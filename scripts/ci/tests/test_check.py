@@ -1,4 +1,3 @@
-"""scripts/ci/check.py: the shards' reports against the suites classed — each run exactly once, in its class."""
 import contextlib
 import importlib.util
 import io
@@ -37,7 +36,7 @@ class CheckTest(unittest.TestCase):
         self.assertEqual(misplaced, {("server", "C"): "it-server-1"})
 
     def test_compare_passes_an_exact_cover(self):
-        classes = {("db", "A"): "it", ("api", "A"): "unit"}  # one name in two projects (JVM and JS) is two suites
+        classes = {("db", "A"): "it", ("api", "A"): "unit"}
         self.assertEqual(check.compare(classes, {"it-db": [("db", "A")], "unit-modules": [("api", "A")]}),
                          ([], [], {}, [], {}))
 
@@ -62,7 +61,6 @@ class CheckTest(unittest.TestCase):
             self.assertIn("| it-db | `A` | some test | no pg_dump |", text)
             self.assertIn("| it-db | 1 | 3 | 2 | 0 | 1 |", text)
             write(f"{d}/reports/report-unit-db/db.tsv", "db\tcom.x.B\tfailed\t0\t1\t0\t0\t0\t10\n")
-            # every suite ran once in its class: the cover holds (the failure is the shard job's to report)
             self.assertEqual(quiet(check.main, [f"{d}/classes.tsv", f"{d}/reports"]), 0)
             write(f"{d}/reports/report-it-server-1/db.tsv", "db\tcom.x.B\tpassed\t1\t0\t0\t0\t0\t10\n")
             self.assertEqual(quiet(check.main, [f"{d}/classes.tsv", f"{d}/reports"]), 1)

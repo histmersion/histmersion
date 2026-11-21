@@ -212,6 +212,18 @@ modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue
 modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	42-43	scala	decision	external quirk: a list mixing Some and None infers the union of the alternatives: ADR-0009
 modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	54	scala	tautology	restates what the names, types and code beside it already say
 modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	7-12	scala	decision	which types tests may compare by value: ADR-0009
+scripts/agents/claude-overhead.sh	67	shell	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude-overhead.sh	86	shell	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	145	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	153	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	186-187	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	206	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	215	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	227	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	25	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/claude_overhead.py	39	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/tests/test_claude_overhead.py	1-4	python	tautology	restates what the names, types and code beside it already say
+scripts/agents/tests/test_claude_overhead.py	18	python	tautology	restates what the names, types and code beside it already say
 scripts/bundle/SlothVerify.java	44	java	tautology	restates what the names, types and code beside it already say
 scripts/bundle/SlothVerify.java	61-62	java	decision	an unloadable class is not Sloth's doing and is kept: ADR-0004
 scripts/bundle/SlothVerify.java	74	java	decision	missing optional dependency judged in its own jar's pass: ADR-0004
@@ -504,3 +516,128 @@ scripts/bundle/user-config.sh	21	shell	tautology	restates what the names, types 
 scripts/bundle/user-config.sh	22	shell	tautology	restates what the names, types and code beside it already say
 scripts/bundle/user-config.sh	29	shell	decision	noclobber guards the race between the test and the write: ADR-0006
 scripts/bundle/user-config.sh	7-10	shell	decision	HISTMERSION_CONFIG wins; the data directory never moves the config: ADR-0006
+scripts/ci/check.py	36	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/check.py	57-60	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/classify.py	39-41	python	decision	markers are looked for in strings too (an environment variable is a string): ADR-0012
+scripts/ci/classify.py	58-59	python	decision	a suite reaches the database transitively, as a fixed point over the names files use: ADR-0012
+scripts/ci/classify.py	70-71	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/plan.py	112	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/plan.py	34	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/plan.py	48	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/plan.py	66-67	python	decision	invariant: the bucket rule is the same as project/TestGroups.split: ADR-0012
+scripts/ci/plan.py	79-81	python	decision	an unclassified suite is dealt nowhere and fails the run after the shards: ADR-0012
+scripts/ci/plan.py	87	python	decision	only db and server can reach the test database: ADR-0012
+scripts/ci/plan.py	96	python	decision	a Scala.js project links its tests once, so projects are dealt whole: ADR-0012
+scripts/ci/tests/test_check.py	1	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_check.py	40	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_check.py	65	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_classify.py	1	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_classify.py	24	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_classify.py	41	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_classify.py	42	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_plan.py	1	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_plan.py	45-46	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_plan.py	56	python	tautology	restates what the names, types and code beside it already say
+scripts/ci/tests/test_plan.py	59	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	104-105	python	decision	repository files the suites read (agents, skills, reference pages, seeds): ADR-0012
+scripts/dev/affected.py	123	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	128-130	python	decision	lint suites read other modules' sources, so they run on any change there: ADR-0012
+scripts/dev/affected.py	135	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	141	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	152	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	165	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	178	python	decision	a suite that only reads a changed file is tested; its dependents are not: ADR-0012
+scripts/dev/affected.py	19-21	python	decision	web to server is a build edge only; no server suite tests the Scala.js code: ADR-0012
+scripts/dev/affected.py	196	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	197	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	57	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	59	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	63	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/affected.py	81-82	python	decision	the basemap fixture is read by server suites; the rest of web/test is the browser suite: ADR-0012
+scripts/dev/cache-isolation-check.sh	101-102	shell	decision	the shared cache's failure mode: a lost blob whose action entry stays: ADR-0012
+scripts/dev/cache-isolation-check.sh	2-20	shell	decision	two checkouts never replay each other's sbt 2 cache entries; how it is proved: ADR-0012
+scripts/dev/cache-isolation-check.sh	43	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/cache-isolation-check.sh	55	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/cache-isolation-check.sh	58	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/cache-isolation-check.sh	64	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/pinned-jdk.sh	2-3	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/sbt.sh	2-7	shell	decision	external quirk: sbt 2's thin client drops the caller's environment, so each call gets its own server: ADR-0012
+scripts/dev/seed-cache.sh	36	shell	decision	external quirk: Bash 3.2 reads an unparenthesised case pattern inside $(…) as its end: ADR-0007
+scripts/dev/seed-cache.sh	59	shell	decision	a copy-on-write clone on APFS, a plain copy elsewhere: ADR-0012
+scripts/dev/seed-cache.sh	61	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/test-weights.py	13	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/test-weights.py	2-9	python	decision	suite weights balance the forked groups; stale numbers only cost balance: ADR-0012
+scripts/dev/test-weights.py	21	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/pinned-jdk-test.sh	2	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/pinned-jdk-test.sh	9	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/seed-cache-test.sh	10	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/seed-cache-test.sh	2	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/seed-cache-test.sh	26	shell	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	1-4	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	101	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	17-18	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	40	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	45	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	52	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_affected.py	65	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_test_weights.py	1-4	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/tests/test_third_party_licences.py	1-4	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	104-105	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	121-123	python	decision	external quirk: sbt 2.1's export prints nothing when the result comes from the cache: ADR-0012
+scripts/dev/third_party_licences.py	143	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	158	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	169	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	182-183	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	214	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	232	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	247-248	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	263	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	298	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	32	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	34	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	346	python	decision	external quirk: a local version (+cpu) is the PyPI release's build: ADR-0012
+scripts/dev/third_party_licences.py	76	python	decision	the licences combinable with AGPL-3.0: ADR-0012
+scripts/dev/third_party_licences.py	83	python	decision	the licences that cannot be combined with AGPL-3.0: ADR-0012
+scripts/dev/third_party_licences.py	88	python	tautology	restates what the names, types and code beside it already say
+scripts/dev/third_party_licences.py	99	python	tautology	restates what the names, types and code beside it already say
+scripts/docs/screenshots.sh	43	shell	tautology	restates what the names, types and code beside it already say
+scripts/docs/screenshots.sh	49	shell	tautology	restates what the names, types and code beside it already say
+scripts/docs/screenshots.sh	90	shell	tautology	restates what the names, types and code beside it already say
+scripts/docs/screenshots.sh	93-94	shell	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	129	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	137	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	148	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	181	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	215	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	224	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	238	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	247	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	260	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	285	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	294	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	304	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	309	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	314	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	321	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	329	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	336	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	34	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	43	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	46	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	55	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	66	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	72	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	83	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/bench.py	90	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/catalogue_live.py	1-2	python	stale	its usage line names another script (live_driver.py)
+scripts/perf/catalogue_live.py	42-43	python	decision	live drivers record corpus values under symbolic names, never the values: ADR-0012
+scripts/perf/catalogue_live.py	69	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/library_live.py	1-4	python	decision	live drivers record corpus values under symbolic names, never the values: ADR-0012
+scripts/perf/library_live.py	113	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/library_live.py	22	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/library_live.py	82	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/research_live.py	1-5	python	decision	live drivers record corpus values under symbolic names, never the values: ADR-0012
+scripts/perf/research_live.py	22	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/research_live.py	42	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/research_live.py	73	python	tautology	restates what the names, types and code beside it already say
+scripts/perf/tests/test_bench.py	1-4	python	tautology	restates what the names, types and code beside it already say

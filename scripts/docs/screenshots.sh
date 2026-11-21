@@ -40,13 +40,11 @@ port="${HISTMERSION_DOCS_SERVER_PORT:-$(free_port)}"
 stub_port="$(free_port)"
 url="http://127.0.0.1:$port"
 
-# ── the JDK: the active one, of the pinned major ──────────────────────────────────────────────
 jh="${JAVA_HOME:-}"
 [ -n "$jh" ] || jh="$(java -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.home = //p' | head -1 || true)"
 { [ -n "$jh" ] && [ -x "$jh/bin/java" ] && "$jh/bin/java" -version 2>&1 | grep -q 'version "25'; } \
   || { echo "no JDK 25 active — run 'sdk env install && sdk env' in the checkout" >&2; exit 3; }
 
-# ── what runs, and what stops it ───────────────────────────────────────────────────────────────
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/histmersion-docs.XXXXXX")"
 server_pid=""; stub_pid=""
 cleanup() {
@@ -87,11 +85,8 @@ node docs/demo/converter-stub.mjs "$stub_port" & stub_pid=$!
   export HISTMERSION_CONVERTER_URL="http://127.0.0.1:$stub_port"
   export HISTMERSION_SPOOL_DIR="$tmp/spool" HISTMERSION_BACKUPS_DIR="$tmp/backups" HISTMERSION_BUNDLES_DIR="$tmp/bundles"
   export HISTMERSION_PG_BIN_DIR="$pg" HISTMERSION_INIT_DATA_DIR="$repo/db"
-  # the terrain base map: the small Aegean extract the browser tests use (no download)
   export HISTMERSION_BASEMAP_DIR="$repo/modules/web/test/fixtures/basemap" HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false \
     HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false
-  # the online base maps stay the home shots' background (the fixture covers only the Aegean); the
-  # local maps are in the menu all the same, and their own shots choose them
   export HISTMERSION_UI_BASE_MAP_SOURCE=online
   unset ANTHROPIC_API_KEY OPENAI_API_KEY HISTMERSION_AGENTS_LOCAL_API_KEY
   exec "$jh/bin/java" -Duser.home="$tmp/home" -cp "$(cat "$classpath_file")" com.histmersion.server.histmersionServer

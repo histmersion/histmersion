@@ -46,3 +46,4 @@ audited and moved here.
 | [0009](0009-newtype-kernel.md) | One newtype kernel gives every concept its instances, and conversions follow Iron |
 | [0010](0010-value-conventions.md) | Conventions of the shared values and vocabularies |
 | [0011](0011-test-plugin-fixtures.md) | Test plugins prove one property each, with no network |
+| [0012](0012-developer-build-and-test-tooling.md) | Developer build and test tooling |

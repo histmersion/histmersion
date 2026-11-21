@@ -1,8 +1,3 @@
-"""Live-volume driver for research's read paths: the article list under fixed filters, reads of single articles (in
-full, brief, their coverage, review, versions, export and lint), their pages and the backlinks of the sources they
-cite, against a scratch server; digests, counts and timings only. A value the corpus holds (a slug, a kind, a tag, a
-citekey) is looked up at run time and written under a symbolic name, never itself.
-usage: research_live.py BASE_URL OUT_TSV [ROUNDS]"""
 import sys, math, hashlib, time, json, re, urllib.request, urllib.error, urllib.parse, statistics
 
 base, out = sys.argv[1], sys.argv[2]
@@ -19,7 +14,6 @@ def add(kind, path, label=None):
     reqs.append((kind, path))
     if label: labels[path] = label
 
-# what the corpus holds, looked up once: the source tags most used, the articles' kinds, the first articles of lists
 tags = [f["value"] for f in read("/api/facets?field=tags&limit=3")][:3]
 listing = read("/api/articles?limit=1000")["articles"]
 kinds = sorted({a["kind"] for a in listing})
@@ -39,7 +33,6 @@ add("list", "/api/articles?from=-1600&to=-1100")
 add("list", "/api/articles?status=contested")
 add("list", "/api/article-slugs")
 
-# single articles: the first of each kind and the three with the longest summaries
 picked = []
 for k in kinds:
     picked += [a["slug"] for a in listing if a["kind"] == k][:1]
@@ -70,7 +63,6 @@ def fetch(path):
         data, status, etag = e.read(), e.code, "-"
     return (time.perf_counter() - t0) * 1000, status, elapsed.sub(b'"elapsedMs":0', data), etag
 
-# warm-up pass, a pause for background builds, then the recorded pass and a second for stability
 for _, p in reqs: fetch(p)
 time.sleep(30)
 first = {}

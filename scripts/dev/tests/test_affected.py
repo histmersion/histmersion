@@ -1,7 +1,3 @@
-"""Tests of affected.py's pure mapping — no git, no sbt.
-
-    python3 -m unittest scripts/dev/tests/test_affected.py      (also: just test-scripts)
-"""
 import os
 import sys
 import unittest
@@ -14,8 +10,6 @@ A = affected
 
 class AffectedTest(unittest.TestCase):
     def test_a_cli_change_tests_the_cli_and_the_server_that_runs_it(self):
-        # (the server's calibre commands suite runs the CLI; and the lint suites of api and core, which read every
-        # module's main Scala — not their dependents)
         self.assertEqual(A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"]),
                          (["api", "config", "core", "cli", "server"], True, ["modules/cli/src/main/scala/com/histmersion/cli/Main.scala → cli",
                           "server: depends on a changed module",
@@ -37,19 +31,16 @@ class AffectedTest(unittest.TestCase):
         self.assertEqual(tests, ["api", "config", "files", "core", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginsCalibre", "db", "cli", "server"])
 
     def test_api_js_reaches_web_not_server(self):
-        # (and the lint suites, which read every module's main Scala)
         self.assertEqual(A.affected(["modules/api/src/main/scalajs/Y.scala"])[0], ["api", "apiJS", "config", "core", "web"])
 
     def test_web_change_does_not_rerun_the_server(self):
         tests, db, _ = A.affected(["modules/web/src/main/scala/com/histmersion/web/Main.scala"])
-        # the lint suites read the web sources (StyleLintSuite, MapEngineBoundarySuite)
         self.assertEqual(tests, ["api", "config", "core", "web"])
         self.assertFalse(db)
 
     def test_main_sources_are_read_by_cores_lints(self):
         self.assertIn("core", A.affected(["modules/cli/src/main/scala/com/histmersion/cli/Main.scala"])[0])
         self.assertIn("core", A.affected(["modules/server/src/main/scala/com/histmersion/server/Main.scala"])[0])
-        # a test of its own, or a resource, is not
         self.assertEqual(A.affected(["modules/cli/src/test/scala/X.scala"])[0], ["cli", "server"])
 
     def test_db_reaches_server(self):
@@ -62,7 +53,6 @@ class AffectedTest(unittest.TestCase):
                                  "pluginVaults", "pluginResolver", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello/src/main/scala/H.scala"])[0], ["api", "config", "core", "server"])
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-ai/src/main/resources/x.conf"])[0], ["server"])
-        # the fixture with a dependency is read by the resolver's suites and the server's
         self.assertEqual(A.affected(["modules/plugin-fixtures/hello-lib/src/main/scala/S.scala"])[0],
                          ["api", "config", "core", "pluginResolver", "server"])
 
@@ -98,7 +88,6 @@ class AffectedTest(unittest.TestCase):
                          {"pluginApi", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginsCalibre", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloDeps", "pluginResolver",
                           "server"})
         self.assertEqual(A.dependents(set()), set())
-        # the first-party plugins' library reaches the host, the plugins and the server (and the lint suites)
         self.assertEqual(A.affected(["modules/upstreams/src/main/scala/U.scala"])[0],
                          ["api", "config", "core", "upstreams", "pluginHost", "pluginTestkit", "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginsCalibre", "server"])
         self.assertEqual(A.affected(["modules/plugins/events/src/main/scala/E.scala"])[0], ["api", "config", "core", "pluginsEvents", "server"])

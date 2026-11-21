@@ -1,4 +1,3 @@
-"""scripts/ci/classify.py: a suite that reaches the test database is IT, transitively; the rest unit; none lost."""
 import contextlib
 import importlib.util
 import io
@@ -21,7 +20,6 @@ SOURCES = {
     "server/Helper.scala": "package com.x.db\n\nfinal case class RepoHelper():\n"
                            "  def url = sys.env.get(\"HISTMERSION_TEST_DB_URL\")\n",
     "server/HttpSuite.scala": "package com.x.server\n\nclass HttpSuite extends munit.FunSuite:\n  Fixtures.load()\n",
-    # the same simple name as a reaching file's definition, but its own: not a use
     "server/RepoSuite.scala": "package com.x.server\n\nclass RepoSuite extends munit.FunSuite:\n  test(\"y\")(())\n",
 }
 
@@ -38,8 +36,8 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual((pkg, names, markers), ("com.x.db", ["TestDb"], {"TestDb", "HISTMERSION_TEST_DB_URL"}))
         _, _, markers, used = classify.parse(SOURCES["db/PureSuite.scala"])
         self.assertEqual(markers, set())
-        self.assertNotIn("DbSuite", used)  # comments and strings are not uses
-        self.assertNotIn("PureSuite", used)  # nor its own name
+        self.assertNotIn("DbSuite", used)
+        self.assertNotIn("PureSuite", used)
 
     def test_reaching_is_transitive(self):
         files = {p: classify.parse(t) for p, t in SOURCES.items()}

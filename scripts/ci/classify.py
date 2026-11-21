@@ -36,9 +36,6 @@ STRING = re.compile(r'"""(?:.|\n)*?"""|"(?:\\.|[^"\\\n])*"')
 
 
 def parse(text):
-    """(package, [top-level names], markers, names used) of one Scala source. Chained package clauses (`package a`
-    / `package b`) are joined; a top-level definition starts at column 0. Markers are looked for in the code and its
-    strings (an environment variable is a string), the names a file uses in its code only, without its own."""
     pkg, names = [], []
     for line in text.splitlines():
         m = PACKAGE.match(line)
@@ -55,8 +52,6 @@ def parse(text):
 
 
 def reaching(files):
-    """The files that reach the database: `files` is {path: parse(text)}. A file with a marker does; so does a file
-    that uses a name a reaching file defines (a fixed point)."""
     reached = {p for p, f in files.items() if f[2]}
     frontier = set(reached)
     while frontier:
@@ -67,8 +62,6 @@ def reaching(files):
 
 
 def classify(suites, sources, read):
-    """{(project, suite): 'unit' | 'it' | 'unclassified'}. `sources`: {project: [dir]}; `read(dir)` yields
-    (path, text) of every .scala file under a directory."""
     files, by_fqn = {}, {}
     for project, dirs in sources.items():
         for d in dirs:

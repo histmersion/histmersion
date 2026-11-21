@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Prints the home of the active JDK (JAVA_HOME, else the `java` on PATH) when it is the GraalVM CE that
-# scripts/bundle/graalvm-pins.txt pins, with native-image; otherwise says how to activate it and exits 1.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck source=../bundle/kit-common.sh

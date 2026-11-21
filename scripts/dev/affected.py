@@ -16,9 +16,6 @@ import argparse
 import subprocess
 import sys
 
-# the sbt project ids and what each depends on (compile or test) — build.sbt's dependsOn, plus the
-# TEST resources (the hello / hello-ai plugin jars, the hello-deps fixture repository). web → server (the bundle) is a BUILD
-# edge only: no server suite tests the Scala.js code, so a web change does not re-run the server.
 DEPS = {
     "values": [],
     "valuesJS": [],
@@ -54,13 +51,10 @@ DEPS = {
 ORDER = ["values", "valuesJS", "api", "apiJS", "config", "files", "core", "pluginApi", "upstreams", "pluginHost", "pluginTestkit",
          "pluginsFetchers", "pluginsEvents", "pluginsMedia", "pluginsGazetteers", "pluginsAiHttp", "pluginsCalibre", "pluginVaults", "pluginHello", "pluginHelloAi", "pluginHelloLib",
          "pluginHelloDeps", "pluginResolver", "chimneyIron", "chimneyIronTests", "db", "cli", "web", "server"]
-# modules with no test sources of their own
 NO_TESTS = {"pluginHello", "pluginHelloAi", "pluginHelloLib", "pluginHelloDeps", "chimneyIron"}
-# modules whose suites need the throwaway Postgres (HISTMERSION_TEST_DB_URL)
 NEEDS_DB = {"db", "server"}
 ALL = "*"
 
-# path prefix → modules (first match wins; longest prefixes first)
 RULES = [
     ("build.sbt", [ALL]),
     ("project/", [ALL]),
@@ -78,8 +72,6 @@ RULES = [
     ("modules/db/", ["db"]),
     ("modules/server/", ["server"]),
     ("modules/cli/", ["cli"]),
-    # the basemap fixture is read by the server's basemap suites; the rest of test/ is the
-    # Playwright browser suite (npm), not sbt
     ("modules/web/test/fixtures/", ["server"]),
     ("modules/web/test/", []),
     ("modules/web/", ["web"]),
@@ -101,8 +93,6 @@ RULES = [
     ("modules/plugin-fixtures/hello/", ["pluginHello"]),
     ("modules/chimney-iron-tests/", ["chimneyIronTests"]),
     ("modules/chimney-iron/", ["chimneyIron"]),
-    # repository files the suites read: agents and skills (server resources, AgentsSuite), the
-    # reference pages (ApiSurfaceSuite, OpsHttpSuite), the seed data (PeriodsSuite, place seeds)
     ("agents/", ["core", "server"]),
     ("skills/", ["core", "server"]),
     ("plugin/", ["server"]),
@@ -120,25 +110,19 @@ RULES = [
     (".claude/", []),
     (".opencode/", []),
 ]
-# top-level files that no suite reads
 INERT_TOP = {"README.md", "AGENTS.md", "CLAUDE.md", ".gitignore", ".env.example", ".mcp.json.example",
              "justfile"}
 
 
-# the lint suites read the other modules' main sources: api's StyleLintSuite the web page's and api's own,
-# PluralSuite every module's Scala; config's ConfigSuite every module's Scala; core's MapEngineBoundarySuite
-# the web page's (#3765: a web change passed test-quick and failed test-it)
 LINT_READERS = ["api", "config", "core"]
 
 
 def read_by_lints(path):
-    """Is `path` a file the lint suites read (the web page's sources, any module's main Scala)?"""
     p = path.removeprefix("./")
     return p.startswith("modules/web/src/main/") or (p.startswith("modules/") and "/src/main/" in p and p.endswith(".scala"))
 
 
 def modules_for(path):
-    """The modules a changed path touches directly; [ALL] for anything unknown (be safe)."""
     p = path.removeprefix("./")
     if "/" not in p and p in INERT_TOP:
         return []
@@ -149,7 +133,6 @@ def modules_for(path):
 
 
 def dependents(mods):
-    """`mods` plus every module that depends on one of them, transitively."""
     out = set(mods)
     changed = True
     while changed:
@@ -162,7 +145,6 @@ def dependents(mods):
 
 
 def affected(paths):
-    """(the modules to test in build order, whether any needs the test database, the reasons)."""
     direct, why = set(), []
     for p in paths:
         ms = modules_for(p)
@@ -175,7 +157,6 @@ def affected(paths):
     closure = dependents(direct)
     for m in sorted(closure - direct, key=ORDER.index):
         why.append(f"{m}: depends on a changed module")
-    # a suite that only READS a changed file: its module is tested, its dependents are not
     readers = [p for p in paths if read_by_lints(p)]
     for m in LINT_READERS:
         if readers and m not in closure:
@@ -193,8 +174,8 @@ def git_changed(base):
     def git(*a):
         return subprocess.run(["git", *a], capture_output=True, text=True, check=True).stdout
     mb = git("merge-base", base, "HEAD").strip()
-    files = set(git("diff", "--name-only", mb).split())  # committed since the base + unstaged + staged
-    files |= set(git("ls-files", "--others", "--exclude-standard").split())  # untracked
+    files = set(git("diff", "--name-only", mb).split())
+    files |= set(git("ls-files", "--others", "--exclude-standard").split())
     return sorted(files)
 
 

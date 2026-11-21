@@ -11,7 +11,9 @@ service.
 
 ## Decision
 
-- The kit's scripts and installers are written for Bash 3.2: no associative arrays and no newer builtins.
+- The kit's scripts and installers are written for Bash 3.2: no associative arrays and no newer builtins. A `case`
+  pattern inside `$(…)` is parenthesised (`(pattern)`), because Bash 3.2 reads an unparenthesised `pattern)` there as
+  the end of the substitution.
 - **Every location can be moved by the environment**: `HISTMERSION_HOME` (the install), `HISTMERSION_DATA_DIR`,
   `HISTMERSION_SERVICE` (`launchd | systemd | none`), the service's label or unit, `HISTMERSION_SERVER_URL`, the
   keychain, `GNUPGHOME`, `HOME`. That is how the tests run against temporary installs, and never against

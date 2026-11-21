@@ -1,7 +1,3 @@
-"""Live-volume driver for the library's read paths: fixed searches, facets, the map feed, the histogram, reads of one
-source and the read-only query against a scratch server; digests, counts and timings only. A value the corpus holds
-(a tag, a topic, a place id, a citekey) is looked up at run time and written under a symbolic name, never itself.
-usage: library_live.py BASE_URL OUT_TSV [ROUNDS]"""
 import sys, math, hashlib, time, json, re, urllib.request, urllib.error, urllib.parse, statistics
 
 base, out = sys.argv[1], sys.argv[2]
@@ -19,7 +15,6 @@ def add(kind, path, label=None, body=None):
     reqs.append((kind, path, body))
     if label: labels[(path, body)] = label
 
-# what the corpus holds, looked up once: the largest facets' values and the first hits' citekeys
 def top(field, n):
     return [f["value"] for f in read(f"/api/facets?field={field}&limit={n}")][:n]
 tags, topics, statuses = top("tags", 3), top("topics", 2), top("status", 3)
@@ -79,7 +74,6 @@ for s in spans[:2]:
 add("histogram", f"/api/aggregate?by=region&tag={q(tags[0])}", "/api/aggregate?by=region&tag={tag0}")
 add("histogram", "/api/aggregate?q=hittite&from=-2000&to=-1000")
 
-# reads of single sources: the first hits of three searches
 hits = []
 for t in ("hittite", "collapse", "chariot"):
     hits += [h["source"]["citekey"] for h in read(f"/api/sources?q={q(t)}&limit=2")["hits"]]
@@ -110,7 +104,6 @@ def fetch(path, body):
         data, status, etag = e.read(), e.code, "-"
     return (time.perf_counter() - t0) * 1000, status, elapsed.sub(b'"elapsedMs":0', data), etag
 
-# warm-up pass, a pause for background builds, then the recorded pass and a second for stability
 for _, p, b in reqs: fetch(p, b)
 time.sleep(30)
 first = {}

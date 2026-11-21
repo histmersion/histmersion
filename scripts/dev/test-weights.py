@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
-"""Refresh project/test-weights.tsv — each DB-backed suite's seconds in a measured run — from an sbt log.
-
-    just test-it 2>&1 | tee /tmp/it.log; python3 scripts/dev/test-weights.py /tmp/it.log
-
-build.sbt (`dbTestGroups`) deals the suites of db and server into their forked groups longest first by
-these weights, so the groups end together; a suite missing here weighs 1 s. Stale numbers only cost
-balance, never correctness. Suites under 2 s are left out (they are the default, near enough).
-"""
 import re
 import sys
 
-# the db and server modules' suites: their packages since the move by feature (db, server, util, domain)
 LINE = re.compile(
     r"Test run com\.histmersion\.(?:db|server|util|domain)\.(?:[\w$]+\.)*([\w$]+) finished: .* total ([\d.]+)s"
 )
@@ -18,7 +9,6 @@ ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def weights(lines):
-    """{suite simple name: seconds} for every suite at 2 s or more (the last report of a name wins)."""
     out = {}
     for l in lines:
         m = LINE.search(ANSI.sub("", l))

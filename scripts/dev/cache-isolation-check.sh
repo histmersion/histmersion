@@ -1,23 +1,4 @@
 #!/usr/bin/env bash
-# Two checkouts never replay each other's sbt 2 cache entries (docs/research-build-speed.md §2).
-#
-#   scripts/dev/cache-isolation-check.sh            the build as it is in THIS checkout (build.sbt, project/)
-#   scripts/dev/cache-isolation-check.sh --shared   the same two checkouts on ONE shared disk cache (a temp
-#                                                   dir, never ~/Library/Caches/sbt): shows what the shared
-#                                                   cache did — the other checkout's results replayed, and
-#                                                   a lost blob turning into missing classes there
-#
-# Makes two temporary `git worktree`s of HEAD (removed afterwards) with this checkout's build definition
-# copied in, gives each its own version of a probe source in plugin-api (the smallest module), and builds
-# them alternately, each with its own sbt server:
-#   1. A builds "alpha", B builds "beta": each class file holds its own marker
-#   2. A switches to B's exact source: A must compile it itself (a hit here = B's entry replayed in A)
-#   3. B gets a compile error; A then takes the same broken source: A must compile and fail on its own,
-#      not replay B's cached failure
-#   4. each checkout's cache is inside it (Global / localCacheDirectory = <checkout>/target/sbt-cache, and
-#      -Dsbt.global.localcache as the justfile passes it, for sbt's own global-plugins project)
-#      and every restored output links into that checkout's own cache
-# Needs ~2 GB of memory and ~5 minutes. Exit 0 = isolated; 1 = a replay crossed checkouts.
 set -uo pipefail
 mode="${1:-isolated}"
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -40,7 +21,6 @@ bad() { failed=$((failed + 1)); echo "  FAIL $1"; }
 
 for w in "$a" "$b"; do
   git -C "$repo" worktree add --detach "$w" HEAD >/dev/null 2>&1 || { echo "git worktree add $w failed" >&2; exit 2; }
-  # the build definition under test is this checkout's, committed or not
   cp "$repo/build.sbt" "$w/build.sbt"
   cp "$repo"/project/*.sbt "$repo"/project/*.scala "$repo/project/build.properties" "$w/project/"
   if [ "$mode" = --shared ]; then
@@ -52,16 +32,15 @@ probe="modules/plugin-api/src/main/scala/com/histmersion/plugin/CacheProbe.scala
 classes() { find "$1/target/out" -path '*histmersion-plugin-api/classes' -type d 2>/dev/null | head -1; }
 write() { printf 'package com.histmersion.plugin\n\nobject CacheProbe:\n  val marker: String = "%s"\n' "$2" > "$1/$probe"; }
 broken() { printf 'package com.histmersion.plugin\n\nobject CacheProbe:\n  val marker: Int = "%s"\n' "$2" > "$1/$probe"; }
-# build <checkout> <label> — sbt's own server per call (`--server -batch`, what the recipes use)
 build() {
   local w="$1" log="$tmp/$2.log"
-  local flag=(); [ "$mode" = --shared ] || flag=("-Dsbt.global.localcache=$w/target/sbt-cache")  # as the justfile's `sbt`
+  local flag=(); [ "$mode" = --shared ] || flag=("-Dsbt.global.localcache=$w/target/sbt-cache")
   (cd "$w" && sbt --server -batch --no-colors ${flag[@]+"${flag[@]}"} "show Global / localCacheDirectory" pluginApi/compile) > "$log" 2>&1
   echo $? > "$log.rc"
 }
 rc() { cat "$tmp/$1.log.rc"; }
 compiled() { grep -q "compiling .*histmersion-plugin-api/classes" "$tmp/$1.log"; }
-holds() {  # the probe class in <checkout> holds <marker>
+holds() {
   local f; f="$(classes "$1")/com/histmersion/plugin/CacheProbe\$.class"
   [ -f "$f" ] && LC_ALL=C grep -aq "$2" "$f"
 }
@@ -98,8 +77,6 @@ if [ "$mode" != --shared ]; then
     [ -z "$outside" ] && ok "$n's restored outputs link only into its own cache" || bad "$n links outside itself: $outside"
   done
 else
-  # the shared cache's failure mode: a blob lost from the CAS (pruned, a cleanFull elsewhere, a
-  # half-written copy) while its action entry stays — the other checkout gets the "hit" and no classes
   write "$a" epsilon; build "$a" a5
   zip="$(find "$(classes "$a")/.." -maxdepth 1 -name 'classes.sbtdir.zip' | head -1)"
   blob="$(readlink "$zip" 2>/dev/null || true)"
