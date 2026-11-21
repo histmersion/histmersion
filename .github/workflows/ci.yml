@@ -236,6 +236,15 @@ jobs:
             if grep -n 'HISTMERSION_TEST_DB_URL' "$f"; then bad=1; fi
           done
           exit $bad
+      # the guideline inventory's log (GuidelineRatchetSuite, SentenceLedgerSuite) goes with the report, so a failed
+      # inventory run can be read afterwards; scripts/ci/check.py reads only the report's .tsv files
+      - name: the guideline inventory's log, with the report
+        if: always()
+        run: |
+          if [ -f target/guidelines/inventory.log ]; then
+            mkdir -p "$HISTMERSION_CI_REPORT_DIR"
+            cp target/guidelines/inventory.log "$HISTMERSION_CI_REPORT_DIR/guideline-inventory.log"
+          fi
       - if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
