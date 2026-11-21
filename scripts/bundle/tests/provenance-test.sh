@@ -1,17 +1,4 @@
 #!/usr/bin/env bash
-# Tests of GPG provenance AT EACH START (docs/research-plugins.md §21.3) in a temp dir — nothing outside it:
-#   - libexec/histmersion-server-verified (server-verified.sh): with provenance off it execs the binary as
-#     before; on, it execs only a binary whose SHA-256 is the one its checksum record carries, signed by
-#     the configured key — with the REAL gpg in a temporary GNUPGHOME (throw-away keys without a
-#     passphrase) and a LaunchAgent-like environment (env -i, PATH=/usr/bin:/bin, no GNUPGHOME)
-#   - histmersion-signing use-gpg / off-gpg / sign-binary / verify-binary / status
-#   - pointing the service at the launcher and back: a temporary plist (macOS, plutil) and systemd unit,
-#     with FAKE launchctl / systemctl
-#   - the WHOLE installer of this platform with provenance on and off (temporary HOME and install, fake
-#     launchctl/systemctl/curl/codesign, --prebuilt): what the service definition starts
-# gpg missing: the gpg-dependent checks are skipped with a note.
-#
-#   scripts/bundle/tests/provenance-test.sh        (also: just test-scripts)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 src="$here/.."
@@ -33,9 +20,8 @@ passed=0; failed=0; skipped=0
 ok()   { passed=$((passed + 1)); echo "  ok   $1"; }
 bad()  { failed=$((failed + 1)); echo "  FAIL $1"; }
 skip() { skipped=$((skipped + 1)); echo "  skip $1"; }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
+check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
-# an install: a fake server that records how it was started, the real scripts
 install="$tmp/install"
 new_install() {
   rm -rf "$install" && mkdir -p "$install/bin" "$install/libexec"
@@ -54,7 +40,6 @@ signing="$install/bin/histmersion-signing"
 # shellcheck source=../kit-common.sh
 . "$src/kit-common.sh"
 
-# ── provenance off: nothing changes ───────────────────────────────────────────────────────────────
 echo "provenance off"
 new_install
 check "the service starts the binary itself" '[ "$(hk_service_program "$install")" = "$install/bin/histmersion-server" ]'
@@ -68,17 +53,15 @@ if ! command -v gpg >/dev/null 2>&1; then
   [ "$failed" -eq 0 ]; exit
 fi
 
-new_gnupg() { # <dir> <name> → the new key's fingerprint
+new_gnupg() {
   mkdir -m 700 "$1"; gnupg_homes+=("$1")
   GNUPGHOME="$1" gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "$2 <test@localhost>" ed25519 sign 1d >/dev/null 2>&1
   GNUPGHOME="$1" gpg --batch --with-colons --list-secret-keys 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}'
 }
 gh="$tmp/gnupg"; fpr="$(new_gnupg "$gh" "Histmersion Test")"
 gpg_abs="$(command -v gpg)"
-# what a LaunchAgent gives its program: no GNUPGHOME, a PATH without Homebrew or MacGPG2
 as_service() { env -i HOME="$HOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin HISTMERSION_DATA_DIR="$HISTMERSION_DATA_DIR" "$@"; }
 
-# ── use-gpg ───────────────────────────────────────────────────────────────────────────────────────
 echo "use-gpg"
 new_install
 GNUPGHOME="$gh" "$signing" use-gpg "$fpr" > "$tmp/u.out" 2>&1
@@ -89,7 +72,6 @@ check "use-gpg signs the installed binary's SHA-256" \
 check "…and says there is no service to point (HISTMERSION_SERVICE=none)" 'grep -q "service: none installed" "$tmp/u.out"'
 check "with provenance on, the service is to start the launcher" '[ "$(hk_service_program "$install")" = "$launcher" ]'
 
-# ── the launcher at a start ───────────────────────────────────────────────────────────────────────
 echo "launcher"
 rc=0; as_service "$launcher" --self-check > "$tmp/l.out" 2>&1 || rc=$?
 check "a LaunchAgent-like start (no GNUPGHOME, no gpg on PATH): verified with the recorded gpg and keyring, then exec'd" \
@@ -139,15 +121,12 @@ check "the signer's key is not in the keyring the service sees: refused (exit 78
 rc=0; as_service env HISTMERSION_GPG="$tmp/no-gpg" "$launcher" > "$tmp/l.out" 2>&1 || rc=$?
 check "no gpg to verify with: refused (exit 78), never started unverified" '[ "$rc" = 78 ] && grep -q "REFUSING" "$tmp/l.out"'
 
-# .prev travels with its own signed record (relink.sh's names)
 cp "$tmp/good-server" "$install/bin/histmersion-server.prev"
 "$signing" sign-binary > "$tmp/s.out"
 check "sign-binary signs .prev too, under the names its records rotate to" \
   '[ -f "$install/bin/histmersion-server.sha256.prev" ] && [ -f "$install/bin/histmersion-server.sha256.asc.prev" ] && hk_verify_binary "$install/bin/histmersion-server.prev" "$install/bin/histmersion-server.sha256.prev" "$install/bin/histmersion-server.sha256.asc.prev" "$fpr" >/dev/null'
 check "verify-binary: both verified (exit 0)" '"$signing" verify-binary > "$tmp/v.out" && [ "$(grep -c "^verified" "$tmp/v.out")" = 2 ]'
 
-# a key that certifies with its primary and signs with a SUBKEY (a common layout): VALIDSIG names the
-# subkey first, use-gpg stores the primary's fingerprint — both checks must accept it
 gh3="$tmp/gnupg-subkey"; mkdir -m 700 "$gh3"; gnupg_homes+=("$gh3")
 GNUPGHOME="$gh3" gpg --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "Subkey Signer <test@localhost>" ed25519 cert 1d >/dev/null 2>&1
 fpr3="$(GNUPGHOME="$gh3" gpg --batch --with-colons --list-secret-keys 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}')"
@@ -163,7 +142,6 @@ check "  …while verify-file still names the signing subkey (what a plugin's pi
 rm -rf "$HISTMERSION_DATA_DIR/plugins"
 GNUPGHOME="$gh" "$signing" use-gpg "$fpr" > /dev/null 2>&1
 
-# ── pointing the service at the launcher, and back ────────────────────────────────────────────────
 echo "service definition"
 fakes="$tmp/fakes"; mkdir -p "$fakes"
 cat > "$fakes/launchctl" <<SH
@@ -178,7 +156,7 @@ exit 0
 SH
 chmod +x "$fakes"/*
 svc() { tr '\n' ';' < "$tmp/svc" 2>/dev/null || true; }
-write_unit() { # <file> <program>
+write_unit() {
   printf '[Unit]\nDescription=Histmersion\n\n[Service]\nExecStart=%s\nRestart=on-failure\n' "$2" > "$1"
 }
 unit="$tmp/histmersion.service"
@@ -223,7 +201,6 @@ PLIST
     '[ "$(plutil -extract ProgramArguments.0 raw -o - "$plist")" = "$install/bin/histmersion-server" ] && [ -z "$(svc)" ]'
 fi
 
-# ── the installer: what the service starts ────────────────────────────────────────────────────────
 echo "installer"
 ibundle="$tmp/ibundle"; ihome="$tmp/ihome"; ifakes="$tmp/ifakes"
 rm -rf "$ibundle" && mkdir -p "$ibundle/bin" "$ibundle/libexec" "$ibundle/pg/bin" "$ifakes"
@@ -236,12 +213,12 @@ chmod +x "$ibundle/pg/bin/pg_ctl" "$ibundle/bin/histmersion"
 printf '#!/bin/sh\necho "launchctl $*" >> "%s/isvc"\ncase "$1" in print) exit 1;; esac\nexit 0\n' "$tmp" > "$ifakes/launchctl"
 printf '#!/bin/sh\necho "systemctl $*" >> "%s/isvc"\ncase "$*" in *is-active*) exit 3;; esac\nexit 0\n' "$tmp" > "$ifakes/systemctl"
 printf '#!/bin/sh\nexit 0\n' > "$ifakes/curl"
-printf '#!/bin/sh\necho "codesign $*" >> "%s/isvc"\nexit 0\n' "$tmp" > "$ifakes/codesign"   # never the keychain
+printf '#!/bin/sh\necho "codesign $*" >> "%s/isvc"\nexit 0\n' "$tmp" > "$ifakes/codesign"
 chmod +x "$ifakes"/*
 installer="$src/install-linux.sh"; [ "$(uname -s)" = Darwin ] && installer="$src/install-macos.sh"
 idest="$ihome/opt/histmersion"
 idata="$ihome/.local/share/histmersion"; [ "$(uname -s)" = Darwin ] && idata="$ihome/Library/Application Support/Histmersion"
-run_installer() { # → exit code in $irc, output in $tmp/install.out
+run_installer() {
   irc=0
   env -i HOME="$ihome" USER="${USER:-test}" TMPDIR="$tmp" PATH="$ifakes:/usr/bin:/bin:/usr/sbin:/sbin" \
     HISTMERSION_INSTALL_DIR="$idest" HISTMERSION_BIN_DIR="$ihome/bin" HISTMERSION_CODESIGN_IDENTITY=- \

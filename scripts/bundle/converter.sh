@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# Build the OCR converter as a self-contained directory — no system Python, no install.
-#
-#   scripts/bundle/converter.sh <out-dir>      # → <out-dir>/converter/{python,app.py,models}
-#
-# python/  a python-build-standalone CPython (Astral's relocatable builds, the ones `uv python
-#          install` uses) with the converter's LOCKED dependencies installed straight into it —
-#          no venv, so nothing points back at the build machine; run it as `python/bin/python3 -m`.
-# models/  docling's layout/table weights, so OCR works offline (DOCLING_ARTIFACTS_PATH).
 set -euo pipefail
 out="$(mkdir -p "${1:?usage: $0 <out-dir>}" && cd "$1" && pwd)/converter"
 here="$(cd "$(dirname "$0")/../../converter" && pwd)"
@@ -15,7 +7,6 @@ py_version="$(sed -n 's/^requires-python = ">=\([0-9.]*\)".*/\1/p' "$here/pyproj
 rm -rf "$out" && mkdir -p "$out"
 echo "→ python-build-standalone CPython $py_version"
 uv python install "$py_version" --install-dir "$out/.pbs" --no-bin >/dev/null
-# the real directory is the fully versioned one; uv also leaves a minor-version symlink beside it
 mv "$(find "$out/.pbs" -maxdepth 1 -type d -name "cpython-$py_version.*" | head -1)" "$out/python"
 rm -rf "$out/.pbs"
 py="$out/python/bin/python3"
@@ -23,13 +14,8 @@ py="$out/python/bin/python3"
 echo "→ locked dependencies (uv.lock, extra: ocr)"
 req="$(mktemp)"
 (cd "$here" && uv export --frozen --no-dev --extra ocr --no-hashes --no-emit-project --format requirements-txt) > "$req"
-# On Linux the lock pins torch/torchvision to the CPU-only builds (`+cpu`), which live only on the
-# PyTorch index pyproject.toml routes them to — an exported requirements file does not carry it.
 extra=()
 if [ "$(uname -s)" = "Linux" ]; then
-  # every version is pinned by the lock, so taking each from whichever index has it is safe — and
-  # needed: under uv's default (first index wins) the PyTorch index also "owns" certifi, numpy, …
-  # at versions it does not carry
   extra=(--extra-index-url "$(sed -n '/name = "pytorch-cpu"/{n;s/^url = "\(.*\)"/\1/p;}' "$here/pyproject.toml")"
          --index-strategy unsafe-best-match)
 fi
@@ -39,11 +25,7 @@ cp "$here/app.py" "$out/"
 
 "$py" "$(dirname "$0")/relocate_scripts.py" "$out/python/bin"
 
-# only what the pipeline in app.py loads: layout (heron), the table model, RapidOCR (~570 MB);
-# the default set adds CodeFormula (610 MB), an ONNX layout copy and the figure classifier (unused)
 echo "→ docling models (layout, tableformer, rapidocr)"
-# a model host that fails can answer 200 with a JSON error, which the download stores as the model
-# (ModelScope did, 2026-11-02): every file is checked, and a bundle is never built from broken ones
 models_ok() {
   "$py" - "$1" <<'PY'
 import os, sys
@@ -65,8 +47,6 @@ for b in bad:
 sys.exit(1 if bad else 0)
 PY
 }
-# the models are cached per docling version (HISTMERSION_MODELS_CACHE overrides the place), so a
-# bundle downloads them only when docling changes, and an outage of the host does not stop a build
 docling_version="$("$py" -c 'import importlib.metadata as m; print(m.version("docling"))')"
 cache="${HISTMERSION_MODELS_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/histmersion/docling-models}/$docling_version"
 if [ -d "$cache" ] && models_ok "$cache" 2>/dev/null; then

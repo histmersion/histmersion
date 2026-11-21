@@ -1,18 +1,4 @@
 #!/usr/bin/env bash
-# bin/histmersion-server-jvm — the server in JVM mode (docs/research-plugins.md §8.5): the same kit the
-# native binary is linked from, plus the plugins directory's jars and their dependencies (plugins/lib/),
-# on a JDK. Plugins are found at each start, so adding one needs a restart, not a relink. The cost is the
-# JVM's start-up and heap. When the plugin jars or their POMs changed since lib/ was resolved (a jar
-# dropped in by hand), the dependencies are resolved again first.
-#
-#   histmersion-server-jvm [--self-check | --help]       the server's own arguments, passed through
-#
-# The fallback when no native relink is possible (no GraalVM/C toolchain, too little memory, a plugin
-# that will not link): `histmersion-relink --jvm` makes it bin/histmersion-server, so the LaunchAgent /
-# systemd unit runs it unchanged. The JDK: HISTMERSION_JAVA_HOME, else the GraalVM `histmersion-toolchain
-# install` provisioned (a full JDK), else GRAALVM_HOME / JAVA_HOME of the pinned major version.
-# HISTMERSION_JVM_OPTS adds JVM options (e.g. -Xmx4g). With GPG provenance set up, the plugins
-# directory must match its signed manifest, or the server does not start.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 common="$here/../libexec/kit-common.sh"; [ -f "$common" ] || common="$here/kit-common.sh"
@@ -42,7 +28,6 @@ if [ "${#jars[@]}" -gt 0 ]; then
     hk_resolve "$jh" "$install" "$plugins/lib" "${jars[@]}" >&2 \
       || hk_die 3 "the plugins' dependencies could not be resolved (above) — histmersion plugin rebuild --jvm says why"
   fi
-  # the plugin set this start runs with, reported by /api/about and --self-check as a relinked binary's is
   mkdir -p "$plugins/.jvm"
   "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.pluginTool plugin-set --lib "$plugins/lib" \
     "$plugins/.jvm/plugin-set.jar" "$plugins/.jvm/plugin-set.json" jvm "$kit" "${jars[@]}" >/dev/null \
@@ -52,10 +37,7 @@ if [ "${#jars[@]}" -gt 0 ]; then
   while IFS= read -r d; do cp="$cp:$d"; done < <(hk_plugin_deps "$plugins")
 fi
 
-# the bundle's runtime (Postgres, converter) is found from HISTMERSION_HOME: the process is `java`, not
-# a binary in <install>/bin, so it cannot be found from the executable's location as natively
 export HISTMERSION_HOME="$install"
 export HISTMERSION_RUNTIME="${HISTMERSION_RUNTIME:-true}"
-# argv[0] = this launcher's path, so `pgrep -f <install>/bin/histmersion-server` finds the process
 # shellcheck disable=SC2086
 exec -a "$0" "$jh/bin/java" ${HISTMERSION_JVM_OPTS:-} -cp "$cp" "$(cat "$kit/main-class")" "$@"

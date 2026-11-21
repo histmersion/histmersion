@@ -1,0 +1,100 @@
+path	lines	language	category	reason
+scripts/bundle/SlothVerify.java	8-19	java	decision	why Sloth's output is verified and broken classes restored: ADR-0004
+scripts/bundle/SlothVerify.java	61-62	java	decision	an unloadable class is not Sloth's doing and is kept: ADR-0004
+scripts/bundle/SlothVerify.java	74	java	decision	missing optional dependency judged in its own jar's pass: ADR-0004
+scripts/bundle/codesign-identity-macos.sh	2-22	shell	decision	stable local signing identity, untrusted by default, why TCC grants survive: ADR-0002
+scripts/bundle/codesign-identity-macos.sh	28	shell	decision	external quirk: the system LibreSSL's PKCS#12 is what `security import` reads: ADR-0002
+scripts/bundle/converter.sh	2-9	shell	decision	self-contained converter: python-build-standalone, locked deps, no venv, offline models: ADR-0005
+scripts/bundle/converter.sh	18	shell	decision	external quirk: uv leaves a minor-version symlink beside the versioned directory: ADR-0005
+scripts/bundle/converter.sh	26-27	shell	decision	external quirk: torch CPU builds live only on the PyTorch index the lock routes them to: ADR-0005
+scripts/bundle/converter.sh	30-32	shell	decision	why every index may serve a pinned version (uv's first-index rule): ADR-0005
+scripts/bundle/converter.sh	42-43	shell	decision	only the models the pipeline loads are bundled: ADR-0005
+scripts/bundle/converter.sh	45-46	shell	decision	external quirk: a model host answered 200 with a JSON error; every file is checked: ADR-0005
+scripts/bundle/converter.sh	68-69	shell	decision	models cached per docling version so an outage does not stop a build: ADR-0005
+scripts/bundle/install-build.sh	1-21	shell	decision	install links the server locally by default and falls back to the prebuilt binary: ADR-0001
+scripts/bundle/install-build.sh	61-62	shell	decision	the bundle's binary becomes .prev so rollback can still reach it: ADR-0001
+scripts/bundle/install-build.sh	73-75	shell	decision	an install never ends without a server binary: ADR-0001
+scripts/bundle/install-build.sh	129-136	shell	decision	what the service starts with GPG provenance on or off; signing failure never blocks start: ADR-0003
+scripts/bundle/install-linux.sh	39	shell	excuse	`--local-build` kept so older command lines still work (compatibility flag): issue "Legacy installer flags"
+scripts/bundle/install-linux.sh	58	shell	decision	a running instance holds the database cluster open, so it is stopped first: ADR-0001
+scripts/bundle/install-linux.sh	70	shell	decision	the previous install stays aside so its binary can be kept: ADR-0001
+scripts/bundle/install-linux.sh	85-86	shell	decision	plugin API, platform and testkit go to ~/.m2 so plugin builds find them as m2Local: ADR-0008
+scripts/bundle/install-linux.sh	119	shell	decision	the user config file gets a template only when none exists: ADR-0006
+scripts/bundle/install-macos.sh	50	shell	excuse	`--local-build` kept so older command lines still work (compatibility flag): issue "Legacy installer flags"
+scripts/bundle/install-macos.sh	66	shell	decision	a running instance holds the database cluster open, so it is stopped first: ADR-0001
+scripts/bundle/install-macos.sh	79	shell	decision	the previous install stays aside so its binary can be kept: ADR-0001
+scripts/bundle/install-macos.sh	81	shell	decision	external quirk: browser downloads are quarantined and Gatekeeper blocks every binary: ADR-0002
+scripts/bundle/install-macos.sh	90-91	shell	decision	signing with the local identity keeps macOS permissions across updates: ADR-0002
+scripts/bundle/install-macos.sh	103-104	shell	decision	plugin API, platform and testkit go to ~/.m2 so plugin builds find them as m2Local: ADR-0008
+scripts/bundle/install-macos.sh	111-112	shell	decision	the installed plist's settings are read before the plist is rewritten: ADR-0006
+scripts/bundle/install-macos.sh	132-134	shell	decision	a LaunchAgent has no XDG_CONFIG_HOME; the config template is never an overwrite: ADR-0006
+scripts/bundle/kit-common.sh	1-12	shell	decision	Bash 3.2 and every location movable by the environment so tests never touch the user's install: ADR-0007
+scripts/bundle/kit-common.sh	38-39	shell	decision	a plugin's dependencies come from the POM beside its jar: ADR-0001
+scripts/bundle/kit-common.sh	70-72	shell	decision	what the server ships is not installed again; a newer version of it is refused: ADR-0001
+scripts/bundle/kit-common.sh	76-77	shell	decision	external quirk: coursier's pre-3.8 lazy vals need --sun-misc-unsafe-memory-access=allow: ADR-0004
+scripts/bundle/kit-common.sh	99-100	shell	decision	the pinned GraalVM is the first version in graalvm-pins.txt, copied into the kit at build time: ADR-0001
+scripts/bundle/kit-common.sh	105-107	shell	decision	GraalVM homes tried best first; sdkman names a build by release, not tag: ADR-0001
+scripts/bundle/kit-common.sh	141-142	shell	decision	external quirk: macOS has no trustworthy available-memory figure, so total is used: ADR-0001
+scripts/bundle/kit-common.sh	159-160	shell	decision	one relink at a time through an atomic lock directory; a dead owner's lock is taken over: ADR-0001
+scripts/bundle/kit-common.sh	209-218	shell	decision	the build record lets an install skip linking the same binary again; it holds nothing personal: ADR-0001
+scripts/bundle/kit-common.sh	230-233	shell	decision	the plugin fingerprint covers jars, POMs and resolved dependencies: ADR-0001
+scripts/bundle/kit-common.sh	242-243	shell	decision	the machine is identified by a hash; a record without one never matches: ADR-0001
+scripts/bundle/kit-common.sh	283-284	shell	decision	GPG provenance is off unless the user set up a key: ADR-0003
+scripts/bundle/kit-common.sh	291-295	shell	decision	with provenance on, the service starts the verifying launcher: ADR-0003
+scripts/bundle/kit-common.sh	297-299	shell	decision	external quirk: a LaunchAgent's PATH has no Homebrew or MacGPG2, so the gpg program is recorded: ADR-0003
+scripts/bundle/kit-common.sh	313-314	shell	decision	the GnuPG home is recorded only when it is not the default: ADR-0003
+scripts/bundle/kit-common.sh	322-325	shell	decision	signing key vs primary key fingerprints, and which one each check pins: ADR-0003
+scripts/bundle/kit-common.sh	357-358	shell	decision	the service starts the verifying launcher only with provenance on: ADR-0003
+scripts/bundle/kit-common.sh	386-388	shell	decision	a service definition that starts another install's server is left alone: ADR-0003
+scripts/bundle/launchagent-env.sh	1-16	shell	decision	the LaunchAgent's settings are carried across installs; what is carried, overridden and dropped: ADR-0006
+scripts/bundle/launchagent-env.sh	44	shell	decision	invariant: variable names hold no dot, so a plutil key path is safe: ADR-0006
+scripts/bundle/launchagent-env.sh	55-56	shell	decision	a boolean or a number is never masked as a secret: ADR-0006
+scripts/bundle/launchagent-env.sh	110-111	shell	decision	plutil does the escaping, so values survive exactly: ADR-0006
+scripts/bundle/plugin-template-check.sh	2-17	shell	decision	every plugin template is built as an author would, against the bundle, with a temporary HOME: ADR-0008
+scripts/bundle/plugin-template-check.sh	39	shell	decision	the check runs the CLI and scala-cli under a temporary HOME, never the caller's: ADR-0008
+scripts/bundle/plugin-template-check.sh	42	shell	decision	external quirk: scala-cli's --power must precede -D: ADR-0008
+scripts/bundle/plugin-template-check.sh	44	shell	decision	a compiler warning fails the check, the JVM's own WARNING lines do not: ADR-0008
+scripts/bundle/plugin-template-check.sh	57	shell	decision	run from another directory so recordings are found by the project's path: ADR-0008
+scripts/bundle/postgres.sh	2-6	shell	decision	portable PostgreSQL + PostGIS from conda-forge, relocated by the server on first start: ADR-0005
+scripts/bundle/postgres.sh	13-15	shell	decision	external quirk: conda-forge PostgreSQL finds lib/share only at its baked prefix, recorded as spelled: ADR-0005
+scripts/bundle/relink.sh	170-171	shell	decision	the relinked binary's checksum is signed when provenance is on: ADR-0003
+scripts/bundle/relink.sh	184-185	shell	decision	with provenance on, an unsigned previous binary is reported before anything moves: ADR-0003
+scripts/bundle/relink.sh	196-197	shell	decision	a binary's records travel with it to .prev, never left beside another binary: ADR-0001
+scripts/bundle/relink.sh	264	shell	decision	config decode errors stop the relink before the build: ADR-0001
+scripts/bundle/relink.sh	321	shell	decision	external quirk: native-image leaves reports in its working directory: ADR-0001
+scripts/bundle/relocate_scripts.py	1-9	python	decision	console-script shebangs rewritten into the sh/python polyglot so the bundle can move: ADR-0005
+scripts/bundle/server-jvm.sh	2-15	shell	decision	JVM mode: the kit on a JDK as the fallback when no native relink is possible: ADR-0001
+scripts/bundle/server-jvm.sh	55-56	shell	decision	the process is java, so the bundle's runtime is found from HISTMERSION_HOME: ADR-0005
+scripts/bundle/server-jvm.sh	59	shell	decision	argv[0] is the launcher's path so pgrep finds the server: ADR-0001
+scripts/bundle/server-verified.sh	2-19	shell	decision	the verifying launcher: checks the signed SHA-256, exits 78 so the service manager retries, off means off: ADR-0003
+scripts/bundle/server.sh	2-8	shell	decision	the bundle is built by the exact pinned GraalVM; the kit records it: ADR-0001
+scripts/bundle/server.sh	43-45	shell	decision	the bundle's own binary carries a build record so a same-machine install keeps it: ADR-0001
+scripts/bundle/server.sh	47-50	shell	decision	the bundle ships the Maven repository plugin authors compile against: ADR-0008
+scripts/bundle/server.sh	73	shell	decision	the bundle carries the licence and third-party notices: ADR-0001
+scripts/bundle/server.sh	78-80	shell	decision	first-run seed data ships as data, never the external extracts: ADR-0001
+scripts/bundle/signing.sh	2-36	shell	decision	signing is optional; what each subcommand does; gpg program and GNUPGHOME recorded: ADR-0003
+scripts/bundle/signing.sh	53-55	shell	decision	external quirk: codesign by name only finds trusted identities, so it is given the hash: ADR-0002
+scripts/bundle/signing.sh	151	shell	decision	the launcher needs the same gpg and keyring outside this shell: ADR-0003
+scripts/bundle/signing.sh	229	shell	decision	a plugin's pinned signer is the signing key's fingerprint: ADR-0003
+scripts/bundle/signing.sh	253	shell	decision	the configured key is the primary's, so a subkey signature matches too: ADR-0003
+scripts/bundle/smoke.sh	2-14	shell	decision	the smoke test proves a bundle end to end in isolation, on offset ports: ADR-0007
+scripts/bundle/smoke.sh	22-23	shell	decision	the pixi environment is hidden so the bundle must work on its own: ADR-0005
+scripts/bundle/smoke.sh	114-115	shell	excuse	the former oa-index switch still turns its successors off with a deprecation warning: issue "Legacy oa-index plugin mapping"
+scripts/bundle/smoke.sh	159	shell	decision	the smoke test never touches the user's keyring, data, config or service: ADR-0007
+scripts/bundle/smoke.sh	194	shell	decision	plugin new gets a HOME of its own so the caller's ~/.m2 is untouched: ADR-0007
+scripts/bundle/smoke.sh	236-237	shell	decision	the relink test acts on a temporary install and never signs with a keychain identity: ADR-0007
+scripts/bundle/tcc-check.sh	81	shell	decision	the temporary keychain is in the search list only while signing: ADR-0002
+scripts/bundle/tests/kit-scripts-test.sh	2-20	shell	decision	what the kit tests cover, and that the login keychain is never read or changed: ADR-0007
+scripts/bundle/tests/kit-scripts-test.sh	31	shell	decision	external quirk: the keychain search list is found from HOME: ADR-0007
+scripts/bundle/tests/kit-scripts-test.sh	124	shell	decision	external quirk: sdkman names a GraalVM build by release, the pins' URLs by tag: ADR-0001
+scripts/bundle/tests/launchagent-env-test.sh	23-25	shell	decision	external quirk: some macOS versions print plutil's "could not extract" on stdout: ADR-0006
+scripts/bundle/tests/provenance-test.sh	78	shell	decision	a LaunchAgent gives its program no GNUPGHOME and a PATH without Homebrew: ADR-0003
+scripts/bundle/tests/provenance-test.sh	149-150	shell	decision	keys that sign with a subkey: both checks must accept them: ADR-0003
+scripts/bundle/tests/relink-test.sh	112	shell	decision	tests must never call `security`, which reads the keychain: ADR-0007
+scripts/bundle/toolchain.sh	2-17	shell	decision	GraalVM CE provisioned at its pinned checksum into the data directory, curl so no quarantine: ADR-0001
+scripts/bundle/toolchain.sh	48	shell	decision	preflight checks everything but GraalVM before a 340 MB download: ADR-0001
+scripts/bundle/uninstall-linux.sh	2-3	shell	decision	uninstall keeps the data unless --purge: ADR-0001
+scripts/bundle/uninstall-macos.sh	2-3	shell	decision	uninstall keeps the data unless --purge: ADR-0001
+scripts/bundle/user-config.sh	1-5	shell	decision	the user config file's precedence, and the installer writes a template once: ADR-0006
+scripts/bundle/user-config.sh	7-10	shell	decision	HISTMERSION_CONFIG wins; the data directory never moves the config: ADR-0006
+scripts/bundle/user-config.sh	29	shell	decision	noclobber guards the race between the test and the write: ADR-0006

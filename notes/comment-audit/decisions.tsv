@@ -1,0 +1,506 @@
+path	lines	language	category	reason
+modules/chimney-iron-tests/src/test/scala/com/histmersion/chimneyiron/client.scala	7	scala	decision	a client layer's copies judge nothing; the server checks: ADR-0009
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	51	scala	decision	external behaviour: Iron's apply emits no check for an argument already refined: ADR-0009
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	66	scala	tautology	restates what the names, types and code beside it already say
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	72	scala	tautology	restates what the names, types and code beside it already say
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	76-78	scala	tautology	restates what the names, types and code beside it already say
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypeToNewtypeExtension.scala	12	scala	decision	Scala 3 only, where Hearth's Type and Expr are scala.quoted's: ADR-0009
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	100	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	41-43	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	46	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	49	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	52-54	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	57	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	60	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	64	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	67	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	70	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	73	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	78-79	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	8-38	scala	decision	what every newtype companion provides and why names are derived, never spelled: ADR-0009
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	83-85	scala	decision	external quirk: a companion beside a top-level alias is named through File$package: ADR-0009
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	89	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	93	scala	tautology	restates what the names, types and code beside it already say
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	96	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty-derivation/src/main/scala/com/histmersion/util/nonempty/derivation/NonEmptyVectorProvider.scala	12-16	scala	decision	the provider makes NonEmptyVector a list that refuses empty input, at compile time only: ADR-0009
+modules/nonempty-derivation/src/main/scala/com/histmersion/util/nonempty/derivation/NonEmptyVectorProvider.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty-derivation/src/test/scala/com/histmersion/util/nonempty/derivation/DerivedCodecsSuite.scala	11	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty-derivation/src/test/scala/com/histmersion/util/nonempty/derivation/DerivedCodecsSuite.scala	39-40	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty/src/main/scala/com/histmersion/util/nonempty/NonEmptyVector.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty/src/main/scala/com/histmersion/util/nonempty/NonEmptyVector.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty/src/main/scala/com/histmersion/util/nonempty/NonEmptyVector.scala	19	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty/src/main/scala/com/histmersion/util/nonempty/NonEmptyVector.scala	27	scala	tautology	restates what the names, types and code beside it already say
+modules/nonempty/src/main/scala/com/histmersion/util/nonempty/NonEmptyVector.scala	6-8	scala	decision	invariant: at run time it is the Vector itself, so an element type must never be a vector: ADR-0009
+modules/plugin-fixtures/hello-ai/src/main/scala/com/histmersion/fixtures/helloai/HelloAiConfig.scala	10-12	scala	tautology	restates what the names, types and code beside it already say
+modules/plugin-fixtures/hello-ai/src/main/scala/com/histmersion/fixtures/helloai/Reply.scala	10-17	scala	decision	the AI test fixture is scripted, calls no model and opens no socket: ADR-0011
+modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsConfig.scala	10-13	scala	decision	registering proves the dependency was installed and linked: ADR-0011
+modules/plugin-fixtures/hello-lib/src/main/scala/com/histmersion/fixtures/hellolib/Shout.scala	7-9	scala	decision	a library no module depends on, so a plugin using it needs it installed: ADR-0011
+modules/plugin-fixtures/hello/src/main/scala/com/histmersion/fixtures/hello/ForeignSpiPlugin.scala	8-10	scala	decision	built for a foreign SPI generation and absent from the services file on purpose: ADR-0011
+modules/plugin-fixtures/hello/src/main/scala/com/histmersion/fixtures/hello/HelloConfig.scala	10-17	scala	decision	the greeter is chosen by name so only the jar's own reachability metadata makes it work: ADR-0011
+modules/plugin-fixtures/hello/src/main/scala/com/histmersion/fixtures/hello/HelloPlugin.scala	8-10	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/ByteCount.scala	11	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/ByteCount.scala	5	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/ByteOffset.scala	5	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/LatLon.scala	4	scala	decision	coordinates are WGS84 as PostGIS geometry(Point, 4326): ADR-0010
+modules/values/src/main/scala/com/histmersion/Latitude.scala	5	scala	decision	latitude sign convention: ADR-0010
+modules/values/src/main/scala/com/histmersion/Longitude.scala	5	scala	decision	longitude sign convention: ADR-0010
+modules/values/src/main/scala/com/histmersion/Offset.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/PageSize.scala	5	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/Sha256.scala	5	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/UserId.scala	5-7	scala	decision	the server runs for one person: everything belongs to the one local user: ADR-0010
+modules/values/src/main/scala/com/histmersion/Year.scala	5-7	scala	decision	years are signed and counted astronomically, so every integer is a year: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/AuthorName.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	105-107	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	112-114	scala	decision	allowlists name families; unreadable and all-rights-reserved are never stored: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	128	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	131	scala	decision	public-domain pictures still show a credit line, as a courtesy and a source: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	134	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	139	scala	stale	misplaced: describes the family list but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	21	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	25-27	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	38	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	43-45	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	72-76	scala	decision	a licence URL that is not Creative Commons is never guessed: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	8-10	scala	decision	one shared licence classification for every domain: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	85	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	90-92	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	95-97	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/Title.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/AgentRole.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/AgentRole.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	102-105	scala	decision	who decided is read from the note's and result's marks: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	114	scala	stale	misplaced: describes AutopilotNote but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	122	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	127-129	scala	decision	invariant: the SQL that filters by decider must say the same as this function: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	18	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	21	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	26	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	29-33	scala	decision	which approvals block their run and which are applied by the decision: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	40	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	43-44	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	47-49	scala	decision	a model-proposed action is applied only when a person approves it: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	52	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	55	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	58	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	74-76	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	87-89	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala	11	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala	17	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala	22	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala	34	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala	43	scala	stale	misplaced: describes queries but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/ItemStatus.scala	14	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Manager.scala	24-26	scala	decision	paused starts nothing new, stopped cancels in-flight work: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Manager.scala	8-11	scala	decision	the scope of each manager kind: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Pipeline.scala	113-115	scala	excuse	runless items counted under the review pipeline "as the managers have always counted them": issue "Fallback pipeline for runless manager items"
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	11	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	14	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	17-19	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	22	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	26	scala	stale	misplaced: describes the host providers but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	32	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Run.scala	10	scala	decision	a run is a background job, so its id is the job's: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Run.scala	15-18	scala	decision	what paused, waiting-approval and the terminal states mean: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Run.scala	36	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/automation/Step.scala	8	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Event.scala	10	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Event.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Event.scala	20	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Event.scala	56	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	103	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	11	scala	decision	a place id is the gazetteer, an underscore and the gazetteer's id: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	19-23	scala	decision	the five place kinds, and why a people is a point: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	35-37	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	57-68	scala	decision	Pleiades atlas-grid centres are approximate points, told from the coordinates: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	80	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	91-93	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	99	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala	21	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala	9	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/ArchiveId.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/ArxivId.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Citekey.scala	18	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Citekey.scala	26	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Citekey.scala	7-11	scala	decision	why the citekey rule is bounded and bans `..`: a file name and a URL segment: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/library/Confidence.scala	9	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala	12-14	scala	decision	DOIs are case-insensitive, so they are kept lower-case: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Edge.scala	22-24	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Edge.scala	41	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Edge.scala	9-11	scala	stale	history:the string constants it replaced are gone
+modules/values/src/main/scala/com/histmersion/domain/library/EditionsPolicy.scala	10	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/EditionsPolicy.scala	7	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Isbn.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchMethod.scala	10	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchMethod.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchMethod.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchMethod.scala	19	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchMethod.scala	7	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchOutcome.scala	10	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchOutcome.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchOutcome.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchOutcome.scala	19	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/MatchOutcome.scala	7	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Pmcid.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Pmid.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Source.scala	17	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/library/Source.scala	33	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/Asset.scala	14	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/Asset.scala	9	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	18	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	21	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	24	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	27	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	30	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	33-35	scala	decision	the order of picture roles on a card: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	38	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/research/Article.scala	23	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/research/Slug.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/domain/research/Slug.scala	7-8	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Bundle.scala	15-17	scala	decision	invariant: kind names are kebab-case as the database trigger writes them: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Bundle.scala	21-23	scala	decision	a bundle carries only places and periods added locally: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Bundle.scala	28	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Bundle.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	10	scala	decision	convention: Right is the bundle: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	19	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	22	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	25	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	28	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	34	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	40	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	43	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	7	scala	decision	convention: Left is this collection: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	10	scala	decision	invariant: an issue kind's wire name is part of the issue id and never changes: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	110	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	112	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	115	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	118	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	12-14	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	121-123	scala	decision	a decision is remembered per issue, as git's rerere does: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	17	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	20	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	24	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	27	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	30	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	33	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	36-37	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	40	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	43	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	46	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	49	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	52	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	55	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	90	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	92	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	95	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	98	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/jobs/Job.scala	14-16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/jobs/Job.scala	9	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/main/scala/com/histmersion/util/plugins/Plugin.scala	9	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/test/scala/com/histmersion/values/CitekeySuite.scala	8-10	scala	decision	why citekeys are validated: an unvalidated one became a directory: ADR-0010
+modules/values/src/test/scala/com/histmersion/values/DoiSuite.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/test/scala/com/histmersion/values/SlugSuite.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	42-43	scala	decision	external quirk: a list mixing Some and None infers the union of the alternatives: ADR-0009
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	54	scala	tautology	restates what the names, types and code beside it already say
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	7-12	scala	decision	which types tests may compare by value: ADR-0009
+scripts/bundle/SlothVerify.java	44	java	tautology	restates what the names, types and code beside it already say
+scripts/bundle/SlothVerify.java	61-62	java	decision	an unloadable class is not Sloth's doing and is kept: ADR-0004
+scripts/bundle/SlothVerify.java	74	java	decision	missing optional dependency judged in its own jar's pass: ADR-0004
+scripts/bundle/SlothVerify.java	8-19	java	decision	why Sloth's output is verified and broken classes restored: ADR-0004
+scripts/bundle/SlothVerify.java	81	java	tautology	restates what the names, types and code beside it already say
+scripts/bundle/codesign-identity-macos.sh	2-22	shell	decision	stable local signing identity, untrusted by default, why TCC grants survive: ADR-0002
+scripts/bundle/codesign-identity-macos.sh	28	shell	decision	external quirk: the system LibreSSL's PKCS#12 is what `security import` reads: ADR-0002
+scripts/bundle/codesign-identity-macos.sh	30	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/converter.sh	18	shell	decision	external quirk: uv leaves a minor-version symlink beside the versioned directory: ADR-0005
+scripts/bundle/converter.sh	2-9	shell	decision	self-contained converter: python-build-standalone, locked deps, no venv, offline models: ADR-0005
+scripts/bundle/converter.sh	26-27	shell	decision	external quirk: torch CPU builds live only on the PyTorch index the lock routes them to: ADR-0005
+scripts/bundle/converter.sh	30-32	shell	decision	why every index may serve a pinned version (uv's first-index rule): ADR-0005
+scripts/bundle/converter.sh	42-43	shell	decision	only the models the pipeline loads are bundled: ADR-0005
+scripts/bundle/converter.sh	45-46	shell	decision	external quirk: a model host answered 200 with a JSON error; every file is checked: ADR-0005
+scripts/bundle/converter.sh	68-69	shell	decision	models cached per docling version so an outage does not stop a build: ADR-0005
+scripts/bundle/install-build.sh	1-21	shell	decision	install links the server locally by default and falls back to the prebuilt binary: ADR-0001
+scripts/bundle/install-build.sh	129-136	shell	decision	what the service starts with GPG provenance on or off; signing failure never blocks start: ADR-0003
+scripts/bundle/install-build.sh	137	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	27	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	28	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	36-37	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	40	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	43	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	44	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	61-62	shell	decision	the bundle's binary becomes .prev so rollback can still reach it: ADR-0001
+scripts/bundle/install-build.sh	63	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-build.sh	73-75	shell	decision	an install never ends without a server binary: ADR-0001
+scripts/bundle/install-build.sh	76	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-linux.sh	119	shell	decision	the user config file gets a template only when none exists: ADR-0006
+scripts/bundle/install-linux.sh	39	shell	excuse	`--local-build` kept so older command lines still work (compatibility flag): issue "Legacy installer flags"
+scripts/bundle/install-linux.sh	58	shell	decision	a running instance holds the database cluster open, so it is stopped first: ADR-0001
+scripts/bundle/install-linux.sh	70	shell	decision	the previous install stays aside so its binary can be kept: ADR-0001
+scripts/bundle/install-linux.sh	73-74	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-linux.sh	79	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-linux.sh	85-86	shell	decision	plugin API, platform and testkit go to ~/.m2 so plugin builds find them as m2Local: ADR-0008
+scripts/bundle/install-linux.sh	93	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-macos.sh	103-104	shell	decision	plugin API, platform and testkit go to ~/.m2 so plugin builds find them as m2Local: ADR-0008
+scripts/bundle/install-macos.sh	111-112	shell	decision	the installed plist's settings are read before the plist is rewritten: ADR-0006
+scripts/bundle/install-macos.sh	132-134	shell	decision	a LaunchAgent has no XDG_CONFIG_HOME; the config template is never an overwrite: ADR-0006
+scripts/bundle/install-macos.sh	50	shell	excuse	`--local-build` kept so older command lines still work (compatibility flag): issue "Legacy installer flags"
+scripts/bundle/install-macos.sh	66	shell	decision	a running instance holds the database cluster open, so it is stopped first: ADR-0001
+scripts/bundle/install-macos.sh	79	shell	decision	the previous install stays aside so its binary can be kept: ADR-0001
+scripts/bundle/install-macos.sh	81	shell	decision	external quirk: browser downloads are quarantined and Gatekeeper blocks every binary: ADR-0002
+scripts/bundle/install-macos.sh	84-85	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/install-macos.sh	90-91	shell	decision	signing with the local identity keeps macOS permissions across updates: ADR-0002
+scripts/bundle/install-macos.sh	97	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	1-12	shell	decision	Bash 3.2 and every location movable by the environment so tests never touch the user's install: ADR-0007
+scripts/bundle/kit-common.sh	101	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	105-107	shell	decision	GraalVM homes tried best first; sdkman names a build by release, not tag: ADR-0001
+scripts/bundle/kit-common.sh	108	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	118	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	119	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	129-130	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	131	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	141-142	shell	decision	external quirk: macOS has no trustworthy available-memory figure, so total is used: ADR-0001
+scripts/bundle/kit-common.sh	149	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	153	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	159-160	shell	decision	one relink at a time through an atomic lock directory; a dead owner's lock is taken over: ADR-0001
+scripts/bundle/kit-common.sh	16	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	161	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	177	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	189	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	190	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	201	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	209-218	shell	decision	the build record lets an install skip linking the same binary again; it holds nothing personal: ADR-0001
+scripts/bundle/kit-common.sh	220	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	225	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	230-233	shell	decision	the plugin fingerprint covers jars, POMs and resolved dependencies: ADR-0001
+scripts/bundle/kit-common.sh	234	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	242-243	shell	decision	the machine is identified by a hash; a record without one never matches: ADR-0001
+scripts/bundle/kit-common.sh	268-269	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	270	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	283-284	shell	decision	GPG provenance is off unless the user set up a key: ADR-0003
+scripts/bundle/kit-common.sh	291-295	shell	decision	with provenance on, the service starts the verifying launcher: ADR-0003
+scripts/bundle/kit-common.sh	297-299	shell	decision	external quirk: a LaunchAgent's PATH has no Homebrew or MacGPG2, so the gpg program is recorded: ADR-0003
+scripts/bundle/kit-common.sh	30	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	31	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	313-314	shell	decision	the GnuPG home is recorded only when it is not the default: ADR-0003
+scripts/bundle/kit-common.sh	322-325	shell	decision	signing key vs primary key fingerprints, and which one each check pins: ADR-0003
+scripts/bundle/kit-common.sh	326	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	340-341	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	342	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	357-358	shell	decision	the service starts the verifying launcher only with provenance on: ADR-0003
+scripts/bundle/kit-common.sh	359	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	365	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	375	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	38-39	shell	decision	a plugin's dependencies come from the POM beside its jar: ADR-0001
+scripts/bundle/kit-common.sh	386-388	shell	decision	a service definition that starts another install's server is left alone: ADR-0003
+scripts/bundle/kit-common.sh	389	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	40	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	48	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	49	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	56-57	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	58	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	65	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	66	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	70-72	shell	decision	what the server ships is not installed again; a newer version of it is refused: ADR-0001
+scripts/bundle/kit-common.sh	73	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	76-77	shell	decision	external quirk: coursier's pre-3.8 lazy vals need --sun-misc-unsafe-memory-access=allow: ADR-0004
+scripts/bundle/kit-common.sh	83	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	88	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	89	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	94	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	95	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/kit-common.sh	99-100	shell	decision	the pinned GraalVM is the first version in graalvm-pins.txt, copied into the kit at build time: ADR-0001
+scripts/bundle/launchagent-env.sh	1-16	shell	decision	the LaunchAgent's settings are carried across installs; what is carried, overridden and dropped: ADR-0006
+scripts/bundle/launchagent-env.sh	110-111	shell	decision	plutil does the escaping, so values survive exactly: ADR-0006
+scripts/bundle/launchagent-env.sh	112	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	124-125	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	126	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	18	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	19	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	29	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	30	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	37-38	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	39	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	44	shell	decision	invariant: variable names hold no dot, so a plutil key path is safe: ADR-0006
+scripts/bundle/launchagent-env.sh	55-56	shell	decision	a boolean or a number is never masked as a secret: ADR-0006
+scripts/bundle/launchagent-env.sh	57	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	67	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	68	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	72	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	73	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	85	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/launchagent-env.sh	86	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/plugin-template-check.sh	2-17	shell	decision	every plugin template is built as an author would, against the bundle, with a temporary HOME: ADR-0008
+scripts/bundle/plugin-template-check.sh	39	shell	decision	the check runs the CLI and scala-cli under a temporary HOME, never the caller's: ADR-0008
+scripts/bundle/plugin-template-check.sh	42	shell	decision	external quirk: scala-cli's --power must precede -D: ADR-0008
+scripts/bundle/plugin-template-check.sh	44	shell	decision	a compiler warning fails the check, the JVM's own WARNING lines do not: ADR-0008
+scripts/bundle/plugin-template-check.sh	57	shell	decision	run from another directory so recordings are found by the project's path: ADR-0008
+scripts/bundle/plugin-template-check.sh	74	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/plugin-template-check.sh	84	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/postgres.sh	11	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/postgres.sh	13-15	shell	decision	external quirk: conda-forge PostgreSQL finds lib/share only at its baked prefix, recorded as spelled: ADR-0005
+scripts/bundle/postgres.sh	2-6	shell	decision	portable PostgreSQL + PostGIS from conda-forge, relocated by the server on first start: ADR-0005
+scripts/bundle/relink.sh	104-105	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	133	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	135	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	137	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	144	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	157	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	170-171	shell	decision	the relinked binary's checksum is signed when provenance is on: ADR-0003
+scripts/bundle/relink.sh	172	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	184-185	shell	decision	with provenance on, an unsigned previous binary is reported before anything moves: ADR-0003
+scripts/bundle/relink.sh	196-197	shell	decision	a binary's records travel with it to .prev, never left beside another binary: ADR-0001
+scripts/bundle/relink.sh	211	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	264	shell	decision	config decode errors stop the relink before the build: ADR-0001
+scripts/bundle/relink.sh	265	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	280	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	293	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	315-316	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	321	shell	decision	external quirk: native-image leaves reports in its working directory: ADR-0001
+scripts/bundle/relink.sh	328	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	335	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	339	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	342	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	80	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relink.sh	91	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/relocate_scripts.py	1-9	python	decision	console-script shebangs rewritten into the sh/python polyglot so the bundle can move: ADR-0005
+scripts/bundle/server-jvm.sh	2-15	shell	decision	JVM mode: the kit on a JDK as the fallback when no native relink is possible: ADR-0001
+scripts/bundle/server-jvm.sh	45	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/server-jvm.sh	55-56	shell	decision	the process is java, so the bundle's runtime is found from HISTMERSION_HOME: ADR-0005
+scripts/bundle/server-jvm.sh	59	shell	decision	argv[0] is the launcher's path so pgrep finds the server: ADR-0001
+scripts/bundle/server-verified.sh	2-19	shell	decision	the verifying launcher: checks the signed SHA-256, exits 78 so the service manager retries, off means off: ADR-0003
+scripts/bundle/server.sh	2-8	shell	decision	the bundle is built by the exact pinned GraalVM; the kit records it: ADR-0001
+scripts/bundle/server.sh	20	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/server.sh	29	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/server.sh	43-45	shell	decision	the bundle's own binary carries a build record so a same-machine install keeps it: ADR-0001
+scripts/bundle/server.sh	47-50	shell	decision	the bundle ships the Maven repository plugin authors compile against: ADR-0008
+scripts/bundle/server.sh	63	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/server.sh	73	shell	decision	the bundle carries the licence and third-party notices: ADR-0001
+scripts/bundle/server.sh	78-80	shell	decision	first-run seed data ships as data, never the external extracts: ADR-0001
+scripts/bundle/signing.sh	151	shell	decision	the launcher needs the same gpg and keyring outside this shell: ADR-0003
+scripts/bundle/signing.sh	2-36	shell	decision	signing is optional; what each subcommand does; gpg program and GNUPGHOME recorded: ADR-0003
+scripts/bundle/signing.sh	229	shell	decision	a plugin's pinned signer is the signing key's fingerprint: ADR-0003
+scripts/bundle/signing.sh	253	shell	decision	the configured key is the primary's, so a subkey signature matches too: ADR-0003
+scripts/bundle/signing.sh	51	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/signing.sh	53-55	shell	decision	external quirk: codesign by name only finds trusted identities, so it is given the hash: ADR-0002
+scripts/bundle/signing.sh	76	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/signing.sh	77	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/signing.sh	83-84	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/signing.sh	89-90	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	101	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	105	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	114-115	shell	excuse	the former oa-index switch still turns its successors off with a deprecation warning: issue "Legacy oa-index plugin mapping"
+scripts/bundle/smoke.sh	128-129	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	159	shell	decision	the smoke test never touches the user's keyring, data, config or service: ADR-0007
+scripts/bundle/smoke.sh	194	shell	decision	plugin new gets a HOME of its own so the caller's ~/.m2 is untouched: ADR-0007
+scripts/bundle/smoke.sh	2-14	shell	decision	the smoke test proves a bundle end to end in isolation, on offset ports: ADR-0007
+scripts/bundle/smoke.sh	219	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	22-23	shell	decision	the pixi environment is hidden so the bundle must work on its own: ADR-0005
+scripts/bundle/smoke.sh	236-237	shell	decision	the relink test acts on a temporary install and never signs with a keychain identity: ADR-0007
+scripts/bundle/smoke.sh	244	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	254	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	264	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	266	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	278	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	285	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	313	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	323	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	352-353	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	359	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	366	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	37-38	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	49-50	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	61	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	78-79	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	86	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/smoke.sh	96	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tcc-check.sh	102	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tcc-check.sh	52	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tcc-check.sh	73	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tcc-check.sh	81	shell	decision	the temporary keychain is in the search list only while signing: ADR-0002
+scripts/bundle/tcc-check.sh	94	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	124	shell	decision	external quirk: sdkman names a GraalVM build by release, the pins' URLs by tag: ADR-0001
+scripts/bundle/tests/kit-scripts-test.sh	129	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	135	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	178	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	182	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	2-20	shell	decision	what the kit tests cover, and that the login keychain is never read or changed: ADR-0007
+scripts/bundle/tests/kit-scripts-test.sh	219	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	227-228	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	229	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	243	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	253	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	288	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	306	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	31	shell	decision	external quirk: the keychain search list is found from HOME: ADR-0007
+scripts/bundle/tests/kit-scripts-test.sh	322	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	335	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	349-351	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	376	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	384	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	41	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	412	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	53	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/kit-scripts-test.sh	89	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	102	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	108	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	12	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	18	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	2-5	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	23-25	shell	decision	external quirk: some macOS versions print plutil's "could not extract" on stdout: ADR-0006
+scripts/bundle/tests/launchagent-env-test.sh	28	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	29	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	41	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	42	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	51	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	6	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/launchagent-env-test.sh	61	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	142	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	149-150	shell	decision	keys that sign with a subkey: both checks must accept them: ADR-0003
+scripts/bundle/tests/provenance-test.sh	166	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	181	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	2-14	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	226	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	239	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	244	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	36	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	38	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	57	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	71	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	78	shell	decision	a LaunchAgent gives its program no GNUPGHOME and a PATH without Homebrew: ADR-0003
+scripts/bundle/tests/provenance-test.sh	81	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/provenance-test.sh	92	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	112	shell	decision	tests must never call `security`, which reads the keychain: ADR-0007
+scripts/bundle/tests/relink-test.sh	114	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	130	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	2-8	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	225	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	233	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	24	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	26	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	265	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	272	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	304	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	319	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/relink-test.sh	85	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/user-config-test.sh	19	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/user-config-test.sh	2-4	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/user-config-test.sh	23	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/tests/user-config-test.sh	32	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/toolchain.sh	2-17	shell	decision	GraalVM CE provisioned at its pinned checksum into the data directory, curl so no quarantine: ADR-0001
+scripts/bundle/toolchain.sh	48	shell	decision	preflight checks everything but GraalVM before a 340 MB download: ADR-0001
+scripts/bundle/uninstall-linux.sh	2-3	shell	decision	uninstall keeps the data unless --purge: ADR-0001
+scripts/bundle/uninstall-macos.sh	2-3	shell	decision	uninstall keeps the data unless --purge: ADR-0001
+scripts/bundle/user-config.sh	1-5	shell	decision	the user config file's precedence, and the installer writes a template once: ADR-0006
+scripts/bundle/user-config.sh	11	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/user-config.sh	21	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/user-config.sh	22	shell	tautology	restates what the names, types and code beside it already say
+scripts/bundle/user-config.sh	29	shell	decision	noclobber guards the race between the test and the write: ADR-0006
+scripts/bundle/user-config.sh	7-10	shell	decision	HISTMERSION_CONFIG wins; the data directory never moves the config: ADR-0006

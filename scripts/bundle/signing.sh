@@ -1,39 +1,4 @@
 #!/usr/bin/env bash
-# bin/histmersion-signing — OPTIONAL signing of what a relink builds (docs/research-plugins.md §9; D6).
-# Nothing here is needed: without it binaries are ad-hoc signed and nothing is verified, as before.
-#
-#   histmersion-signing status
-#   histmersion-signing setup-macos [--name N] [--trust]      create a self-signed code-signing identity
-#                                                             in YOUR LOGIN KEYCHAIN (asks first; macOS),
-#                                                             untrusted unless --trust (#3647: privacy
-#                                                             grants survive relinks without trusting it)
-#   histmersion-signing use-gpg <key id> [--no-restart]       sign Histmersion's provenance with an
-#                                                             existing GPG key (its fingerprint is kept);
-#                                                             signs the installed server binary and points
-#                                                             the service at the verifying launcher
-#   histmersion-signing generate-gpg [--name N] [--email E]   make a new GPG key for it (gpg asks for the
-#                                                             passphrase itself; it is never stored)
-#   histmersion-signing off-gpg [--no-restart]                stop signing (the key stays in your keyring);
-#                                                             the service starts the binary directly again
-#   histmersion-signing sign-binary                           sign bin/histmersion-server's SHA-256 (and
-#                                                             .prev's) — after you checked it is yours
-#   histmersion-signing verify-binary                         what the launcher checks at each start
-#
-# Used by histmersion-relink, histmersion-server-jvm and `histmersion plugin …`:
-#
-#   codesign <file> <identifier>      macOS: with the identity if it exists, else ad hoc
-#   sign <file>                       a detached ASCII signature <file>.asc with the GPG key
-#   verify-file <file> <file.asc>     verify a signature; prints the signer's fingerprint
-#   sign-plugins / verify-plugins     <data>/plugins/plugins.manifest (+ .asc): the jars' SHA-256s
-#
-# With GPG provenance on, the service starts libexec/histmersion-server-verified, which refuses a server
-# binary whose SHA-256 is not the signed one (docs/research-plugins.md §21.3). use-gpg records the gpg
-# program and GNUPGHOME it ran with (<data>/signing/gpg-program, gnupg-home), because a LaunchAgent's
-# PATH has neither Homebrew's nor MacGPG2's gpg.
-#
-# The macOS identity: HISTMERSION_CODESIGN_IDENTITY (default "Histmersion Local"; "-" = ad hoc, nothing
-# looked up), HISTMERSION_CODESIGN_KEYCHAIN to sign from a keychain other than the search list's.
-# The GPG key: <data>/signing/gpg-key (a fingerprint, nothing secret). Passphrases stay with gpg-agent.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 common="$here/../libexec/kit-common.sh"; [ -f "$common" ] || common="$here/kit-common.sh"
@@ -48,11 +13,8 @@ server="$install/bin/histmersion-server"
 identity="${HISTMERSION_CODESIGN_IDENTITY:-Histmersion Local}"
 gpg_bin="$(hk_gpg_program || echo gpg)"
 gpg_home="$(hk_gpg_home)"
-[ -z "$gpg_home" ] || export GNUPGHOME="$gpg_home"   # the keyring use-gpg recorded, when not the default
+[ -z "$gpg_home" ] || export GNUPGHOME="$gpg_home"
 
-# The identity's SHA-1 when it is in the keychain search list (or the named keychain), trusted or not.
-# codesign is given the hash, not the name: by name it looks among VALID (trusted) identities only, and
-# an untrusted self-signed one signs just as well (docs/research-plugins.md §9.2).
 identity_hash() {
   [ "$identity" != "-" ] || return 1
   command -v security >/dev/null 2>&1 || return 1
@@ -73,21 +35,16 @@ need_gpg_key() {
   printf '%s\n' "$k"
 }
 
-# A detached ASCII signature of <file> into <out> with the configured key.
-gpg_sign() { # <file> <out>
+gpg_sign() {
   local key; key="$(need_gpg_key)"
   rm -f "$2"
   "$gpg_bin" --batch --yes --armor --local-user "$key" --detach-sign --output "$2" "$1"
 }
 
-# The binary, its checksum record and that record's signature — the installed one, then .prev (the
-# names relink.sh's records rotate to).
 binary_triples() {
   printf '%s\n' "$server|$server.sha256|$server.sha256.asc" "$server.prev|$server.sha256.prev|$server.sha256.asc.prev"
 }
 
-# The manifest of the plugins directory: `<sha256>  <file>` per jar, sorted (SHA256SUMS format); then
-# the POMs beside them and the dependency jars of lib/ (as `lib/<file>`), which are linked with them.
 plugins_manifest() {
   local j
   { hk_plugin_jars "$plugins"; hk_plugin_poms "$plugins"; } | while IFS= read -r j; do
@@ -148,7 +105,6 @@ case "$cmd" in
     [ -n "$fpr" ] || hk_die 2 "gpg has no secret key '$key' (gpg --list-secret-keys)"
     mkdir -p "$sigdir"
     printf '%s\n' "$fpr" > "$sigdir/gpg-key"
-    # what the service's launcher needs to find the same gpg and keyring outside this shell
     gpath="$(command -v "$gpg_bin" 2>/dev/null || true)"
     case "$gpath" in /*) printf '%s\n' "$gpath" > "$sigdir/gpg-program" ;; *) rm -f "$sigdir/gpg-program" ;; esac
     if [ -n "${GNUPGHOME:-}" ]; then printf '%s\n' "$GNUPGHOME" > "$sigdir/gnupg-home"; else rm -f "$sigdir/gnupg-home"; fi
@@ -226,7 +182,6 @@ case "$cmd" in
 
   verify-file)
     file="${1:?usage: verify-file <file> <file.asc>}" asc="${2:?usage: verify-file <file> <file.asc>}"
-    # the SIGNING key's fingerprint, as before (a plugin's pinned signer in index.json is that one)
     if fpr="$(hk_gpg_verify "$file" "$asc" 2>"${TMPDIR:-/tmp}/hm-verify.$$")"; then rm -f "${TMPDIR:-/tmp}/hm-verify.$$"; printf '%s\n' "${fpr%% *}"; exit 0; fi
     why="$(cat "${TMPDIR:-/tmp}/hm-verify.$$")"; rm -f "${TMPDIR:-/tmp}/hm-verify.$$"
     case "$why" in
@@ -250,7 +205,6 @@ case "$cmd" in
     m="$plugins/plugins.manifest"
     [ -f "$m" ] && [ -f "$m.asc" ] || hk_die 2 "no signed manifest in $plugins (histmersion-signing sign-plugins)"
     "$0" verify-file "$m" "$m.asc" >/dev/null || exit 2
-    # the configured key is the primary's fingerprint: a key that signs with a subkey matches too
     signers="$(hk_gpg_verify "$m" "$m.asc" 2>/dev/null)" || exit 2
     case " $signers " in *" $key "*) signer="$key" ;; *) hk_die 2 "plugins.manifest is signed by ${signers##* }, not by the configured key $key" ;; esac
     [ "$(plugins_manifest)" = "$(cat "$m")" ] \

@@ -1,20 +1,4 @@
 #!/usr/bin/env bash
-# bin/histmersion-toolchain — what a LOCAL build or relink needs (docs/research-plugins.md §8).
-#
-#   histmersion-toolchain check      GraalVM, native-image, C toolchain, memory, disk: can this machine
-#                                    relink? (exit 0 yes, 2 no — and what to do)
-#   histmersion-toolchain preflight  the same without GraalVM: could it, once GraalVM is provisioned?
-#                                    (what an install asks before downloading it)
-#   histmersion-toolchain install    download GraalVM CE at the kit's pinned version from its official
-#                                    GitHub release, check its pinned SHA-256, unpack it into
-#                                    <data>/toolchain/graalvm-ce-<version> (~640 MB)
-#   histmersion-toolchain path       the GraalVM home a relink would use
-#   histmersion-toolchain remove     delete the provisioned GraalVM
-#
-# GraalVM CE is GPLv2 with the Classpath Exception (libexec/graalvm-pins.txt has the note); the download
-# is curl (no quarantine attribute), the pin is the release's own checksum. It lives in the data
-# directory, not the install: an install replaces the install directory wholesale.
-# HISTMERSION_GRAALVM_PINS (another pins file) and HISTMERSION_TOOLCHAIN_PLATFORM exist for the tests.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 common="$here/../libexec/kit-common.sh"; [ -f "$common" ] || common="$here/kit-common.sh"
@@ -45,7 +29,6 @@ case "$cmd" in
     ;;
 
   check|preflight)
-    # preflight: everything but GraalVM — what an installer asks BEFORE downloading ~340 MB of it
     ok=1
     if [ "$cmd" = check ]; then
       if gv="$(hk_find_graalvm "$v")"; then echo "- GraalVM CE $v: $gv"

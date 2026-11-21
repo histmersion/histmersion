@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Remove the Histmersion app (bundle, LaunchAgent, CLI link). The DATA — database, backups — in
-# ~/Library/Application Support/Histmersion is kept unless --purge is given.
 set -euo pipefail
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/Applications/Histmersion}"
 label="com.histmersion.server"

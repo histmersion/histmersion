@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# Tests of the installer's user config file step (user-config.sh) in a temp dir — nothing outside it.
-#
-#   scripts/bundle/tests/user-config-test.sh        (also: just test-scripts)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=../user-config.sh
@@ -16,11 +13,10 @@ mkdir -p "$HOME"
 passed=0; failed=0
 ok()   { passed=$((passed + 1)); echo "  ok   $1"; }
 bad()  { failed=$((failed + 1)); echo "  FAIL $1"; }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
+check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
 echo "user-config"
 
-# ── where the server will look ───────────────────────────────────────────────────────────────────
 envd="$tmp/env"; mkdir -p "$envd"
 check "location: the default directory" '[ "$(uc_location "$envd" "$tmp/cfg")" = "$tmp/cfg/histmersion.conf" ]'
 check "location: a missing env dir is none" '[ "$(uc_location "$tmp/none" "$tmp/cfg")" = "$tmp/cfg/histmersion.conf" ]'
@@ -29,7 +25,6 @@ check "location: the data dir never moves it" '[ "$(uc_location "$envd" "$tmp/cf
 printf '%s' "~/my.conf" > "$envd/HISTMERSION_CONFIG"
 check "location: HISTMERSION_CONFIG wins, ~ expanded" '[ "$(uc_location "$envd" "$tmp/cfg")" = "$HOME/my.conf" ]'
 
-# ── the template is written once, never over a file ──────────────────────────────────────────────
 target="$tmp/home/.config/histmersion/histmersion.conf"
 uc_write_template "$template" "$target" > "$tmp/1.log"
 check "first install: the template is written (directory created)" 'cmp -s "$template" "$target"'

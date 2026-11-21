@@ -77,7 +77,7 @@ done
 [ -f "$kit/kit.json" ] && [ -f "$kit/classpath" ] || hk_die 2 "no relink kit at $kit — this bundle predates plugins, or it is not a Histmersion bundle"
 graalvm_version="$(cat "$kit/graalvm-version")"
 main_class="$(cat "$kit/main-class")"
-kit_cp() { # the kit's class path in its order
+kit_cp() {
   local n out=""
   while IFS= read -r n; do [ -n "$n" ] && out="$out${out:+:}$kit/lib/$n"; done < "$kit/classpath"
   printf '%s' "$out"
@@ -88,7 +88,7 @@ need_java() {
   jh="$(hk_find_java "$graalvm_version")" \
     || hk_die 2 "no JDK ${graalvm_version%%.*} found — run histmersion-toolchain install (or set HISTMERSION_JAVA_HOME)"
 }
-tool() { # pluginTool <args…> on the kit's class path
+tool() {
   "$jh/bin/java" -cp "$kit/lib/*" com.histmersion.server.plugins.pluginTool "$@"
 }
 jars=()
@@ -101,8 +101,6 @@ if [ "$mode" = describe ]; then
   exit $?
 fi
 
-# --resolve: into <data>/plugins/lib unless --lib names another directory, for the plugins directory's
-# jars unless jars are named
 if [ "$mode" = resolve ]; then
   need_java
   lib="$plugins/lib" opts=() named=()
@@ -130,18 +128,16 @@ rm -rf "$work" && mkdir -p "$work/plugins"
 log="$data/logs/relink.log"
 step() { echo "→ $*"; echo "$(date '+%F %T') $*" >> "$log"; }
 
-# ── swap and roll back ────────────────────────────────────────────────────────────────────────────
 expected_digest=""
-# the binary and what travels with it: its plugin set, its GPG-signed checksum, its build record
 records="histmersion-server histmersion-server.plugin-set.json histmersion-server.sha256 histmersion-server.sha256.asc histmersion-server.build"
-put_back() { # the .prev binary (and its records) back in place
+put_back() {
   local f
   for f in $records; do
     if [ -e "$bin/$f.prev" ]; then mv -f "$bin/$f.prev" "$bin/$f"
     elif [ "$f" != histmersion-server ]; then rm -f "$bin/$f"; fi
   done
 }
-swap_in() { # <new binary> <its plugin-set record> — the current one becomes .prev
+swap_in() {
   local f
   for f in $records; do
     rm -f "$bin/$f.prev"
@@ -154,7 +150,7 @@ swap_in() { # <new binary> <its plugin-set record> — the current one becomes .
   [ -f "$work/histmersion-server.build" ] && cp "$work/histmersion-server.build" "$bin/"
   return 0
 }
-restart_and_check() { # 0 = healthy with the expected digest
+restart_and_check() {
   [ -n "$restart" ] || { echo "  not restarted (--no-restart): the service runs the old binary until it restarts"; return 0; }
   [ "$(hk_service_kind)" = none ] && { echo "  no service (HISTMERSION_SERVICE=none)"; return 0; }
   step "restart the service and wait for /api/health (up to ${HISTMERSION_RELINK_HEALTH_SECONDS:-120} s)"
@@ -167,9 +163,7 @@ restart_and_check() { # 0 = healthy with the expected digest
   echo "  healthy${expected_digest:+, plugin set ${expected_digest:0:12}…}"
 }
 
-# the binary's SHA-256, signed with the GPG key when provenance is on: the service's launcher
-# (libexec/histmersion-server-verified) starts only a binary whose checksum carries that signature
-sign_checksum() { # <new binary in $work>
+sign_checksum() {
   [ -n "$(hk_gpg_key)" ] || return 0
   (cd "$work" && hk_sha256 "$(basename "$1")" | sed 's/$/  histmersion-server/' > histmersion-server.sha256)
   if "$signing" sign "$work/histmersion-server.sha256"; then echo "  binary checksum signed with GPG key $(hk_gpg_key)"
@@ -181,8 +175,6 @@ sign_checksum() { # <new binary in $work>
 
 if [ "$mode" = rollback ]; then
   [ -e "$server.prev" ] || hk_die 2 "no previous binary ($server.prev) to roll back to"
-  # with provenance on, the service would refuse a previous binary without a good signed checksum:
-  # say so now, before anything moves
   if [ -n "$(hk_gpg_key)" ] && ! why="$(hk_verify_binary "$server.prev" "$bin/histmersion-server.sha256.prev" "$bin/histmersion-server.sha256.asc.prev" "$(hk_gpg_key)")"; then
     hk_die 2 "the previous binary is not verified ($why) — the service would not start it; if you trust it: histmersion-signing sign-binary, then roll back"
   fi
@@ -193,8 +185,6 @@ if [ "$mode" = rollback ]; then
       mv -f "$bin/$f.prev" "$bin/$f"
       [ -e "$work/$f.swap" ] && mv -f "$work/$f.swap" "$bin/$f.prev"
     elif [ -e "$bin/$f" ]; then
-      # a record the previous binary did not have (its checksum, its build record) describes the binary
-      # going to .prev, so it goes with it — never left beside a binary it does not describe
       mv -f "$bin/$f" "$bin/$f.prev"
     fi
   done
@@ -208,7 +198,6 @@ fi
 
 need_java
 
-# ── 2. the kit ────────────────────────────────────────────────────────────────────────────────────
 step "kit: $(sed -n 's/.*"version" *: *"\([^"]*\)".*/\1/p' "$kit/kit.json" | head -1), GraalVM $graalvm_version"
 hk_sha256_check "$kit" SHA256SUMS >/dev/null 2>&1 \
   || hk_die 2 "the kit at $kit does not match its SHA256SUMS (a file changed or is missing) — reinstall the bundle"
@@ -261,8 +250,7 @@ set_mode=native; [ "$mode" = jvm ] && set_mode=jvm
 expected_digest="$(tool plugin-set --lib "$plugins/lib" "$work/plugin-set.jar" "$work/plugin-set.json" "$set_mode" "$kit" ${jars[@]+"${jars[@]}"})"
 cp_plugins="$work/plugin-set.jar"
 for j in ${jars[@]+"${jars[@]}"} ${deps[@]+"${deps[@]}"}; do cp_plugins="$cp_plugins:$j"; done
-# the server itself, on the JVM, with the user's config: decode errors stop here, not after the build
-check_report() { # <report file> <exit code> → 0 when the config loaded and no NEW plugin failed
+check_report() {
   [ "$2" = 3 ] && { echo "  the config does not load (above)" >&2; return 1; }
   local id bad=""
   for id in $new_ids; do
@@ -277,7 +265,6 @@ sed -n '/^- [a-z0-9-]* [^ ]* — /p; /^- plugin set:/p; /^self-check/p' "$work/j
 check_report "$work/jvm-self-check.out" "$rc" || hk_die 2 "pre-flight: the server's self-check on the JVM failed — $work kept nothing; see above"
 [ "$mode" = check ] && { echo "pre-flight passed: plugin set ${expected_digest:0:12}…"; exit 0; }
 
-# ── JVM mode: no build; the launcher becomes bin/histmersion-server ────────────────────────────────
 if [ "$mode" = jvm ]; then
   step "switch to JVM mode"
   cp "$bin/histmersion-server-jvm" "$work/histmersion-server.new"
@@ -290,7 +277,6 @@ if [ "$mode" = jvm ]; then
   exit 0
 fi
 
-# ── 6. Sloth over the plugin jars and their dependencies ──────────────────────────────────────────
 patched="$work/plugin-set.jar"
 linked=(${jars[@]+"${jars[@]}"} ${deps[@]+"${deps[@]}"})
 if [ "${#linked[@]}" -gt 0 ]; then
@@ -312,34 +298,27 @@ if [ "${#linked[@]}" -gt 0 ]; then
   for j in "${linked[@]}"; do patched="$patched:$work/plugins/$(basename "$j")"; done
 fi
 
-# ── 7. native-image ───────────────────────────────────────────────────────────────────────────────
-# HISTMERSION_NATIVE_XMX: an optional cap on the builder's heap, as in build.sbt (none by default)
 xmx=(); [ -n "${HISTMERSION_NATIVE_XMX:-}" ] && xmx=("-J-Xmx$HISTMERSION_NATIVE_XMX")
 step "native-image (about 2 minutes and 9–10 GB of memory; log: $log)"
 start=$(date +%s)
 rc=0
-# in the work dir: native-image leaves reports (build artifacts, crash notes) in its working directory
 (cd "$work" && "$gv/bin/native-image" ${xmx[@]+"${xmx[@]}"} "@$kit/native-image.args" -cp "$(kit_cp):$patched" "$main_class" \
   "$work/histmersion-server.new") >> "$log" 2>&1 || rc=$?
 [ "$rc" = 0 ] && [ -x "$work/histmersion-server.new" ] || { tail -20 "$log" >&2; hk_die 3 "native-image failed (exit $rc) — the current binary is unchanged; JVM mode works with the same plugins: histmersion-relink --jvm"; }
 peak="$(grep -o 'Peak RSS: [0-9.,]*[A-Z]*' "$log" | tail -1 || true)"
 echo "  built in $(( $(date +%s) - start )) s${peak:+ · $peak}"
 
-# ── 8. the new binary's own self-check (never started as a server) ────────────────────────────────
 step "self-check of the new binary"
 rc=0
 "$work/histmersion-server.new" --self-check > "$work/self-check.out" 2>&1 || rc=$?
 sed -n '/^- [a-z0-9-]* [^ ]* — /p; /^- plugin set:/p; /^self-check/p' "$work/self-check.out" | sed 's/^/  /'
 check_report "$work/self-check.out" "$rc" || { cat "$work/self-check.out" >> "$log"; hk_die 3 "the new binary's self-check failed — the current binary is unchanged (a plugin without its own reachability metadata fails here)"; }
 
-# ── 9. sign ───────────────────────────────────────────────────────────────────────────────────────
 "$signing" codesign "$work/histmersion-server.new" com.histmersion.server | sed 's/^/  /'
 sign_checksum "$work/histmersion-server.new"
 
-# what it was linked from, on which machine: an install that would link the same thing keeps it
 hk_write_build_record "$work/histmersion-server.build" native "$kit" "$plugins" relink
 
-# ── 10–11. swap, restart, health; roll back on failure ────────────────────────────────────────────
 step "swap: $server (the current one kept as .prev)"
 swap_in "$work/histmersion-server.new" "$work/plugin-set.json"
 if ! restart_and_check; then

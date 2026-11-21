@@ -47,7 +47,7 @@ for a; do
   case "$a" in
     -h|--help) sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
     --move) move=--move ;;
-    --local-build) build=local ;;   # the default; kept so older command lines still work
+    --local-build) build=local ;;
     --prebuilt) build=prebuilt ;;
     --jvm) build=jvm ;;
     *) echo "unknown argument '$a'" >&2; exit 1 ;;
@@ -63,7 +63,6 @@ for p in bin/histmersion-server pg/bin/pg_ctl; do
   [ -x "$src/$p" ] || { echo "not a Histmersion bundle: $src/$p is missing (build one with 'just bundle')" >&2; exit 1; }
 done
 
-# stop a running instance first: it holds the database cluster open
 if launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; then
   echo "→ stopping the running Histmersion"
   launchctl bootout "gui/$(id -u)/$label" || true
@@ -76,40 +75,29 @@ if [ "$src" != "$dest" ]; then
   rm -rf "$dest.old"; [ -e "$dest" ] && mv "$dest" "$dest.old"
   if [ "$move" = "--move" ]; then mv "$src" "$dest"; else cp -R "$src" "$dest"; fi
 fi
-# the previous install stays aside until the build step: its binary is kept when linking would repeat it
 prev=""; [ -d "$dest.old" ] && prev="$dest.old"
-# a bundle downloaded through a browser is quarantined; Gatekeeper would block every binary in it
 xattr -dr com.apple.quarantine "$dest" 2>/dev/null || true
 
-# the server binary: linked on this machine from the kit with the user's plugins (the default), else the
-# bundle's prebuilt one (--prebuilt, or the fallback when this machine cannot link it), or JVM mode
 mode="$(ib_mode "$build")" || exit 1
 HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" "$prev" || { echo "no server binary to run (see above)" >&2; exit 1; }
 rm -rf "$dest.old"
 
-# sign with the local identity if there is one: a stable signature keeps macOS permissions across updates
-# (a relinked server was signed by histmersion-relink already; a JVM-mode launcher is a script)
 if [ -x "$dest/bin/histmersion-signing" ]; then
   "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion" com.histmersion.cli | sed 's/^/  cli: /'
   case "$ib_result" in prebuilt|kept) "$dest/bin/histmersion-signing" codesign "$dest/bin/histmersion-server" com.histmersion.server | sed 's/^/  server: /' ;; esac
 fi
 
-# what the LaunchAgent starts: the binary, or (GPG provenance on) the launcher that verifies it first
 program="$(HISTMERSION_DATA_DIR="$data" ib_service_program "$dest")"
 
 mkdir -p "$bindir" "$data/logs" "$(dirname "$plist")"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
-# the plugin API, platform and testkit into the local Maven repository (~/.m2/repository), where a
-# plugin project finds them as m2Local without naming this install's path; only missing or changed files
 if [ -d "$dest/maven" ]; then
   HISTMERSION_INSTALL_DIR="$dest" HISTMERSION_DATA_DIR="$data" "$dest/bin/histmersion" plugin repo --m2 >/dev/null 2>"$data/logs/plugin-repo-m2.log" \
     && echo "→ plugin API, platform and testkit copied into ~/.m2/repository (for plugin builds)" \
     || echo "note: could not copy the plugin artifacts into ~/.m2/repository ($data/logs/plugin-repo-m2.log); 'histmersion plugin repo --m2' retries"
 fi
 
-# per-install settings the service needs (never stored in the repo): the installed plist's, with the
-# caller's environment over them — read BEFORE the plist is rewritten below
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 la_env_prepare "$plist" "$work" "$work/env"
@@ -129,9 +117,6 @@ cat > "$plist" <<PLIST
 PLIST
 la_env_apply "$work/env" "$plist"
 
-# the user config file, where the server will look for it (the plist's HISTMERSION_CONFIG moves it; a
-# LaunchAgent has no XDG_CONFIG_HOME, so the default is ~/.config): a commented template when there is
-# none, never an overwrite
 uc_write_template "$here/histmersion.conf.template" "$(uc_location "$work/env" "$HOME/.config/histmersion")"
 
 echo "→ starting"

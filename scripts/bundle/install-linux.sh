@@ -36,7 +36,7 @@ for a; do
   case "$a" in
     -h|--help) sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
     --move) move=--move ;;
-    --local-build) build=local ;;   # the default; kept so older command lines still work
+    --local-build) build=local ;;
     --prebuilt) build=prebuilt ;;
     --jvm) build=jvm ;;
     *) echo "unknown argument '$a'" >&2; exit 1 ;;
@@ -55,7 +55,6 @@ systemctl --user show-environment >/dev/null 2>&1 || {
   echo "no systemd user session (systemctl --user) — log in normally, or run $src/bin/histmersion-server by hand" >&2
   exit 1; }
 
-# stop a running instance first: it holds the database cluster open
 if systemctl --user is-active --quiet "$unit"; then
   echo "→ stopping the running Histmersion"
   systemctl --user stop "$unit"
@@ -67,30 +66,23 @@ if [ "$src" != "$dest" ]; then
   rm -rf "$dest.old"; [ -e "$dest" ] && mv "$dest" "$dest.old"
   if [ "$move" = "--move" ]; then mv "$src" "$dest"; else cp -R "$src" "$dest"; fi
 fi
-# the previous install stays aside until the build step: its binary is kept when linking would repeat it
 prev=""; [ -d "$dest.old" ] && prev="$dest.old"
 
-# the server binary: linked on this machine from the kit with the user's plugins (the default), else the
-# bundle's prebuilt one (--prebuilt, or the fallback when this machine cannot link it), or JVM mode
 mode="$(ib_mode "$build")" || exit 1
 HISTMERSION_HOME="$dest" HISTMERSION_DATA_DIR="$data" ib_build "$dest" "$mode" "$prev" || { echo "no server binary to run (see above)" >&2; exit 1; }
 rm -rf "$dest.old"
 
-# what the unit starts: the binary, or (GPG provenance on) the launcher that verifies it first
 program="$(HISTMERSION_DATA_DIR="$data" ib_service_program "$dest")"
 
 mkdir -p "$bindir" "$data/logs" "$unit_dir"
 ln -sf "$dest/bin/histmersion" "$bindir/histmersion"
 
-# the plugin API, platform and testkit into the local Maven repository (~/.m2/repository), where a
-# plugin project finds them as m2Local without naming this install's path; only missing or changed files
 if [ -d "$dest/maven" ]; then
   HISTMERSION_INSTALL_DIR="$dest" HISTMERSION_DATA_DIR="$data" "$dest/bin/histmersion" plugin repo --m2 >/dev/null 2>"$data/logs/plugin-repo-m2.log" \
     && echo "→ plugin API, platform and testkit copied into ~/.m2/repository (for plugin builds)" \
     || echo "note: could not copy the plugin artifacts into ~/.m2/repository ($data/logs/plugin-repo-m2.log); 'histmersion plugin repo --m2' retries"
 fi
 
-# per-install settings the service needs, passed through when set (never stored in the repo)
 env_line=""
 for v in HISTMERSION_CORPUS_DIR HISTMERSION_ACQUIRE_CONTACT_EMAIL; do
   val="$(printenv "$v" || true)"
@@ -116,7 +108,6 @@ StandardError=append:$data/logs/server.log
 WantedBy=default.target
 UNIT
 
-# the user config file (environment > this file > defaults): a commented template when there is none
 uc_write_template "$here/histmersion.conf.template" \
   "$(uc_location /nonexistent "${XDG_CONFIG_HOME:-$HOME/.config}/histmersion")"
 
