@@ -27,8 +27,8 @@ d basemap/vector-cache/tiles/4/0/
 f basemap/vector-cache/tiles/4/0/0.mvt 321
 f basemap/vector.pmtiles
 d config/
-f config/histmersion.conf 391
-f config/histmersion.conf.bak 391
+f config/histmersion.conf 382
+f config/histmersion.conf.bak 382
 d data/
 d data/logs/
 d data/logs/structured/
