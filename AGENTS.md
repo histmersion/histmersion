@@ -183,7 +183,7 @@ is a written reason.
   server: these are values, not exceptions. Exceptions are for genuinely unexpected states.
 - **Catch `NonFatal(e)`, never `Throwable`.** Catching Throwable (E235) is a compile error (`-Wconf` in `build.sbt`).
   A catch that cleans up and rethrows, or a process edge that must end the process, keeps every Throwable with
-  `case e: (Throwable @nowarn("id=E235"))` and a line saying why. `NonFatal` lets `InterruptedException` through: a
+  `case e: (Throwable @nowarn("id=E235"))`, its reason recorded in an ADR (`docs/adr/`). `NonFatal` lets `InterruptedException` through: a
   catch that relies on an interrupt names it in its own `case`.
 - **User output uses our `util.console.Console`, passed with `using`.** `Cli.out.println(...)` and
   `Cli.err.println(...)` resolve that contextual interface; they are not global streams. Raw streams and
@@ -333,21 +333,27 @@ a failure to meet this rule: rename, extract a method or introduce a type instea
 def firstPage(citekeys: List[Citekey], pageSize: PageSize): List[Citekey] = citekeys.take(pageSize.value)
 ```
 
-### 6. Comments go in two places only
+### 6. No comments in code
 
-- **Scaladoc on the public API plugins see** (`plugin-api`). Plugin authors read it through cellar and
-  similar tools, without the code.
-- **Where behaviour answers something outside the code**: an external decision, an external blocker,
-  or a factor that cannot be expressed in code without over-engineering or absurdly long names.
+_Check: `GuidelineRatchetSuite` rule `G22comment` (comment blocks per module and scope in
+`architecture/guidelines-ratchet.tsv`, falls only; no file may hold more comments than at the merge base with the
+pilot, and a new file holds none)._
 
-Either way a comment stands on its own. It never points at Histmersion's internal docs, tickets or
-queue ids, GitHub issues or "§x.y" sections: what the reader needs goes in the comment, and history
-goes in the commit message.
+Code in every language (Scala, Java, JavaScript, CSS, HTML, Python, shell, SQL) carries no comments. What a comment would
+say goes elsewhere:
 
-```scala
-// GraalVM 25.4's builder refuses a java.* class on the image class path; this jar holds one.
-excludeDependencies += ExclusionRule("io.github.cquiroz", "scala-java-time-tzdb_3")
-```
+- **What the code does**: its names, types and structure (rule 5).
+- **A shortcut, workaround or "for now"**: an issue describing the proper fix.
+- **An important, non-obvious decision** (why this design, a constraint, an invariant, an external quirk such as "GraalVM
+  25.4's builder refuses a java.* class on the image class path"): a record in `docs/adr/`, which names the code it
+  governs.
+- **History**: the commit message.
+
+Exempt, and not counted: applied Flyway migrations, vendored code, test fixture pages, functional directives
+(`//> using`, `// scalafmt:`, `// scalafix:`, shebangs, `# noqa`, `# shellcheck`, eslint directives, PEP 723 headers) and
+help text a script prints from its own header. Plugin-API Scaladoc (`plugin-api`) is counted too, but is removed only
+with the owner's agreement: plugin authors read it through cellar, without the code. The `delete-comment` skill
+(`.claude/skills/delete-comment/SKILL.md`) is the procedure for auditing and removing comments.
 
 ### 7. Derive in the `derives` clause
 
@@ -556,8 +562,8 @@ package: on a case-insensitive file system their class files overwrite each othe
 
 Every check lists today's violations in `modules/server/src/test/resources/architecture/contracts.tsv`, exact both
 ways: a new violation fails the build, and so does a row nothing violates any more (`HISTMERSION_UPDATE_ARCHITECTURE=1`
-rewrites the list; a change only ever removes rows or lowers counts). Rules 2, 5, 6 and 10 are judged in review (10 is
-also `ArchitectureSuite`'s direction rule).
+rewrites the list; a change only ever removes rows or lowers counts). Rules 2, 5 and 10 are judged in review (10 is
+also `ArchitectureSuite`'s direction rule); rule 6 is the `G22comment` ratchet of `GuidelineRatchetSuite`.
 
 The guideline inventory (`tools/refactor/GuidelineInventory.scala`, a Scalafix rule over the SemanticDB every compile
 writes) is a ratchet too: `GuidelineRatchetSuite` (server tests) counts its findings per rule, module and scope in
@@ -831,7 +837,7 @@ unformatted file and is the first step of `just test-quick` and of CI. Commits t
 - One logical change per commit. Imperative subject under ~72 chars, no trailing period:
   `Add facets endpoint + MCP tool`, `Fix int8range upper-bound off-by-one`.
 - Explain **why** in the body when it is not obvious. The body is where history, ticket ids and
-  links to docs belong; code comments carry none of them (*Coding practices* 6).
+  links to docs belong; code carries no comments at all (*Coding practices* 6).
 - A commit that changes behaviour carries its tests. A commit that adds a dependency carries the
   regenerated native-image metadata and `THIRD-PARTY.md` (`just licences`); a dependency whose
   licence it marks `INCOMPATIBLE` with the AGPL does not go in.
