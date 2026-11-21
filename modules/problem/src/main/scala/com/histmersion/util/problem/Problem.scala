@@ -75,9 +75,6 @@ object Problem:
       */
     def of[T](value: T)(using RefinedType.Mirror[T]): Raw = Raw(s"$value")
 
-    /** A case of a closed vocabulary (an enum) as an input could name it: its name (`File`), as a list of the values a
-      * field takes shows it.
-      */
     def of(value: scala.reflect.Enum): Raw = Raw(value.toString)
 
   /** The wire name of a request or settings field (`lat`, `edges`, `agents.budgets.daily-usd`). */
@@ -356,7 +353,6 @@ object Problem:
       /** `stated` is not a page of the activity list: its time is not an instant. */
       case ActivityPageTime(stated: Raw)
 
-      /** `stated` is not a page of the structured log (`<instant>~<id>`). */
       case LogPage(stated: Raw)
 
       /** `stated` is no event catalogue; `known` are. */

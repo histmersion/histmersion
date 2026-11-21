@@ -11,11 +11,6 @@ import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.util.Using
 
-/** The server's connections, each told the calling thread's trace and label (`histmersion.trace`,
-  * `histmersion.trace_label`) before it is handed out: the database's write triggers record them with every write
-  * statement. A physical connection is told only when they differ from what it was told last, so a pool's connection
-  * reused by the same trace, or by untraced work, costs no round trip.
-  */
 final class TracedDataSource(underlying: DataSource) extends DataSource:
   private val told = java.util.WeakHashMap[AnyRef, (Option[LogEvent.Trace], Option[LogEvent.Label])]()
 

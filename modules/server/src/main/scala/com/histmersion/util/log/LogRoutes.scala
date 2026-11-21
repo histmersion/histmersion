@@ -6,7 +6,6 @@ import com.histmersion.api.log.LogApi
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
-/** The structured log's endpoints bound to their controllers. */
 final class LogRoutes(log: LogControllers):
   def endpoints: List[ServerEndpoint[Any, Identity]] =
     List(

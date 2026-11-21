@@ -187,7 +187,6 @@ object Composition:
     val deps = sg.deps(restart, system)
     val cfg = hc.app // the listener's settings: restart-only (ConfigReload.RestartOnly)
     val h = ServerWiring(deps, converter.getOrElse(ConverterWiring.client(deps.cfg.converter)))
-    // the structured log's one writer, stopped (after writing what it holds) before the pools close
     val logWriter = h.logWriter
     logWriter.start()
     releaseAfterScope(logWriter.close())
@@ -219,10 +218,7 @@ object Composition:
     // a test server must never seed its database behind the test's back
     if autoInit.value then
       try h.maintenance.writing(h.bootstrap.autoStart())
-      catch
-        case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
-    // every request pinned to the generation current when it arrived (hot.PinRequests)
-    // and each one traced, from the outside: answered with its trace, recorded once answered
+      catch case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     val options = NettySyncServerOptions.customiseInterceptors
       .prependInterceptor(Pin.Requests(sg.graph))
       .prependInterceptor(RequestLog(logWriter, () => deps.cfg.log))

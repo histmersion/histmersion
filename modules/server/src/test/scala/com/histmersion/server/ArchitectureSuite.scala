@@ -450,13 +450,9 @@ object ArchitectureSuite:
         .mapValues(_.head.start)
         .toMap
 
-    /** A type the file defines itself, at any depth (`object Trace` inside a record's companion). */
     private val OwnDefinition =
       "(?m)^[ \\t]*(?:(?:final|sealed|abstract|private|protected|open|case|implicit|transparent|inline|opaque)(?:\\[\\w+\\])?\\s+)*(?:class|trait|object|enum|type)\\s+([A-Z]\\w*)".r
 
-    /** The type names a file defines itself, nested ones too: there the bare name is the file's own type, which shadows
-      * a top-level type of the same name in another place.
-      */
     def ownNames(code: String): Set[String] = OwnDefinition.findAllMatchIn(code).map(_.group(1)).toSet
 
     private def direction(placed: List[(SourceFile, String)]): List[Violation] =

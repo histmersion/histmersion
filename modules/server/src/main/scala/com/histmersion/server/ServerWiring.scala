@@ -232,10 +232,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val activity: ActivityControllers =
     ActivityControllers(ActivityService(ds), () => Instant.now(deps.clock))
 
-  /** The structured log's one writer (a worker a restore holds; the composition starts and stops its thread). */
   def logWriter: LogWriter = deps.logWriter
 
-  /** The structured log: what happened, by trace, job, source or problem. */
   val log: LogControllers =
     LogControllers(LogService(deps.transactor, deps.logFiles), () => Instant.now(deps.clock))
 

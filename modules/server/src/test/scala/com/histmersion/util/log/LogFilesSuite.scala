@@ -9,9 +9,6 @@ import com.histmersion.util.storage.LineFiles
 import java.nio.file.{Files, Path}
 import java.time.Instant
 
-/** The rolling files: one per day and class, every event once, read back by the same query rules as the table, and
-  * pruned by the same retention. Pure apart from a temporary directory.
-  */
 class LogFilesSuite extends munit.FunSuite:
   private val dir = FunFixture[Path](_ => Files.createTempDirectory("hm-log-files"), d => deleteTree(d))
 
@@ -104,7 +101,6 @@ class LogFilesSuite extends munit.FunSuite:
   test("the size cap of the table: the live rows over the cap, at the average row size"):
     assertEquals(LogRetention.excessRows(bytes = 1000, rows = 10, dead = 0, max = LogConfig.MaxBytes(2000)), 0)
     assertEquals(LogRetention.excessRows(bytes = 1000, rows = 10, dead = 0, max = LogConfig.MaxBytes(500)), 5)
-    // half the space is dead rows waiting to be reused: only the live half counts
     assertEquals(LogRetention.excessRows(bytes = 1000, rows = 5, dead = 5, max = LogConfig.MaxBytes(500)), 0)
     assertEquals(LogRetention.excessRows(bytes = 0, rows = 0, dead = 0, max = LogConfig.MaxBytes(0)), 0)
 

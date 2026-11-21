@@ -9,23 +9,14 @@ import java.time.Instant
 
 import LogFiles.{dayOf, daysOf, fileOf, Problems}
 
-/** The structured log's rolling files: one per UTC day and retention class, `events-<day>.jsonl` and
-  * `problems-<day>.jsonl`, one event per line, in the same JSON as the table's `event` column. Every event is written
-  * here as well as to the table, so the log can be searched while the database is down. Only the log writer appends.
-  */
 final class LogFiles(files: LineFiles):
 
-  /** Append `events`, each to its day's file of its class. `false` when there is no directory or it cannot be written.
-    */
   def append(events: Vector[LogEvent]): Boolean =
     events.isEmpty ||
       files.append(
         events.groupBy(e => fileOf(e.problem, e.at.day)).map((file, group) => file -> group.map(writeToString(_)))
       )
 
-  /** The page `q` asks for, read from the files: days newest first, stopping once a whole day is past the page. Lines
-    * that do not read as an event (one being written now) are skipped.
-    */
   def page(q: LogQuery): (Vector[LogEvent], Option[LogPage.Cursor]) =
     val all = names
     @annotation.tailrec
@@ -36,15 +27,10 @@ final class LogFiles(files: LineFiles):
       case _ => found
     q.page(loop(daysOf(all).filter(q.mayHoldDay), Vector.empty))
 
-  /** The names of the log's files. */
   def names: List[String] = files.names.filter(dayOf(_).isDefined)
 
-  /** The files' total size. */
   def bytes: Long = names.map(files.size).sum
 
-  /** Retention at `now`: ordinary files of days before `ordinaryBefore`, problem files of days before `problemsBefore`,
-    * then the oldest until the files fit in `maxBytes` (today's never). The names of the files deleted.
-    */
   def prune(
       now: Instant,
       ordinaryBefore: Instant,
@@ -75,15 +61,12 @@ object LogFiles:
   val Problems = "problems-"
   val Suffix = ".jsonl"
 
-  /** The file of the events of `day`, problems (`problem`) or ordinary ones. */
   def fileOf(problem: Boolean, day: String): String = s"${if problem then Problems else Events}$day$Suffix"
 
-  /** The day of a log file's name, `None` for any other file. */
   def dayOf(name: String): Option[String] =
     List(Events, Problems)
       .find(name.startsWith)
       .map(prefix => name.stripPrefix(prefix).stripSuffix(Suffix))
       .filter(d => name.endsWith(Suffix) && d.matches("\\d{4}-\\d{2}-\\d{2}"))
 
-  /** The days of the files `names`, newest first, each once. */
   def daysOf(names: List[String]): List[String] = names.flatMap(dayOf).distinct.sorted.reverse

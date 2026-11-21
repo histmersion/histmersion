@@ -59,7 +59,6 @@ object TestDb:
       ok
     }
 
-  /** [[url]] as the settings' database URL. */
   lazy val dbUrl: Option[DbConfig.Url] = url.map(DbConfig.Url(_))
 
   private[db] def name(url: String): String = url.split('?').head.reverse.takeWhile(_ != '/').reverse

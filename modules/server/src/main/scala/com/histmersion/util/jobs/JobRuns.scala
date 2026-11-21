@@ -27,7 +27,6 @@ trait JobRuns:
 
   def pipelineVersion(id: Run.Id): Option[Pipeline.Version]
 
-  /** The trace the run was created under: its steps join it whenever it runs. */
   def trace(id: Run.Id): Option[LogEvent.Trace]
   def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit
 
@@ -140,7 +139,6 @@ object JobRuns:
       val after = state.updateAndGet(m => m.get(id).filter(p).fold(m)(r => m.updated(id, f(r))))
       before.get(id) != after.get(id)
 
-    /** Is `r` a run of `kind`? */
     private def of(kind: Job.Kind)(r: JobRunState): Boolean = r.row.kind.value == kind.value
 
     /** A run as it stands. */

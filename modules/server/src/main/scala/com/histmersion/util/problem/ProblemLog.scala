@@ -5,11 +5,6 @@ import util.problem.Text.sentence
 import com.histmersion.api.log.LogEvent
 import com.histmersion.util.log.TraceScope
 
-/** A problem in the server's log: `<group>.<case> <field>=<value> …: <sentence>`, the keys being the case's own field
-  * names. Outside text appears here in full; an internal problem is logged as an error, any other as a warning. Inside
-  * a trace, the problem is also one `ProblemRaised` event of the structured log: its case and, for an unexpected one,
-  * its id, never its text.
-  */
 object ProblemLog:
 
   extension (problem: Problem)
@@ -28,7 +23,6 @@ object ProblemLog:
         case _: Problem.Internal | _: Problem.Unclassified | _: Problem.Stored => scribe.error(problem.line)
         case _                                                                 => scribe.warn(problem.line)
 
-    /** The problem's event in the calling thread's trace: its `<group>.<case>`, and the id of an unexpected one. */
     def record(): Unit =
       val id = problem match
         case u: Problem.Internal.Unexpected => Some(LogEvent.ProblemId.of(u.id))

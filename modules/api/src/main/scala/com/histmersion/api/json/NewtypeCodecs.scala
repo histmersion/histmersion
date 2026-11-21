@@ -13,17 +13,6 @@ import util.json.RawJson.asJson
 import api.problem.Answer
 import api.problem.Answer.{asProblem, entry}
 
-/** The JSON codec, key codec, tapir schema and (unconstrained ones) tapir text codec of every newtype (`type X = X.T;
-  * object X extends Newtype[Base, C]`), from its base type's: the same JSON and the same schema, with the constraint
-  * checked on decoding. Importing its givens also brings the base types', the containers' and raw JSON's
-  * ([[JsonCodec]], [[RawJson]]).
-  *
-  * An unconstrained (`Pure`) newtype — every one of the wire contract's — decodes as its base type does, with no check:
-  * there is nothing to check, and not calling Iron's `either` keeps every companion's runtime constraint out of the web
-  * page's bundle.
-  *
-  * A [[Problem]] in a wire record is written typed, as a failed request's body lists one ([[Answer.Entry]]).
-  */
 object NewtypeCodecs:
   export JsonCodec.given
 
@@ -42,10 +31,6 @@ object NewtypeCodecs:
   given schema: [T] => (m: RefinedType.Mirror[T]) => (base: Schema[m.BaseType]) => Schema[T] =
     base.as[T]
 
-  /** A newtype as a query parameter or a path segment: its base type's text, read with no check. Only an unconstrained
-    * (`Pure`) newtype — every one of the wire contract's — has one: the server checks once, where an api value becomes
-    * a domain value.
-    */
   given plain: [T] => (m: RefinedType.Mirror[T] { type ConstraintType = Pure })
     => (base: Codec[String, m.BaseType, CodecFormat.TextPlain]) => Codec[String, T, CodecFormat.TextPlain] =
     base.asInstanceOf[Codec[String, T, CodecFormat.TextPlain]]

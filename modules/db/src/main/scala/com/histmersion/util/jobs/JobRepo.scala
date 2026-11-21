@@ -256,15 +256,10 @@ object JobRepo:
       .flatten
       .map(Pipeline.Version(_))
 
-  /** The trace a job or a run (both rows of `jobs`, `id` a [[Job.Id]] or a [[Run.Id]]) was created under; none for one
-    * older than the structured log.
-    */
   def traceOf[K](id: K)(using DbCodec[K])(using DbCon): Option[LogEvent.Trace] =
     sql"SELECT trace_id::text FROM jobs WHERE id = $id AND trace_id IS NOT NULL".query[LogEvent.Trace].run().headOption
 
   def runHeartbeat(kind: Job.Kind, id: Run.Id)(using DbCon): Unit =
-    // the structured log counts heartbeats per minute instead of recording each (histmersion.log_count, set for this
-    // statement's transaction before its triggers run)
     Unused(
       sql"""WITH counted AS (SELECT set_config('histmersion.log_count', 'on', true))
             UPDATE jobs SET heartbeat_at = now() FROM counted WHERE id = $id AND kind = $kind""".update.run(),

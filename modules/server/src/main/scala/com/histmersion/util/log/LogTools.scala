@@ -9,9 +9,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.util.mcp.McpOut
 
-/** The structured log for agents: one `log` tool, the same filters as `GET /api/log`; with `problem` alone, what
-  * happened around that problem (`GET /api/problems/{id}`).
-  */
 final class LogTools(log: LogControllers):
   def tools =
     List(

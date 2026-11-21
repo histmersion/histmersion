@@ -47,7 +47,6 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
       .response(asByteArrayAlways)
     val started = System.nanoTime()
     val sent = scala.util.Try(req.send(backend))
-    // the call in the calling thread's trace: the host and the status only, never the URL (a key may ride in its query)
     TraceScope.record(
       LogEvent.What.ProviderCalled(
         LogEvent.Upstream.of(url.upstream),

@@ -70,7 +70,6 @@ object QueryAccess:
         ("GRANT USAGE ON SCHEMA public TO %I%s", ""),
         ("GRANT SELECT ON ALL TABLES IN SCHEMA public TO %I%s", ""),
         ("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO %I%s", ""),
-        // the structured log holds client addresses and search text: not for the escape hatch's model-written SQL
         ("REVOKE ALL ON public.log_events, public.log_writes, public.log_counts FROM %I%s", ""),
         ("REVOKE CREATE ON SCHEMA public FROM %I%s", "")
       )
