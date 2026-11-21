@@ -4,7 +4,7 @@ G3misplaced	cli	main	94
 G3misplaced	config	main	10
 G3misplaced	core	main	351
 G3misplaced	core	test	5
-G3misplaced	db	main	599
+G3misplaced	db	main	600
 G3misplaced	db	test	12
 G3misplaced	files	main	33
 G3misplaced	plugin-api	main	2
@@ -66,7 +66,7 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10446
+G44	server	main	10443
 G44	server	test	3979
 G44	upstreams	main	147
 G44	upstreams	test	44
@@ -204,7 +204,7 @@ G49	plugins/gazetteers	main	21
 G49	plugins/gazetteers	test	30
 G49	plugins/media	main	103
 G49	plugins/media	test	15
-G49	server	main	4011
+G49	server	main	4010
 G49	server	test	1110
 G49	upstreams	main	42
 G49	upstreams	test	17
@@ -294,6 +294,8 @@ G9prefixRole	upstreams	test	6
 G9prefixRole	values	test	5
 G9prefixRole	web	main	4
 G9prefixRole	web	test	71
+acceptedOutcome	db	main	225
+acceptedOutcome	server	main	42
 silentCompare	api	main	13
 silentCompare	api	test	9
 silentCompare	cli	main	3

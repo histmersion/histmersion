@@ -1139,9 +1139,9 @@ unwrap	server:domain/automation/managers/HintEffectPipeline.scala	.value outside
 unwrap	server:domain/automation/managers/ManagerDefaultsViews.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerKindDefinition.scala	.value outside a boundary	2
 unwrap	server:domain/automation/managers/ManagerService.scala	.value outside a boundary	231
-unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	88
+unwrap	server:domain/automation/managers/ManagerSupervisor.scala	.value outside a boundary	87
 unwrap	server:domain/automation/managers/ManagersControllers.scala	.value outside a boundary	126
-unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	150
+unwrap	server:domain/automation/scheduler/SchedulerService.scala	.value outside a boundary	149
 unwrap	server:domain/automation/workflows/Pipelines.scala	.value outside a boundary	7
 unwrap	server:domain/automation/workflows/Workflows.scala	.value outside a boundary	6
 unwrap	server:domain/automation/worklists/QueueService.scala	.value outside a boundary	11
@@ -1312,7 +1312,7 @@ unwrap	server:domain/research/workflows/ReviewManagerKind.scala	.value outside a
 unwrap	server:domain/research/workflows/SeedManagerKind.scala	.value outside a boundary	64
 unwrap	server:server/ArticleHtml.scala	.value outside a boundary	9
 unwrap	server:server/Bootstrap.scala	.value outside a boundary	26
-unwrap	server:server/Composition.scala	.value outside a boundary	26
+unwrap	server:server/Composition.scala	.value outside a boundary	25
 unwrap	server:server/Deps.scala	.value outside a boundary	3
 unwrap	server:server/GazetteerPaths.scala	.value outside a boundary	5
 unwrap	server:server/HtmlRender.scala	.value outside a boundary	30
