@@ -2,7 +2,7 @@ package com.histmersion
 package server
 package comments
 
-class CommentLexerSuite extends munit.FunSuite:
+class SourceCommentsSuite extends munit.FunSuite:
 
   private def texts(language: SourceLanguage, source: String): List[String] =
     language.comments(source).map(_.text).toList

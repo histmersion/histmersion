@@ -3,6 +3,7 @@ package server
 package comments
 
 final class CommentLexer(text: String, language: SourceLanguage):
+  import CommentLexer.*
   private val size = text.length
   private val found = Vector.newBuilder[SourceComment]
 
@@ -159,7 +160,7 @@ final class CommentLexer(text: String, language: SourceLanguage):
       else if identifierChar(c) then
         var s = p
         while s > 0 && identifierChar(text.charAt(s - 1)) do s -= 1
-        CommentLexer.keywordsBeforeRegex.contains(text.substring(s, p + 1))
+        keywordsBeforeRegex.contains(text.substring(s, p + 1))
       else false
 
   private def regex(i: Int): Int =

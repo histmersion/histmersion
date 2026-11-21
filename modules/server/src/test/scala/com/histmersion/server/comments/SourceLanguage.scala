@@ -5,6 +5,8 @@ package comments
 enum SourceLanguage derives CanEqual:
   case Scala, Java, JavaScript, Css, Html, Python, Shell, Sql
 
+  import SourceLanguage.{cFamilyDirectives, pythonDirectives, scriptDirectives}
+
   def label: String = toString.toLowerCase
 
   def comments(text: String): Vector[SourceComment] = CommentLexer(text, this).comments
@@ -20,14 +22,14 @@ enum SourceLanguage derives CanEqual:
     val body = comment.stripLeading
     body.startsWith("#!") || (this match
       case Scala | Java =>
-        SourceLanguage.cFamilyDirectives.exists(d => body.startsWith(s"//$d") || body.startsWith(s"/*$d")) ||
-        SourceLanguage.cFamilyDirectives.exists(d => body.startsWith(s"// $d") || body.startsWith(s"/* $d"))
+        cFamilyDirectives.exists(d => body.startsWith(s"//$d") || body.startsWith(s"/*$d")) ||
+        cFamilyDirectives.exists(d => body.startsWith(s"// $d") || body.startsWith(s"/* $d"))
       case JavaScript =>
         body.startsWith("/*!") ||
-        SourceLanguage.scriptDirectives.exists(d => body.startsWith(s"// $d") || body.startsWith(s"/* $d"))
+        scriptDirectives.exists(d => body.startsWith(s"// $d") || body.startsWith(s"/* $d"))
       case Css    => body.startsWith("/*!") || body.startsWith("/* stylelint-")
       case Html   => body.startsWith("<!-- prettier-ignore") || body.startsWith("<!--[if")
-      case Python => SourceLanguage.pythonDirectives.exists(d => body.startsWith(s"# $d") || body.startsWith(s"#$d"))
+      case Python => pythonDirectives.exists(d => body.startsWith(s"# $d") || body.startsWith(s"#$d"))
       case Shell  => body.startsWith("# shellcheck ")
       case Sql    => false)
 

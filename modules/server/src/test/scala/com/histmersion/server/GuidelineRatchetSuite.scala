@@ -98,8 +98,9 @@ class GuidelineRatchetSuite extends munit.FunSuite:
     git.base(sys.env) match
       case Left(why)   => fail(why)
       case Right(base) =>
-        val changed = Comments.changedSince(git, base.commit)
-        val renamed = Comments.renamedSince(git, base.commit)
+        val since = Comments.Since(git, base.commit)
+        val changed = since.changed
+        val renamed = since.renamed
         val counts =
           Comments.files.filter(f => f.counted.nonEmpty && changed(f.path)).map(f => f.path -> f.counted.size)
         def atBase(path: String): Int =
@@ -351,12 +352,12 @@ object GuidelineRatchetSuite:
         .collect { case status :: from :: to :: Nil if status.startsWith("R") => to -> from }
         .toMap
 
-    def renamedSince(git: RatchetBase.Git, commit: String): Map[String, String] =
-      renames(git.ok("diff", "-M", "--name-status", commit).getOrElse(""))
+    final case class Since(git: RatchetBase.Git, commit: String):
+      def renamed: Map[String, String] = renames(git.ok("diff", "-M", "--name-status", commit).getOrElse(""))
 
-    def changedSince(git: RatchetBase.Git, commit: String): Set[String] =
-      (git.ok("diff", "--name-only", commit).getOrElse("") + "\n" +
-        git.ok("ls-files", "--others", "--exclude-standard").getOrElse("")).linesIterator.filter(_.nonEmpty).toSet
+      def changed: Set[String] =
+        (git.ok("diff", "--name-only", commit).getOrElse("") + "\n" +
+          git.ok("ls-files", "--others", "--exclude-standard").getOrElse("")).linesIterator.filter(_.nonEmpty).toSet
 
   /** The files changed since a file was last committed: committed since, staged, unstaged and untracked. */
   object Changes:
