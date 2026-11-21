@@ -1,8 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.Paging
-import com.histmersion.api.log.{LogApi, LogMarkdown, LogPage}
+import com.histmersion.api.log.{LogApi, LogPage}
 import com.histmersion.util.console.Console
 
 /** `histmersion log [--trace t] [--job j] [--run r] [--source ck] [--problem id] [--label l] [--kind k] [--since s]
@@ -23,22 +22,23 @@ object LogCmd:
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Log(filter, json) =>
-          val opts = List(
-            "trace" -> filter.trace.map(_.value),
-            "label" -> filter.label.map(_.value),
-            "job" -> filter.job.map(_.value),
-            "run" -> filter.run.map(_.value),
-            "source" -> filter.source.map(_.value),
-            "problem" -> filter.problem.map(_.value),
-            "kind" -> filter.kind.map(_.value),
-            "since" -> filter.since.map(_.value),
-            "until" -> filter.until.map(_.value),
-            "limit" -> filter.limit.map(l => s"${l.value}")
-          )
           filter.problemAlone
             .fold(c.call(LogApi.events)(filter))(p => c.call(LogApi.problem)(p))
             .map(p =>
-              Output.emit(json, p)(
-                LogMarkdown.page(_, cursor => s"Older: `${PageCmd.next("log", opts, Paging.Cursor(cursor.value))}`")
-              )
+              Output.emit(json, p)(_.markdown(cursor => s"Older: `${PageCmd.next("log", options(filter), cursor)}`"))
             )
+
+    /** The filters as the command line gives them (the cursor apart), each one only when set: the next page's command.
+      */
+    private def options(filter: LogPage.Filter): List[(String, Option[String])] = List(
+      "trace" -> filter.trace.map(t => s"$t"),
+      "label" -> filter.label.map(l => s"$l"),
+      "job" -> filter.job.map(j => s"$j"),
+      "run" -> filter.run.map(r => s"$r"),
+      "source" -> filter.source.map(s => s"$s"),
+      "problem" -> filter.problem.map(p => s"$p"),
+      "kind" -> filter.kind.map(k => s"$k"),
+      "since" -> filter.since.map(s => s"$s"),
+      "until" -> filter.until.map(u => s"$u"),
+      "limit" -> filter.limit.map(l => s"$l")
+    )

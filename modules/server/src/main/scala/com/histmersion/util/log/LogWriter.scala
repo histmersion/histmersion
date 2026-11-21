@@ -3,7 +3,6 @@ package util.log
 
 import com.histmersion.api.log.LogEvent
 import com.histmersion.api.log.LogEvent.{Count, Subject, What}
-import com.histmersion.config.LogConfig
 import com.histmersion.util.database.{Transactor, WritePermit}
 import com.histmersion.util.jobs.Quiescent
 
@@ -13,6 +12,8 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
 import java.util.concurrent.ThreadLocalRandom
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
+
+import LogWriter.{subjectsOf, writesCounted, written, StagedEveryMillis}
 
 /** The structured log's one writer, and the only way an event reaches the table or the files. Recording never blocks:
   * an event goes into a bounded queue (full: it is counted, and one `Lost` event says how many), and this writer's own
@@ -29,8 +30,8 @@ final class LogWriter(
     clock: Clock
 ) extends LogSink:
   private val queue = ArrayBlockingQueue[LogEvent](settings().queueSize.capacity)
-  private val lostToQueue = AtomicLong(0L)
-  private val counted = ConcurrentHashMap[LogEvent.Operation, (Long, Long)]()
+  private val lostToQueue = AtomicReference(Count.zero)
+  private val perMinute = ConcurrentHashMap[LogEvent.Operation, (Count, Count)]()
   private val running = AtomicBoolean(false)
   private val thread = AtomicReference[Option[Thread]](None)
   private val backlog = AtomicReference(Vector.empty[LogEvent])
@@ -48,32 +49,27 @@ final class LogWriter(
     def quiesce(): Unit = resting.set(true)
     def busy: Vector[Quiescent.Busy] =
       if writing.get() then Vector(Quiescent.Busy("a batch of events into the table")) else Vector.empty
-    def restored(): Unit = ()
+    def restored()(using WritePermit): Unit = ()
     def resume(): Unit = resting.set(false)
 
   /** A new trace, as the server mints one for a request, a start-up or its own work. */
-  def mintTrace(): LogEvent.Trace = LogEvent.Trace(mintId())
+  def mintTrace(): LogEvent.Trace =
+    val r = ThreadLocalRandom.current()
+    LogEvent.Trace.v7(clock.millis(), r.nextLong(), r.nextLong())
 
   def record(scope: TraceScope, subjects: Vector[Subject], what: What): Unit =
-    offer(
-      LogEvent(
-        LogEvent.Id(mintId()),
-        now(),
-        scope.trace,
-        scope.label,
-        scope.actor,
-        LogWriter.subjects(subjects, what),
-        what
-      )
-    )
+    offer(LogEvent(mintId(), now(), scope.trace, scope.label, scope.actor, subjectsOf(subjects, what), what))
 
   /** `what`, the server's own step outside any request or job: a trace of its own. */
-  def recordServer(what: What): Unit =
-    offer(LogEvent(LogEvent.Id(mintId()), now(), mintTrace(), None, LogEvent.Actor.Server, Vector.empty, what))
+  def recordServer(what: What): Unit = offer(server(what))
 
   /** One request on a counted path (map tiles, static files, the health check): summed per minute. */
   def count(operation: LogEvent.Operation, failed: Boolean): Unit =
-    val _ = counted.merge(operation, (1L, if failed then 1L else 0L), (a, b) => (a._1 + b._1, a._2 + b._2))
+    val _ = perMinute.merge(
+      operation,
+      (Count.one, if failed then Count.one else Count.zero),
+      (a, b) => (a._1 + b._1, a._2 + b._2)
+    )
 
   /** Start the writer's thread (once). */
   def start(): Unit =
@@ -112,7 +108,7 @@ final class LogWriter(
     while running.get() do
       try
         val first = queue.poll(settings().flushMillis.millis, TimeUnit.MILLISECONDS)
-        val due = clock.millis() - stagedAt >= LogWriter.StagedEveryMillis
+        val due = clock.millis() - stagedAt >= StagedEveryMillis
         if due then stagedAt = clock.millis()
         round(Option(first).toVector, due)
       catch
@@ -120,16 +116,16 @@ final class LogWriter(
         case NonFatal(e)             => scribe.warn(s"log writer: ${e.getClass.getSimpleName}")
 
   private def housekeeping(): Vector[LogEvent] =
-    val lost = lostToQueue.getAndSet(0L)
-    val lostEvent = Option.when(lost > 0)(server(What.Lost(Count(lost), LogEvent.Loss.QueueFull)))
+    val lost = lostToQueue.getAndSet(Count.zero)
+    val lostEvent = Option.when(lost.positive)(server(What.Lost(lost, LogEvent.Loss.QueueFull)))
     val minute = 60000L
     val countedEvents =
       if clock.millis() - countedSince.get() < minute then Vector.empty
       else
         countedSince.set(clock.millis())
-        val ops = counted.keySet().asScala.toVector
+        val ops = perMinute.keySet().asScala.toVector
         ops.flatMap { op =>
-          Option(counted.remove(op)).map((n, failed) => server(What.RequestsCounted(op, Count(n), Count(failed))))
+          Option(perMinute.remove(op)).map((n, failed) => server(What.RequestsCounted(op, n, failed)))
         }
     lostEvent.toVector ++ countedEvents
 
@@ -139,31 +135,32 @@ final class LogWriter(
     val pending = backlog.get() ++ batch
     val staged =
       if gate.active || resting.get() then None
-      else if pending.isEmpty && !stagedDue then Some(Vector.empty)
+      else if pending.isEmpty && !stagedDue then Some((Vector.empty, Some(0L)))
       else
         writing.set(true)
         try
           gate.unit {
             gate.permit {
               transactor.write {
-                val writes = LogRepo.takeStaged(cfg.batchSize.rows).map(LogWriter.written) ++
-                  LogRepo.takeCounted.map(c => LogWriter.counted(c, LogEvent.Id(mintId()), mintTrace()))
-                LogRepo.insert(pending ++ writes)
-                writes
+                val writes = LogRepo.takeStaged(cfg.batchSize.rows).map(written) ++
+                  LogRepo.takeCounted.map(c => writesCounted(c, mintId(), mintTrace()))
+                (writes, LogRepo.insert(pending ++ writes))
               }
             }.toOption
           }
         catch case NonFatal(_) => None
         finally writing.set(false)
     staged match
-      case Some(writes) =>
+      case Some((writes, added)) =>
+        // events already in the table (a batch retried from the backlog) are not added twice
+        scribe.debug(s"log writer: ${added.fold("some")(n => s"$n")} new event(s) in the table")
         backlog.set(Vector.empty)
         val _ = files.append(writes)
       case None =>
         val (kept, over) = cfg.backlog.keep(pending)
         backlog.set(kept)
-        if over > 0 then
-          val _ = files.append(Vector(server(What.Lost(Count(over.toLong), LogEvent.Loss.DatabaseBacklog))))
+        if over.nonEmpty then
+          val _ = files.append(Vector(server(What.Lost(Count.of(over), LogEvent.Loss.DatabaseBacklog))))
     prune(cfg)
 
   private def prune(cfg: LogConfig): Unit =
@@ -173,25 +170,25 @@ final class LogWriter(
 
   private def offer(e: LogEvent): Unit =
     if !queue.offer(e) then
-      val _ = lostToQueue.incrementAndGet()
+      val _ = lostToQueue.updateAndGet(_ + Count.one)
 
   private def server(what: What): LogEvent =
-    LogEvent(LogEvent.Id(mintId()), now(), mintTrace(), None, LogEvent.Actor.Server, Vector.empty, what)
+    LogEvent(mintId(), now(), mintTrace(), None, LogEvent.Actor.Server, Vector.empty, what)
 
-  private def now(): LogEvent.At = LogEvent.At(LogStamp.iso(clock.instant()))
+  private def now(): LogEvent.At = LogEvent.At.of(clock.instant())
 
-  private def mintId(): String =
+  private def mintId(): LogEvent.Id =
     val r = ThreadLocalRandom.current()
-    LogStamp.uuidV7(clock.millis(), r.nextLong(), r.nextLong())
+    LogEvent.Id.v7(clock.millis(), r.nextLong(), r.nextLong())
 
 object LogWriter:
   /** How often the writer takes the database's staged write statements when it has no event of its own to write. */
   val StagedEveryMillis: Long = 1000L
 
   /** `named` and what the step itself names: a problem with an id is a subject, so it can be looked up by that id. */
-  def subjects(named: Vector[Subject], what: What): Vector[Subject] = what match
-    case LogEvent.What.ProblemRaised(Some(id), _) => (named :+ id.subject).distinct
-    case _                                        => named
+  def subjectsOf(named: Vector[Subject], what: What): Vector[Subject] = what match
+    case What.ProblemRaised(Some(id), _) => (named :+ id.subject).distinct
+    case _                               => named
 
   /** The table whose rows' keys are jobs. */
   val Jobs: LogEvent.Table = LogEvent.Table("jobs")
@@ -217,7 +214,7 @@ object LogWriter:
     )
 
   /** A minute's count of one table's change as its event, under a trace of its own (`trace`). */
-  private[log] def counted(c: LogRepo.Counted, id: LogEvent.Id, trace: LogEvent.Trace): LogEvent =
+  private[log] def writesCounted(c: LogRepo.Counted, id: LogEvent.Id, trace: LogEvent.Trace): LogEvent =
     LogEvent(
       id,
       c.at,

@@ -289,7 +289,7 @@ object Cli:
 
     /** The line after a failure's sentences that leads to what the server did with the request. */
     def traceLine(trace: LogEvent.Trace): String =
-      s"trace ${trace.value} — what happened: histmersion log --trace ${trace.value}"
+      s"trace $trace — what happened: histmersion log --trace $trace"
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:

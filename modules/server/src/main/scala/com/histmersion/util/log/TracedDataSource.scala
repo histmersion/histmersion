@@ -1,6 +1,10 @@
 package com.histmersion
 package util.log
 
+import com.augustnagro.magnum.DbCodec
+import com.histmersion.api.log.LogEvent
+import com.histmersion.util.database.NewtypeColumns.given
+
 import java.io.PrintWriter
 import java.sql.Connection
 import java.util.logging.Logger
@@ -13,14 +17,14 @@ import scala.util.Using
   * reused by the same trace, or by untraced work, costs no round trip.
   */
 final class TracedDataSource(underlying: DataSource) extends DataSource:
-  private val told = java.util.WeakHashMap[AnyRef, (String, String)]()
+  private val told = java.util.WeakHashMap[AnyRef, (Option[LogEvent.Trace], Option[LogEvent.Label])]()
 
   def getConnection(): Connection = tell(underlying.getConnection())
   def getConnection(username: String, password: String): Connection = tell(underlying.getConnection(username, password))
 
   private def tell(c: Connection): Connection =
-    val scope = Tracing.scope
-    val wanted = (scope.fold("")(_.trace.value), scope.flatMap(_.label).fold("")(_.value))
+    val scope = TraceScope.current
+    val wanted = (scope.map(_.trace), scope.flatMap(_.label))
     val physical: AnyRef =
       if c.isWrapperFor(classOf[org.postgresql.PGConnection]) then c.unwrap(classOf[org.postgresql.PGConnection])
       else c
@@ -29,11 +33,12 @@ final class TracedDataSource(underlying: DataSource) extends DataSource:
       try
         Using.resource(
           c.prepareStatement(
-            "SELECT set_config('histmersion.trace', ?, false), set_config('histmersion.trace_label', ?, false)"
+            "SELECT set_config('histmersion.trace', coalesce(?, ''), false), " +
+              "set_config('histmersion.trace_label', coalesce(?, ''), false)"
           )
         ) { s =>
-          s.setString(1, wanted._1)
-          s.setString(2, wanted._2)
+          summon[DbCodec[Option[LogEvent.Trace]]].writeSingle(wanted._1, s, 1)
+          summon[DbCodec[Option[LogEvent.Label]]].writeSingle(wanted._2, s, 2)
           Using.resource(s.executeQuery())(_ => ())
         }
         val _ = told.synchronized(told.put(physical, wanted))

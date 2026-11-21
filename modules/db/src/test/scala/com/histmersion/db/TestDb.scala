@@ -9,6 +9,7 @@ package db
   * UI, which is exactly what happened once.
   */
 
+import com.histmersion.config.DbConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
 object TestDb:
@@ -57,6 +58,9 @@ object TestDb:
         .foreach(b => ensureExists(validate(b).fold(e => throw IllegalStateException(e), identity), ok))
       ok
     }
+
+  /** [[url]] as the settings' database URL. */
+  lazy val dbUrl: Option[DbConfig.Url] = url.map(DbConfig.Url(_))
 
   private[db] def name(url: String): String = url.split('?').head.reverse.takeWhile(_ != '/').reverse
 

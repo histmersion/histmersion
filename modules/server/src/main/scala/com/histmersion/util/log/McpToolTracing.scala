@@ -18,6 +18,6 @@ object McpToolTracing:
       t.outputSchema,
       t.annotations,
       (input, context, headers) =>
-        Tracing.record(LogEvent.What.ToolCalled(LogEvent.Tool(t.name)))
+        TraceScope.record(LogEvent.What.ToolCalled(LogEvent.Tool(t.name)))
         t.logic(input, context, headers)
     )

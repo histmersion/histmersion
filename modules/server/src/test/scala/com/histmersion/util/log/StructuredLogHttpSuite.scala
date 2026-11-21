@@ -26,7 +26,8 @@ class StructuredLogHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private val Secret = "sk-structured-log-secret-7f3a9c"
+  private val Key = AuthConfig.ApiKey("sk-structured-log-secret-7f3a9c")
+  private val Secret = s"$Key"
   private val http = HttpClient.newHttpClient()
 
   private def get(url: String, headers: (String, String)*): HttpResponse[String] =
@@ -50,36 +51,37 @@ class StructuredLogHttpSuite extends DbSuite:
     val base = AppConfig.load()
     val cfg = base
       .modify(_.db)
-      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .setTo(base.db.modify(_.url).setTo(TestDb.dbUrl.get))
       .modify(_.log)
       .setTo(base.log.modify(_.dir).setTo(LogConfig.Dir(dir.toString)))
       .modify(_.auth)
-      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Secret)))
+      .setTo(base.auth.modify(_.apiKey).setTo(Key))
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val searched = get(s"$url/api/search?q=bronze%20age%20collapse", RequestLog.LabelHeader -> "suite-session")
         val trace = searched.headers().firstValue(RequestLog.TraceHeader).orElse("")
-        assert(LogEvent.Trace(trace).wellFormed, s"the answer's trace: '$trace'")
+        val expected = LogEvent.Trace.fromHeader(trace)
+        assert(expected.exists(_.wellFormed), s"the answer's trace: '$trace'")
         val p = awaitLog(url, s"trace=$trace", _.what.isInstanceOf[What.RequestAnswered])
         val answered = p.events.collect { case LogEvent(_, _, _, label, _, _, r: What.RequestAnswered) => (label, r) }
         assertEquals(answered.size, 1, p.toString)
         val (label, r) = answered.head
-        assertEquals(r.operation.value, "/api/search")
-        assertEquals(r.method.value, "GET")
-        assertEquals(r.status.value, searched.statusCode)
+        assertEquals(r.operation, "/api/search")
+        assertEquals(r.method, "GET")
+        assertEquals(r.status, searched.statusCode)
         assertEquals(r.client, Some("127.0.0.1"))
         assertEquals(r.search, Some("bronze age collapse"))
         assertEquals(label, Some("suite-session"))
         // the label alone finds it too
-        val byLabel = awaitLog(url, "label=suite-session", _.trace.value == trace)
-        assert(byLabel.events.exists(_.trace.value == trace), byLabel.toString)
+        val byLabel = awaitLog(url, "label=suite-session", e => expected.contains(e.trace))
+        assert(byLabel.events.exists(e => expected.contains(e.trace)), byLabel.toString)
         // a path parameter is named, never its value
         val job = get(s"$url/api/jobs/no-such-job-77")
         val jobTrace = job.headers().firstValue(RequestLog.TraceHeader).orElse("")
         val jp = awaitLog(url, s"trace=$jobTrace", _.what.isInstanceOf[What.RequestAnswered])
-        val ops = jp.events.collect { case LogEvent(_, _, _, _, _, _, r: What.RequestAnswered) => r.operation.value }
+        val ops = jp.events.collect { case LogEvent(_, _, _, _, _, _, r: What.RequestAnswered) => s"${r.operation}" }
         assert(ops.nonEmpty && ops.forall(o => o.contains("{") && !o.contains("no-such-job-77")), ops.toString)
         // the health check is counted, not logged one by one
         val health = get(s"$url/api/health")
@@ -114,7 +116,7 @@ class StructuredLogHttpSuite extends DbSuite:
       finally b.stop()
     }
     // the secret, sent with every request and kept in the settings, is in neither store
-    val ds = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    val ds = testPool(base.db.modify(_.url).setTo(TestDb.dbUrl.get))
     val inTable = connect(ds)(
       sql"SELECT count(*) FROM log_events WHERE event::text LIKE ${s"%$Secret%"} OR coalesce(label, '') LIKE ${s"%$Secret%"}"
         .query[Long]

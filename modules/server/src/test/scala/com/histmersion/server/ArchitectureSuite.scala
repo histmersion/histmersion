@@ -334,6 +334,7 @@ object ArchitectureSuite:
       "plugins" -> "util.plugins",
       "settings" -> "util.settings",
       "text" -> "util.text",
+      "time" -> "util.time",
       "problem" -> "util.problem",
       "instance" -> "server.instance",
       "views" -> "server.views"

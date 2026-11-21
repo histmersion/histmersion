@@ -7,6 +7,7 @@ import com.histmersion.api.log.LogEvent
 import com.augustnagro.magnum.DbCon
 import com.histmersion.domain.automation.{Pipeline, Run}
 
+import com.histmersion.util.database.NewtypeColumns.given
 import hearth.kindlings.optics.syntax.*
 
 import java.time.Instant
@@ -84,7 +85,7 @@ object JobRuns:
     def create(run: RunRow)(using WritePermit): Run.Id = db.write(JobRepo.insertRun(run))
     def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = JobRepo.insertRun(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = db.read(JobRepo.runPipelineVersion(id))
-    def trace(id: Run.Id): Option[LogEvent.Trace] = db.read(JobRepo.traceOfRun(id))
+    def trace(id: Run.Id): Option[LogEvent.Trace] = db.read(JobRepo.traceOf(id))
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit = db.write(JobRepo.runHeartbeat(kind, id))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       db.read(JobRepo.runsIn(kind, statuses))
@@ -133,11 +134,14 @@ object JobRuns:
     private val stamp = java.util.concurrent.atomic.AtomicLong(0L)
     private def touched(r: JobRunState): JobRunState =
       r.modify(_.updated).setTo(JobRunState.Updated(stamp.incrementAndGet())).modify(_.updatedAt).setTo(now())
-    private def change(kind: Job.Kind, id: Run.Id)(f: JobRunState => JobRunState): Boolean = changeOf(kind.value, id)(f)
-    private def changeOf(kind: String, id: Run.Id)(f: JobRunState => JobRunState): Boolean =
+    private def change(kind: Job.Kind, id: Run.Id)(f: JobRunState => JobRunState): Boolean = changeIf(id, of(kind))(f)
+    private def changeIf(id: Run.Id, p: JobRunState => Boolean)(f: JobRunState => JobRunState): Boolean =
       val before = state.get
-      val after = state.updateAndGet(m => m.get(id).filter(_.row.kind.value == kind).fold(m)(r => m.updated(id, f(r))))
+      val after = state.updateAndGet(m => m.get(id).filter(p).fold(m)(r => m.updated(id, f(r))))
       before.get(id) != after.get(id)
+
+    /** Is `r` a run of `kind`? */
+    private def of(kind: Job.Kind)(r: JobRunState): Boolean = r.row.kind.value == kind.value
 
     /** A run as it stands. */
     def get(id: Run.Id): Option[JobRunState] = state.get.get(id)
@@ -147,7 +151,7 @@ object JobRuns:
 
     /** A run's row changed by its owner's own tables (a step recorded): stamped as the database's `updated_at = now()`.
       */
-    def stamped(id: Run.Id): Unit = state.get.get(id).foreach(r => changeOf(r.row.kind.value, id)(touched): Unit)
+    def stamped(id: Run.Id): Unit = changeIf(id, _ => true)(touched): Unit
 
     def create(run: RunRow)(using WritePermit): Run.Id =
       val id = Run.Id.applyUnsafe(java.util.UUID.randomUUID().toString)
@@ -180,9 +184,7 @@ object JobRuns:
       val _ = change(kind, id)(_.modify(_.heartbeatAt).setTo(Some(now())))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       RowCount(
-        state.get.values.count(r =>
-          r.row.kind.value == kind.value && (r.row.status == statuses._1 || r.row.status == statuses._2)
-        )
+        state.get.values.count(r => of(kind)(r) && (r.row.status == statuses._1 || r.row.status == statuses._2))
       )
     def move(
         kind: Job.Kind,
@@ -208,7 +210,7 @@ object JobRuns:
           )
       }
     private def mine(kind: Job.Kind): List[(Run.Id, JobRunState)] =
-      state.get.toList.filter(_._2.row.kind.value == kind.value)
+      state.get.toList.filter((_, r) => of(kind)(r))
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       mine(kind)
         .filter((_, r) => r.row.status == paused && r.resumeAt.exists(!_.isAfter(now)))

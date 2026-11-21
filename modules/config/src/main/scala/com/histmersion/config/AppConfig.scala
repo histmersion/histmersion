@@ -3,6 +3,7 @@ package config
 
 import com.histmersion.util.problem.{Problem, Problems, Raised}
 import com.histmersion.util.mcp.McpConfig
+import com.histmersion.util.log.LogConfig
 import org.ekrich.config.ConfigFactory
 import hearth.kindlings.sconfigderivation.ConfigReader
 import hearth.kindlings.sconfigderivation.annotations.configKey

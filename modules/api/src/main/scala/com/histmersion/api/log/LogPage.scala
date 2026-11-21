@@ -4,15 +4,32 @@ package api.log
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.time.TimeBound
 import io.github.iltotore.iron.constraint.any.Pure
+
+import java.time.Instant
+import scala.util.Try
+
+import LogPage.{Cursor, Origin}
 
 /** A page of the structured log, newest first: `next` is the cursor of the older page, `origin` where it was read (the
   * file when the database could not be).
   */
-final case class LogPage(events: Vector[LogEvent], next: Option[LogPage.Cursor], origin: LogPage.Origin)
+final case class LogPage(events: Vector[LogEvent], next: Option[Cursor], origin: Origin)
     derives JsonCodec,
       KindlingsSchema,
-      api.json.Schema
+      api.json.Schema:
+
+  /** The page as Markdown: one line per event, then `older` of the next page's cursor when there is one. */
+  def markdown(older: Cursor => String): String =
+    val from = origin match
+      case Origin.Database => ""
+      case Origin.File     => "_Read from the log file: the database could not answer._\n\n"
+    val lines = if events.isEmpty then "_No events._" else events.map(_.markdown).mkString("\n")
+    from + lines + next.fold("")(c => s"\n\n${older(c)}")
+
+  /** The same events, oldest first. */
+  def oldestFirst: LogPage = LogPage(events.reverse, next, origin)
 
 object LogPage:
   type Cursor = Cursor.T
@@ -24,9 +41,9 @@ object LogPage:
       /** As a filter gives it: trimmed, none when blank. */
       def present: Option[Cursor] = Option(c.value.trim).filter(_.nonEmpty).map(Cursor(_))
 
-      /** Its two parts, `<instant>~<id>`, when it has both. */
-      def parts: Option[(String, String)] = c.value.split("~", 2) match
-        case Array(at, id) if id.nonEmpty => Some((at, id))
+      /** The place it names, `<instant>~<id>`, when it has both and the instant reads. */
+      def place: Option[(Instant, LogEvent.Id)] = c.value.split("~", 2) match
+        case Array(at, id) if id.nonEmpty => Try(Instant.parse(at)).toOption.map((_, LogEvent.Id(id)))
         case _                            => None
 
   type Limit = Limit.T
@@ -36,6 +53,9 @@ object LogPage:
 
     /** The largest page. */
     def max: Limit = Limit(MaxLimit)
+
+    /** One event. */
+    def one: Limit = Limit(1)
 
     extension (l: Limit)
       /** The first `l` of `rows`, and the rest. */
@@ -76,8 +96,8 @@ object LogPage:
       source: Option[LogEvent.Key] = None,
       problem: Option[LogEvent.ProblemId] = None,
       kind: Option[LogEvent.Kind] = None,
-      since: Option[LogEvent.At] = None,
-      until: Option[LogEvent.At] = None,
+      since: Option[TimeBound] = None,
+      until: Option[TimeBound] = None,
       limit: Option[Limit] = None,
       before: Option[Cursor] = None,
       from: Option[From] = None

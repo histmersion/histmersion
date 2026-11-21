@@ -9,7 +9,7 @@ import com.histmersion.util.database.TestPermits.given
 class TransactorSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val db = Transactor(testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))))
+  private lazy val db = Transactor(testPool(AppConfig.load().db.copy(url = TestDb.dbUrl.get)))
 
   override def beforeAll(): Unit =
     if testDb.isDefined then

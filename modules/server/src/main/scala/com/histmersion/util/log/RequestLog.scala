@@ -3,16 +3,16 @@ package util.log
 
 import com.histmersion.api.log.LogEvent
 import com.histmersion.api.log.LogEvent.What
-import com.histmersion.config.LogConfig
-import sttp.model.Header
+import sttp.model.{Header, StatusCode}
 import sttp.monad.MonadError
 import sttp.shared.Identity
-import sttp.tapir.Endpoint
 import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.interceptor.*
 import sttp.tapir.server.interpreter.BodyListener
 import sttp.tapir.server.model.ServerResponse
+
+import RequestLog.{LabelHeader, TraceHeader, Unmatched}
 
 /** Every HTTP request — REST, MCP, pages — opens a trace: its steps (provider calls, problems, the database's writes)
   * are recorded under it, its answer carries it (`Histmersion-Trace`), and once answered it is one `RequestAnswered`
@@ -31,20 +31,20 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
             monad: MonadError[Identity],
             body: BodyListener[Identity, B]
         ): Identity[ServerResponse[B]] =
-          matched.set(RequestLog.template(ctx.endpoint))
+          matched.set(LogEvent.Operation.of(ctx.endpoint))
           next.onDecodeSuccess(ctx)
         def onSecurityFailure[A](ctx: SecurityFailureContext[Identity, A])(using
             monad: MonadError[Identity],
             body: BodyListener[Identity, B]
         ): Identity[ServerResponse[B]] =
-          matched.set(RequestLog.template(ctx.endpoint))
+          matched.set(LogEvent.Operation.of(ctx.endpoint))
           next.onSecurityFailure(ctx)
         def onDecodeFailure(ctx: DecodeFailureContext)(using
             monad: MonadError[Identity],
             body: BodyListener[Identity, B]
         ): Identity[Option[ServerResponse[B]]] =
           val answer = next.onDecodeFailure(ctx)
-          if answer.isDefined then matched.set(RequestLog.template(ctx.endpoint))
+          if answer.isDefined then matched.set(LogEvent.Operation.of(ctx.endpoint))
           answer
 
   def apply[R, B](
@@ -56,39 +56,39 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
       def apply(request: ServerRequest, endpoints: List[ServerEndpoint[R, Identity]])(using
           monad: MonadError[Identity]
       ): RequestResult[B] =
-        val method = request.method.method
+        val method = LogEvent.Method.of(request.method)
         val path = request.uri.pathSegments.segments.map(_.v).mkString("/", "/", "")
-        val counted = (method == "GET" || method == "HEAD") && settings().countsPath(path)
+        val counted = method.reads && settings().countsPath(path)
         val scope = TraceScope(
           writer.mintTrace(),
-          request.header(RequestLog.LabelHeader).flatMap(LogEvent.Label.fromHeader),
+          request.header(LabelHeader).flatMap(LogEvent.Label.fromHeader),
           LogEvent.Actor.Client,
           writer
         )
         val started = System.nanoTime()
         matched.remove()
-        val result = Tracing.within(scope)(next(request, endpoints))
-        val operation = Option(matched.get()).getOrElse(LogEvent.Operation(RequestLog.Unmatched))
+        val result = scope.within(next(request, endpoints))
+        val operation = Option(matched.get()).getOrElse(Unmatched)
         matched.remove()
         val status = result match
-          case RequestResult.Response(response, _) => response.code.code
-          case _: RequestResult.Failure            => 404
-        if counted then writer.count(LogEvent.Operation(s"$method $operation"), status >= 500)
+          case RequestResult.Response(response, _) => LogEvent.Status.of(response.code)
+          case _: RequestResult.Failure            => LogEvent.Status.of(StatusCode.NotFound)
+        if counted then writer.count(operation.by(method), status.serverError)
         else
           scope.record(
             Vector(scope.trace.request),
             What.RequestAnswered(
               operation,
-              LogEvent.Method(method),
-              LogEvent.Status(status),
-              LogEvent.Millis((System.nanoTime() - started) / 1000000L),
+              method,
+              status,
+              LogEvent.Millis.between(started, System.nanoTime()),
               request.connectionInfo.remote.map(a => LogEvent.Client(a.getAddress.getHostAddress)),
-              request.queryParameters.get("q").map(_.trim).filter(_.nonEmpty).map(q => LogEvent.Search(q.take(500)))
+              request.queryParameters.get("q").flatMap(LogEvent.Search.fromQuery)
             )
           )
         result match
           case RequestResult.Response(response, source) =>
-            RequestResult.Response(response.addHeaders(List(Header(RequestLog.TraceHeader, s"${scope.trace}"))), source)
+            RequestResult.Response(response.addHeaders(List(Header(TraceHeader, s"${scope.trace}"))), source)
           case failure => failure
 
 object RequestLog:
@@ -99,8 +99,4 @@ object RequestLog:
   val LabelHeader = "Histmersion-Trace-Label"
 
   /** The operation of a request no route matched. */
-  val Unmatched = "(no route)"
-
-  /** A route's template: its path with its parameters named (`/api/sources/{citekey}`), never the query. */
-  def template(e: Endpoint[?, ?, ?, ?, ?]): LogEvent.Operation =
-    LogEvent.Operation(e.showPathTemplate(showQueryParam = None))
+  val Unmatched: LogEvent.Operation = LogEvent.Operation("(no route)")

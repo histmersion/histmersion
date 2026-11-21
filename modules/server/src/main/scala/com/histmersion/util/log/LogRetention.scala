@@ -1,35 +1,39 @@
 package com.histmersion
 package util.log
 
-import com.histmersion.config.LogConfig
 import com.histmersion.util.database.{Transactor, WritePermit}
 
 import java.time.Instant
 import scala.util.control.NonFatal
+
+import LogRetention.excessRows
 
 /** The structured log's retention, the same for the table and the files: ordinary events are kept `keep-days`, problems
   * `keep-problem-days`, and each store at most `max-bytes`, the oldest going first.
   */
 final class LogRetention(files: LogFiles, transactor: Transactor, gate: WritePermit.Gate):
 
-  /** One run over the files and the table at `now`. A database that cannot be reached now is pruned at the next run.
+  /** One run over the files and the table at `now`. A database that cannot be reached now (or that a restore holds) is
+    * pruned at the next run. What went is written to the server's log.
     */
   def run(cfg: LogConfig, now: Instant): Unit =
     val ordinary = cfg.keepDays.before(now)
     val problems = cfg.keepProblemDays.before(now)
-    val _ = files.prune(now, ordinary, problems, cfg.maxBytes)
+    val gone = files.prune(now, ordinary, problems, cfg.maxBytes)
+    if gone.nonEmpty then scribe.info(s"log retention: ${gone.size} log file(s) deleted")
     try
-      val _ = gate.unit {
+      gate.unit {
         gate.permit {
           transactor.write {
-            val _ = LogRepo.deleteOlder(LogStamp.iso(ordinary), LogStamp.iso(problems))
+            val expired = LogRepo.deleteOlder(ordinary, problems)
             val (bytes, rows, dead) = LogRepo.size
-            val over = LogRetention.excessRows(bytes, rows, dead, cfg.maxBytes)
-            if over > 0 then
-              val _ = LogRepo.deleteOldest(over)
+            val over = excessRows(bytes, rows, dead, cfg.maxBytes)
+            expired + (if over > 0 then LogRepo.deleteOldest(over) else 0L)
           }
         }
-      }
+      } match
+        case Right(deleted) => if deleted > 0 then scribe.info(s"log retention: $deleted event(s) deleted")
+        case Left(_) => scribe.info("log retention: a restore holds the database; the table is pruned at the next run")
     catch
       case NonFatal(e) =>
         scribe.warn(s"log retention: the table is pruned at the next run (${e.getClass.getSimpleName})")

@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.agents
 import com.histmersion.util.problem.{External, Problem, ProblemLog}
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.util.log.JobTrace
+import com.histmersion.util.log.TraceScope
 
 import hearth.kindlings.optics.syntax.*
 
@@ -456,7 +456,7 @@ final class Engine(
 
   /** Run one queued run under its own trace (the one its row keeps), whoever resumed it. */
   private def executeInItsTrace(id: Run.Id)(using WritePermit): Unit =
-    JobTrace.resumed(agents.jobRuns.trace(id))(execute(id))
+    TraceScope.resumed(agents.jobRuns.trace(id))(execute(id))
 
   /** Run one queued run to its next resting state. */
   private[histmersion] def execute(id: Run.Id)(using WritePermit): Unit =

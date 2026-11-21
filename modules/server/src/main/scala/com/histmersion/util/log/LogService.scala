@@ -19,7 +19,7 @@ trait LogService:
 
 object LogService:
   /** How long a read of the table may take before the files are read instead. */
-  val ReadTimeoutMs: Int = 10000
+  val ReadTimeout: Transactor.TimeoutMs = Transactor.TimeoutMs(10000)
 
   def apply(transactor: Transactor, files: LogFiles): LogService = Implementation(transactor, files)
 
@@ -29,7 +29,7 @@ object LogService:
         case LogQuery.Store.File     => fromFiles(q)
         case LogQuery.Store.Database =>
           try
-            val rows = transactor.readOnlyRollback(Transactor.TimeoutMs(ReadTimeoutMs)) {
+            val rows = transactor.readOnlyRollback(ReadTimeout) {
               LogRepo.page(where(q), q.limit.andOne)
             }
             val (events, next) = q.page(rows)
@@ -38,11 +38,18 @@ object LogService:
 
     def problem(id: LogEvent.ProblemId, limit: LogPage.Limit): Option[LogPage] =
       val trace =
-        try transactor.readOnlyRollback(Transactor.TimeoutMs(ReadTimeoutMs))(LogRepo.traceOfProblem(id))
+        try
+          transactor
+            .readOnlyRollback(ReadTimeout)(
+              LogRepo
+                .page(where(LogQuery.ofSubject(id.subject, LogPage.Limit.one)), LogPage.Limit.one, oldestFirst = true)
+            )
+            .headOption
+            .map(_.trace)
         catch case NonFatal(_) => None
       trace
-        .orElse(files.page(LogQuery.ofSubject(id.subject, LogPage.Limit(1)))._1.headOption.map(_.trace))
-        .map(t => oldestFirst(page(LogQuery.ofTrace(t, limit))))
+        .orElse(files.page(LogQuery.ofSubject(id.subject, LogPage.Limit.one))._1.headOption.map(_.trace))
+        .map(t => page(LogQuery.ofTrace(t, limit)).oldestFirst)
 
     private def fromFiles(q: LogQuery): LogPage =
       val (events, next) = files.page(q)
@@ -56,12 +63,10 @@ object LogService:
     sql"""${q.trace.fold(sql"")(t => sql" AND trace = $t::uuid")}${q.label.fold(sql"")(l => sql" AND label = $l")}${
         if subjects.isEmpty then sql"" else sql" AND subjects @> $subjects::text[]"
       }${q.kind.fold(sql"")(k => sql" AND kind = $k")}${q.since.fold(sql"")(s =>
-        sql" AND at >= ${LogStamp.iso(s)}::timestamptz"
-      )}${q.until.fold(sql"")(u => sql" AND at <= ${LogStamp.iso(u)}::timestamptz")}${q.before.fold(sql"")(p =>
-        sql" AND (at, id) < (${LogStamp.iso(p.at)}::timestamptz, ${p.id}::uuid)"
+        sql" AND at >= ${LogEvent.At.of(s)}::timestamptz"
+      )}${q.until.fold(sql"")(u => sql" AND at <= ${LogEvent.At.of(u)}::timestamptz")}${q.before.fold(sql"")(p =>
+        sql" AND (at, id) < (${LogEvent.At.of(p.at)}::timestamptz, ${p.id}::uuid)"
       )}"""
-
-  private def oldestFirst(p: LogPage): LogPage = LogPage(p.events.reverse, p.next, p.origin)
 
   /** The same reads over events held in memory (tests): written with [[add]]. */
   final class InMemory(events: AtomicReference[Vector[LogEvent]] = AtomicReference(Vector.empty)) extends LogService:
@@ -74,4 +79,4 @@ object LogService:
     def problem(id: LogEvent.ProblemId, limit: LogPage.Limit): Option[LogPage] =
       events.get
         .find(_.subjects.contains(id.subject))
-        .map(e => oldestFirst(page(LogQuery.ofTrace(e.trace, limit))))
+        .map(e => page(LogQuery.ofTrace(e.trace, limit)).oldestFirst)

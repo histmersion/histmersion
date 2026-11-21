@@ -99,6 +99,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.instance.Version
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
+import com.histmersion.api.log.LogApi
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.research.Article
 import com.histmersion.util.json.JsonCodec
@@ -1282,7 +1283,7 @@ object Api:
     backupStatus
   ) ++ OpsApi.all ++ AgentsApi.all ++ ManagersApi.all ++ AutopilotApi.switches ++ AcquisitionWorkApi.all ++
     ManagersApi.steering ++ AutopilotApi.draining ++ ManagersApi.stalled ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ PersonalApi.all ++
-    CollectionsApi.all ++ com.histmersion.api.log.LogApi.all
+    CollectionsApi.all ++ LogApi.all
 
   lazy val places: PublicEndpoint[
     (Option[Place.Kind.Wire], Option[AggregateQuery.AsOf], Option[PlacesGeoQuery.Limit]),

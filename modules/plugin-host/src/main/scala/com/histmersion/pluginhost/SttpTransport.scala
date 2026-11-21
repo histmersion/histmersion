@@ -4,7 +4,7 @@ package pluginhost
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.Plugin
 import com.histmersion.api.log.LogEvent
-import com.histmersion.util.log.Tracing
+import com.histmersion.util.log.TraceScope
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
 import sttp.model.Uri
@@ -48,12 +48,12 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
     val started = System.nanoTime()
     val sent = scala.util.Try(req.send(backend))
     // the call in the calling thread's trace: the host and the status only, never the URL (a key may ride in its query)
-    Tracing.record(
+    TraceScope.record(
       LogEvent.What.ProviderCalled(
-        LogEvent.Upstream(url.upstream.value),
-        LogEvent.Host(url.upstream.value),
-        sent.toOption.map(r => LogEvent.Status(r.code.code)),
-        LogEvent.Millis((System.nanoTime() - started) / 1000000L)
+        LogEvent.Upstream.of(url.upstream),
+        LogEvent.Host.of(url.upstream),
+        sent.toOption.map(r => LogEvent.Status.of(r.code)),
+        LogEvent.Millis.between(started, System.nanoTime())
       )
     )
     sent.toEither.left

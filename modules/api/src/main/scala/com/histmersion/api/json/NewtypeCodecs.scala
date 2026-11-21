@@ -3,7 +3,7 @@ package api.json
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import sttp.tapir.Schema
+import sttp.tapir.{Codec, CodecFormat, Schema}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
 import hearth.kindlings.jsoniterjson.Json
@@ -13,9 +13,10 @@ import util.json.RawJson.asJson
 import api.problem.Answer
 import api.problem.Answer.{asProblem, entry}
 
-/** The JSON codec, key codec and tapir schema of every newtype (`type X = X.T; object X extends Newtype[Base, C]`),
-  * from its base type's: the same JSON and the same schema, with the constraint checked on decoding. Importing its
-  * givens also brings the base types', the containers' and raw JSON's ([[JsonCodec]], [[RawJson]]).
+/** The JSON codec, key codec, tapir schema and (unconstrained ones) tapir text codec of every newtype (`type X = X.T;
+  * object X extends Newtype[Base, C]`), from its base type's: the same JSON and the same schema, with the constraint
+  * checked on decoding. Importing its givens also brings the base types', the containers' and raw JSON's
+  * ([[JsonCodec]], [[RawJson]]).
   *
   * An unconstrained (`Pure`) newtype — every one of the wire contract's — decodes as its base type does, with no check:
   * there is nothing to check, and not calling Iron's `either` keeps every companion's runtime constraint out of the web
@@ -40,6 +41,14 @@ object NewtypeCodecs:
 
   given schema: [T] => (m: RefinedType.Mirror[T]) => (base: Schema[m.BaseType]) => Schema[T] =
     base.as[T]
+
+  /** A newtype as a query parameter or a path segment: its base type's text, read with no check. Only an unconstrained
+    * (`Pure`) newtype — every one of the wire contract's — has one: the server checks once, where an api value becomes
+    * a domain value.
+    */
+  given plain: [T] => (m: RefinedType.Mirror[T] { type ConstraintType = Pure })
+    => (base: Codec[String, m.BaseType, CodecFormat.TextPlain]) => Codec[String, T, CodecFormat.TextPlain] =
+    base.asInstanceOf[Codec[String, T, CodecFormat.TextPlain]]
 
   /** A problem in a wire record: its group, its case, its fields and its English sentence (`{"group", "case", "data",
     * "text"}`, an [[Answer.Entry]]), so a reader keeps its type and a person still reads the sentence. One codec for

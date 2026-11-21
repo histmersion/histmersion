@@ -9,7 +9,7 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.exchange.MergeIssue
 import sttp.tapir.*
 
-import java.time.{Instant, LocalDate, ZoneOffset}
+import java.time.Instant
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.given
@@ -34,8 +34,7 @@ object ListFilters:
   object Qualifier extends Newtype[String, Pure]
   type Term = Term.T
   object Term extends Newtype[String, Pure]
-  type TimeBound = TimeBound.T
-  object TimeBound extends Newtype[String, Pure]
+  export com.histmersion.api.time.TimeBound
 
   val FacetsHeader = "X-Facet-Counts"
 
@@ -323,37 +322,7 @@ object ListFilters:
         )
       case None => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
 
-  private val Relative = """(\d{1,6})\s*([dhm])""".r
-  private val DateOnly = """(\d{4}-\d{2}-\d{2})""".r
-
-  def timeBound(s: TimeBound, end: Boolean, now: Instant): Either[Problem, Instant] =
-    (s).value.trim.toLowerCase match
-      case Relative(n, unit) =>
-        val secs = n.toLong * (unit match { case "d" => 86400L; case "h" => 3600L; case _ => 60L })
-        Right(now.minusSeconds(secs))
-      case DateOnly(d) =>
-        scala.util
-          .Try(LocalDate.parse(d))
-          .toOption
-          .map(day => (if (end) == (true) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
-          .toRight(
-            Invalid.Unreadable.here(
-              TypeName.of(TimeBound),
-              Raw(s"$s"),
-              Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))
-            )
-          )
-      case _ =>
-        scala.util
-          .Try(Instant.parse((s).value.trim))
-          .toOption
-          .toRight(
-            Invalid.Unreadable.here(
-              TypeName.of(TimeBound),
-              Raw(s"$s"),
-              Vector(Raw("2026-10-01"), Raw("2026-10-01T12:00:00Z"), Raw("7d"), Raw("12h"), Raw("30m"))
-            )
-          )
+  def timeBound(s: TimeBound, end: Boolean, now: Instant): Either[Problem, Instant] = s.instant(end, now)
 
   def range(
       since: Option[TimeBound],

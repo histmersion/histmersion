@@ -75,6 +75,11 @@ object Problem:
       */
     def of[T](value: T)(using RefinedType.Mirror[T]): Raw = Raw(s"$value")
 
+    /** A case of a closed vocabulary (an enum) as an input could name it: its name (`File`), as a list of the values a
+      * field takes shows it.
+      */
+    def of(value: scala.reflect.Enum): Raw = Raw(value.toString)
+
   /** The wire name of a request or settings field (`lat`, `edges`, `agents.budgets.daily-usd`). */
   type Field = Field.T
   object Field extends Newtype[String, Pure]:

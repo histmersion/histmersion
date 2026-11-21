@@ -82,7 +82,7 @@ object BackupService:
 
   /** `pg_dump`'s arguments that leave out the rows of the tables the owners keep out of a backup (the log's). */
   def rowsLeftOut(registry: DataContributions): List[String] =
-    registry.backups.flatMap(_._2.rowsLeftOut).map(t => s"--exclude-table-data=public.${t.value}")
+    registry.backups.flatMap(_._2.rowsLeftOut).map(t => s"--exclude-table-data=public.$t")
 
   private def problem(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
 
@@ -288,7 +288,7 @@ object BackupService:
                 for
                   part <- reservation.onDisk.left.map(e => problem(e.message.sentence))
                   res <- run(
-                    List(pgDump) ++ command(t.args*) ++ command(BackupService.rowsLeftOut(registry)*) ++
+                    List(pgDump) ++ command(t.args*) ++ command(rowsLeftOut(registry)*) ++
                       command("-Fc", "-f", part.toString)
                   )
                   _ <- succeeded("pg_dump", res)

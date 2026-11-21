@@ -1,8 +1,13 @@
 package com.histmersion
-package config
+package util.log
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+import LogConfig.{Backlog, BatchSize, Counted, Dir, FlushMillis, KeepDays, MaxBytes, PruneEveryMinutes, QueueSize}
 
 /** The structured log: where its rolling files are (`dir`, empty: `<data dir>/logs/structured`), how long its events
   * are kept (ordinary ones `keepDays`, problems `keepProblemDays`) and how large the table and the files may grow
@@ -10,19 +15,19 @@ import io.github.iltotore.iron.constraint.any.Pure
   * rather than logged one by one.
   */
 final case class LogConfig(
-    dir: LogConfig.Dir,
-    keepDays: LogConfig.KeepDays,
-    keepProblemDays: LogConfig.KeepDays,
-    maxBytes: LogConfig.MaxBytes,
-    queueSize: LogConfig.QueueSize,
-    batchSize: LogConfig.BatchSize,
-    flushMillis: LogConfig.FlushMillis,
-    backlog: LogConfig.Backlog,
-    pruneEveryMinutes: LogConfig.PruneEveryMinutes,
-    counted: LogConfig.Counted
+    dir: Dir,
+    keepDays: KeepDays,
+    keepProblemDays: KeepDays,
+    maxBytes: MaxBytes,
+    queueSize: QueueSize,
+    batchSize: BatchSize,
+    flushMillis: FlushMillis,
+    backlog: Backlog,
+    pruneEveryMinutes: PruneEveryMinutes,
+    counted: Counted
 ) derives ConfigReader:
   /** Whether a GET of `path` is counted rather than logged one by one. */
-  def countsPath(path: String): Boolean = counted.prefixes.exists(_.covers(path))
+  def countsPath(path: String): Boolean = counted.covers(path)
 
 object LogConfig:
   type Dir = Dir.T
@@ -35,8 +40,7 @@ object LogConfig:
   object KeepDays extends Newtype[Int, Pure]:
     extension (d: KeepDays)
       /** The cut-off at `now`: what is older goes. */
-      def before(now: java.time.Instant): java.time.Instant =
-        now.minus(math.max(0, d.value).toLong, java.time.temporal.ChronoUnit.DAYS)
+      def before(now: Instant): Instant = now.minus(math.max(0, d.value).toLong, ChronoUnit.DAYS)
 
   type MaxBytes = MaxBytes.T
   object MaxBytes extends Newtype[Long, Pure]:
@@ -63,10 +67,10 @@ object LogConfig:
   type Backlog = Backlog.T
   object Backlog extends Newtype[Int, Pure]:
     extension (b: Backlog)
-      /** The newest of `pending` the backlog keeps, and how many it lets go. */
-      def keep[A](pending: Vector[A]): (Vector[A], Int) =
+      /** The newest of `pending` the backlog keeps, and the older ones it lets go. */
+      def keep[A](pending: Vector[A]): (Vector[A], Vector[A]) =
         val keep = math.max(0, b.value)
-        (pending.takeRight(keep), math.max(0, pending.size - keep))
+        (pending.takeRight(keep), pending.dropRight(keep))
 
   type PruneEveryMinutes = PruneEveryMinutes.T
   object PruneEveryMinutes extends Newtype[Int, Pure]:
@@ -74,15 +78,15 @@ object LogConfig:
       /** Whether a run is due at `nowMillis`, the last one at `lastMillis`. */
       def due(lastMillis: Long, nowMillis: Long): Boolean = nowMillis - lastMillis >= math.max(1, p.value) * 60000L
 
+  /** The counted path prefixes, separated by commas (blank ones ignored). */
   type Counted = Counted.T
   object Counted extends Newtype[String, Pure]:
     extension (c: Counted)
-      /** The counted path prefixes, each trimmed, empty ones left out. */
-      def prefixes: List[CountedPrefix] =
-        c.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(CountedPrefix(_))
-
-  type CountedPrefix = CountedPrefix.T
-  object CountedPrefix extends Newtype[String, Pure]:
-    extension (p: CountedPrefix)
-      /** Whether `path` is under it (`/web/` covers `/web` and `/web/app.js`). */
-      def covers(path: String): Boolean = path == p.value.stripSuffix("/") || path.startsWith(p.value)
+      /** Whether `path` is under one of the prefixes, each trimmed (`/web/` covers `/web` and `/web/app.js`). */
+      def covers(path: String): Boolean =
+        c.value
+          .split(",")
+          .iterator
+          .map(_.trim)
+          .filter(_.nonEmpty)
+          .exists(p => path == p.stripSuffix("/") || path.startsWith(p))

@@ -6,14 +6,14 @@ import com.histmersion.api.json.NewtypeCodecs.given
 
 import chimp.server.*
 import com.histmersion.api.Api
-import com.histmersion.api.log.{LogEvent, LogMarkdown, LogPage}
+import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.util.mcp.McpOut
 
 /** The structured log for agents: one `log` tool, the same filters as `GET /api/log`; with `problem` alone, what
   * happened around that problem (`GET /api/problems/{id}`).
   */
-object LogTools:
-  def apply(log: LogControllers) =
+final class LogTools(log: LogControllers):
+  def tools =
     List(
       tool("log")
         .description(
@@ -36,9 +36,8 @@ object LogTools:
             .fold(
               McpOut.error,
               p =>
-                ToolResult.text(
-                  LogMarkdown.page(p, c => s"_Older: call `log` again with the same filters and `before: \"$c\"`._")
-                )
+                ToolResult
+                  .text(p.markdown(c => s"_Older: call `log` again with the same filters and `before: \"$c\"`._"))
             )
         }
     )
