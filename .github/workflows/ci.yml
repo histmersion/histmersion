@@ -17,7 +17,7 @@ name: ci
 #              the CLI reference against the native CLI's help — no free runner has the memory to link the server
 #   macos      on macOS arm64 (the platform the owner runs): the scripts' tests, the CLI reference against the
 #              CLI's help (on the JVM), and the browser tests (Playwright, modules/web/test) against the server on
-#              the JVM but the `budgets: …` ones — a skipped browser test fails (G125)
+#              the JVM but the `budgets: …` ones, one file at a time — a skipped browser test fails (G125)
 #   macos-budgets  the `budgets: …` browser tests alone (the same files, the complementary name pattern): timing on
 #              a shared runner, so a budget over its figure warns and never blocks; a skip or no test run fails
 #
@@ -326,7 +326,7 @@ jobs:
     name: macos (browser tests but the budgets, scripts' tests, CLI docs)
     needs: build
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
     steps:
@@ -398,10 +398,11 @@ jobs:
       - name: browser tests (the files of `npm run test:browser` but the `budgets:` tests; a skipped test fails, G125)
         working-directory: modules/web
         run: |
-          files="$(node -p "require('./package.json').scripts['test:browser'].replace(/^node --test /, '')")"
+          files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
           report="$RUNNER_TEMP/browser-junit.xml"
           rc=0
-          node --test --test-skip-pattern='^budgets: ' --test-reporter=spec --test-reporter-destination=stdout \
+          node --test --test-concurrency=1 --test-skip-pattern='^budgets: ' \
+            --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=junit --test-reporter-destination="$report" $files || rc=$?
           tests="$(grep -c '<testcase' "$report" || true)"
           skipped="$(grep -c '<skipped' "$report" || true)"
@@ -488,8 +489,8 @@ jobs:
         continue-on-error: true
         working-directory: modules/web
         run: |
-          files="$(node -p "require('./package.json').scripts['test:browser'].replace(/^node --test /, '')")"
-          HISTMERSION_PERF_REPORT=1 node --test --test-name-pattern='^budgets: ' \
+          files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
+          HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-name-pattern='^budgets: ' \
             --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/budgets-junit.xml" $files
       - name: every budget test ran and none was skipped (G125)
