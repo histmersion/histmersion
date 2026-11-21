@@ -22,8 +22,6 @@ import os
 import re
 import sys
 
-# ── the stand-in API ──────────────────────────────────────────────────────────────────────────────
-
 
 def _message(i, model):
     return {"id": f"msg_overhead_{i}", "type": "message", "role": "assistant", "model": model,
@@ -36,7 +34,6 @@ MCP_PROTOCOL = "2025-06-18"
 
 
 def mcp_answer(req, tools):
-    """The stand-in MCP server's reply to one JSON-RPC message: None for a notification (202, no body)."""
     if "id" not in req:
         return None
     method = req.get("method")
@@ -142,15 +139,12 @@ def serve(port_file, out_dir, tools_file=None):
     srv.serve_forever()
 
 
-# ── reading a launch ──────────────────────────────────────────────────────────────────────────────
-
 
 def _chars(x):
     return len(json.dumps(x, ensure_ascii=False))
 
 
 def measure(request, init):
-    """The sizes of one request body, and what the CLI's init event says it loaded."""
     tools = request.get("tools") or []
     system = request.get("system") or []
     messages = request.get("messages") or []
@@ -183,8 +177,6 @@ def init_event(lines):
 
 
 def first_call(lines):
-    """The first top-level assistant event's usage: input + cache read + cache write tokens (what the
-    server stores as agent_steps.first_call_tokens). None when there is none."""
     for e in events(lines):
         if e.get("type") != "assistant" or e.get("parent_tool_use_id") is not None:
             continue
@@ -203,7 +195,6 @@ _ENTRY = re.compile(r'^\s*([A-Z][A-Z0-9_]*)\s*=\s*"([^"]*)"')
 
 
 def defaults(text):
-    """The variables reference.conf sets in `agents.providers.claude-code.env { … }`, in order."""
     out, in_cc, in_env = [], False, False
     for line in text.splitlines():
         if not in_cc:
@@ -212,7 +203,7 @@ def defaults(text):
         if not in_env:
             if re.match(r"^\s*env\s*\{", line):
                 in_env = True
-            elif re.match(r"^\s{6}\}", line):  # the end of the claude-code block
+            elif re.match(r"^\s{6}\}", line):
                 break
             continue
         if re.match(r"^\s*\}", line):
@@ -224,7 +215,6 @@ def defaults(text):
 
 
 def table(rows):
-    """`rows`: (label, measure) pairs, the first the baseline. Characters, with the change against it."""
     base = rows[0][1]
     head = f"{'arm':44} {'system':>8} {'tools':>8} {'(mcp)':>8} {'messages':>9} {'total':>8} {'~tokens':>8} " \
            f"{'vs ' + rows[0][0]:>12}  init: tools skills slash agents"

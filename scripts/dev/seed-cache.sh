@@ -33,7 +33,6 @@ if [ "$verify" = 1 ]; then
   [ -d "$to/target/out" ] || { echo "seed-cache: $to has no target/out — build it first" >&2; exit 2; }
   bad="$(find "$to/target/out" -type l 2>/dev/null | while read -r l; do t="$(readlink "$l")"
     case "$t" in ("$to"/*) ;; (/*) echo "$l -> $t" ;; (*) ;; esac; done | head -5)"
-  # (`(pattern)`: macOS's /bin/bash 3.2 reads an unparenthesised `pattern)` inside `$(…)` as the end of the substitution)
   if [ -n "$bad" ]; then echo "seed-cache: outputs of $to link outside it:"; echo "$bad"; exit 1; fi
   n="$(find "$to/target/out" -type l 2>/dev/null | wc -l | tr -d ' ')"
   echo "seed-cache: $n restored output(s) of $to, every one linked inside it"
@@ -56,9 +55,7 @@ links="$(find "$src" -type l | head -3)"
 mkdir -p "$to/target"
 tmp="$to/target/sbt-cache.seeding-$$"
 rm -rf "$tmp"
-# a clone on APFS (copy-on-write), a plain copy elsewhere
 if cp -c -R "$src" "$tmp" 2>/dev/null; then how="cloned"; else cp -R "$src" "$tmp"; how="copied"; fi
-# the copy holds no link (checked above) — and is still checked, since the source may change under us
 [ -z "$(find "$tmp" -type l | head -1)" ] || { rm -rf "$tmp"; echo "seed-cache: the copy holds a symbolic link — refused" >&2; exit 1; }
 rm -rf "$dst"
 mv "$tmp" "$dst"

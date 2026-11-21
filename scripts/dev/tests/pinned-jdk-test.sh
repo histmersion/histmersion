@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# scripts/dev/pinned-jdk.sh against fake JDK homes (a `release` file and stub binaries; no real JDK).
 set -euo pipefail
 here="$(cd "$(dirname "$0")/../../.." && pwd)"
 check="$here/scripts/dev/pinned-jdk.sh"
 pinned="$(awk '!/^#/ && NF {print $1; exit}' "$here/scripts/bundle/graalvm-pins.txt")"
 t="$(mktemp -d)"; trap 'rm -rf "$t"' EXIT
 fail() { echo "FAIL: $*" >&2; exit 1; }
-fake_jdk() { # <dir> <JAVA_VERSION> <with native-image: yes|no>
+fake_jdk() {
   mkdir -p "$1/bin"; printf 'JAVA_VERSION="%s"\n' "$2" > "$1/release"
   printf '#!/bin/sh\necho "    java.home = %s" >&2\n' "$1" > "$1/bin/java"; chmod +x "$1/bin/java"
   if [ "$3" = yes ]; then printf '#!/bin/sh\n' > "$1/bin/native-image"; chmod +x "$1/bin/native-image"; fi

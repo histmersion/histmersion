@@ -29,9 +29,6 @@ import xml.etree.ElementTree as ET
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MAVEN_CENTRAL = "https://repo1.maven.org/maven2"
 
-# ── pure parts ────────────────────────────────────────────────────────────────────────────────────
-
-# wording seen in POMs, PyPI and conda-forge → an SPDX id; matched in order, case-insensitively
 SPDX_PATTERNS = [
     (r"affero|agpl", "AGPL-3.0"),
     (r"lesser|lgpl|library general", "LGPL"),
@@ -73,19 +70,16 @@ SPDX_PATTERNS = [
     (r"non-?commercial", "CC-BY-NC"),
 ]
 
-# combinable with AGPL-3.0 into one program
 COMPATIBLE = {
     "AGPL-3.0", "LGPL", "GPL-3.0", "GPL-2.0-or-later", "Apache-2.0", "MIT", "BSD-3-Clause", "BSD-2-Clause",
     "BSD", "ISC", "MPL-2.0", "EPL-2.0", "PostgreSQL", "Zlib", "bzip2-1.0.6", "PSF-2.0", "Unicode",
     "Public-domain", "HPND", "curl", "X11", "BSL-1.0", "OFL-1.1", "GPL-2.0-with-classpath-exception", "0BSD",
     "IJG", "OLDAP-2.8", "blessing",
 }
-# cannot be combined with AGPL-3.0 into one program
 INCOMPATIBLE = {"GPL-2.0-only", "EPL-1.0", "CDDL", "MPL-1.1", "OpenSSL", "Proprietary", "CC-BY-NC"}
 
 
 def spdx(wording: str) -> str:
-    """One licence statement → an SPDX-style id, or `?: <the wording>` when it is not recognised."""
     w = " ".join(wording.split())
     if not w:
         return "?"
@@ -96,13 +90,10 @@ def spdx(wording: str) -> str:
 
 
 def split_expression(expr: str) -> list:
-    """An SPDX or conda expression (`MIT OR Apache-2.0`, `BSD-3-Clause AND LGPL-2.1`) → its parts."""
     return [p.strip(" ()") for p in re.split(r"\s+(?:OR|AND|or|and|/)\s+|;", expr) if p.strip(" ()")]
 
 
 def classify(licences: list, any_of: bool = False) -> str:
-    """`compatible` when every licence is (or, `any_of`, at least one is); `INCOMPATIBLE` when the
-    offending one is a known incompatible licence; `check` otherwise (nothing stated, or unrecognised)."""
     ids = [spdx(l) for l in licences]
     if not ids:
         return "check"
@@ -118,9 +109,6 @@ SBT_SHOW_ENTRY = re.compile(r"^\[info\] \* Attributed\((.+)\)$")
 
 
 def parse_sbt_export(text: str) -> list:
-    """`sbt show …/fullClasspath` (one `[info] * Attributed(…)` line per entry) or `sbt export …/fullClasspath`
-    (one `List(…)` line per module) output → the class path entries of every module, without duplicates. `just
-    licences` uses `show`: sbt 2.1's `export` prints nothing when the task's result comes from the cache."""
     out = []
     for line in text.splitlines():
         line = line.strip()
@@ -140,7 +128,6 @@ def parse_sbt_export(text: str) -> list:
 
 
 def maven_coords(entry: str):
-    """A jar in a Maven-layout cache → (group, artifact, version), or None (a project's own output)."""
     m = re.search(r"/maven2/(.+)/([^/]+)/([^/]+)/\2-\3(?:-[^/]*)?\.jar$", entry)
     if not m:
         return None
@@ -155,7 +142,6 @@ def _strip_ns(root):
 
 
 def pom_licences(pom_xml: str) -> list:
-    """The licence names a POM declares (its URL when it has no name)."""
     root = _strip_ns(ET.fromstring(pom_xml))
     out = []
     for lic in root.findall("./licenses/license"):
@@ -166,7 +152,6 @@ def pom_licences(pom_xml: str) -> list:
 
 
 def pom_parent(pom_xml: str):
-    """The (group, artifact, version) of a POM's parent, or None."""
     root = _strip_ns(ET.fromstring(pom_xml))
     p = root.find("./parent")
     if p is None:
@@ -179,8 +164,6 @@ def pom_path(group: str, artifact: str, version: str) -> str:
 
 
 def uv_shipped(lock_text: str, root_name: str, extras=("ocr",)) -> list:
-    """The (name, version) of every package uv.lock installs for `root_name` with `extras` — its main
-    and optional dependencies, transitively, never a dependency group such as `dev`."""
     lock = tomllib.loads(lock_text)
     pkgs = {p["name"]: p for p in lock.get("package", [])}
     seen, todo = set(), []
@@ -211,7 +194,6 @@ def uv_shipped(lock_text: str, root_name: str, extras=("ocr",)) -> list:
 
 
 def pixi_packages(lock_text: str, platform: str) -> list:
-    """The (name, version, licence) of every conda package pixi.lock records for `platform`."""
     out, current = [], None
     for line in lock_text.splitlines():
         m = re.match(r"^- conda: (\S+)$", line)
@@ -229,7 +211,6 @@ def pixi_packages(lock_text: str, platform: str) -> list:
 
 
 def npm_packages(lock_json: str) -> list:
-    """(name, version, licence, dev) for every package in an npm lockfile (v2/v3)."""
     lock = json.loads(lock_json)
     out = []
     for path, p in lock.get("packages", {}).items():
@@ -244,8 +225,6 @@ def npm_packages(lock_json: str) -> list:
 
 
 def pypi_licence(info: dict) -> str:
-    """The licence a PyPI project's JSON `info` states: the SPDX expression, else a short `license`
-    text, else the `License ::` classifiers."""
     expr = (info.get("license_expression") or "").strip()
     if expr:
         return expr
@@ -260,7 +239,6 @@ def pypi_licence(info: dict) -> str:
 
 
 def markdown(rows_by_section: list) -> str:
-    """The THIRD-PARTY.md text: one table per section, then every row not `compatible`, repeated."""
     lines = [
         "# Third-party licences",
         "",
@@ -294,8 +272,6 @@ def markdown(rows_by_section: list) -> str:
     lines.append("")
     return "\n".join(lines)
 
-
-# ── the outside world ─────────────────────────────────────────────────────────────────────────────
 
 def coursier_cache() -> str:
     for c in (os.environ.get("COURSIER_CACHE"), os.path.expanduser("~/Library/Caches/Coursier/v1"),
@@ -343,7 +319,6 @@ def python_rows(lock_path: str) -> list:
     rows = []
     for name, version in shipped:
         try:
-            # a local version (`2.13.0+cpu`, the PyTorch CPU index) is the PyPI release's build
             with urllib.request.urlopen(f"https://pypi.org/pypi/{name}/{version.split('+')[0]}/json", timeout=30) as r:
                 lic = pypi_licence(json.load(r).get("info", {}))
         except Exception as e:  # noqa: BLE001

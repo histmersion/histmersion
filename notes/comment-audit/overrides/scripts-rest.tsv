@@ -1,0 +1,26 @@
+path	lines	language	category	reason
+scripts/ci/classify.py	39-41	python	decision	markers are looked for in strings too (an environment variable is a string): ADR-0012
+scripts/ci/classify.py	58-59	python	decision	a suite reaches the database transitively, as a fixed point over the names files use: ADR-0012
+scripts/ci/plan.py	66-67	python	decision	invariant: the bucket rule is the same as project/TestGroups.split: ADR-0012
+scripts/ci/plan.py	79-81	python	decision	an unclassified suite is dealt nowhere and fails the run after the shards: ADR-0012
+scripts/ci/plan.py	87	python	decision	only db and server can reach the test database: ADR-0012
+scripts/ci/plan.py	96	python	decision	a Scala.js project links its tests once, so projects are dealt whole: ADR-0012
+scripts/dev/affected.py	19-21	python	decision	web to server is a build edge only; no server suite tests the Scala.js code: ADR-0012
+scripts/dev/affected.py	81-82	python	decision	the basemap fixture is read by server suites; the rest of web/test is the browser suite: ADR-0012
+scripts/dev/affected.py	104-105	python	decision	repository files the suites read (agents, skills, reference pages, seeds): ADR-0012
+scripts/dev/affected.py	128-130	python	decision	lint suites read other modules' sources, so they run on any change there: ADR-0012
+scripts/dev/affected.py	178	python	decision	a suite that only reads a changed file is tested; its dependents are not: ADR-0012
+scripts/dev/cache-isolation-check.sh	2-20	shell	decision	two checkouts never replay each other's sbt 2 cache entries; how it is proved: ADR-0012
+scripts/dev/cache-isolation-check.sh	101-102	shell	decision	the shared cache's failure mode: a lost blob whose action entry stays: ADR-0012
+scripts/dev/sbt.sh	2-7	shell	decision	external quirk: sbt 2's thin client drops the caller's environment, so each call gets its own server: ADR-0012
+scripts/dev/seed-cache.sh	36	shell	decision	external quirk: Bash 3.2 reads an unparenthesised case pattern inside $(…) as its end: ADR-0007
+scripts/dev/seed-cache.sh	59	shell	decision	a copy-on-write clone on APFS, a plain copy elsewhere: ADR-0012
+scripts/dev/test-weights.py	2-9	python	decision	suite weights balance the forked groups; stale numbers only cost balance: ADR-0012
+scripts/dev/third_party_licences.py	76	python	decision	the licences combinable with AGPL-3.0: ADR-0012
+scripts/dev/third_party_licences.py	83	python	decision	the licences that cannot be combined with AGPL-3.0: ADR-0012
+scripts/dev/third_party_licences.py	121-123	python	decision	external quirk: sbt 2.1's export prints nothing when the result comes from the cache: ADR-0012
+scripts/dev/third_party_licences.py	346	python	decision	external quirk: a local version (+cpu) is the PyPI release's build: ADR-0012
+scripts/perf/catalogue_live.py	1-2	python	stale	its usage line names another script (live_driver.py)
+scripts/perf/catalogue_live.py	42-43	python	decision	live drivers record corpus values under symbolic names, never the values: ADR-0012
+scripts/perf/library_live.py	1-4	python	decision	live drivers record corpus values under symbolic names, never the values: ADR-0012
+scripts/perf/research_live.py	1-5	python	decision	live drivers record corpus values under symbolic names, never the values: ADR-0012

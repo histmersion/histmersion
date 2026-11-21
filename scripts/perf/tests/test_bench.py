@@ -1,7 +1,3 @@
-"""Tests of bench.py's pure helpers — no server.
-
-    python3 -m unittest scripts/perf/tests/test_bench.py      (also: just test-scripts)
-"""
 import os
 import sys
 import unittest

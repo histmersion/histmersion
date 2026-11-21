@@ -31,7 +31,6 @@ CLASSES = ("unit", "it")
 
 
 def read_classes(lines):
-    """[(project, suite, class)] from `<project> TAB <suite> TAB <class>` lines; malformed lines are refused."""
     rows = []
     for n, line in enumerate(lines, 1):
         line = line.rstrip("\n")
@@ -45,7 +44,6 @@ def read_classes(lines):
 
 
 def weights(lines):
-    """{suite simple name: seconds} from project/test-weights.tsv (bad lines skipped, as TestGroups.weights)."""
     out = {}
     for line in lines:
         line = line.strip()
@@ -63,8 +61,6 @@ def weights(lines):
 
 
 def deal(items, n, weight):
-    """`items` into at most `n` non-empty buckets: heaviest first, each to the lightest bucket so far (ties: the
-    lower index), names breaking ties — the same rule as project/TestGroups.split, stable for a given input."""
     k = max(1, min(n, len(items)))
     buckets = [[] for _ in range(k)]
     load = [0.0] * k
@@ -76,15 +72,11 @@ def deal(items, n, weight):
 
 
 def plan(rows, unit_server, it_server, w, unit_modules=2):
-    """{shard name: sorted [(project, suite)]}; every classed row in exactly one shard, a unit suite in a unit shard.
-    A suite of no class (`unclassified`) is in none: scripts/ci/check.py fails the run on it, after the shards have
-    run the rest."""
     pairs = [(p, s) for p, s, _ in rows]
     if len(set(pairs)) != len(pairs):
         raise ValueError(f"a suite listed twice: {sorted({r for r in pairs if pairs.count(r) > 1})}")
     stray = sorted((p, s) for p, s, c in rows if c == "it" and p not in FORKED)
     if stray:
-        # only db and server see TestDb (server through db's tests): an IT suite elsewhere is a misreading
         raise ValueError(f"IT suites outside db and server: {stray}")
 
     def simple(r):
@@ -93,7 +85,6 @@ def plan(rows, unit_server, it_server, w, unit_modules=2):
     def of(cls, pred):
         return sorted((p, s) for p, s, c in rows if c == cls and pred(p))
 
-    # the other projects whole (a Scala.js project links its tests once), dealt by suite count
     modules = of("unit", lambda p: p not in FORKED)
     sizes = {p: sum(1 for q, _ in modules if q == p) for p, _ in modules}
     shards = {}
@@ -109,7 +100,6 @@ def plan(rows, unit_server, it_server, w, unit_modules=2):
 
 
 def matrix(shards):
-    """The GitHub matrix: one entry per shard; only the IT shards start PostgreSQL."""
     return [{"shard": k, "db": k.startswith("it-")} for k in shards]
 
 

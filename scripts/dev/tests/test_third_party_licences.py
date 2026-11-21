@@ -1,7 +1,3 @@
-"""Tests of third_party_licences.py's pure parts — no sbt, no network.
-
-    python3 -m unittest scripts/dev/tests/test_third_party_licences.py      (also: just test-scripts)
-"""
 import json
 import os
 import sys

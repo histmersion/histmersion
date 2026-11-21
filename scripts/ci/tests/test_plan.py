@@ -1,4 +1,3 @@
-"""scripts/ci/plan.py: every suite in exactly one shard of its class, the server's dealt by weight."""
 import contextlib
 import importlib.util
 import io
@@ -42,8 +41,7 @@ class PlanTest(unittest.TestCase):
         self.assertEqual(sorted(flat), sorted((p, s) for p, s, _ in all_rows))
         self.assertEqual(sorted(shards), ["it-db", "it-server-1", "it-server-2", "it-server-3", "unit-db",
                                           "unit-modules-1", "unit-modules-2", "unit-server-1", "unit-server-2"])
-        self.assertEqual(shards["it-server-1"], [("server", "com.x.I0")])  # the heavy one alone
-        # the other projects whole, the biggest first: api (2 suites) alone, apiJS and core together
+        self.assertEqual(shards["it-server-1"], [("server", "com.x.I0")])
         self.assertEqual(shards["unit-modules-1"], [("api", "com.x.A1"), ("api", "com.x.A2")])
         self.assertEqual(shards["unit-modules-2"], [("apiJS", "com.x.A1"), ("core", "com.x.C1")])
         cls = {(p, s): c for p, s, c in all_rows}
@@ -53,10 +51,9 @@ class PlanTest(unittest.TestCase):
     def test_refusals(self):
         with self.assertRaises(ValueError):
             plan.plan(rows("db", "it", "D1", "D1"), 2, 2, {})
-        # a suite of no class is dealt nowhere (the shards check fails on it)
         self.assertEqual(plan.plan(rows("db", "unclassified", "D1") + rows("db", "it", "D2"), 2, 2, {}),
                          {"it-db": [("db", "com.x.D2")]})
-        with self.assertRaises(ValueError):  # only db and server can reach the database
+        with self.assertRaises(ValueError):
             plan.plan(rows("cli", "it", "C1"), 2, 2, {})
 
     def test_empty_shards_are_left_out_and_only_it_shards_start_a_database(self):

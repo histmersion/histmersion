@@ -1,7 +1,3 @@
-"""Tests of test-weights.py — no sbt.
-
-    python3 -m unittest scripts/dev/tests/test_test_weights.py      (also: just test-scripts)
-"""
 import importlib.util
 import os
 import unittest

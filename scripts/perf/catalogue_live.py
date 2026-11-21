@@ -1,5 +1,3 @@
-"""Live-volume driver: fixed requests against a scratch server; digests, counts and timings only.
-usage: live_driver.py BASE_URL OUT_TSV [ROUNDS]"""
 import sys, math, hashlib, time, json, urllib.request, urllib.error, urllib.parse, statistics
 
 base, out = sys.argv[1], sys.argv[2]
@@ -39,8 +37,6 @@ for p in periods:
     reqs.append(("histogram", f"/api/aggregate?{p}"))
     reqs.append(("histogram", f"/api/aggregate?by=region&{p}"))
 
-# one place of each search's first answer: its detail, counts, children, tree, footprints and links, and what its id
-# selects; recorded under a symbolic name (the place's id is looked up at run time and never written)
 labels = {}
 def first_place(q):
     with urllib.request.urlopen(base + f"/api/places?q={q}&limit=1", timeout=600) as r:
@@ -66,7 +62,6 @@ def fetch(path):
         body, status, etag = e.read(), e.code, "-"
     return (time.perf_counter() - t0) * 1000, status, body, etag
 
-# warm-up pass, a pause for background builds, then the recorded pass and a second for stability
 for _, p in reqs: fetch(p)
 time.sleep(30)
 first = {}

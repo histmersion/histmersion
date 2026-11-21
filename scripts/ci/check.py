@@ -33,7 +33,6 @@ def read_classes(lines):
 
 
 def read_report(lines):
-    """[(project, suite, result, counts, millis)] from a shard's `<project>.tsv` rows."""
     out = []
     for n, line in enumerate(lines, 1):
         line = line.rstrip("\n")
@@ -54,10 +53,6 @@ def shard_class(shard):
 
 
 def compare(classes, ran):
-    """`classes`: {(project, suite): class}; `ran`: {shard: [(project, suite)]}. Returns (unclassified, missing,
-    repeated, unexpected, misplaced): the suites of no class, the classed suites no shard ran, {suite: [shard, ...]}
-    for each run more than once, the suites run that nobody listed, and {suite: shard} for each run in a shard of
-    the other class."""
     where = defaultdict(list)
     for shard, suites in sorted(ran.items()):
         for s in suites:

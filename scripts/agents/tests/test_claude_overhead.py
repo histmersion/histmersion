@@ -1,7 +1,3 @@
-"""Tests of claude_overhead.py (claude-overhead.sh's helper) — no claude, no network beyond loopback.
-
-    python3 -m unittest scripts/agents/tests/test_claude_overhead.py      (also: just test-scripts)
-"""
 import http.client
 import json
 import os
@@ -15,7 +11,6 @@ import claude_overhead as co  # noqa: E402
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 
-# 2.1.294's stream-json, as an offline run of claude-overhead.sh recorded it (trimmed)
 INIT = {"type": "system", "subtype": "init", "tools": ["StructuredOutput"], "skills": ["a", "b"],
         "slash_commands": ["a", "b", "c"], "agents": ["claude", "Explore", "Plan"]}
 

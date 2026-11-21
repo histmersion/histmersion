@@ -64,7 +64,6 @@ plugin="$tree/headless"; settings="$tree/roles/$role/settings.json"
 [ -f "$settings" ] || { echo "no role settings $settings" >&2; exit 1; }
 command -v claude >/dev/null || { echo "claude is not on PATH" >&2; exit 1; }
 
-# the tuned arm: reference.conf's env defaults and --disable-slash-commands, unless --env/--flag given
 if [ $custom -eq 0 ]; then
   while IFS= read -r kv; do envs+=("$kv"); done < <(python3 -I "$helper" defaults "$reference")
   flags=(--disable-slash-commands)
@@ -83,7 +82,6 @@ mkdir -p "$tmp/work"
 mcp_pids=()
 cleanup_mcp() { for p in ${mcp_pids[@]+"${mcp_pids[@]}"}; do kill "$p" 2>/dev/null || true; done; }
 
-# one launch: <label> [--flag…] -- [K=V…]; prints nothing, leaves $tmp/<label>/{stream.jsonl,request.json}
 launch() {
   local label="$1"; shift
   local fl=() ev=()

@@ -31,7 +31,6 @@ import threading
 import time
 import urllib.parse
 
-# ── budgets (ms, p95) — docs/research-interactive-performance.md §Budgets ───────────────────────────
 BUDGETS = {
     "hover.place": 50, "hover.source": 50, "hover.article": 50,
     "suggest.place": 50, "suggest.tag": 50, "suggest.author": 50, "suggest.topic": 50,
@@ -40,10 +39,7 @@ BUDGETS = {
 }
 
 
-# ── pure helpers (unit-tested) ──────────────────────────────────────────────────────────────────
-
 def percentile(xs, p):
-    """Nearest-rank percentile of `xs` (0 < p <= 100); None for no samples."""
     if not xs:
         return None
     s = sorted(xs)
@@ -52,7 +48,6 @@ def percentile(xs, p):
 
 
 def summarise(samples):
-    """{key: [(ms, bytes)…]} → {key: {n, p50, p95, max, bytes}} (bytes = the median payload)."""
     out = {}
     for k, xs in samples.items():
         ms = [x[0] for x in xs]
@@ -63,13 +58,11 @@ def summarise(samples):
 
 
 def prefixes(word, longest=4):
-    """What typing `word` sends, one keystroke at a time: its first 1…`longest` characters."""
     w = (word or "").strip()
     return [w[:i] for i in range(1, min(longest, len(w)) + 1)]
 
 
 def query(params):
-    """URL query string from a list of (key, value) pairs; None values are dropped, lists repeat."""
     flat = []
     for k, v in params:
         if v is None:
@@ -80,14 +73,12 @@ def query(params):
 
 
 def bucket_size(span_years, pixels=1200, max_buckets=1500):
-    """TimelineView.bucketSizeFor: the bucket the strip asks for over `span_years` at `pixels` wide."""
     by_pixels = math.ceil(span_years / max(pixels, 100))
     by_limit = math.ceil(span_years / max_buckets)
     return max(1, by_pixels, by_limit)
 
 
 def over_budget(summary, budgets, slack=1.0):
-    """[(interaction, p95, budget)] for every interaction whose p95 exceeds budget × slack."""
     bad = []
     for k, b in budgets.items():
         s = summary.get(k)
@@ -126,15 +117,13 @@ def compare(before, after, title):
     return "\n".join(rows)
 
 
-# ── HTTP: one keep-alive connection per thread, like a browser's pool ──────────────────────────────
-
 class Client:
     def __init__(self, base, timeout):
         u = urllib.parse.urlparse(base)
         self.host, self.port, self.timeout = u.hostname, u.port or 80, timeout
         self.local = threading.local()
         self.lock = threading.Lock()
-        self.endpoints = {}   # endpoint key → [(ms, bytes)]
+        self.endpoints = {}
         self.errors = []
 
     def _conn(self):
@@ -145,7 +134,6 @@ class Client:
         return c
 
     def get(self, key, path):
-        """GET `path`; records (ms, bytes) under endpoint `key`; returns (status, body bytes)."""
         t0 = time.perf_counter()
         for attempt in (1, 2):
             try:
@@ -177,8 +165,6 @@ class Client:
         except ValueError:
             return None
 
-
-# ── what the corpus offers to hover, type and pick ───────────────────────────────────────────────
 
 def discover(c, rng):
     cfg = c.json("config", "/api/config") or {}
@@ -212,8 +198,6 @@ def discover(c, rng):
     }
 
 
-# ── the interactions ─────────────────────────────────────────────────────────────────────────────
-
 class Bench:
     def __init__(self, c, d, rng, n, pool, skip=(), sequential=False):
         self.c, self.d, self.rng, self.n, self.pool, self.skip = c, d, rng, n, pool, set(skip)
@@ -221,7 +205,6 @@ class Bench:
         self.interactions = {}
 
     def on(self, key):
-        """Is interaction `key` part of this run (`--skip` drops whole groups, e.g. `map` or `map.year`)?"""
         return not any(key == s or key.startswith(s + ".") for s in self.skip)
 
     def record(self, key, ms):
@@ -235,7 +218,6 @@ class Bench:
         self.record(key, (time.perf_counter() - t0) * 1000)
 
     def par(self, *fns):
-        """Fire the callables at once (the browser's parallel requests) and wait for all."""
         fs = [self.pool.submit(f) for f in fns]
         for f in fs:
             f.result()
@@ -244,7 +226,6 @@ class Bench:
         xs = list(xs)
         return xs if len(xs) <= k else self.rng.sample(xs, k)
 
-    # the bundle a committed filter change fires (App.load + TimelineView + the visible tab)
     def filter_bundle(self, params, tab="sources"):
         c, d = self.c, self.d
         lo, hi = dict(params).get("from", d["span"][0]), dict(params).get("to", d["span"][1])
@@ -257,7 +238,7 @@ class Bench:
         def sources():
             c.get("sources", "/api/sources?" + query(params + [("limit", d["page"])]))
 
-        def lists():   # App.load before 2026-10-09: findings, THEN sources (--sequential-lists)
+        def lists():
             findings()
             sources()
 
@@ -282,7 +263,6 @@ class Bench:
         lo, hi = d["span"]
         span = [("from", lo), ("to", hi)]
 
-        # hover: a place on the map (its card with counts), a source link, an article link
         for pid, y in self.pick(d["polities"], n) + [(p, d["mid"]) for p in self.pick(d["place_ids"], n)]:
             self.timed("hover.place", lambda: c.get("places.detail+counts",
                                                     f"/api/places/{urllib.parse.quote(pid)}?" + query([("asOf", y), ("counts", "true")])))
@@ -291,7 +271,6 @@ class Bench:
         for slug in self.pick(d["slugs"], n):
             self.timed("hover.article", lambda: c.get("articles.one", f"/api/articles/{urllib.parse.quote(slug)}?brief=true"))
 
-        # typing: one request per keystroke prefix (the client debounces, so a fast typist sends fewer)
         for w in self.pick(d["place_words"], n):
             for p in prefixes(w):
                 self.timed("suggest.place", lambda: c.get("places.search", "/api/places?" + query(
@@ -301,24 +280,20 @@ class Bench:
                 for p in prefixes(w.replace("_", " "), 3):
                     self.timed(key, lambda: c.get("facets", "/api/facets?" + query([("field", field), ("prefix", p)] + span)))
 
-        # hovering a suggestion previews it: the whole filter bundle with the value added
         for field, single in (("tags", "tag"), ("topics", "topic"), ("authors", "author")):
             for v in self.pick(d["vocab"][field], max(2, n // 3)):
                 self.timed("suggest.hover", lambda: self.filter_bundle(span + [(single, v)]))
 
-        # a committed filter change with each tab visible
         for tab in ("sources", "articles", "events"):
             for v in self.pick(d["vocab"]["tags"], max(2, n // 3)):
                 self.timed("filter.change", lambda: self.filter_bundle(span + [("tag", v)], tab))
 
-        # a place chosen (map click or picker): the bundle with place=<id>, plus its outline
         for pid, y in self.pick(d["polities"], n // 2) + [(p, d["mid"]) for p in self.pick(d["place_ids"], n // 2)]:
             def chosen():
                 self.par(lambda: self.filter_bundle(span + [("place", pid)], "articles"),
                          lambda: c.get("places.detail", f"/api/places/{urllib.parse.quote(pid)}?" + query([("asOf", y)])))
             self.timed("place.chosen", chosen)
 
-        # the map at a new year: the overlays the layers ask for
         tmin, tmax = d["limits"]
         for y in self.pick(range(-3000, 1500, 50), n):
             self.timed("map.year", lambda: self.par(
@@ -326,14 +301,12 @@ class Bench:
                 lambda: c.get("places.geo.site", "/api/places/geo?" + query([("kind", "site"), ("asOf", y), ("limit", 200)])),
                 lambda: c.get("media.geo", "/api/media-geo?" + query([("from", y - 250), ("to", y + 250), ("limit", 200)]))))
 
-        # a timeline drag: the detail strip refetches as the span moves (newest wins)
         w = hi - lo
         for step in range(n):
             a = lo + step * max(1, w // (n * 2))
             self.timed("timeline.drag", lambda: c.get("aggregate.detail", "/api/aggregate?" + query(
                 [("by", "time"), ("unit", "sources"), ("from", a), ("to", a + w), ("size", bucket_size(w))])))
 
-        # playback: one findings request per frame at a sliding ±50-year window
         for step in range(n):
             ph = lo + step * max(1, w // n)
             self.timed("playback.frame", lambda: c.get("findings", "/api/findings?" + query([("from", ph - 50), ("to", ph + 50)])))
