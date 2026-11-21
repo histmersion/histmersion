@@ -22,10 +22,6 @@ import java.nio.file.{Files, Path}
 import java.time.{Clock, Instant}
 import scala.jdk.CollectionConverters.*
 
-/** The structured log on a migrated database: every table's writes recorded by the triggers (one row per statement,
-  * with the connection's trace and label), every event in the table AND the file under one id, the retention on both,
-  * the file read when the database cannot answer, and the log kept out of backups. Gated on HISTMERSION_TEST_DB_URL.
-  */
 class StructuredLogDbSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -35,7 +31,6 @@ class StructuredLogDbSuite extends DbSuite:
   private lazy val ds = testPool(testConfig)
   private lazy val migrated = Migrate.run(ds)
 
-  /** The log's settings; its files are the `LogFiles` each writer here is given. */
   private def settings(dir: Path): LogConfig = base.log
 
   private def tempDir(): Path = Files.createTempDirectory("hm-structured-log")
@@ -58,7 +53,6 @@ class StructuredLogDbSuite extends DbSuite:
     }
     val unrecorded: Set[String] = LogData.unrecorded.map(t => s"$t").toSet
     val counted: Set[String] = LogData.counted.map(t => s"$t").toSet
-    // the two lists, pinned: a table moved in or out of either is a decision, made here
     assertEquals(
       unrecorded,
       Set(
@@ -90,7 +84,6 @@ class StructuredLogDbSuite extends DbSuite:
 
   test("the escape hatch's read-only role cannot read the log (client addresses, search text); other tables it can"):
     val _ = migrated
-    // as the server's start does (and does again after a restore, which runs --no-privileges)
     assertEquals(QueryAccess.provision(ds, base.query), Right(()))
     val qds = testQueryPool(testConfig, base.query)
     List(
@@ -139,10 +132,8 @@ class StructuredLogDbSuite extends DbSuite:
       t.join()
       out.get.get
     assertEquals(onAnotherThread(request.within(pins.carry(TraceScope.trace))), Some(request.trace))
-    // handed over from no scope: a scope of its own, recording into the writer
     val own = onAnotherThread(pins.carry(TraceScope.current))
     assert(own.exists(s => s.trace != request.trace && (s.sink eq writer)), own.toString)
-    // a resumed job: its own trace, kept on its row
     val kept = writer.mintTrace()
     assertEquals(
       onAnotherThread(request.within(pins.carry(TraceScope.resumed(Some(kept))(TraceScope.trace)))),
@@ -155,7 +146,7 @@ class StructuredLogDbSuite extends DbSuite:
     val _ = migrated
     val dir = tempDir()
     val writer = LogWriter(() => settings(dir), files(dir), Transactor(ds), WritePermit.Gate(), Clock.systemUTC())
-    writer.flush() // whatever earlier suites left staged
+    writer.flush()
     val trace = writer.mintTrace()
     val traced = TracedDataSource(ds)
     val scope = TraceScope(trace, Some(LogEvent.Label("suite-label")), LogEvent.Actor.Client, writer)
@@ -183,7 +174,6 @@ class StructuredLogDbSuite extends DbSuite:
     assertEquals(event.label, Some("suite-label"))
     assert(event.subjects.map(_.ref).contains("source:logsuite2026"), event.subjects.toString)
     assert(event.subjects.map(_.ref).contains("job:log-suite-1"), event.subjects.toString)
-    // the same event, under the same id, in the file
     val lines = Files.list(dir).iterator().asScala.toList.flatMap(f => Files.readAllLines(f, UTF_8).asScala)
     assert(lines.exists(_.contains(s"${event.id}")), s"the file holds ${lines.size} line(s), none with ${event.id}")
     val fromFile = LogService(Transactor(ds), files(dir))
@@ -228,7 +218,6 @@ class StructuredLogDbSuite extends DbSuite:
     assertEquals(page.events.map(e => s"${e.id}"), inTable.map(_._1))
     val around = service.problem(LogEvent.ProblemId("cafe0001"), LogPage.Limit(10))
     assertEquals(around.map(_.events.map(_.trace)), Some(Vector(trace)), "the problem's trace, found in the file")
-    // the writer itself, with the database down: the file still gets every event, the table catches up later
     val offline = LogWriter(() => settings(dir), files(dir), Transactor(down), WritePermit.Gate(), Clock.systemUTC())
     val later = offline.mintTrace()
     offline.record(
@@ -258,7 +247,6 @@ class StructuredLogDbSuite extends DbSuite:
     val ok = What.RequestsCounted(LogEvent.Operation("GET /api/health"), LogEvent.Count(1), LogEvent.Count(0))
     val bad = What.ProblemRaised(None, LogEvent.ProblemCase("Io.Unreadable"))
     val events = Vector(ev(1, 40, ok), ev(2, 40, bad), ev(3, 100, bad), ev(4, 1, ok))
-    // the ids are fixed: what an earlier run of this suite kept goes first
     connect(ds)(sql"DELETE FROM log_events WHERE trace = ${s"$trace"}::uuid".update.run(): Unit)
     assertEquals(connect(ds)(LogRepo.insert(events)), Some(4L))
     assertEquals(connect(ds)(LogRepo.insert(events)), Some(0L), "an event already in the table is not added again")
@@ -286,7 +274,6 @@ class StructuredLogDbSuite extends DbSuite:
     val allowed = Set(
       "modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala",
       "modules/server/src/main/scala/com/histmersion/util/log/LogData.scala",
-      // its REVOKE: the read-only role may not read the log
       "modules/db/src/main/scala/com/histmersion/domain/library/search/QueryAccess.scala"
     )
     val roots = Files.list(Path.of("modules")).iterator().asScala.toList.map(_.resolve("src/main"))

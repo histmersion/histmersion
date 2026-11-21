@@ -7,16 +7,11 @@ import com.histmersion.util.problem.Problems
 
 import java.time.Instant
 
-/** `GET /api/log`, `GET /api/problems/{id}`, the `log` tool and `histmersion log`: the filters checked, then a page.
-  */
 final class LogControllers(log: LogService, now: () => Instant):
 
   def events(filter: LogPage.Filter): Either[Problems, LogPage] =
     LogQuery.parse(filter, now()).map(log.page)
 
-  /** What happened around a problem, by the id its caller was shown: the steps of the trace it was raised in, oldest
-    * first.
-    */
   def problem(id: LogEvent.ProblemId): Either[Problems, LogPage] =
     id.present
       .flatMap(log.problem(_, LogPage.Limit.max))

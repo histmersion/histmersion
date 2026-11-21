@@ -80,7 +80,6 @@ object BackupService:
 
   private def guards(registry: DataContributions): List[GuardedTable] = registry.backups.flatMap(_._2.guarded)
 
-  /** `pg_dump`'s arguments that leave out the rows of the tables the owners keep out of a backup (the log's). */
   def rowsLeftOut(registry: DataContributions): List[String] =
     registry.backups.flatMap(_._2.rowsLeftOut).map(t => s"--exclude-table-data=public.$t")
 

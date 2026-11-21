@@ -154,7 +154,9 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
             Left(Cli.Error(e.problems, ExitCode.Origin.Server, notFound = e.isNotFound, trace = trace))
           case _ =>
-            Left(Cli.Error(unexpected(HttpStatus(resp.code.code), serverUrl, write), ExitCode.Origin.Server, trace = trace))
+            Left(
+              Cli.Error(unexpected(HttpStatus(resp.code.code), serverUrl, write), ExitCode.Origin.Server, trace = trace)
+            )
 
   def unanswered(what: String): Problem =
     Problem.Upstream.Unanswered(Histmersion, Problem.Upstream.Url.of(serverUrl), External.Reported.of(what))
@@ -477,10 +479,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def fillFigureLicences(apply: Api.Apply): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
 object Client:
-  /** The answer's header that names the trace the server handled the request under. */
   val TraceHeader = "Histmersion-Trace"
 
-  /** The trace an answer named, if any. */
   def traceOf(header: Option[String]): Option[LogEvent.Trace] =
     header.flatMap(LogEvent.Trace.fromHeader)
 

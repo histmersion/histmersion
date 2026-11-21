@@ -18,9 +18,6 @@ object McpEdge:
   /** What a cut answer's trailer tells the caller to do. */
   val ReadOn: String = "ask for less: the tool's own paging (offset, chars, limit, before) or a narrower filter"
 
-  /** The MCP server over `tools`, each held to `limits()` and each call recorded in its request's trace under the
-    * tool's name ([[McpToolTracing]]: the request itself is `POST /mcp`).
-    */
   def server(tools: List[Tool], limits: () => McpConfig): McpServer[Identity] =
     McpServer(tools = tools.map(t => McpToolTracing.traced(capped(t, limits))))
 

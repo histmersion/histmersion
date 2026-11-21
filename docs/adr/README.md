@@ -52,3 +52,6 @@ audited and moved here.
 | [0015](0015-web-bundle-build-identity.md) | The page and the server agree on the web bundle's build |
 | [0016](0016-server-pages-on-api-html.md) | The server's pages are built from api.Html, and search marks only text |
 | [0017](0017-ratchet-checker-scope.md) | What two ratchet checkers count: newtype companions and test suites |
+| [0018](0018-structured-log.md) | The structured log: one writer, a table and rolling files under the same ids, traced on the thread |
+| [0019](0019-newtype-wire-codecs.md) | Unconstrained newtypes cross the wire unchecked; only they take a text codec |
+| [0020](0020-checker-scope-lifted-instances-and-own-names.md) | What two more ratchet checkers count: lifted newtype instances and a file's own type names |

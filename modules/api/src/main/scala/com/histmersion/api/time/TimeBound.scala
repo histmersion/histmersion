@@ -7,21 +7,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import java.time.{Instant, LocalDate, ZoneOffset}
 
-/** A bound of a time filter as a person writes it: a date (`2026-10-01`), an ISO instant, or a time ago (`7d`, `12h`,
-  * `30m`). The lists of activity and jobs and the structured log read it the same way.
-  */
 type TimeBound = TimeBound.T
 object TimeBound extends Newtype[String, Pure]:
   private val Relative = """(\d{1,6})\s*([dhm])""".r
   private val DateOnly = """(\d{4}-\d{2}-\d{2})""".r
 
   extension (s: TimeBound)
-    /** As a filter gives it: trimmed, none when blank. */
     def present: Option[TimeBound] = Option(s.value.trim).filter(_.nonEmpty).map(TimeBound(_))
 
-    /** The instant it names, against `now`: a time ago before `now`, an instant as it is, a date's start of day in UTC
-      * (an `end` bound: the next day's, so the date is included).
-      */
     def instant(end: Boolean, now: Instant): Either[Problem, Instant] =
       def unreadable = Invalid.Unreadable.here(
         TypeName.of(TimeBound),

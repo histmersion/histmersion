@@ -127,7 +127,6 @@ final class Deps(
   lazy val eventSources: EventSourceFilter =
     FilterEventSources()
 
-  /** The structured log's rolling files, in `log.dir` (empty: the server's logs directory's `structured`). */
   lazy val logFiles: LogFiles =
     LogFiles(
       LineFiles(() =>
@@ -139,10 +138,6 @@ final class Deps(
       )
     )
 
-  /** The structured log's one writer: the sink of every trace scope ([[TracedPinning]] gives work that starts without
-    * one a scope of its own). Its own connections are told no trace: it runs in none, and the log's tables record no
-    * writes. The composition starts and stops its thread.
-    */
   lazy val logWriter: LogWriter = LogWriter(() => cfg.log, logFiles, transactor, maintenance.permits, clock)
 
   /** The server's files, each named place where today's settings put it. */

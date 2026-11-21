@@ -5,9 +5,6 @@ import chimp.server.{ServerContext, ServerTool}
 import com.histmersion.api.log.LogEvent
 import sttp.shared.Identity
 
-/** An MCP tool whose every call is recorded in its request's trace under the tool's name: the request itself is one
-  * `POST /mcp` whatever tool it calls, and its body is never read for the log.
-  */
 object McpToolTracing:
   def traced[I, O, C <: ServerContext[Identity]](t: ServerTool[I, O, Identity, C]): ServerTool[I, O, Identity, C] =
     ServerTool(

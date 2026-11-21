@@ -8,17 +8,12 @@ import com.histmersion.util.database.Transactor
 import java.util.concurrent.atomic.AtomicReference
 import scala.util.control.NonFatal
 
-/** Reading the structured log: a page of a query, and the trace a problem was raised in. The table is read; when the
-  * database cannot answer, or the query asks for it, the files are.
-  */
 trait LogService:
   def page(q: LogQuery): LogPage
 
-  /** Every step of the trace `id` was raised in (oldest first), or `None` when no event names that problem. */
   def problem(id: LogEvent.ProblemId, limit: LogPage.Limit): Option[LogPage]
 
 object LogService:
-  /** How long a read of the table may take before the files are read instead. */
   val ReadTimeout: Transactor.TimeoutMs = Transactor.TimeoutMs(10000)
 
   def apply(transactor: Transactor, files: LogFiles): LogService = Implementation(transactor, files)
@@ -55,7 +50,6 @@ object LogService:
       val (events, next) = files.page(q)
       LogPage(events, next, LogPage.Origin.File)
 
-  /** The filters of `q` as SQL, each one only when set. */
   private[log] def where(q: LogQuery): Frag =
     import com.histmersion.util.database.given
     import com.histmersion.util.database.NewtypeColumns.given
@@ -68,7 +62,6 @@ object LogService:
         sql" AND (at, id) < (${LogEvent.At.of(p.at)}::timestamptz, ${p.id}::uuid)"
       )}"""
 
-  /** The same reads over events held in memory (tests): written with [[add]]. */
   final class InMemory(events: AtomicReference[Vector[LogEvent]] = AtomicReference(Vector.empty)) extends LogService:
     def add(e: LogEvent): Unit = events.updateAndGet(_ :+ e): Unit
 

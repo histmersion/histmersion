@@ -14,13 +14,6 @@ import sttp.tapir.server.model.ServerResponse
 
 import RequestLog.{LabelHeader, TraceHeader, Unmatched}
 
-/** Every HTTP request — REST, MCP, pages — opens a trace: its steps (provider calls, problems, the database's writes)
-  * are recorded under it, its answer carries it (`Histmersion-Trace`), and once answered it is one `RequestAnswered`
-  * event with the route template that matched, the status, the time, the client's address and the search text. A
-  * client's own label (`Histmersion-Trace-Label`) is kept beside the trace. Map tiles, static files and the health
-  * check (`log.counted`) are counted per minute instead. The netty-sync interpreter runs a request's whole logic on its
-  * own thread, which is what lets the trace scope and the matched route ride on it.
-  */
 final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends RequestInterceptor[Identity]:
   private val matched = ThreadLocal[LogEvent.Operation | Null]()
 
@@ -92,11 +85,8 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
           case failure => failure
 
 object RequestLog:
-  /** The answer's header that names its trace. */
   val TraceHeader = "Histmersion-Trace"
 
-  /** The header a client names its own calls with (an outside agent session grouping its calls). */
   val LabelHeader = "Histmersion-Trace-Label"
 
-  /** The operation of a request no route matched. */
   val Unmatched: LogEvent.Operation = LogEvent.Operation("(no route)")

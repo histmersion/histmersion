@@ -57,13 +57,11 @@ final class ServerGraph private (
     val maintenance: WriteGate
 ):
 
-  /** Each connection told the calling thread's trace, for the database's write triggers. */
   val ds: DataSource = TracedDataSource(maintenance.permits.dataSource(Hot.DataSource(pool)(identity)))
   val queryDs: DataSource = maintenance.permits.dataSource(Hot.DataSource(queryPool)(_.ds))
 
   /** The handlers' view: config, file and plugins from the graph at each call. */
   def deps(restart: Option[() => Unit], system: SystemContext): Deps =
-    // the pinning hands work over in a trace scope recording into the writer these deps build
     lazy val built: Deps = new Deps(
       () => graph.config.app,
       ds,

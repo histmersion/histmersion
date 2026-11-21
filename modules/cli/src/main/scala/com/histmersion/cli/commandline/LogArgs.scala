@@ -8,7 +8,6 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 
-/** The command line of [[LogCmd]]. */
 object LogArgs:
   private val Help = "What happened, step by step: answered requests, provider calls, problems and database writes, " +
     "each with the trace that links one request's or job's steps"

@@ -287,7 +287,6 @@ object Cli:
   object Error:
     def answered(problems: Problems): Error = Error(problems, ExitCode.Origin.Server)
 
-    /** The line after a failure's sentences that leads to what the server did with the request. */
     def traceLine(trace: LogEvent.Trace): String =
       s"trace $trace — what happened: histmersion log --trace $trace"
 

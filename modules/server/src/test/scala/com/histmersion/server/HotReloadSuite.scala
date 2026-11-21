@@ -219,7 +219,6 @@ class HotReloadSuite extends DbSuite:
       // the request that started on A answered from A; a new one goes to B
       assertEquals(inFlight.get(30, TimeUnit.SECONDS), DbA)
       assertEquals(database(url), DbB)
-      // B was migrated on the swap: the squashed V109, V110 and V111
       assert(on(DbB, "SELECT count(*) FROM flyway_schema_history WHERE success") == 3)
 
       // the held job finishes on A — its row and its source are there, not in B

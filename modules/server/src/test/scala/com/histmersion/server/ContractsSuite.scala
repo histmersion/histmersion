@@ -1019,11 +1019,6 @@ object ContractsSuite:
         }
         .toList
 
-    /** A newtype's instance lifted from its base type's (`given x: [T] => (m: RefinedType.Mirror[T]) => (base:
-      * Codec[m.BaseType]) => Codec[T]`): how every newtype gets one (a newtype's instance maps its base type's, G45's
-      * lifted type class), which no derives clause can request, since an opaque type has none. No codec of a record is
-      * written by hand there.
-      */
     private val NewtypeLift = "\\bRefinedType\\.Mirror\\[".r
 
     /** The text after a header's last `=>` or `:` at depth 0 (the whole header when it has neither). */

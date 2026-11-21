@@ -7,8 +7,6 @@ import com.histmersion.api.Api
 import com.histmersion.api.time.TimeBound
 import sttp.tapir.*
 
-/** The structured log's endpoints: a filtered page, and what happened around one problem (by the id its answer gave).
-  */
 object LogApi:
 
   private lazy val base = endpoint.in("api").errorOut(Api.problemOut)

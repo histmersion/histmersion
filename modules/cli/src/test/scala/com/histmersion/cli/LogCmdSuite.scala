@@ -5,7 +5,6 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.api.time.TimeBound
 
-/** `histmersion log …`: every filter a flag, `--file` the file store, `--problem` alone the problem's trace. */
 class LogCmdSuite extends munit.FunSuite:
   private val json = Cli.JsonOutput(false)
 

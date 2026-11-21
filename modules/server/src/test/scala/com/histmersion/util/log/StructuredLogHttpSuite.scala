@@ -18,10 +18,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** The structured log over real HTTP: every answer names its trace, the request is found by it (route template, status,
-  * client address, search text, the client's label), a problem id nobody raised is a 404, and a secret seeded through
-  * the settings never reaches the table or the file. Gated on HISTMERSION_TEST_DB_URL.
-  */
 class StructuredLogHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -36,7 +32,6 @@ class StructuredLogHttpSuite extends DbSuite:
 
   private def page(body: String): LogPage = RawJson.decode[LogPage](body).fold(e => fail(s"$e: $body"), identity)
 
-  /** The log page of `query`, once it holds an event `found` accepts (the writer batches every 200 ms). */
   private def awaitLog(url: String, query: String, found: LogEvent => Boolean, left: Int = 100): LogPage =
     val r = get(s"$url/api/log?$query")
     assertEquals(r.statusCode, 200, r.body)
@@ -74,21 +69,17 @@ class StructuredLogHttpSuite extends DbSuite:
         assertEquals(r.client, Some("127.0.0.1"))
         assertEquals(r.search, Some("bronze age collapse"))
         assertEquals(label, Some("suite-session"))
-        // the label alone finds it too
         val byLabel = awaitLog(url, "label=suite-session", e => expected.contains(e.trace))
         assert(byLabel.events.exists(e => expected.contains(e.trace)), byLabel.toString)
-        // a path parameter is named, never its value
         val job = get(s"$url/api/jobs/no-such-job-77")
         val jobTrace = job.headers().firstValue(RequestLog.TraceHeader).orElse("")
         val jp = awaitLog(url, s"trace=$jobTrace", _.what.isInstanceOf[What.RequestAnswered])
         val ops = jp.events.collect { case LogEvent(_, _, _, _, _, _, r: What.RequestAnswered) => s"${r.operation}" }
         assert(ops.nonEmpty && ops.forall(o => o.contains("{") && !o.contains("no-such-job-77")), ops.toString)
-        // the health check is counted, not logged one by one
         val health = get(s"$url/api/health")
         val healthTrace = health.headers().firstValue(RequestLog.TraceHeader).orElse("")
         Thread.sleep(500)
         assertEquals(page(get(s"$url/api/log?trace=$healthTrace").body).events, Vector.empty)
-        // an MCP call is POST /mcp, and its tool is named in the same trace
         val call = http.send(
           HttpRequest
             .newBuilder(URI.create(s"$url/mcp"))
@@ -110,12 +101,10 @@ class StructuredLogHttpSuite extends DbSuite:
           Vector(LogEvent.Tool("ping")),
           s"${call.statusCode} ${call.body}"
         )
-        // a problem id nobody raised
         assertEquals(get(s"$url/api/problems/nobody00").statusCode, 404)
         assertEquals(get(s"$url/api/log?kind=Nope").statusCode, 400)
       finally b.stop()
     }
-    // the secret, sent with every request and kept in the settings, is in neither store
     val ds = testPool(base.db.modify(_.url).setTo(TestDb.dbUrl.get))
     val inTable = connect(ds)(
       sql"SELECT count(*) FROM log_events WHERE event::text LIKE ${s"%$Secret%"} OR coalesce(label, '') LIKE ${s"%$Secret%"}"

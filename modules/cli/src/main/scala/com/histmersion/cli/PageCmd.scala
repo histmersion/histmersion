@@ -11,9 +11,6 @@ import io.github.iltotore.iron.RefinedType
   */
 object PageCmd:
 
-  /** `histmersion jobs --status failed --limit 20 --before 4f1c…` — `opts` in the order given, the ones left unset
-    * dropped; a value with a space or quote is single-quoted for the shell. The cursor is any listing's (a newtype).
-    */
   def next[C](command: String, opts: List[(String, Option[String])], cursor: C)(using RefinedType.Mirror[C]): String =
     val set = opts.collect { case (k, Some(v)) => s"--$k ${quote(v)}" }
     (List(s"histmersion $command") ++ set ++ List(s"--before ${quote(s"$cursor")}")).mkString(" ")

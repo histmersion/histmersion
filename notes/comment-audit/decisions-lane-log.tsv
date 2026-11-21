@@ -1,0 +1,256 @@
+path	lines	language	category	reason
+modules/api/src/main/scala/com/histmersion/api/json/NewtypeCodecs.scala	16-26	scala	decision	an unconstrained newtype decodes as its base type with no check, keeping Iron's runtime constraints out of the web bundle; a Problem in a wire record is written typed: ADR-0019
+modules/api/src/main/scala/com/histmersion/api/json/NewtypeCodecs.scala	45-48	scala	decision	only an unconstrained newtype has a tapir text codec; the server checks once, where an api value becomes a domain value: ADR-0019
+modules/api/src/main/scala/com/histmersion/api/log/LogApi.scala	10-11	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	102	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	107	scala	decision	a client's label is cut at 200 characters: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	11-15	scala	decision	an event is typed, no free text, body or secret; trace, label (never used as a trace) and subjects: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	110	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	114	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	119	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	123	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	128	scala	decision	a request is named by its route template, never the raw path with its query: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	131-132	scala	decision	the route an endpoint matches, its parameters named, never the query: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	137	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	142	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	146	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	151	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	158	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	166	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	174	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	177	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	180	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	183	scala	decision	a search's text is cut at 500 characters: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	186	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	191	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	196	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	205	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	208	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	211	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	216	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	220	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	223	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	226	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	229	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	233	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	235	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	238	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	241	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	244	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	247	scala	decision	subjects find a step across traces: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	255	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	263	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	267	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	27	scala	decision	failures are kept as long as problems: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	270	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	272	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	275	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	278	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	280	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	290	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	293	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	296-298	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	30	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	301	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	304	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	307	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	310-312	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	317	scala	decision	which cases count as problems for retention: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	325	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	33	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	346	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	40-43	scala	decision	ids are UUIDv7 in lower case so they sort by time; the caller supplies clock and randomness: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	46	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	49	scala	decision	the server mints ids and traces as lower-case UUIDs: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	54	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	57	scala	decision	a cursor accepts only an id the server minted: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	61	scala	decision	ids sort as the table orders its UUIDs, as their lower-case text: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	64-66	scala	decision	times in UTC to the microsecond, as the database keeps them, so the table and the file compare the same: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	74	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	78	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	81	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	84	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	89	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	92	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	96	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogEvent.scala	99	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	107	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	15-17	scala	decision	a page is read from the file when the database cannot answer: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	23	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	41	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	44	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	51	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	54	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	57	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	61	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	64	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	67	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	73	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	77	scala	decision	the table is read, falling back to the file; or the file alone: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	80	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	84	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	87	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/log/LogPage.scala	90	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/time/TimeBound.scala	10-12	scala	decision	the activity and job lists and the structured log read a time bound the same way: ADR-0018
+modules/api/src/main/scala/com/histmersion/api/time/TimeBound.scala	19	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/time/TimeBound.scala	22-24	scala	decision	a date starts its day in UTC; as an end bound it includes the day: ADR-0018
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	290	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	480	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	483	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/LogCmd.scala	14	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/LogCmd.scala	20	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/LogCmd.scala	31-32	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/LogCmd.scala	7-11	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/PageCmd.scala	14-16	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/commandline/LogArgs.scala	11	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/LogCmdSuite.scala	8	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	12-16	scala	decision	the log's settings: files, retention, size caps, batching, counted paths: ADR-0018
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	29	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	35	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	39	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	45	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	51	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	61	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	73	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	81	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	84	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/util/log/LogConfig.scala	88	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	13-15	scala	decision	one set of query rules for the table's SQL and the file's reader: ADR-0018
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	27	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	34	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	40	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	43	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	51	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	53	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	56	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	59-60	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	62	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	73	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	77	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogQuery.scala	81-84	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogSink.scala	13	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/LogSink.scala	6-8	scala	decision	recording never blocks and never fails the step it describes; the one writer mints ids and times: ADR-0018
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	23-27	scala	decision	the trace scope lives on the thread, as the generation pin does, and is carried to handed-over work: ADR-0018
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	34	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	41	scala	tautology	restates what the names, types and code beside it already say
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	47-51	scala	decision	a job or run takes back the trace its row keeps, not the resumer's: ADR-0018
+modules/core/src/main/scala/com/histmersion/util/log/TraceScope.scala	6	scala	tautology	restates what the names, types and code beside it already say
+modules/db/src/main/scala/com/histmersion/domain/library/search/QueryAccess.scala	73	scala	decision	the read-only role may not read the log, which holds client addresses and search text: ADR-0018
+modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala	259-261	scala	tautology	restates what the names, types and code beside it already say
+modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala	266-267	scala	decision	heartbeats are counted per minute by the statement (histmersion.log_count): ADR-0018
+modules/db/src/test/scala/com/histmersion/db/TestDb.scala	62	scala	tautology	restates what the names, types and code beside it already say
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SttpTransport.scala	50	scala	decision	a provider call records host and status only, never the URL (a key may ride in its query): ADR-0018
+modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala	359	scala	tautology	restates what the names, types and code beside it already say
+modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala	78-80	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/domain/automation/agents/Engine.scala	422-424	scala	decision	a queued run executes under the permit of the unit it runs in, never the submitter's, and under its own trace: ADR-0018
+modules/server/src/main/scala/com/histmersion/domain/automation/agents/Engine.scala	457	scala	decision	a run executes under its own trace whoever resumed it: ADR-0018
+modules/server/src/main/scala/com/histmersion/server/Composition.scala	190	scala	decision	the writer stops after writing what it holds, before the pools close: ADR-0018
+modules/server/src/main/scala/com/histmersion/server/Composition.scala	224-225	scala	decision	every request is traced from the outside: answered with its trace, recorded once answered: ADR-0018
+modules/server/src/main/scala/com/histmersion/server/Deps.scala	130	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/Deps.scala	142-145	scala	decision	the writer's own connections are told no trace; the log's tables record no writes: ADR-0018
+modules/server/src/main/scala/com/histmersion/server/ServerGraph.scala	60	scala	decision	each connection is told the calling thread's trace for the write triggers: ADR-0018
+modules/server/src/main/scala/com/histmersion/server/ServerGraph.scala	66	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/ServerWiring.scala	235	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/ServerWiring.scala	238	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/data/backup/BackupService.scala	83	scala	decision	a backup's dump leaves the log's rows out: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/data/backup/BackupShare.scala	7-11	scala	decision	tables whose rows the dump leaves out keep their definitions, so a restored database has them empty: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/jobs/JobRuns.scala	143	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/jobs/JobRuns.scala	30	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogControllers.scala	10-11	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogControllers.scala	17-19	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogData.scala	21-23	scala	decision	the tables whose writes are neither recorded nor counted: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogData.scala	36-38	scala	decision	the tables counted per minute, and heartbeats counted by the statement: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogData.scala	9-11	scala	decision	the log is a debugging aid: no backup rows, no bundle: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	12-15	scala	decision	one file per UTC day and retention class, same JSON as the table, readable while the database is down: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	18-19	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	26-28	scala	decision	a file line that does not read (one being written) is skipped: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	39	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	42	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	45-47	scala	decision	the files' retention; today's file is never deleted: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	78	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	81	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogFiles.scala	88	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	14-17	scala	decision	LogRepo is the only code that writes the log's tables: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	20-22	scala	decision	an event retried from the backlog is not inserted twice: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	50	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	53-55	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	63-65	scala	decision	staged writes are taken in the batch's transaction, so a failure leaves them staged: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	73	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	84	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	90	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRepo.scala	99	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogRetention.scala	11-13	scala	decision	one retention for the table and the files: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRetention.scala	16-18	scala	decision	an unreachable or held database is pruned at the next run; deletions go to the server's log: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRetention.scala	42	scala	decision	at most 1 000 000 rows deleted per run: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRetention.scala	45-48	scala	decision	the size cap counts the live share, since freed space is reused rather than returned: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogRoutes.scala	9	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogService.scala	11-13	scala	decision	the table is read; the files when the database cannot answer or the query asks: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogService.scala	17	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogService.scala	21	scala	decision	a table read may take 10 s before the files are read: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogService.scala	58	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogService.scala	71	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogTools.scala	12-14	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	155	scala	decision	an event retried from the backlog is not added twice: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	18-24	scala	decision	one writer; bounded queue and backlog, losses counted; file first, then the table with the staged writes: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	185	scala	decision	staged writes taken at least every second: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	188	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	193	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	196	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	203	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	216	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	44-46	scala	decision	a restore holds the writer at rest: files appended, the database left alone: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	55	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	63	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	66	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	74	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	79	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/LogWriter.scala	88-90	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/McpToolTracing.scala	8-10	scala	decision	each MCP tool call is recorded under the tool's name; the body is never read: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/RequestLog.scala	101	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/RequestLog.scala	17-23	scala	decision	every request opens a trace; route template; label header; counted paths; netty-sync runs a request on one thread: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/RequestLog.scala	95	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/RequestLog.scala	98	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/log/TracedDataSource.scala	14-18	scala	decision	connections told trace and label only when they differ from what that connection was told: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/log/TracedPinning.scala	7-11	scala	decision	pinning carries the scope; work from no scope gets its own trace: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/mcp/McpEdge.scala	21-23	scala	decision	each MCP tool call is recorded in its request's trace: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/problem/ProblemLog.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/problem/ProblemLog.scala	8-12	scala	decision	the text log's problem line; the structured event leaves the text out: ADR-0018
+modules/server/src/main/scala/com/histmersion/util/storage/LineFiles.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/storage/LineFiles.scala	23-25	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/storage/LineFiles.scala	48	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/storage/LineFiles.scala	54	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/storage/LineFiles.scala	57	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/util/storage/LineFiles.scala	9-12	scala	decision	no directory holds nothing; an unreadable file reads as empty: ADR-0018
+modules/server/src/test/scala/com/histmersion/server/ArchitectureSuite.scala	453	scala	decision	a type a file defines itself, at any depth, is its own: ADR-0020
+modules/server/src/test/scala/com/histmersion/server/ArchitectureSuite.scala	457-459	scala	decision	a file's own type name shadows a top-level type of the same name: ADR-0020
+modules/server/src/test/scala/com/histmersion/server/ContractsSuite.scala	1022-1026	scala	decision	a newtype's instance lifted from its base type's is no hand-written codec: ADR-0020
+modules/server/src/test/scala/com/histmersion/server/DataOracleSuite.scala	628-630	scala	decision	the log's rows are not compared: a backup leaves them out and a restore starts them empty: ADR-0018
+modules/server/src/test/scala/com/histmersion/server/DataTreeOracleSuite.scala	328	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/server/HotReloadSuite.scala	222	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/LogFilesSuite.scala	107	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/LogFilesSuite.scala	12-14	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	142	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	145	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	158	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	186	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	231	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	25-28	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	261	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	289	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	38	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	61	scala	decision	the unrecorded and counted table lists are pinned: moving a table is a decision: ADR-0018
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogDbSuite.scala	93	scala	decision	the role's provisioning runs at start and again after a restore (--no-privileges): ADR-0018
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	113	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	118	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	21-24	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	39	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	77	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	80	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	86	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/util/log/StructuredLogHttpSuite.scala	91	scala	tautology	restates what the names, types and code beside it already say

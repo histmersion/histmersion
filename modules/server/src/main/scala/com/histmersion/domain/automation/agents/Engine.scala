@@ -419,9 +419,6 @@ final class Engine(
         )(target)
       )
 
-  /** Queue run `id`: it executes later on a pool thread, under the permit of the unit it runs in there (never the
-    * submitter's, whose block has ended by then), and under the run's own trace.
-    */
   def submit(id: Run.Id): Unit =
     queue.put(Queued(id, agents.pins.carry(agents.workers.unit(executeInItsTrace(id))), era))
 
@@ -454,7 +451,6 @@ final class Engine(
       // a cancel or a restore that interrupted a run as it ended must not end the worker: only the pool's stop does
       catch case _: InterruptedException => alive = !stopping
 
-  /** Run one queued run under its own trace (the one its row keeps), whoever resumed it. */
   private def executeInItsTrace(id: Run.Id)(using WritePermit): Unit =
     TraceScope.resumed(agents.jobRuns.trace(id))(execute(id))
 
