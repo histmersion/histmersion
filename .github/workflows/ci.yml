@@ -17,7 +17,9 @@ name: ci
 #              the CLI reference against the native CLI's help — no free runner has the memory to link the server
 #   macos      on macOS arm64 (the platform the owner runs): the scripts' tests, the CLI reference against the
 #              CLI's help (on the JVM), and the browser tests (Playwright, modules/web/test) against the server on
-#              the JVM — a skipped browser test fails (G125)
+#              the JVM but the `budgets: …` ones, one file at a time — a skipped browser test fails (G125)
+#   macos-budgets  the `budgets: …` browser tests alone (the same files, the complementary name pattern): timing on
+#              a shared runner, so a budget over its figure warns and never blocks; a skip or no test run fails
 #
 # The ratchet suites compare against the merge base with contracts3-pilot: the test jobs check out the full
 # history, so origin/contracts3-pilot is there (RatchetBase's fallback; HISTMERSION_RATCHET_BASE overrides it).
@@ -321,10 +323,10 @@ jobs:
     # The browser tests on macOS arm64, the platform the owner runs (Chromium draws the map on the GPU there), against
     # the server on the JVM from the build job's compile; the scripts' tests; the CLI reference checked against the
     # CLI's help (run on the JVM: tools/gen-cli-docs.sh's fallback). The NATIVE build is the `native` job's.
-    name: macos (browser tests, scripts' tests, CLI docs)
+    name: macos (browser tests but the budgets, scripts' tests, CLI docs)
     needs: build
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
     steps:
@@ -393,16 +395,22 @@ jobs:
         run: |
           npm ci
           npx playwright install chromium
-      - name: browser tests (the files of `npm run test:browser`; a skipped test fails, G125)
+      - name: browser tests (the files of `npm run test:browser` but the `budgets:` tests; a skipped test fails, G125)
         working-directory: modules/web
         run: |
-          files="$(node -p "require('./package.json').scripts['test:browser'].replace(/^node --test /, '')")"
+          files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
           report="$RUNNER_TEMP/browser-junit.xml"
           rc=0
-          node --test --test-reporter=spec --test-reporter-destination=stdout \
+          node --test --test-concurrency=1 --test-skip-pattern='^budgets: ' \
+            --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=junit --test-reporter-destination="$report" $files || rc=$?
+          tests="$(grep -c '<testcase' "$report" || true)"
           skipped="$(grep -c '<skipped' "$report" || true)"
-          echo "browser tests: exit $rc, $skipped skipped"
+          echo "browser tests: exit $rc, $tests run, $skipped skipped"
+          if [ "$tests" = 0 ]; then
+            echo "::error::no browser test ran"
+            rc=1
+          fi
           if [ "$skipped" != 0 ]; then
             echo "::error::$skipped browser test(s) skipped (G125: a skip fails the run)"
             rc=1
@@ -416,6 +424,103 @@ jobs:
           path: |
             ${{ runner.temp }}/server.log
             ${{ runner.temp }}/browser-junit.xml
+            target/test-pg.log
+          retention-days: 7
+          if-no-files-found: ignore
+      - if: always()
+        run: just test-db-down
+
+  macos-budgets:
+    name: macos-budgets (browser speed budgets, timing, never blocks)
+    needs: build
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      HISTMERSION_SERVER_URL: http://127.0.0.1:18080
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: ./.github/actions/setup
+      - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
+        with: { tool: just }
+      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+        with:
+          manifest-path: runtime/postgres/pixi.toml
+          cache: true
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: modules/web/package-lock.json
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: compiled, path: "${{ runner.temp }}" }
+      - name: the build job's compilation output
+        run: |
+          mkdir -p target
+          zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
+          rm "$RUNNER_TEMP/compiled.tar.zst"
+      - name: the server's class path (compiled from the replay, one module at a time where not)
+        run: |
+          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
+          cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
+          test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
+      - name: throwaway PostgreSQL 18 + PostGIS
+        run: just test-db
+      - name: the test server on the JVM (no runtime children, scratch settings, the Aegean base-map extract)
+        run: |
+          conf="$RUNNER_TEMP/histmersion-test.conf"; : > "$conf"
+          echo "HISTMERSION_TEST_CONFIG_FILE=$conf" >> "$GITHUB_ENV"
+          HISTMERSION_RUNTIME=false HISTMERSION_CONFIG="$conf" \
+          HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-data" \
+          HISTMERSION_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test \
+          HISTMERSION_PORT=18080 HISTMERSION_PUBLIC_URL="$HISTMERSION_SERVER_URL" \
+          HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
+          HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false \
+          HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false \
+            nohup java --sun-misc-unsafe-memory-access=allow -Xss4m -cp "$(cat "$SERVER_CLASSPATH_FILE")" \
+              com.histmersion.server.histmersionServer > "$RUNNER_TEMP/server.log" 2>&1 &
+          curl -fsS --retry 90 --retry-delay 2 --retry-connrefused --retry-all-errors "$HISTMERSION_SERVER_URL/api/health"
+      - name: browser dependencies (Playwright's Chromium)
+        working-directory: modules/web
+        run: |
+          npm ci
+          npx playwright install chromium
+      - name: the speed budgets (the `budgets:` tests of the files of `npm run test:browser`; over a budget warns)
+        continue-on-error: true
+        working-directory: modules/web
+        run: |
+          files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
+          HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-name-pattern='^budgets: ' \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/budgets-junit.xml" $files
+      - name: every budget test ran and none was skipped (G125)
+        if: always()
+        run: |
+          report="$RUNNER_TEMP/budgets-junit.xml"
+          test -s "$report" || { echo "::error::the budget tests wrote no report"; exit 1; }
+          tests="$(grep -c '<testcase' "$report" || true)"
+          skipped="$(grep -c '<skipped' "$report" || true)"
+          failed="$(grep -c '<failure' "$report" || true)"
+          echo "budget tests: $tests run, $failed failed, $skipped skipped"
+          if [ "$failed" != 0 ]; then
+            echo "::warning::$failed browser budget test(s) failed on the macOS runner (the timing job, never blocking)"
+          fi
+          if [ "$tests" = 0 ]; then
+            echo "::error::no budget test ran"
+            exit 1
+          fi
+          if [ "$skipped" != 0 ]; then
+            echo "::error::$skipped budget test(s) skipped (G125: a skip fails the run)"
+            exit 1
+          fi
+      - name: logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-budgets-logs
+          path: |
+            ${{ runner.temp }}/server.log
+            ${{ runner.temp }}/budgets-junit.xml
             target/test-pg.log
           retention-days: 7
           if-no-files-found: ignore

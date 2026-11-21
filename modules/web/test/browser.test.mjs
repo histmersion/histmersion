@@ -2039,6 +2039,32 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
   });
 });
 
+const goalProblem = (group, kase, slug, text, code = null) =>
+  ({ problems: [{ group, case: kase, data: { typeName: 'Goal.Slug', key: slug }, text }], code });
+const alreadyExists = slug => goalProblem('Conflict', 'AlreadyExists', slug, `goal slug '${slug}' already exists`);
+const goalNotFound = slug => goalProblem('NotFound', 'Entity', slug, `no goal slug '${slug}'`, 'not_found');
+const areaCreated = (body, made) => ({
+  goal: { slug: body.slug, title: body.goal.title, status: 'planned', notes: body.goal.notes ?? null,
+    tags: body.goal.tags ?? [], regions: [], periodStart: null, periodEnd: null, parentSlug: null,
+    updatedAt: '2026-11-21 20:07:19.964192+01' },
+  run: null, seed: null, watch: null, ...made });
+
+async function routeNoOtherAreaWrites(page, slugs, asked) {
+  for (const slug of slugs) {
+    await page.route(`**/api/goals/${slug}`, route => {
+      if (route.request().method() === 'GET') return route.fulfill({ status: 404, json: goalNotFound(slug) });
+      asked.push(`${route.request().method()} goal`);
+      return route.abort();
+    });
+    await page.route(`**/api/goals/${slug}/view`, route => route.fulfill({ status: 404, json: goalNotFound(slug) }));
+  }
+  await page.route('**/api/agents/runs', route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    asked.push('POST run');
+    return route.abort();
+  });
+}
+
 // Process managers, phase 2: the goals window's New research area form and the article window's
 // Review / Extend / Enrich buttons, against fixed answers (nothing is written): the form refuses an
 // existing slug, creates the goal at the slug made from the title, starts the planner and creates the
@@ -2051,25 +2077,22 @@ test('managers phase 2: the New research area form and the Review / Extend / Enr
       return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
     });
     const asked = [];
-    await page.route('**/api/goals/zz-pw-tin-trade', route => {
+    await page.route('**/api/goals/areas', route => {
       const r = route.request();
-      asked.push(`${r.method()} goal`);
-      if (r.method() === 'GET') return route.fulfill({ status: 404, json: { message: 'No goal', code: 'not-found' } });
-      asked.push(JSON.parse(r.postData()));
-      return route.fulfill({ json: { slug: 'zz-pw-tin-trade', title: 'Zz PW tin trade', status: 'planned', tags: ['tin'] } });
+      if (r.method() !== 'POST') return route.continue();
+      const body = JSON.parse(r.postData());
+      asked.push(['area', body]);
+      if (body.slug === 'zz-pw-exists') return route.fulfill({ status: 409, json: alreadyExists('zz-pw-exists') });
+      return route.fulfill({ json: areaCreated(body, {
+        run: body.plan ? { id: 'zz-run', pipeline: 'plan-goal', target: body.slug, status: 'queued' } : null,
+        seed: body.seed ? { id: `seed:${body.slug}`, kind: 'seed', goal: body.slug, state: 'paused' } : null }) });
     });
-    await page.route('**/api/goals/zz-pw-exists', route =>
-      route.fulfill({ json: { slug: 'zz-pw-exists', title: 'Exists', status: 'planned' } }));
-    await page.route('**/api/agents/runs', route => {
-      asked.push(['run', JSON.parse(route.request().postData())]);
-      return route.fulfill({ json: { id: 'zz-run', pipeline: 'plan-goal', target: 'zz-pw-tin-trade', status: 'queued' } });
-    });
+    await routeNoOtherAreaWrites(page, ['zz-pw-tin-trade', 'zz-pw-exists'], asked);
     await page.route('**/api/agents/managers', route => {
       if (route.request().method() !== 'POST') return route.continue();
-      asked.push(['manager', JSON.parse(route.request().postData())]);
-      return route.fulfill({ json: { id: 'seed:zz-pw-tin-trade', kind: 'seed', goal: 'zz-pw-tin-trade', state: 'paused' } });
+      asked.push('POST manager');
+      return route.abort();
     });
-    await page.route('**/api/goals/zz-pw-tin-trade/view', route => route.fulfill({ status: 404, json: { message: 'fixture' } }));
     await page.goto(new URL('/#open=goals', baseURL).href);
     await page.reload();
     const pane = page.locator('.goals-pane');
@@ -2080,21 +2103,18 @@ test('managers phase 2: the New research area form and the Review / Extend / Enr
     await form.locator('input[aria-label="slug"]').fill('zz-pw-exists');
     await form.locator('button', { hasText: 'create' }).click();
     await form.locator('.form-error').waitFor();
-    assert.match(await form.locator('.form-error').innerText(), /exists already/);
-    assert.ok(!asked.some(a => a === 'PUT goal'));
-    // a new one: slug from the title, the goal, the planner, the seeding manager
+    assert.match(await form.locator('.form-error').innerText(), /goal slug 'zz-pw-exists' already exists/);
+    assert.deepEqual(asked.map(a => a[0] === 'area' ? a[1].slug : a), ['zz-pw-exists']);
     await form.locator('input[aria-label="slug"]').fill('');
     await form.locator('input[aria-label="title"]').fill('Zz PW tin trade');
     await form.locator('input[aria-label="tags"]').fill('tin, trade');
     await form.locator('button', { hasText: 'create' }).click();
     await page.waitForFunction(() => document.querySelector('.goal-new-form .form-ok'));
     assert.match(await form.locator('.form-ok').innerText(), /zz-pw-tin-trade created.*planner is running.*seed:zz-pw-tin-trade created paused/);
-    assert.deepEqual(asked.filter(a => typeof a === 'string'), ['GET goal', 'PUT goal']);
-    assert.deepEqual(asked.find(a => a.title).tags, ['tin', 'trade']);
-    const run = asked.find(a => a[0] === 'run')[1];
-    assert.deepEqual([run.pipeline, run.target], ['plan-goal', 'zz-pw-tin-trade']);
-    assert.deepEqual(asked.find(a => a[0] === 'manager')[1].goal, 'zz-pw-tin-trade');
-    assert.equal(asked.find(a => a[0] === 'manager')[1].kind, 'seed');
+    assert.deepEqual(asked.map(a => a[0] === 'area' ? a[1].slug : a), ['zz-pw-exists', 'zz-pw-tin-trade']);
+    const area = asked[1][1];
+    assert.deepEqual([area.goal.title, area.goal.tags, area.plan, area.seed, area.watch ?? null],
+      ['Zz PW tin trade', ['tin', 'trade'], true, true, null]);
 
     // the article window's buttons
     const enq = [];
@@ -2133,21 +2153,23 @@ test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', as
       return route.fulfill({ response: res, json: { ...(await res.json()), agentsEnabled: true } });
     });
     const made = [];
-    await page.route('**/api/goals/zz-pw-watch', route => {
-      if (route.request().method() === 'GET') return route.fulfill({ status: 404, json: { message: 'No goal', code: 'not-found' } });
-      return route.fulfill({ json: { slug: 'zz-pw-watch', title: 'Zz PW watch', status: 'planned' } });
-    });
-    await page.route('**/api/goals/zz-pw-watch/view', route => route.fulfill({ status: 404, json: { message: 'fixture' } }));
     const watcher = {
       id: 'watch:zz-pw-watch', kind: 'watch', goal: 'zz-pw-watch', state: 'paused', cron: '@weekly',
-      nextTickAt: '2026-10-25T00:00:00Z', statusNote: 'paused', counts: { pending: 2 }, inFlight: 0,
+      nextTickAt: '2026-10-25T00:00:00Z', statusNote: { kind: 'paused', detail: '' }, counts: { pending: 2 }, inFlight: 0,
       config: { autoIngest: true, autoIngestPerDay: 3 },
       effective: { autoIngest: true, autoIngestPerDay: 3, dailyUsd: 2, sweeps: ['acquisition', 'currency'] },
       spentTodayUsd: 0.5, tokensToday: 12345 };
+    await page.route('**/api/goals/areas', route => {
+      if (route.request().method() !== 'POST') return route.continue();
+      const body = JSON.parse(route.request().postData());
+      made.push(['area', body]);
+      return route.fulfill({ json: areaCreated(body, { watch: body.watch ? watcher : null }) });
+    });
+    await routeNoOtherAreaWrites(page, ['zz-pw-watch'], made);
     await page.route('**/api/agents/managers', route => {
       if (route.request().method() === 'POST') {
-        made.push(JSON.parse(route.request().postData()));
-        return route.fulfill({ json: watcher });
+        made.push('POST manager');
+        return route.abort();
       }
       return route.fulfill({ json: [watcher] });
     });
@@ -2168,8 +2190,9 @@ test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', as
     await form.locator('button', { hasText: 'create' }).click();
     await page.waitForFunction(() => document.querySelector('.goal-new-form .form-ok'));
     assert.match(await form.locator('.form-ok').innerText(), /watcher watch:zz-pw-watch created paused.*ingests legal open-access finds/);
-    assert.deepEqual(made.map(m => [m.kind, m.goal, m.config.autoIngest, m.config.autoIngestPerDay]),
-      [['watch', 'zz-pw-watch', true, 3]]);
+    assert.deepEqual(made.map(m => m[0] === 'area'
+      ? [m[1].slug, m[1].plan ?? false, m[1].seed ?? false, m[1].watch?.autoIngest, m[1].watch?.autoIngestPerDay] : m),
+    [['zz-pw-watch', false, false, true, 3]]);
 
     // the managers window: the day's spend against the cap
     await page.route(/\/api\/agents\/managers\/watch(%3A|:)zz-pw-watch$/, route => route.fulfill({ json: {
@@ -4533,6 +4556,8 @@ test('#7381: every goal stage has its own colour, shape and word in both themes,
     try {
       const page = await context.newPage();
       await configOverride(page);
+      await page.route(url => new URL(url).pathname === '/api/goals', route => route.fulfill({ json: {
+        total: 1, offset: 0, next: null, goals: [areaCreated({ slug: 'zz-pw-legend', goal: { title: 'Zz PW legend' } }, {}).goal] } }));
       await page.goto(new URL('/research/goals', baseURL).href);
       await page.locator('.goals-pane .goal-legend .goal-status').first().waitFor();
       const looks = await page.evaluate(() => [...document.querySelectorAll('.goal-legend .goal-status')].map(b => {

@@ -66,7 +66,10 @@ platform. The tests reach the map through `window.histmersionMap` (`web/MapHandl
 the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names, a
 base-map layer's visibility and how many of its features are drawn (`layerVisibility`, `layerDrawn`: the
 sea's depth, the contours inside the Argolid focus region).
-`test:browser` runs both files; the budgets and the soak test take ~3 minutes of it (100 soak rounds).
+`test:browser` runs the three files one at a time (`--test-concurrency=1`): side by side they wrote the same
+settings file at once and measured the budgets while two other browsers were busy; the budgets and the soak
+test take ~3 minutes of it (100 soak rounds). In CI the `budgets: …` tests run in their own job (`macos-budgets`,
+`--test-name-pattern='^budgets: '`), the rest in `macos` (`--test-skip-pattern`, the same pattern).
 `npm --prefix modules/web run test:perf` runs them alone; `HISTMERSION_SOAK_ROUNDS=20` shortens the
 soak, `HISTMERSION_PERF_REPORT=1` prints every measured figure. `perf-baseline.mjs` measures the
 same paths on any server, read-only (non-GET requests are refused) — the live baseline in the doc:
