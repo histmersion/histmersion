@@ -122,9 +122,9 @@ export async function hoverCards(page, n = 6) {
     await away();
     shown.push(await inputToUpdate(page, '.cite-tooltip', at(4)));
     await away();
-    filled.push(await inputToUpdate(page, '.cite-tooltip', at(5), `!el.textContent.includes('loading')`));
+    filled.push(await inputToUpdate(page, '.cite-tooltip', at(5), { lacks: 'loading' }));
     await away();
-    warm.push(await inputToUpdate(page, '.cite-tooltip', at(4), `!el.textContent.includes('loading')`));
+    warm.push(await inputToUpdate(page, '.cite-tooltip', at(4), { lacks: 'loading' }));
   }
   await away();
   const max = xs => Math.max(0, ...xs);
@@ -146,7 +146,7 @@ export async function filterTyping(page, text, chipPrefix) {
   const chip = page.locator('#f-more .chip-input').first();
   await chip.click();
   const suggest = await inputToUpdate(page, '#f-more .chip-suggest', () => chip.pressSequentially(chipPrefix, { delay: 30 }),
-    `!el.hidden && el.querySelector('li')`);
+    { hidden: false, has: 'li' });
   let preview = null;
   const opt = page.locator('#f-more .chip-suggest li').first();
   if (await opt.count()) {
@@ -171,7 +171,7 @@ export async function articleOpen(page, baseURL) {
   const result = { windowMs: shown };
   // pinned as a window: from the click to the article's own content in it
   result.contentMs = await inputToUpdate(page, '.wm-window .wm-content', () => page.locator('.result-detail .detail-pin').click(),
-    `el.querySelector('h1, h2')`);
+    { has: 'h1, h2' });
   await page.locator('.wm-window .wm-close').click();
   await page.locator('#detail-back').click();
   return result;

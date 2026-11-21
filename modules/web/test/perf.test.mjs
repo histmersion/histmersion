@@ -235,14 +235,14 @@ test('budgets: Library\'s table and reading pane answer within 100 ms, a page at
     await page.goto(new URL('/library', baseURL).href);
     await page.locator('.library-sources-pane .lib-row').first().waitFor();
     await quiet(page);
-    const titled = n => `el.textContent.includes('Zz library source ${n}:')`;
+    const titled = n => ({ includes: `Zz library source ${n}:` });
     const clickMs = await inputToUpdate(page, '.reading-pane .reading-title',
       () => page.locator('.lib-row a.lib-title').nth(3).click(), titled(3));
     await quiet(page);
     const keyMs = await inputToUpdate(page, '.reading-pane .reading-title', () => page.keyboard.press('ArrowDown'), titled(4));
     await quiet(page);
     const pageMs = await inputToUpdate(page, '.library-range', () => page.locator('.library-next').click(),
-      `el.textContent === '51–100 of 1,026'`);
+      { equals: '51–100 of 1,026' });
     const rows = await page.locator('.lib-row').count();
     within('library', { clickMs, keyMs, pageMs, rows });
   });
