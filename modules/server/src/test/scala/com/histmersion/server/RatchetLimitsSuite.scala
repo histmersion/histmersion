@@ -59,6 +59,50 @@ class RatchetLimitsSuite extends munit.FunSuite:
     fresh.write(Orders.path, "db:x/A.scala\tid\treviewed")
     assert(Orders.checkFile(fresh.git, NoVariable).swap.exists(_.contains("a row not at the base")))
 
+  test("a new rule's key passes with no accepted row when the merge-base tree measures at least its count"):
+    val r = Repo.pilot(Ratchet.path -> List(Header, "G44\tcore\tmain\t3"))
+    r.branch("work")
+    r.write(Ratchet.path, Header, "G22comment\tcore\tmain\t5", "G44\tcore\tmain\t3")
+    val key = List("G22comment", "core", "main")
+    assertEquals(Ratchet.checkFile(r.git, NoVariable, inventories = List(Measured(Map(key -> 5)))), Right(Nil))
+    assertEquals(Ratchet.checkFile(r.git, NoVariable, inventories = List(Measured(Map(key -> 9)))), Right(Nil))
+
+  test("a new rule's key above what the merge-base tree measures fails, and says what the base measured"):
+    val r = Repo.pilot(Ratchet.path -> List(Header, "G44\tcore\tmain\t3"))
+    r.branch("work")
+    r.write(Ratchet.path, Header, "G22comment\tcore\tmain\t5", "G22comment\tweb\ttest\t1", "G44\tcore\tmain\t3")
+    val measured = Measured(Map(List("G22comment", "core", "main") -> 4))
+    val why = Ratchet.checkFile(r.git, NoVariable, inventories = List(measured)).swap.getOrElse("")
+    assert(why.contains("G22comment\tcore\tmain: not at the base -> 5 here, but the merge-base tree"), why)
+    assert(why.contains("measures 4"), why)
+    assert(why.contains("G22comment\tweb\ttest: not at the base -> 1 here, but the merge-base tree"), why)
+    assert(why.contains("measures 0"), why)
+
+  test("a key the base's file already lists is held to that row, whatever the tree measures"):
+    val r = Repo.pilot(Ratchet.path -> List(Header, "G22comment\tcore\tmain\t3"))
+    r.branch("work")
+    r.write(Ratchet.path, Header, "G22comment\tcore\tmain\t5")
+    val measured = Measured(Map(List("G22comment", "core", "main") -> 9))
+    val why = Ratchet.checkFile(r.git, NoVariable, inventories = List(measured)).swap.getOrElse("")
+    assert(why.contains("G22comment\tcore\tmain: 3 at the base -> 5 here"), why)
+
+  test("a rule no tree inventory measures still needs the accepted row"):
+    val r = Repo.pilot(Ratchet.path -> List(Header, "G44\tcore\tmain\t3"))
+    r.branch("work")
+    r.write(Ratchet.path, Header, "G44\tcore\tmain\t3", "G49\tweb\tmain\t1")
+    val measured = Measured(Map(List("G49", "web", "main") -> 7))
+    val why = Ratchet.checkFile(r.git, NoVariable, inventories = List(measured)).swap.getOrElse("")
+    assert(why.contains("G49\tweb\tmain: not at the base -> 1 here"), why)
+
+  test("the blobs of a commit are read in one batch; a path the commit lacks is left out"):
+    val r = Repo.pilot("a.txt" -> List("one"), "d/b.sh" -> List("# two", "echo"))
+    val base = r.head
+    r.write("a.txt", "changed")
+    assertEquals(
+      r.git.blobs(base, List("a.txt", "missing.txt", "d/b.sh")),
+      Map("a.txt" -> "one\n", "d/b.sh" -> "# two\necho\n")
+    )
+
   test("a rise passes when the branch adds the owner's accepted row for it, up to its delta, and only then"):
     val r = Repo.pilot(Ratchet.path -> List(Header, "G44\tcore\tmain\t2"))
     r.branch("work")
@@ -270,6 +314,11 @@ class RatchetLimitsSuite extends munit.FunSuite:
     assert(none.swap.exists(_.contains("no merge base of HEAD and contracts3-pilot")), none)
 
 object RatchetLimitsSuite:
+
+  final case class Measured(counts: Map[List[String], Int]) extends RatchetBase.TreeInventory:
+    val file: String = Spec.GuidelineRatchet.path
+    def owns(key: List[String]): Boolean = key.headOption.contains("G22comment")
+    def measure(git: Git, commit: String): Either[String, Map[List[String], Int]] = Right(counts)
 
   /** An accepted row of the guideline ratchet, by default for `G44 core main`. */
   def g44(

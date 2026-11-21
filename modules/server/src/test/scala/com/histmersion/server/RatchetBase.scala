@@ -68,7 +68,8 @@ object RatchetBase:
         lines: List[String],
         git: Git,
         env: Map[String, String],
-        approvals: Git => Approvals = Approvals.AddedInBranch.apply
+        approvals: Git => Approvals = Approvals.AddedInBranch.apply,
+        inventories: List[TreeInventory] = Nil
     ): Either[String, List[Accepted]] =
       for
         b <- git.base(env)
@@ -76,12 +77,14 @@ object RatchetBase:
         before <- counts(git.show(b.commit, path).getOrElse(Nil))
         accepted <- approvals(git).granted(b)
         risen = rises(path, before, now)
-        left = unaccepted(risen, accepted)
+        measured <- BaseMeasure.of(inventories.filter(_.file == path), risen, git, b.commit)
+        left = unaccepted(risen.filterNot(measured.proves), accepted)
         _ <- Either.cond(
           left.isEmpty,
           (),
           (s"$path is above its limit, the file at ${b.describe}:" ::
-            left.map(_.describe(shape, accepted)) ++ List(RiseNeedsOwner)).mkString("\n")
+            left.map(r => measured.refusal(r).getOrElse(r.describe(shape, accepted))) ++ List(RiseNeedsOwner))
+            .mkString("\n")
         )
       yield accepted.filter(a => risen.exists(a.covers))
 
@@ -91,7 +94,8 @@ object RatchetBase:
     def checkFile(
         git: Git = Git(Path.of(".")),
         env: Map[String, String] = sys.env,
-        approvals: Git => Approvals = Approvals.AddedInBranch.apply
+        approvals: Git => Approvals = Approvals.AddedInBranch.apply,
+        inventories: List[TreeInventory] = Nil
     ): Either[String, List[Accepted]] =
       val file = git.repo.resolve(path)
       for
@@ -102,7 +106,7 @@ object RatchetBase:
             "a regenerated file would accept any count"
         )
         lines <- read(file)
-        used <- check(lines, git, env, approvals)
+        used <- check(lines, git, env, approvals, inventories)
       yield used
 
   object Spec:
@@ -124,6 +128,33 @@ object RatchetBase:
 
   /** A row's key: its key cells. */
   type Key = List[String]
+
+  trait TreeInventory:
+    def file: String
+    def owns(key: Key): Boolean
+    def measure(git: Git, commit: String): Either[String, Map[Key, Int]]
+
+  final case class BaseMeasure(commit: String, owned: Key => Boolean, counts: Map[Key, Int]):
+    def eligible(rise: Rise): Boolean = rise.from == 0 && owned(rise.key)
+
+    def proves(rise: Rise): Boolean = eligible(rise) && rise.to <= counts.getOrElse(rise.key, 0)
+
+    def refusal(rise: Rise): Option[String] =
+      Option.when(eligible(rise))(
+        s"  ${rise.key.mkString("\t")}: not at the base -> ${rise.to} here, but the merge-base tree " +
+          s"(${commit.take(9)}) measures ${counts.getOrElse(rise.key, 0)}: a new rule's baseline may not exceed what " +
+          "the base already had; fix the new findings"
+      )
+
+  object BaseMeasure:
+    def of(inventories: List[TreeInventory], risen: List[Rise], git: Git, commit: String): Either[String, BaseMeasure] =
+      val asked = inventories.filter(i => risen.exists(r => r.from == 0 && i.owns(r.key)))
+      val measured = asked.map(_.measure(git, commit))
+      measured
+        .collectFirst { case Left(why) => why }
+        .toLeft(
+          BaseMeasure(commit, k => asked.exists(_.owns(k)), measured.collect { case Right(m) => m }.flatten.toMap)
+        )
 
   /** A count above the base's: the file, the key, the base's count (zero when the base has no such row) and the new. */
   final case class Rise(file: String, key: Key, from: Int, to: Int) derives CanEqual:
@@ -242,6 +273,41 @@ object RatchetBase:
     /** The file at a commit: `None` when the commit has no such file. */
     def show(commit: String, path: String): Option[List[String]] =
       ok("cat-file", "-e", s"$commit:$path").flatMap(_ => ok("show", s"$commit:$path")).map(_.linesIterator.toList)
+
+    def blobs(commit: String, paths: List[String]): Map[String, String] =
+      val requests = Files.createTempFile("ratchet-blobs", ".txt")
+      try
+        val _ = Files.writeString(requests, paths.map(p => s"$commit:$p\n").mkString, UTF_8)
+        val builder = new ProcessBuilder(List("git", "-C", repo.toString, "cat-file", "--batch").asJava)
+          .redirectInput(requests.toFile)
+          .redirectError(ProcessBuilder.Redirect.DISCARD)
+        env.foreach((k, v) => builder.environment.put(k, v))
+        Try {
+          val process = builder.start()
+          val bytes = process.getInputStream.readAllBytes()
+          val _ = process.waitFor()
+          bytes
+        }.toOption.fold(Map.empty)(batch(paths, _))
+      finally
+        val _ = Files.deleteIfExists(requests)
+
+    private def batch(paths: List[String], bytes: Array[Byte]): Map[String, String] =
+      var at = 0
+      val out = Map.newBuilder[String, String]
+      paths.foreach { path =>
+        var eol = at
+        while eol < bytes.length && bytes(eol) != '\n'.toByte do eol += 1
+        val header = new String(bytes, at, eol - at, UTF_8)
+        at = eol + 1
+        header.split(' ').toList match
+          case _ :: "blob" :: size :: Nil =>
+            val n = size.toInt
+            out += path -> new String(bytes, at, n, UTF_8)
+            at += n + 1
+          case _ :: _ :: size :: Nil => at += size.toInt + 1
+          case _                     => ()
+      }
+      out.result()
 
     /** The base: the merge base of `HEAD` with the variable's ref, else with the first default ref that has one. */
     def base(env: Map[String, String]): Either[String, Base] =
