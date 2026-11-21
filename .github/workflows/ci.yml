@@ -434,7 +434,7 @@ jobs:
     name: macos-budgets (browser speed budgets, timing, never blocks)
     needs: build
     runs-on: macos-15
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
     steps:
@@ -487,10 +487,11 @@ jobs:
           npx playwright install chromium
       - name: the speed budgets (the `budgets:` tests of the files of `npm run test:browser`; over a budget warns)
         continue-on-error: true
+        timeout-minutes: 40
         working-directory: modules/web
         run: |
           files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
-          HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-name-pattern='^budgets: ' \
+          HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-force-exit --test-name-pattern='^budgets: ' \
             --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/budgets-junit.xml" $files
       - name: every budget test ran and none was skipped (G125)
@@ -498,7 +499,7 @@ jobs:
         run: |
           report="$RUNNER_TEMP/budgets-junit.xml"
           test -s "$report" || { echo "::error::the budget tests wrote no report"; exit 1; }
-          tests="$(grep -c '<testcase' "$report" || true)"
+          tests="$(grep -c '<testcase name="budgets: ' "$report" || true)"
           skipped="$(grep -c '<skipped' "$report" || true)"
           failed="$(grep -c '<failure' "$report" || true)"
           echo "budget tests: $tests run, $failed failed, $skipped skipped"
