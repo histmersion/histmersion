@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 import com.histmersion.util.mcp.ChimpJson.given
-import com.histmersion.util.log.{LogTools, McpToolTracing}
+import com.histmersion.util.log.LogTools
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.Text.sentence
@@ -660,10 +660,7 @@ final class McpTools(
       ++ CollectionsTools(collections) // the Calibre library, archive.org
   )
 
-  /** Every tool call recorded in its request's trace under the tool's name (the request itself is `POST /mcp`). */
-  private val traced = McpServer(tools = server.tools.map(t => McpToolTracing.traced(t)))
-
-  val endpoint = traced.endpoint(List("mcp"))
+  val endpoint = server.endpoint(List("mcp"))
 
   /** Every tool `/mcp` advertises — what a `{{tool:<name>}}` placeholder in a definition may name. */
   def toolNames: Set[String] = server.tools.map(_.name).toSet

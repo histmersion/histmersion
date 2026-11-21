@@ -3,6 +3,7 @@ package util.mcp
 
 import chimp.protocol.ToolContent
 import chimp.server.{McpServer, ServerContext, ServerTool, ToolResult}
+import com.histmersion.util.log.McpToolTracing
 import sttp.shared.Identity
 
 /** The `/mcp` edge: the one place an MCP server is built, and so the one place every tool's call passes. Each tool's
@@ -17,9 +18,11 @@ object McpEdge:
   /** What a cut answer's trailer tells the caller to do. */
   val ReadOn: String = "ask for less: the tool's own paging (offset, chars, limit, before) or a narrower filter"
 
-  /** The MCP server over `tools`, each held to `limits()`. */
+  /** The MCP server over `tools`, each held to `limits()` and each call recorded in its request's trace under the
+    * tool's name ([[McpToolTracing]]: the request itself is `POST /mcp`).
+    */
   def server(tools: List[Tool], limits: () => McpConfig): McpServer[Identity] =
-    McpServer(tools = tools.map(capped(_, limits)))
+    McpServer(tools = tools.map(t => McpToolTracing.traced(capped(t, limits))))
 
   /** `tool`, with its arguments and its answer held to `limits()`. */
   def capped[I, O](
