@@ -138,7 +138,7 @@ class GuidelineRatchetSuite extends munit.FunSuite:
     val _ = java.nio.file.Files
       .createSymbolicLink(repo.dir.resolve("modules/core/src/main/scala/L.scala"), Path.of("A.scala"))
     repo.commit("link")
-    val measured = Comments.AtBase.measure(repo.git, repo.head)
+    val measured = new Comments.AtBase().measure(repo.git, repo.head)
     assertEquals(
       measured,
       Right(
@@ -228,7 +228,7 @@ object GuidelineRatchetSuite:
   final case class Key(rule: String, module: String, scope: String) derives CanEqual:
     def cells: List[String] = List(rule, module, scope)
 
-  lazy val Inventories: List[RatchetBase.TreeInventory] = List(Comments.AtBase)
+  lazy val Inventories: List[RatchetBase.TreeInventory] = List(new Comments.AtBase)
 
   final case class Finding(rule: String, module: String, path: String, line: Int, detail: String):
     def key: Key = Key(rule, module, if path.contains("/src/test/") then "test" else "main")
@@ -369,7 +369,7 @@ object GuidelineRatchetSuite:
 
     lazy val findings: List[Finding] = files.toList.flatMap(_.found)
 
-    object AtBase extends RatchetBase.TreeInventory:
+    final class AtBase extends RatchetBase.TreeInventory:
       val file: String = RatchetFile.toString
 
       def owns(key: RatchetBase.Key): Boolean = key.headOption.contains(Rule)
