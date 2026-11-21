@@ -13,7 +13,8 @@ import com.histmersion.server.ArchitectureSuite.{Blank, SourceFile, Violation}
   *   - `primitive` (rules 1, 3): a public method of a service, repository or controller whose parameter or result is a
   *     `String`/`Int`/`Long` (alone or in an `Option`/collection) named for a concept that has a newtype;
   *   - `unwrap` (rules 1, 4): `.value` outside boundary code (the db, cli, web and config modules; routes, endpoints,
-  *     tools, codecs, repositories, SQL, Markdown, JSON, wiring and transformer files; a newtype's own file);
+  *     tools, codecs, repositories, SQL, Markdown, JSON, wiring and transformer files; a newtype's own file; the body
+  *     of a newtype's companion);
   *   - `concept` (rule 3): a top-level type name defined in more than one file of one layer (the JVM's and the Scala.js
   *     copy of one file are one definition);
   *   - `derives` (rule 7, G66): a codec, schema or config given written by hand, generic ones included, or a `.derived`
@@ -620,6 +621,26 @@ class ContractsSuite extends munit.FunSuite:
     )
     assertEquals(ArchitectureSuite.Ratchet.totals(rows), Map("concept" -> 2, "copy" -> 2, "one-type" -> 4))
 
+  test("a .value inside a newtype's companion is its own raw value, no unwrap; one anywhere else is"):
+    val code =
+      """object Outer:
+        |  def a(x: Outer.Id): String = x.value
+        |  type Id = Id.T
+        |  object Id extends Newtype[String, Pure]:
+        |    def len(id: Id): Int = id.value.length
+        |
+        |    extension (id: Id)
+        |      def blank: Boolean = id.value.isEmpty
+        |  type Plain = Plain.T
+        |  object Plain extends Newtype[Int, Pure]
+        |  def b(p: Plain): Int = p.value
+        |object Legacy extends RefinedType[Int, Pure]:
+        |  def twice(l: Legacy.T): Int = l.value * 2
+        |val c = Legacy(1).value
+        |""".stripMargin
+    val lines = Rules.unwraps(code).map(at => code.substring(0, at).count(_ == '\n') + 1)
+    assertEquals(lines, List(2, 11, 14), "the companions' bodies (lines 5, 8, 13) are skipped, the code after them not")
+
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
     assertEquals(Rules.propertyOf("ApprovalKind", entities), Some("Approval"))
@@ -892,7 +913,40 @@ object ContractsSuite:
 
     private def unwrap(s: SourceFile): List[Violation] =
       if isBoundary(s) then Nil
-      else counted("unwrap", s, ".value outside a boundary", "\\.value\\b".r.findAllMatchIn(s.code).map(_.start).toList)
+      else counted("unwrap", s, ".value outside a boundary", unwraps(s.code))
+
+    /** The offsets of the `.value`s in `code` (comments and strings blanked) that are unwraps: those outside the body
+      * of a newtype's companion (`object X extends Newtype[…]:`, or Iron's `RefinedType`/`RefinedSubtype`). Inside its
+      * companion the raw value is the newtype's own, where rule 1 puts it ("appears only inside the newtype's own
+      * companion and at a boundary"), as the guideline inventory's G44 counts it.
+      */
+    def unwraps(code: String): List[Int] =
+      val bodies =
+        NewtypeCompanion.findAllMatchIn(code).map(m => m.end -> bodyEnd(code, m.end, m.group(1).length)).toList
+      "\\.value\\b".r
+        .findAllMatchIn(code)
+        .map(_.start)
+        .filterNot(at => bodies.exists((from, to) => at >= from && at < to))
+        .toList
+
+    /** A newtype's companion that opens an indented body (its line ends with `:`). */
+    private val NewtypeCompanion =
+      "(?m)^([ \\t]*)object\\s+[A-Z]\\w*\\s+extends\\s+(?:Newtype|Refined(?:Sub)?Type)\\b[^\\n]*:[ \\t]*$".r
+
+    /** Where the body that starts on the line after offset `from` ends: at the first line holding code indented by
+      * `indent` or less (a blank line belongs to the body).
+      */
+    @tailrec private def bodyEnd(code: String, from: Int, indent: Int): Int =
+      val next = code.indexOf('\n', from)
+      if next < 0 then code.length
+      else
+        val lineEnd = code.indexOf('\n', next + 1) match
+          case -1  => code.length
+          case end => end
+        val line = code.substring(next + 1, lineEnd)
+        if line.isBlank || line.takeWhile(c => c == ' ' || c == '\t').length > indent then
+          bodyEnd(code, lineEnd, indent)
+        else next + 1
 
     private val TopLevel =
       "(?m)^(?:(?:final|sealed|abstract|private|protected|open|case|implicit|transparent|inline|opaque)(?:\\[\\w+\\])?\\s+)*(class|trait|object|enum|type)\\s+([A-Z]\\w*)".r
