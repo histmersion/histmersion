@@ -82,7 +82,9 @@ def inventory(root: Path, out: Path): Unit =
   val files = CommentScope.default.files(root)
   val rows = files.flatMap { f =>
     f.blocks.map { b =>
-      val status = f.exemption.map(why => s"exempt:$why").getOrElse(if b.directive then "directive" else "counted")
+      val status = f.exemption
+        .map(why => s"exempt:$why")
+        .getOrElse(if b.directive then "directive" else if f.selfPrinted(b) then "help-text" else "counted")
       List(f.path, f.module, f.language.label, b.lineRange, b.lines.toString, b.kind, status, b.summary).mkString("\t")
     }
   }

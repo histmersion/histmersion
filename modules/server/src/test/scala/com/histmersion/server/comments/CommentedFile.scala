@@ -37,8 +37,7 @@ final case class CommentedFile(path: String, language: SourceLanguage, text: Str
     path.split('/').toList match
       case "modules" :: group :: sub :: _ :: _ if CommentedFile.groupedModules.contains(group) => s"$group/$sub"
       case "modules" :: module :: _ :: _                                                       => module
-      case single :: Nil                                                                       => single
-      case top :: _                                                                            => top
+      case top :: _                                                                            => s"repo/$top"
       case Nil                                                                                 => path
 
   def removing(chosen: Vector[CommentBlock]): CommentRemoval = CommentRemoval(text, chosen)

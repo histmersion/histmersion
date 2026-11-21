@@ -153,8 +153,9 @@ class CommentLexerSuite extends munit.FunSuite:
     def module(path: String) = CommentScope.default.parsed(path, "").map(_.module)
     assertEquals(module("modules/core/src/main/scala/A.scala"), Some("core"))
     assertEquals(module("modules/plugins/media/x/src/main/scala/A.scala"), Some("plugins/media"))
-    assertEquals(module("scripts/ci/check.py"), Some("scripts"))
-    assertEquals(module("build.sbt"), Some("build.sbt"))
+    assertEquals(module("scripts/ci/check.py"), Some("repo/scripts"))
+    assertEquals(module("db/places/build.py"), Some("repo/db"))
+    assertEquals(module("build.sbt"), Some("repo/build.sbt"))
 
   test("removing a whole-line comment drops its lines; a trailing one leaves the code"):
     val source = "val a = 1 // why\n/** doc\n  * more */\ndef f = 2\n"
