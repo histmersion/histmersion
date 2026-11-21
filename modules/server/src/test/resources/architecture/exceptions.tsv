@@ -455,7 +455,6 @@ direction	server:domain/personal/reading/ReadMark.scala	personal -> library: Tit
 direction	server:domain/research/articles/ArticleRoutes.scala	research -> server: ArticleHtml	1
 direction	server:domain/research/articles/PageBuilder.scala	research -> server: ArticleHtml	1
 direction	server:server/MarkdownHtml.scala	util.common -> library: FullText	1
-direction	server:server/MarkdownHtml.scala	util.common -> research: HtmlRender	1
 direction	server:server/Pages.scala	research -> server: ArticleHtml	1
 direction	server:server/agents/AgentDoctor.scala	automation -> server: HttpDownload	1
 direction	server:server/agents/BuiltinAi.scala	automation -> library: Title	1
