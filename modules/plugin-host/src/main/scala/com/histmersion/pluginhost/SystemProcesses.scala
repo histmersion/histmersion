@@ -51,6 +51,8 @@ final class SystemProcesses extends Processes:
     private val outBytes = new java.io.ByteArrayOutputStream()
     private val errBytes = new java.io.ByteArrayOutputStream()
     private val in = proc.getOutputStream
+    private val readersAtWork = new java.util.concurrent.atomic.AtomicInteger(2)
+    private val drainMillis = 2000L
 
     private def pump(from: InputStream, into: java.io.ByteArrayOutputStream): Unit =
       val buf = new Array[Byte](4096)
@@ -60,7 +62,14 @@ final class SystemProcesses extends Processes:
           lock.synchronized { into.write(buf, 0, n); lock.notifyAll() }
           n = from.read(buf)
       catch case _: IOException => ()
-      finally lock.synchronized(lock.notifyAll())
+      finally lock.synchronized { val _ = readersAtWork.decrementAndGet(); lock.notifyAll() }
+
+    private def awaitReadersAtEnd(): Unit =
+      val deadline = System.nanoTime + drainMillis * 1000000L
+      lock.synchronized {
+        while readersAtWork.get > 0 && deadline - System.nanoTime > 0 do
+          lock.wait(math.max(1L, math.min((deadline - System.nanoTime) / 1000000, 50L)))
+      }
 
     private[SystemProcesses] def startReaders(): Unit =
       val _ = Thread.ofVirtual().start(() => pump(proc.getInputStream, outBytes))
@@ -97,14 +106,17 @@ final class SystemProcesses extends Processes:
         while !ready() && proc.isAlive && left > 0 do
           lock.wait(math.max(1L, math.min(left / 1000000, 50L)))
           left = deadline - System.nanoTime
-        ready()
       }
+      if !proc.isAlive && !lock.synchronized(ready()) then awaitReadersAtEnd()
+      lock.synchronized(ready())
 
     /** Close the tool's stdin and wait for it to exit within `timeout` (killed otherwise); its exit code. */
     def close(timeout: FiniteDuration): Option[Processes.Result.Exit] =
       try in.close()
       catch case _: IOException => ()
-      if proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS) then Some(Processes.Result.Exit(proc.exitValue))
+      if proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS) then
+        awaitReadersAtEnd()
+        Some(Processes.Result.Exit(proc.exitValue))
       else
         proc.descendants().forEach { p =>
           val _ = p.destroyForcibly()
@@ -114,7 +126,10 @@ final class SystemProcesses extends Processes:
 
     /** The exit code once the tool has exited within `timeout`. */
     def exit(timeout: FiniteDuration): Option[Processes.Result.Exit] =
-      Option.when(proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS))(Processes.Result.Exit(proc.exitValue))
+      Option.when(proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS)) {
+        awaitReadersAtEnd()
+        Processes.Result.Exit(proc.exitValue)
+      }
 
   object Session:
     def start(
