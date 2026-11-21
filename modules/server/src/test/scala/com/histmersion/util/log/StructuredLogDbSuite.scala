@@ -258,6 +258,8 @@ class StructuredLogDbSuite extends DbSuite:
     val ok = What.RequestsCounted(LogEvent.Operation("GET /api/health"), LogEvent.Count(1), LogEvent.Count(0))
     val bad = What.ProblemRaised(None, LogEvent.ProblemCase("Io.Unreadable"))
     val events = Vector(ev(1, 40, ok), ev(2, 40, bad), ev(3, 100, bad), ev(4, 1, ok))
+    // the ids are fixed: what an earlier run of this suite kept goes first
+    connect(ds)(sql"DELETE FROM log_events WHERE trace = ${s"$trace"}::uuid".update.run(): Unit)
     assertEquals(connect(ds)(LogRepo.insert(events)), Some(4L))
     assertEquals(connect(ds)(LogRepo.insert(events)), Some(0L), "an event already in the table is not added again")
     LogRetention(files(dir), Transactor(ds), WritePermit.Gate()).run(settings(dir), now)
