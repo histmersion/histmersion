@@ -41,10 +41,10 @@ object LogPage:
       /** As a filter gives it: trimmed, none when blank. */
       def present: Option[Cursor] = Option(c.value.trim).filter(_.nonEmpty).map(Cursor(_))
 
-      /** The place it names, `<instant>~<id>`, when it has both and the instant reads. */
+      /** The place it names, `<instant>~<id>`, when the instant reads and the id is one the server minted. */
       def place: Option[(Instant, LogEvent.Id)] = c.value.split("~", 2) match
-        case Array(at, id) if id.nonEmpty => Try(Instant.parse(at)).toOption.map((_, LogEvent.Id(id)))
-        case _                            => None
+        case Array(at, id) => Try(Instant.parse(at)).toOption.zip(LogEvent.Id.parse(id))
+        case _             => None
 
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]:
