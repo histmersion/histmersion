@@ -15,7 +15,6 @@ object Output:
 
   val JsonHelp: String = "Print the raw JSON response instead of Markdown"
 
-  /** `--json` on a command whose answer is text only (G112): its failures are JSON. */
   val FailureJsonHelp: String =
     "Print a failure as JSON ({\"problems\": [...]}, as the API answers it); the answer itself is text"
 
@@ -24,7 +23,7 @@ object Output:
 
   /** What [[emit]] prints. Pure. */
   def render[A: JsonValueCodec](json: Cli.JsonOutput, a: A)(markdown: A => String): String =
-    if json.value then Output.json(a) else markdown(a)
+    json.choose(Output.json(a), markdown(a))
 
   /** Print `a` as JSON when `json`, else as its Markdown. */
   def emit[A: JsonValueCodec](json: Cli.JsonOutput, a: A)(markdown: A => String)(using console: Console): Unit =

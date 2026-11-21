@@ -29,7 +29,6 @@ final class PluginOps(using console: Console)(
     confirm: Cli.Question => Boolean = PluginOps.ask
 ):
 
-  /** A failure of the plugin tooling on this machine, as a sentence: the command, its input or this install to fix. */
   private def err(msg: String) = Cli.Error(Problem.Unclassified(Legacy.Text(msg)))
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
@@ -463,15 +462,13 @@ final class PluginOps(using console: Console)(
       case rc if rc.value == 0 => Right(())
       case rc                  =>
         val log = install.data.resolve("logs").resolve("relink.log")
-        // the script's 1 is its usage error; any other code is the relink refusing or failing (2 refused before
-        // building, 3 the build or the self-check failed, 4 rolled back)
         Left(
           Cli.Error(
             if rc.value == 1 then Problem.Unclassified(Legacy.Text(s"histmersion-relink exited $rc (log: $log)"))
             else
               Problem.Io.Process(
                 Problem.Io.Tool("histmersion-relink"),
-                Problem.Io.Ending.Exited(rc, External.Stderr(s"log: $log"))
+                Problem.Io.Ending.Exited(rc, External.Stderr.tail(s"log: $log"))
               )
           )
         )

@@ -174,6 +174,17 @@ class CasesSuite extends munit.FunSuite:
         "a secret reference (\"env:<NAME>\" or a vault's, e.g. \"keepassxc:<entry>#password\"); it was not asked"
     )
 
+  test("a wait that is not a whole number of seconds above 0 names its setting, its variable and the value given"):
+    assertEquals(
+      Config
+        .Setting(
+          SettingKey("cli.follow-timeout-seconds"),
+          Config.Fault.NotPositiveSeconds(Raw("0"), SettingKey("HISTMERSION_FOLLOW_TIMEOUT"))
+        )
+        .sentence,
+      "cli.follow-timeout-seconds (HISTMERSION_FOLLOW_TIMEOUT) must be a whole number of seconds above 0, not 0"
+    )
+
   test(
     "only a missing entity, a listed one, a place's name, hand-set values, a download, a copy or a referred-to record is not found"
   ):

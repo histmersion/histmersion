@@ -146,8 +146,6 @@ object MergeCmd:
             )
           )
         )
-      // the server restarted under it: nothing is half applied, but whether it committed is in `merge list`, so its
-      // outcome is unknown here
       case MergeJobState.Interrupted =>
         Left(
           Cli.Error(

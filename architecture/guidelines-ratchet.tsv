@@ -1,9 +1,9 @@
 # rule	module	scope	count — guideline findings (GuidelineInventory) that may only go down (G57); regenerate with HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *GuidelineRatchetSuite'
 G22comment	api	main	704
 G22comment	api	test	371
-G22comment	cli	main	613
-G22comment	cli	test	98
-G22comment	config	main	395
+G22comment	cli	main	596
+G22comment	cli	test	95
+G22comment	config	main	394
 G22comment	config	test	30
 G22comment	core	main	1448
 G22comment	core	test	472
@@ -77,8 +77,8 @@ G3misplaced	web	main	924
 G44	api	main	4581
 G44	api	test	716
 G44	chimney-iron-tests	test	10
-G44	cli	main	364
-G44	cli	test	91
+G44	cli	main	361
+G44	cli	test	86
 G44	config	main	175
 G44	config	test	51
 G44	core	main	2869
@@ -138,7 +138,7 @@ G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	25
 G45boundary	api	main	592
-G45boundary	cli	main	1018
+G45boundary	cli	main	1013
 G45boundary	config	main	63
 G45boundary	console	main	4
 G45boundary	core	main	10
@@ -187,8 +187,8 @@ G47root	core	main	3
 G47root	plugin-host	main	2
 G47root	server	main	2
 G47self	api	main	3712
-G47self	cli	main	207
-G47self	config	main	738
+G47self	cli	main	203
+G47self	config	main	736
 G47self	console	main	7
 G47self	core	main	997
 G47self	db	main	787
@@ -267,8 +267,8 @@ G58raw	server	main	15
 G58raw	server	test	21
 G5problem	api	main	3
 G5problem	core	main	1
-G60fromString	cli	main	134
-G60fromString	cli	test	15
+G60fromString	cli	main	133
+G60fromString	cli	test	14
 G60fromString	core	test	23
 G60fromString	db	main	10
 G60fromString	db	test	5
@@ -348,7 +348,7 @@ acceptedOutcome	db	main	225
 acceptedOutcome	server	main	42
 silentCompare	api	main	13
 silentCompare	api	test	9
-silentCompare	cli	main	3
+silentCompare	cli	main	1
 silentCompare	core	test	6
 silentCompare	db	test	19
 silentCompare	plugin-host	main	3

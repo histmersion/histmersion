@@ -1,0 +1,92 @@
+path	lines	language	category	reason
+modules/api/src/main/scala/com/histmersion/api/jobs/JobInfo.scala	41	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/AcquireClient.scala	50	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	64	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	69	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	75	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	45	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	268-271	scala	decision	a failure's exit code is worked out from its problems and where they were met, never given (E15): ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	278	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	281-283	scala	decision	which failed polls are asked again (out of reach, busy, unanswered): ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	287-289	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	294	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	298-300	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	625-626	scala	decision	a backup's name from the wire is checked with the server's gate before it becomes a local path: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	128-130	scala	decision	a poll has a read timeout so a silent server is a failed poll, not a hang: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	159-161	scala	decision	work with no final answer may have been applied: check before sending again: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	487	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	491	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	515	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	518	scala	decision	connect timeout 10 s: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	521	scala	decision	poll read timeout 30 s: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	524-527	scala	decision	what a lost connection means: never made unreachable, a write cut off outcome unknown, a read unreachable: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	66	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	155	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	340	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	430	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	433	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	439-441	scala	decision	--json on every command; the patch commands keep their valued --json: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	445	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/CommandLine.scala	476	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	11-14	scala	decision	the exit codes are worked out from the problem (E15), each says what a caller does next: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	17	scala	decision	1 usage: fails again unchanged: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	20	scala	decision	2 refused: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	23	scala	decision	3 unreachable: safe to send again: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	26	scala	decision	4 not found: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	29-31	scala	decision	5 conflict: read again, then decide: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	34-35	scala	decision	6 unavailable: try later: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	38-40	scala	decision	7 fault: retrying does not help: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	43-45	scala	decision	8 outcome unknown: check before sending again: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	48-50	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	63	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	66-68	scala	decision	where a problem was met decides between the caller's fix and the server's fault: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	73	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	76-78	scala	decision	precedence among several problems: unknown outcome, unreachable, else the first: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/ExitCode.scala	85	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	29-32	scala	decision	a followed conversion exits with its problem's code, unknown outcome past the wait: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	41	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	15-21	scala	decision	following is bounded: backoff, failed polls borne, timeout ends with outcome unknown: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	30	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	33	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	40	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	44	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	47	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	50	scala	decision	six hours by default, an OCR of a long book takes one: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	53	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	65-66	scala	decision	the wait doubles up to 30 s: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	77	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	85-87	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	136-138	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	149-150	scala	decision	a merge apply interrupted by a restart has an unknown outcome here: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Output.scala	18	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/PluginAuthoring.scala	73	scala	decision	a copy on this machine that failed is the command's to fix (local origin): ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	32	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	466-467	scala	decision	external contract: histmersion-relink's exit codes 1-4: ADR-0014
+modules/cli/src/main/scala/com/histmersion/cli/Runner.scala	10-12	scala	decision	a child process's exit code is not the CLI's own: ADR-0014
+modules/cli/src/test/scala/com/histmersion/cli/ClientSuite.scala	10-13	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/ClientSuite.scala	16	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/ClientSuite.scala	84-87	scala	decision	external quirk: the JDK's client sends a GET a second time, so the stub hangs up on every connection: ADR-0014
+modules/cli/src/test/scala/com/histmersion/cli/ExitOnProblemsSuite.scala	11-13	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/ExitOnProblemsSuite.scala	33	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/ExitOnProblemsSuite.scala	90	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/ExitOnProblemsSuite.scala	99	scala	decision	the suite's pattern is assembled from two halves so the search does not find the suite: ADR-0014
+modules/cli/src/test/scala/com/histmersion/cli/JobFollowSuite.scala	17-20	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JobFollowSuite.scala	44	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JobFollowSuite.scala	48	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JobFollowSuite.scala	117	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JobFollowSuite.scala	128	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JobFollowSuite.scala	136	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JsonEverywhereSuite.scala	11-13	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JsonEverywhereSuite.scala	18	scala	excuse	the patch commands' --json takes the patch; owner question G112: issues-lane-cli.md #1
+modules/cli/src/test/scala/com/histmersion/cli/JsonEverywhereSuite.scala	21	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/JsonEverywhereSuite.scala	36	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/Loopback.scala	4	scala	tautology	restates what the names, types and code beside it already say
+modules/cli/src/test/scala/com/histmersion/cli/Loopback.scala	7	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/config/CliConfig.scala	11-14	scala	tautology	restates what the names, types and code beside it already say
+modules/config/src/main/scala/com/histmersion/config/CliConfig.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala	1055-1058	scala	decision	Unanswered vs Unreachable: a write may have been applied: ADR-0014
+modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala	1676	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/domain/library/collections/CollectionsService.scala	186	scala	tautology	restates what the names, types and code beside it already say
+tools/refactor/DropCliExitCode.scala	9-23	scala	decision	the rewrite that dropped the explicit exit codes, and which sites it left for hand edits: ADR-0014
+tools/refactor/DropCliExitCode.scala	54	scala	tautology	restates what the names, types and code beside it already say

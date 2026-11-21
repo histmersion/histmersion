@@ -125,7 +125,7 @@ class ManagerCmdSuite extends munit.FunSuite:
     try
       val f = Parsing.parse("agent", "autopilot", "repair-acquire", "--dry-run").fold(h => fail(h.toString), identity)
       val out = ByteArrayOutputStream()
-      val r = Console.withOut(out)(f.run(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))))
+      val r = Console.withOut(out)(f.run(new Client(Loopback.url(srv.getAddress.getPort))))
       assertEquals(r, Right(()))
       assert(
         seen.peek().startsWith("POST /api/agents/autopilot/repair-acquire") && seen.peek().contains("\"dryRun\":true"),

@@ -7,6 +7,7 @@ import com.histmersion.api.Api
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
+import scala.concurrent.duration.DurationInt
 import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.{AuthorName, Citekey, Doi, Title}
@@ -25,19 +26,13 @@ import com.histmersion.api.Paging
   */
 object IngestCmd:
 
-  /** Poll one job until it reaches a terminal state ([[JobFollow.job]]: one rewritten progress line), then print it.
-    * The exit code is the point: a failed conversion must not look like success in a script — it exits with its
-    * problem's code; a job still running when the wait ([[JobFollow.Limits]]) ran out exits "outcome unknown".
-    */
-
   def pollJob(c: Client, id: Job.Id, waited: Int)(using console: Console): Either[Cli.Error, Unit] =
     followLimits.flatMap(limits =>
       JobFollow
-        .job(c.job, id, c.unanswered, limits, waited = waited * 1000L)
+        .job(c.job, id, c.unanswered, limits, waited = waited.seconds)
         .map(j => Cli.out.println(IngestMarkdown.job(j)))
     )
 
-  /** How long a job is followed: the setting [[JobFollow.Limits.TimeoutVariable]]. */
   private[cli] def followLimits: Either[Cli.Error, JobFollow.Limits] =
     JobFollow.Limits.of(Settings.app.cli.followTimeoutSeconds).left.map(Cli.Error(_))
 

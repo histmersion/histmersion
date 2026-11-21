@@ -63,7 +63,6 @@ object CommandLine:
 
   /** What the command line asks for. */
   enum Outcome:
-    /** `json`: the command line asked for `--json`, so a failure is printed as JSON too. */
     case Run(server: Option[Client.ServerUrl], command: Cli.Command, json: Cli.JsonOutput)
     case Help(text: HelpText)
     case Failed(problems: Problems, help: HelpText, json: Cli.JsonOutput)
@@ -151,6 +150,8 @@ object CommandLine:
   /** A newtype's converter: its base type's, the constraint checked. */
   given newtype: [T] => (m: RefinedType.Mirror[T]) => (base: ValueConverter[m.BaseType]) => ValueConverter[T] =
     base.flatMap(v => m.ops.either(v).map(t => Some(t.asInstanceOf[T])))
+
+  private def jsonOutput(asked: Boolean): Cli.JsonOutput = Cli.JsonOutput(asked)
 
   /** A value read by `read`, refused with its message: a choice among words, an alternative of a sealed type. */
   private[cli] def reading[T](read: String => Either[String, T]): ValueConverter[T] =
@@ -334,7 +335,6 @@ object CommandLine:
       */
     def holds(confs: Subcommand*): Unit = confs.foreach(adopt)
 
-    /** Add one subcommand; a [[Leaf]] gets its `--json` first, while its options can still be added. */
     protected def adopt(conf: Subcommand): Unit =
       conf match
         case leaf: Leaf => leaf.declareJson()
@@ -350,7 +350,7 @@ object CommandLine:
     /** `--json`, as every command that offers it spells it. */
     def json(): () => Cli.JsonOutput =
       val f = flag("json", Output.JsonHelp)
-      () => Cli.JsonOutput(f.getOrElse(false))
+      () => jsonOutput(f.getOrElse(false))
 
     /** A positional argument. */
     def arg[T](name: String, required: Boolean = true)(using
@@ -424,23 +424,17 @@ object CommandLine:
 
     def command: Either[Problems, Cli.Command]
 
-    // `var`: the `--json` flag, set where it is declared (by the command, or by [[declareJson]])
     private var output: Option[ScallopOption[Boolean]] = None
 
-    /** `--json`, as every command spells it; the command reads it, and a failure is printed as JSON (G112). */
     override def json(): () => Cli.JsonOutput =
       val f = flag("json", Output.JsonHelp)
       output = Some(f)
-      () => Cli.JsonOutput(f.getOrElse(false))
+      () => jsonOutput(f.getOrElse(false))
 
-    /** `--json` on every command (G112): declared after its own options when the command did not declare it. A command
-      * whose `--json` takes a value (a whole patch: `patch`, `article patch`) keeps that one.
-      */
     private[cli] def declareJson(): Unit =
       if output.isEmpty && types.of("json").isEmpty then output = Some(flag("json", Output.FailureJsonHelp))
 
-    /** The command line asked for `--json`. */
-    def jsonRequested: Cli.JsonOutput = Cli.JsonOutput(output.exists(_.getOrElse(false)))
+    def jsonRequested: Cli.JsonOutput = jsonOutput(output.exists(_.getOrElse(false)))
 
   /** A subcommand that only holds others: `histmersion article`. */
   abstract private[cli] class Group(parent: String, name: String, help: String) extends Subcommand(name) with Declares:
@@ -470,8 +464,7 @@ object CommandLine:
       )
     entries.foreach(e => adopt(e.conf()))
 
-    /** `--json` was on the command line: a command line that does not parse is still answered in JSON. */
-    private val askedJson = Cli.JsonOutput(args.contains("--json"))
+    private val askedJson = jsonOutput(args.contains("--json"))
 
     /** Scallop's own errors, typed. Help and version still go through the output and exit hooks. */
     override protected def onError(e: Throwable): Unit = e match

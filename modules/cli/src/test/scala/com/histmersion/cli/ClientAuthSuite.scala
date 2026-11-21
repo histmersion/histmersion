@@ -38,7 +38,7 @@ class ClientAuthSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))
+    try body(Loopback.url(srv.getAddress.getPort))
     finally srv.stop(0)
 
   test("downloadBackup sends the bearer token"):
