@@ -2886,6 +2886,18 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
       // the foot is drawn again as the base map's status and style come in: let it settle before tapping it
       await page.waitForFunction(() => !document.querySelector('.map-foot.is-missing'), null, { timeout: 5000 }).catch(() => {});
       await page.waitForTimeout(600);
+      await page.evaluate(() => {
+        const log = window.__footLog = [], t0 = performance.now(), now = () => Math.round(performance.now() - t0);
+        let last = '';
+        new MutationObserver(() => {
+          const s = [...document.querySelectorAll('.map-foot')].map(f =>
+            `${f.className}|${f.querySelector('.map-foot-toggle')?.getAttribute('aria-expanded')}`).join(' / ');
+          if (s !== last) { last = s; log.push(`${now()} ${s}`); }
+        }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-expanded'] });
+        for (const type of ['pointerdown', 'click', 'keydown'])
+          document.addEventListener(type, e => log.push(`${now()} ${type} ${e.key ?? ''} ${e.target?.className?.baseVal ?? e.target?.className} ${e.clientX ?? ''},${e.clientY ?? ''}`), true);
+      });
+      const footLog = () => page.evaluate(() => JSON.stringify(window.__footLog));
       const box = sel => page.evaluate(s => {
         const e = document.querySelector(s);
         if (!e) return null;
@@ -2915,7 +2927,7 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
             await page.waitForFunction(() => !document.querySelector('.map-foot').classList.contains('is-open'));
           }
           const ft = await box('.map-foot');
-          assert.equal((await box('.map-foot-body')).shown, false, `${at}: folded by its button`);
+          assert.equal((await box('.map-foot-body')).shown, false, `${at}: folded by its button: ${await footLog()}`);
           assert.ok(ft.h <= 64 && ft.w <= 64 && ft.l >= G - 1, `${at}: the notice's button: ${JSON.stringify(ft)}`);
         }
         await page.locator('.hd-legend-toggle').click();
@@ -2960,6 +2972,7 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
           await page.locator('.map-foot-toggle').click();
           await page.locator('.map-foot .terrain-notice').waitFor({ state: 'attached' });
           await page.waitForTimeout(100);
+          assert.equal((await box('.map-foot-body')).shown, true, `${at}: its button opens it: ${await footLog()}`);
           const ft = await box('.map-foot'), lb = await box('.hd-legend');
           assert.ok(ft.l >= G - 1 && ft.r <= viewport.width - G + 1 && ft.t >= map.t && ft.b <= viewport.height,
             `${at}: the notice within the gutters: ${JSON.stringify(ft)}`);
@@ -2967,8 +2980,7 @@ test('on a phone the legend and the notice fold to buttons; the opened key fits 
           assert.ok(await page.locator('.map-foot-body').evaluate(e => e.scrollHeight <= e.clientHeight + 1), `${at}: all of its text`);
           assert.equal(await sideways(), 0);
           await page.locator('.map-foot-toggle').click();
-          assert.equal((await box('.map-foot-body')).shown, false, `${at}: its button folds it`);
-        }
+          assert.equal((await box('.map-foot-body')).shown, false, `${at}: its button folds it: ${await footLog()}`);        }
       }
     });
   }
