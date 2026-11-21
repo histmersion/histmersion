@@ -57,7 +57,6 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(!shell.contains(WebBundle.Token), shell)
     val page = ArticleHtml.page(Title("t"), html"<p>b</p>", PageKind.values.head, served).markup
     assert(page.contains(s"""<script src="/web/app.bundle.js?v=$id"></script>"""), page)
-    // the old constants (`?v=2`, `?v=3`) never come back: a bundle address is built from the build alone
     val fixed = """app\.bundle\.js\?v=[0-9a-zA-Z]""".r
     val text = Set("scala", "js", "html", "css")
     val roots = List("modules/server/src/main", "modules/web/src/main").map(java.nio.file.Path.of(_))

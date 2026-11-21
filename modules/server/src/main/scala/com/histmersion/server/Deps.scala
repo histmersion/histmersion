@@ -105,7 +105,6 @@ final class Deps(
   val jvmHome: JvmHome = SystemContext.jvmHome()
   val transactor: Transactor = Transactor(ds)
 
-  /** The web bundle on the class path, named by its build: the page, its config and every answer carry the id. */
   lazy val webBundle: WebBundle = WebBundle.read(resources)
 
   /** The work lists' kernel (ACQUIRE, TASKS, LOG over `queue_items`). */

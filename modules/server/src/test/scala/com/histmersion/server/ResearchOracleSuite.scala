@@ -1013,7 +1013,6 @@ class ResearchOracleSuite extends DbSuite:
     "\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}(?::?\\d{2})?)?".r
   private val DayRe = "\\b\\d{4}-\\d{2}-\\d{2}\\b".r
 
-  /** The web bundle's address carries the build's id (G109), which changes with every web change. */
   private val BundleRe = "app\\.bundle\\.js\\?v=[0-9a-f]*".r
   private val DurationRe = "(\"(?:durationMs|elapsedMs|tookMillis|ageSeconds)\" ?: ?)\\d+".r
   private val MsRe = "· \\d+ ms".r

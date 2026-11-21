@@ -13,9 +13,6 @@
 </head>
 <body>
   <div id="app"></div>
-  <!-- MapLibre GL JS on window.maplibregl, then the app's bundle (web/boot.js); the preload starts its download.
-       The server writes the bundle's build over {{build}} (WebBundle): a new build is a new address, never a cached
-       old bundle, and boot.js loads the bundle with the query it was loaded with. -->
   <link rel="preload" href="/web/app.bundle.js?v={{build}}" as="script" />
   <script type="module" src="/web/boot.js?v={{build}}"></script>
 </body>

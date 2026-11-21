@@ -782,15 +782,8 @@ def buildMetaSource(base: File): String = {
      |""".stripMargin
 }
 
-/** The text the web page holds where its build goes (`web/PageBuild.compiled`): as long as the id, so the source map's
-  * columns stay right when the id is written over it.
-  */
 val WebBuildPlaceholder = "HISTMERSION-BUILD-ID-UNSET-00000"
 
-/** The linked web bundle named by its build (G109): the first 32 hex digits of its SHA-256, and the bundle with that id
-  * written over [[WebBuildPlaceholder]]. The server serves the id beside it (`web/build-id.txt`), and the page compares
-  * the two. A bundle without the placeholder stops the build: the page would compare nothing.
-  */
 def webBuild(js: String): (String, String) = {
   require(js.contains(WebBuildPlaceholder), s"the linked web bundle does not hold $WebBuildPlaceholder (web PageBuild)")
   val id = java.security.MessageDigest
@@ -1168,7 +1161,6 @@ lazy val server = project
       val dst = (Compile / resourceManaged).value / "web" / "app.bundle.js"
       dst.getParentFile.mkdirs()
       val linked = IO.read(src).replace("//# sourceMappingURL=main.js.map", "//# sourceMappingURL=app.bundle.js.map")
-      // the bundle named by its build (G109): the id written into the bundle and beside it, for the server
       val (id, js) = webBuild(linked)
       IO.write(dst, js)
       val idFile = (Compile / resourceManaged).value / "web" / "build-id.txt"

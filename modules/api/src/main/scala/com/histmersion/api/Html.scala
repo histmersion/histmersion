@@ -129,29 +129,16 @@ object Html:
       s"""<span class="conf-badge conf-$wire" title="${esc(ConfidenceStyle.label(c))}">""" +
         s"""${ConfidenceStyle.icon(c).markup}<span class="conf-text">$wire</span></span>"""
 
-  // ── markup derived from markup ───────────────────────────────────────────────────────────────
-
   private val BareImg = """<img(?![^>]*\bloading=)\s""".r
 
-  /** `h` with every `<img>` that does not say how it loads told to load lazily (`loading="lazy"`): the figures of a
-    * long text load as they scroll into view. Only the code's own attribute is added, to tags already in `h`.
-    */
   def lazyImages(h: T): T =
     BareImg.replaceAllIn(h, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """))
 
-  /** `h` with each match of `pattern` in its TEXT wrapped in `<mark id="hl<n>">…</mark>` (`n` from 1, in document
-    * order), and how many. Only text is rewritten: a tag (its name, its attributes), the content of a `<script>` or
-    * `<style>` and an entity (`&amp;`) are copied as they are, so a term inside an address or an entity never breaks
-    * the markup. The ids are what the web page's `InPage.nextMatch` steps through.
-    */
   def marked(h: T, pattern: scala.util.matching.Regex): (T, Int) = markText(h, pattern)
 
-  /** [[marked]] over a text of markup (with its tests: a text that is no `Html` may hold an unterminated tag). */
   private[api] def markText(src: String, pattern: scala.util.matching.Regex): (String, Int) =
     if src.isEmpty then (src, 0)
     else
-      // java.lang.StringBuilder: scala's has no append(CharSequence, from, to), and would silently auto-tuple the
-      // three arguments into append(Any)
       val sb = new java.lang.StringBuilder(src.length + 32)
       @tailrec def loop(i: Int, n: Int): Int =
         if i >= src.length then n
@@ -168,9 +155,6 @@ object Html:
       val n = loop(0, 0)
       (sb.toString, n)
 
-  /** Appends `text` to `sb` with each match wrapped; entities are left alone. `soFar` marks were written before (ids go
-    * on from there). Returns how many this call added.
-    */
   private def marks(text: String, re: scala.util.matching.Regex, sb: java.lang.StringBuilder, soFar: Int): Int =
     textPieces(text).foldLeft(0) {
       case (n, Left(entity)) =>
@@ -193,9 +177,6 @@ object Html:
         added
     }
 
-  /** End index (exclusive) of the verbatim run starting at `<`: a whole tag, or a whole `<script>`/`<style>` element
-    * with its content.
-    */
   private def verbatimEnd(html: String, at: Int): Int =
     val close =
       if html.regionMatches(true, at, "<script", 0, 7) then Some("</script>")
@@ -213,7 +194,6 @@ object Html:
 
   private val TextEntity = """&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]{1,31});""".r
 
-  /** A text split into `Left(entity)` (copied as it is) and `Right(plain)` (searched) pieces. */
   private def textPieces(text: String): List[Either[String, String]] =
     val (pieces, last) =
       TextEntity.findAllMatchIn(text).foldLeft((List.empty[Either[String, String]], 0)) { case ((acc, last), m) =>

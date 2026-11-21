@@ -49,3 +49,6 @@ audited and moved here.
 | [0012](0012-developer-build-and-test-tooling.md) | Developer build and test tooling |
 | [0013](0013-ocr-converter.md) | The OCR converter is a stateless Python sidecar |
 | [0014](0014-cli-exit-codes-and-following-work.md) | The CLI's exit code follows the problem, and following server work is bounded |
+| [0015](0015-web-bundle-build-identity.md) | The page and the server agree on the web bundle's build |
+| [0016](0016-server-pages-on-api-html.md) | The server's pages are built from api.Html, and search marks only text |
+| [0017](0017-ratchet-checker-scope.md) | What two ratchet checkers count: newtype companions and test suites |
