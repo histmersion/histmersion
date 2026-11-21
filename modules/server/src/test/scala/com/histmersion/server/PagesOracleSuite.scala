@@ -22,7 +22,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
 import com.histmersion.domain.Title
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
 
 /** The bytes of the server's pages, recorded (W5): a source's page (whole, without its text, with its text missing) and
@@ -75,7 +75,7 @@ class PagesOracleSuite extends munit.FunSuite:
       WikiLinks.Occurrence.Target("bronze_age_collapse") -> topic
     ).get
 
-  private val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
+  private val bundle = WebBundle(BuildId("0123456789abcdef0123456789abcdef"))
 
   private val findings = List(
     Finding.Row(

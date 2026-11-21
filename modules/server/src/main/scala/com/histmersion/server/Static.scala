@@ -10,7 +10,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object Static:
   type Asset = Asset.T
-  object Asset extends Newtype[String, Pure]
+  object Asset extends Newtype[String, Pure]:
+    extension (asset: Asset)
+      /** The asset with every `token` in it replaced by `text` (a page shell's slot filled). */
+      def filled(token: String, text: String): Asset = Asset(asset.value.replace(token, text))
   type ReadPath = ReadPath.T
   object ReadPath extends Newtype[String, Pure]
 

@@ -21,7 +21,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.Title
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.instance.UiConfig
+import com.histmersion.api.instance.BuildId
 import com.histmersion.api.Html.html
 import com.histmersion.server.instance.WebBundle
 
@@ -351,7 +351,7 @@ class PagesSuite extends munit.FunSuite:
     pages.foreach(html => assertEquals(api.Html.sanitize(html).markup, html))
 
   test("a standalone page loads the Scala.js bundle and names its page kind"):
-    val bundle = WebBundle(UiConfig.BuildId("0123456789abcdef0123456789abcdef"))
+    val bundle = WebBundle(BuildId("0123456789abcdef0123456789abcdef"))
     val doc = ArticleHtml.page(Title("T"), html"<p>x</p>", PageKind.Source, bundle).markup
     assert(doc.contains("""<script src="/web/app.bundle.js?v=0123456789abcdef0123456789abcdef"></script>"""), doc)
     assert(doc.contains("""data-page="source""""), doc)
