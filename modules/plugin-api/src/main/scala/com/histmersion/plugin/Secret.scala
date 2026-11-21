@@ -81,7 +81,6 @@ object Secret:
     val ValueScheme = "value"
     val EnvScheme = "env"
 
-    /** What a literal value is shown as. */
     val Mask = "***"
 
     private val EnvName = "[A-Za-z_][A-Za-z0-9_]*".r

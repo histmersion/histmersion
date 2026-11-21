@@ -6,18 +6,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One item of a [[SourceCollection]] — a book in a Calibre library, an item of archive.org — as the collection
   * describes it. Plain data: the host decides what a source made from it holds.
   *
-  * @param id
-  *   its id in the collection
-  * @param title
-  *   its title, when it has one
   * @param authors
   *   its authors (or creators), in the collection's order and spelling
   * @param year
   *   its year of publication, when the collection knows it (a placeholder date is no year)
   * @param published
   *   the publication date exactly as the collection stores it
-  * @param publisher
-  *   its publisher
   * @param description
   *   the collection's description of it (Calibre's comments, archive.org's description), as stored — it may be HTML
   * @param tags

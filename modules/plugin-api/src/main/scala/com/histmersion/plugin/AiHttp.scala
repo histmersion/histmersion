@@ -23,7 +23,6 @@ trait AiHttp:
 
 object AiHttp:
 
-  /** A client that sends nothing (a test, `--self-check`). */
   type PostBody = PostBody.T
   object PostBody extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
@@ -40,7 +39,6 @@ object AiHttp:
       Problem.Config.Unavailable(Problem.Config.Capability.Network)
     )
 
-  /** One HTTP answer. */
   final case class Response(
       status: Response.Status,
       body: Response.Body,

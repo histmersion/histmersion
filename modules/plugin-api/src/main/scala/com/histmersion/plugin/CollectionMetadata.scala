@@ -12,10 +12,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   the source's title
   * @param authors
   *   its authors, one name each ("Stocker, Sharon R." is one author)
-  * @param doi
-  *   its DOI
-  * @param isbn
-  *   its ISBN
   * @param year
   *   the year the host cites it by
   * @param publisher

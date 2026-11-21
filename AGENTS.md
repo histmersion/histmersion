@@ -351,8 +351,23 @@ say goes elsewhere:
 
 Exempt, and not counted: applied Flyway migrations, vendored code, test fixture pages, functional directives
 (`//> using`, `// scalafmt:`, `// scalafix:`, shebangs, `# noqa`, `# shellcheck`, eslint directives, PEP 723 headers) and
-help text a script prints from its own header. Plugin-API Scaladoc (`plugin-api`) is counted too, but is removed only
-with the owner's agreement: plugin authors read it through cellar, without the code. The `delete-comment` skill
+help text a script prints from its own header.
+
+**The one exception: Scaladoc on a public API.** Plugin authors read the SPI through cellar, without the code. A `/** */`
+block may stay only when all of these hold (`ApiDoc` in the server tests checks the first three):
+
+- it sits on a public definition (no `private`/`protected` modifier) in the main sources of a designated public-API
+  module, listed once in `ApiDoc.PublicApiModules`: `plugin-api` (the SPI) and `plugin-testkit` (shipped to plugin
+  authors in the install's `maven/`). Scaladoc anywhere else is a comment;
+- it names no excuse (`ApiDoc.excuses`: workaround, hack, for now, temporary, TODO/FIXME/XXX, until, kept for … old,
+  legacy, compiled before / still compiles, should be … but, can't … because). "The workaround is documented" does not
+  make it acceptable: the shortcut becomes an issue;
+- it does not restate its signature: fewer than 80 % of its content words may be the definition's own name, parameter
+  names and type names (split by camelCase), and no `@param`/`@tparam`/`@return` may only repeat a name;
+- it explains what the API does not say: units, ranges, threading, error behaviour, lifecycle, who calls it and when.
+  The review (the `delete-comment` skill) judges this part.
+
+The `delete-comment` skill
 (`.claude/skills/delete-comment/SKILL.md`) is the procedure for auditing and removing comments.
 
 ### 7. Derive in the `derives` clause

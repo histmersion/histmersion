@@ -4,23 +4,10 @@ package plugin
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** AI providers, the fifth part of the app that plugins extend: who serves a model the embedded agents call. A plugin
-  * adds an [[AiProvider]] to [[Plugin.Context.aiProviders]] under the PROVIDER NAME — the part before the colon of a
-  * `provider:model` reference (`agents.roles.extractor = "gemini:gemini-3-pro"` asks the provider registered as
-  * `gemini`).
-  *
-  * The provider answers ONE model call at a time ([[AiProvider.turn]]). The host owns the rest: the prompts, the tool
-  * loop and the tools themselves (run in process, under each step's allowlist), the typed answer's decoding and
-  * validation and its retries, budgets, allowances, approvals, the trace, and which model of a role's chain is picked
-  * before every call. A provider's models are METERED: they need a price in `agents.prices` (`0/0` for a free one), and
-  * allowances on `<provider>:*` cap them.
-  */
-
 /** One provider. Called from many runs at once (each call is independent: keep no per-call state). Failures are values;
   * an exception from [[turn]] is the provider's error.
   */
 trait AiProvider:
-  /** What to call it: "Google Gemini API". */
   def title: AiProvider.Title
 
   def description: AiProvider.Description = AiProvider.Description("")

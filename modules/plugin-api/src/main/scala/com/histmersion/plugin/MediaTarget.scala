@@ -11,7 +11,6 @@ enum MediaTarget derives CanEqual:
 
 object MediaTarget:
 
-  /** One place or event a collection was asked about: its kind and its id on the map. */
   final case class Id(kind: MediaTarget, id: Id.Value)
 
   object Id:

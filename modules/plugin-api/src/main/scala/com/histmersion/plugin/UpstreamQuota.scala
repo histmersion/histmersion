@@ -39,7 +39,6 @@ trait UpstreamQuota:
   def waitingUntil: Option[UpstreamQuota.WaitingUntil] = None
 
 object UpstreamQuota:
-  /** No limit: every call may go, nothing is kept. What a host without a budget for the upstream lends. */
   type TakePurpose = TakePurpose.T
   object TakePurpose extends Newtype[String, Pure]
   export Problem.Upstream.Status as ObserveStatus

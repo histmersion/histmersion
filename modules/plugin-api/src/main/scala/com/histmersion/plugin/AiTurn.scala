@@ -60,7 +60,6 @@ object AiTurn:
       answerSchemaRendered: Option[Request.AnswerSchemaRendered] = None,
       answerDescription: Option[Request.AnswerDescription] = None
   ):
-    /** The constructor of a host or a test compiled before the rendered schema and its description were passed. */
     def this(
         model: String,
         system: String,
@@ -84,7 +83,6 @@ object AiTurn:
     )
 
   object Request:
-    /** The request as a host or a test compiled before the rendered schema and its description were passed wrote it. */
     type ApplyModel = Model
     val ApplyModel: Model.type = Model
     type ApplySystem = System

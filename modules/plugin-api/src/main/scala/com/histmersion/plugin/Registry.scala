@@ -10,7 +10,6 @@ trait Registry[A]:
   def add(id: Registry.AddId, a: A): Either[Problem, Unit]
 
 object Registry:
-  /** A registry that takes nothing, saying why. */
   type RefusingAddId = AddId
   val RefusingAddId: AddId.type = AddId
 

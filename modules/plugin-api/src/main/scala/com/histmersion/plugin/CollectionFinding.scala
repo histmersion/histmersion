@@ -6,8 +6,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One linked item that disagrees with the host's record, judged against the record it matches best (an item shared by
   * a chapter and its volume is fine when it matches either).
   *
-  * @param id
-  *   the item's id
   * @param keys
   *   every source linked to it, sorted
   * @param issues

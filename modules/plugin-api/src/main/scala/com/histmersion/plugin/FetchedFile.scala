@@ -9,8 +9,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   the channel it came from, recorded as the source's provenance (`arxiv`, `pmc`, …)
   * @param url
   *   where it was downloaded from
-  * @param bytes
-  *   the file
   * @param extension
   *   `pdf`, `epub`, `xml` (a JATS full text), … — the host refuses a `pdf` that is not one
   * @param licence

@@ -31,3 +31,20 @@ keeps what it said and what a proper fix looks like. The coordinator files them 
 - **Proper fix:** an item that starts no agent run has no pipeline; model that (an `Option[Pipeline]`, or a manager
   item kind of its own) and count such items under their manager rather than under `ReviewArticle`. The managers' pages
   and their tests then show them separately instead of inflating the review's numbers.
+
+Issues 1-3 were filed as #9, #10 and #11.
+
+## 4. plugin-api binary-compatibility shims
+
+- **Where:** `modules/plugin-api/src/main/scala/com/histmersion/plugin/AiCapabilities.scala:23,32`,
+  `AiTurn.scala:63,87`, `AiUsage.scala:16,26` (secondary constructors and `Apply…` aliases), and the defaults of
+  `Plugin.Context`'s later registries (`sourceFetchers`, `quota`, `licences`, `gazetteerSources`, `sourceCollections`)
+  in `Plugin.scala`.
+- **Excuse text:** "The constructor of a provider compiled before the loop's notes and verbatim failures existed";
+  "The request as a host or a test compiled before the rendered schema and its description were passed wrote it";
+  "The constructor of a provider compiled before reasoning tokens were counted"; "a default that refuses every
+  addition, so a context written for an earlier extension point — a test's — still compiles".
+- **Proper fix:** nothing is published and Histmersion is the only plugin provider (G55), so there are no old plugin
+  builds to keep linking. Remove the secondary constructors and aliases; make the later registries and members abstract
+  (or give them defaults only where "the host lends none" is a real host configuration, said in the contract), and
+  update the first-party plugins, plugin-host, the testkit, the fixtures and the testkit API snapshot in the same change.

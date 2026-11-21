@@ -27,7 +27,6 @@ final case class GazetteerRelation(
 )
 
 object GazetteerRelation:
-  /** The plain hierarchy edge: the child lies within the parent. */
   type ChildId = ChildId.T
   object ChildId extends Newtype[String, Pure]
   type ParentId = ParentId.T

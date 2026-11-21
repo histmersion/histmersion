@@ -17,7 +17,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * A collection may launch processes (a library's own command-line tool) and read its own files.
   */
 trait SourceCollection:
-  /** What the collection is called in answers: "Calibre", "archive.org". */
   def title: SourceCollection.Title
 
   /** One sentence: what it holds and on what terms. */
@@ -40,7 +39,6 @@ trait SourceCollection:
   /** The items a search answers, in the collection's order. */
   def search(query: CollectionQuery): Either[Problems, List[CollectionItem]]
 
-  /** One item by its id; `Right(None)` when the collection has no such item. */
   def item(id: CollectionId): Either[Problems, Option[CollectionItem]]
 
   /** Whether `item`'s metadata is good enough to make a source of; `Left` says what to fix first. */
@@ -54,7 +52,6 @@ trait SourceCollection:
       format: Option[SourceCollection.FileFormat]
   ): Either[Problems, CollectionFile]
 
-  /** The bytes of `file` of `item`. */
   def original(item: CollectionItem, file: CollectionFile): Either[Problems, FetchedFile]
 
   /** The cover the collection keeps for `item`, when it keeps one; `Right(None)` when it has none. */

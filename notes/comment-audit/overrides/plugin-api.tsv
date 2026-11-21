@@ -1,0 +1,41 @@
+path	lines	language	category	reason
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiCapabilities.scala	23	scala	excuse	a constructor kept for providers compiled before a field existed: issue "plugin-api binary-compatibility shims"
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiCapabilities.scala	32	scala	excuse	an alias kept for providers compiled before a field existed: issue "plugin-api binary-compatibility shims"
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiTurn.scala	63	scala	excuse	a constructor kept for hosts and tests compiled before a field existed: issue "plugin-api binary-compatibility shims"
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiTurn.scala	87	scala	excuse	an alias kept for hosts and tests compiled before a field existed: issue "plugin-api binary-compatibility shims"
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiUsage.scala	16	scala	excuse	a constructor kept for providers compiled before reasoning tokens: issue "plugin-api binary-compatibility shims"
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiUsage.scala	26	scala	excuse	an alias kept for providers compiled before reasoning tokens: issue "plugin-api binary-compatibility shims"
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiHttp.scala	26	scala	stale	misplaced: describes a client that sends nothing but sits on the PostBody type
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiHttp.scala	43	scala	tautology	"One HTTP answer." says only the type's name
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiMessage.scala	14	scala	tautology	names the case and nothing more
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiProvider.scala	23	scala	tautology	an example title, nothing about the contract
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiStop.scala	4	scala	tautology	"Why the model stopped." restates the enum's name
+modules/plugin-api/src/main/scala/com/histmersion/plugin/AiTool.scala	11-13	scala	stale	misplaced: describes a tool call but sits on the Name type
+modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionChange.scala	6-8	scala	tautology	lists the record's fields
+modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateEntry.scala	6	scala	tautology	lists the record's fields
+modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateOutcome.scala	12	scala	tautology	"These fields were written." restates Applied
+modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateOutcome.scala	15	scala	tautology	restates Failed and its fields
+modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateOutcome.scala	18	scala	tautology	restates UpToDate
+modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateOutcome.scala	24	scala	tautology	restates Missing
+modules/plugin-api/src/main/scala/com/histmersion/plugin/EventCatalogue.scala	22	scala	tautology	an example title, nothing about the contract
+modules/plugin-api/src/main/scala/com/histmersion/plugin/EventCatalogue.scala	25	scala	tautology	restates licence; the Licence type says how it is stated
+modules/plugin-api/src/main/scala/com/histmersion/plugin/EventCatalogue.scala	28	scala	tautology	restates citation
+modules/plugin-api/src/main/scala/com/histmersion/plugin/EventCatalogue.scala	31	scala	tautology	restates home
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Fetch.scala	7	scala	tautology	restates the enum's name
+modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerRelation.scala	30	scala	stale	misplaced: describes an edge kind but sits on the ChildId type
+modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerSource.scala	21	scala	tautology	an example title, nothing about the contract
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Licence.scala	49	scala	tautology	restates unknown
+modules/plugin-api/src/main/scala/com/histmersion/plugin/LicenceReader.scala	26	scala	stale	misplaced: describes a host lending no reading but sits on a parameter type
+modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaCollection.scala	25	scala	tautology	an example title, nothing about the contract
+modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaFound.scala	44	scala	tautology	restates the interpolation beside it
+modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaTarget.scala	14	scala	tautology	lists the record's fields
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Period.scala	26	scala	tautology	restates from and its Either; the class doc states the invariant
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Plugin.scala	62-67	scala	stale	misplaced on DefaultsResource; the configReader doc states the same import and lenient readers
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Plugin.scala	110-112	scala	stale	misplaced: describes the HTTP policy but sits on files
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Processes.scala	36	scala	tautology	restates the Tool type
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Processes.scala	83	scala	tautology	restates NoProcesses
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Registry.scala	13	scala	stale	misplaced: describes a refusing registry but sits on a parameter type
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala	84	scala	tautology	restates Mask
+modules/plugin-api/src/main/scala/com/histmersion/plugin/SourceCollection.scala	20	scala	tautology	example titles, nothing about the contract
+modules/plugin-api/src/main/scala/com/histmersion/plugin/SourceCollection.scala	57	scala	tautology	restates original's signature
+modules/plugin-api/src/main/scala/com/histmersion/plugin/UpstreamQuota.scala	42	scala	stale	misplaced: describes the unlimited budget but sits on the TakePurpose type

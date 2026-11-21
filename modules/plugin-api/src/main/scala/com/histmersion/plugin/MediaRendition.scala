@@ -9,15 +9,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   the file's type as the provider states it (used when the download's answer names none)
   * @param width
   *   the width of the file at `imageUrl`, in pixels
-  * @param height
-  *   its height
   * @param bytes
   *   the size of the file at `imageUrl` when it is the ORIGINAL (no smaller copy exists): the host refuses one larger
   *   than its limit without downloading it
   * @param thumbWidth
   *   the width of the thumbnail at `thumbUrl`
-  * @param thumbHeight
-  *   its height
   */
 final case class MediaRendition(
     mime: MediaRendition.Mime,
