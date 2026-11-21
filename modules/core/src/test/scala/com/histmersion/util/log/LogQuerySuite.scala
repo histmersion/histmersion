@@ -10,7 +10,7 @@ import com.histmersion.api.time.TimeBound
 
 import java.time.Instant
 
-class StructuredLogQuerySuite extends munit.FunSuite:
+class LogQuerySuite extends munit.FunSuite:
   private val now = Instant.parse("2026-11-20T12:00:00Z")
   private val traceA = LogEvent.Trace("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f")
   private val traceB = LogEvent.Trace("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e40")
