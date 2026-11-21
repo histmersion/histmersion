@@ -22,19 +22,24 @@ object LogData extends DataContribution:
     * and what PostGIS and Flyway own.
     */
   val unrecorded: List[TableName] = List(
-    "log_events",
-    "log_writes",
-    "log_counts",
-    "source_chunks",
-    "map_changes",
-    "site_undated_cells",
-    "site_undated_build",
-    "flyway_schema_history",
-    "spatial_ref_sys"
-  ).map(TableName(_))
+    TableName("log_events"),
+    TableName("log_writes"),
+    TableName("log_counts"),
+    TableName("source_chunks"),
+    TableName("map_changes"),
+    TableName("site_undated_cells"),
+    TableName("site_undated_build"),
+    TableName("flyway_schema_history"),
+    TableName("spatial_ref_sys")
+  )
 
   /** The tables whose writes are counted per minute instead of recorded one by one: the agent lease's renewals and the
     * quota updates. (The jobs' heartbeats are counted too, by the statement, not the table.)
     */
   val counted: List[TableName] =
-    List("agent_leases", "upstream_quota", "plan_quota_readings", "plan_quota_refreshes").map(TableName(_))
+    List(
+      TableName("agent_leases"),
+      TableName("upstream_quota"),
+      TableName("plan_quota_readings"),
+      TableName("plan_quota_refreshes")
+    )

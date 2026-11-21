@@ -392,7 +392,7 @@ final class HttpApi(
       CollectionsRoutes(collections)
 
   val endpoints: List[ServerEndpoint[Any, Identity]] =
-    LogRoutes(h.log) ++
+    LogRoutes(h.log).endpoints ++
       EventImportsRoutes(h.eventImports) ++
       EventLinksRoutes(h.eventLinks) ++
       SiteTypesRoutes(h.siteTypes) ++ rest ++

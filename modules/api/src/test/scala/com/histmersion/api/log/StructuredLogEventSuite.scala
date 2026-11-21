@@ -5,7 +5,9 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString}
 import com.histmersion.api.log.LogEvent.{Subject, What}
 
-class LogEventSuite extends munit.FunSuite:
+import java.time.Instant
+
+class StructuredLogEventSuite extends munit.FunSuite:
   private def event(what: What) =
     LogEvent(
       LogEvent.Id("01a1f981-4912-7849-a9dc-9b021af12285"),
@@ -47,7 +49,7 @@ class LogEventSuite extends munit.FunSuite:
     }
 
   test("every case's name is a kind the filter knows, and no other"):
-    assertEquals(every.map(w => s"${w.kind}").sorted, LogEvent.Kinds.sorted)
+    assertEquals(every.map(_.kind).sorted, LogEvent.Kinds.sorted)
 
   test("failures are kept as long as problems: a 5xx answer, an unreachable or 5xx provider, a problem, a loss"):
     assertEquals(every.map(_.failing), List(false, false, true, false, true, true, false, false))
@@ -65,16 +67,19 @@ class LogEventSuite extends munit.FunSuite:
     )
 
   test("a subject's ref is what the table's subjects column holds"):
-    assertEquals(Subject.Problem(LogEvent.Key("ab12")).ref, "problem:ab12")
+    assertEquals(Subject.Problem(LogEvent.ProblemId("ab12")).ref, "problem:ab12")
     assertEquals(LogEvent.ProblemId("ab12").subject.ref, "problem:ab12")
     assertEquals(Subject.Source(LogEvent.Key("smith2020")).ref, "source:smith2020")
+    assertEquals(LogEvent.Trace("t1").request.ref, "request:t1")
 
   test("the Markdown line names the step, its subjects and its trace"):
-    val line = LogMarkdown.line(event(every.head))
+    val line = event(every.head).markdown
+    assert(line.startsWith("- 2026-11-20 09:15:02.123 · "), line)
     assert(line.contains("GET /api/search → 200 in 12 ms from 127.0.0.1 searching “bronze age”"), line)
     assert(line.contains("source:smith2020, job:j1"), line)
     assert(line.contains("trace `0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f` [session-7]"), line)
-    val file = LogMarkdown.page(LogPage(Vector.empty, None, LogPage.Origin.File), _ => "")
+    assertEquals(every.map(_.markdown).last, "12 update statement(s) on agent_leases, counted")
+    val file = LogPage(Vector.empty, None, LogPage.Origin.File).markdown(_ => "")
     assert(file.contains("Read from the log file"), file)
 
   test("the filters' values: blank is none, a trace is read in lower case and must be a UUID, a kind in any case"):
@@ -88,13 +93,17 @@ class LogEventSuite extends munit.FunSuite:
     assertEquals(LogEvent.At("2026-11-20T09:15:02.123456Z").day, "2026-11-20")
 
   test("a page's size: clamped to 1 … the most, cut, one more to see whether an older page follows"):
-    assertEquals(LogPage.Limit.clamped(None), LogPage.Limit(LogPage.DefaultLimit))
+    assertEquals(LogPage.Limit.clamped(None), LogPage.Limit(100))
     assertEquals(LogPage.Limit.clamped(Some(LogPage.Limit(0))), LogPage.Limit(1))
     assertEquals(LogPage.Limit.clamped(Some(LogPage.Limit(99999))), LogPage.Limit.max)
     assertEquals(LogPage.Limit(2).cut(Vector(1, 2, 3)), (Vector(1, 2), Vector(3)))
     assert(LogPage.Limit(2).below(3) && !LogPage.Limit(2).below(2))
-    assertEquals(LogPage.Cursor.of(LogEvent.At("t"), LogEvent.Id("i")).parts, Some(("t", "i")))
-    assertEquals(LogPage.Cursor("garbage").parts, None)
+    assertEquals(
+      LogPage.Cursor.of(LogEvent.At("2026-11-20T09:15:02.123456Z"), LogEvent.Id("i")).place,
+      Some((Instant.parse("2026-11-20T09:15:02.123456Z"), LogEvent.Id("i")))
+    )
+    assertEquals(LogPage.Cursor("garbage").place, None)
+    assertEquals(LogPage.Cursor("not-a-time~i").place, None)
     assert(LogPage.From("FILE").names("File"))
     assertEquals(
       LogPage.Filter(problem = Some(LogEvent.ProblemId("ab12"))).problemAlone,

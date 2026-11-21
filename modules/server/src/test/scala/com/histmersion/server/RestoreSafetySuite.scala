@@ -39,7 +39,7 @@ class RestoreSafetySuite extends DbSuite:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(TestDb.dbUrl.get))
   private lazy val pool =
     val p = testPool(cfg.db)
     Migrate.run(p)

@@ -622,7 +622,7 @@ final class McpTools(
         jobStatus,
         jobControlTool,
         activityTool
-      ) ++ LogTools(h.log) ++ MediaTools(
+      ) ++ LogTools(h.log).tools ++ MediaTools(
         h.media.assets,
         h.media.links,
         ck => h.library.sources.get(ck).left.map(Api.Error(_)).isRight

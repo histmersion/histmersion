@@ -147,7 +147,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       case scala.util.Failure(e) =>
         Left(Cli.Error(transport(e, serverUrl, Problem.Upstream.Url(s"${req.uri}"), write)))
       case scala.util.Success(resp) =>
-        val trace = Client.traceOf(resp.header(Client.TraceHeader))
+        import Client.{TraceHeader, traceOf}
+        val trace = traceOf(resp.header(TraceHeader))
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
@@ -481,7 +482,7 @@ object Client:
 
   /** The trace an answer named, if any. */
   def traceOf(header: Option[String]): Option[LogEvent.Trace] =
-    header.map(_.trim).filter(_.nonEmpty).map(LogEvent.Trace(_))
+    header.flatMap(LogEvent.Trace.fromHeader)
 
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]

@@ -28,6 +28,9 @@ import com.histmersion.domain.library.sources.SourcePassages
 import com.histmersion.domain.catalogue.events.EventSourceFilter
 import com.histmersion.domain.library.search.FilterEventSources
 import com.histmersion.util.storage.Storage
+import com.histmersion.util.storage.{LineFiles, Location}
+
+import java.nio.file.Path
 import com.histmersion.util.data.DataContributions
 import com.histmersion.domain.automation.AutomationData
 import com.histmersion.domain.catalogue.CatalogueData
@@ -126,7 +129,15 @@ final class Deps(
 
   /** The structured log's rolling files, in `log.dir` (empty: the server's logs directory's `structured`). */
   lazy val logFiles: LogFiles =
-    LogFiles(() => StorageLocations.logDir(cfg, loaded, environment, userPaths))
+    LogFiles(
+      LineFiles(() =>
+        cfg.log.dir.set
+          .map(Path.of(_))
+          .orElse(
+            StorageLocations.root(Location.Logs, cfg, loaded, environment, userPaths).map(_.resolve("structured"))
+          )
+      )
+    )
 
   /** The structured log's one writer: the sink of every trace scope ([[TracedPinning]] gives work that starts without
     * one a scope of its own). Its own connections are told no trace: it runs in none, and the log's tables record no

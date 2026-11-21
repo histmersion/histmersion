@@ -18,7 +18,7 @@ import com.histmersion.config.DbConfig
 class NewtypeColumnsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val ds = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
+  private lazy val ds = testPool(AppConfig.load().db.copy(url = TestDb.dbUrl.get))
 
   test("a newtype column reads and writes as its base type"):
     val uid = UUID.fromString("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")

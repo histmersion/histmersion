@@ -71,8 +71,6 @@ object JobRepo:
       r.detail.flatMap(d => Jsonb.read[JobDetail](Jsonb.JsonText(d.value)))
     )
 
-  private def json(d: JobDetail): Jsonb.JsonText = Jsonb.write(d)
-
   /** Create a `queued` job. The id is opaque to clients; a UUID keeps it unguessable and unique. `acquireItem` is the
     * acquisition item the job ticks off when it succeeds; `detail` what the job is about beyond its citekey.
     */
@@ -84,7 +82,7 @@ object JobRepo:
       detail: Option[JobDetail] = None
   )(using DbCon): JobInfo =
     val id = java.util.UUID.randomUUID().toString
-    val js = detail.map(json)
+    val js = detail.map(Jsonb.write[JobDetail](_))
     sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail)
           VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, $js::jsonb)""".update.run()
     get(Job.Id.assume(id)).getOrElse(
@@ -103,7 +101,7 @@ object JobRepo:
 
   /** Replace a job's [[JobDetail]] — e.g. an init job adding the periods it skipped. */
   def setDetail(id: Job.Id, detail: JobDetail)(using DbCon): Unit =
-    val js = json(detail)
+    val js = Jsonb.write[JobDetail](detail)
     Unused(sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run(), Unused.Why.Held)
 
   def get(id: Job.Id)(using DbCon): Option[JobInfo] =
@@ -258,12 +256,10 @@ object JobRepo:
       .flatten
       .map(Pipeline.Version(_))
 
-  /** The trace the job was created under (none for a job older than the structured log). */
-  def traceOfJob(id: Job.Id)(using DbCon): Option[LogEvent.Trace] =
-    sql"SELECT trace_id::text FROM jobs WHERE id = $id AND trace_id IS NOT NULL".query[LogEvent.Trace].run().headOption
-
-  /** The trace the run was created under (none for a run older than the structured log). */
-  def traceOfRun(id: Run.Id)(using DbCon): Option[LogEvent.Trace] =
+  /** The trace a job or a run (both rows of `jobs`, `id` a [[Job.Id]] or a [[Run.Id]]) was created under; none for one
+    * older than the structured log.
+    */
+  def traceOf[K](id: K)(using DbCodec[K])(using DbCon): Option[LogEvent.Trace] =
     sql"SELECT trace_id::text FROM jobs WHERE id = $id AND trace_id IS NOT NULL".query[LogEvent.Trace].run().headOption
 
   def runHeartbeat(kind: Job.Kind, id: Run.Id)(using DbCon): Unit =
@@ -371,7 +367,7 @@ object JobRepo:
     */
   def startMergeApply(bundle: MergeRepo.BundleName, planHash: MergeRow.PlanHash)(using DbCon): Job.Id =
     val id = java.util.UUID.randomUUID().toString
-    val js = json(ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash(planHash.value))))
+    val js = Jsonb.write[JobDetail](ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash(planHash.value))))
     sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
           VALUES ($id, ${ExchangeJobKinds.MergeApply.kind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update
       .run()

@@ -8,6 +8,7 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Timestamps
 
+import java.time.Instant
 import scala.util.Try
 
 /** The structured log's two tables: `log_events` (every event, as its JSON and the columns queries filter on) and
@@ -16,19 +17,22 @@ import scala.util.Try
   */
 private[log] object LogRepo:
 
-  /** Every event of `events` not in the table yet (an event retried after a failed batch is not written twice). */
-  def insert(events: Vector[LogEvent])(using DbCon): Unit =
-    if events.nonEmpty then insertAll(events)
-
-  private def insertAll(events: Vector[LogEvent])(using DbCon): Unit =
-    val _ = batchUpdate(events) { e =>
-      val subjects: List[String] = e.subjects.map(_.ref).toList
-      val json = writeToString(e)
-      sql"""INSERT INTO log_events (id, at, trace, label, kind, problem, subjects, event)
-            VALUES (${e.id}::uuid, ${e.at}::timestamptz, ${e.trace}::uuid, ${e.label},
-                    ${e.kind}, ${e.problem}, $subjects::text[], $json::jsonb)
-            ON CONFLICT (id) DO NOTHING""".update
-    }
+  /** Every event of `events` not in the table yet (an event retried after a failed batch is not written twice): how
+    * many were new, when the driver says.
+    */
+  def insert(events: Vector[LogEvent])(using DbCon): Option[Long] =
+    if events.isEmpty then Some(0L)
+    else
+      batchUpdate(events) { e =>
+        val subjects: List[String] = e.subjects.map(_.ref).toList
+        val json = writeToString(e)
+        sql"""INSERT INTO log_events (id, at, trace, label, kind, problem, subjects, event)
+              VALUES (${e.id}::uuid, ${e.at}::timestamptz, ${e.trace}::uuid, ${e.label},
+                      ${e.kind}, ${e.problem}, $subjects::text[], $json::jsonb)
+              ON CONFLICT (id) DO NOTHING""".update
+      } match
+        case BatchUpdateResult.Success(rows) => Some(rows)
+        case BatchUpdateResult.SuccessNoInfo => None
 
   /** A staged write statement, as the trigger recorded it. */
   final case class Staged(
@@ -66,26 +70,22 @@ private[log] object LogRepo:
       .run()
       .toVector
 
-  /** A page of events: `where` the filters, newest first, at most `limit`. */
-  def page(where: Frag, limit: LogPage.Limit)(using DbCon): Vector[LogEvent] =
-    sql"SELECT event::text FROM log_events WHERE TRUE $where ORDER BY at DESC, id DESC LIMIT $limit"
+  /** A page of events: `where` the filters, newest first (`oldestFirst`: oldest first), at most `limit`. */
+  def page(where: Frag, limit: LogPage.Limit, oldestFirst: Boolean = false)(using DbCon): Vector[LogEvent] =
+    val query =
+      if oldestFirst then sql"SELECT event::text FROM log_events WHERE TRUE $where ORDER BY at, id LIMIT $limit"
+      else sql"SELECT event::text FROM log_events WHERE TRUE $where ORDER BY at DESC, id DESC LIMIT $limit"
+    query
       .query[String]
       .run()
       .toVector
       .flatMap(decode)
 
-  /** The trace a problem was raised in, if its event is kept. */
-  def traceOfProblem(id: LogEvent.ProblemId)(using DbCon): Option[LogEvent.Trace] =
-    val subject = id.subject.ref
-    sql"""SELECT trace::text FROM log_events WHERE subjects @> ARRAY[$subject]::text[] ORDER BY at, id LIMIT 1"""
-      .query[LogEvent.Trace]
-      .run()
-      .headOption
-
   /** Ordinary events before `ordinary`, problems before `problems`: deleted; the rows deleted. */
-  def deleteOlder(ordinary: String, problems: String)(using DbCon): Long =
-    sql"""DELETE FROM log_events WHERE (NOT problem AND at < $ordinary::timestamptz)
-                                    OR (problem AND at < $problems::timestamptz)""".update.run().toLong
+  def deleteOlder(ordinary: Instant, problems: Instant)(using DbCon): Long =
+    val (o, p) = (LogEvent.At.of(ordinary), LogEvent.At.of(problems))
+    sql"""DELETE FROM log_events WHERE (NOT problem AND at < $o::timestamptz)
+                                    OR (problem AND at < $p::timestamptz)""".update.run().toLong
 
   /** The table's size on disk (its indexes included), its rows, and the dead rows whose space is not reused yet. */
   def size(using DbCon): (Long, Long, Long) =
