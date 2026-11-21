@@ -12,7 +12,7 @@ import java.time.Instant
 /** The rolling files: one per day and class, every event once, read back by the same query rules as the table, and
   * pruned by the same retention. Pure apart from a temporary directory.
   */
-class StructuredLogFilesSuite extends munit.FunSuite:
+class LogFilesSuite extends munit.FunSuite:
   private val dir = FunFixture[Path](_ => Files.createTempDirectory("hm-log-files"), d => deleteTree(d))
 
   private def deleteTree(d: Path): Unit =

@@ -6,7 +6,7 @@ import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.api.time.TimeBound
 
 /** `histmersion log …`: every filter a flag, `--file` the file store, `--problem` alone the problem's trace. */
-class StructuredLogCmdSuite extends munit.FunSuite:
+class LogCmdSuite extends munit.FunSuite:
   private val json = Cli.JsonOutput(false)
 
   test("each flag sets its filter; --file reads the file"):

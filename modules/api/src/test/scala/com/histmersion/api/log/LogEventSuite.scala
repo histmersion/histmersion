@@ -7,7 +7,7 @@ import com.histmersion.api.log.LogEvent.{Subject, What}
 
 import java.time.Instant
 
-class StructuredLogEventSuite extends munit.FunSuite:
+class LogEventSuite extends munit.FunSuite:
   private def event(what: What) =
     LogEvent(
       LogEvent.Id("01a1f981-4912-7849-a9dc-9b021af12285"),
