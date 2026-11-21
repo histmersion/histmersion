@@ -1,0 +1,14 @@
+path	lines	language	category	reason
+converter/app.py	1-20	python	decision	the converter's contract: endpoints, fast path vs docling, relative asset links, dedup, stateless: ADR-0013
+converter/app.py	42-43	python	decision	uploads are streamed in blocks; holding whole scans per request ran the sidecar out of memory: ADR-0013
+converter/app.py	58-61	python	decision	docling's ~30 s import is warmed in the background so health answers at once: ADR-0013
+converter/app.py	112-114	python	decision	/inspect counts pages and scans cheaply so the server scales its patience: ADR-0013
+converter/app.py	138-139	python	decision	thumbnails are made here because the native server has no working image codec: ADR-0013
+converter/app.py	190	python	decision	the document and its mmap are released before the temporary directory goes: ADR-0013
+converter/app.py	197-204	python	decision	external quirk: pymupdf4llm OCRs pages that already have a text layer and doubles every line: ADR-0013
+converter/app.py	240-241	python	decision	docling reads the bundled models, else it downloads them and fails offline: ADR-0013
+converter/app.py	246	python	decision	external quirk: docling scales relative to 72 dpi: ADR-0013
+converter/app.py	268-274	python	decision	external quirk: pymupdf4llm names images after the temporary input file, so they are renamed: ADR-0013
+converter/tests/test_convert.py	1-6	python	decision	the contract the Scala server depends on: ADR-0013
+converter/tests/test_convert.py	162-167	python	decision	the ABBYY page shape and why the OCR engine is faked: ADR-0013
+converter/tests/test_figures.py	1-10	python	decision	the figure fixture shared with the server's FigurePickSuite and how it is regenerated: ADR-0013

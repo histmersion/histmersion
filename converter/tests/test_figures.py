@@ -1,13 +1,3 @@
-"""Pictures for hover cards (#1446): `/thumbnail`, and what `/convert` hands the server to choose a
-paper's illustration from.
-
-The illustration is chosen server-side (`FigurePick`, Scala) from the figures a conversion stored:
-their names (the page), sizes and how often the Markdown links each. This test builds a paper the
-way journals print them — a masthead strip and a small logo on every page, one large map on page 2,
-a small icon — converts it, and checks the converter's answer carries exactly what that choice
-needs. The same answer is checked in as `modules/core/src/test/resources/figures/paper.json`,
-which `FigurePickSuite` runs the choice over (regenerate it with `FIGURES_FIXTURE=<path> pytest`).
-"""
 from __future__ import annotations
 
 import base64
@@ -29,7 +19,6 @@ def _png(width: int, height: int, colour: tuple[int, int, int]) -> bytes:
         return len(data).to_bytes(4, "big") + kind + data + zlib.crc32(kind + data).to_bytes(4, "big")
 
     ihdr = width.to_bytes(4, "big") + height.to_bytes(4, "big") + bytes([8, 2, 0, 0, 0])
-    # a gradient, so a JPEG/PNG of it is not trivially small and differs per colour
     rows = []
     for y in range(height):
         rows.append(b"\x00" + b"".join(bytes(((colour[0] + x) % 256, (colour[1] + y) % 256, colour[2])) for x in range(width)))
@@ -39,10 +28,10 @@ def _png(width: int, height: int, colour: tuple[int, int, int]) -> bytes:
 @pytest.fixture(scope="module")
 def paper_pdf() -> bytes:
     pymupdf = pytest.importorskip("pymupdf")
-    masthead = _png(600, 60, (10, 20, 30))    # a journal's banner: a strip
-    logo = _png(40, 40, (200, 0, 0))          # the publisher's logo, on every page
-    figure = _png(500, 380, (30, 120, 60))    # the paper's map, page 2
-    icon = _png(60, 60, (0, 0, 200))          # an open-access badge, page 3
+    masthead = _png(600, 60, (10, 20, 30))
+    logo = _png(40, 40, (200, 0, 0))
+    figure = _png(500, 380, (30, 120, 60))
+    icon = _png(60, 60, (0, 0, 200))
     doc = pymupdf.open()
     for n in range(4):
         page = doc.new_page()
@@ -71,19 +60,15 @@ def test_conversion_reports_what_the_illustration_choice_needs(paper_pdf):
     figures = []
     for img in body["images"]:
         name = img["name"]
-        assert name.startswith("fig-"), name             # the page is in the name
+        assert name.startswith("fig-"), name
         links = md.count(f"assets/{name}")
         figures.append({"name": name, "width": img["width"], "height": img["height"], "refs": links,
                         "firstAt": (md.find(f"assets/{name}") / len(md)) if links else None})
-    # pictures come back as rendered at the conversion's dpi: the map is the largest, on page 2
-    # (`fig-0002-…`, pages counted from 1), at its own aspect
     largest = max(figures, key=lambda f: f["width"] * f["height"])
     assert largest["name"].startswith("fig-0002-"), figures
     assert abs(largest["width"] / largest["height"] - 500 / 380) < 0.02, largest
-    # the logo is stored ONCE (deduplicated by sha256) and linked from every page it is on
     logo = [f for f in figures if f["refs"] >= 3]
     assert len(logo) == 1 and logo[0]["width"] == logo[0]["height"] < 150, figures
-    # the masthead is a strip
     assert any(f["width"] >= 8 * f["height"] for f in figures), figures
     path = os.environ.get("FIGURES_FIXTURE")
     if path:

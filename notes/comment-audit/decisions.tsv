@@ -1,4 +1,48 @@
 path	lines	language	category	reason
+converter/app.py	1-20	python	decision	the converter's contract: endpoints, fast path vs docling, relative asset links, dedup, stateless: ADR-0013
+converter/app.py	107	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	112-114	python	decision	/inspect counts pages and scans cheaply so the server scales its patience: ADR-0013
+converter/app.py	126	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	133	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	138-139	python	decision	thumbnails are made here because the native server has no working image codec: ADR-0013
+converter/app.py	168	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	176	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	190	python	decision	the document and its mmap are released before the temporary directory goes: ADR-0013
+converter/app.py	197-204	python	decision	external quirk: pymupdf4llm OCRs pages that already have a text layer and doubles every line: ADR-0013
+converter/app.py	218	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	225	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	230	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	240-241	python	decision	docling reads the bundled models, else it downloads them and fails offline: ADR-0013
+converter/app.py	246	python	decision	external quirk: docling scales relative to 72 dpi: ADR-0013
+converter/app.py	258	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	268-274	python	decision	external quirk: pymupdf4llm names images after the temporary input file, so they are renamed: ADR-0013
+converter/app.py	282-286	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	299	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	320	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	340	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	357	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	36	python	tautology	restates what the names, types and code beside it already say
+converter/app.py	42-43	python	decision	uploads are streamed in blocks; holding whole scans per request ran the sidecar out of memory: ADR-0013
+converter/app.py	58-61	python	decision	docling's ~30 s import is warmed in the background so health answers at once: ADR-0013
+converter/tests/test_convert.py	1-6	python	decision	the contract the Scala server depends on: ADR-0013
+converter/tests/test_convert.py	104	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_convert.py	110	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_convert.py	114-115	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_convert.py	154	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_convert.py	162-167	python	decision	the ABBYY page shape and why the OCR engine is faked: ADR-0013
+converter/tests/test_convert.py	177-178	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_convert.py	198	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_convert.py	24	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	1-10	python	decision	the figure fixture shared with the server's FigurePickSuite and how it is regenerated: ADR-0013
+converter/tests/test_figures.py	32	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	42	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	43	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	44	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	45	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	74	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	78-79	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	83	python	tautology	restates what the names, types and code beside it already say
+converter/tests/test_figures.py	86	python	tautology	restates what the names, types and code beside it already say
 modules/chimney-iron-tests/src/test/scala/com/histmersion/chimneyiron/client.scala	7	scala	decision	a client layer's copies judge nothing; the server checks: ADR-0009
 modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	51	scala	decision	external behaviour: Iron's apply emits no check for an argument already refined: ADR-0009
 modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	66	scala	tautology	restates what the names, types and code beside it already say

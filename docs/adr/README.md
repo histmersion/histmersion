@@ -47,3 +47,4 @@ audited and moved here.
 | [0010](0010-value-conventions.md) | Conventions of the shared values and vocabularies |
 | [0011](0011-test-plugin-fixtures.md) | Test plugins prove one property each, with no network |
 | [0012](0012-developer-build-and-test-tooling.md) | Developer build and test tooling |
+| [0013](0013-ocr-converter.md) | The OCR converter is a stateless Python sidecar |
