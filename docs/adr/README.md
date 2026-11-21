@@ -55,3 +55,4 @@ audited and moved here.
 | [0018](0018-structured-log.md) | The structured log: one writer, a table and rolling files under the same ids, traced on the thread |
 | [0019](0019-newtype-wire-codecs.md) | Unconstrained newtypes cross the wire unchecked; only they take a text codec |
 | [0020](0020-checker-scope-lifted-instances-and-own-names.md) | What two more ratchet checkers count: lifted newtype instances and a file's own type names |
+| [0021](0021-stall-watchdog-interrupts-before-killing.md) | The stall watchdog interrupts a run before it kills its processes, and a stalled run checkpoints nothing |
