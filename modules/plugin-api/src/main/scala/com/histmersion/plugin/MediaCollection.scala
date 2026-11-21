@@ -5,24 +5,10 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** Media collections, the second part of the app that plugins extend: an open-access collection of pictures — a
-  * museum's objects, a library's maps, an excavation archive's photographs — searched for the places on the map. A
-  * plugin adds one or more [[MediaCollection]]s to [[Plugin.Context.mediaCollections]]; `histmersion media import <id>`
-  * then runs it.
-  *
-  * The plugin only SEARCHES and DESCRIBES: it returns [[MediaItem]]s with the licence AS ITS PROVIDER STATES IT.
-  * Everything that decides what is stored is the host's and cannot be changed by a plugin: the licence is read from the
-  * statement and judged against the host's allowlist (`histmersion.media.collections`, the user's to widen), an item is
-  * tied to a place only by the host's match rules (names compared by the gazetteer's name key, values marked uncertain
-  * never used, the dates must overlap the place's, the reason stored on the link), and the host downloads the
-  * rendition, makes the thumbnail, stores the credit line and records the place as asked.
-  */
-
 /** One collection. Called by the host from one import at a time; keep no per-place state of your own. Failures are
   * values (`Left`); an exception is caught by the host and reported for that place.
   */
 trait MediaCollection:
-  /** What the import is called in jobs and lists: "Portal objects". */
   def title: MediaCollection.Title
 
   /** One sentence for `histmersion media providers`: what it brings and on what terms. */

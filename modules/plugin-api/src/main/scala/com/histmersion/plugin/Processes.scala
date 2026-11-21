@@ -33,7 +33,6 @@ object Processes:
   type CaptureArgv = CaptureArgv.T
   object CaptureArgv extends Newtype[String, Pure]
 
-  /** The file name of a tool. */
   type Tool = Tool.T
   object Tool extends Newtype[String, Pure]
 
@@ -80,5 +79,4 @@ object Processes:
       Left(NoProcesses)
     def capture(argv: List[CaptureArgv]): Either[Problem, Result] = Left(NoProcesses)
 
-    /** What every call answers: the host lends no processes. */
     val NoProcesses: Problem = Problem.Config.Unavailable(Problem.Config.Capability.Processes)

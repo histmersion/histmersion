@@ -11,7 +11,6 @@ enum AiMessage:
   /** What the model answered on an earlier turn: its text and the tools it called. */
   case Assistant(text: AiMessage.Assistant.Text, toolCalls: List[AiTool.Call])
 
-  /** What the host's tool answered to one call. */
   case ToolResult(
       callId: AiMessage.ToolResult.CallId,
       tool: AiMessage.ToolResult.Tool,

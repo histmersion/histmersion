@@ -3,9 +3,6 @@ package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** One field a collection changes (or would change) in an item: its name in the collection, what it holds now and what
-  * it is written to.
-  */
 final case class CollectionChange(field: CollectionChange.Field, from: CollectionChange.From, to: CollectionChange.To)
 
 object CollectionChange:

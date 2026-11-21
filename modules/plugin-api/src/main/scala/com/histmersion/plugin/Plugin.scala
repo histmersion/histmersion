@@ -9,11 +9,6 @@ import java.util.Locale
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** The plugin SPI: everything a plugin author compiles against, and nothing else — no domain model, no database, no
-  * server. The host (`com.histmersion.server.plugins`) owns discovery, config layering, secret resolution and the
-  * registries' contents.
-  */
-
 /** The ONE ServiceLoader service (`META-INF/services/com.histmersion.plugin.Plugin`). A plugin may add to several parts
   * of the app at once; it does so in [[register]], through the context's registries.
   *
@@ -59,12 +54,6 @@ trait Plugin:
   def register(config: Config, ctx: Plugin.Context): Either[Problems, Unit]
 
 object Plugin:
-  /** The readers a plugin's config derivation must see: an `${?ENV}` override always arrives as a HOCON STRING, so a
-    * number or boolean setting has to accept a numeric or boolean string too — the same givens `core/Config.scala`
-    * declares for Histmersion's own settings. A plugin imports them where it derives (`import
-    * com.histmersion.plugin.Plugin.Config.given`); lexical-scope givens win over the companion defaults. Without them
-    * an env override of a number fails with "Expected NUMBER but got STRING".
-    */
   type DefaultsResource = DefaultsResource.T
   object DefaultsResource extends Newtype[String, Pure]
 
@@ -104,13 +93,9 @@ object Plugin:
   /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point
     * is a new registry here, not a new service type, so existing plugin jars keep loading. (Seven: [[secretVaults]],
     * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]], [[aiProviders]], [[gazetteerSources]] and
-    * [[sourceCollections]]. Each one added after the first has a default that refuses every addition, so a context
-    * written for an earlier extension point — a test's — still compiles, and adding them changed no `Spi.Version`.)
+    * [[sourceCollections]].)
     */
   trait Context:
-    /** The host's outbound HTTP — the one policy (User-Agent without personal data, Retry-After, bot challenges stop
-      * the request). A plugin never opens its own sockets.
-      */
     def files: LocalFiles = LocalFiles.Unavailable
     def processes: Processes = Processes.Unavailable
     def http: Http
@@ -131,8 +116,7 @@ object Plugin:
     def secretVaults: Registry[Secret.Vault]
 
     /** The acquisition chain: each fetcher under its own id, which is what `histmersion.acquire.chain` orders. A plugin
-      * may add several (one per step). A host that has no acquisition chain refuses every addition — the default, so a
-      * context written for an earlier extension point (a test's) still compiles.
+      * may add several (one per step). A host that has no acquisition chain refuses every addition.
       */
     def sourceFetchers: Registry[SourceFetcher] =
       Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.AcquisitionChain))
@@ -158,27 +142,24 @@ object Plugin:
       Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.AiProviders))
 
     /** The host's budget for the metered upstream `upstream` (`core`: CORE's API), shared with the host's own calls to
-      * it and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]] —
-      * the default, so a context written before budgets existed still compiles.
+      * it and kept for the whole server. An upstream the host keeps no budget for gets [[UpstreamQuota.Unlimited]].
       */
     def quota(upstream: Context.QuotaUpstream): UpstreamQuota = UpstreamQuota.Unlimited
 
     /** The host's reading of licence statements ([[LicenceReader]]), for a media collection that must decide on a
-      * licence before it states it. A host that lends none reads every statement as unknown — the default, so a context
-      * written before it existed still compiles.
+      * licence before it states it. A host that lends none reads every statement as unknown.
       */
     def licences: LicenceReader = LicenceReader.Unread
 
     /** The gazetteer datasets `histmersion places fetch <id>` imports, each under its own id — the name the import is
-      * asked for. A host that imports no gazetteers refuses every addition — the default, so a context written for an
-      * earlier extension point still compiles.
+      * asked for. A host that imports no gazetteers refuses every addition.
       */
     def gazetteerSources: Registry[GazetteerSource] =
       Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.GazetteerImport))
 
     /** The collections of sources the library searches and imports from, and may write back to, each under its own name
       * — the name `histmersion calibre …` or `histmersion archive …` runs it by ([[SourceCollection]]). A host that has
-      * no library refuses every addition — the default, so a context written before collections existed still compiles.
+      * no library refuses every addition.
       */
     def sourceCollections: Registry[SourceCollection] =
       Registry.refusing(Problem.Config.Unavailable(Problem.Config.Capability.SourceCollections))

@@ -16,8 +16,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   a PubMed Central id (`PMC6091220`)
   * @param archive
   *   an archive.org item identifier
-  * @param isbn
-  *   an ISBN
   * @param title
   *   the work's title, as the caller knows it
   * @param authors

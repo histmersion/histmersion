@@ -4,31 +4,16 @@ package plugin
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** Event catalogues, the third part of the app that plugins extend: a catalogue of events — eruptions, earthquakes,
-  * battles, treaties — that `histmersion events import <id>` reads into the map as RESEARCH LEADS (drawn lighter than
-  * the events a source in the corpus attests). A plugin adds one or more [[EventCatalogue]]s to
-  * [[Plugin.Context.eventCatalogues]].
-  *
-  * The plugin READS: it splits one import into parts and returns each part's records. The host owns the rest: which
-  * parts are read (a part read before is not read again unless `--refresh`), the years and the `--bbox`/size
-  * thresholds, holding a dating inside the present, merging a record with the event another catalogue (or an earlier
-  * import) already holds, storing it, and the card's provenance line (the catalogue's title, licence and citation).
-  */
-
 /** One catalogue. Called by the host from one import at a time; failures are values (`Left`), an exception is caught by
   * the host and reported for that part.
   */
 trait EventCatalogue:
-  /** What to call it: "Smithsonian Global Volcanism Program". */
   def title: EventCatalogue.Title
 
-  /** The terms its data comes under, as the provider states them. */
   def licence: Licence
 
-  /** How it asks to be cited. */
   def citation: EventCatalogue.Citation
 
-  /** Its home page. */
   def home: EventCatalogue.Home
 
   /** The least time between two requests to one host, in milliseconds (the provider's own terms). */

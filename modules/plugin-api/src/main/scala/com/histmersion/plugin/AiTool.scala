@@ -8,9 +8,6 @@ final case class AiTool(name: AiTool.Name, description: AiTool.Description, inpu
 
 object AiTool:
 
-  /** A tool call the model made: the call's id (echoed in its [[AiMessage.ToolResult]]), the tool, and its input as
-    * JSON text.
-    */
   type Name = Name.T
   object Name extends Newtype[String, Pure]
   type Description = Description.T

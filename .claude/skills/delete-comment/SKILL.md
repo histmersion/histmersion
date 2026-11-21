@@ -31,14 +31,27 @@ Not counted (the scanner exempts them, and you never delete them):
 
 The source licence needs no headers (AGENTS.md, *Commits*), so there is no licence exemption.
 
-Plugin-API Scaladoc (`modules/plugin-api`) is read by plugin authors through cellar; classify it like any other comment,
-but ask the owner before deleting it in bulk.
+**The one exception: public-API Scaladoc** (AGENTS.md rule 6). A `/** */` block is exempt only when the scanner's
+`ApiDoc` finds all three: it sits on a public definition in the main sources of a module of `ApiDoc.PublicApiModules`
+(`plugin-api`, `plugin-testkit`); it names no excuse word (`ApiDoc.excuses`); and it does not restate its signature (under
+80 % of its content words come from the definition's name, parameters and types, and no `@param`/`@tparam`/`@return`
+only repeats a name). The inventory's kind column says why a doc in those modules still counts: `doc not on a public
+definition`, `doc excuse (…): file an issue`, `doc restating its signature`.
+
+Passing the scanner is necessary, not sufficient. Review the exempt docs too (`show-kept`, below) and keep only those
+that explain what the API does not: units, ranges, threading, error behaviour, lifecycle, who calls it and when. Delete
+a doc that only gives an example name or lists fields, a doc left on the wrong declaration (stale), and a doc that
+justifies a compatibility shim or shortcut (an excuse: draft the issue). Where a long doc is good but one tag restates a
+name, `trim-tags` removes only those tags; a doc with an excuse clause next to real contract text may have the clause cut
+by hand (comment text only, no code).
 
 ## 2. Look at the comments
 
 ```bash
 scala-cli run --server=false -q tools/refactor/DeleteComments.scala -- inventory refactor-audit/<lane>/inventory.tsv
 scala-cli run --server=false -q tools/refactor/DeleteComments.scala -- show modules/<module>/ > refactor-audit/<lane>/show.txt
+scala-cli run --server=false -q tools/refactor/DeleteComments.scala -- show-kept modules/plugin-api/src/main/   # exempt API docs
+scala-cli run --server=false -q tools/refactor/DeleteComments.scala -- trim-tags modules/plugin-api/src/main/   # restating tags only
 ```
 
 `inventory` prints, per language: files, lines, counted blocks and comment lines, the lines deleting all of them would
@@ -76,6 +89,7 @@ scala-cli run --server=false -q tools/refactor/DeleteComments.scala -- \
 ```
 
 Every counted block under the prefixes gets a row in `notes/comment-audit/decisions.tsv`: its override, or `tautology`.
+An exempt public-API doc gets its override, or `keep`; `apply` removes it only when the override says so.
 An override that matches no block is an error (a typo, or the file changed since `show`). Only run `decide` over prefixes
 whose every block you read.
 
@@ -109,5 +123,7 @@ Then:
 3. Compile and test the touched modules through `notes/forced-run.sh` (the lane rules).
 4. Record the fall: `HISTMERSION_UPDATE_ARCHITECTURE=1` with `server/testOnly *GuidelineRatchetSuite` through
    `forced-run.sh` rewrites `architecture/guidelines-ratchet.tsv` with the lower `G22comment` counts. It refuses while any
-   count rose; a rise needs the owner's accept script, never a hand edit.
+   count rose. There is no approval for a rise: fix the new comments. A key the merge base's file does not list yet is
+   written only when the suite measures the merge-base tree at no fewer comments (`RatchetBase.TreeInventory`); never
+   edit the file by hand.
 5. Commit one module or package at a time, with the decisions, the ADRs and the issues it produced.

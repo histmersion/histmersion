@@ -23,7 +23,6 @@ trait LicenceReader:
   def readFirst(statements: List[LicenceReader.ReadFirstStatements]): Licence.Read
 
 object LicenceReader:
-  /** A host that lends no reading: every statement is unknown. */
   type ReadNameName = ReadNameName.T
   object ReadNameName extends Newtype[String, Pure]
   type ReadUrlUrl = ReadUrlUrl.T

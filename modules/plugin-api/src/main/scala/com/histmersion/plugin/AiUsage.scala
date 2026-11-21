@@ -13,7 +13,6 @@ final case class AiUsage(
     cacheWrite: AiUsage.CacheWrite = AiUsage.CacheWrite((0).toLong),
     reasoning: AiUsage.Reasoning = AiUsage.Reasoning((0).toLong)
 ):
-  /** The constructor of a provider compiled before reasoning tokens were counted. */
   def this(input: Long, output: Long, cacheRead: Long, cacheWrite: Long) = this(
     AiUsage.Input(input),
     AiUsage.Output(output),
@@ -23,7 +22,6 @@ final case class AiUsage(
   )
 
 object AiUsage:
-  /** The usage as a provider compiled before reasoning tokens were counted wrote it. */
   type ApplyInput = Input
   val ApplyInput: Input.type = Input
   type ApplyOutput = Output

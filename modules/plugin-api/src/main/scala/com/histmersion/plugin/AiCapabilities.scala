@@ -20,7 +20,6 @@ final case class AiCapabilities(
     iterationMarkers: AiCapabilities.IterationMarkers = AiCapabilities.IterationMarkers(false),
     verbatimFailures: AiCapabilities.VerbatimFailures = AiCapabilities.VerbatimFailures(false)
 ):
-  /** The constructor of a provider compiled before the loop's notes and verbatim failures existed. */
   def this(tools: Boolean, structuredOutput: Boolean) = this(
     AiCapabilities.Tools(tools),
     AiCapabilities.StructuredOutput(structuredOutput),
@@ -29,7 +28,6 @@ final case class AiCapabilities(
   )
 
 object AiCapabilities:
-  /** The capabilities as a provider compiled before the loop's notes and verbatim failures wrote them. */
   type ApplyTools = Tools
   val ApplyTools: Tools.type = Tools
   type ApplyStructuredOutput = StructuredOutput

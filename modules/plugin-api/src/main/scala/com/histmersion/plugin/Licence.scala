@@ -46,5 +46,4 @@ object Licence extends Newtype[String, Pure]:
     val AllRights = "all-rights-reserved"
     val Unknown = "unknown"
 
-    /** A statement nothing reads. */
     def unknown(statement: UnknownStatement): Read = Read(Id((statement).value), Family(Unknown))
