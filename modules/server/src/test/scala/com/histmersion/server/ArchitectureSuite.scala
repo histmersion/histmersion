@@ -100,6 +100,26 @@ class ArchitectureSuite extends munit.FunSuite:
     assertEquals(Ratchet.risenRules(listed, grown), List("filesystem 3 -> 4"))
     assertEquals(Ratchet.exceptionsFile(listed.reverse), Ratchet.Header :: Ratchet.DirectionNote :: listed)
 
+  test("a name a file defines itself, nested too, is its own; another place's type of that name is still found"):
+    val agents = "object Trace:\n  def of(x: Int) = x\n"
+    val record =
+      "final case class Event(trace: Trace)\nobject Event:\n  type Trace = Trace.T\n  object Trace extends Newtype[String, Pure]\n"
+    val user = "final case class Step(trace: Trace)\n"
+    def file(key: String, pkg: String, text: String) = SourceFile(key, pkg, Blank(text), text)
+    val rows = Rules
+      .all(
+        List(
+          file("server:domain/automation/agents/Trace.scala", "com.histmersion.domain.automation.agents", agents) ->
+            "automation.agents",
+          file("api:api/log/Event.scala", "com.histmersion.api.log", record) -> "util.log",
+          file("api:api/log/Step.scala", "com.histmersion.api.log", user) -> "util.log"
+        )
+      )
+      .map(_.row)
+      .filter(_.startsWith("direction"))
+    assertEquals(rows, List("direction\tapi:api/log/Step.scala\tutil.log -> automation: Trace\t1"))
+    assertEquals(Rules.ownNames(record), Set("Event", "Trace"))
+
   test("a file's key names its platform's source root, and the shared root has no marker"):
     assertEquals(SourceFile.key("api", "scala", "api/problem/Answer.scala"), "api:api/problem/Answer.scala")
     assertEquals(
@@ -429,12 +449,22 @@ object ArchitectureSuite:
         .mapValues(_.head.start)
         .toMap
 
+    /** A type the file defines itself, at any depth (`object Trace` inside a record's companion). */
+    private val OwnDefinition =
+      "(?m)^[ \\t]*(?:(?:final|sealed|abstract|private|protected|open|case|implicit|transparent|inline|opaque)(?:\\[\\w+\\])?\\s+)*(?:class|trait|object|enum|type)\\s+([A-Z]\\w*)".r
+
+    /** The type names a file defines itself, nested ones too: there the bare name is the file's own type, which shadows
+      * a top-level type of the same name in another place.
+      */
+    def ownNames(code: String): Set[String] = OwnDefinition.findAllMatchIn(code).map(_.group(1)).toSet
+
     private def direction(placed: List[(SourceFile, String)]): List[Violation] =
       val defined = owners(placed)
       placed.flatMap { (s, from) =>
+        val own = ownNames(s.code)
         uses(s).toList.sortBy(_._1).flatMap { (name, at) =>
           defined.get(name).collect {
-            case (to, files) if !files(s.key) && !Place.mayDependOn(from, to) =>
+            case (to, files) if !files(s.key) && !own(name) && !Place.mayDependOn(from, to) =>
               Violation(
                 "direction",
                 s.key,
