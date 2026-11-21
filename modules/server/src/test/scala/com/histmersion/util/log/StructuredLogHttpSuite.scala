@@ -53,7 +53,7 @@ class StructuredLogHttpSuite extends DbSuite:
       .modify(_.db)
       .setTo(base.db.modify(_.url).setTo(TestDb.dbUrl.get))
       .modify(_.log)
-      .setTo(base.log.modify(_.dir).setTo(LogConfig.Dir(dir.toString)))
+      .setTo(base.log.modify(_.dir).setTo(LogConfig.Dir.at(dir.toString)))
       .modify(_.auth)
       .setTo(base.auth.modify(_.apiKey).setTo(Key))
     supervised {

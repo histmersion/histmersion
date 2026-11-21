@@ -65,21 +65,28 @@ class StructuredLogQuerySuite extends munit.FunSuite:
     assert(parse(LogPage.Filter(before = Some(LogPage.Cursor("garbage")))).left.exists(_.sentence.contains("garbage")))
 
   test("a page: matching events newest first, cut at the limit, the cursor leads to the rest and nothing twice"):
+    val (id1, id2, id3, id4, id5) = (
+      LogEvent.Id("0193a5f2-0000-7000-8000-000000000001"),
+      LogEvent.Id("0193a5f2-0000-7000-8000-000000000002"),
+      LogEvent.Id("0193a5f2-0000-7000-8000-000000000003"),
+      LogEvent.Id("0193a5f2-0000-7000-8000-000000000004"),
+      LogEvent.Id("0193a5f2-0000-7000-8000-000000000005")
+    )
     val events = Vector(
-      event(LogEvent.Id("01"), LogEvent.At("2026-11-20T10:00:00.000001Z"), traceA),
-      event(LogEvent.Id("02"), LogEvent.At("2026-11-20T10:00:00.000002Z"), traceB),
-      event(LogEvent.Id("03"), LogEvent.At("2026-11-20T10:00:00.000003Z"), traceA),
-      event(LogEvent.Id("04"), LogEvent.At("2026-11-20T10:00:00.000003Z"), traceA),
-      event(LogEvent.Id("05"), LogEvent.At("2026-11-20T10:00:00.000004Z"), traceA)
+      event(id1, LogEvent.At("2026-11-20T10:00:00.000001Z"), traceA),
+      event(id2, LogEvent.At("2026-11-20T10:00:00.000002Z"), traceB),
+      event(id3, LogEvent.At("2026-11-20T10:00:00.000003Z"), traceA),
+      event(id4, LogEvent.At("2026-11-20T10:00:00.000003Z"), traceA),
+      event(id5, LogEvent.At("2026-11-20T10:00:00.000004Z"), traceA)
     )
     val first = parse(LogPage.Filter(trace = Some(traceA), limit = Some(LogPage.Limit(2))))
       .fold(p => fail(p.sentence), identity)
     val (rows, next) = first.page(events)
-    assertEquals(rows.map(_.id), Vector("05", "04"))
+    assertEquals(rows.map(_.id), Vector(id5, id4))
     val second = parse(LogPage.Filter(trace = Some(traceA), limit = Some(LogPage.Limit(2)), before = next))
       .fold(p => fail(p.sentence), identity)
     val (rest, end) = second.page(events)
-    assertEquals(rest.map(_.id), Vector("03", "01"))
+    assertEquals(rest.map(_.id), Vector(id3, id1))
     assertEquals(end, None)
 
   test("a subject filter needs every subject named; a trace's events are found by it alone"):

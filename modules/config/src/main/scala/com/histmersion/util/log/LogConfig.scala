@@ -32,6 +32,9 @@ final case class LogConfig(
 object LogConfig:
   type Dir = Dir.T
   object Dir extends Newtype[String, Pure]:
+    /** The directory at `path`, as the setting names it. */
+    def at(path: String): Dir = Dir(path)
+
     extension (d: Dir)
       /** The directory set, when one is (empty: the server's logs directory). */
       def set: Option[String] = Option(d.value.trim).filter(_.nonEmpty)

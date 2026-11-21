@@ -46,10 +46,16 @@ object LogEvent:
     val lsb = (low & 0x3fffffffffffffffL) | Long.MinValue // the variant bits 10
     java.util.UUID(msb, lsb).toString
 
+  /** The shape the server mints ids and traces in: a UUID in lower case. */
+  private val Uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+
   type Id = Id.T
   object Id extends Newtype[String, Pure]:
     /** A new id: the UUIDv7 of `millis` and the random bits `high` and `low`. */
     def v7(millis: Long, high: Long, low: Long): Id = Id(uuidV7(millis, high, low))
+
+    /** An id as a cursor carries it back: one the server minted (a UUID in lower case), none otherwise. */
+    def parse(text: String): Option[Id] = Option.when(text.matches(Uuid))(Id(text))
 
     extension (i: Id)
       /** Whether it sorts before `other` (as the table orders its UUIDs: byte by byte, as their lower-case text). */
@@ -94,8 +100,7 @@ object LogEvent:
       def request: Subject = Subject.Request(t)
 
       /** Whether it has the shape the server mints: a UUID in lower case. */
-      def wellFormed: Boolean =
-        t.value.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+      def wellFormed: Boolean = t.value.matches(Uuid)
 
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
@@ -168,7 +173,9 @@ object LogEvent:
 
   /** The address the request came from. */
   type Client = Client.T
-  object Client extends Newtype[String, Pure]
+  object Client extends Newtype[String, Pure]:
+    /** The client at the remote end of a connection, by its address as text (`127.0.0.1`). */
+    def address(hostAddress: String): Client = Client(hostAddress)
 
   /** What the caller searched for (the `q` of a search). */
   type Search = Search.T
@@ -200,7 +207,9 @@ object LogEvent:
 
   /** An MCP tool's name. */
   type Tool = Tool.T
-  object Tool extends Newtype[String, Pure]
+  object Tool extends Newtype[String, Pure]:
+    /** The tool an MCP server registered under `name` (the name a `tools/call` asks for). */
+    def named(name: String): Tool = Tool(name)
 
   type ProblemId = ProblemId.T
   object ProblemId extends Newtype[String, Pure]:

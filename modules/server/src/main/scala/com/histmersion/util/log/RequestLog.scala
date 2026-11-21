@@ -82,7 +82,7 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
               method,
               status,
               LogEvent.Millis.between(started, System.nanoTime()),
-              request.connectionInfo.remote.map(a => LogEvent.Client(a.getAddress.getHostAddress)),
+              request.connectionInfo.remote.map(a => LogEvent.Client.address(a.getAddress.getHostAddress)),
               request.queryParameters.get("q").flatMap(LogEvent.Search.fromQuery)
             )
           )

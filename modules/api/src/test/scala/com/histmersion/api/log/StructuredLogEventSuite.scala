@@ -98,12 +98,15 @@ class StructuredLogEventSuite extends munit.FunSuite:
     assertEquals(LogPage.Limit.clamped(Some(LogPage.Limit(99999))), LogPage.Limit.max)
     assertEquals(LogPage.Limit(2).cut(Vector(1, 2, 3)), (Vector(1, 2), Vector(3)))
     assert(LogPage.Limit(2).below(3) && !LogPage.Limit(2).below(2))
+    val id = LogEvent.Id("01a1f981-4912-7849-a9dc-9b021af12285")
     assertEquals(
-      LogPage.Cursor.of(LogEvent.At("2026-11-20T09:15:02.123456Z"), LogEvent.Id("i")).place,
-      Some((Instant.parse("2026-11-20T09:15:02.123456Z"), LogEvent.Id("i")))
+      LogPage.Cursor.of(LogEvent.At("2026-11-20T09:15:02.123456Z"), id).place,
+      Some((Instant.parse("2026-11-20T09:15:02.123456Z"), id))
     )
     assertEquals(LogPage.Cursor("garbage").place, None)
-    assertEquals(LogPage.Cursor("not-a-time~i").place, None)
+    assertEquals(LogPage.Cursor("not-a-time~01a1f981-4912-7849-a9dc-9b021af12285").place, None)
+    assertEquals(LogPage.Cursor("2026-11-20T09:15:02.123456Z~not-an-id").place, None, "only an id the server minted")
+    assertEquals(LogEvent.Id.parse("01A1F981-4912-7849-A9DC-9B021AF12285"), None)
     assert(LogPage.From("FILE").names("File"))
     assertEquals(
       LogPage.Filter(problem = Some(LogEvent.ProblemId("ab12"))).problemAlone,
