@@ -3,6 +3,7 @@ package server
 package comments
 
 final case class CommentBlock(language: SourceLanguage, parts: Vector[SourceComment]) derives CanEqual:
+  import CommentBlock.*
   def start: Int = parts.head.start
   def end: Int = parts.last.end
   def firstLine: Int = parts.head.firstLine
@@ -21,7 +22,7 @@ final case class CommentBlock(language: SourceLanguage, parts: Vector[SourceComm
   def lineRange: String = if firstLine == lastLine then s"$firstLine" else s"$firstLine-$lastLine"
 
   def summary: String =
-    text.linesIterator.map(_.trim).mkString(" ").replace('\t', ' ').take(CommentBlock.SummaryWidth)
+    text.linesIterator.map(_.trim).mkString(" ").replace('\t', ' ').take(SummaryWidth)
 
 object CommentBlock:
   val SummaryWidth: Int = 160

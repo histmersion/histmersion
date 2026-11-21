@@ -3,6 +3,7 @@ package server
 package comments
 
 final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
+  import CommentRemoval.*
 
   private def lineStartOf(offset: Int): Int = text.lastIndexOf('\n', offset - 1) + 1
 
@@ -12,29 +13,29 @@ final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
 
   private def blank(from: Int, until: Int): Boolean = text.substring(from, until).forall(_.isWhitespace)
 
-  private def span(comment: SourceComment): CommentRemoval.Span =
+  private def span(comment: SourceComment): Span =
     val lineStart = lineStartOf(comment.start)
     val lineEnd = lineEndOf(comment.end)
     if blank(lineStart, comment.start) && blank(comment.end, lineEnd) then
-      CommentRemoval.Span(lineStart, math.min(lineEnd + 1, text.length), wholeLines = true)
+      Span(lineStart, math.min(lineEnd + 1, text.length), wholeLines = true)
     else if blank(comment.end, lineEnd) then
       var s = comment.start
       while s > lineStart && (text.charAt(s - 1) == ' ' || text.charAt(s - 1) == '\t') do s -= 1
-      CommentRemoval.Span(s, comment.end, wholeLines = false)
+      Span(s, comment.end, wholeLines = false)
     else
       var e = comment.end
       while e < lineEnd && (text.charAt(e) == ' ' || text.charAt(e) == '\t') do e += 1
-      CommentRemoval.Span(comment.start, e, wholeLines = false)
+      Span(comment.start, e, wholeLines = false)
 
-  private lazy val spans: Vector[CommentRemoval.Span] =
+  private lazy val spans: Vector[Span] =
     chosen
       .flatMap(_.parts)
       .map(span)
       .sortBy(_.start)
-      .foldLeft(Vector.empty[CommentRemoval.Span]) { (merged, next) =>
+      .foldLeft(Vector.empty[Span]) { (merged, next) =>
         merged.lastOption match
           case Some(last) if next.start <= last.end =>
-            merged.init :+ CommentRemoval.Span(last.start, math.max(last.end, next.end), last.wholeLines)
+            merged.init :+ Span(last.start, math.max(last.end, next.end), last.wholeLines)
           case _ => merged :+ next
       }
 
@@ -56,7 +57,7 @@ final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
       if before.isBlank && next.isBlank && nextEnd >= 0 then
         out.delete(join, nextEnd + 1)
         separators += 1
-      else if before.isBlank && join > 0 && CommentRemoval.closers.exists(next.trim.startsWith) then
+      else if before.isBlank && join > 0 && closers.exists(next.trim.startsWith) then
         val beforeStart = out.lastIndexOf("\n", join - 2) + 1
         out.delete(beforeStart, join)
         separators += 1
@@ -67,7 +68,7 @@ final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
 
   def separatorLinesShed: Int = removed._2
 
-  def linesShed: Int = CommentRemoval.lineCount(text) - CommentRemoval.lineCount(result)
+  def linesShed: Int = lineCount(text) - lineCount(result)
 
 object CommentRemoval:
   val closers: List[String] = List("}", ")", "]")

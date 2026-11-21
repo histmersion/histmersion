@@ -14,6 +14,8 @@ final case class CommentScope(
     exemptDirectories: List[(String, String)],
     exemptFixtures: String
 ):
+  import CommentScope.*
+
   private def under(path: String, directory: String): Boolean =
     path.startsWith(s"$directory/") || path.contains(s"/$directory/")
 
@@ -38,7 +40,7 @@ final case class CommentScope(
       .map(language => CommentedFile(path, language, text, exemption(path, language)))
 
   def files(root: Path): Vector[CommentedFile] =
-    CommentScope.listed(root).flatMap(file(root, _))
+    listed(root).flatMap(file(root, _))
 
 object CommentScope:
   val default: CommentScope = CommentScope(

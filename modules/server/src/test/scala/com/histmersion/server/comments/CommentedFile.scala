@@ -3,6 +3,7 @@ package server
 package comments
 
 final case class CommentedFile(path: String, language: SourceLanguage, text: String, exemption: Option[String]):
+  import CommentedFile.*
   lazy val blocks: Vector[CommentBlock] = CommentBlock.runs(language, text, language.comments(text))
 
   private lazy val textLines: Vector[String] = text.linesIterator.toVector
@@ -10,7 +11,7 @@ final case class CommentedFile(path: String, language: SourceLanguage, text: Str
   private lazy val printedLines: Vector[(Int, Int)] =
     language match
       case SourceLanguage.Shell =>
-        CommentedFile.selfPrint.findAllMatchIn(text).toVector.map { m =>
+        selfPrint.findAllMatchIn(text).toVector.map { m =>
           val from = m.group(1).toInt
           val until = Option(m.group(2)).map(_.toInt).getOrElse {
             val pattern = m.group(3).r
@@ -35,10 +36,10 @@ final case class CommentedFile(path: String, language: SourceLanguage, text: Str
 
   def module: String =
     path.split('/').toList match
-      case "modules" :: group :: sub :: _ :: _ if CommentedFile.groupedModules.contains(group) => s"$group/$sub"
-      case "modules" :: module :: _ :: _                                                       => module
-      case top :: _                                                                            => s"repo/$top"
-      case Nil                                                                                 => path
+      case "modules" :: group :: sub :: _ :: _ if groupedModules.contains(group) => s"$group/$sub"
+      case "modules" :: module :: _ :: _                                         => module
+      case top :: _                                                              => s"repo/$top"
+      case Nil                                                                   => path
 
   def removing(chosen: Vector[CommentBlock]): CommentRemoval = CommentRemoval(text, chosen)
 
