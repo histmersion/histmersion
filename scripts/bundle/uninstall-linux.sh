@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Remove the Histmersion app (bundle, systemd user service, CLI link). The DATA — database, backups —
-# in ${XDG_DATA_HOME:-~/.local/share}/histmersion is kept unless --purge is given.
 set -euo pipefail
 dest="${HISTMERSION_INSTALL_DIR:-$HOME/.local/opt/histmersion}"
 data="${XDG_DATA_HOME:-$HOME/.local/share}/histmersion"

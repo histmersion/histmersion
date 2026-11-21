@@ -1,32 +1,24 @@
 #!/usr/bin/env bash
-# Tests of the installer's LaunchAgent environment merge (launchagent-env.sh, #914) against temporary
-# plists — no launchctl, nothing outside a temp dir. macOS only (plutil); elsewhere it skips.
-#
-#   scripts/bundle/tests/launchagent-env-test.sh        (also: just test-scripts)
-set -euo pipefail   # as the installer runs: an errexit slip in the library fails here too
+set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 if ! command -v plutil >/dev/null 2>&1; then echo "skipped: plutil (macOS) is not available"; exit 0; fi
 # shellcheck source=../launchagent-env.sh
 . "$here/../launchagent-env.sh"
 
-# the caller's environment is part of the input: start from none of it
 for v in $(compgen -e | grep -E '^(HISTMERSION_|ANTHROPIC_API_KEY$|OPENAI_API_KEY$)' || true); do unset "$v"; done
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/bin"
-export PATH="$tmp/bin:/usr/bin:/bin"   # no real claude/codex/opencode can be found
+export PATH="$tmp/bin:/usr/bin:/bin"
 
 passed=0; failed=0
 ok()   { passed=$((passed + 1)); echo "  ok   $1"; }
 bad()  { failed=$((failed + 1)); echo "  FAIL $1"; }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
-# <plist> <name>: the value, or nothing when the key is absent (plutil's exit status says so: some macOS versions
-# print their "could not extract" message on standard output, which read as a value)
+check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 val()  { local v; v="$(plutil -extract "EnvironmentVariables.$2" raw -n -o - "$1" 2>/dev/null)" || return 0; printf '%s' "$v"; }
 
-# A plist as the installer writes it, before the environment is applied.
-fresh() { # <path>
+fresh() {
   cat > "$1" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -38,8 +30,7 @@ fresh() { # <path>
 PLIST
 }
 
-# One install: prepare from <installed>, write a fresh plist to <installed>, apply. Output → <log>.
-install() { # <installed plist> <log>
+install() {
   local work; work="$(mktemp -d "$tmp/work.XXXX")"
   la_env_prepare "$1" "$work" "$work/env" > "$2"
   fresh "$1"
@@ -48,7 +39,6 @@ install() { # <installed plist> <log>
 
 echo "launchagent-env"
 
-# ── 1. a first install: no plist yet, the caller's settings go in ──────────────────────────────────
 p1="$tmp/first.plist"
 ( export HISTMERSION_AGENTS_ENABLED=true HISTMERSION_CORPUS_DIR="$tmp/corpus" HISTMERSION_PORT=9999
   install "$p1" "$tmp/1.log" )
@@ -58,7 +48,6 @@ check "first install: a variable the installer does not pass stays out" '[ -z "$
 check "first install: says what it set" 'grep -q "set      HISTMERSION_AGENTS_ENABLED=true" "$tmp/1.log"'
 check "first install: the plist is valid" 'plutil -lint -s "$p1"'
 
-# ── 2. a re-install: hand-added settings survive, the caller overrides, others are dropped ─────────
 p2="$tmp/again.plist"
 cat > "$p2" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -99,13 +88,11 @@ check "re-install: a command already set is not re-resolved" '[ "$(val "$p2" HIS
 check "re-install: a command found nowhere stays unset" '[ -z "$(val "$p2" HISTMERSION_AGENTS_OPENCODE_COMMAND)" ]'
 check "re-install: the plist is valid" 'plutil -lint -s "$p2"'
 
-# ── 3. idempotent: installing again with nothing in the environment changes nothing ───────────────
 cp "$p2" "$tmp/before.plist"
 install "$p2" "$tmp/3.log"
 check "idempotent: the same plist again" 'cmp -s "$p2" "$tmp/before.plist"'
 check "idempotent: everything kept, nothing changed" '! grep -qE "^  (changed|set|resolved)" "$tmp/3.log"'
 
-# ── 4. the masking rule on its own ────────────────────────────────────────────────────────────────
 check "secret: an API key" 'la_env_secret OPENAI_API_KEY abc'
 check "secret: a token-like value under any name" 'la_env_secret HISTMERSION_X sk-abc'
 check "not secret: a switch or a number" '! la_env_secret HISTMERSION_AGENTS_CODEX_USE_API_KEY true && ! la_env_secret HISTMERSION_AUTH_TTL 3600'

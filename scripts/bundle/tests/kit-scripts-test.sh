@@ -1,23 +1,4 @@
 #!/usr/bin/env bash
-# Tests of the kit's other scripts in a temp dir — nothing outside it:
-#   - histmersion-server-jvm (server-jvm.sh): the class path, the environment, provenance, with a FAKE java
-#   - histmersion-toolchain (toolchain.sh): provisioning GraalVM from a pins file — a FAKE GraalVM tarball
-#     served from file://, its SHA-256 checked; check's verdicts
-#   - histmersion-signing (signing.sh): GPG provenance with the REAL gpg in a temporary GNUPGHOME (a
-#     throw-away key without a passphrase; skipped with a note when gpg is not installed), and ad-hoc
-#     code signing of a copy of /usr/bin/true (macOS)
-#   - with HISTMERSION_TEST_KEYCHAIN=1 (macOS, opt-in): an UNTRUSTED self-signed identity in a TEMPORARY
-#     keychain, codesign with it; two different binaries (different cdhashes) get one designated
-#     requirement and each satisfies the other's — what a TCC grant stores and checks, the automatable
-#     proxy for "a privacy permission survives a relink" (the real check needs a privacy prompt:
-#     scripts/bundle/tcc-check.sh); ad-hoc signing, the control, gives neither. The user's keychain
-#     search list is saved, the temporary keychain appended for the signing, the list restored and
-#     compared, the keychain deleted. The login keychain is never read or changed.
-#   - the installers' build step (install-build.sh): local by default, --prebuilt, --jvm, every fallback to
-#     the prebuilt binary, the build record that spares a second link; and the WHOLE installer of this
-#     platform against fakes (temporary HOME and install, fake launchctl/systemctl and health)
-#
-#   scripts/bundle/tests/kit-scripts-test.sh        (also: just test-scripts)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 src="$here/.."
@@ -28,7 +9,7 @@ cleanup() {
   rm -rf "$tmp"
 }
 trap cleanup EXIT
-real_home="$HOME" # the keychain search list is per user and found from HOME: the keychain block needs the real one
+real_home="$HOME"
 export HOME="$tmp/home" SDKMAN_DIR="$tmp/no-sdkman"
 unset JAVA_HOME GRAALVM_HOME HISTMERSION_GRAALVM_HOME HISTMERSION_JAVA_HOME 2>/dev/null || true
 mkdir -p "$HOME"
@@ -38,7 +19,7 @@ passed=0; failed=0; skipped=0
 ok()   { passed=$((passed + 1)); echo "  ok   $1"; }
 bad()  { failed=$((failed + 1)); echo "  FAIL $1"; }
 skip() { skipped=$((skipped + 1)); echo "  skip $1"; }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
+check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
 install="$tmp/install"
 mkdir -p "$install/bin" "$install/libexec" "$install/kit/lib" "$install/kit/tools/resolver"
@@ -50,7 +31,6 @@ echo 25.0.5.0.3 > "$install/kit/graalvm-version"
 printf 'b.jar\na.jar\n' > "$install/kit/classpath"
 echo com.histmersion.server.histmersionServer > "$install/kit/main-class"
 
-# ── histmersion-server-jvm ────────────────────────────────────────────────────────────────────────
 echo "server-jvm"
 jdk="$tmp/jdk"; mkdir -p "$jdk/bin"; echo 'JAVA_VERSION="25.0.2"' > "$jdk/release"
 cat > "$jdk/bin/java" <<'SH'
@@ -86,7 +66,6 @@ rc=0; HISTMERSION_JAVA_HOME="$jdk" HISTMERSION_GPG=false "$install/bin/histmersi
 check "provenance on and the directory unverified: the server does not start (exit 3)" '[ "$rc" = 3 ] && grep -q "signed manifest" "$tmp/e.out"'
 rm -rf "$HISTMERSION_DATA_DIR/signing" "$HISTMERSION_DATA_DIR/plugins"
 
-# ── histmersion-toolchain ─────────────────────────────────────────────────────────────────────────
 echo "toolchain"
 fake="$tmp/fake-graal/graalvm-community-25.5.5.0.3+1.1"
 mkdir -p "$fake/Contents/Home/bin"
@@ -121,18 +100,15 @@ check "the repo's pins: one version, the three CI platforms, each a 64-hex SHA-2
    && [ "$(grep -cE "^$pinned (macos-aarch64|linux-x64|linux-aarch64) " "$src/graalvm-pins.txt")" = 3 ]'
 rc=0; HISTMERSION_HOME="$tmp/no-kit" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) bash "$src/toolchain.sh" check > "$tmp/t.out" 2>&1 || rc=$?
 check "without a kit, the toolchain's version is the pins' (the one pin)" 'grep -q "GraalVM CE $pinned" "$tmp/t.out"'
-# sdkman names a GraalVM CE build by its release (25.5.5.0+3-graalce), the pins' URLs by its tag (graal-25.5.5.0.3)
 sdk_java="$(sed -n 's/^java=\(.*\)-graalce$/\1/p' "$src/../../.sdkmanrc" | tr '+' '.')"
 check ".sdkmanrc names the pinned GraalVM CE release" \
   '[ -n "$sdk_java" ] && [ "$(grep -cvE "^#|^$|/releases/download/graal-$sdk_java/" "$src/graalvm-pins.txt")" = 0 ]'
 
-# ── histmersion-signing ───────────────────────────────────────────────────────────────────────────
 echo "signing"
 signing="$install/bin/histmersion-signing"
 out="$("$signing" status)"
 check "status with nothing set up: GPG off" 'echo "$out" | grep -q "GPG provenance: off"'
 if [ "$(uname -s)" = Darwin ]; then
-  # #3647: untrusted by default; declining the question changes nothing either way
   sm="$(printf 'n\n' | "$signing" setup-macos 2>&1)"
   smt="$(printf 'n\n' | "$signing" setup-macos --trust 2>&1)"
   smn="$(printf 'n\n' | "$signing" setup-macos --no-trust 2>&1)"
@@ -175,11 +151,9 @@ if [ "$(uname -s)" = Darwin ]; then
     'grep -q "signed ad hoc" "$tmp/c.out" && echo "$info" | grep -q "Identifier=com.histmersion.test" && echo "$info" | grep -q "Signature=adhoc"'
 fi
 
-# ── tcc-check.sh: the manual TCC procedure's mechanics (the privacy prompt itself is the user's) ────
 if [ "$(uname -s)" = Darwin ] && command -v clang >/dev/null 2>&1; then
   echo "tcc-check"
   tfakes="$tmp/tcc-fakes"; mkdir -p "$tfakes" "$tmp/tcc-target"; touch "$tmp/tcc-target/a" "$tmp/tcc-target/b"
-  # launchd stand-in: bootstrap/kickstart run the agent's program once, as launchd would
   cat > "$tfakes/launchctl" <<SH
 #!/bin/bash
 echo "launchctl \$*" >> "$tmp/tcc.calls"
@@ -216,7 +190,6 @@ else
   skip "tcc-check.sh (macOS with clang)"
 fi
 
-# ── the installers' build step (install-build.sh; D5: a local build by default) ─────────────────────
 echo "install-build"
 # shellcheck source=../install-build.sh
 . "$src/install-build.sh"
@@ -224,9 +197,7 @@ check "mode: local by default, as asked otherwise" \
   '[ "$(ib_mode "")" = local ] && [ "$(ib_mode local)" = local ] && [ "$(ib_mode jvm)" = jvm ] && [ "$(ib_mode prebuilt)" = prebuilt ]'
 check "mode: an unknown one is refused" '! ib_mode fast >/dev/null 2>&1'
 
-# a tool that records its call and exits with $tmp/rc.<name>.<first argument> (default 0); a relink
-# that succeeds puts a "linked" binary in bin/ with its build record, as the real one does
-fake_tool() { # <dest> <name>
+fake_tool() {
   cat > "$1/bin/$2" <<SH
 #!/bin/bash
 echo "$2 \$*" >> "$tmp/steps"
@@ -240,7 +211,7 @@ exit "\$rc"
 SH
   chmod +x "$1/bin/$2"
 }
-new_dest() { # <dir> — a bundle with a prebuilt binary, a kit, fake toolchain and relink
+new_dest() {
   rm -rf "$1" "$tmp"/rc.* && mkdir -p "$1/bin" "$1/kit" "$1/libexec"
   printf '#!/bin/sh\n# prebuilt\n' > "$1/bin/histmersion-server"; chmod +x "$1/bin/histmersion-server"
   echo 25.0.5.0.3 > "$1/kit/graalvm-version"; echo kit-jar > "$1/kit/a.jar"
@@ -250,7 +221,7 @@ new_dest() { # <dir> — a bundle with a prebuilt binary, a kit, fake toolchain 
   : > "$tmp/steps"
 }
 steps() { tr '\n' ';' < "$tmp/steps"; }
-build() { # <dest> <mode> [<previous>] → output in $tmp/ib.out, rc in $ib_rc
+build() {
   ib_rc=0; HISTMERSION_HOME="$1" ib_build "$@" > "$tmp/ib.out" 2>&1 || ib_rc=$?
 }
 is_prebuilt() { grep -q "# prebuilt" "$1/bin/histmersion-server"; }
@@ -285,7 +256,6 @@ new_dest "$dest"; rm "$dest/bin/histmersion-server"; echo 3 > "$tmp/rc.histmersi
 check "no prebuilt binary to fall back to: the step fails" '[ "$ib_rc" != 0 ]'
 rm -rf "$HISTMERSION_DATA_DIR/plugins"
 
-# the REAL histmersion-toolchain: its memory, download and checksum verdicts drive the fallback
 real_toolchain() { install -m 0755 "$src/toolchain.sh" "$1/bin/histmersion-toolchain"; }
 new_dest "$dest"; real_toolchain "$dest"
 rc_mem=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((8 * 1073741824)) HISTMERSION_GRAALVM_PINS="$tmp/pins" \
@@ -303,7 +273,6 @@ rc_ok=0; PATH="$fakebin:$PATH" HISTMERSION_RELINK_MEMORY_BYTES=$((48 * 107374182
 check "enough memory, the pinned download good: GraalVM provisioned, then linked" \
   '[ "$rc_ok" = 0 ] && [ "$ib_result" = local ] && [ -x "$HISTMERSION_DATA_DIR/toolchain/graalvm-ce-25.0.5.0.3/Contents/Home/bin/native-image" ] && [ "$(steps)" = "histmersion-relink --no-restart;" ]'
 
-# nothing linked again when it would give the same binary (the build record)
 new_dest "$dest"; build "$dest" local; : > "$tmp/steps"
 build "$dest" local
 check "reinstalled in place, same kit and plugins: kept, nothing run" '[ "$ib_result" = kept ] && [ ! -s "$tmp/steps" ]'
@@ -319,7 +288,7 @@ mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugin
 new_dest "$dest"; hk_write_build_record "$dest/bin/histmersion-server.build" native "$dest/kit" "$tmp/no-plugins" bundle
 build "$dest" local
 check "…with a plugin jar installed: linked here (the bundle's binary lacks it)" '[ "$ib_result" = local ] && grep -q "linked with other plugins" "$tmp/ib.out"'
-prev="$tmp/prev"; new_dest "$prev"; build "$prev" local      # the previous install: linked here, with hello
+prev="$tmp/prev"; new_dest "$prev"; build "$prev" local
 new_dest "$dest"; build "$dest" local "$prev"
 check "a reinstall of the same bundle: the previous install's binary is carried over, nothing linked" \
   '[ "$ib_result" = reused ] && [ ! -s "$tmp/steps" ] && grep -q "# linked native" "$dest/bin/histmersion-server" && cmp -s "$prev/bin/histmersion-server.build" "$dest/bin/histmersion-server.build"'
@@ -332,7 +301,6 @@ build "$prev" local; : > "$tmp/steps"; build "$dest" local "$prev"
 check "a new kit (an update): linked again" '[ "$ib_result" = local ] && grep -q "histmersion-relink --no-restart" "$tmp/steps"'
 rm -rf "$HISTMERSION_DATA_DIR/plugins"
 
-# --prebuilt and --jvm
 new_dest "$dest"; build "$dest" prebuilt
 check "prebuilt: nothing run, the bundle's binary" '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && [ ! -s "$tmp/steps" ] && is_prebuilt "$dest"'
 mkdir -p "$HISTMERSION_DATA_DIR/plugins"; echo p > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.jar"
@@ -346,9 +314,6 @@ new_dest "$dest"; echo 2 > "$tmp/rc.histmersion-toolchain.path"; echo 2 > "$tmp/
 check "jvm, no JDK can be provisioned: the prebuilt binary instead, the install goes on" \
   '[ "$ib_rc" = 0 ] && [ "$ib_result" = prebuilt ] && is_prebuilt "$dest" && [ "$(steps)" = "histmersion-toolchain path;histmersion-toolchain install;" ]'
 
-# the whole installer against fakes (temporary HOME, install and bin dirs; fake service manager and
-# health): the default local build runs, and a data directory with NO plugins/ directory does not
-# abort it under `set -o pipefail` (regression: cdd16b48)
 echo "installer"
 ihome="$tmp/ihome"; ibundle="$tmp/ibundle"; ifakes="$tmp/ifakes"
 rm -rf "$ihome" "$ibundle" "$ifakes"; new_dest "$ibundle"; mkdir -p "$ihome" "$ifakes" "$ibundle/pg/bin"
@@ -373,7 +338,6 @@ check "  …and the installer explains its options (--help)" \
   'bash "$installer" --help | grep -q -- "--prebuilt takes the bundle.s binary"'
 unset HISTMERSION_MACHINE_ID
 
-# ── opt-in: a stable identity from a TEMPORARY keychain ───────────────────────────────────────────
 if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then
   echo "temporary keychain"
   export HOME="$real_home"
@@ -381,7 +345,7 @@ if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then
   security create-keychain -p "$kpw" "$kc"
   security unlock-keychain -p "$kpw" "$kc"
   saved="$(security list-keychains -d user | sed 's/^[[:space:]]*"\(.*\)"$/\1/')"
-  restore() { # the user's search list exactly as it was, and the temporary keychain gone
+  restore() {
     # shellcheck disable=SC2086
     printf '%s\n' "$saved" | tr '\n' '\0' | xargs -0 security list-keychains -d user -s
     security delete-keychain "$kc" 2>/dev/null || true
@@ -409,7 +373,6 @@ if [ "${HISTMERSION_TEST_KEYCHAIN:-}" = 1 ] && [ "$(uname -s)" = Darwin ]; then
   for b in a1 a2; do HISTMERSION_CODESIGN_IDENTITY=- "$signing" codesign "$tmp/$b" com.histmersion.server > /dev/null; done
   check "control: signed ad hoc, the two binaries' requirements differ (cdhash) and neither satisfies the identity's" \
     '[ "$(dr "$tmp/a1")" != "$(dr "$tmp/a2")" ] && dr "$tmp/a1" | grep -q cdhash && ! codesign --verify -R "=$dr1" "$tmp/a1" 2>/dev/null && ! codesign --verify -R "=$(dr "$tmp/a1")" "$tmp/a2" 2>/dev/null'
-  # tcc-check.sh's default: a NEW untrusted identity in ITS temporary keychain (the launchd stand-in)
   if [ -x "$tmp/tcc-fakes/launchctl" ]; then
     mkdir -p "$tmp/tcc-lfakes"; cp "$tmp/tcc-fakes/launchctl" "$tmp/tcc-lfakes/"; rm -f "$tmp/tcc.loaded"
     tcck() { PATH="$tmp/tcc-lfakes:$PATH" HISTMERSION_TCC_DIR="$tmp/tcc-work" HISTMERSION_TCC_AGENTS="$tmp/tcc-agents" \

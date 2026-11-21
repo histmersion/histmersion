@@ -1,13 +1,3 @@
-"""Make a python-build-standalone interpreter's console scripts relocatable.
-
-pip/uv write the BUILD path of the interpreter into each script's shebang, so `bin/docling-tools`
-breaks as soon as the bundle is moved or unpacked elsewhere. This rewrites every Python shebang
-into the sh/python polyglot uv uses for relocatable environments: /bin/sh runs the first line and
-execs the `python3` that sits next to the script; Python sees a harmless string literal.
-
-    python3 relocate_scripts.py <python>/bin
-"""
-
 import os
 import sys
 

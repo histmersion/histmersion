@@ -1,33 +1,12 @@
 #!/usr/bin/env bash
-# Create a local code-signing identity for Histmersion's binaries — free, no Apple Developer account:
-#
-#   scripts/bundle/codesign-identity-macos.sh [--trust|--no-trust] [name]   (default name: "Histmersion Local")
-#   (in a bundle: libexec/codesign-identity-macos.sh, run by `histmersion-signing setup-macos`)
-#
-# Why: the native binaries are otherwise signed ad hoc, and macOS privacy permissions (e.g. access to
-# ~/Documents) are tied to an ad-hoc binary's exact hash — every rebuild looks like a new app and the
-# permission is lost. Signed with one stable identity, a permission granted once survives every update.
-# It serves THIS Mac only; it does not satisfy Gatekeeper for copies downloaded elsewhere (that would
-# need Apple's paid program and notarisation).
-#
-# Idempotent: does nothing if the identity already exists. install-macos.sh then signs with it
-# automatically.
-#
-# The identity is left UNTRUSTED by default (#3647): codesign signs with it just as well, its designated
-# requirement is as stable, and the TCC check (scripts/bundle/tcc-check.sh, 2026-10-23) showed a privacy
-# grant to a binary it signed survives a relink (docs/research-plugins.md §21.2) — so no trust setting
-# of your login keychain is changed. --trust also trusts it for code signing (asks for your login
-# password once, a macOS dialog); --no-trust, the default, is still accepted.
-# HISTMERSION_KEYCHAIN puts the identity into another keychain than the login one — the tests use a
-# temporary keychain they delete; they never touch the login keychain.
 set -euo pipefail
 trust=""
 case "${1:-}" in --trust) trust=1; shift ;; --no-trust) shift ;; esac
 name="${1:-Histmersion Local}"
 keychain="${HISTMERSION_KEYCHAIN:-$HOME/Library/Keychains/login.keychain-db}"
-openssl=/usr/bin/openssl   # the system LibreSSL writes a PKCS#12 that `security import` reads
+openssl=/usr/bin/openssl
 
-exists() { # trusted or not, in that keychain
+exists() {
   security find-identity -p codesigning "$keychain" 2>/dev/null | grep -qF "\"$name\""
 }
 if exists; then

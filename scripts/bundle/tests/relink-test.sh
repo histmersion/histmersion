@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# Tests of bin/histmersion-relink's ORCHESTRATION (relink.sh) against a temporary install with FAKES:
-# a fake GraalVM (java answers pluginTool and --self-check; native-image writes a fake binary), fake
-# launchctl/systemctl/curl (a "service" whose health follows the binary in bin/), fake codesign and gpg.
-# Nothing outside the temp dir is touched: no real service, no keychain, no network, no real build.
-# The real relink (real native-image, the hello plugin) is in scripts/bundle/smoke.sh.
-#
-#   scripts/bundle/tests/relink-test.sh        (also: just test-scripts)
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 src="$here/.."
@@ -21,9 +14,8 @@ export STATE="$state"
 passed=0; failed=0
 ok()   { passed=$((passed + 1)); echo "  ok   $1"; }
 bad()  { failed=$((failed + 1)); echo "  FAIL $1"; }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }  # <what> <shell test>
+check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 
-# ── a fake GraalVM ────────────────────────────────────────────────────────────────────────────────
 graal="$tmp/graalvm"; mkdir -p "$graal/bin"
 echo 'JAVA_VERSION="25.0.5.0.3"' > "$graal/release"
 cat > "$graal/bin/java" <<'SH'
@@ -82,7 +74,6 @@ SH
 chmod +x "$graal/bin/java" "$graal/bin/native-image"
 jdk_only="$tmp/jdk-only"; mkdir -p "$jdk_only/bin"; cp "$graal/release" "$jdk_only/"; cp "$graal/bin/java" "$jdk_only/bin/"
 
-# ── fake service, health, toolchain, signing tools on PATH ────────────────────────────────────────
 cat > "$fakes/launchctl" <<'SH'
 #!/bin/bash
 echo "launchctl $*" >> "$STATE/restarts"
@@ -109,9 +100,7 @@ SH
 printf '#!/bin/sh\necho /usr/bin/clang\n' > "$fakes/xcrun"
 printf '#!/bin/sh\necho /usr/bin/cc\n' > "$fakes/cc"
 printf '#!/bin/sh\necho "codesign $*" >> "$STATE/codesign.calls"\n' > "$fakes/codesign"
-# `security` would read the keychain: the tests must never call it (HISTMERSION_CODESIGN_IDENTITY=-)
 printf '#!/bin/sh\necho "security $*" >> "$STATE/security.calls"\nexit 1\n' > "$fakes/security"
-# gpg: a "signature" is the signed file's sha256; the key FAKEKEY is the only secret key
 cat > "$fakes/gpg" <<'SH'
 #!/bin/bash
 args=" $* "
@@ -127,7 +116,6 @@ SH
 chmod +x "$fakes"/*
 export PATH="$fakes:$PATH" HISTMERSION_GPG="$fakes/gpg"
 
-# ── a temporary install with a kit ────────────────────────────────────────────────────────────────
 new_install() {
   rm -rf "$tmp/install" "$tmp/data" "$state" && mkdir -p "$state"
   export INSTALL="$tmp/install"
@@ -222,7 +210,6 @@ check "the new binary does not come up: exit 4, the previous one is back and res
   '[ "$rc" = 4 ] && binary_has "digest=e3b0" && [ "$(grep -c kickstart "$state/restarts")" = 2 ] && [ "$(cat "$state/up")" = up ]'
 
 new_install
-# a server that comes up but reports another plugin set than the one linked:
 cat > "$fakes/launchctl" <<'SH'
 #!/bin/bash
 echo "launchctl $*" >> "$STATE/restarts"; echo up > "$STATE/up"; echo stale > "$STATE/running"
@@ -230,7 +217,7 @@ SH
 chmod +x "$fakes/launchctl"
 rc="$(relink)"
 check "up, but running another plugin set: rolled back (exit 4)" '[ "$rc" = 4 ] && binary_has "digest=e3b0" && grep -q "expected d1" "$tmp/out"'
-cp "$fakes/systemctl" "$fakes/launchctl" # restore the real fake
+cp "$fakes/systemctl" "$fakes/launchctl"
 
 new_install
 rc="$(relink --no-restart)"
@@ -262,14 +249,13 @@ check "a jar the kit manifest does not list: refused (exit 2)" '[ "$rc" = 2 ] &&
 new_install
 rc="$(HISTMERSION_GRAALVM_HOME="" HISTMERSION_JAVA_HOME="$jdk_only" relink)"
 check "no GraalVM with native-image: refused (exit 2), toolchain install named" '[ "$rc" = 2 ] && grep -q "histmersion-toolchain install" "$tmp/out"'
-if [ "$(uname -s)" = Darwin ]; then # (on Linux any cc on PATH counts, and /usr/bin has one)
+if [ "$(uname -s)" = Darwin ]; then
   printf '#!/bin/sh\nexit 1\n' > "$fakes/xcrun"; chmod +x "$fakes/xcrun"
   rc="$(relink)"
   check "no C toolchain (xcrun finds no clang): refused (exit 2)" '[ "$rc" = 2 ] && grep -q "no C toolchain" "$tmp/out"'
 fi
 printf '#!/bin/sh\necho /usr/bin/clang\n' > "$fakes/xcrun"; printf '#!/bin/sh\necho /usr/bin/cc\n' > "$fakes/cc"
 
-# ── GPG provenance ────────────────────────────────────────────────────────────────────────────────
 new_install
 mkdir -p "$HISTMERSION_DATA_DIR/signing"; echo FAKEKEY > "$HISTMERSION_DATA_DIR/signing/gpg-key"
 rc="$(relink)"
@@ -301,7 +287,6 @@ rc="$(relink --rollback --no-restart)"
 check "…signed with sign-binary (you vouch for it): rolled back, and the launcher starts it" \
   '[ "$rc" = 0 ] && binary_has "digest=e3b0" && "$INSTALL/libexec/histmersion-server-verified" > "$tmp/l.out" 2>&1 && grep -q verified "$tmp/l.out"'
 
-# ── JVM mode ──────────────────────────────────────────────────────────────────────────────────────
 new_install
 rc="$(relink --jvm)"
 check "--jvm: no build; the launcher becomes bin/histmersion-server, the record says jvm" \
@@ -316,7 +301,6 @@ rc="$(relink --jvm --no-restart)"
 check "--jvm with provenance: the launcher put in bin/ has its SHA-256 signed, so the service's verified start accepts it" \
   '[ "$rc" = 0 ] && hk_verify_binary "$INSTALL/bin/histmersion-server" "$INSTALL/bin/histmersion-server.sha256" "$INSTALL/bin/histmersion-server.sha256.asc" FAKEKEY >/dev/null'
 
-# ── the plugins' dependencies ─────────────────────────────────────────────────────────────────────
 new_install
 echo "pom" > "$HISTMERSION_DATA_DIR/plugins/hello-0.1.0.pom"
 echo "org.example-xml_3-2.4.0.jar" > "$state/resolve.dep"

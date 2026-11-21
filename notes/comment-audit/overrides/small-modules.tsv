@@ -1,0 +1,51 @@
+path	lines	language	category	reason
+modules/chimney-iron-tests/src/test/scala/com/histmersion/chimneyiron/client.scala	7	scala	decision	a client layer's copies judge nothing; the server checks: ADR-0009
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypePairs.scala	51	scala	decision	external behaviour: Iron's apply emits no check for an argument already refined: ADR-0009
+modules/chimney-iron/src/main/scala/com/histmersion/chimneyiron/IronNewtypeToNewtypeExtension.scala	12	scala	decision	Scala 3 only, where Hearth's Type and Expr are scala.quoted's: ADR-0009
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	8-38	scala	decision	what every newtype companion provides and why names are derived, never spelled: ADR-0009
+modules/newtype/src/main/scala/com/histmersion/Newtype.scala	83-85	scala	decision	external quirk: a companion beside a top-level alias is named through File$package: ADR-0009
+modules/nonempty-derivation/src/main/scala/com/histmersion/util/nonempty/derivation/NonEmptyVectorProvider.scala	12-16	scala	decision	the provider makes NonEmptyVector a list that refuses empty input, at compile time only: ADR-0009
+modules/nonempty/src/main/scala/com/histmersion/util/nonempty/NonEmptyVector.scala	6-8	scala	decision	invariant: at run time it is the Vector itself, so an element type must never be a vector: ADR-0009
+modules/plugin-fixtures/hello-ai/src/main/scala/com/histmersion/fixtures/helloai/Reply.scala	10-17	scala	decision	the AI test fixture is scripted, calls no model and opens no socket: ADR-0011
+modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsConfig.scala	10-13	scala	decision	registering proves the dependency was installed and linked: ADR-0011
+modules/plugin-fixtures/hello-lib/src/main/scala/com/histmersion/fixtures/hellolib/Shout.scala	7-9	scala	decision	a library no module depends on, so a plugin using it needs it installed: ADR-0011
+modules/plugin-fixtures/hello/src/main/scala/com/histmersion/fixtures/hello/ForeignSpiPlugin.scala	8-10	scala	decision	built for a foreign SPI generation and absent from the services file on purpose: ADR-0011
+modules/plugin-fixtures/hello/src/main/scala/com/histmersion/fixtures/hello/HelloConfig.scala	10-17	scala	decision	the greeter is chosen by name so only the jar's own reachability metadata makes it work: ADR-0011
+modules/values/src/main/scala/com/histmersion/LatLon.scala	4	scala	decision	coordinates are WGS84 as PostGIS geometry(Point, 4326): ADR-0010
+modules/values/src/main/scala/com/histmersion/Latitude.scala	5	scala	decision	latitude sign convention: ADR-0010
+modules/values/src/main/scala/com/histmersion/Longitude.scala	5	scala	decision	longitude sign convention: ADR-0010
+modules/values/src/main/scala/com/histmersion/UserId.scala	5-7	scala	decision	the server runs for one person: everything belongs to the one local user: ADR-0010
+modules/values/src/main/scala/com/histmersion/Year.scala	5-7	scala	decision	years are signed and counted astronomically, so every integer is a year: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	8-10	scala	decision	one shared licence classification for every domain: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	72-76	scala	decision	a licence URL that is not Creative Commons is never guessed: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	112-114	scala	decision	allowlists name families; unreadable and all-rights-reserved are never stored: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	131	scala	decision	public-domain pictures still show a credit line, as a courtesy and a source: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/Licence.scala	139	scala	stale	misplaced: describes the family list but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	29-33	scala	decision	which approvals block their run and which are applied by the decision: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	47-49	scala	decision	a model-proposed action is applied only when a person approves it: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	102-105	scala	decision	who decided is read from the note's and result's marks: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	114	scala	stale	misplaced: describes AutopilotNote but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala	127-129	scala	decision	invariant: the SQL that filters by decider must say the same as this function: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala	43	scala	stale	misplaced: describes queries but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/Manager.scala	8-11	scala	decision	the scope of each manager kind: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Manager.scala	24-26	scala	decision	paused starts nothing new, stopped cancels in-flight work: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Pipeline.scala	113-115	scala	excuse	runless items counted under the review pipeline "as the managers have always counted them": issue "Fallback pipeline for runless manager items"
+modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala	26	scala	stale	misplaced: describes the host providers but sits on the Wire type
+modules/values/src/main/scala/com/histmersion/domain/automation/Run.scala	10	scala	decision	a run is a background job, so its id is the job's: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/automation/Run.scala	15-18	scala	decision	what paused, waiting-approval and the terminal states mean: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	11	scala	decision	a place id is the gazetteer, an underscore and the gazetteer's id: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	19-23	scala	decision	the five place kinds, and why a people is a point: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala	57-68	scala	decision	Pleiades atlas-grid centres are approximate points, told from the coordinates: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/library/Citekey.scala	7-11	scala	decision	why the citekey rule is bounded and bans `..`: a file name and a URL segment: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala	12-14	scala	decision	DOIs are case-insensitive, so they are kept lower-case: ADR-0010
+modules/values/src/main/scala/com/histmersion/domain/library/Edge.scala	9-11	scala	stale	history:the string constants it replaced are gone
+modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala	33-35	scala	decision	the order of picture roles on a card: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Bundle.scala	15-17	scala	decision	invariant: kind names are kebab-case as the database trigger writes them: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Bundle.scala	21-23	scala	decision	a bundle carries only places and periods added locally: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	7	scala	decision	convention: Left is this collection: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/DecisionKind.scala	10	scala	decision	convention: Right is the bundle: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	10	scala	decision	invariant: an issue kind's wire name is part of the issue id and never changes: ADR-0010
+modules/values/src/main/scala/com/histmersion/util/data/exchange/Issue.scala	121-123	scala	decision	a decision is remembered per issue, as git's rerere does: ADR-0010
+modules/values/src/test/scala/com/histmersion/values/CitekeySuite.scala	8-10	scala	decision	why citekeys are validated: an unvalidated one became a directory: ADR-0010
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	7-12	scala	decision	which types tests may compare by value: ADR-0009
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala	42-43	scala	decision	external quirk: a list mixing Some and None infers the union of the alternatives: ADR-0009

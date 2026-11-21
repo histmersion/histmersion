@@ -49,7 +49,7 @@ domain="gui/$(id -u)"
 die() { echo "tcc-check: $*" >&2; exit 1; }
 [ "$(uname -s)" = Darwin ] || die "macOS only"
 
-build() { # <variant> → $probe (a new binary: the variant is compiled in, so the cdhash differs)
+build() {
   command -v clang >/dev/null 2>&1 || die "no clang (xcode-select --install)"
   cat > "$work/probe.c" <<'C'
 #include <dirent.h>
@@ -70,7 +70,7 @@ C
   clang -O1 -DVARIANT="\"$1\"" -o "$work/probe.new" "$work/probe.c"
 }
 
-identity_hash() { # the SHA-1 of the identity to sign with
+identity_hash() {
   local name kcarg=()
   name="$(cat "$work/identity-name")"
   [ "$name" = "-" ] && { echo -; return 0; }
@@ -78,7 +78,7 @@ identity_hash() { # the SHA-1 of the identity to sign with
   security find-identity -p codesigning ${kcarg[@]+"${kcarg[@]}"} | awk -v n="\"$name\"" 'index($0, n) {print $2; exit}'
 }
 
-sign() { # <file> <identity sha1 or -> — with the temporary keychain in the search list only meanwhile
+sign() {
   local saved rc=0
   if [ "$2" = "-" ] || [ ! -f "$kc" ]; then codesign --force --sign "$2" --identifier "$ident" "$1"; return; fi
   saved="$(security list-keychains -d user | sed 's/^[[:space:]]*"\(.*\)"$/\1/')"
@@ -91,7 +91,7 @@ sign() { # <file> <identity sha1 or -> — with the temporary keychain in the se
   return "$rc"
 }
 
-install_probe() { # <variant> <identity sha1 or -> — replace the probe at its fixed path, as a relink swaps
+install_probe() {
   build "$1"
   sign "$work/probe.new" "$2"
   mv -f "$work/probe.new" "$probe"
@@ -99,7 +99,7 @@ install_probe() { # <variant> <identity sha1 or -> — replace the probe at its 
   echo "  designated requirement: $(codesign -d -r- "$probe" 2>&1 | sed -n 's/^\(# \)\{0,1\}designated => //p')"
 }
 
-run_and_wait() { # <variant> — run the agent once more; wait for that variant's answer
+run_and_wait() {
   local i=0 wait="${HISTMERSION_TCC_WAIT:-180}"
   if launchctl print "$domain/$label" >/dev/null 2>&1; then launchctl kickstart "$domain/$label"
   else launchctl bootstrap "$domain" "$plist"; fi
