@@ -9,7 +9,6 @@ import io.scalaland.chimney.internal.compiletime.derivation.transformer.ChimneyE
 
 final class IronNewtypeToNewtypeExtension extends ChimneyMacroExtension:
 
-  // Scala 3 is the only platform this module builds for: there Hearth's Type and Expr are scala.quoted's own.
   override def extend(engine: MacroCommons & ChimneyEngineExtensionApi): Unit = engine match
     case MacroCommonsScala3(scala3) => extendScala3(scala3)
     case _                          => ()

@@ -10,10 +10,8 @@ enum AgentRole(val wire: AgentRole.Wire) derives CanEqual:
   case Skeptic extends AgentRole(AgentRole.Wire("skeptic"))
   case Fixer extends AgentRole(AgentRole.Wire("fixer"))
 
-  /** plan-goal: sub-goals, queries and candidate works for a goal; acquisition-sweep: ranks them. */
   case Planner extends AgentRole(AgentRole.Wire("planner"))
 
-  /** compile-article: drafts the article (or the section to append) from the verified claims. */
   case Writer extends AgentRole(AgentRole.Wire("writer"))
 
 object AgentRole:

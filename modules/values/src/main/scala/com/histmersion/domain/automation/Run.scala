@@ -7,15 +7,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object Run:
 
-  /** An agent run's id. A run is a background job, so this is that job's id; its own type says which jobs are runs. */
   type Id = Id.T
 
   object Id extends Newtype[String, Match["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]]
 
-  /** An agent run's state, stored in `jobs.status`. `Paused` is resumable (a budget breach, a server restart, a
-    * person's pause); `WaitingApproval` holds no worker and goes back to the queue when a person decides the approval
-    * it waits on; `Cancelled` and the other terminal states are final.
-    */
   enum State(val wire: State.Wire) derives CanEqual:
     case Queued extends State(State.Wire("queued"))
     case Running extends State(State.Wire("running"))
@@ -33,7 +28,6 @@ object Run:
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
-    /** The legal transitions. `None` = refuse (the run has moved on). Resume is `Paused → Queued`. */
     def next(from: State, to: State): Option[State] = (from, to) match
       case (Queued, Running) | (Queued, Cancelled) | (Queued, Paused)                     => Some(to)
       case (Running, Done) | (Running, Failed) | (Running, Paused) | (Running, Cancelled) => Some(to)

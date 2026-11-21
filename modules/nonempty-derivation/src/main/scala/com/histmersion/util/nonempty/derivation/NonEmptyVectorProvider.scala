@@ -9,11 +9,6 @@ import hearth.std.{ProviderResult, StandardMacroExtension, StdExtensions}
 
 import com.histmersion.util.nonempty.NonEmptyVector
 
-/** Tells Hearth's derivations (Kindlings' JSON codecs and Tapir schemas) that a [[NonEmptyVector]] is a collection: it
-  * is written as the list of its elements, and read from a list that has at least one (an empty list is refused, never
-  * read as a value). Loaded from `META-INF/services` by the macros of every module that has this one on its compile
-  * class path; it runs at compile time only, so nothing of it reaches a binary.
-  */
 final class NonEmptyVectorProvider extends StandardMacroExtension {
 
   @scala.annotation.nowarn("msg=is never used")
@@ -34,7 +29,6 @@ final class NonEmptyVectorProvider extends StandardMacroExtension {
       Existential[[X] =>> IsCollectionOf[A, X], E](new IsCollectionOf[A, E] {
         override def asIterable(value: Expr[A]): Expr[Iterable[E]] =
           Expr.quote(NonEmptyVector.toVector(Expr.splice(value).asInstanceOf[NonEmptyVector[E]]))
-        // O(1): the elements are a Vector
         override def sizeHintForBuilder(value: Expr[A]): Option[Expr[Int]] =
           Some(Expr.quote(NonEmptyVector.size(Expr.splice(value).asInstanceOf[NonEmptyVector[E]])))
         override type CtorResult = Vector[E]

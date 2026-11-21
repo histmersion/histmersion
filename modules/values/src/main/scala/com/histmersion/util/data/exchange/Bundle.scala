@@ -12,23 +12,15 @@ object Bundle:
   type RangeUpper = RangeUpper.T
   object RangeUpper extends Newtype[Long, Pure]
 
-  /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
-    * kebab-case (`article-version`), as the V031 trigger writes them.
-    */
   enum Kind:
     case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
 
-    /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance imports itself are
-      * not carried (docs/research-merge-import.md §7.8).
-      */
     case Place, Period
 
     def wire: Kind.Wire = Kind.Wire((Kind.wireOf(this)).value)
 
-    /** The NDJSON file holding this kind's lines. */
     def file: Kind.EntryPath = Kind.EntryPath(s"entities/${Kind.fileStem(this)}.ndjson")
 
-    /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
     def issueLetter: Kind.IssueLetter = Kind.letterOf(this)
 
   object Kind:

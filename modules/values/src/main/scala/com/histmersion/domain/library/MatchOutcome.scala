@@ -4,19 +4,14 @@ package domain.library
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 enum MatchOutcome:
-  /** The same record here (by uid or ledger): imported as an update, if anything. */
   case Same
 
-  /** Another record here is the same work, sure enough to merge without asking. */
   case AutoMerge
 
-  /** Another record here may be the same work: a [[IssueKind.SameWork]] issue decides it. */
   case NeedsDecision
 
-  /** A new source. */
   case New
 
-  /** Deleted here: not brought back. */
   case DeletedHere
 
 object MatchOutcome:

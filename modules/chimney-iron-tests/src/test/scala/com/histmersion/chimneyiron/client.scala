@@ -4,8 +4,6 @@ package chimneyiron.client
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
-// A client layer's copies: the same names over the same base types, judging nothing (the server checks).
-
 type Citekey = Citekey.T
 object Citekey extends Newtype[String, Pure]
 

@@ -11,7 +11,6 @@ enum ItemStatus(val wire: ItemStatus.Wire) derives CanEqual:
   case Failed extends ItemStatus(ItemStatus.Wire("failed"))
   case Cancelled extends ItemStatus(ItemStatus.Wire("cancelled"))
 
-  /** Settled: only a person (re-open, enqueue) brings it back. */
   def isFinal: Boolean = (this == Done || this == Stopped || this == Failed || this == Cancelled)
 
 object ItemStatus:

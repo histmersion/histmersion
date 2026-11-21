@@ -6,9 +6,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object Edge:
 
-  /** The typed relationships between sources. Wire representation is the lowercase/underscore string (e.g.
-    * `superseded_by`). The enum replaces the `EdgeKind` string constants.
-    */
   enum Kind:
     case References, Challenges, Refutes, Updates, SupersededBy, Supersedes,
       Confirms, Cites, FoundationalFor, CompilationOf, ReviewOf, Verifies
@@ -19,9 +16,6 @@ object Edge:
 
     private val wireMap: Map[Wire, Kind] = values.map(e => wireOf(e) -> e).toMap
 
-    /** The wire string for an edge kind: lowercase with underscores preserved. `SupersededBy` → `"superseded_by"`,
-      * `FoundationalFor` → `"foundational_for"`.
-      */
     def wireOf(e: Kind): Wire = e match
       case References      => Wire("references")
       case Challenges      => Wire("challenges")
@@ -38,7 +32,6 @@ object Edge:
 
     def fromWire(s: Wire): Option[Kind] = wireMap.get(Wire((s).value.toLowerCase))
 
-    /** All wire strings, for validators and legends. */
     val allWire: List[Wire] = (values.map(wireOf).toList).map(refactorValue => Wire((refactorValue).value))
 
     given WireEnumValues[Kind]:

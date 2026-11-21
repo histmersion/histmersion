@@ -3,8 +3,6 @@ package values
 
 import com.histmersion.values.testsupport.ComparedByValue.given
 
-/** A DOI read out of a text: the resolver URL and `doi:` stripped, lower case, the sentence's punctuation left out. */
-
 import com.histmersion.domain.library.Doi
 class DoiSuite extends munit.FunSuite:
 
