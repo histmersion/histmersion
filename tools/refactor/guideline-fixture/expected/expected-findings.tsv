@@ -136,6 +136,8 @@ G60fromString	core	modules/core/src/main/scala/com/histmersion/util/problem/Prob
 G60unrecognised	core	modules/core/src/main/scala/com/histmersion/util/problem/Problem.scala	36	Stored.Unrecognised
 G9prefix	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	6	Source+Status;class;entity=com/histmersion/domain/Source#
 G9prefixRole	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	7	Source+Repo;class;entity=com/histmersion/domain/Source#
+G9prefix	core	modules/core/src/test-fixture/scala/com/histmersion/domain/SourceSuite.scala	7	Source+Order;class;entity=com/histmersion/domain/Source#
+G9prefixRole	core	modules/core/src/test-fixture/scala/com/histmersion/domain/SourceSuite.scala	6	Source+Fixture;class;entity=com/histmersion/domain/Source#
 silentCompare	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	12	contains:Citekey~String
 silentCompare	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	14	contains:Citekey~Slug
 silentInterp	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	s:Status
