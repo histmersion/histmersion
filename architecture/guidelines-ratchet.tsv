@@ -47,7 +47,7 @@ G22comment	server	main	4417
 G22comment	server	test	2240
 G22comment	upstreams	main	151
 G22comment	upstreams	test	19
-G22comment	web	main	2815
+G22comment	web	main	2814
 G22comment	web	test	276
 G3misplaced	api	main	563
 G3misplaced	cli	main	94
