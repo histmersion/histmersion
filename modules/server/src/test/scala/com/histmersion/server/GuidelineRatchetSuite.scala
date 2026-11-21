@@ -49,9 +49,11 @@ class GuidelineRatchetSuite extends munit.FunSuite:
         }
         .mkString("\n")
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
-      assert(rises.isEmpty, s"not regenerated: these counts rose (fix the new findings first)\n$risen")
+      val unproven = rises.filterNot((key, was, _) => was == 0 && Inventories.exists(_.owns(key.cells)))
+      assert(unproven.isEmpty, s"not regenerated: these counts rose (fix the new findings first)\n$risen")
       val rendered = Ratchet.render(actual)
-      RatchetBase.Spec.GuidelineRatchet.check(rendered, RatchetBase.Git(Path.of(".")), sys.env) match
+      RatchetBase.Spec.GuidelineRatchet
+        .check(rendered, RatchetBase.Git(Path.of(".")), sys.env, inventories = Inventories) match
         case Left(why) => fail(s"not regenerated: $why")
         case Right(_)  => ()
       val _ = Files.write(RatchetFile, rendered.asJava, UTF_8)
@@ -70,10 +72,10 @@ class GuidelineRatchetSuite extends munit.FunSuite:
 
   test(
     "architecture/guidelines-ratchet.tsv and architecture/boundaries.tsv are no higher than at the merge base with " +
-      "the pilot, but for the owner's accepted rises"
+      "the pilot, but for the owner's accepted rises and a new rule's keys the merge-base tree proves"
   ):
     List(RatchetBase.Spec.GuidelineRatchet, RatchetBase.Spec.Boundaries).foreach { spec =>
-      spec.checkFile() match
+      spec.checkFile(inventories = Inventories) match
         case Left(why)   => fail(why)
         case Right(used) => RatchetBase.announce(used).foreach(println)
     }
@@ -123,6 +125,29 @@ class GuidelineRatchetSuite extends munit.FunSuite:
     assertEquals(
       Comments.grown(counts, base.getOrElse(_, 0)),
       List(("b.scala", 1, 3), ("new.sh", 0, 1))
+    )
+
+  test("G22: the merge-base tree is measured from its blobs: counted comments per module and scope, links skipped"):
+    val repo = RatchetLimitsSuite.Repo.pilot(
+      "modules/core/src/main/scala/A.scala" -> List("// one", "object A", "/** two */", "val b = 1"),
+      "modules/core/src/test/scala/ASuite.scala" -> List("//> using scala 3", "// three", "class ASuite"),
+      "scripts/x.sh" -> List("#!/bin/sh", "# four", "echo"),
+      "refactor-audit/B.scala" -> List("// not code"),
+      "README.md" -> List("# not code")
+    )
+    val _ = java.nio.file.Files
+      .createSymbolicLink(repo.dir.resolve("modules/core/src/main/scala/L.scala"), Path.of("A.scala"))
+    repo.commit("link")
+    val measured = Comments.AtBase.measure(repo.git, repo.head)
+    assertEquals(
+      measured,
+      Right(
+        Map(
+          List("G22comment", "core", "main") -> 2,
+          List("G22comment", "core", "test") -> 1,
+          List("G22comment", "repo/scripts", "main") -> 1
+        )
+      )
     )
 
   test("G22: a renamed file is compared with its old path"):
@@ -200,7 +225,10 @@ object GuidelineRatchetSuite:
   val RatchetFile: Path = Path.of("architecture/guidelines-ratchet.tsv")
 
   /** A count's place: the inventory's rule, the module (`modules/<module>/src/…`) and whether the file is a test. */
-  final case class Key(rule: String, module: String, scope: String) derives CanEqual
+  final case class Key(rule: String, module: String, scope: String) derives CanEqual:
+    def cells: List[String] = List(rule, module, scope)
+
+  lazy val Inventories: List[RatchetBase.TreeInventory] = List(Comments.AtBase)
 
   final case class Finding(rule: String, module: String, path: String, line: Int, detail: String):
     def key: Key = Key(rule, module, if path.contains("/src/test/") then "test" else "main")
@@ -335,10 +363,33 @@ object GuidelineRatchetSuite:
 
     lazy val files: Vector[CommentedFile] = CommentScope.default.files(Path.of("."))
 
-    lazy val findings: List[Finding] =
-      files.toList.flatMap(f =>
-        f.counted.map(b => Finding(Rule, f.module, f.path, b.firstLine, s"${f.language.label}:${b.kind}"))
-      )
+    extension (f: CommentedFile)
+      def found: List[Finding] =
+        f.counted.toList.map(b => Finding(Rule, f.module, f.path, b.firstLine, s"${f.language.label}:${b.kind}"))
+
+    lazy val findings: List[Finding] = files.toList.flatMap(_.found)
+
+    object AtBase extends RatchetBase.TreeInventory:
+      val file: String = RatchetFile.toString
+
+      def owns(key: RatchetBase.Key): Boolean = key.headOption.contains(Rule)
+
+      def measure(git: RatchetBase.Git, commit: String): Either[String, Map[RatchetBase.Key, Int]] =
+        git
+          .ok("ls-tree", "-r", commit)
+          .toRight(s"git ls-tree -r $commit failed: the merge-base tree cannot be measured")
+          .map { listing =>
+            val paths = listing.linesIterator.toList
+              .collect {
+                case row if row.startsWith("100") && row.contains(" blob ") && row.contains("\t") =>
+                  row.substring(row.indexOf('\t') + 1)
+              }
+              .filter(CommentScope.default.candidate)
+            val texts = git.blobs(commit, paths)
+            val found =
+              paths.flatMap(p => texts.get(p).flatMap(CommentScope.default.parsed(p, _)).toList.flatMap(_.found))
+            Ratchet.counts(found).map((k, n) => k.cells -> n)
+          }
 
     def grown(counts: List[(String, Int)], atBase: String => Int): List[(String, Int, Int)] =
       counts

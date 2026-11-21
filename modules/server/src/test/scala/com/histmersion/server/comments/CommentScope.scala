@@ -22,6 +22,11 @@ final case class CommentScope(
   def includes(path: String): Boolean =
     !excludedRoots.exists(root => path.startsWith(s"$root/")) && !excludedDirectories.exists(under(path, _))
 
+  def candidate(path: String): Boolean =
+    val known = SourceLanguage.of(path, "").isDefined
+    val extensionless = !path.substring(path.lastIndexOf('/') + 1).contains('.')
+    includes(path) && (known || extensionless)
+
   def exemption(path: String, language: SourceLanguage): Option[String] =
     exemptRoots
       .collectFirst { case (root, why) if path.startsWith(s"$root/") => why }
