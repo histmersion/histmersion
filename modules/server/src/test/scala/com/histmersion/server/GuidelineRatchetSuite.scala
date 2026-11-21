@@ -346,15 +346,28 @@ object GuidelineRatchetSuite:
         "--auto-classpath-roots",
         "target/out"
       ) ++ targetRoots ++ List("--files", "modules")
-      val process = new ProcessBuilder(command.asJava).redirectErrorStream(true).redirectOutput(Log.toFile).start()
+      val builder = new ProcessBuilder(command.asJava)
+        .redirectErrorStream(true)
+        .redirectOutput(Log.toFile)
+        .redirectInput(ProcessBuilder.Redirect.from(new java.io.File("/dev/null")))
+      builder.environment().remove("JAVA_OPTS")
+      builder.environment().remove("JDK_JAVA_OPTIONS")
+      val started = System.nanoTime
+      val process = builder.start()
       val finished = process.waitFor(15, TimeUnit.MINUTES)
-      if !finished then process.destroyForcibly()
-      val tail =
-        if Files.isRegularFile(Log) then Files.readAllLines(Log, UTF_8).asScala.takeRight(40).mkString("\n") else ""
+      if !finished then
+        process.destroyForcibly()
+        val _ = process.waitFor(10, TimeUnit.SECONDS)
+      val seconds = (System.nanoTime - started) / 1000000000L
+      val exit = if finished then process.exitValue().toString else "none (killed after 15 min)"
+      val logged = if Files.isRegularFile(Log) then Files.readAllLines(Log, UTF_8).asScala.toList else Nil
+      val report = if Files.isRegularFile(Report) then "written" else "missing"
+      val log = if logged.isEmpty then "empty" else s"${logged.size} lines, the last 40:"
       assert(
         finished && process.exitValue() == 0 && Files.isRegularFile(Report),
-        s"the guideline inventory did not finish (log $Log; a stale or missing SemanticDB means a module was not compiled: " +
-          s"sbt compile Test/compile):\n$tail"
+        s"the guideline inventory did not finish (a stale or missing SemanticDB means a module was not compiled: " +
+          s"sbt compile Test/compile): exit $exit after $seconds s, report $report, $Log $log\n" +
+          s"${logged.takeRight(40).mkString("\n")}\ncommand: ${command.mkString(" ")}"
       )
       Finding.parse(Files.readAllLines(Report, UTF_8).asScala.toList)
 
