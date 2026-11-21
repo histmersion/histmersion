@@ -12,10 +12,8 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.Sha256
 import com.histmersion.api.ByteCount
 
-/** [[JobFollow]] (#1798 item 14, G113): a followed job or backup that ends badly exits with its problem's code, never
-  * 0; one that succeeds is `Right`; a poll that fails for a moment is asked again, and following is bounded, ending
-  * "outcome unknown" with the last state seen. No server, no clock: the fetch and sleep are fakes.
-  */
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+
 class JobFollowSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard
@@ -39,11 +37,9 @@ class JobFollowSuite extends munit.FunSuite:
 
   private val quiet = (_: String) => ()
 
-  /** What no final answer came for, as the client names it. */
   private val unanswered: String => Problem = what =>
-    Problem.Upstream.Unanswered(Client.Histmersion, Problem.Upstream.Url("http://h:8000"), External.Reported(what))
+    Problem.Upstream.Unanswered(Client.Histmersion, Problem.Upstream.Url("http://h:8000"), External.Reported.of(what))
 
-  /** The server out of reach, for one poll. */
   private val unreachable: Cli.Error =
     Cli.Error(
       Problem.Upstream.Unreachable.here(
@@ -56,7 +52,7 @@ class JobFollowSuite extends munit.FunSuite:
   private def follow(
       fetch: SpatialHierarchyResult.Job.Id => Either[Cli.Error, JobInfo],
       limits: JobFollow.Limits = JobFollow.Limits.Default,
-      sleep: Long => Unit = _ => ()
+      sleep: FiniteDuration => Unit = _ => ()
   ) = JobFollow.job(fetch, id, unanswered, limits, sleep = sleep, progress = quiet, clear = () => ())
 
   test("a job followed to done is Right; queued and running are polled through"):
@@ -107,23 +103,22 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("polls that keep failing end 'outcome unknown' with the last state seen, after waits that grow"):
     val next = server[Either[Cli.Error, JobInfo]](Right(job(JobInfo.Status("running"))), Left(unreachable))
-    val waits = scala.collection.mutable.ListBuffer.empty[Long]
+    val waits = scala.collection.mutable.ListBuffer.empty[FiniteDuration]
     val r = follow(_ => next(), sleep = waits += _)
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.OutcomeUnknown))
     val said = r.left.toOption.map(_.problems.sentences.mkString("; ")).getOrElse("")
     assert(said.contains("5 poll(s) in a row failed") && said.contains("last known state: running"), said)
-    // one poll interval after the answer, then 1 s, 2 s, 4 s, 8 s between the failed polls
-    assertEquals(waits.toList, List(1000L, 1000L, 2000L, 4000L, 8000L))
+    assertEquals(waits.toList, List(1.second, 1.second, 2.seconds, 4.seconds, 8.seconds))
 
   test("the wait between failed polls doubles up to its ceiling"):
     assertEquals(
-      (1 to 8).map(JobFollow.backoff(1000, _)).toList,
-      List(1000L, 2000, 4000, 8000, 16000, 30000, 30000, 30000)
+      (1 to 8).map(JobFollow.backoff(1.second, _)).toList,
+      List(1.second, 2.seconds, 4.seconds, 8.seconds, 16.seconds, 30.seconds, 30.seconds, 30.seconds)
     )
 
   test("a job still running at the deadline ends 'outcome unknown', naming how to see its end"):
-    val limits = JobFollow.Limits(JobFollow.TimeoutMs(3000), JobFollow.FailedPolls(5))
-    var polls = 0 // `var`: how often the fake server was asked
+    val limits = JobFollow.Limits(3.seconds, JobFollow.FailedPolls(5))
+    var polls = 0
     val r = follow(_ => { polls += 1; Right(job(JobInfo.Status("running"))) }, limits)
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.OutcomeUnknown))
     assertEquals(polls, 4)
@@ -131,7 +126,7 @@ class JobFollowSuite extends munit.FunSuite:
 
   test("a failed poll that is not for a moment (the job is gone) ends the follow at once with its own code"):
     val gone = Cli.Error.answered(Problem.NotFound.Entity(Problem.TypeName("Job"), Problem.Raw("j1")))
-    var polls = 0 // `var`: how often the fake server was asked
+    var polls = 0
     val r = follow { _ => polls += 1; Left(gone) }
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.NotFound))
     assertEquals(polls, 1)
@@ -139,8 +134,12 @@ class JobFollowSuite extends munit.FunSuite:
   test("the timeout is cli.follow-timeout-seconds, six hours by default; 0 or less is a usage error"):
     val seconds = CliConfig.FollowTimeoutSeconds
     assertEquals(JobFollow.Limits.of(seconds(21600)), Right(JobFollow.Limits.Default))
-    assertEquals(JobFollow.Limits.of(seconds(90)).map(_.timeout), Right(JobFollow.TimeoutMs(90000)))
+    assertEquals(JobFollow.Limits.of(seconds(90)).map(_.timeout), Right(90.seconds))
     assertEquals(JobFollow.Limits.of(seconds(0)).left.map(Cli.Error(_).exitCode), Left(ExitCode.Usage))
+    assertEquals(
+      JobFollow.Limits.of(seconds(-5)).left.map(_.sentence),
+      Left("cli.follow-timeout-seconds (HISTMERSION_FOLLOW_TIMEOUT) must be a whole number of seconds above 0, not -5")
+    )
 
   private def backup(
       state: Backup.State.Wire,
@@ -161,7 +160,7 @@ class JobFollowSuite extends munit.FunSuite:
       first: Backup.Status,
       limits: JobFollow.Limits = JobFollow.Limits.Default
   ) =
-    JobFollow.backup(fetch, first, unanswered, limits, JobFollow.BackupPollMs(0), sleep = _ => (), progress = quiet)
+    JobFollow.backup(fetch, first, unanswered, limits, Duration.Zero, sleep = _ => (), progress = quiet)
 
   test("a backup that fails exits 2 — it used to exit 1, the usage code"):
     val next =
@@ -194,7 +193,7 @@ class JobFollowSuite extends munit.FunSuite:
     assertEquals(never.left.map(_.exitCode), Left(ExitCode.OutcomeUnknown))
 
   test("a backup still running at the deadline ends 'outcome unknown'"):
-    val limits = JobFollow.Limits(JobFollow.TimeoutMs(0), JobFollow.FailedPolls(5))
+    val limits = JobFollow.Limits(Duration.Zero, JobFollow.FailedPolls(5))
     val r =
       followBackup(() => Right(backup(Backup.State.Wire("running"))), backup(Backup.State.Wire("running")), limits)
     assertEquals(r.left.map(_.exitCode), Left(ExitCode.OutcomeUnknown))

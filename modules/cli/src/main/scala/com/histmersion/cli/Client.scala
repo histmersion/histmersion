@@ -101,6 +101,8 @@ import com.histmersion.api.Api.HttpMethod.equality
   * `Authorization: Bearer <key>` value for authenticated servers; `None` = local.
   */
 final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] = None):
+  import Client.{transport, unexpected, ConnectTimeout, Histmersion, HttpStatus, PollTimeout, Write}
+
   private val base = Uri.unsafeParse(serverUrl.value)
 
   // HTTP/1.1, explicitly. sttp's sync backend is java.net.http, whose default HTTP/2 client reuses a
@@ -111,7 +113,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     java.net.http.HttpClient
       .newBuilder()
       .version(java.net.http.HttpClient.Version.HTTP_1_1)
-      .connectTimeout(Client.ConnectTimeout)
+      .connectTimeout(ConnectTimeout)
       .build()
   )
   private val interp = SttpClientInterpreter()
@@ -123,11 +125,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
     send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)))
 
-  /** A poll of running work: a read that answers at once, so a server that stops answering without closing the
-    * connection is a failed poll after [[Client.PollTimeout]], not a CLI that hangs for ever (G113).
-    */
   private def poll[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Either[Cli.Error, O] =
-    send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(Client.PollTimeout)))
+    send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(PollTimeout)))
 
   /** The bearer token on a request. EVERY request goes through here — the typed calls and the two file downloads alike
     * (#767: `downloadBackup` was built by hand and sent none).
@@ -140,38 +139,22 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     * the server answered.
     */
   private def send[O](req: Request[sttp.tapir.DecodeResult[Either[Api.Error, O]]]): Either[Cli.Error, O] =
+    val write = Write.of(req.method)
     scala.util.Try(req.send(backend)) match
       case scala.util.Failure(e) if WorkingDir.denied(e) =>
         Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"${WorkingDir.message}")), workingDirDenied = true))
       case scala.util.Failure(e) =>
-        Left(
-          Cli.Error(
-            Client.transport(
-              e,
-              serverUrl,
-              Problem.Upstream.Url(s"${req.uri}"),
-              Client.Write(Client.isWrite(req.method))
-            )
-          )
-        )
+        Left(Cli.Error(transport(e, serverUrl, Problem.Upstream.Url(s"${req.uri}"), write)))
       case scala.util.Success(resp) =>
         resp.body match
           case sttp.tapir.DecodeResult.Value(Right(o)) => Right(o)
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
             Left(Cli.Error(e.problems, ExitCode.Origin.Server, notFound = e.isNotFound))
           case _ =>
-            Left(
-              Cli.Error.answered(
-                Client
-                  .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method)))
-              )
-            )
+            Left(Cli.Error.answered(unexpected(HttpStatus(resp.code.code), serverUrl, write)))
 
-  /** No final answer came for work a request started (`what`: still running when the wait for it ran out, interrupted
-    * by a restart): the request may have been applied, so a caller checks before sending it again.
-    */
   def unanswered(what: String): Problem =
-    Problem.Upstream.Unanswered(Client.Histmersion, Problem.Upstream.Url(serverUrl.value), External.Reported(what))
+    Problem.Upstream.Unanswered(Histmersion, Problem.Upstream.Url.of(serverUrl), External.Reported.of(what))
 
   def version: Either[Cli.Error, Version.Info] = call(Api.version)(())
   def health: Either[Cli.Error, Health] = call(Api.health)(())
@@ -494,7 +477,10 @@ object Client:
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]
   type Write = Write.T
-  object Write extends Newtype[Boolean, Pure]
+  object Write extends Newtype[Boolean, Pure]:
+    def of(method: sttp.model.Method): Write = Write(isWrite(method))
+
+    extension (write: Write) def fold[A](changes: => A, reads: => A): A = if write.value then changes else reads
 
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
 
@@ -517,35 +503,23 @@ object Client:
     /** Pure: the token a file holds, its first non-blank line trimmed; none for a file of blank lines. */
     def firstLine(text: String): Option[Token] = text.linesIterator.map(_.trim).find(_.nonEmpty).map(Token(_))
 
-  /** The server, as a problem names it. */
   val Histmersion: Problem.Upstream.Name = Problem.Upstream.Name("Histmersion")
 
-  /** How long the CLI waits to connect to the server before it says it cannot reach it. */
   val ConnectTimeout: java.time.Duration = java.time.Duration.ofSeconds(10)
 
-  /** How long one poll of running work waits for its answer. */
   val PollTimeout: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration(30, "s")
 
-  /** What a send that threw means. Pure. A connection never made sent nothing ([[Problem.Upstream.Unreachable]]: safe
-    * to send again); a write whose connection ended after it was sent (a reset, a read that timed out) may have been
-    * applied ([[Problem.Upstream.Unanswered]]); a read that failed changed nothing, and is "cannot reach" too.
-    */
   def transport(thrown: Throwable, serverUrl: ServerUrl, sent: Problem.Upstream.Url, write: Write): Problem =
-    val reported = External.Reported(s"${thrown.getClass.getSimpleName}: ${thrown.getMessage}")
+    val reported = External.Reported.of(s"${thrown.getClass.getSimpleName}: ${thrown.getMessage}")
+    def unreachable =
+      Problem.Upstream.Unreachable.here(
+        Histmersion,
+        Problem.Upstream.Url.of(serverUrl),
+        External.Reported.of(s"$reported — is the server running?")
+      )
     thrown match
-      case _: sttp.client4.SttpClientException.ConnectException =>
-        Problem.Upstream.Unreachable.here(
-          Histmersion,
-          Problem.Upstream.Url(serverUrl.value),
-          External.Reported(s"$reported — is the server running?")
-        )
-      case _ if write.value => Problem.Upstream.Unanswered(Histmersion, sent, reported)
-      case _                =>
-        Problem.Upstream.Unreachable.here(
-          Histmersion,
-          Problem.Upstream.Url(serverUrl.value),
-          External.Reported(s"$reported — is the server running?")
-        )
+      case _: sttp.client4.SttpClientException.ConnectException => unreachable
+      case _ => write.fold(Problem.Upstream.Unanswered(Histmersion, sent, reported), unreachable)
 
   def isWrite(m: sttp.model.Method): Boolean =
     m == sttp.model.Method.POST || m == sttp.model.Method.PUT || m == sttp.model.Method.PATCH ||
@@ -569,4 +543,4 @@ object Client:
       )
     case c => Problem.Unclassified(Legacy.Text(s"unexpected answer from $serverUrl: HTTP $c"))
 
-  private def what(write: Write): String = if write.value then "this write" else "this request"
+  private def what(write: Write): String = write.fold("this write", "this request")

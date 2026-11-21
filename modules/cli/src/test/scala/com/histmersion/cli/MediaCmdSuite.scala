@@ -73,7 +73,7 @@ class MediaCmdSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"), seen)
+    try body(Loopback.url(srv.getAddress.getPort), seen)
     finally srv.stop(0)
 
   /** Run the command line against `url`; its result, stdout and stderr. */

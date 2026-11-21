@@ -7,9 +7,6 @@ import com.histmersion.util.problem.Problem.Io
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters.*
 
-/** Running the kit's scripts and curl. Behind a trait so the commands can be tested without them. The exit code here is
-  * the child process's ([[Io.ExitCode]]), not the CLI's own ([[com.histmersion.cli.ExitCode]]).
-  */
 trait Runner:
   /** stdout on success; on failure the exit code and stderr. */
   def capture(

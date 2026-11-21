@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.config.*
+import com.histmersion.util.problem.Problem
 import com.histmersion.api.library.{
   AcquireApi,
   ArchiveImportRequest,
@@ -46,8 +47,7 @@ final class AcquireClient(c: Client):
   def updateRetractions: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.updateRetractions)(())
   def retractionsStatus: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.retractionsStatus)(())
 
-  /** No final answer came for work a request started here ([[Client.unanswered]]). */
-  def unanswered(what: String): com.histmersion.util.problem.Problem = c.unanswered(what)
+  def unanswered(what: String): Problem = c.unanswered(what)
   def followups(req: FollowupsRequest): Either[Cli.Error, FollowupsResult] = c.call(AcquireApi.followups)(req)
   def ingest(req: Ingest.Request): Either[Cli.Error, Ingest.Report] = c.call(AcquireApi.ingest)(req)
   def archiveSearch(q: AcquireApi.Query, rows: Option[AcquireApi.Limit]): Either[Cli.Error, ArchiveSearchResult] =

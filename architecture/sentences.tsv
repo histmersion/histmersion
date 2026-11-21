@@ -214,7 +214,7 @@ com/histmersion/api/problem/ProblemJson.unknown().#0	modules/api/src/main/scalaj
 com/histmersion/cli/AcquireCmd.Perform#apply().#0	modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	Unclassified		--acquire-item applies to a file upload; for an identifier, tick the item off with `histmersion queue done <id>` once the source is in	same	
 com/histmersion/cli/AcquireCmd.legalOnly().#0	modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	Invalid.Inconsistent	Invalid.Exclusion.AtMostOne	give lat, lon together, or none of them	same	
 com/histmersion/cli/AcquireCmd.pollRetractions().#0	modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	Unclassified		the refresh failed: {msg.sentence}	same	
-com/histmersion/cli/AcquireCmd.pollRetractions().#1	modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	Unclassified		the refresh is still running after 10 minutes — check the server log	same	
+com/histmersion/cli/AcquireCmd.pollRetractions().#1	modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	Unclassified		the refresh is still running after 10 minutes — check the server log	removed	
 com/histmersion/cli/AgentCmd.Perform#apply().#0	modules/cli/src/main/scala/com/histmersion/cli/AgentCmd.scala	Unclassified		--remove takes no --limit	same	
 com/histmersion/cli/AgentCmd.Perform#apply().#1	modules/cli/src/main/scala/com/histmersion/cli/AgentCmd.scala	Unclassified		{failed.size} of {ids.size} not decided — {first.problems.sentences.mkString("; ")}	same	
 com/histmersion/cli/AgentCmd.Perform#apply().#2	modules/cli/src/main/scala/com/histmersion/cli/AgentCmd.scala	Unclassified		--model-for {m.sentence}	same	
@@ -256,9 +256,12 @@ com/histmersion/cli/Calibre.setCmd().#0	modules/cli/src/main/scala/com/histmersi
 com/histmersion/cli/Calibre.setCmd().#1	modules/cli/src/main/scala/com/histmersion/cli/Calibre.scala	Unclassified		cannot set {unknown.mkString(", ")} — settable: {SettableFields.mkString(", ")}	same	
 com/histmersion/cli/Calibre.setCmd().#2	modules/cli/src/main/scala/com/histmersion/cli/Calibre.scala	Unclassified		refusing a blank or Unknown title	same	
 com/histmersion/cli/Calibre.setCmd().#3	modules/cli/src/main/scala/com/histmersion/cli/Calibre.scala	Unclassified		refusing a blank or Unknown author	same	
+com/histmersion/cli/CalibreCmd.Perform#apply().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/cli/CalibreCmd.fail().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	Unclassified		{msg}	same	
+com/histmersion/cli/CalibreCmd.hostImport().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	NotFound.Entity		No source 'anthony2007'	same	
 com/histmersion/cli/CalibreCmd.listGaps().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	Unclassified		{counted.size} source(s) are not in Calibre yet ({counted.take(3).map(_.gap.citekey).mkString(", ")}{if (counted.size > 3) ", …" else ""}) — run `histmersion calibre sync --apply`	same	
 com/histmersion/cli/CalibreCmd.serverGaps().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	Unclassified		{counted.size} source(s) are not in Calibre yet ({counted.take(3).map(_.citekey).mkString(", ")}{if (counted.size > 3) ", …" else ""}) — run `histmersion calibre sync --apply`	same	
+com/histmersion/cli/CalibreCmd.truncated().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	Unclassified		too many linked sources for one query — raise query.max-rows	same	
 com/histmersion/cli/CalibreCmd.withOriginal().#0	modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	Unclassified		{e.problems.sentences.mkString("; ")}{hint}	same	
 com/histmersion/cli/Cli.PerformTop#apply().#0	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Unclassified		unknown --group '{by}' ({GroupAxes.mkString(" | ")})	same	
 com/histmersion/cli/Cli.PerformTop#apply().#1	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Unclassified		--json prints the whole record; drop --section/--heading/--offset/--chars	same	
@@ -266,9 +269,13 @@ com/histmersion/cli/Cli.PerformTop#apply().#2	modules/cli/src/main/scala/com/his
 com/histmersion/cli/Cli.PerformTop#apply().#3	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Unclassified		{failed.size} of {total} source(s) could not be exported	same	
 com/histmersion/cli/Cli.PerformTop#apply().#4	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Unclassified		server returned an odd file name: {m.sentence}	same	
 com/histmersion/cli/Cli.PerformTop#apply().#5	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Unclassified		aborted	same	
+com/histmersion/cli/Cli.run().#0	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Unclassified		{WorkingDir.message}	same	
 com/histmersion/cli/Cli.tokenFile().#0	modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	Io.File	Io.Access.Read	could not read /tmp/bundle.hmx — java.nio.file.NoSuchFileException: /tmp/bundle.hmx	same	
 com/histmersion/cli/Client#send().#0	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Unclassified		{WorkingDir.message}	same	
-com/histmersion/cli/Client#send().#1	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Unclassified		cannot reach Histmersion at {serverUrl} ({e.getClass.getSimpleName}: {e.getMessage}) — is the server running?	same	
+com/histmersion/cli/Client#send().#1	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Unclassified		cannot reach Histmersion at {serverUrl} ({e.getClass.getSimpleName}: {e.getMessage}) — is the server running?	removed	
+com/histmersion/cli/Client#unanswered().#0	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Upstream.Unanswered		Histmersion at https://histmersion.example/api/queue/tasks gave no final answer (java.io.IOException: connection reset): the request may have been applied — check before sending it again	same	
+com/histmersion/cli/Client.transport().#0	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Upstream.Unreachable		cannot reach core at https://api.core.ac.uk/v3/search/works — java.io.IOException: connection reset	same	
+com/histmersion/cli/Client.transport().#1	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Upstream.Unanswered		Histmersion at https://histmersion.example/api/queue/tasks gave no final answer (java.io.IOException: connection reset): the request may have been applied — check before sending it again	same	
 com/histmersion/cli/Client.unexpected().#0	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Unclassified		{serverUrl} refused {what(write)}: it needs its API key — set HISTMERSION_TOKEN, or name a file that holds it in cli.token-file	same	
 com/histmersion/cli/Client.unexpected().#1	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Unclassified		{serverUrl} refused {what(write)} (HTTP 403)	same	
 com/histmersion/cli/Client.unexpected().#2	modules/cli/src/main/scala/com/histmersion/cli/Client.scala	Unclassified		{serverUrl} has no such endpoint (HTTP 404) — is the CLI newer than the server?	same	
@@ -291,6 +298,7 @@ com/histmersion/cli/EventsCmd.patch().#0	modules/cli/src/main/scala/com/histmers
 com/histmersion/cli/EventsCmd.patch().#1	modules/cli/src/main/scala/com/histmersion/cli/EventsCmd.scala	Unclassified		nothing to change: give at least one field	same	
 com/histmersion/cli/IngestCmd.upload().#0	modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	Unclassified		uploading a file needs --citekey to store it under	same	
 com/histmersion/cli/IngestCmd.upload().#1	modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	Unclassified		{file} is empty — there is nothing to convert	same	
+com/histmersion/cli/JobFollow.Limits.of().#0	modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	Config.Setting	Config.Fault.NotPositiveSeconds	cli.follow-timeout-seconds (HISTMERSION_FOLLOW_TIMEOUT) must be a whole number of seconds above 0	changed	histmersion.agents.providers.codex.command is empty
 com/histmersion/cli/JobFollow.backup().#0	modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	Unclassified		backup {s.file} finished without a checksum	same	
 com/histmersion/cli/JobFollow.failed().#0	modules/cli/src/main/scala/com/histmersion/cli/JobFollow.scala	Unclassified		{what} failed: {why.filter(_.nonEmpty).getOrElse("unknown reason")}	same	
 com/histmersion/cli/LocalInstall.locate().#0	modules/cli/src/main/scala/com/histmersion/cli/LocalInstall.scala	Unclassified		no data directory (HOME is unset; set HISTMERSION_DATA_DIR)	same	
@@ -315,7 +323,7 @@ com/histmersion/cli/MergeCmd.Perform#apply().#5	modules/cli/src/main/scala/com/h
 com/histmersion/cli/MergeCmd.Perform#apply().#6	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		the merge was not applied (see above)	same	
 com/histmersion/cli/MergeCmd.follow().#0	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		merge apply {j.job}: done, but no result	same	
 com/histmersion/cli/MergeCmd.follow().#1	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		{j.problems.fold(s"merge apply $( j.job ) failed")(_.sentences.mkString("; "))}	same	
-com/histmersion/cli/MergeCmd.follow().#2	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		merge apply {j.job}: {j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}	same	
+com/histmersion/cli/MergeCmd.follow().#2	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		merge apply {j.job}: {j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}	removed	
 com/histmersion/cli/MergeCmd.resolutions().#0	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		no such file: {p}	same	
 com/histmersion/cli/MergeCmd.resolutions().#1	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		{p}: {e.sentence}	same	
 com/histmersion/cli/MergeCmd.resolutions().#2	modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	Unclassified		--editions {e}: expected merge or separate	same	
@@ -348,7 +356,8 @@ com/histmersion/cli/PluginCmd.Perform#apply().#1	modules/cli/src/main/scala/com/
 com/histmersion/cli/PluginCmd.Perform#apply().#2	modules/cli/src/main/scala/com/histmersion/cli/PluginCmd.scala	Unclassified		no sources jar beside {jar}	same	
 com/histmersion/cli/PluginCmd.local().#0	modules/cli/src/main/scala/com/histmersion/cli/PluginCmd.scala	Unclassified		histmersion plugin manages the install on THIS machine, but the CLI is pointed at {c.serverUrl} — run the command on the machine the server runs on	same	
 com/histmersion/cli/PluginOps#err().#0	modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	Unclassified		{msg}	same	
-com/histmersion/cli/PluginOps#rebuild().#0	modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	Unclassified		histmersion-relink exited {rc} (log: {install.data.resolve("logs").resolve("relink.log")})	same	
+com/histmersion/cli/PluginOps#rebuild().#0	modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	Unclassified		histmersion-relink exited {rc} (log: {install.data.resolve("logs").resolve("relink.log")})	changed	histmersion-relink exited {rc} (log: {log})
+com/histmersion/cli/PluginOps#rebuild().#1	modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	Io.Process	Io.Ending.Exited	calibredb exited with 2 — calibredb: library is locked	same	
 com/histmersion/cli/SettingsCmd.Local.file().#0	modules/cli/src/main/scala/com/histmersion/cli/SettingsCmd.scala	Unclassified		no settings file location: HOME is unset (set {UserPaths.ConfigEnv})	same	
 com/histmersion/cli/SettingsCmd.Perform#apply().#0	modules/cli/src/main/scala/com/histmersion/cli/SettingsCmd.scala	Unclassified		There is no setting called {k}.	same	
 com/histmersion/cli/Shell.System.run().#0	modules/cli/src/main/scala/com/histmersion/cli/Shell.scala	Unclassified		{cmd.head} exited {rc}: {err.trim.take(400)}	same	

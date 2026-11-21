@@ -2,6 +2,7 @@ package com.histmersion
 package api.jobs
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import io.github.iltotore.iron.constraint.any.Pure
@@ -36,6 +37,11 @@ final case class JobInfo(
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean = state.isTerminal
   def succeeded: Boolean = (state == JobState.Done)
+
+  def stateLine: String =
+    val detail =
+      progress.map(p => s"$p").orElse(problems.map(_.sentences.mkString("; "))).map(t => s" — $t").getOrElse("")
+    s"$status$detail"
 object JobInfo:
 
   /** A job's kind as the wire names it (`ingest`, `merge-apply`); the server checks it against its registered kinds. */

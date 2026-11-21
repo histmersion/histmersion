@@ -103,7 +103,7 @@ class CalibrePushSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    val url = Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")
+    val url = Loopback.url(srv.getAddress.getPort)
     def stop(): Unit = srv.stop(0)
 
   /** `calibredb`: records each command; `add` reads the file it was given (it must exist THEN). */

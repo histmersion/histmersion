@@ -35,7 +35,7 @@ class MetaFilesSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"), () => seen.toArray.toList.map(_.toString))
+    try body(Loopback.url(srv.getAddress.getPort), () => seen.toArray.toList.map(_.toString))
     finally srv.stop(0)
 
   private def tempDir(): Path = Files.createTempDirectory("zz-meta")
@@ -63,9 +63,7 @@ class MetaFilesSuite extends munit.FunSuite:
     )
     srv.start()
     try
-      assert(
-        Ops.writeMeta(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")), tempDir()).isLeft
-      )
+      assert(Ops.writeMeta(new Client(Loopback.url(srv.getAddress.getPort)), tempDir()).isLeft)
     finally srv.stop(0)
 
   test("readMeta imports the three queue files and never sends GOALS.md"):

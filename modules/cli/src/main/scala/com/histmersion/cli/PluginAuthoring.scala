@@ -70,7 +70,6 @@ object PluginAuthoring:
         .toEither
         .left
         .map(e =>
-          // a copy on this machine that failed: this machine's to fix, as a usage error is
           Cli.Error(Problem.Unclassified(Legacy.Text(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}")))
         )
     }

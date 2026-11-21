@@ -6,21 +6,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters._
 import java.util.concurrent.ConcurrentLinkedQueue
 
-/** G111 (owner decision E15): a CLI failure's exit code is worked out from its problem, never given at the site. This
-  * rule drops the explicit code from every `Cli.Error(...)` (and `Error(...)` inside `object Cli`): the named argument
-  * `exitCode = <anything>` and a positional second argument `ExitCode.<Name>`.
-  *
-  * A site whose problem is written in place as `Problem.Unclassified(...)` and whose code is not `ExitCode.Usage` would
-  * change its code when the argument goes (a local unclassified problem exits as a usage error): it is listed as
-  * `retype` and left alone, for a hand edit (`Cli.Error.answered`, or a typed case). A code that is not a literal
-  * `ExitCode.<Name>` (a variable, an `if`) is listed as `by-hand` and left alone too.
-  *
-  * Modes: `dry-run` (the default) only writes the listing; `apply` also drops the arguments of the `drop` rows. Re-run
-  * after an apply, the listing is empty. Run from the worktree root:
-  *   bash tools/refactor/scalafix.sh --config tools/refactor/drop-cli-exit-code.conf --files modules/cli/src
-  *   bash tools/refactor/scalafix.sh --config tools/refactor/drop-cli-exit-code-apply.conf --files modules/cli/src
-  * then `cli/scalafmtOnly` on the changed files.
-  */
 object DropCliExitCode {
   final case class Policy(mode: String = "dry-run", report: String = "refactor-audit/cli-exit-code.tsv")
   object Policy {
@@ -51,7 +36,6 @@ class DropCliExitCode(val policy: DropCliExitCode.Policy) extends SyntacticRule(
     case _                                                 => false
   }
 
-  /** `ExitCode.<Name>`: the literal code's name. */
   private def literal(t: Term): Option[String] = t match {
     case Term.Select(Term.Name("ExitCode"), Term.Name(n))                                     => Some(n)
     case Term.Select(Term.Select(Term.Name("Error"), Term.Name("ExitCode")), Term.Name(n)) => Some(n)

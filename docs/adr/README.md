@@ -48,3 +48,4 @@ audited and moved here.
 | [0011](0011-test-plugin-fixtures.md) | Test plugins prove one property each, with no network |
 | [0012](0012-developer-build-and-test-tooling.md) | Developer build and test tooling |
 | [0013](0013-ocr-converter.md) | The OCR converter is a stateless Python sidecar |
+| [0014](0014-cli-exit-codes-and-following-work.md) | The CLI's exit code follows the problem, and following server work is bounded |

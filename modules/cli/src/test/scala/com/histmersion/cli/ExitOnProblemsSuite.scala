@@ -8,26 +8,25 @@ import scala.jdk.CollectionConverters.*
 import util.problem.{Problem, Problems}
 import util.problem.Problem.*
 
-/** G111 (owner decision E15): the exit code of every problem case, met by the CLI itself and answered by the server, is
-  * one of the documented codes, worked out from the case; no site gives one; the CLI reference lists them all.
-  */
 class ExitOnProblemsSuite extends munit.FunSuite:
 
   private val origins = ExitCode.Origin.values.toList
   private val documented = ExitCode.documented.map(_._1)
 
   test("the documented codes are distinct, 1 to 8, in order"):
-    assertEquals(documented.map(_.value), (1 to 8).toList)
+    assertEquals(
+      documented,
+      List(ExitCode(1), ExitCode(2), ExitCode(3), ExitCode(4), ExitCode(5), ExitCode(6), ExitCode(7), ExitCode(8))
+    )
 
   examples.foreach { p =>
     test(s"${p.group.productPrefix}.${p.productPrefix}: one documented exit code wherever it is met"):
       origins.foreach { o =>
-        assertEquals(documented.count(_ == ExitCode.of(p, o)), 1, s"$o")
+        assertEquals(documented.count(_ == ExitCode.of(p, o)), 1, o.productPrefix)
         assertEquals(Cli.Error(p, o).exitCode, ExitCode.of(p, o))
       }
   }
 
-  // what a caller does next, for the cases a script branches on
   private val Local = ExitCode.Origin.Local
   private val Server = ExitCode.Origin.Server
   private def one[A <: Problem](using tt: scala.reflect.ClassTag[A]): A =
@@ -57,7 +56,9 @@ class ExitOnProblemsSuite extends munit.FunSuite:
       (one[Upstream.Unanswered], Server, ExitCode.Unavailable),
       (one[Run.Failed], Server, ExitCode.Refused)
     )
-    cases.foreach((p, o, code) => assertEquals(ExitCode.of(p, o), code, s"${p.productPrefix} met at $o"))
+    cases.foreach((p, o, code) =>
+      assertEquals(ExitCode.of(p, o), code, s"${p.productPrefix} met at ${o.productPrefix}")
+    )
 
   test("among several problems, an unknown outcome outweighs the server out of reach, which outweighs the first"):
     val unreachable = one[Upstream.Unreachable]
@@ -82,7 +83,6 @@ class ExitOnProblemsSuite extends munit.FunSuite:
       "the hint stays"
     )
 
-  /** The repository's root, where the suites run. */
   private val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
 
   private def scalaFiles(dir: Path): List[Path] =
@@ -91,7 +91,6 @@ class ExitOnProblemsSuite extends munit.FunSuite:
     finally walk.close()
 
   test("no site gives an exit code: every CLI failure's code is worked out from its problem"):
-    // spelled in two halves, so that this suite does not find itself
     val named = ("exit" + "Code\\s*=\\s").r
     val codes = "Usage|Refused|Unreachable|NotFound|Conflict|Unavailable|Fault|OutcomeUnknown"
     val positional = ("Error\\([^\\n]*,\\s*Exit" + s"Code\\.($codes)\\b").r
@@ -108,5 +107,5 @@ class ExitOnProblemsSuite extends munit.FunSuite:
   test("the CLI reference lists every exit code, with its name, and no other"):
     val doc = Files.readString(root.resolve("docs/user-guide/reference/cli.md"), UTF_8)
     val listed =
-      """(?m)^\| `(\d+)` \| ([a-z ]+) \|""".r.findAllMatchIn(doc).map(m => (m.group(1).toInt, m.group(2))).toList
-    assertEquals(listed, (0 -> "success") :: ExitCode.documented.map((c, n) => (c.value, n)))
+      """(?m)^\| `(\d+)` \| ([a-z ]+) \|""".r.findAllMatchIn(doc).map(m => (m.group(1), m.group(2))).toList
+    assertEquals(listed, ("0" -> "success") :: ExitCode.documented.map((c, n) => (s"$c", n)))

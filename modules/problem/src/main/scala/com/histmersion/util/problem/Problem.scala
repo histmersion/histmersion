@@ -1052,10 +1052,6 @@ object Problem:
       /** The problem of the request as a whole: no path into it. */
       def here(upstream: Name, url: Url, after: Millis): Timeout = Timeout(upstream, url, after, Vector.empty)
 
-    /** A request that writes was sent to `upstream` at `url`, and no final answer came (`reported`: the connection
-      * ended, or the work it started was still running when the wait for it ran out): it may have been applied. Not the
-      * same as [[Unreachable]], where nothing was sent: this one is checked before it is sent again.
-      */
     final case class Unanswered(upstream: Name, url: Url, reported: External.Reported) extends Upstream
 
     /** `upstream` answered at `url`, but not with `expected`. */
@@ -1672,6 +1668,8 @@ object Problem:
 
       /** Its value `raw` is no size Postgres reads: a whole number of kB, MB, GB or TB, `auto`, or empty. */
       case NotSize(raw: Raw)
+
+      case NotPositiveSeconds(raw: Raw, variable: SettingKey)
 
       /** It sizes the database pool at `pool` connections, more than the bundled Postgres' `connections` (the setting
         * `limit`) leave room for: at most `most`. A reload holds the old pools beside the new ones until they are idle,

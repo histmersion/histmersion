@@ -1075,6 +1075,8 @@ object Text:
       case Config.Fault.NotSize(raw)    =>
         s"is not a size: '$raw' (a whole number of kB, MB, GB or TB, such as 512MB or 2GB; auto; or \"\" for " +
           "Postgres' own default)"
+      case Config.Fault.NotPositiveSeconds(raw, variable) =>
+        s"($variable) must be a whole number of seconds above 0, not $raw"
       case Config.Fault.PoolOverConnections(pool, limit, connections, most, reserved) =>
         s"is $pool, more than the $connections connections of $limit leave room for: at most $most (a settings " +
           s"reload holds the old pools beside the new ones, each beside its read-only query pool, and $reserved stay " +

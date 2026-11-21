@@ -181,10 +181,8 @@ object CollectionsService:
   ) extends CollectionsService:
 
     private def fail(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
-    private def usage(message: String): Api.Error =
-      Api.Error(Problem.Unclassified(Legacy.Text(message)), Some(Api.Error.Code(CollectionsApi.Usage)))
+    private def usage(message: String): Api.Error = usageOf(Problem.Unclassified(Legacy.Text(message)))
 
-    /** A refusal of the request itself, with its own problems (their case gives the CLI's exit code). */
     private def usageOf(problems: Problems): Api.Error = Api.Error(problems, Some(Api.Error.Code(CollectionsApi.Usage)))
     private def failed(problems: Problems): Api.Error = fail(problems.sentences.mkString("; "))
 

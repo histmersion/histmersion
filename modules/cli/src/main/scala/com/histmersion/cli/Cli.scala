@@ -40,7 +40,8 @@ object Cli:
   type DryRun = DryRun.T
   object DryRun extends Newtype[Boolean, Pure]
   type JsonOutput = JsonOutput.T
-  object JsonOutput extends Newtype[Boolean, Pure]
+  object JsonOutput extends Newtype[Boolean, Pure]:
+    extension (json: JsonOutput) def choose[A](asJson: => A, asText: => A): A = if json.value then asJson else asText
   type NoWait = NoWait.T
   object NoWait extends Newtype[Boolean, Pure]
   type Question = Question.T
@@ -213,28 +214,19 @@ object Cli:
       // LinkageError that NonFatal would let through
       case t: (Throwable @nowarn("id=E235")) if WorkingDir.denied(t) =>
         err.println(WorkingDir.message)
-        sys.exit(Error(Problem.Unclassified(Legacy.Text(WorkingDir.message))).exitCode.value)
+        Error(Problem.Unclassified(Legacy.Text(WorkingDir.message))).exitCode.exit()
 
   /** The exit code is decided here, at the edge. */
   private def runCommand(args: Array[String])(using console: Console): Unit =
     CommandLine.parse(args.toSeq) match
       case CommandLine.Outcome.Help(text)                   => out.println(text); sys.exit(0)
       case CommandLine.Outcome.Failed(problems, help, json) =>
-        failJson(json, problems)
+        val e = Error(problems)
+        e.printJson(json)
         err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
-        sys.exit(Error(problems).exitCode.value)
+        e.exitCode.exit()
       case CommandLine.Outcome.Run(server, cmd, json) =>
         finish(server, cmd.run, json)
-
-  /** A failure as `--json` prints it on stdout: the body a failed HTTP request answers, `{"problems": [{"group",
-    * "case", "data", "text"}]}`, so a script reads the same typed entries from the CLI as from the API (G112). Pure.
-    */
-  def failureJson(problems: Problems): String =
-    import com.histmersion.api.problem.Answer.answer
-    Output.json(problems.answer)
-
-  private def failJson(json: JsonOutput, problems: Problems)(using console: Console): Unit =
-    if json.value then out.println(failureJson(problems))
 
   private def finish(server: Option[Client.ServerUrl], run: Client => Either[Error, Unit], json: JsonOutput)(using
       console: Console
@@ -242,14 +234,16 @@ object Cli:
     val url = server.getOrElse(Client.ServerUrl(Settings.app.cli.serverUrl.value))
     val token = Client.Token.chosen(Option(System.getenv("HISTMERSION_TOKEN")), tokenFile) match
       case Right(t) => t
-      case Left(p)  => failJson(json, p); err.println(s"error: ${p.sentence}"); sys.exit(Error(p).exitCode.value)
+      case Left(p)  =>
+        val e = Error(p)
+        e.printJson(json); err.println(s"error: ${p.sentence}"); e.exitCode.exit()
     run(new Client(url, token)) match
       case Right(())                     => ()
       case Left(e) if e.workingDirDenied =>
-        failJson(json, e.problems); err.println(WorkingDir.message); sys.exit(e.exitCode.value)
+        e.printJson(json); err.println(WorkingDir.message); e.exitCode.exit()
       case Left(e) =>
-        failJson(json, e.problems)
-        e.problems.sentences.foreach(s => err.println(s"error: $s")); sys.exit(e.exitCode.value)
+        e.printJson(json)
+        e.problems.sentences.foreach(s => err.println(s"error: $s")); e.exitCode.exit()
 
   /** The token in the file `cli.token-file` names (none when it names none); a file that does not read is a problem. */
   private def tokenFile: Either[Problem, Option[Client.Token]] =
@@ -269,23 +263,24 @@ object Cli:
           )
           .map(Client.Token.firstLine)
 
-  /** A user-facing failure: its problems and where they were met. The exit code is worked out from them
-    * ([[ExitCode.of]]), never given (owner decision E15): `Cli.Error(problems)` is one the CLI found itself,
-    * [[Error.answered]] one the server answered with.
-    */
   final case class Error(
       problems: Problems,
       origin: ExitCode.Origin = ExitCode.Origin.Local,
       notFound: Boolean = false,
       workingDirDenied: Boolean = false
   ):
-    /** The process's exit code: the problems' own, met at [[origin]]. */
     def exitCode: ExitCode = ExitCode.of(problems, origin)
 
+    def transient: Boolean =
+      Set(ExitCode.Unreachable, ExitCode.Unavailable, ExitCode.OutcomeUnknown).contains(exitCode)
+
+    def json: String =
+      import com.histmersion.api.problem.Answer.answer
+      Output.json(problems.answer)
+
+    def printJson(asked: JsonOutput)(using console: Console): Unit = asked.choose(out.println(json), ())
+
   object Error:
-    /** A failure the server answered with: a refusal, or the outcome of its work (a failed job, a bundle that did not
-      * verify).
-      */
     def answered(problems: Problems): Error = Error(problems, ExitCode.Origin.Server)
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
@@ -610,8 +605,6 @@ object Cli:
               into match
                 case None    => Right(())
                 case Some(d) =>
-                  // the name comes back over the wire, so it is validated here too before it becomes a
-                  // path on THIS machine — the same gate the server applies to it
                   Backup
                     .safeName(Backup.Name(r.file.value))
                     .left

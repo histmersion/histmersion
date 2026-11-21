@@ -61,18 +61,15 @@ object CalibreCmd:
   object Unlinked extends Newtype[Boolean, Pure]
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
-  /** A failure of the Calibre library on this machine, or of a pass over it, as a sentence. */
   private def fail(msg: String): Cli.Error = Cli.Error(Problem.Unclassified(Legacy.Text(msg)))
 
   private def failProblem(p: Problem): Cli.Error = Cli.Error(p)
 
-  /** The server's query answered only part of the linked sources. */
   private def truncated: Cli.Error =
     Cli.Error.answered(
       Problem.Unclassified(Legacy.Text("too many linked sources for one query — raise query.max-rows"))
     )
 
-  /** What a Calibre book not found is, as the problem names it. */
   private val CalibreBook = Problem.TypeName("Calibre book")
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
