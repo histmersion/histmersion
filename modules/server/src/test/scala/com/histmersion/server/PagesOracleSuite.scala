@@ -25,13 +25,6 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
 
-/** The bytes of the server's pages, recorded (W5): a source's page (whole, without its text, with its text missing) and
-  * an article's page, each in its shell, and every atom they are built of, over data that holds the characters markup
-  * escapes (`&`, `<`, `"`), underscores, a figure and a picture, findings with a confidence and a significance, edges
-  * of every kind, formatting problems, a review and its goals. Recorded on the string-built pages before they moved
-  * onto api.Html: what was escaped then is escaped now, byte for byte. `HISTMERSION_UPDATE_ORACLE=1` rewrites the file.
-  * Pure: no database.
-  */
 class PagesOracleSuite extends munit.FunSuite:
 
   private val file = Path.of("modules/server/src/test/resources/oracle/pages/pages.txt")

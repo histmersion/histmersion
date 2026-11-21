@@ -8,10 +8,6 @@ import com.histmersion.api.Html
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-/** The terms of a query, its pattern, and their marks in a page (as PageBuilder marks it: the pattern through api's
-  * `Html.marked`). The page is an [[Html]]: a text of markup that is no `Html` (an unterminated tag, a `<script>`
-  * element) is api's HtmlSuite's, where the marking lives.
-  */
 class HighlightSuite extends munit.FunSuite:
 
   private def page(markup: String): Html = Html.sanitize(markup)

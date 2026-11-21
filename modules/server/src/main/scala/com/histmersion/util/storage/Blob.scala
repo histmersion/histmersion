@@ -45,6 +45,4 @@ object Blob:
   object Location extends Newtype[String, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]:
-    extension (text: Text)
-      /** The text without the white space around it (a line a build wrote, its line break dropped). */
-      def trimmed: String = text.value.trim
+    extension (text: Text) def trimmed: String = text.value.trim

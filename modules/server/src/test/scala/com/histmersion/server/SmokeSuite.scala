@@ -37,7 +37,6 @@ class SmokeSuite extends munit.FunSuite:
       val (hs, hb) = get(s"$url/api/health"); assertEquals(hs, 200); assert(hb.contains("\"ok\""), hb)
       val (is, ib) = get(url); assertEquals(is, 200); assert(ib.contains("<div id=\"app\">"))
       val (cs, _) = get(s"$url/web/app.bundle.js"); assertEquals(cs, 200)
-      // G109: the page, the config and every answer name the bundle's one build
       val build = Static.read(Static.ReadPath("web/build-id.txt")).value.trim
       assert(ib.contains(s"/web/app.bundle.js?v=$build") && ib.contains(s"/web/boot.js?v=$build"), ib)
       val (us, ub) = get(s"$url/api/config"); assertEquals(us, 200)

@@ -16,17 +16,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.research.ReviewGoal
 
-/** The HTML atoms of the server-rendered pages — PURE builders of [[Html]], one shape per thing, so a source reference
-  * looks and behaves the same in an article's prose, its "Sources cited" footer, a source's "Cites / Cited by" list and
-  * the backlinks.
-  *
-  * This is the HUMAN surface. The Markdown in `core` ([[Markdown]], [[ArticleMarkdown]]) is the LLM surface (MCP, CLI)
-  * and deliberately stays separate: what reads well to an agent — `[[citekey]]`, "an empty result is not evidence of
-  * agreement" — is not what a reader wants on a page.
-  *
-  * Every value that came from the database is a text the `html"…"` interpolator escapes; only an [[Html]] is spliced as
-  * it is.
-  */
 object HtmlRender:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
@@ -58,9 +47,6 @@ object HtmlRender:
 
   def sourceRef(r: Source.Ref, label: Label): Html = Atoms.sourceLink(r.citekey, r.doi, label.value)
 
-  /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
-    * a bare year. A label: the anchor it goes into escapes it.
-    */
   def readable(r: Source.Ref): Label =
     if r.authors.exists(_.value.trim.nonEmpty) then Label(r.shortCite.value) else Label(r.title.value)
 

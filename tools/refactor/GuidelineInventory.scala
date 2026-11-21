@@ -49,7 +49,6 @@ object GuidelineInventory {
     roleSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests", "Service", "Repo", "Repository", "Controllers", "Controller",
       "Routes", "Row", "Rows", "Markdown", "Render", "Renderer", "Codec", "Codecs", "Cmd", "View", "Views", "Page", "Api", "Client",
       "Store", "Config", "Json", "Schema", "Fixtures", "Fixture", "Support", "Impl", "Ops", "Syntax", "Rule"),
-    // a test suite named for its subject (`PagesSuite`, `PagesOracleSuite`) is how a test is named: no G9 finding
     testSuiteSuffixes: List[String] = List("Suite", "Spec", "Test", "Tests"),
     collectionOwners: List[String] = List("scala/collection/", "scala/Option#", "scala/Some#", "scala/Array#", "scala/package.", "scala/Predef.", "scala/IArray"),
     collectionOps: List[String] = List("find", "filter", "filterNot", "exists", "forall", "sortBy", "sortWith", "map", "flatMap", "contains",

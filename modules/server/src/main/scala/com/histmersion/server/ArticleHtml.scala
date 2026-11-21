@@ -18,10 +18,8 @@ object ArticleHtml:
   type MatchNavMatches = MatchNavMatches.T
   object MatchNavMatches extends Newtype[Int, Pure]
 
-  /** HTML-escape a value destined for an attribute or text node. */
   def esc(s: HtmlRender.Text): Html = HtmlRender.esc(s)
 
-  /** `/source/{ck}` with the page's own query parameters (unescaped — for a header, or a splice that escapes it). */
   def sourceUrl(ck: Citekey, full: Boolean, fragment: Boolean, q: Option[HtmlRender.Query]): Url =
     val params = List(
       if full then Some("full=true") else None,
@@ -52,10 +50,6 @@ object ArticleHtml:
 
   private val nl = Html.text("\n")
 
-  /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is escaped here rather
-    * than at every call site. `bodyHtml` is already-rendered HTML and is not. The bundle's address carries its build
-    * ([[WebBundle.path]]).
-    */
   def page(title: Title, bodyHtml: Html, kind: PageKind, bundle: WebBundle): Html =
     Html.join(
       List(
@@ -71,10 +65,8 @@ object ArticleHtml:
       nl
     )
 
-  /** A whole page around an inner body ([[page]]), for a route that renders pages but does not choose the bundle. */
   type Shell = (Title, Html, PageKind) => Html
 
-  /** [[page]] with `bundle`. */
   def shell(bundle: WebBundle): Shell = page(_, _, _, bundle)
 
   /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet paints so a page

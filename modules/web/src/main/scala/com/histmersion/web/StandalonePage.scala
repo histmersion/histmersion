@@ -23,7 +23,6 @@ object StandalonePage:
       InPage.wire(root)
       InPage.wireShortcut(root)
     }
-    // the prompt when the server runs another build than this page's (PageBuild)
     val host = document.createElement("div")
     val _ = document.body.appendChild(host)
     val _ = com.raquo.laminar.api.L.render(host, PageBuild.current.element)

@@ -3,13 +3,6 @@ package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** What to highlight of a search in a rendered page — pure, no parser, no dependencies.
-  *
-  * Used by `GET /source/{ck}?q=…` so a reader lands on the passage that matched: the page marks each match of
-  * [[pattern]] in its TEXT (api's `Html.marked`), copying tag names, attributes such as `href="/source/egypt"` and
-  * entities (`&amp;`) as they are, so markup can never be corrupted by a term that happens to occur in it. Each match
-  * becomes `<mark id="hl<n>">…</mark>`; the ids are what the web bundle's `InPage.nextMatch` steps through.
-  */
 object Highlight:
   type Term = Term.T
   object Term extends Newtype[String, Pure]
@@ -32,10 +25,6 @@ object Highlight:
 
   private val Operators = Set("or", "and", "not")
 
-  /** What a page marks for the query `q`: none when it holds no term worth highlighting. Case-insensitive, any term at
-    * a word start, extended over the rest of the word so a stemmed hit ("egypt" → "Egyptian") is highlighted whole;
-    * phrases allow any run of whitespace.
-    */
   def pattern(q: Term): Option[scala.util.matching.Regex] =
     terms(q) match
       case Nil => None

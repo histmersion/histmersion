@@ -211,8 +211,6 @@ class HtmlSuite extends munit.FunSuite:
       "a < b <!-- c --> <etal>d</etal> <script>e</script>"
     ).foreach(s => assertEquals(clean(clean(s)), clean(s), s))
 
-  // ── markup derived from markup (moved here with the transforms, from IngestSuite and core's HighlightSuite) ──────
-
   test("lazyImages adds loading=lazy exactly once"):
     val out = Html.lazyImages(Html.sanitize("""<p><img src="/source/ck/assets/a.png" alt="A" /></p>""")).markup
     assertEquals(out.sliding("loading=".length).count(_ == "loading="), 1)
@@ -231,7 +229,6 @@ class HtmlSuite extends munit.FunSuite:
       assertEquals(Html.lazyImages(Html.sanitize(s)).markup, clean(Html.lazyImages(Html.sanitize(s)).markup), s)
     }
 
-  // without `u`: Scala.js refuses \b with Unicode case before ES2018 (core's Highlight builds its own, on the JVM)
   private val sea = "(?i)\\bsea\\w*".r
 
   test("marked wraps the text's hits, numbered in document order, and counts them"):

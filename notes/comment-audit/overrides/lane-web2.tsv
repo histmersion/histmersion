@@ -1,0 +1,71 @@
+path	lines	language	category	reason
+build.sbt	785-787	scala	decision	the placeholder is as long as an id, so the source map's columns stay right: ADR-0015
+build.sbt	790-793	scala	decision	the build's id is the first 32 hex digits of the linked bundle's SHA-256, written over the placeholder and beside it; no placeholder stops the build: ADR-0015
+build.sbt	1171	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/Html.scala	132	scala	tautology	a section ruler
+modules/api/src/main/scala/com/histmersion/api/Html.scala	136-138	scala	decision	lazyImages adds loading="lazy" only to an img that does not say how it loads: ADR-0016
+modules/api/src/main/scala/com/histmersion/api/Html.scala	142-146	scala	decision	marked rewrites only text; tags, script/style content and entities verbatim; ids hl<n> for InPage.nextMatch: ADR-0016
+modules/api/src/main/scala/com/histmersion/api/Html.scala	149	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/Html.scala	153-154	scala	decision	external quirk: Scala's StringBuilder has no append(CharSequence, from, to) and auto-tuples: ADR-0016
+modules/api/src/main/scala/com/histmersion/api/Html.scala	171-173	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/Html.scala	196-198	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/Html.scala	216	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	7-11	scala	decision	what the build id is, its three channels, empty means nothing to compare: ADR-0015
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	18-20	scala	decision	the header goes on every answer so an open page notices an upgrade at its next request: ADR-0015
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	23	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	25	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	28	scala	decision	a side without an id compares nothing: ADR-0015
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	31	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	34	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	38	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	42	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	45	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/main/scala/com/histmersion/api/instance/BuildId.scala	51	scala	tautology	restates what the names, types and code beside it already say
+modules/api/src/test/scala/com/histmersion/api/HtmlSuite.scala	214	scala	stale	a section ruler naming where the tests came from
+modules/api/src/test/scala/com/histmersion/api/HtmlSuite.scala	234	scala	decision	external quirk: Scala.js refuses \b with Unicode case before ES2018: ADR-0016
+modules/core/src/main/scala/com/histmersion/domain/Highlight.scala	6-12	scala	decision	the page marks the pattern in its text only, tags and entities verbatim, ids for InPage.nextMatch: ADR-0016
+modules/core/src/main/scala/com/histmersion/domain/Highlight.scala	35-38	scala	decision	case-insensitive word-start terms extended over the word (stemmed hits whole), phrases over any white space: ADR-0016
+modules/core/src/test/scala/com/histmersion/domain/HighlightSuite.scala	11-14	scala	tautology	restates what the suite's tests already say
+modules/server/src/main/resources/web/boot.js	1-5	javascript	decision	classic script after MapLibre, no inline script under the CSP, the bundle loaded with this file's own query: ADR-0015
+modules/server/src/main/resources/web/index.html	16-18	html	decision	the server writes the build over {{build}}: a new build is a new address: ADR-0015
+modules/server/src/main/resources/web/style.css	2308-2309	css	decision	the prompt is a line over the page, what is shown stays readable: ADR-0015
+modules/server/src/main/scala/com/histmersion/domain/research/articles/ArticleRoutes.scala	37	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/ArticleHtml.scala	21	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/ArticleHtml.scala	24	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/ArticleHtml.scala	55-58	scala	decision	a page's title is data and is escaped like every other: ADR-0016
+modules/server/src/main/scala/com/histmersion/server/ArticleHtml.scala	74	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/ArticleHtml.scala	77	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/Composition.scala	246	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/Deps.scala	108	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/HtmlRender.scala	19-29	scala	decision	one shape per atom; the human surface apart from core's agent Markdown; database values escaped by html"…": ADR-0016
+modules/server/src/main/scala/com/histmersion/server/HtmlRender.scala	61-63	scala	decision	a readable label is never a bare year: ADR-0016
+modules/server/src/main/scala/com/histmersion/server/HttpApi.scala	371-374	scala	decision	the app's shell only at WebPaths, every other GET a 404: ADR-0016
+modules/server/src/main/scala/com/histmersion/server/Pages.scala	25-27	scala	decision	wikilinks resolve through one lookup for the whole page: ADR-0016
+modules/server/src/main/scala/com/histmersion/server/Pages.scala	49-52	scala	decision	linkProse stays Markdown (anchors as raw inline HTML flexmark passes) until MarkdownHtml.render: ADR-0016
+modules/server/src/main/scala/com/histmersion/server/Static.scala	15	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	8-13	scala	decision	the three channels; a new build is a new address, so no cached old bundle: ADR-0015
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	17	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	20-22	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	25	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	29	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	32	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/main/scala/com/histmersion/server/instance/WebBundle.scala	35-37	scala	decision	a missing file or one holding no id is the empty id: ADR-0015
+modules/server/src/main/scala/com/histmersion/util/storage/Blob.scala	49	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/server/ContractsSuite.scala	917-921	scala	decision	a .value in a newtype companion's body is its own raw value, per rule 1 and G44: ADR-0017
+modules/server/src/test/scala/com/histmersion/server/ContractsSuite.scala	931	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/server/ContractsSuite.scala	935-937	scala	tautology	restates what the names, types and code beside it already say
+modules/server/src/test/scala/com/histmersion/server/PagesOracleSuite.scala	28-34	scala	decision	the pages' bytes recorded on the string-built renderer before the move: ADR-0016
+modules/server/src/test/scala/com/histmersion/server/ResearchOracleSuite.scala	1016	scala	decision	the oracle masks the build id, which changes with every web change: ADR-0015
+modules/server/src/test/scala/com/histmersion/server/SmokeSuite.scala	40	scala	tautology	restates what the test's name and assertions already say
+modules/server/src/test/scala/com/histmersion/server/WebAssetsSuite.scala	60	scala	tautology	restates what the test's name and assertions already say
+modules/web/src/main/scala/com/histmersion/web/ApiClient.scala	125	scala	decision	the header is read before the answer, so an upgrade is not a decode failure: ADR-0015
+modules/web/src/main/scala/com/histmersion/web/PageBuild.scala	9-13	scala	decision	why the page compares builds and offers a reload: ADR-0015
+modules/web/src/main/scala/com/histmersion/web/PageBuild.scala	16	scala	decision	the prompt stays until the page reloads: ADR-0015
+modules/web/src/main/scala/com/histmersion/web/PageBuild.scala	19	scala	tautology	restates what the names, types and code beside it already say
+modules/web/src/main/scala/com/histmersion/web/PageBuild.scala	23	scala	tautology	restates what the names, types and code beside it already say
+modules/web/src/main/scala/com/histmersion/web/PageBuild.scala	40-44	scala	decision	external quirk: the Scala.js optimizer folds a comparison with the placeholder literal before the id is written: ADR-0015
+modules/web/src/main/scala/com/histmersion/web/PageBuild.scala	47	scala	tautology	restates what the names, types and code beside it already say
+modules/web/src/main/scala/com/histmersion/web/StandalonePage.scala	26	scala	tautology	restates what the names, types and code beside it already say
+modules/web/src/test/scala/com/histmersion/web/PageBuildSuite.scala	7-10	scala	tautology	restates what the suite's tests already say
+tools/refactor/GuidelineInventory.scala	52	scala	decision	a test suite named for its subject is no G9 finding: ADR-0017

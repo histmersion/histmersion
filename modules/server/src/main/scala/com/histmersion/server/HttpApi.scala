@@ -368,10 +368,6 @@ final class HttpApi(
         Left(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Endpoint), Problem.Raw(s"/api/${p.mkString("/")}"))))
       )
 
-  /** The web UI, at its own pages' addresses only ([[WebPaths]]). It used to have no path input at all, so every
-    * unmatched GET — a typo, a probe, a missing asset — came back 200 with the whole HTML page. The page names the
-    * bundle by its build ([[WebBundle.shell]]).
-    */
   private val index: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in(paths)

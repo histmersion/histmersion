@@ -22,9 +22,6 @@ import com.histmersion.api.checks.FormatReport
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Edge
 
-/** PURE rendering of the typed page models to [[Html]]. Wikilinks resolve through `links` (one lookup for the whole
-  * page, done by [[PageBuilder]]) into the [[HtmlRender]] anchors.
-  */
 object Pages:
   type Anchor = Anchor.T
   object Anchor extends Newtype[String, Pure]
@@ -46,10 +43,6 @@ object Pages:
 
   // ── prose ────────────────────────────────────────────────────────────────────────────────────
 
-  /** Markdown with every `[[wikilink]]` replaced by its typed anchor (raw inline HTML, which flexmark passes through
-    * and [[MarkdownHtml]] keeps). `number` appends the citation number to a source reference. Still Markdown: it
-    * becomes [[Html]] only through [[MarkdownHtml.render]].
-    */
   def linkProse(
       md: FullText.Shown.Markdown,
       links: WikiLinks.Occurrence.Target => Option[LinkTarget],

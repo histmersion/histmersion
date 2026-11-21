@@ -4,10 +4,6 @@ package web
 import com.histmersion.api.instance.BuildId
 import com.histmersion.api.instance.BuildId.Verdict
 
-/** G109 (review finding W6): the page and the server agree on a build. The comparison, its unknown sides, the header's
-  * text read as a build, and the prompt's flag, which an answer naming another build sets and nothing clears until the
-  * page reloads.
-  */
 class PageBuildSuite extends munit.FunSuite:
 
   private val a = BuildId("0123456789abcdef0123456789abcdef")

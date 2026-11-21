@@ -34,7 +34,6 @@ object ArticleRoutes:
   private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
 
-  /** `shell` puts a whole page around the inner HTML ([[ArticleHtml.shell]]: the server's bundle). */
   def apply(
       articles: ArticlesControllers,
       pages: PageBuilder,
