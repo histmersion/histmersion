@@ -19,6 +19,8 @@ structured log's new code met two more checkers that counted code the coding pra
   record's companion), is that file's own type there: the bare name shadows a top-level type of the same name in another
   place, so its uses are no dependency on that place.
 
+Both were approved by the owner on 2026-11-21.
+
 ## Consequences
 
 Newtype text codecs (ADR-0019) and nested companion types with common names no longer need an exception. Both checks
