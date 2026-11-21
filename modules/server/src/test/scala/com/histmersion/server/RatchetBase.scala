@@ -77,7 +77,7 @@ object RatchetBase:
         before <- counts(git.show(b.commit, path).getOrElse(Nil))
         accepted <- approvals(git).granted(b)
         risen = rises(path, before, now)
-        measured <- BaseMeasure.of(inventories.filter(_.file == path), risen, git, b.commit)
+        measured <- TreeCount.of(inventories.filter(_.file == path), risen, git, b.commit)
         left = unaccepted(risen.filterNot(measured.proves), accepted)
         _ <- Either.cond(
           left.isEmpty,
@@ -134,7 +134,7 @@ object RatchetBase:
     def owns(key: Key): Boolean
     def measure(git: Git, commit: String): Either[String, Map[Key, Int]]
 
-  final case class BaseMeasure(commit: String, owned: Key => Boolean, counts: Map[Key, Int]):
+  final case class TreeCount(commit: String, owned: Key => Boolean, counts: Map[Key, Int]):
     def eligible(rise: Rise): Boolean = rise.from == 0 && owned(rise.key)
 
     def proves(rise: Rise): Boolean = eligible(rise) && rise.to <= counts.getOrElse(rise.key, 0)
@@ -146,14 +146,14 @@ object RatchetBase:
           "the base already had; fix the new findings"
       )
 
-  object BaseMeasure:
-    def of(inventories: List[TreeInventory], risen: List[Rise], git: Git, commit: String): Either[String, BaseMeasure] =
+  object TreeCount:
+    def of(inventories: List[TreeInventory], risen: List[Rise], git: Git, commit: String): Either[String, TreeCount] =
       val asked = inventories.filter(i => risen.exists(r => r.from == 0 && i.owns(r.key)))
       val measured = asked.map(_.measure(git, commit))
       measured
         .collectFirst { case Left(why) => why }
         .toLeft(
-          BaseMeasure(commit, k => asked.exists(_.owns(k)), measured.collect { case Right(m) => m }.flatten.toMap)
+          TreeCount(commit, k => asked.exists(_.owns(k)), measured.collect { case Right(m) => m }.flatten.toMap)
         )
 
   /** A count above the base's: the file, the key, the base's count (zero when the base has no such row) and the new. */
