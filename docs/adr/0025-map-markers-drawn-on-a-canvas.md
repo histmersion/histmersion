@@ -1,0 +1,54 @@
+# 0025. The map's point markers are drawn on a canvas; their elements stay as the accessible proxies
+
+- Status: accepted (owner, 2026-11-22: "canvas 2D as planned", queue row 31)
+- Date: 2026-11-22
+
+## Context
+
+Every point on the map (a finding, a site, an event, a picture, a bubble of several) was a DOM element in a marker
+pane over the map, moved by writing its `--tx`/`--ty` every frame the map moves. A zoom over a full view moves and
+regroups a few hundred of them: 35–42 ms of style recalculation plus ~30 ms of script per frame at 3× CPU, the
+longest zoom task 79–95 ms at 3× and ~120 ms on the hosted macOS runner, against a 50 ms budget. Registering the
+place properties (`@property`, not inherited) already confined each restyle to its marker; the cost is the number of
+elements restyled and laid out per frame, not any one of them.
+
+A WebGL symbol layer of MapLibre would need every look as a sprite image and gives up the slide animations, the
+reduced-motion rule and the per-marker hit testing the app already has. Canvas 2D draws a few hundred shapes and
+glyph bitmaps in 1–3 ms and keeps all of it in the app's hands.
+
+## Decision
+
+- A marker keeps its `DomMarker` (its point, its handlers, its stacking, its element); the cluster layer, the point
+  layers, the slide animations and the hover cards above it do not change.
+- The pane no longer paints the element. It draws every marker of the point panes on one canvas over the map's own,
+  in the panes' stacking order, from the marker's look: its shape (circle, square, turned square, print, bubble),
+  fill (a colour or the coincident findings' gradient), edge (width, style, colour), rings, opacity, count, and
+  glyph. The canvas is redrawn on the map's move, resize and render, and on every frame of a running slide or fade.
+- The stylesheet stays the one description of a look: the look is read from the computed style of the marker's
+  element (boxes with their fill, gradient, edge, corners, rings and shadows; a turned `::before`; the inline SVG of a
+  glyph or a bubble; a count's text), so the themes and any later change of the stylesheet reach the canvas without
+  a second copy. Animations and transitions are off for the elements the canvas reads; the canvas animates itself.
+  A look is drawn once into a bitmap (a sprite) and the canvas draws the sprites; looks are shared by markers that
+  look the same, and read again only when a marker's classes or inline style change.
+- The pane finds the marker under the pointer itself (topmost first, its drawn box, a turned square's diamond) and
+  calls the same `MarkerHandlers` the delegated listeners called: over, out, move, click; the map's own pointer
+  handling still learns that the pointer is over a marker (`MapEvent.overMarker`).
+- The element becomes the marker's accessible proxy: it stays in the document in an off-screen list, focusable,
+  with its name and keyboard handlers, and is not moved per frame. The focused proxy alone is placed over its marker,
+  so the focus ring and a card opened from the keyboard stand where the marker is drawn.
+- The tests read markers through `window.histmersionMap.markers` (row 31 step 1), which the canvas answers from the
+  same looks it draws.
+
+## Consequences
+
+A zoom's frames restyle no marker elements. The canvas is one more layer to keep in step with the map: it must be
+redrawn in the same frame as the map, or markers lag the tiles. Hover effects the stylesheet gave for free (the
+point's 12 % growth, the cursor) are drawn and set by the pane. The playback event markers (a few, with text labels)
+stay DOM elements. A look may only use what the painter reads (the subset above); a property outside it is not
+drawn, and the browser test that compares the canvas with the elements pixel by pixel catches it.
+
+## Code
+
+`web/map/MarkerPane.scala`, `web/map/DomMarker.scala`, `web/map/MarkerCanvas.scala` (the canvas, the looks held, the
+paint), `web/map/MarkerLook.scala` (a look read from computed style, its sprite), `web/map/TheMap.scala` (the switch,
+`localStorage` `histmersion.ui.markerCanvas`, until the canvas is the default), `web/MapHandle.scala`.

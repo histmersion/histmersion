@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
   * per marker in view; one far outside the view is hidden, not moved).
   */
-final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
+final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface, host: dom.HTMLElement):
   private val markers = js.Set[DomMarker]()
   private val retiring = js.Set[DomMarker]()
 
@@ -58,14 +58,15 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
   def add(m: DomMarker): Unit =
     if !markers.contains(m) then
       markers.add(m)
-      el.appendChild(m.el)
+      m.painted = host eq el
+      host.appendChild(m.el)
       m.place(View.of(surface))
       m.added()
 
   def remove(m: DomMarker): Unit =
     if markers.contains(m) then
       markers.remove(m)
-      if m.el.parentNode eq el then { val _ = el.removeChild(m.el) }
+      if m.el.parentNode eq host then { val _ = host.removeChild(m.el) }
       m.removed()
 
   /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its element
@@ -80,7 +81,7 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
       dom.window.setTimeout(
         () => {
           retiring.remove(m)
-          if m.el.parentNode eq el then { val _ = el.removeChild(m.el) }
+          if m.el.parentNode eq host then { val _ = host.removeChild(m.el) }
         },
         ms.value.toDouble
       )
@@ -89,7 +90,7 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
 
   def live: List[DomMarker] = markers.toList
 
-  def leaving: List[DomMarker] = retiring.toList.filter(m => (m.el.parentNode eq el) && !markers.contains(m))
+  def leaving: List[DomMarker] = retiring.toList.filter(m => (m.el.parentNode eq host) && !markers.contains(m))
 
   def size: MarkerPane.MarkerCount = MarkerPane.MarkerCount(markers.size)
 
