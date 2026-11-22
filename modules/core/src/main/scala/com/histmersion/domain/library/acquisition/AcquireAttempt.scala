@@ -88,9 +88,9 @@ object AcquireAttempt:
   def unanswered(answer: Problem.NotFound.Answer): Boolean = answer.said match
     case Problem.NotFound.Said.Miss(Problem.NotFound.Absence.Unanswered)  => true
     case Problem.NotFound.Said.Miss(Problem.NotFound.Absence.RateLimited) => true
-    case _                                                               => false
+    case _                                                                => false
 
   def looked(answer: Problem.NotFound.Answer): Boolean = answer.said match
     case Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NotHeld) => true
-    case _: Problem.NotFound.Said.Refused                            => true
-    case _                                                           => false
+    case _: Problem.NotFound.Said.Refused                             => true
+    case _                                                            => false
