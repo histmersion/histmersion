@@ -78,13 +78,20 @@ class RatchetLimitsSuite extends munit.FunSuite:
     assert(why.contains("G22comment\tweb\ttest: not at the base -> 1 here, but the merge-base tree"), why)
     assert(why.contains("measures 0"), why)
 
-  test("a key the base's file already lists is held to that row, whatever the tree measures"):
+  test(
+    "a key the base's file lists rises only to what the merge-base tree measures under the checker's current " +
+      "definition (a redefinition), and above it fails, saying what the tree measured"
+  ):
     val r = Repo.pilot(Ratchet.path -> List(Header, "G22comment\tcore\tmain\t3"))
     r.branch("work")
     r.write(Ratchet.path, Header, "G22comment\tcore\tmain\t5")
-    val measured = Measured(Map(List("G22comment", "core", "main") -> 9))
-    val why = Ratchet.checkFile(r.git, NoVariable, inventories = List(measured)).swap.getOrElse("")
-    assert(why.contains("G22comment\tcore\tmain: 3 at the base -> 5 here"), why)
+    val key = List("G22comment", "core", "main")
+    assertEquals(Ratchet.checkFile(r.git, NoVariable, inventories = List(Measured(Map(key -> 5)))), Right(Nil))
+    val why = Ratchet.checkFile(r.git, NoVariable, inventories = List(Measured(Map(key -> 4)))).swap.getOrElse("")
+    assert(why.contains("G22comment\tcore\tmain: 3 at the base -> 5 here, but the merge-base tree"), why)
+    assert(why.contains("measures 4"), why)
+    val unmeasured = Ratchet.checkFile(r.git, NoVariable).swap.getOrElse("")
+    assert(unmeasured.contains("G22comment\tcore\tmain: 3 at the base -> 5 here"), unmeasured)
 
   test("a rule no tree inventory measures still needs the accepted row"):
     val r = Repo.pilot(Ratchet.path -> List(Header, "G44\tcore\tmain\t3"))
