@@ -96,7 +96,7 @@ object GuidelineInventory {
     "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"...\")` / `X(f\"...\")` whose every splice is a literal (nothing to validate). An interpolation that splices anything else is built from that value and counts as it would (decision 2026-11-15: `X(s\"$y\")` is `X(y)`): a newtype or plain value spliced is a construction (`;interpolation`), a `.value` spliced is the unwrap alone (as `X(y.value)`); a refined newtype built from any interpolation is one",
     "G44conversion" -> "the same inside a *Controller(s)/*Routes file where the value feeds a domain newtype constructor/parse directly, or the construction itself",
     "G44plaindef" -> "a public def with a String/Int/Long/Double/Boolean parameter that some call site feeds with `.value` of a newtype (reported at the def)",
-    "G45boundary" -> "hand `.value` or newtype construction inside a boundaries.tsv file (G45: lift type classes instead)",
+    "G45boundary" -> "hand `.value` inside a boundaries.tsv file (G45: lift type classes instead); building a newtype from outside data there is the boundary's job, policed by G68, and no finding (owner 2026-11-19)",
     "G46" -> "`type X = a.B.C` immediately followed by `val X: a.B.C.type = a.B.C`",
     "G47root" -> "each `_root_` occurrence",
     "G47fqn" -> "a reference spelled `com.histmersion.` (or `_root_.com.histmersion.`) inside a com.histmersion file, outside imports/package clauses; same-package or other-package",
@@ -473,7 +473,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
               "interpolation" + (if (spliced.exists(t => termType(t).flatMap(newtypeOf).nonEmpty)) ":newtype" else "")
             else "expr"
           val detail = s"construct:${obj.displayName}.$how;$shape"
-          if (boundary) report("G45boundary", a, detail + ";" + boundaryKinds(path))
+          if (boundary) ()
           else if (isController) report("G44conversion", a, detail)
           else report("G44", a, detail)
         }
@@ -488,7 +488,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val obj = q match { case qn: Term.Name => qn.symbol; case qs: Term.Select => qs.name.symbol; case _ => Symbol.None }
         if (isNewtypeObject(obj) && !allowedInCompanion(s, Some(obj))) {
           val detail = s"construct:${obj.displayName}.${n.value};function-reference"
-          if (boundary) report("G45boundary", s, detail + ";" + boundaryKinds(path))
+          if (boundary) ()
           else if (isController) report("G44conversion", s, detail)
           else report("G44", s, detail)
           if (Set("option", "either", "optionAll", "eitherAll")(n.value) && newtypeParents(obj).exists(_._3.value == pure)) report("silentPure", s, s"${obj.displayName}.${n.value}")

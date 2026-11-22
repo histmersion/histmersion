@@ -35,6 +35,9 @@ is a Scalafix rule over SemanticDB: the base tree cannot be measured without com
   G44conversion finding at the same place, so it counted those twice. The shape it named (a lambda passed to a
   collection operation, an argument of contains/indexOf, a comparison of two `.value`s) is now the suffix
   `;G49:<shape>` of that finding's detail.
+- **G45boundary counts only taking the raw value out** (decision 2). In a boundary file (`architecture/boundaries.tsv`)
+  `.value` is still a finding; building a newtype there from outside data (`apply`, `assume`, `either`, …, or one of
+  them passed as a function) is the boundary's job, policed by G68, and no finding of any rule.
 
 ## Consequences
 
