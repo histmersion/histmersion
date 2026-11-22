@@ -6,9 +6,10 @@ import com.histmersion.plugin.EnvVar
 
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Processes.Result
-import java.io.{InputStream, IOException}
+import java.io.{FileInputStream, InputStream, IOException, RandomAccessFile}
+import java.lang.ProcessBuilder.Redirect
 import java.nio.charset.StandardCharsets.UTF_8
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters.*
@@ -62,7 +63,9 @@ final class SystemProcesses extends Processes:
           lock.synchronized { into.write(buf, 0, n); lock.notifyAll() }
           n = from.read(buf)
       catch case _: IOException => ()
-      finally lock.synchronized { val _ = readersAtWork.decrementAndGet(); lock.notifyAll() }
+      finally
+        val _ = Try(from.close())
+        lock.synchronized { val _ = readersAtWork.decrementAndGet(); lock.notifyAll() }
 
     private def awaitReadersAtEnd(): Unit =
       val deadline = System.nanoTime + drainMillis * 1000000L
@@ -71,9 +74,9 @@ final class SystemProcesses extends Processes:
           lock.wait(math.max(1L, math.min((deadline - System.nanoTime) / 1000000, 50L)))
       }
 
-    private[SystemProcesses] def startReaders(): Unit =
-      val _ = Thread.ofVirtual().start(() => pump(proc.getInputStream, outBytes))
-      val _ = Thread.ofVirtual().start(() => pump(proc.getErrorStream, errBytes))
+    private[SystemProcesses] def startReaders(stdout: InputStream, stderr: InputStream): Unit =
+      val _ = Thread.ofVirtual().start(() => pump(stdout, outBytes))
+      val _ = Thread.ofVirtual().start(() => pump(stderr, errBytes))
 
     /** Everything the tool printed to stdout / stderr so far. */
     def out: Processes.Result.Out = Processes.Result.Out(lock.synchronized(outBytes.toString(UTF_8)))
@@ -139,13 +142,68 @@ final class SystemProcesses extends Processes:
       val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
       val pb = new ProcessBuilder(argv.map(_.value).asJava)
       env.foreach((k, v) => pb.environment().put(k.value, v.value))
-      Try(pb.start()).toEither.left
-        .map(e => notStarted(tool, e))
+      val fifos = fifoDir().flatMap(dir =>
+        readEnds(dir) match
+          case Some(ends) => Some((dir, ends))
+          case None       =>
+            removed(dir)
+            None
+      )
+      fifos.foreach { (dir, _) =>
+        val _ = pb.redirectOutput(dir.resolve("out").toFile).redirectError(dir.resolve("err").toFile)
+      }
+      val started = Try(pb.start()).toEither
+      fifos.foreach((dir, _) => removed(dir))
+      started.left
+        .map { e =>
+          fifos.foreach { (_, ends) =>
+            val _ = Try(ends._1.close())
+            val _ = Try(ends._2.close())
+          }
+          notStarted(tool, e)
+        }
         .map { proc =>
           val s = new Session(proc, tool)
-          s.startReaders()
+          fifos match
+            case Some((_, (stdout, stderr))) => s.startReaders(stdout, stderr)
+            case None                        => s.startReaders(proc.getInputStream, proc.getErrorStream)
           s
         }
+
+    private def fifoDir(): Option[Path] =
+      Try(Files.createTempDirectory("histmersion-session-")).toOption.flatMap { dir =>
+        val made = Try {
+          val mk = new ProcessBuilder("mkfifo", "-m", "600", dir.resolve("out").toString, dir.resolve("err").toString)
+            .redirectOutput(Redirect.DISCARD)
+            .redirectError(Redirect.DISCARD)
+            .start()
+          mk.getOutputStream.close()
+          val done = mk.waitFor(5, TimeUnit.SECONDS)
+          if !done then
+            val _ = mk.destroyForcibly()
+          done && mk.exitValue == 0
+        }.getOrElse(false)
+        if made then Some(dir)
+        else
+          removed(dir)
+          None
+      }
+
+    private def readEnds(dir: Path): Option[(InputStream, InputStream)] =
+      Try(readEnd(dir.resolve("out"))).toOption.flatMap { stdout =>
+        val stderr = Try(readEnd(dir.resolve("err"))).toOption
+        if stderr.isEmpty then
+          val _ = Try(stdout.close())
+        stderr.map(e => (stdout, e))
+      }
+
+    private def readEnd(fifo: Path): InputStream =
+      val writer = new RandomAccessFile(fifo.toFile, "rw")
+      try new FileInputStream(fifo.toFile)
+      finally writer.close()
+
+    private def removed(dir: Path): Unit =
+      List(dir.resolve("out"), dir.resolve("err"), dir).foreach(p => Try(Files.deleteIfExists(p)))
 
   /** `tool` could not be started or run: what the JDK said. */
   private def notStarted(tool: String, e: Throwable): Problem =
