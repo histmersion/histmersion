@@ -10,7 +10,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
   * per marker in view; one far outside the view is hidden, not moved).
   */
-final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface, host: dom.HTMLElement):
+final class MarkerPane(
+    val el: dom.HTMLElement,
+    surface: MapSurface,
+    host: dom.HTMLElement,
+    prepare: DomMarker => Unit
+):
   private val markers = js.Set[DomMarker]()
   private val retiring = js.Set[DomMarker]()
 
@@ -61,6 +66,7 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface, host: dom.H
       m.painted = host eq el
       host.appendChild(m.el)
       m.place(View.of(surface))
+      prepare(m)
       m.added()
 
   def remove(m: DomMarker): Unit =

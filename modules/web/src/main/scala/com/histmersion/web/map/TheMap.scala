@@ -46,11 +46,14 @@ object TheMap:
       .flatMap(_ => els.find((p, _) => pointPane(p)))
       .map((_, first) => MarkerCanvas(surface.overlayRoot, first, surface.container))
     els.foreach { (p, el) =>
-      val host = canvas.filter(_ => pointPane(p)).fold(el)(_.proxies)
-      panes(p.name) = MarkerPane(el, surface, host)
+      val drawing = canvas.filter(_ => pointPane(p))
+      panes(p.name) = MarkerPane(el, surface, drawing.fold(el)(_.proxies), m => drawing.foreach(_.prepare(m)))
     }
     surface.on(MapEventKind.Move)(_ => reposition())
-    surface.on(MapEventKind.Resize)(_ => reposition())
+    surface.on(MapEventKind.Resize) { _ =>
+      canvas.foreach(_.resized())
+      reposition()
+    }
 
   private var canvas: Option[MarkerCanvas] = None
 
