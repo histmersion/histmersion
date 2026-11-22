@@ -23,6 +23,10 @@ object MapHandle:
 
   private var serial = 0
 
+  private val pointPane: MapStack.Pane => Boolean = _.point == MapStack.Pane.Point(true)
+
+  private val paneName: MapStack.Pane => String = _.cssClass.stripPrefix("hd-pane--")
+
   private val faceSelector = ".hd-ev, .hd-find, .hd-site-marker, .hd-cluster, .hd-point, .hd-note"
 
   private def within(el: dom.Element): List[dom.Element] =
@@ -75,10 +79,10 @@ object MapHandle:
     )
 
   private def describe(
+      origin: dom.DOMRect,
       pane: MapStack.Pane,
       m: DomMarker,
       ghost: Boolean,
-      origin: dom.DOMRect,
       detail: Boolean
   ): js.Dynamic =
     val els = within(m.el)
@@ -93,7 +97,7 @@ object MapHandle:
       tag.hdSerial = serial
     js.Dynamic.literal(
       serial = tag.hdSerial,
-      pane = pane.name.value,
+      pane = paneName(pane),
       x = r.left + r.width / 2 - origin.left,
       y = r.top + r.height / 2 - origin.top,
       clientX = r.left + r.width / 2,
@@ -155,9 +159,9 @@ object MapHandle:
       val origin = TheMap.surface.container.getBoundingClientRect()
       val detail = spec.exists(sp => !js.isUndefined(sp.detail) && sp.detail.asInstanceOf[Boolean])
       val every = spec.exists(sp => !js.isUndefined(sp.every) && sp.every.asInstanceOf[Boolean])
-      val all = MapStack.domPanes.filter(p => every || p.point.value).flatMap { p =>
+      val all = MapStack.domPanes.filter(p => every || pointPane(p)).flatMap { p =>
         val pane = TheMap.pane(p)
-        pane.live.map(describe(p, _, false, origin, detail)) ++ pane.leaving.map(describe(p, _, true, origin, detail))
+        pane.live.map(describe(origin, p, _, false, detail)) ++ pane.leaving.map(describe(origin, p, _, true, detail))
       }
       spec.fold(all)(sp => all.filter(matches(_, sp))).toJSArray
 
@@ -169,9 +173,9 @@ object MapHandle:
         .flatMap(e => Option(e.closest(".hd-marker")))
       val found = for
         el <- hit
-        p <- MapStack.domPanes.filter(_.point.value).find(p => TheMap.pane(p).el.contains(el))
+        p <- MapStack.domPanes.filter(pointPane).find(p => TheMap.pane(p).el.contains(el))
         m <- (TheMap.pane(p).live.map(_ -> false) ++ TheMap.pane(p).leaving.map(_ -> true)).find(_._1.el eq el)
-      yield describe(p, m._1, m._2, origin, false)
+      yield describe(origin, p, m._1, m._2, false)
       found.orNull
 
   def install(s: MapSurface): Unit =
@@ -290,7 +294,7 @@ object MapHandle:
           (names: js.UndefOr[js.Array[String]]) =>
             val origin = s.container.getBoundingClientRect()
             MapStack.domPanes
-              .filter(p => names.fold(p.point.value)(_.contains(p.name.value)))
+              .filter(p => names.fold(pointPane(p))(_.contains(paneName(p))))
               .flatMap { p =>
                 val pane = TheMap.pane(p)
                 pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true)
@@ -314,10 +318,10 @@ object MapHandle:
       markersIn = (
           (names: js.UndefOr[js.Array[String]]) =>
             MapStack.domPanes
-              .filter(p => names.fold(true)(_.contains(p.name.value)))
+              .filter(p => names.fold(true)(_.contains(paneName(p))))
               .map { p =>
                 val pane = TheMap.pane(p)
-                pane.size.value + pane.leaving.size
+                pane.live.size + pane.leaving.size
               }
               .sum
       ): js.Function1[js.UndefOr[js.Array[String]], Int],
