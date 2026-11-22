@@ -103,7 +103,7 @@ object GuidelineInventory {
     "G47self" -> "`T.Member` (name-qualified) or `a.b.T.Member` (full-path) written inside T or its companion",
     "G47package" -> "a file with one `package com.histmersion.x.y` clause instead of chained clauses",
     "G48" -> "`.modify(_.x)(_.description(...))` on a Tapir Schema (one per modify)",
-    "G49" -> "`.value` inside a lambda passed to a collection operation, as an argument of contains/indexOf, or in `a.value == b.value` / `.value.equalsIgnoreCase(...)`",
+    "G49" -> "no count of its own (owner 2026-11-19): a label `;G49:<shape>` on the G44/G45boundary/G44conversion finding of a `.value` inside a lambda passed to a collection operation, as an argument of contains/indexOf, or in `a.value == b.value` / `.value.equalsIgnoreCase(...)`",
     "silentCompare" -> "==/!=/contains/indexOf whose sides have unrelated types (opaque newtype vs primitive, two newtypes, enum vs primitive/newtype)",
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)",
@@ -417,16 +417,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val nt = termType(q).flatMap(newtypeOf)
         if (nt.isEmpty) note("value-receiver-type-unresolved", where(s))
         val ntName = nt.fold("?")(_.displayName)
-        if (!allowedInCompanion(s, nt)) {
-          val fedInto = s.parent.flatMap(_.parent) match {
-            case Some(a: Term.Apply) if a.argClause.values.exists(_ eq s) && isConversionTarget(a.fun) => Some(a.fun.syntax.take(60))
-            case _ => None
-          }
-          if (boundary) report("G45boundary", s, s"value:$ntName;${boundaryKinds(path)}")
-          else if (isController && fedInto.nonEmpty) report("G44conversion", s, s"value:$ntName->${fedInto.get}")
-          else report("G44", s, s"value:$ntName" + fedInto.fold("")(f => s";bridge->$f"))
-        }
-        // G49: inside a lambda passed to a collection op
+        // G49: inside a lambda passed to a collection op, a label on the finding of the `.value` itself
         // a block that only holds the lambda (`xs.map { x => … }`) is the same argument as `xs.map(x => …)`
         val lambdaOp = ancestors(s).takeWhile(a => !a.is[Defn.Def] && !a.is[Template]).filterNot {
           case b: Term.Block => b.stats.size == 1
@@ -453,7 +444,16 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           case Some(Term.Select(_, m)) if Set("equalsIgnoreCase", "compareTo", "compareToIgnoreCase", "equals")(m.value) => Some(m.value)
           case _ => None
         }
-        (compared.map("compare:" + _) orElse lambdaOp.map("lambda:" + _) orElse direct).foreach(d => if (!allowedInCompanion(s, nt)) report("G49", s, s"$d;$ntName"))
+        val g49 = (compared.map("compare:" + _) orElse lambdaOp.map("lambda:" + _) orElse direct).fold("")(d => s";G49:$d")
+        if (!allowedInCompanion(s, nt)) {
+          val fedInto = s.parent.flatMap(_.parent) match {
+            case Some(a: Term.Apply) if a.argClause.values.exists(_ eq s) && isConversionTarget(a.fun) => Some(a.fun.syntax.take(60))
+            case _ => None
+          }
+          if (boundary) report("G45boundary", s, s"value:$ntName;${boundaryKinds(path)}$g49")
+          else if (isController && fedInto.nonEmpty) report("G44conversion", s, s"value:$ntName->${fedInto.get}$g49")
+          else report("G44", s, s"value:$ntName" + fedInto.fold("")(f => s";bridge->$f") + g49)
+        }
       // G44/G45: construction from a raw value
       case a: Term.Apply if constructionOf(a.fun).nonEmpty && !inImport(a) =>
         val (obj, how) = constructionOf(a.fun).get
