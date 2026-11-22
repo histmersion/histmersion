@@ -138,8 +138,12 @@ export async function filterTyping(page, text, chipPrefix) {
   await settled(page);
   const box = page.locator('#f-q');
   await box.click();
-  const keys = await measure(page, async () => { await box.pressSequentially(text, { delay: 60 }); });
-  const toList = await inputToUpdate(page, '#list', () => box.press('End'));
+  const keys = await measure(page, async () => { await box.pressSequentially(text.slice(0, -1), { delay: 60 }); });
+  const wait = await page.evaluate(async () => { const d = (await (await fetch('/api/config')).json()).debounce;
+    return d.searchMs + d.reloadMs + 100; });
+  await page.waitForTimeout(wait);
+  await quiet(page);
+  const toList = await inputToUpdate(page, '#list', () => box.press(text.slice(-1)));
   await box.fill('');
   // a chip filter: its suggestions, then a hovered suggestion's preview of the filter
   if (await page.locator('#f-more').isHidden()) await page.locator('#f-more-toggle').click();

@@ -43,6 +43,7 @@ export function probe() {
   const tick = t => { if (P.recording) P.frames.push(t); requestAnimationFrame(tick); };
   requestAnimationFrame(tick);
   // the next change under `selector` (matching `ready`, when given) after the next input, painted
+  const touches = (rec, el) => el.contains(rec.target) || [...rec.addedNodes].some(n => n.contains?.(el));
   const matches = (el, r) => (r.includes == null || el.textContent.includes(r.includes)) &&
     (r.lacks == null || !el.textContent.includes(r.lacks)) && (r.equals == null || el.textContent === r.equals) &&
     (r.has == null || !!el.querySelector(r.has)) && (r.hidden == null || el.hidden === r.hidden);
@@ -55,16 +56,17 @@ export function probe() {
       obs.disconnect();
       types.forEach(t => window.removeEventListener(t, onInput, { capture: true }));
     };
-    const check = () => {
+    const check = records => {
       if (inputTs === null) return false;
       const el = document.querySelector(selector);
       if (!el) return false;
+      if (!records.some(r => touches(r, el))) return false;
       if (ready && !matches(el, ready)) return false;
       stop();
       nextPaint(t => resolve(t - inputTs));
       return true;
     };
-    const obs = new MutationObserver(() => { try { check(); } catch (e) { stop(); reject(e); } });
+    const obs = new MutationObserver(records => { try { check(records); } catch (e) { stop(); reject(e); } });
     obs.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
   });
 }
