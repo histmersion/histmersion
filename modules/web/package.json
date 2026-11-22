@@ -7,6 +7,9 @@
     "preview": "vite preview",
     "test:browser": "node --test --test-concurrency=1 test/browser.test.mjs test/marks.test.mjs test/perf.test.mjs",
     "test:perf": "node --test test/perf.test.mjs",
+    "test:budgets": "node --test --test-concurrency=1 --test-force-exit --test-name-pattern='^budgets: ' test/perf.test.mjs",
+    "budgets:local": "npm run test:budgets; full=$?; HISTMERSION_CPU_THROTTLE=3 npm run test:budgets; slow=$?; echo \"budgets: full speed exit $full, CPU throttled 3x exit $slow\"; [ $full = 0 ] && [ $slow = 0 ]",
+    "budgets:ab": "node test/budgets-ab.mjs",
     "perf:baseline": "node test/perf-baseline.mjs",
     "test:browser:firefox": "HISTMERSION_TEST_BROWSER=firefox node --test --test-concurrency=1 test/browser.test.mjs test/marks.test.mjs test/perf.test.mjs",
     "test:browser:all": "npm run test:browser && npm run test:browser:firefox"

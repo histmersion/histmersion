@@ -71,10 +71,35 @@ settings file at once and measured the budgets while two other browsers were bus
 test take ~3 minutes of it (100 soak rounds). In CI the `budgets: …` tests run in their own job (`macos-budgets`,
 `--test-name-pattern='^budgets: '`), the rest in `macos` (`--test-skip-pattern`, the same pattern).
 
-**Budgets on a virtual GPU** (owner decision 2026-11-22). GitHub's macOS runner is an Apple M1 virtual machine (3
-cores) whose WebGL renderer is "Apple Paravirtual device": it paints about 8 frames a second however idle the page's
-main thread is (a pan drops 49 % of its frames with no long task; the same pan, the CPU throttled 3× on a real GPU,
-drops none). There, and only there, the budgets hold the main-thread figures — every `longTaskMax`, the first
+**The absolute budgets are held on a real Mac** (owner decision 2026-11-22), at full speed and with the CPU
+throttled 3× (`HISTMERSION_CPU_THROTTLE=3`, Chromium's own throttling, printed first), against a test server started as
+above:
+
+```bash
+HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run budgets:local
+```
+
+It runs the `budgets: …` tests twice and fails when either run does; rows 30 and 31 of the plan are judged on these
+figures.
+
+**In CI the budgets compare a change with its merge base** (owner decision 2026-11-22). GitHub's macOS runner is a
+shared Apple M1 virtual machine (3 cores, WebGL "Apple Paravirtual device", about 8 frames a second): no user's
+device, so `macos-budgets` holds no absolute limit there. It builds and starts the merge base's server beside this
+change's, runs the budget tests against each three times, alternating (`budgets-ab.mjs`; `HISTMERSION_BUDGETS_RECORD`
+makes `perf.test.mjs` write every figure instead of holding it), and compares figure by figure (`budgets-compare.mjs`,
+`budget-figures.mjs`): a main-thread figure is a regression when every run of the change is worse than every run of
+the base and the medians differ by more than the runs' own spread (the larger of the two sides') and a floor (20 ms;
+3 MB of heap; 5 % of the DOM nodes and listeners; nothing for the counts that must not move, such as `notAnimated`).
+Frame-bound figures (below) are printed, not compared. A budget run of the change that fails, skips a test or runs
+none fails the job too. `HISTMERSION_BUDGETS_INJECT_ZOOM_MS=60` in the job's step adds a 60 ms task to every zoom of
+the change's runs (`budgets-inject.mjs`): the check that the job turns red. Measured here (M4 Pro, the same server
+on both sides, three rounds): the base against itself 73 figures, no regression; with the 60 ms task, 7 regressions —
+the six zooms' longest tasks (0 → 72–107 ms) and Readable's draw.
+
+**Main-thread and frame-bound figures on a virtual GPU** (owner decision 2026-11-22). The runner paints about 8
+frames a second however idle the page's main thread is (a pan drops 49 % of its frames with no long task; the same
+pan, the CPU throttled 3× on a real GPU, drops none). A run of the budgets that holds them there holds the main-thread
+figures — every `longTaskMax`, the first
 render's and the loads' times (`mapMs`, `markersMs`, `listMs`, `drawnMs`), the playback's request rates, the cluster
 zoom's `notAnimated`, the heap, the DOM and the listeners — and print the frame-bound ones without failing on them:
 dropped frames (`droppedPct`, `stillFramesPct`) and every input-to-next-paint figure (`inputP95`, the hover cards'
@@ -82,8 +107,8 @@ dropped frames (`droppedPct`, `stillFramesPct`) and every input-to-next-paint fi
 `windowMs`/`contentMs`, the release's `releaseToListMs`, Library's `clickMs`/`keyMs`/`pageMs`). The limits are the
 same. The mode needs both the job's `HISTMERSION_VIRTUAL_GPU=1` and a WebGL renderer naming a paravirtual
 device (`engine.mjs` `frameMode`); anything else — a real GPU, Firefox, an unknown renderer — holds every figure.
-The first line of the run says which mode is in force. The job's colour is its own verdict: red when a held figure
-is over its budget (or a budget test fails otherwise, is skipped or none ran); it is not a required check.
+The first line of the run says which mode is in force. `macos-budgets` is not a required check; its colour is the
+comparison's verdict.
 
 The same rule, the same switch (the `macos` job sets the variable too), applies to the functional tests' click
 checks (owner decision 2026-11-22): a chip of the approvals, runs and jobs windows, the news mark in Research's side

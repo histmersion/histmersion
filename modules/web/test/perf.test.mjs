@@ -16,8 +16,10 @@
 
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
+import { writeFileSync } from 'node:fs';
 import { engineName, frameMode, isChromium, launch, wantsGpu } from './engine.mjs';
-import { inputToUpdate, memory, newPerfPage, quiet } from './perf-lib.mjs';
+import { FRAME_BOUND } from './budget-figures.mjs';
+import { cpuThrottle, inputToUpdate, memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
 import { eventsIn, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { soak } from './perf-soak.mjs';
@@ -92,15 +94,21 @@ const BUDGETS = {
 };
 
 let browser;
-const FRAME_BOUND = new Set(['droppedPct', 'inputP95', 'stillFramesPct', 'releaseToListMs', 'shownMax', 'filledMax',
-  'warmMax', 'keyP95', 'keyMax', 'suggestMs', 'previewToListMs', 'windowMs', 'contentMs', 'clickMs', 'keyMs', 'pageMs']);
 let mainThreadOnly = false;
+const recordTo = process.env.HISTMERSION_BUDGETS_RECORD;
+const recorded = {};
+const seen = {};
 
 before(async () => {
   browser = await launch();
-  mainThreadOnly = await frameMode(browser, 'budgets', 'frame-bound figures');
+  console.log(`# budgets: CPU ${cpuThrottle() > 1 ? `throttled ${cpuThrottle()}×` : 'at full speed'}`);
+  if (recordTo) console.log(`# budgets: recorded to ${recordTo}, none held here (compared with the merge base: budgets-compare.mjs)`);
+  else mainThreadOnly = await frameMode(browser, 'budgets', 'frame-bound figures');
 });
-after(async () => { await browser?.close(); });
+after(async () => {
+  await browser?.close();
+  if (recordTo) writeFileSync(recordTo, JSON.stringify(recorded, null, 1));
+});
 
 /** The figures an engine cannot measure from a page (engine.mjs): Firefox has no CDP, so no heap, no
   * listener count and no layout-object count. Only these are skipped, only there; any other missing figure
@@ -112,6 +120,12 @@ const get = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
 /** Every figure of `measured` named in `budget` is within it. */
 function within(name, measured, budget = BUDGETS[name]) {
   if (report) console.log(`# ${name} ${JSON.stringify(measured)}`);
+  if (recordTo) {
+    seen[name] = (seen[name] ?? 0) + 1;
+    const as = seen[name] === 1 ? name : `${name}#${seen[name]}`;
+    for (const k of Object.keys(budget)) recorded[`${as}.${k}`] = get(measured, k) ?? null;
+    return;
+  }
   for (const [k, max] of Object.entries(budget)) {
     const v = get(measured, k);
     if (v === null && UNMEASURABLE.has(k.split('.').at(-1))) { if (report) console.log(`# ${name}.${k}: not measurable in ${engineName}`); continue; }

@@ -72,6 +72,8 @@ export function probe() {
 /** A page with the probe and the map handle the browser regressions use; third-party requests (tiles)
   * are refused, so only the app is measured. `source`: the base-map family the page is told it has
   * (`local` or `online`, `/api/config`'s resolved `ui.base-map-source`); by default the server's. */
+export const cpuThrottle = () => Number(process.env.HISTMERSION_CPU_THROTTLE || 1);
+
 export async function newPerfPage(browser, origin, viewport = { width: 1440, height: 900 }, { source } = {}) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
@@ -102,6 +104,7 @@ export async function newPerfPage(browser, origin, viewport = { width: 1440, hei
   // CDP (heap, DOM counters, forced garbage collection) is Chromium's; elsewhere `cdp` is null
   const cdp = browser.browserType().name() === 'chromium' ? await context.newCDPSession(page) : null;
   if (cdp) await cdp.send('Performance.enable');
+  if (cdp && cpuThrottle() > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpuThrottle() });
   return { context, page, cdp, errors, blocked };
 }
 
