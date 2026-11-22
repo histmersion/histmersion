@@ -502,6 +502,11 @@ jobs:
         run: |
           npm ci
           npx playwright install chromium
+      - name: the merge base's browser dependencies (each side runs its own test code)
+        working-directory: ${{ runner.temp }}/base/modules/web
+        run: |
+          npm ci
+          npx playwright install chromium
       - name: the machine the budgets are measured on (CPU, memory, graphics)
         run: |
           sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
@@ -516,7 +521,7 @@ jobs:
           HISTMERSION_BUDGETS_INJECT_ZOOM_MS: ""
         run: |
           node test/budgets-ab.mjs --base-url "$HISTMERSION_BASE_URL" --pr-url "$HISTMERSION_SERVER_URL" \
-            --rounds 3 --out "$RUNNER_TEMP/budgets-ab"
+            --base-web "$RUNNER_TEMP/base/modules/web" --rounds 3 --out "$RUNNER_TEMP/budgets-ab"
       - name: logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

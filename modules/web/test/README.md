@@ -94,13 +94,17 @@ figures.
 **In CI the budgets compare a change with its merge base** (owner decision 2026-11-22). GitHub's macOS runner is a
 shared Apple M1 virtual machine (3 cores, WebGL "Apple Paravirtual device", about 8 frames a second): no user's
 device, so `macos-budgets` holds no absolute limit there. It builds and starts the merge base's server beside this
-change's, runs the budget tests against each three times, alternating (`budgets-ab.mjs`; `HISTMERSION_BUDGETS_RECORD`
+change's, runs the budget tests against each three times, alternating, each side with its own test code (the merge
+base's from its worktree, `--base-web`) (`budgets-ab.mjs`; `HISTMERSION_BUDGETS_RECORD`
 makes `perf.test.mjs` write every figure instead of holding it), and compares figure by figure (`budgets-compare.mjs`,
 `budget-figures.mjs`): a main-thread figure is a regression when every run of the change is worse than every run of
 the base and the medians differ by more than the runs' own spread (the larger of the two sides') and a floor (20 ms;
 3 MB of heap; 5 % of the DOM nodes and listeners; nothing for the counts that must not move, such as `notAnimated`).
-Frame-bound figures (below) are printed, not compared. A budget run of the change that fails, skips a test or runs
-none fails the job too. `HISTMERSION_BUDGETS_INJECT_ZOOM_MS=60` in the job's step adds 60 ms of work to every frame
+Frame-bound figures (below) are printed, not compared. A budget run of either side that fails, skips a test or runs
+none fails the job too (the base's with its own tests: a real problem of the base). When the change alters the code
+that measures (`perf.test.mjs` or any module it imports, compared file by file), no figure is compared: each is
+printed as "measurement changed: not compared", with the files and a warning in the summary — neither a pass nor a
+failure. `HISTMERSION_BUDGETS_INJECT_ZOOM_MS=60` in the job's step adds 60 ms of work to every frame
 the map draws during a zoom (zoomstart to zoomend) in the change's runs (`budgets-inject.mjs`), so a zoom's longest
 task grows by 60 ms however long it already was; it adds no listener and touches nothing outside a zoom. It is the
 check that the job turns red. Measured here (M4 Pro, the same server on both sides, three rounds): the base against

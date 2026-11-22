@@ -32,13 +32,32 @@ export function compareFigure(key, base, pr) {
   return { key, base, pr, baseMedian, prMedian, worse, noise, floor, frameBound: frameBound(key), regression };
 }
 
-export function compareRuns(baseRuns, prRuns) {
+export function compareRuns(baseRuns, prRuns, { measurementChanged = false } = {}) {
   const keys = [...new Set([...baseRuns, ...prRuns].flatMap(r => Object.keys(r)))].sort();
   return keys.map(key => {
     const base = baseRuns.map(r => r[key]).filter(v => typeof v === 'number');
     const pr = prRuns.map(r => r[key]).filter(v => typeof v === 'number');
+    if (measurementChanged) return { key, base, pr, measurementChanged: true, frameBound: frameBound(key), regression: false };
     if (base.length !== baseRuns.length || pr.length !== prRuns.length)
       return { key, base, pr, missing: true, frameBound: frameBound(key), regression: false };
     return compareFigure(key, base, pr);
   });
+}
+
+const IMPORT = /from\s+['"](\.\/[^'"]+\.mjs)['"]/g;
+
+export function importClosure(read, entry) {
+  const seen = new Set();
+  const visit = file => {
+    if (seen.has(file)) return;
+    seen.add(file);
+    for (const m of read(file).matchAll(IMPORT)) visit(m[1].slice(2));
+  };
+  visit(entry);
+  return [...seen].sort();
+}
+
+export function changedMeasurement(readBase, readPr, entry) {
+  const files = [...new Set([...importClosure(readBase, entry), ...importClosure(readPr, entry)])].sort();
+  return files.filter(f => readBase(f) !== readPr(f));
 }
