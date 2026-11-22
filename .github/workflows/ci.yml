@@ -18,8 +18,8 @@ name: ci
 #   macos      on macOS arm64 (the platform the owner runs): the scripts' tests, the CLI reference against the
 #              CLI's help (on the JVM), and the browser tests (Playwright, modules/web/test) against the server on
 #              the JVM but the `budgets: …` ones, one file at a time — a skipped browser test fails (G125)
-#   macos-budgets  the `budgets: …` browser tests alone (the same files, the complementary name pattern); on the
-#              runner's virtual GPU the main-thread figures are held and the frame-bound ones printed (perf.test.mjs)
+#   macos-budgets  the `budgets: …` browser tests alone (the same files, the complementary name pattern), this change
+#              and its merge base on this runner, interleaved: red on a regression past the runs' noise (budgets-ab.mjs)
 #
 # The ratchet suites compare against the merge base with contracts3-pilot: the test jobs check out the full
 # history, so origin/contracts3-pilot is there (RatchetBase's fallback; HISTMERSION_RATCHET_BASE overrides it).
@@ -433,15 +433,16 @@ jobs:
         run: just test-db-down
 
   macos-budgets:
-    name: macos-budgets (browser speed budgets; main-thread figures on the virtual GPU)
+    name: macos-budgets (browser speed against the merge base, on the same runner)
     needs: build
     runs-on: macos-15
     timeout-minutes: 90
     env:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
+      HISTMERSION_BASE_URL: http://127.0.0.1:18081
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
+        with: { persist-credentials: false, fetch-depth: 0 }
       - uses: ./.github/actions/setup
       - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         with: { tool: just }
@@ -466,22 +467,36 @@ jobs:
           $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
-      - name: throwaway PostgreSQL 18 + PostGIS
-        run: just test-db
-      - name: the test server on the JVM (no runtime children, scratch settings, the Aegean base-map extract)
+      - name: the merge base's server class path (a worktree of it, compiled from the same replay where unchanged)
         run: |
-          conf="$RUNNER_TEMP/histmersion-test.conf"; : > "$conf"
-          echo "HISTMERSION_TEST_CONFIG_FILE=$conf" >> "$GITHUB_ENV"
-          HISTMERSION_RUNTIME=false HISTMERSION_CONFIG="$conf" \
-          HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-data" \
-          HISTMERSION_DB_URL=jdbc:postgresql://127.0.0.1:55432/histmersion_test \
-          HISTMERSION_PORT=18080 HISTMERSION_PUBLIC_URL="$HISTMERSION_SERVER_URL" \
-          HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
-          HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false \
-          HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false \
-            nohup java --sun-misc-unsafe-memory-access=allow -Xss4m -cp "$(cat "$SERVER_CLASSPATH_FILE")" \
-              com.histmersion.server.histmersionServer > "$RUNNER_TEMP/server.log" 2>&1 &
+          base="$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-contracts3-pilot}")"
+          echo "the merge base: $base (this change: $(git rev-parse HEAD))"
+          git worktree add --detach "$RUNNER_TEMP/base" "$base"
+          (cd "$RUNNER_TEMP/base" && $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath)
+          cp="$(find "$RUNNER_TEMP/base/target/out" -path '*histmersion-server/classpath.txt' | head -1)"
+          test -s "$cp" && echo "BASE_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
+      - name: throwaway PostgreSQL 18 + PostGIS (a database each)
+        run: |
+          just test-db
+          runtime/postgres/.pixi/envs/default/bin/createdb -h 127.0.0.1 -p 55432 -U histmersion histmersion_base_test
+      - name: the test servers on the JVM, this change's and the merge base's (no runtime children, scratch settings, the Aegean base-map extract)
+        run: |
+          start() {
+            conf="$RUNNER_TEMP/histmersion-$1.conf"; : > "$conf"
+            HISTMERSION_RUNTIME=false HISTMERSION_CONFIG="$conf" \
+            HISTMERSION_DATA_DIR="$RUNNER_TEMP/histmersion-data-$1" \
+            HISTMERSION_DB_URL="jdbc:postgresql://127.0.0.1:55432/$2" \
+            HISTMERSION_PORT="$3" HISTMERSION_PUBLIC_URL="http://127.0.0.1:$3" \
+            HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap \
+            HISTMERSION_BASEMAP_TERRAIN_ON_DEMAND=false HISTMERSION_BASEMAP_VECTOR_ON_DEMAND=false \
+            HISTMERSION_BASEMAP_BATHYMETRY_ON_DEMAND=false \
+              nohup java --sun-misc-unsafe-memory-access=allow -Xss4m -cp "$(cat "$4")" \
+                com.histmersion.server.histmersionServer > "$RUNNER_TEMP/$5" 2>&1 &
+          }
+          start pr histmersion_test 18080 "$SERVER_CLASSPATH_FILE" server.log
+          start base histmersion_base_test 18081 "$BASE_CLASSPATH_FILE" server-base.log
           curl -fsS --retry 90 --retry-delay 2 --retry-connrefused --retry-all-errors "$HISTMERSION_SERVER_URL/api/health"
+          curl -fsS --retry 90 --retry-delay 2 --retry-connrefused --retry-all-errors "$HISTMERSION_BASE_URL/api/health"
       - name: browser dependencies (Playwright's Chromium)
         working-directory: modules/web
         run: |
@@ -491,36 +506,17 @@ jobs:
         run: |
           sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
           system_profiler SPDisplaysDataType || true
-      - name: the speed budgets (the `budgets:` tests of the files of `npm run test:browser`; on the virtual GPU the main-thread figures)
-        timeout-minutes: 40
+      - name: unit tests of the comparison (budget-figures.mjs)
+        working-directory: modules/web
+        run: node --test test/budget-figures.unit.test.mjs
+      - name: this change against its merge base, interleaved on this runner (budgets-ab.mjs; a regression past the runs' noise fails)
+        timeout-minutes: 60
         working-directory: modules/web
         env:
-          HISTMERSION_VIRTUAL_GPU: "1"
+          HISTMERSION_BUDGETS_INJECT_ZOOM_MS: ""
         run: |
-          files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
-          HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-force-exit --test-name-pattern='^budgets: ' \
-            --test-reporter=spec --test-reporter-destination=stdout \
-            --test-reporter=junit --test-reporter-destination="$RUNNER_TEMP/budgets-junit.xml" $files
-      - name: every budget test ran and none was skipped (G125)
-        if: always()
-        run: |
-          report="$RUNNER_TEMP/budgets-junit.xml"
-          test -s "$report" || { echo "::error::the budget tests wrote no report"; exit 1; }
-          tests="$(grep -c '<testcase name="budgets: ' "$report" || true)"
-          skipped="$(grep -c '<skipped' "$report" || true)"
-          failed="$(grep -c '<failure' "$report" || true)"
-          echo "budget tests: $tests run, $failed failed, $skipped skipped"
-          if [ "$failed" != 0 ]; then
-            echo "::error::$failed browser budget test(s) failed: a held figure over its budget, or a test's own failure"
-          fi
-          if [ "$tests" = 0 ]; then
-            echo "::error::no budget test ran"
-            exit 1
-          fi
-          if [ "$skipped" != 0 ]; then
-            echo "::error::$skipped budget test(s) skipped (G125: a skip fails the run)"
-            exit 1
-          fi
+          node test/budgets-ab.mjs --base-url "$HISTMERSION_BASE_URL" --pr-url "$HISTMERSION_SERVER_URL" \
+            --rounds 3 --out "$RUNNER_TEMP/budgets-ab"
       - name: logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -528,7 +524,8 @@ jobs:
           name: macos-budgets-logs
           path: |
             ${{ runner.temp }}/server.log
-            ${{ runner.temp }}/budgets-junit.xml
+            ${{ runner.temp }}/server-base.log
+            ${{ runner.temp }}/budgets-ab
             target/test-pg.log
           retention-days: 7
           if-no-files-found: ignore
