@@ -114,7 +114,7 @@ export function trackRequests(page) {
   page.on('requestfailed', done);
   // a new document: what the old one had on its way was cancelled with it (and is not always reported)
   page.on('framenavigated', f => {
-    if (f === page.mainFrame()) for (const r of [...st.pending]) if (!r.isNavigationRequest()) st.pending.delete(r);
+    if (f === page.mainFrame()) for (const r of [...st.pending]) if (!r.isNavigationRequest() || r.frame() === f) st.pending.delete(r);
   });
   page.__requests = st;
 }
