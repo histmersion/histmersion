@@ -35,7 +35,10 @@ class MarkerLookSuite extends munit.FunSuite:
     assertEquals(MarkerLook.linear("none"), None)
 
   test("a transform matrix is read, anything else is none"):
-    assertEquals(MarkerLook.matrix("matrix(0.7071, 0.7071, -0.7071, 0.7071, 0, 0)"), Some((0.7071, 0.7071, -0.7071, 0.7071, 0.0, 0.0)))
+    assertEquals(
+      MarkerLook.matrix("matrix(0.7071, 0.7071, -0.7071, 0.7071, 0, 0)"),
+      Some((0.7071, 0.7071, -0.7071, 0.7071, 0.0, 0.0))
+    )
     assertEquals(MarkerLook.matrix("none"), None)
 
   test("a corner radius: pixels, or a share of the smaller side, never past half of it"):

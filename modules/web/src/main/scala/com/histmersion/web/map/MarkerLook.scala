@@ -7,30 +7,135 @@ import scala.scalajs.js
 
 final class MarkerLook(ops: List[js.Function1[dom.CanvasRenderingContext2D, Unit]], val w: Double, val h: Double):
   private val pad = 12.0
-  private var sprite: dom.html.Canvas = null
-  private var spriteDpr = 0.0
+  private val sprites = scala.collection.mutable.LinkedHashMap.empty[String, dom.html.Canvas]
 
-  private def spriteFor(dpr: Double): dom.html.Canvas =
-    if sprite == null || spriteDpr != dpr then
-      val c = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
-      c.width = math.ceil((w + 2 * pad) * dpr).toInt
-      c.height = math.ceil((h + 2 * pad) * dpr).toInt
-      val g = c.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
-      g.setTransform(dpr, 0, 0, dpr, 0, 0)
-      g.translate(w / 2 + pad, h / 2 + pad)
-      ops.foreach(_(g))
-      sprite = c
-      spriteDpr = dpr
-    sprite
+  def sprite(colours: js.Array[String], dpr: Double): dom.html.Canvas =
+    val key = s"$dpr|${colours.mkString("|")}"
+    sprites.getOrElse(
+      key, {
+        val c = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
+        c.width = math.ceil((w + 2 * pad) * dpr).toInt
+        c.height = math.ceil((h + 2 * pad) * dpr).toInt
+        val g = c.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+        g.setTransform(dpr, 0, 0, dpr, 0, 0)
+        g.translate(w / 2 + pad, h / 2 + pad)
+        g.asInstanceOf[js.Dynamic].hdColours = colours
+        ops.foreach(_(g))
+        if sprites.size >= 96 then sprites.remove(sprites.head._1)
+        sprites(key) = c
+        c
+      }
+    )
 
-  def draw(ctx: dom.CanvasRenderingContext2D, x: Double, y: Double, alpha: Double): Unit =
-    val s = spriteFor(dom.window.devicePixelRatio)
+  var atlasId: Int = -1
+
+  def spriteWidth(dpr: Double): Int = math.ceil((w + 2 * pad) * dpr).toInt
+
+  def spriteHeight(dpr: Double): Int = math.ceil((h + 2 * pad) * dpr).toInt
+
+  def render(g: dom.CanvasRenderingContext2D, ox: Double, oy: Double, colours: js.Array[String], dpr: Double): Unit =
+    g.save()
+    g.setTransform(dpr, 0, 0, dpr, ox, oy)
+    g.translate(w / 2 + pad, h / 2 + pad)
+    g.asInstanceOf[js.Dynamic].hdColours = colours
+    ops.foreach(_(g))
+    g.restore()
+
+  def blit(
+      ctx: dom.CanvasRenderingContext2D,
+      atlas: dom.html.Canvas,
+      region: js.Array[Double],
+      dpr: Double,
+      x: Double,
+      y: Double,
+      alpha: Double
+  ): Unit =
     ctx.globalAlpha = alpha
-    ctx.drawImage(s, x - w / 2 - pad, y - h / 2 - pad, w + 2 * pad, h + 2 * pad)
+    ctx.drawImage(
+      atlas,
+      region(1),
+      region(2),
+      region(3),
+      region(4),
+      x - w / 2 - pad,
+      y - h / 2 - pad,
+      region(3) / dpr,
+      region(4) / dpr
+    )
     ctx.globalAlpha = 1
 
 object MarkerLook:
   type Op = js.Function1[dom.CanvasRenderingContext2D, Unit]
+
+  val Vars: List[String] = List("--c", "--g0", "--g1")
+  val Sentinels: List[String] = List("rebeccapurple", "darkolivegreen", "mediumvioletred")
+  private val SentinelRgb: List[(Int, Int, Int)] = List((102, 51, 153), (85, 107, 47), (199, 21, 133))
+  val Second: List[String] = List("lightseagreen", "saddlebrown", "palevioletred")
+
+  private val Rgb = "^rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)\\)$".r
+
+  def rgbOf(c: String): Option[(Int, Int, Int)] = c.trim match
+    case Rgb(r, g, b) => Some((r.toInt, g.toInt, b.toInt))
+    case _            => None
+
+  def inlineVar(el: dom.Element, name: String): String =
+    Option(el.getAttribute("style"))
+      .getOrElse("")
+      .split(";")
+      .iterator
+      .map(_.trim)
+      .collectFirst { case d if d.startsWith(name + ":") => d.drop(name.length + 1).trim }
+      .getOrElse("")
+
+  private val VarDecl = "--(c|g0|g1):[^;\"]*;?".r
+  private val BubbleId = "hdb\\d+".r
+
+  val Transient: List[String] = List(
+    "hd-cluster-move",
+    "hd-cluster-arrive",
+    "hd-cluster-ghost",
+    "hd-cluster-pending",
+    "hd-fade-in",
+    "hd-fade-out",
+    "hd-entering",
+    "hd-exiting",
+    "is-offscreen",
+    "hd-spidered",
+    "hd-spider"
+  )
+
+  private val TransientWord = Transient.map(t => s"\\b$t\\b").mkString("(", "|", ")").r
+
+  def templateKey(el: dom.Element): String =
+    val cls = Option(el.getAttribute("class")).getOrElse("").split(" ").filterNot(Transient.contains).mkString(" ")
+    cls + "|" + TransientWord.replaceAllIn(BubbleId.replaceAllIn(VarDecl.replaceAllIn(el.innerHTML, ""), ""), "")
+
+  def colours(el: dom.Element): js.Array[String] =
+    val all = el.querySelectorAll("[style]")
+    val els = (0 until all.length).map(all(_))
+    js.Array(Vars.map(v => els.iterator.map(inlineVar(_, v)).find(_.nonEmpty).getOrElse(""))*)
+
+  def withColours(el: dom.Element, cs: List[String]): dom.Element =
+    val clone = el.cloneNode(true).asInstanceOf[dom.Element]
+    val every = clone.querySelectorAll("*")
+    (clone +: (0 until every.length).map(every(_))).foreach(e => Transient.foreach(t => e.classList.remove(t)))
+    val all = clone.querySelectorAll("[style]")
+    (0 until all.length).map(all(_).asInstanceOf[dom.HTMLElement]).foreach { e =>
+      cs.lift(0).filter(_ => inlineVar(e, "--c").nonEmpty).foreach(c => e.style.setProperty("--c", c))
+      cs.lift(1).filter(_ => inlineVar(e, "--g0").nonEmpty).foreach(c => e.style.setProperty("--g0", c))
+      cs.lift(2).filter(_ => inlineVar(e, "--g1").nonEmpty).foreach(c => e.style.setProperty("--g1", c))
+    }
+    clone
+
+  def col(ctx: dom.CanvasRenderingContext2D, c: String): String =
+    val i = rgbOf(c).fold(-1)(SentinelRgb.indexOf)
+    if i < 0 then c
+    else
+      val cs = ctx.asInstanceOf[js.Dynamic].hdColours
+      if js.isUndefined(cs) then c
+      else
+        val v = cs.asInstanceOf[js.Array[String]].lift(i).getOrElse("").trim
+        if v.isEmpty then c else v
 
   private val Ws = "\\s+".r
   private val WsComma = "[\\s,]+".r
@@ -154,14 +259,22 @@ object MarkerLook:
         s"A $rx $ry 0 0 1 ${x + rx} $y Z"
 
   def polyPath(points: String, closed: Boolean): String =
-    val ns = WsComma.split(points.trim).toList.flatMap(_.toDoubleOption).grouped(2).collect { case List(x, y) =>
-      (x, y)
-    }.toList
+    val ns = WsComma
+      .split(points.trim)
+      .toList
+      .flatMap(_.toDoubleOption)
+      .grouped(2)
+      .collect { case List(x, y) =>
+        (x, y)
+      }
+      .toList
     ns match
-      case (x0, y0) :: rest => (s"M $x0 $y0" :: rest.map((x, y) => s"L $x $y")).mkString(" ") + (if closed then " Z" else "")
-      case Nil              => ""
+      case (x0, y0) :: rest =>
+        (s"M $x0 $y0" :: rest.map((x, y) => s"L $x $y")).mkString(" ") + (if closed then " Z" else "")
+      case Nil => ""
 
-  private def attr(e: dom.Element, n: String): Double = Option(e.getAttribute(n)).flatMap(_.trim.toDoubleOption).getOrElse(0.0)
+  private def attr(e: dom.Element, n: String): Double =
+    Option(e.getAttribute(n)).flatMap(_.trim.toDoubleOption).getOrElse(0.0)
 
   def pathOf(e: dom.Element): Option[String] = e.tagName.toLowerCase match
     case "path"     => Option(e.getAttribute("d"))
@@ -170,12 +283,18 @@ object MarkerLook:
     case "line"     => Some(s"M ${attr(e, "x1")} ${attr(e, "y1")} L ${attr(e, "x2")} ${attr(e, "y2")}")
     case "polyline" => Some(polyPath(Option(e.getAttribute("points")).getOrElse(""), closed = false))
     case "polygon"  => Some(polyPath(Option(e.getAttribute("points")).getOrElse(""), closed = true))
-    case "rect" =>
+    case "rect"     =>
       val rx = Option(e.getAttribute("rx")).flatMap(_.toDoubleOption)
       val ry = Option(e.getAttribute("ry")).flatMap(_.toDoubleOption)
       Some(
-        rectPath(attr(e, "x"), attr(e, "y"), attr(e, "width"), attr(e, "height"), rx.orElse(ry).getOrElse(0.0),
-          ry.orElse(rx).getOrElse(0.0))
+        rectPath(
+          attr(e, "x"),
+          attr(e, "y"),
+          attr(e, "width"),
+          attr(e, "height"),
+          rx.orElse(ry).getOrElse(0.0),
+          ry.orElse(rx).getOrElse(0.0)
+        )
       )
     case _ => None
 
@@ -183,7 +302,8 @@ object MarkerLook:
     val t = c.trim
     t.nonEmpty && t != "transparent" && t != "none" && Clear.findFirstIn(t).isEmpty
 
-  private def path2d(d: String): dom.Path2D = js.Dynamic.newInstance(js.Dynamic.global.Path2D)(d).asInstanceOf[dom.Path2D]
+  private def path2d(d: String): dom.Path2D =
+    js.Dynamic.newInstance(js.Dynamic.global.Path2D)(d).asInstanceOf[dom.Path2D]
 
   private def dashOf(style: String, width: Double): js.Array[Double] = style match
     case "dashed" => js.Array(math.max(2.0, width * 2), math.max(2.0, width * 2))
@@ -196,7 +316,7 @@ object MarkerLook:
     val half = (math.abs(w * dx) + math.abs(h * dy)) / 2
     val (cx, cy) = (x + w / 2, y + h / 2)
     val grad = ctx.createLinearGradient(cx - dx * half, cy - dy * half, cx + dx * half, cy + dy * half)
-    g.stops.foreach(s => grad.addColorStop(math.max(0, math.min(1, s.at)), s.colour))
+    g.stops.foreach(s => grad.addColorStop(math.max(0, math.min(1, s.at)), col(ctx, s.colour)))
     grad
 
   private def boxOps(
@@ -222,11 +342,19 @@ object MarkerLook:
         path2d(rectPath(x + bw / 2, y + bw / 2, w - bw, h - bw, math.max(0, r - bw / 2), math.max(0, r - bw / 2)))
       val shadowPaths = shs.reverse.map { s =>
         if s.blur > 0 then
-          s -> path2d(rectPath(x - s.spread, y - s.spread, w + 2 * s.spread, h + 2 * s.spread, r + s.spread, r + s.spread))
+          s -> path2d(
+            rectPath(x - s.spread, y - s.spread, w + 2 * s.spread, h + 2 * s.spread, r + s.spread, r + s.spread)
+          )
         else
           s -> path2d(
-            rectPath(x - s.spread + s.dx, y - s.spread + s.dy, w + 2 * s.spread, h + 2 * s.spread, r + s.spread,
-              r + s.spread) + " " + rectPath(x, y, w, h, r, r)
+            rectPath(
+              x - s.spread + s.dx,
+              y - s.spread + s.dy,
+              w + 2 * s.spread,
+              h + 2 * s.spread,
+              r + s.spread,
+              r + s.spread
+            ) + " " + rectPath(x, y, w, h, r, r)
           )
       }
       val dash = dashOf(bstyle, bw)
@@ -242,27 +370,28 @@ object MarkerLook:
         shadowPaths.foreach { (s, p) =>
           if s.blur > 0 then
             ctx.save()
-            ctx.shadowColor = s.colour
+            ctx.shadowColor = col(ctx, s.colour)
             ctx.shadowBlur = s.blur
             ctx.shadowOffsetX = s.dx
             ctx.shadowOffsetY = s.dy
-            ctx.fillStyle = s.colour
+            ctx.fillStyle = col(ctx, s.colour)
             ctx.fill(p)
             ctx.restore()
           else if s.spread > 0 then
-            ctx.fillStyle = s.colour
+            ctx.fillStyle = col(ctx, s.colour)
             ctx.fill(p, dom.CanvasFillRule.evenodd)
         }
-        image match
+        val fill = col(ctx, bg)
+        image.orElse(linear(fill)) match
           case Some(g) =>
             ctx.fillStyle = gradientFor(ctx, g, x, y, w, h)
             ctx.fill(outline)
           case None =>
-            if visible(bg) then
-              ctx.fillStyle = bg
+            if visible(fill) then
+              ctx.fillStyle = fill
               ctx.fill(outline)
         if bw > 0 && bstyle != "none" && visible(bcolour) then
-          ctx.strokeStyle = bcolour
+          ctx.strokeStyle = col(ctx, bcolour)
           ctx.lineWidth = bw
           ctx.setLineDash(dash)
           ctx.stroke(inner)
@@ -285,7 +414,8 @@ object MarkerLook:
         val stroke = cs.getPropertyValue("stroke").trim
         val sw = num(cs.getPropertyValue("stroke-width"))
         val dash = cs.getPropertyValue("stroke-dasharray").trim
-        val dashes = if dash.isEmpty || dash == "none" then js.Array[Double]() else js.Array(WsComma.split(dash).toSeq.flatMap(s => MarkerCanvas.px(s))*)
+        val dashes = if dash.isEmpty || dash == "none" then js.Array[Double]()
+        else js.Array(WsComma.split(dash).toSeq.flatMap(s => MarkerCanvas.px(s))*)
         val cap = cs.getPropertyValue("stroke-linecap").trim
         val join = cs.getPropertyValue("stroke-linejoin").trim
         val strokeOpacity = cs.getPropertyValue("stroke-opacity").trim.toDoubleOption.getOrElse(1.0)
@@ -298,14 +428,23 @@ object MarkerLook:
                 val st = stops(i)
                 Stop(dom.window.getComputedStyle(st).getPropertyValue("stop-color"), attr(st, "offset"))
               }
-              (attr(g, "x1"), attr(g, "y1"), Option(g.getAttribute("x2")).flatMap(_.toDoubleOption).getOrElse(1.0),
-                attr(g, "y2"), ss)
+              (
+                attr(g, "x1"),
+                attr(g, "y1"),
+                Option(g.getAttribute("x2")).flatMap(_.toDoubleOption).getOrElse(1.0),
+                attr(g, "y2"),
+                ss
+              )
             }
           else None
         val bounds = e.asInstanceOf[js.Dynamic].getBBox().asInstanceOf[js.Dynamic]
         val (bx, by, bw2, bh2) =
-          (bounds.x.asInstanceOf[Double], bounds.y.asInstanceOf[Double], bounds.width.asInstanceOf[Double],
-            bounds.height.asInstanceOf[Double])
+          (
+            bounds.x.asInstanceOf[Double],
+            bounds.y.asInstanceOf[Double],
+            bounds.width.asInstanceOf[Double],
+            bounds.height.asInstanceOf[Double]
+          )
         val p = path2d(d)
         val op: Op = (ctx: dom.CanvasRenderingContext2D) =>
           ctx.save()
@@ -316,16 +455,16 @@ object MarkerLook:
           gradient match
             case Some((x1, y1, x2, y2, ss)) =>
               val grad = ctx.createLinearGradient(bx + x1 * bw2, by + y1 * bh2, bx + x2 * bw2, by + y2 * bh2)
-              ss.foreach(s => grad.addColorStop(math.max(0, math.min(1, s.at)), s.colour))
+              ss.foreach(s => grad.addColorStop(math.max(0, math.min(1, s.at)), col(ctx, s.colour)))
               ctx.fillStyle = grad
               ctx.fill(p)
             case None =>
               if visible(fill) then
-                ctx.fillStyle = fill
+                ctx.fillStyle = col(ctx, fill)
                 ctx.fill(p)
           if visible(stroke) && sw > 0 then
             ctx.globalAlpha = ctx.globalAlpha * strokeOpacity
-            ctx.strokeStyle = stroke
+            ctx.strokeStyle = col(ctx, stroke)
             ctx.lineWidth = sw
             ctx.lineCap = if cap.isEmpty then "butt" else cap
             ctx.lineJoin = if join.isEmpty then "miter" else join
@@ -337,13 +476,18 @@ object MarkerLook:
     }
 
   private def textOps(e: dom.Element, cx: Double, cy: Double, opacity: Double): List[Op] =
-    val own = (0 until e.childNodes.length).map(e.childNodes(_)).collect {
-      case t if t.nodeType == dom.Node.TEXT_NODE => t.textContent
-    }.mkString.trim
+    val own = (0 until e.childNodes.length)
+      .map(e.childNodes(_))
+      .collect {
+        case t if t.nodeType == dom.Node.TEXT_NODE => t.textContent
+      }
+      .mkString
+      .trim
     if own.isEmpty then Nil
     else
       val cs = dom.window.getComputedStyle(e)
-      val font = s"${cs.getPropertyValue("font-weight")} ${cs.getPropertyValue("font-size")} ${cs.getPropertyValue("font-family")}"
+      val font =
+        s"${cs.getPropertyValue("font-weight")} ${cs.getPropertyValue("font-size")} ${cs.getPropertyValue("font-family")}"
       val colour = cs.getPropertyValue("color")
       val shs = shadows(cs.getPropertyValue("text-shadow"))
       val op: Op = (ctx: dom.CanvasRenderingContext2D) =>
@@ -354,15 +498,15 @@ object MarkerLook:
         ctx.textBaseline = "middle"
         shs.foreach { s =>
           ctx.save()
-          ctx.shadowColor = s.colour
+          ctx.shadowColor = col(ctx, s.colour)
           ctx.shadowBlur = s.blur
           ctx.shadowOffsetX = s.dx
           ctx.shadowOffsetY = s.dy
-          ctx.fillStyle = colour
+          ctx.fillStyle = col(ctx, colour)
           ctx.fillText(own, cx, cy)
           ctx.restore()
         }
-        ctx.fillStyle = colour
+        ctx.fillStyle = col(ctx, colour)
         ctx.fillText(own, cx, cy)
         ctx.restore()
       List(op)
@@ -393,10 +537,11 @@ object MarkerLook:
                 val bl = num(before.getPropertyValue("left"))
                 val bt = num(before.getPropertyValue("top"))
                 boxOps(x + bl, y + bt, bw, bh, before, matrix(before.getPropertyValue("transform")), 1.0)
-            val own = if e eq el then Nil else boxOps(x, y, r.width, r.height, cs, matrix(cs.getPropertyValue("transform")), 1.0)
+            val own = if e eq el then Nil
+            else boxOps(x, y, r.width, r.height, cs, matrix(cs.getPropertyValue("transform")), 1.0)
             val kids = (0 until e.children.length).toList.flatMap(i => walk(e.children(i), o))
             val text = textOps(e, x + r.width / 2, y + r.height / 2, 1.0)
-            List[Op]((ctx: dom.CanvasRenderingContext2D) => { ctx.save(); ctx.globalAlpha = ctx.globalAlpha * o }) ++
+            List[Op] { (ctx: dom.CanvasRenderingContext2D) => ctx.save(); ctx.globalAlpha = ctx.globalAlpha * o } ++
               own ++ beforeOps ++ text ++ List[Op]((ctx: dom.CanvasRenderingContext2D) => ctx.restore()) ++ kids
       val ops = walk(el, 1.0)
       Some(MarkerLook(ops, box.width, box.height))
