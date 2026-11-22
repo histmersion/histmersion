@@ -135,20 +135,21 @@ object RatchetBase:
     def measure(git: Git, commit: String): Either[String, Map[Key, Int]]
 
   final case class TreeCount(commit: String, owned: Key => Boolean, counts: Map[Key, Int]):
-    def eligible(rise: Rise): Boolean = rise.from == 0 && owned(rise.key)
+    def eligible(rise: Rise): Boolean = owned(rise.key)
 
     def proves(rise: Rise): Boolean = eligible(rise) && rise.to <= counts.getOrElse(rise.key, 0)
 
     def refusal(rise: Rise): Option[String] =
+      val at = if rise.from == 0 then "not at the base" else s"${rise.from} at the base"
       Option.when(eligible(rise))(
-        s"  ${rise.key.mkString("\t")}: not at the base -> ${rise.to} here, but the merge-base tree " +
-          s"(${commit.take(9)}) measures ${counts.getOrElse(rise.key, 0)}: a new rule's baseline may not exceed what " +
-          "the base already had; fix the new findings"
+        s"  ${rise.key.mkString("\t")}: $at -> ${rise.to} here, but the merge-base tree (${commit.take(9)}) " +
+          s"measures ${counts.getOrElse(rise.key, 0)}: a count may exceed the base's file only by what the base " +
+          "tree already had under the checker's current definition; fix the new findings"
       )
 
   object TreeCount:
     def of(inventories: List[TreeInventory], risen: List[Rise], git: Git, commit: String): Either[String, TreeCount] =
-      val asked = inventories.filter(i => risen.exists(r => r.from == 0 && i.owns(r.key)))
+      val asked = inventories.filter(i => risen.exists(r => i.owns(r.key)))
       val measured = asked.map(_.measure(git, commit))
       measured
         .collectFirst { case Left(why) => why }

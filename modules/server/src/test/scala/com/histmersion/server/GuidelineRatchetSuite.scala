@@ -49,7 +49,7 @@ class GuidelineRatchetSuite extends munit.FunSuite:
         }
         .mkString("\n")
     if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
-      val unproven = rises.filterNot((key, was, _) => was == 0 && Inventories.exists(_.owns(key.cells)))
+      val unproven = rises.filterNot((key, _, _) => Inventories.exists(_.owns(key.cells)))
       assert(unproven.isEmpty, s"not regenerated: these counts rose (fix the new findings first)\n$risen")
       val rendered = Ratchet.render(actual)
       RatchetBase.Spec.GuidelineRatchet
@@ -154,6 +154,44 @@ class GuidelineRatchetSuite extends munit.FunSuite:
     val status = "R087\tmodules/a/Old.scala\tmodules/b/New.scala\nM\tbuild.sbt\nA\tx.sh\n"
     assertEquals(Comments.renames(status), Map("modules/b/New.scala" -> "modules/a/Old.scala"))
 
+  test(
+    "the inventory stands for the merge-base tree while the branch changes no input but the checkers: the findings " +
+      "of the files the branch left alone, per key"
+  ):
+    val checker = "modules/server/src/test/scala/com/histmersion/server/ContractsSuite.scala"
+    val kept = "modules/core/src/main/scala/A.scala"
+    val repo = RatchetLimitsSuite.Repo.pilot(kept -> List("object A"), checker -> List("class ContractsSuite"))
+    repo.branch("work")
+    repo.write(checker, "class ContractsSuite", "val x = 1")
+    repo.write("tools/refactor/GuidelineInventory.scala", "object GuidelineInventory")
+    repo.write("docs/adr/0099-x.md", "# x")
+    val found = List(
+      Finding("G44", "core", kept, 1, "splice:Citekey"),
+      Finding("G44", "core", kept, 2, "value:Citekey"),
+      Finding("G44", "server", checker, 2, "value:Citekey")
+    )
+    val atBase = new Inventory.AtBase(found)
+    assertEquals(atBase.measure(repo.git, repo.head), Right(Map(List("G44", "core", "main") -> 2)))
+    assert(atBase.owns(List("G44", "core", "main")) && !atBase.owns(List("G22comment", "core", "main")))
+    repo.write("modules/core/src/main/scala/B.scala", "object B")
+    repo.write("build.sbt", "name := \"x\"")
+    val why = atBase.measure(repo.git, repo.head).swap.getOrElse("")
+    assert(why.contains("these differ: build.sbt, modules/core/src/main/scala/B.scala."), why)
+
+  test("an input of the inventory is a module's Scala source, the build or a file its policy reads"):
+    assert(Inventory.input("modules/db/src/main/scala/X.scala"))
+    assert(Inventory.input("project/Dependencies.scala") && Inventory.input("build.sbt"))
+    assert(Inventory.input("architecture/boundaries.tsv"))
+    assert(!Inventory.input("architecture/guidelines-ratchet.tsv"))
+    assert(!Inventory.input("modules/server/src/test/resources/architecture/contracts.tsv"))
+    assert(!Inventory.input("tools/refactor/GuidelineInventory.scala") && !Inventory.input("docs/adr/0001.md"))
+    assertEquals(
+      Inventory.outsideCheckers(
+        Set("modules/server/src/test/scala/com/histmersion/server/RatchetBase.scala", "modules/a/src/main/scala/B.scala")
+      ),
+      List("modules/a/src/main/scala/B.scala")
+    )
+
   test("findings are counted per rule, module and scope"):
     val findings = List(
       Finding("G44", "core", "modules/core/src/main/scala/A.scala", 3, "value:Citekey"),
@@ -228,7 +266,7 @@ object GuidelineRatchetSuite:
   final case class Key(rule: String, module: String, scope: String) derives CanEqual:
     def cells: List[String] = List(rule, module, scope)
 
-  lazy val Inventories: List[RatchetBase.TreeInventory] = List(new Comments.AtBase)
+  lazy val Inventories: List[RatchetBase.TreeInventory] = List(new Comments.AtBase, new Inventory.AtBase())
 
   final case class Finding(rule: String, module: String, path: String, line: Int, detail: String):
     def key: Key = Key(rule, module, if path.contains("/src/test/") then "test" else "main")
@@ -296,6 +334,38 @@ object GuidelineRatchetSuite:
 
     /** The findings of one run, shared by the suites that read its reports (this one, SentenceLedgerSuite). */
     lazy val findings: List[Finding] = run()
+
+    val CheckerSources: Set[String] =
+      Set("GuidelineRatchetSuite", "RatchetBase", "RatchetLimitsSuite", "ContractsSuite", "ScalaSyntax")
+        .map(name => s"modules/server/src/test/scala/com/histmersion/server/$name.scala")
+
+    def input(path: String): Boolean =
+      (path.startsWith("modules/") && path.endsWith(".scala")) || path == "build.sbt" || path.startsWith("project/") ||
+        Set("architecture/boundaries.tsv", "architecture/text-branch-exceptions.tsv")(path)
+
+    def outsideCheckers(changed: Set[String]): List[String] =
+      changed.filter(p => input(p) && !CheckerSources(p)).toList.sorted
+
+    def unchangedCounts(found: List[Finding], changed: Set[String]): Map[Key, Int] =
+      Ratchet.counts(found.filterNot(f => changed(f.path)))
+
+    final class AtBase(found: => List[Finding] = findings) extends RatchetBase.TreeInventory:
+      val file: String = RatchetFile.toString
+
+      def owns(key: RatchetBase.Key): Boolean = !key.headOption.contains(Comments.Rule)
+
+      def measure(git: RatchetBase.Git, commit: String): Either[String, Map[RatchetBase.Key, Int]] =
+        val changed = Comments.Since(git, commit).changed
+        outsideCheckers(changed) match
+          case Nil   => Right(unchangedCounts(found, changed).map((k, n) => k.cells -> n))
+          case paths =>
+            val more = if paths.size > 20 then s" and ${paths.size - 20} more" else ""
+            Left(
+              s"the guideline inventory reads the SemanticDB of the working tree, so it stands for the merge-base " +
+                s"tree (${commit.take(9)}) only while the branch changes no input but the checkers' own files; " +
+                s"these differ: ${paths.take(20).mkString(", ")}$more. Land a checker's redefinition apart from code " +
+                "changes"
+            )
 
     /** The directories sbt writes the SemanticDB to (`meta`, `test-meta` beside each module's classes) under the
       * `scala-<version>` of the build's Scala. Scalafix is told them, because by default it reads the first
