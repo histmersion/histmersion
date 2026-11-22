@@ -31,5 +31,8 @@ class MarkerMotionSuite extends munit.FunSuite:
     assertEquals(MarkerMotion.motion(Set("hd-fade-in"), 0, 0, 0, still = false).alpha, 0.0)
 
   test("still motion draws the end at once: nothing moves, what leaves is gone"):
-    assertEquals(MarkerMotion.motion(Set("hd-cluster-move"), 30, 30, 0, still = true), MarkerMotion.Motion(0, 0, 1, 1, false))
+    assertEquals(
+      MarkerMotion.motion(Set("hd-cluster-move"), 30, 30, 0, still = true),
+      MarkerMotion.Motion(0, 0, 1, 1, false)
+    )
     assertEquals(MarkerMotion.motion(Set("hd-fade-out"), 0, 0, 0, still = true).alpha, 0.0)

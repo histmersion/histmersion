@@ -286,6 +286,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     }
 
   private def template(el: dom.Element): Option[MarkerLook] =
+    if templates.size > 500 then templates.clear()
     templates.getOrElseUpdate(
       MarkerLook.templateKey(el), {
         val first = snapshot(el, MarkerLook.Sentinels)

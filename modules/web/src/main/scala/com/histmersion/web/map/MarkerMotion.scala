@@ -26,7 +26,8 @@ object MarkerMotion:
 
   def motion(present: Set[String], mx: Double, my: Double, elapsed: Double, still: Boolean): Motion =
     def p(ms: Double): Double = math.max(0.0, math.min(1.0, elapsed / ms))
-    if still then Motion(0, 0, if present("hd-fade-out") || present("hd-exiting") then 0.0 else 1.0, 1.0, running = false)
+    if still then
+      Motion(0, 0, if present("hd-fade-out") || present("hd-exiting") then 0.0 else 1.0, 1.0, running = false)
     else
       var dx = 0.0
       var dy = 0.0
