@@ -16,7 +16,7 @@
 
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { engineName, isChromium, launch, virtualGpu, wantsGpu } from './engine.mjs';
+import { engineName, frameMode, isChromium, launch, wantsGpu } from './engine.mjs';
 import { inputToUpdate, memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
 import { eventsIn, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
@@ -98,17 +98,7 @@ let mainThreadOnly = false;
 
 before(async () => {
   browser = await launch();
-  const probe = await browser.newPage();
-  const renderer = await probe.evaluate(() => {
-    const gl = document.createElement('canvas').getContext('webgl2') ?? document.createElement('canvas').getContext('webgl');
-    const ext = gl?.getExtension('WEBGL_debug_renderer_info');
-    return (ext && gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) || gl?.getParameter(gl.RENDERER) || '';
-  });
-  await probe.close();
-  const asked = process.env.HISTMERSION_BUDGETS_VIRTUAL_GPU === '1';
-  mainThreadOnly = asked && isChromium && virtualGpu(renderer);
-  console.log(`# budgets: ${mainThreadOnly ? 'main-thread figures held, frame-bound figures reported'
-    : 'every figure held'} (renderer "${renderer || 'unknown'}"${asked && !mainThreadOnly ? ', not a virtual GPU' : ''})`);
+  mainThreadOnly = await frameMode(browser, 'budgets', 'frame-bound figures');
 });
 after(async () => { await browser?.close(); });
 

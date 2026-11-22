@@ -397,6 +397,8 @@ jobs:
           npx playwright install chromium
       - name: browser tests (the files of `npm run test:browser` but the `budgets:` tests; a skipped test fails, G125)
         working-directory: modules/web
+        env:
+          HISTMERSION_VIRTUAL_GPU: "1"
         run: |
           files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
           report="$RUNNER_TEMP/browser-junit.xml"
@@ -493,7 +495,7 @@ jobs:
         timeout-minutes: 40
         working-directory: modules/web
         env:
-          HISTMERSION_BUDGETS_VIRTUAL_GPU: "1"
+          HISTMERSION_VIRTUAL_GPU: "1"
         run: |
           files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
           HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-force-exit --test-name-pattern='^budgets: ' \
