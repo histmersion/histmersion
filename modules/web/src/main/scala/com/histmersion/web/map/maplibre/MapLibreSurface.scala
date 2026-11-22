@@ -128,7 +128,10 @@ final class MapLibreSurface(
   private var resizes = 0
   override def resizeCount: MapSurface.ResizeCount = MapSurface.ResizeCount(resizes)
   def isMoving: Boolean = gl.isMoving()
-  def isDrawn: Boolean = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
+  private var idleSinceChange = false
+  List("movestart", "dataloading").foreach(e => gl.on(e, (_: GlEvent) => idleSinceChange = false))
+  gl.on("idle", (_: GlEvent) => idleSinceChange = true)
+  def isDrawn: Boolean = idleSinceChange && !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
   def capabilities: Capabilities = caps
 
   // the names' language of the base map drawn now
