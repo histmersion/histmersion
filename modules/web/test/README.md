@@ -66,6 +66,15 @@ platform. The tests reach the map through `window.histmersionMap` (`web/MapHandl
 the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names, a
 base-map layer's visibility and how many of its features are drawn (`layerVisibility`, `layerDrawn`: the
 sea's depth, the contours inside the Argolid focus region).
+The map's point markers are reached the same way, never through their elements, so the tests hold whatever
+draws them (row 31 moves them from DOM elements to a canvas): `markers(spec)` lists each drawn marker — its pane,
+centre (`x`/`y` in the map, `clientX`/`clientY` for the pointer), box, stacking, flags (its kind and look:
+`hd-cluster`, `hd-ev--approximate`, `hd-cluster-ghost`, …), id, citekey, accessible name, data, bubble count,
+fill, edge, opacity, and with `detail: true` its drawn shape (outline, glyph, a bubble's rings and count);
+`markerAt([x, y])` is the marker the pointer meets there, `spots(panes)` the markers' centres frame by frame,
+`markersIn(panes)` how many are drawn, `spiderLegs()` the legs of a fanned-out bubble. A spec picks markers by
+`flag` and `not` (a name or a list), `id`, `ck`, `pane`, `ghost`, `offscreen` and `data`; `markers.mjs` holds
+the helpers that wait for, hover and click them with the real pointer.
 `test:browser` runs the three files one at a time (`--test-concurrency=1`): side by side they wrote the same
 settings file at once and measured the budgets while two other browsers were busy; the budgets and the soak
 test take ~3 minutes of it (100 soak rounds). In CI the `budgets: …` tests run in their own job (`macos-budgets`,

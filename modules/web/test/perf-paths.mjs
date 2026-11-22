@@ -26,7 +26,7 @@ export async function firstRender(page, url, { markers = true } = {}) {
   const at = (fn, arg) => valueOf(page, fn, arg);
   const mapMs = await at(() => window.__testMap && performance.now());
   const markersMs = markers
-    ? await at(() => document.querySelector('.hd-marker') && performance.now()) : null;
+    ? await at(() => window.__testMap?.markersIn() > 0 && performance.now()) : null;
   const listMs = await at(() => document.querySelector('#list .hit, #list .empty') && performance.now());
   const fcp = await page.evaluate(() => performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? null);
   const lt = await page.evaluate(() => window.__perf.longTasks);
@@ -291,7 +291,7 @@ export async function clusterZoom(page, baseURL, { at = [40, 22], from = 4, zoom
   await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, from]);
   await settled(page);
   const start = await page.evaluate(() => ({ held: window.__testMap.points(),
-    drawn: document.querySelectorAll('#map .hd-pane--events .hd-marker, #map .hd-pane--markers .hd-marker').length }));
+    drawn: window.__testMap.markersIn(['events', 'markers']) }));
   const animated = [];
   const m = await measure(page, async () => {
     for (const z of zooms) {
@@ -367,7 +367,7 @@ export async function fullLoadView(page, baseURL, { motion = null, at = [40, 24]
   await settled(page);
   await page.waitForTimeout(300);
   return page.evaluate(() => ({ held: window.__testMap.points(),
-    drawn: document.querySelectorAll('#map .hd-pane--markers .hd-marker, #map .hd-pane--events .hd-marker, #map .hd-pane--sites .hd-marker').length }));
+    drawn: window.__testMap.markersIn(['markers', 'events', 'sites']) }));
 }
 
 /** One zoom to `zoom`, traced frame by frame: asked through the app (`setZoom`, the cluster regroup's path) or
@@ -381,7 +381,6 @@ export async function fullLoadView(page, baseURL, { motion = null, at = [40, 24]
 export async function motionTrace(page, zoom, { button = null } = {}) {
   const traced = page.evaluate(([z, viaButton]) => new Promise(resolve => {
     const map = window.__testMap, a0 = map.clusterAnimations();
-    const sel = '#map .hd-pane--markers .hd-marker, #map .hd-pane--events .hd-marker, #map .hd-pane--sites .hd-marker';
     const out = { cameraFrames: 0, motionFrames: 0, maxMoved: 0, ghosts: 0, longestFrameMs: 0, frames: 0 };
     let prev = new Map(), tPrev = performance.now(), ended = false, tEnd = 0, camPrev = '';
     const start = performance.now();
@@ -389,11 +388,12 @@ export async function motionTrace(page, zoom, { button = null } = {}) {
     const f = () => {
       const now = performance.now(), cur = new Map();
       let moved = 0;
-      for (const e of document.querySelectorAll(sel)) {
-        if (e.classList.contains('is-offscreen')) continue;
-        const b = e.getBoundingClientRect(), c = [b.left + b.width / 2, b.top + b.height / 2];
-        cur.set(e, c);
-        const p = prev.get(e);
+      const spots = map.spots(['markers', 'events', 'sites']);
+      for (const s of spots) {
+        if (s.offscreen) continue;
+        const c = [s.x, s.y];
+        cur.set(s.serial, c);
+        const p = prev.get(s.serial);
         if (p && Math.hypot(p[0] - c[0], p[1] - c[1]) > 0.5) moved++;
       }
       // the camera as it stands: a frame on which it changed (an ease, or a jump's one frame) moves every marker
@@ -404,7 +404,7 @@ export async function motionTrace(page, zoom, { button = null } = {}) {
       if (cam !== camPrev) out.cameraFrames++;
       else if (still && ended && moved > 0) { out.motionFrames++; out.maxMoved = Math.max(out.maxMoved, moved); }
       camPrev = cam;
-      out.ghosts = Math.max(out.ghosts, document.querySelectorAll('.hd-cluster-ghost').length);
+      out.ghosts = Math.max(out.ghosts, spots.filter(s => s.ghost).length);
       prev = cur; tPrev = now;
       if (!ended || now - tEnd < 600) requestAnimationFrame(f);
       else resolve({ ...out, animated: map.clusterAnimations() > a0, reached: Math.round(map.getZoom() * 100) / 100 });

@@ -117,11 +117,8 @@ async function scrollWindowTo(page, text, { offset = 12 } = {}) {
 
 /** The visible marker whose label or title matches `re`: its centre. */
 async function marker(page, re) {
-  const all = await page.evaluate(() => [...document.querySelectorAll('.hd-pane .hd-marker')].map(e => {
-    const r = e.getBoundingClientRect();
-    const s = e.querySelector('[aria-label],[title]') || e;
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2, label: s.getAttribute('aria-label') || s.getAttribute('title') || '' };
-  }));
+  const all = await page.evaluate(() => window.__testMap.markers({ every: true }).map(m =>
+    ({ x: m.clientX, y: m.clientY, label: m.label || m.title || '' })));
   const hit = all.find(m => re.test(m.label));
   assert.ok(hit, `no marker matching ${re}: ${all.map(m => m.label).join(' | ')}`);
   return hit;

@@ -204,7 +204,7 @@ export async function memory(page, cdp) {
     const map = window.__testMap;
     const app = typeof window.histmersionDiagnostics === 'function' ? window.histmersionDiagnostics() : null;
     return { layers: app?.map?.markers ?? 0, clustered: map ? map.points() : 0,
-      shapes: map ? map.shapes('polities').length : 0, markers: document.querySelectorAll('.hd-marker').length,
+      shapes: map ? map.shapes('polities').length : 0, markers: map ? map.markersIn() : 0,
       app: app ? JSON.parse(JSON.stringify(app)) : null };
   });
   return {
@@ -231,7 +231,7 @@ async function memoryWithoutCdp(page) {
     const map = window.__testMap;
     const app = typeof window.histmersionDiagnostics === 'function' ? window.histmersionDiagnostics() : null;
     return { nodes, documents, layers: app?.map?.markers ?? 0, clustered: map ? map.points() : 0,
-      shapes: map ? map.shapes('polities').length : 0, markers: document.querySelectorAll('.hd-marker').length,
+      shapes: map ? map.shapes('polities').length : 0, markers: map ? map.markersIn() : 0,
       app: app ? JSON.parse(JSON.stringify(app)) : null };
   });
   return {

@@ -8,6 +8,7 @@ import { approvals, goal as researchGoal, routeResearch } from './research-fixtu
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
+import { clickMarker, hoverMarker, marks, waitBubble, waitCount, waitGone, waitMarker } from './markers.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -63,16 +64,14 @@ async function withPage(viewport, run, { source, outside, setup, path } = {}) {
 }
 
 // A point is in the map's one cluster group, which re-places its markers after a view change (and may
-// animate them there): wait until the marker drawn for `selector` stands at its own point.
-async function settledAt(page, selector, lat, lon) {
-  await page.waitForFunction(([sel, la, lo]) => {
-    const el = document.querySelector(sel);
-    if (!el) return false;
-    const icon = el.closest('.hd-marker') || el;
-    const r = icon.getBoundingClientRect(), m = document.getElementById('map').getBoundingClientRect();
+// animate them there): wait until the marker `spec` picks stands at its own point.
+async function settledAt(page, spec, lat, lon) {
+  await page.waitForFunction(([s, la, lo]) => {
+    const m = window.__testMap.markers(s)[0];
+    if (!m) return false;
     const p = window.__testMap.latLngToContainerPoint([la, lo]);
-    return Math.abs(r.left + r.width / 2 - (m.left + p.x)) < 2 && Math.abs(r.top + r.height / 2 - (m.top + p.y)) < 2;
-  }, [selector, lat, lon]);
+    return Math.abs(m.x - p.x) < 2 && Math.abs(m.y - p.y) < 2;
+  }, [spec, lat, lon]);
 }
 
 // A marker stands still: the same element at the same place for `ms`, the map not moving and the list not
@@ -81,27 +80,27 @@ async function settledAt(page, selector, lat, lon) {
 // change while a cold server answers the first requests — the base map's style, the list) or is drawn
 // anew (the events feed is asked again for each view) drops its pending card, and a pointer that does not
 // move sends no second `mouseover`, so the card never comes.
-async function idleMarker(page, selector, ms = 400) {
-  await page.waitForFunction(([sel, ms]) => {
-    const el = document.querySelector(sel);
+async function idleMarker(page, spec, ms = 400) {
+  await page.waitForFunction(([s, ms]) => {
+    const m = window.__testMap.markers(s)[0];
     const S = (window.__idleMarker ??= {});
-    const r = el?.getBoundingClientRect();
-    const at = r ? `${Math.round(r.left)},${Math.round(r.top)}` : null;
-    const busy = !el || window.__testMap.isMoving() || !!document.querySelector('#count.is-loading');
+    const sel = JSON.stringify(s), el = m?.serial;
+    const at = m ? `${Math.round(m.x)},${Math.round(m.y)}` : null;
+    const busy = !m || window.__testMap.isMoving() || !!document.querySelector('#count.is-loading');
     if (busy || S.sel !== sel || S.el !== el || S.at !== at) {
       Object.assign(S, { sel, el, at, since: performance.now() });
       return false;
     }
     return performance.now() - S.since >= ms;
-  }, [selector, ms], { polling: 50 });
+  }, [spec, ms], { polling: 50 });
 }
 
-// Hover the marker `selector` once it stands still, until `card` shows (a marker re-drawn after the hover
+// Hover the marker `spec` picks once it stands still, until `card` shows (a marker re-drawn after the hover
 // takes its pending card with it: the pointer is moved off and back, at most three times).
-async function hoverForCard(page, selector, card) {
+async function hoverForCard(page, spec, card) {
   for (let attempt = 1; ; attempt++) {
-    await idleMarker(page, selector);
-    await page.locator(selector).hover();
+    await idleMarker(page, spec);
+    await hoverMarker(page, spec);
     try {
       await page.locator(card).first().waitFor({ timeout: 5000 });
       return;
@@ -512,8 +511,8 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
     await page.waitForFunction(() => window.__testMap.shapes('polities').includes('zz_realm'));
-    await page.waitForSelector('.hd-site-marker');
-    await page.waitForSelector('.hd-find');
+    await waitMarker(page, { flag: 'hd-site-marker' });
+    await waitMarker(page, { flag: 'hd-find' });
     const map = await page.locator('#map').boundingBox();
     const at = async (lat, lon) => {
       const p = await page.evaluate(([la, lo]) => window.__testMap.latLngToContainerPoint([la, lo]), [lat, lon]);
@@ -522,13 +521,13 @@ test('a dot inside a region opens the dot, not the region, whatever was drawn la
     // what the pointer meets there: a marker (its class), else the map's canvas and the shapes under it
     const hit = async (lat, lon) => {
       const { x, y } = await at(lat, lon);
-      return page.evaluate(([x, y, la, lo]) => {
+      return page.evaluate(([x, y, la, lo, cx, cy]) => {
+        const m = window.__testMap.markerAt([cx, cy]);
+        if (m) return m.flags.includes('hd-point-wrap--diamond') ? 'finding' : m.flags.join(' ');
         const el = document.elementFromPoint(x, y);
         if (!el) return 'nothing';
-        if (el.closest('.hd-point-wrap--diamond')) return 'finding';
-        if (el.closest('.hd-marker')) return el.getAttribute('class') || el.tagName;
         return el.tagName === 'CANVAS' ? `canvas ${window.__testMap.shapesAt([la, lo]).join(' ')}` : el.getAttribute('class') || el.tagName;
-      }, [x, y, lat, lon]);
+      }, [x, y, lat, lon, x - map.x, y - map.y]);
     };
     const placeInHash = () => new URLSearchParams(new URL(page.url()).hash.slice(1)).getAll('placeId');
     const check = async () => {
@@ -650,11 +649,9 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.73, 22.75], 8, { animate: false }));
-    const marker = page.locator('.hd-site-marker').first();
-    await marker.waitFor();
-    await settledAt(page, '.hd-site-marker', 37.73, 22.75);
-    const box = await marker.boundingBox();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await waitMarker(page, { flag: 'hd-site-marker' });
+    await settledAt(page, { flag: 'hd-site-marker' }, 37.73, 22.75);
+    const siteMark = await hoverMarker(page, { flag: 'hd-site-marker' });
     const img = page.locator('.cite-tooltip .cite-tip-media img.cite-tip-thumb');
     await img.waitFor();
     assert.equal(await img.getAttribute('src'), `/media/${uid}/thumb`, 'the local thumbnail, never the provider');
@@ -673,7 +670,7 @@ test('#1446: hovering a site with a picture shows the image and its credit', asy
     // the card pinned (a click on its site; a hover card lets the pointer through), a click on its picture opens
     // the stored picture full size, its credit and licence under it
     await page.route(`**/media/${uid}/file`, route => route.fulfill({ body: png, contentType: 'image/png' }));
-    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.click(siteMark.clientX, siteMark.clientY);
     const pinned = page.locator('.cite-tooltip.is-pinned img.cite-tip-thumb');
     await pinned.waitFor();
     await pinned.click();
@@ -727,29 +724,25 @@ test('#1449: event markers show their kind icon, the tier, a card with sources a
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.3, 32.5], 7, { animate: false }));
-    const battle = page.locator('.hd-ev[data-id="zz_battle"]');
-    await battle.waitFor();
+    const battle = await waitMarker(page, { flag: 'hd-ev', id: 'zz_battle' });
     // the kind's icon is drawn inside the marker, before any hover
-    assert.equal(await battle.locator('svg.glyph').count(), 1);
-    assert.ok(await battle.evaluate(el => el.classList.contains('hd-ev--attested') && el.classList.contains('hd-ev--human')));
-    const erup = page.locator('.hd-ev[data-id="zz_eruption"]');
-    assert.ok(await erup.evaluate(el => el.classList.contains('hd-ev--catalogue') && el.classList.contains('hd-ev--natural')));
+    assert.equal(battle.glyphs, 1);
+    assert.ok(battle.flags.includes('hd-ev--attested') && battle.flags.includes('hd-ev--human'));
+    const erup = await waitMarker(page, { flag: 'hd-ev', id: 'zz_eruption' });
+    assert.ok(erup.flags.includes('hd-ev--catalogue') && erup.flags.includes('hd-ev--natural'));
     // the tiers look different: filled vs outlined (dashed)
-    const styles = await page.evaluate(() => ['zz_battle', 'zz_eruption'].map(id => {
-      const s = getComputedStyle(document.querySelector(`.hd-ev[data-id="${id}"]`));
-      return { border: s.borderStyle, bg: s.backgroundColor };
-    }));
+    const styles = [battle, erup].map(m => ({ border: m.border, bg: m.fill }));
     assert.equal(styles[0].border, 'solid');
     assert.equal(styles[1].border, 'dashed');
     assert.notEqual(styles[0].bg, styles[1].bg);
     assert.ok(asked.some(u => u.pathname.startsWith('/api/tiles/events/') && u.searchParams.get('context') === 'true'),
       'the events are the tiles of the view');
     // the attested event's card lists its source (a source link) and the article citing it
-    await hoverForCard(page, '.hd-ev[data-id="zz_battle"]', '.cite-tooltip .section-sources a[data-ck="zz_src2020"]');
+    await hoverForCard(page, { flag: 'hd-ev', id: 'zz_battle' }, '.cite-tooltip .section-sources a[data-ck="zz_src2020"]');
     assert.match(await page.locator('.cite-tooltip').innerText(), /Zz article/);
     // the catalogue event's card names the catalogue and its lead, and is marked as such
     await page.mouse.move(5, 5);
-    await hoverForCard(page, '.hd-ev[data-id="zz_eruption"]', '.cite-tooltip .section-leads');
+    await hoverForCard(page, { flag: 'hd-ev', id: 'zz_eruption' }, '.cite-tooltip .section-leads');
     const card = await page.locator('.cite-tooltip').innerText();
     assert.match(card, /catalogue only/);
     assert.match(card, /No source in the corpus discusses this VEI 6 eruption/);
@@ -795,20 +788,15 @@ test('P0: approximate events are faded, imprecise ones are not drawn, the card s
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.0, 33.5], 7, { animate: false }));
-    const precise = page.locator('.hd-ev[data-id="zz_precise"]');
-    const approx = page.locator('.hd-ev[data-id="zz_approx"]');
-    await precise.waitFor();
-    await approx.waitFor();
-    assert.equal(await page.locator('.hd-ev[data-id="zz_imprecise"]').count(), 0, 'an imprecise event is not drawn at a year');
-    assert.ok(await approx.evaluate(el => el.classList.contains('hd-ev--approximate')));
-    assert.ok(!(await precise.evaluate(el => el.classList.contains('hd-ev--approximate'))));
-    const look = await page.evaluate(() => ['zz_precise', 'zz_approx'].map(id => {
-      const s = getComputedStyle(document.querySelector(`.hd-ev[data-id="${id}"]`));
-      return { opacity: Number(s.opacity), border: s.borderStyle };
-    }));
+    const precise = await waitMarker(page, { flag: 'hd-ev', id: 'zz_precise' });
+    const approx = await waitMarker(page, { flag: 'hd-ev', id: 'zz_approx' });
+    assert.equal((await marks(page, { flag: 'hd-ev', id: 'zz_imprecise' })).length, 0, 'an imprecise event is not drawn at a year');
+    assert.ok(approx.flags.includes('hd-ev--approximate'));
+    assert.ok(!precise.flags.includes('hd-ev--approximate'));
+    const look = [precise, approx].map(m => ({ opacity: m.opacity, border: m.border }));
     assert.ok(look[1].opacity < look[0].opacity, `faded: ${JSON.stringify(look)}`);
     assert.equal(look[1].border, 'dotted');
-    await hoverForCard(page, '.hd-ev[data-id="zz_approx"]', '.cite-tooltip .cite-tip-title');
+    await hoverForCard(page, { flag: 'hd-ev', id: 'zz_approx' }, '.cite-tooltip .cite-tip-title');
     const card = await page.locator('.cite-tooltip').innerText();
     assert.match(card, /250 CE ± 2500 \(tephrochronology\)/);
     assert.match(card, /imprecise date — listed, not drawn on the map at a year/);
@@ -831,19 +819,15 @@ test('#1449: a site is a period-coloured circle with its type icon (white on a h
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32.5], 7, { animate: false }));
-    const fort = page.locator('.hd-site-icon[data-site-type="fortification"]');
-    await fort.waitFor();
-    await settledAt(page, '.hd-site-icon[data-site-type="fortification"]', 37.5, 32);
+    const fortSpec = { flag: 'hd-site-icon', data: { siteType: 'fortification' } };
+    await waitMarker(page, fortSpec);
+    await settledAt(page, fortSpec, 37.5, 32);
     await page.waitForTimeout(600);   // the fill's colour transition (a span change re-colours in place)
-    assert.equal(await fort.locator('svg.glyph').count(), 1);
+    const fort = (await marks(page, fortSpec))[0];
+    assert.equal(fort.glyphs, 1);
     // the badge is the period colour (--c), a circle with a thin dark edge; the icon white over a dark halo
-    const look = await fort.evaluate(el => {
-      const s = getComputedStyle(el);
-      return { bg: s.backgroundColor, radius: s.borderRadius, border: s.borderTopWidth, c: el.style.getPropertyValue('--c').trim(),
-        ink: getComputedStyle(el.querySelector('.glyph-ink')).stroke, halo: getComputedStyle(el.querySelector('.glyph-halo')).stroke,
-        haloW: parseFloat(getComputedStyle(el.querySelector('.glyph-halo')).strokeWidth),
-        inkW: parseFloat(getComputedStyle(el.querySelector('.glyph-ink')).strokeWidth) };
-    });
+    const look = { bg: fort.fill, radius: fort.radius, border: fort.edge, c: fort.colour,
+      ink: fort.ink.colour, halo: fort.halo.colour, haloW: fort.halo.width, inkW: fort.ink.width };
     const probe = await page.evaluate(c => { const d = document.createElement('div'); d.style.color = c; document.body.append(d);
       const v = getComputedStyle(d).color; d.remove(); return v; }, look.c);
     assert.equal(look.bg, probe, 'filled with the period colour');
@@ -853,15 +837,14 @@ test('#1449: a site is a period-coloured circle with its type icon (white on a h
     assert.match(look.halo, /rgba\(0, 0, 0, 0\.5/, 'over a dark halo');
     assert.ok(look.haloW > look.inkW, 'the halo is wider than the ink');
     // the untyped site: the same circle, with the exclamation mark
-    const plain = page.locator('.hd-site-marker:not([data-site-type])');
-    await plain.waitFor();
-    assert.equal(await plain.evaluate(el => getComputedStyle(el).borderRadius), '50%');
-    assert.equal(await plain.locator('svg.glyph--badge').count(), 1);
+    const plain = await waitMarker(page, { flag: 'hd-site-marker', data: { siteType: null } });
+    assert.equal(plain.radius, '50%');
+    assert.equal(plain.badges, 1);
     // hovering the icon shows the place's card, as the dot does
     await page.route('**/api/places/zz_fort?**', route => route.fulfill({ json: {
       place: { id: 'zz_fort', label: 'Zz fort', kind: 'site', periodStart: -1400, periodEnd: -1100, source: null, names: 'Zz fort' },
       geometry: '{"type":"Point","coordinates":[32,37.5]}', parents: [], children: [], findings: 0, asOf: null, media: [] } }));
-    await fort.hover();
+    await hoverMarker(page, fortSpec);
     await page.waitForSelector('.cite-tooltip .cite-tip-title');
     assert.match(await page.locator('.cite-tooltip .cite-tip-title').innerText(), /Zz fort/);
   });
@@ -892,13 +875,13 @@ test('hovering a finding dot shows its source card, not the citekey', async () =
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.hd-marker.hd-point-wrap--diamond').length >= 2);
+    await page.waitForFunction(() => window.__testMap.markers({ flag: 'hd-point-wrap--diamond' }).length >= 2);
     await page.waitForTimeout(800);   // the dots grow in (hd-entering) before they can be hit
     const markerAt = (lat, lon) => page.evaluate(([la, lo]) => {
       const p = window.__testMap.latLngToContainerPoint([la, lo]);
       const m = document.getElementById('map').getBoundingClientRect();
-      const el = document.elementFromPoint(m.left + p.x, m.top + p.y)?.closest('.hd-marker');
-      return el ? { x: m.left + p.x, y: m.top + p.y, title: el.getAttribute('title'), aria: el.getAttribute('aria-label') } : null;
+      const hit = window.__testMap.markerAt([p.x, p.y]);
+      return hit ? { x: m.left + p.x, y: m.top + p.y, title: hit.title, aria: hit.label } : null;
     }, [lat, lon]);
     const single = await markerAt(37, 31);
     assert.ok(single, 'the single dot is under its point');
@@ -987,8 +970,8 @@ test('cards stay inside the viewport: near an edge, taller than it when pinned, 
     // put the first event 14 px under the map's top edge
     await page.evaluate(([top]) => { const m = window.__testMap; m.setView([38.0, 32.0], 7, { animate: false });
       m.panBy([0, m.getSize().y / 2 - 14], { animate: false }); }, [mapTop]);
-    await page.locator('.hd-ev[data-id="zz_top"]').waitFor();
-    await settledAt(page, '.hd-ev[data-id="zz_top"]', 38.0, 32.0);
+    await waitMarker(page, { flag: 'hd-ev', id: 'zz_top' });
+    await settledAt(page, { flag: 'hd-ev', id: 'zz_top' }, 38.0, 32.0);
     const top = await pagePoint(page, 38.0, 32.0);
     await page.mouse.move(top.x, top.y, { steps: 2 });
     await page.waitForSelector('.cite-tooltip .section-sources');
@@ -1025,8 +1008,8 @@ test('cards stay inside the viewport: near an edge, taller than it when pinned, 
     // bottom: re-placed inside the viewport
     await page.evaluate(() => { const m = window.__testMap; m.setView([36.6, 33.4], 7, { animate: false });
       m.panBy([0, -(m.getSize().y / 2 - 30)], { animate: false }); });
-    await page.locator('.hd-ev[data-id="zz_low"]').waitFor();
-    await settledAt(page, '.hd-ev[data-id="zz_low"]', 36.6, 33.4);
+    await waitMarker(page, { flag: 'hd-ev', id: 'zz_low' });
+    await settledAt(page, { flag: 'hd-ev', id: 'zz_low' }, 36.6, 33.4);
     const low = await pagePoint(page, 36.6, 33.4);
     await page.mouse.move(5, 5);
     await page.mouse.move(low.x, low.y, { steps: 2 });
@@ -1093,9 +1076,9 @@ test('every card kind leads with its icon: source, site, region, event, picture'
       });
     };
     const icons = {
-      source: await iconOf(37, 31, '.hd-find'),
-      site: await iconOf(37.5, 32, '.hd-site-marker'),
-      event: await iconOf(38.3, 33.2, '.hd-ev[data-id="zz_b"]'),
+      source: await iconOf(37, 31, { flag: 'hd-find' }),
+      site: await iconOf(37.5, 32, { flag: 'hd-site-marker' }),
+      event: await iconOf(38.3, 33.2, { flag: 'hd-ev', id: 'zz_b' }),
     };
     // the region: hovered where no point is
     await page.mouse.move(5, 5);
@@ -1115,7 +1098,7 @@ test('every card kind leads with its icon: source, site, region, event, picture'
     assert.equal(new Set(Object.values(icons).map(v => Math.round(v.w))).size, 1, 'one size');
     // the picture's popup leads with the picture icon
     await page.mouse.move(5, 5);
-    await settledAt(page, '.hd-media-dot', 36.5, 33.3);
+    await settledAt(page, { flag: 'hd-media-dot' }, 36.5, 33.3);
     const pic = await pagePoint(page, 36.5, 33.3);
     await page.mouse.click(pic.x, pic.y);
     await page.waitForSelector('.hd-popup-content .media-popup-title .cite-tip-icon svg.glyph');
@@ -1140,6 +1123,7 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     evGeo(`zz_g${i}`, `Zz grid ${i}`, 'earthquake', 20 + Math.floor(i / 71), -10 + (i % 71)));
   let feed = { unplaced: 0, events: few };
   await withPage({ width: 1920, height: 1080 }, async page => {
+    trackRequests(page);
     await page.route('**/api/findings**', route => route.fulfill({ json: [] }));
     await page.route('**/api/places/geo**', route => route.fulfill({ json: { type: 'FeatureCollection', features: [] } }));
     await page.route('**/api/events/geo**', route => route.fulfill({ json: feed }));
@@ -1150,11 +1134,10 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
+    await page.waitForFunction(() => window.__testMap.markers({ flag: 'hd-cluster' })[0]?.count === 3);
     const shape = await page.evaluate(() => {
-      const b = document.querySelector('.hd-marker .hd-cluster');
-      return { events: b.classList.contains('hd-cluster--events'), says: b.getAttribute('aria-label'),
-        rects: b.querySelectorAll('svg rect').length, circles: b.querySelectorAll('svg circle').length };
+      const b = window.__testMap.markers({ flag: 'hd-cluster' })[0];
+      return { events: b.flags.includes('hd-cluster--events'), says: b.label, rects: b.rects, circles: b.circles };
     });
     assert.deepEqual(shape, { events: true, says: '3 events', rects: 4, circles: 0 });
     // does the next zoom animate the bubbles? The cluster layer counts the zooms it animated
@@ -1167,16 +1150,19 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     const drawn = () => page.evaluate(() => new Promise(resolve => {
       let last = -1, same = 0;
       const tick = () => {
-        const n = document.querySelectorAll('#map .hd-pane--events .hd-marker, #map .hd-pane--markers .hd-marker').length;
+        const n = window.__testMap.markersIn(['events', 'markers']);
         if (n === last) same++; else { same = 0; last = n; }
         if (same >= 10) resolve(n); else requestAnimationFrame(tick);
       };
       tick();
     }));
     // the points of the view's tiles held: at least `n` (a view holds what its tiles hold)
-    const showing = async (events, n, at, zoom) => {
+    const showing = async (events, n, at, zoom, { fresh = false } = {}) => {
       feed = { unplaced: 0, events };
+      const before = await page.evaluate(() => window.__testMap.points());
       await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, zoom]);
+      if (fresh) await page.waitForFunction(b => window.__testMap.points() !== b, before, { timeout: 15000 });
+      await quiet(page);
       await page.waitForFunction(k => window.__testMap.points() >= k, n, { timeout: 15000 });
       return drawn();
     };
@@ -1186,7 +1172,7 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     assert.ok(fewDrawn < 200, `a few dozen markers for 1 203 points: ${fewDrawn}`);
     assert.equal(await zoomAnimates(5), true, '1 203 points, a few dozen markers: the zoom animates');
     // over a thousand markers drawn: drawn at once
-    const manyDrawn = await showing(grid, 1000, [38, 25], 6);
+    const manyDrawn = await showing(grid, 1000, [38, 25], 6, { fresh: true });
     assert.ok(manyDrawn > 1000, `over a thousand markers drawn: ${manyDrawn}`);
     assert.equal(await zoomAnimates(7), false, `${manyDrawn} markers: the zoom does not animate`);
     // back to a few: animated again
@@ -1206,13 +1192,12 @@ test('a zoom slides the points of a split bubble out and flies merging points in
   // leaving (a ghost flying into a bubble)
   const trace = (page, z) => page.evaluate((zoom) => new Promise(resolve => {
     const map = window.__testMap, frames = [], animations = map.clusterAnimations();
-    const centre = e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
     map.once('zoomend', () => {
       const t0 = performance.now();
       const f = () => {
-        frames.push([...document.querySelectorAll('.hd-marker:not(.is-offscreen)')]
-          .filter(e => e.querySelector('.hd-find, .hd-cluster'))
-          .map(e => ({ bubble: !!e.querySelector('.hd-cluster'), ghost: e.classList.contains('hd-cluster-ghost'), at: centre(e) })));
+        frames.push(map.markers({ offscreen: false })
+          .filter(m => m.flags.includes('hd-find') || m.flags.includes('hd-cluster'))
+          .map(m => ({ bubble: m.flags.includes('hd-cluster'), ghost: m.flags.includes('hd-cluster-ghost'), at: [m.clientX, m.clientY] })));
         if (performance.now() - t0 < 450) requestAnimationFrame(f);
         else resolve({ frames, animated: map.clusterAnimations() > animations });
       };
@@ -1229,8 +1214,8 @@ test('a zoom slides the points of a split bubble out and flies merging points in
       await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
       await page.waitForFunction(() => window.__testMap);
       await page.evaluate(() => window.__testMap.setView([37.55, 32.03], 7, { animate: false }));
-      await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3', null, { timeout: 15000 });
-      await idleMarker(page, '.hd-marker .hd-cluster');
+      await page.waitForFunction(() => window.__testMap.markers({ flag: 'hd-cluster' })[0]?.count === 3, null, { timeout: 15000 });
+      await idleMarker(page, { flag: 'hd-cluster' });
       // the split: three points out of one bubble
       const split = await trace(page, 10);
       const ends = split.frames.at(-1).filter(m => !m.bubble).map(m => m.at);
@@ -1249,7 +1234,7 @@ test('a zoom slides the points of a split bubble out and flies merging points in
         const spread = pts => Math.max(...pts.flatMap(a => pts.map(b => dist(a, b))));
         assert.ok(spread(firstOnes) < spread(ends) / 2, `they start near one another: ${JSON.stringify(firstOnes)} → ${JSON.stringify(ends)}`);
       }
-      await idleMarker(page, '.hd-marker .hd-find');
+      await idleMarker(page, { flag: 'hd-find' });
       // the merge: three points into one bubble
       const merge = await trace(page, 7);
       const bubble = merge.frames.at(-1).find(m => m.bubble);
@@ -1415,34 +1400,33 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.evaluate(() => window.__testMap.setView([37.5, 32], 7, { animate: false }));
     // the bubble as drawn: waited for, since a regroup replaces its element between two reads
     const bubble = () => page.waitForFunction(() => {
-      const b = document.querySelector('.hd-marker .hd-cluster');
-      return b ? { n: Number(b.textContent), says: b.getAttribute('aria-label'), mixed: b.classList.contains('hd-cluster--mixed'),
+      const b = window.__testMap.markers({ flag: 'hd-cluster' })[0];
+      return b ? { n: b.count, says: b.label, mixed: b.flags.includes('hd-cluster--mixed'),
         // events among the others: the round bubble with the event's square tab (#1647)
-        withEvents: b.classList.contains('hd-cluster--with-events') && !!b.querySelector('.hd-bubble-tab') } : null;
+        withEvents: b.flags.includes('hd-cluster--with-events') && b.flags.includes('hd-bubble-tab') } : null;
     }).then(h => h.jsonValue());
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
+    await waitBubble(page, 5);
     assert.deepEqual(await bubble(), { n: 5, says: '2 findings · 2 sites · 1 event', mixed: true, withEvents: true });
     // a layer switched off leaves the bubble at once; back on, it returns
     await openLayers(page); await page.locator('.viewport-toggle button[title="Sites"]').click();
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
+    await waitBubble(page, 3);
     assert.equal((await bubble()).says, '2 findings · 1 event');
     await openLayers(page); await page.locator('.viewport-toggle button[title="Sites"]').click();
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
+    await waitBubble(page, 5);
     await openLayers(page); await page.locator('.viewport-toggle button[title="Sources"]').click();
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3');
+    await waitBubble(page, 3);
     assert.equal((await bubble()).says, '2 sites · 1 event');
     await openLayers(page); await page.locator('.viewport-toggle button[title="Sources"]').click();
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5');
+    await waitBubble(page, 5);
     // the year window moves past the findings: they leave the bubble
     await page.goto(new URL('/explore#from=-1200&to=-1100', baseURL).href);
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '3', null, { timeout: 10000 });
+    await waitBubble(page, 3, { timeout: 10000 });
     assert.equal((await bubble()).says, '2 sites · 1 event');
     await page.goto(new URL('/explore#from=-1350&to=-1200', baseURL).href);
-    await page.waitForFunction(() => document.querySelector('.hd-marker .hd-cluster')?.textContent === '5', null, { timeout: 10000 });
+    await waitBubble(page, 5, { timeout: 10000 });
     // a click lists every kind, each row with its icon; a site's row pins its card
-    await page.waitForFunction(() => document.querySelectorAll('.hd-marker .hd-cluster').length === 1);
-    const b = await page.locator('.hd-marker .hd-cluster').boundingBox();
-    await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
+    await waitCount(page, { flag: 'hd-cluster' }, 1);
+    await clickMarker(page, { flag: 'hd-cluster' });
     await page.waitForSelector('.pick-title');
     assert.match(await page.locator('.pick-title').innerText(), /2 findings · 2 sites · 1 event in this cluster/);
     assert.equal(await page.locator('.hit-source').count(), 2);
@@ -1455,11 +1439,11 @@ test('a mixed cluster counts what is shown, splits on zoom-in, and lists every k
     await page.keyboard.press('Escape');
     // zoomed in, the bubble splits into the points themselves
     await page.evaluate(() => window.__testMap.setView([37.52, 32.01], 12, { animate: false }));
-    await page.waitForFunction(() => !document.querySelector('.hd-marker .hd-cluster') &&
-      document.querySelectorAll('.hd-marker .hd-point').length === 5, null, { timeout: 10000 });
-    assert.equal(await page.locator('.hd-find').count(), 2);
-    assert.equal(await page.locator('.hd-site-marker').count(), 2);
-    assert.equal(await page.locator('.hd-marker .hd-ev').count(), 1);
+    await page.waitForFunction(() => window.__testMap.markers({ flag: 'hd-cluster' }).length === 0 &&
+      window.__testMap.markers({ flag: 'hd-point' }).length === 5, null, { timeout: 10000 });
+    assert.equal((await marks(page, { flag: 'hd-find' })).length, 2);
+    assert.equal((await marks(page, { flag: 'hd-site-marker' })).length, 2);
+    assert.equal((await marks(page, { flag: 'hd-ev' })).length, 1);
   });
 });
 
@@ -1958,22 +1942,12 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37, 32], 7, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.hd-marker .hd-cluster').length === 3 &&
-      document.querySelector('.hd-ev[data-id="zz_e"]') && document.querySelector('.hd-badge--photo.hd-point') &&
-      document.querySelector('.hd-site-marker') && document.querySelector('.hd-find:not(.hd-coincident)'), null, { timeout: 10000 });
-    const shapes = await page.evaluate(() => {
-      const one = sel => {
-        const el = document.querySelector(sel), s = getComputedStyle(el), r = el.getBoundingClientRect();
-        const g = el.querySelector('svg.glyph').getBoundingClientRect();
-        const before = getComputedStyle(el, '::before');
-        return { w: r.width, h: r.height, radius: parseFloat(s.borderTopLeftRadius), radiusRaw: s.borderTopLeftRadius,
-          edge: s.borderTopColor, edgeW: parseFloat(s.borderTopWidth), glyph: g.width,
-          ink: parseFloat(getComputedStyle(el.querySelector('.glyph-ink')).strokeWidth),
-          turned: before.transform, beforeW: parseFloat(before.width) };
-      };
-      return { square: one('.hd-ev[data-id="zz_e"]'), circle: one('.hd-site-marker'), diamond: one('.hd-find:not(.hd-coincident)'),
-        photo: one('.hd-badge--photo.hd-point') };
-    });
+    const specs = { square: { flag: 'hd-ev', id: 'zz_e' }, circle: { flag: 'hd-site-marker' },
+      diamond: { flag: 'hd-find', not: 'hd-coincident' }, photo: { flag: ['hd-badge--photo', 'hd-point'] } };
+    await page.waitForFunction(ss => window.__testMap.markers({ flag: 'hd-cluster' }).length === 3 &&
+      Object.values(ss).every(s => window.__testMap.markers(s).length > 0), specs, { timeout: 10000 });
+    const shapes = await page.evaluate(ss => Object.fromEntries(Object.entries(ss).map(([k, s]) =>
+      [k, window.__testMap.markers({ ...s, detail: true })[0].shape])), specs);
     const msg = JSON.stringify(shapes);
     // sizes: ~24–26 px (the diamond's and the print's boxes larger, so they look as big)
     assert.ok(shapes.square.w >= 24 && shapes.circle.w >= 26 && shapes.diamond.w >= 32 && shapes.photo.w >= 30, msg);
@@ -1993,16 +1967,10 @@ test('markers: four silhouettes by outline, legible glyphs, a readable key, conc
       const r = b.getBoundingClientRect(); return Math.min(r.width, r.height); }));
     assert.ok(key.length >= 6 && key.every(w => w >= 18), JSON.stringify(key));
     // the bubbles: 1, 2 and 3 digits; every circle about the disc's own centre, the disc exactly the bubble's box
-    const bubbles = await page.evaluate(() => [...document.querySelectorAll('.hd-marker .hd-cluster')].map(b => {
-      const box = b.getBoundingClientRect();
-      const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
-      const cs = [...b.querySelectorAll('.hd-bubble circle')].map(c => { const r = c.getBoundingClientRect();
-        return { dx: r.left + r.width / 2 - cx, dy: r.top + r.height / 2 - cy, w: r.width }; });
-      const t = b.querySelector('.hd-dot-count').getBoundingClientRect();
-      return { n: b.textContent, d: box.width, cs, count: { dx: t.left + t.width / 2 - cx, dy: t.top + t.height / 2 - cy },
+    const bubbles = await page.evaluate(() => window.__testMap.markers({ flag: 'hd-cluster', detail: true }).map(b =>
+      ({ n: String(b.count), d: b.shape.w, cs: b.shape.rings, count: b.shape.countAt,
         // the bubble's svg stays under its count
-        onTop: Number(getComputedStyle(b.querySelector('.hd-dot-count')).zIndex) > Number(getComputedStyle(b.querySelector('.hd-bubble')).zIndex) };
-    }));
+        onTop: b.shape.countOnTop })));
     assert.deepEqual(bubbles.map(b => b.n.length).sort(), [1, 2, 3], JSON.stringify(bubbles));
     for (const b of bubbles) {
       assert.equal(b.cs.length, 4, JSON.stringify(b));
@@ -2027,11 +1995,11 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([37, 30], 6, { animate: false }));
-    await page.waitForFunction(() => document.querySelectorAll('.hd-find').length === 2);
-    const marks = await page.evaluate(() => [...document.querySelectorAll('.hd-find')].map(el => ({
-      unstated: el.classList.contains('hd-unstated'),
-      fill: el.style.getPropertyValue('--c'),
-      edge: getComputedStyle(el, '::before').borderTopStyle })));
+    await waitCount(page, { flag: 'hd-find' }, 2);
+    const marks = await page.evaluate(() => window.__testMap.markers({ flag: 'hd-find', detail: true }).map(m => ({
+      unstated: m.flags.includes('hd-unstated'),
+      fill: m.colour,
+      edge: m.shape.beforeEdge })));
     const none = marks.find(m => m.unstated), high = marks.find(m => !m.unstated);
     assert.ok(none && high, `one unstated, one stated: ${JSON.stringify(marks)}`);
     assert.equal(none.edge, 'dashed');
@@ -2049,10 +2017,10 @@ test('#1946: a finding with no confidence is drawn unstated, not high, and the l
     assert.equal(pip.bg, 'rgb(111, 111, 111)');
     assert.equal(pip.edge, 'dashed');
     // its popup says the confidence is not stated
-    await page.evaluate(() => {
-      const el = document.querySelector('.hd-find.hd-unstated').closest('.hd-marker');
-      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
+    await page.evaluate(() => window.__testMap.setView([37, 25], 6, { animate: false }));
+    await settledAt(page, { flag: ['hd-find', 'hd-unstated'] }, 37, 25);
+    await idleMarker(page, { flag: ['hd-find', 'hd-unstated'] });
+    await clickMarker(page, { flag: ['hd-find', 'hd-unstated'] });
     await page.waitForSelector('.hd-popup-content');
     assert.match(await page.locator('.hd-popup-content').innerText(), /confidence not stated/);
   });
@@ -2833,8 +2801,8 @@ test('the legend and the notice box stay over the markers and under a popup', as
     await page.goto(new URL('/explore#from=-1340&to=-1200', baseURL).href);
     for (const s of spots) {
       // the marker is drawn right under the control's centre…
-      await page.waitForFunction(([x, y]) => [...document.querySelectorAll('.hd-marker')].some(e => {
-        const r = e.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; }), [s.x, s.y], { timeout: 15000 });
+      await page.waitForFunction(([x, y]) => window.__testMap.markers().some(m =>
+        Math.abs(x - m.clientX) <= m.w / 2 && Math.abs(y - m.clientY) <= m.h / 2), [s.x, s.y], { timeout: 15000 });
       // …and the control is what the pointer finds there
       const top = await page.evaluate(([x, y, sel]) => !!document.elementFromPoint(x, y)?.closest(sel), [s.x, s.y, s.sel]);
       assert.ok(top, `${s.sel} is over the marker under it`);
@@ -3236,11 +3204,12 @@ async function countGlCalls(page) {
 async function markersInView(page) {
   return page.evaluate(() => {
     const m = document.getElementById('map').getBoundingClientRect();
+    const S = (window.__inView ??= new Set());
     let seen = 0, fresh = 0;
-    for (const el of document.querySelectorAll('#map .hd-marker')) {
-      const r = el.getBoundingClientRect();
-      if (el.classList.contains('is-offscreen') || r.width === 0 || r.right < m.left || r.left > m.right || r.bottom < m.top || r.top > m.bottom) continue;
-      if (el.__inView) seen++; else { fresh++; el.__inView = true; }
+    for (const k of window.__testMap.markers({ every: true })) {
+      const left = k.clientX - k.w / 2, right = k.clientX + k.w / 2, top = k.clientY - k.h / 2, bottom = k.clientY + k.h / 2;
+      if (k.offscreen || k.w === 0 || right < m.left || left > m.right || bottom < m.top || top > m.bottom) continue;
+      if (S.has(k.serial)) seen++; else { fresh++; S.add(k.serial); }
     }
     return { seen, fresh };
   });
@@ -3411,33 +3380,33 @@ test('pictures at one spot: fanned out, each opens, the list opens them, a pictu
     for (const zoom of [8, null]) {
       const z = zoom ?? await page.evaluate(() => window.__testMap.getMaxZoom());
       await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, z]);
-      const bubble = page.locator('#map .hd-dot-wrap').first();
-      await bubble.waitFor();
-      await settledAt(page, '#map .hd-dot-wrap', at[0], at[1]);
-      assert.equal(await page.locator('#map .hd-point-wrap--photo:not(.hd-spider)').count(), 0, `zoom ${z}: one bubble, no picture alone`);
-      await bubble.click();
-      const legs = page.locator('#map .hd-spider-legs line');
-      await page.locator('#map .hd-spider').first().waitFor();
-      assert.equal(await page.locator('#map .hd-spider').count(), 4, `zoom ${z}: the four fanned out`);
-      assert.equal(await legs.count(), 4, `zoom ${z}: a leg each`);
-      const spots = await page.locator('#map .hd-spider').evaluateAll(els => els.map(e => { const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
+      const bubble = { flag: 'hd-dot-wrap' };
+      await waitMarker(page, bubble);
+      await settledAt(page, bubble, at[0], at[1]);
+      assert.equal((await marks(page, { flag: 'hd-point-wrap--photo', not: 'hd-spider' })).length, 0, `zoom ${z}: one bubble, no picture alone`);
+      await clickMarker(page, bubble);
+      await waitMarker(page, { flag: 'hd-spider' });
+      assert.equal((await marks(page, { flag: 'hd-spider' })).length, 4, `zoom ${z}: the four fanned out`);
+      assert.equal(await page.evaluate(() => window.__testMap.spiderLegs()), 4, `zoom ${z}: a leg each`);
+      const spots = (await marks(page, { flag: 'hd-spider' })).map(m => [m.clientX, m.clientY]);
       for (let i = 0; i < spots.length; i++) for (let j = i + 1; j < spots.length; j++)
         assert.ok(Math.hypot(spots[i][0] - spots[j][0], spots[i][1] - spots[j][1]) >= 20, `zoom ${z}: apart: ${JSON.stringify(spots)}`);
       // the third: its popup, its long name inside it
-      await page.locator('#map .hd-spider').nth(2).click();
+      const third = (await marks(page, { flag: 'hd-spider' }))[2];
+      await page.mouse.click(third.clientX, third.clientY);
       const popup = page.locator('.hd-popup .maplibregl-popup-content');
       await popup.waitFor();
       const title = await page.locator('.hd-popup .media-popup-title').innerText();
       assert.ok(media.some(m => title.includes(m.assetName)), title);
       // Escape (the popup closes on it first, or on the map's own key; then the fan) folds them back
       await page.keyboard.press('Escape');
-      await page.locator('#map .hd-spider').first().waitFor({ state: 'detached', timeout: 3000 }).catch(async () => {
+      await waitGone(page, { flag: 'hd-spider' }, { timeout: 3000 }).catch(async () => {
         await page.keyboard.press('Escape');
-        await page.locator('#map .hd-spider').first().waitFor({ state: 'detached', timeout: 3000 });
+        await waitGone(page, { flag: 'hd-spider' }, { timeout: 3000 });
       });
       // the list of the bubble: a picture's row opens its popup where no zoom parts it (it silently did nothing)
       await page.evaluate(() => window.__testMap.closePopup());
-      await bubble.click();
+      await clickMarker(page, bubble);
       await page.keyboard.press('Escape');
       const row = page.locator(`#list .hit-dot[data-dot-kind="media"]`).filter({ hasText: longName });
       await row.waitFor();
@@ -4012,20 +3981,19 @@ test('sites of no known date: asked for only when switched on, drawn dashed bene
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
     await page.evaluate(() => window.__testMap.setView([38.2, 24], 7));
-    await page.locator('.hd-site-marker').first().waitFor();
-    assert.equal(await page.locator('.hd-undated').count(), 0, 'no undated site while the switch is off');
+    await waitMarker(page, { flag: 'hd-site-marker' });
+    assert.equal((await marks(page, { flag: 'hd-undated' })).length, 0, 'no undated site while the switch is off');
     assert.ok(asked.filter(u => u.pathname.includes('/sites/')).every(u => !u.searchParams.has('undated')), 'never asked for');
     assert.equal(await page.locator('.hd-legend-undated').count(), 0);
     await page.locator('#layers-btn').click();
     await page.locator('#undated-sites').check();
-    await page.locator('.hd-point.hd-undated').waitFor();
+    await waitMarker(page, { flag: ['hd-point', 'hd-undated'] });
     assert.ok(asked.some(u => u.pathname.includes('/sites/') && u.searchParams.get('undated') === 'true'), 'asked with undated=true');
     const looks = await page.evaluate(() => {
-      const u = document.querySelector('.hd-point.hd-undated'), d = document.querySelector('.hd-site-marker:not(.hd-undated)');
-      const cs = e => getComputedStyle(e);
-      const z = e => Number(getComputedStyle(e.closest('.hd-marker')).zIndex) || 0;
-      return { uStyle: cs(u).borderTopStyle, dStyle: cs(d).borderTopStyle, uSize: u.getBoundingClientRect().width,
-        dSize: d.getBoundingClientRect().width, uZ: z(u), dZ: z(d), uShape: cs(u).borderRadius, dShape: cs(d).borderRadius };
+      const u = window.__testMap.markers({ flag: ['hd-point', 'hd-undated'], detail: true })[0];
+      const d = window.__testMap.markers({ flag: 'hd-site-marker', not: 'hd-undated', detail: true })[0];
+      return { uStyle: u.border, dStyle: d.border, uSize: u.shape.w, dSize: d.shape.w, uZ: u.z, dZ: d.z,
+        uShape: u.radius, dShape: d.radius };
     });
     assert.equal(looks.uStyle, 'dashed', JSON.stringify(looks));
     assert.equal(looks.dStyle, 'solid', JSON.stringify(looks));
@@ -4035,7 +4003,8 @@ test('sites of no known date: asked for only when switched on, drawn dashed bene
     await page.locator('.hd-legend-undated').waitFor({ state: 'attached' });
     assert.match(await page.locator('.hd-legend-undated').textContent(), /date unknown/);
     await page.locator('#undated-sites').uncheck();
-    await page.waitForFunction(() => !document.querySelector('.hd-point.hd-undated') && !document.querySelector('.hd-legend-undated'));
+    await page.waitForFunction(() => window.__testMap.markers({ flag: ['hd-point', 'hd-undated'] }).length === 0 &&
+      !document.querySelector('.hd-legend-undated'));
   });
 });
 
