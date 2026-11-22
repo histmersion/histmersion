@@ -322,7 +322,13 @@ final class MapLibreSurface(
                   () =>
                     if mine == generation then
                       creditsV = MapLibreStyles.credits(style.asInstanceOf[js.Dynamic])
-                      val _ = gl.setStyle(style, js.Dynamic.literal(diff = sameStyle).asInstanceOf[js.Object])
+                      val overlays = shapeSets.keySet.toSet ++ pointSets.keySet
+                      val carry: js.Function2[js.Dynamic, js.Dynamic, js.Dynamic] =
+                        (previous, next) => MapLibreStyles.carryOverlays(previous, next, overlays)
+                      val options =
+                        if sameStyle then js.Dynamic.literal(diff = true, transformStyle = carry)
+                        else js.Dynamic.literal(diff = false)
+                      val _ = gl.setStyle(style, options.asInstanceOf[js.Object])
                       gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent()))),
                   0
                 )
