@@ -42,7 +42,11 @@ object TheMap:
       p -> el
     }
     canvas = Option
-      .when(Store.Browser.get(MarkerCanvas.StorageKey).contains("on"))(())
+      .when(
+        Store.Browser.get(MarkerCanvas.StorageKey).contains("on") &&
+          surface.capabilities.webgl == Capabilities.Webgl(true) &&
+          surface.capabilities.webgl2 == Capabilities.Webgl2(true)
+      )(())
       .flatMap(_ => els.find((p, _) => pointPane(p)))
       .map((_, first) => MarkerCanvas(surface.overlayRoot, first, surface.container))
     els.foreach { (p, el) =>
@@ -69,6 +73,11 @@ object TheMap:
     MapStack.domPanes.filter(pointPane).flatMap(p => panes.get(p.name)).map(pn => pn.live ++ pn.leaving)
 
   def markerCanvas: Option[MarkerCanvas] = canvas
+
+  def drawnMarkerAt(clientX: Double, clientY: Double): Boolean = canvas.exists(_.hit(clientX, clientY).isDefined)
+
+  def drawnMarkerElAt(clientX: Double, clientY: Double): Option[dom.Element] =
+    canvas.flatMap(_.hit(clientX, clientY)).map(_.el)
 
   /** Every marker on the map now, by pane (for [[com.histmersion.web.Diagnostics]]). */
   def markerCount: MarkerPane.MarkerCount = MarkerPane.MarkerCount(panes.values.map(_.size.value).sum)

@@ -32,7 +32,13 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
         case e: dom.Element => Option(e.closest(".hd-marker"))
         case n              =>
           Option(n.parentNode).collect { case e: dom.Element => e }.flatMap(e => Option(e.closest(".hd-marker")))
-      el.foreach(e => byEl.delete(e))
+      el.foreach { e =>
+        byEl.delete(e)
+        if r.attributeName == "class" then e.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
+      }
+      (0 until r.addedNodes.length).map(r.addedNodes(_)).foreach { n =>
+        n.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
+      }
     }
     schedule()
   })
@@ -124,6 +130,9 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, width, height)
     val layer = js.Array[js.Dynamic]()
+    val now = dom.window.performance.now()
+    val still = stillNow
+    var animating = false
     panes().foreach { ms =>
       layer.length = 0
       ms.foreach { m =>
@@ -131,6 +140,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
           held(m).foreach { d =>
             d.x = m.drawX
             d.y = m.drawY
+            d.marker = m.asInstanceOf[js.Any]
             layer.push(d)
           }
       }
@@ -141,17 +151,123 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       layer.foreach { d =>
         val look = d.look.asInstanceOf[MarkerLook]
         val r = region(look, d.colours.asInstanceOf[js.Array[String]], dpr)
-        look.blit(
-          ctx,
-          atlas,
-          r,
-          dpr,
-          d.x.asInstanceOf[Double] + d.sx.asInstanceOf[Double],
-          d.y.asInstanceOf[Double] + d.sy.asInstanceOf[Double],
-          d.alpha.asInstanceOf[Double]
-        )
+        val mo = motionOf(d, now, still)
+        animating ||= mo.running
+        val x = d.x.asInstanceOf[Double] + d.sx.asInstanceOf[Double] + mo.dx
+        val y = d.y.asInstanceOf[Double] + d.sy.asInstanceOf[Double] + mo.dy
+        val grown = (hovered ne null) && (d.marker.asInstanceOf[DomMarker] eq hovered) && d.grows.asInstanceOf[Boolean]
+        val scale = mo.scale * (if grown then 1.12 else 1.0)
+        if scale != 1.0 then
+          ctx.save()
+          ctx.translate(x, y)
+          ctx.scale(scale, scale)
+          ctx.translate(-x, -y)
+        if mo.alpha > 0 && scale > 0 then look.blit(ctx, atlas, r, dpr, x, y, d.alpha.asInstanceOf[Double] * mo.alpha)
+        if scale != 1.0 then ctx.restore()
       }
     }
+    if animating then schedule()
+
+  private def motionOf(d: js.Dynamic, now: Double, still: Boolean): MarkerMotion.Motion =
+    MarkerMotion.motion(
+      d.present.asInstanceOf[Set[String]],
+      d.mx.asInstanceOf[Double],
+      d.my.asInstanceOf[Double],
+      now - d.t0.asInstanceOf[Double],
+      still
+    )
+
+  private def stillNow: Boolean = dom.document.documentElement.getAttribute("data-map-motion") == "still"
+
+  private var hovered: DomMarker = null
+  private var downAt: (Double, Double) = (Double.NaN, Double.NaN)
+
+  def placed(m: DomMarker): js.Dynamic =
+    val r = frame.getBoundingClientRect()
+    val d = info(m)
+    val mo = d.map(motionOf(_, dom.window.performance.now(), stillNow))
+    val sx = d.fold(0.0)(_.sx.asInstanceOf[Double]) + mo.fold(0.0)(_.dx)
+    val sy = d.fold(0.0)(_.sy.asInstanceOf[Double]) + mo.fold(0.0)(_.dy)
+    val look = d.map(_.look.asInstanceOf[MarkerLook])
+    js.Dynamic.literal(
+      x = m.drawX + sx,
+      y = m.drawY + sy,
+      clientX = r.left + m.drawX + sx,
+      clientY = r.top + m.drawY + sy,
+      w = look.fold(0.0)(_.w),
+      h = look.fold(0.0)(_.h),
+      offscreen = m.offscreen
+    )
+
+  def hit(clientX: Double, clientY: Double): Option[DomMarker] =
+    val r = frame.getBoundingClientRect()
+    val (x, y) = (clientX - r.left, clientY - r.top)
+    val now = dom.window.performance.now()
+    val still = stillNow
+    lastPanes().reverseIterator
+      .flatMap { ms =>
+        ms.filter(drawable)
+          .flatMap(m => held(m).map(m -> _))
+          .sortBy((_, d) => d.z.asInstanceOf[Int])
+          .reverseIterator
+      }
+      .find { (m, d) =>
+        val look = d.look.asInstanceOf[MarkerLook]
+        val mo = motionOf(d, now, still)
+        !d.inert.asInstanceOf[Boolean] && mo.alpha > 0 &&
+        math.abs(x - m.drawX - d.sx.asInstanceOf[Double] - mo.dx) <= look.w / 2 &&
+        math.abs(y - m.drawY - d.sy.asInstanceOf[Double] - mo.dy) <= look.h / 2
+      }
+      .map(_._1)
+
+  private def anchor(m: DomMarker): Unit =
+    val at = placed(m)
+    m.el.asInstanceOf[dom.HTMLElement].style.setProperty("--ax", s"${at.x.asInstanceOf[Double] + 10000}px")
+    m.el.asInstanceOf[dom.HTMLElement].style.setProperty("--ay", s"${at.y.asInstanceOf[Double]}px")
+
+  private def unanchor(m: DomMarker): Unit =
+    m.el.asInstanceOf[dom.HTMLElement].style.setProperty("--ax", "-9999px")
+    m.el.asInstanceOf[dom.HTMLElement].style.setProperty("--ay", "-9999px")
+
+  private def hoverTo(next: Option[DomMarker], e: dom.MouseEvent): Unit =
+    val now = next.orNull
+    if now ne hovered then
+      Option(hovered).flatMap(m => Option(m.handlers)).foreach(_.out(e))
+      Option(hovered).foreach(unanchor)
+      next.foreach(anchor)
+      hovered = now
+      frame.classList.toggle("is-over-marker", now ne null)
+      next.flatMap(m => Option(m.handlers)).foreach(_.over(e))
+      schedule()
+    else next.flatMap(m => Option(m.handlers)).foreach(_.move(e))
+
+  private def onMap(e: dom.Event): Boolean = e.target match
+    case t: dom.Element => (t eq root) || ((t.parentNode eq root) && t.tagName.toLowerCase == "canvas")
+    case _              => false
+
+  frame.addEventListener(
+    "mousemove",
+    (e: dom.MouseEvent) => hoverTo(if onMap(e) then hit(e.clientX, e.clientY) else None, e),
+    useCapture = true
+  )
+  frame.addEventListener("mouseleave", (e: dom.MouseEvent) => hoverTo(None, e))
+  frame.addEventListener(
+    "mousedown",
+    (e: dom.MouseEvent) => downAt = (e.clientX, e.clientY),
+    useCapture = true
+  )
+  frame.addEventListener(
+    "click",
+    (e: dom.MouseEvent) =>
+      val still = math.hypot(e.clientX - downAt._1, e.clientY - downAt._2) <= 4 || downAt._1.isNaN
+      if still && onMap(e) then
+        hit(e.clientX, e.clientY).foreach { m =>
+          anchor(m)
+          Option(m.handlers).foreach(_.click(e))
+        }
+    ,
+    useCapture = true
+  )
 
   private def drawable(m: DomMarker): Boolean = !m.offscreen && !m.drawX.isNaN
 
@@ -202,6 +318,19 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
           sy = MarkerLook.num(MarkerLook.inlineVar(m.el, "--sy")),
           alpha = if m.el.classList.contains("hd-spidered") then 0.3 else 1.0,
           pending = m.el.classList.contains(ClusterMotion.Pending),
+          inert = m.el.classList.contains("hd-cluster-ghost") || m.el.classList.contains("hd-spider-legs"),
+          grows = m.el.querySelector(".hd-point") != null,
+          present = MarkerLook.Transient
+            .filter(t => m.el.classList.contains(t) || m.el.querySelector(s".$t") != null)
+            .toSet
+            .asInstanceOf[js.Any],
+          mx = MarkerLook.num(MarkerLook.inlineVar(m.el, "--move-x")),
+          my = MarkerLook.num(MarkerLook.inlineVar(m.el, "--move-y")),
+          t0 = Option(m.el.asInstanceOf[js.Dynamic].hdT0)
+            .filterNot(js.isUndefined)
+            .map(_.asInstanceOf[Double])
+            .getOrElse(dom.window.performance.now()),
+          marker = null,
           x = 0.0,
           y = 0.0
         )
