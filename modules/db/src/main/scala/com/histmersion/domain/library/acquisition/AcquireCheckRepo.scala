@@ -85,8 +85,10 @@ private[acquisition] object AcquireCheckRepo:
 
   private val Select =
     sql"""SELECT item_id, ${Timestamps.iso(sql"at")}, trigger, generation, outcome, citekey, source,
-                 ARRAY(SELECT jsonb_array_elements_text(jsonb_path_query_array(answers, '$$[*].fetcher'))),
-                 ARRAY(SELECT jsonb_array_elements_text(jsonb_path_query_array(answers, '$$[*].said'))),
+                 ARRAY(SELECT f.v FROM jsonb_array_elements_text(jsonb_path_query_array(answers, '$$[*].fetcher'))
+                         WITH ORDINALITY AS f(v, i) ORDER BY f.i),
+                 ARRAY(SELECT s.v FROM jsonb_array_elements_text(jsonb_path_query_array(answers, '$$[*].said'))
+                         WITH ORDINALITY AS s(v, i) ORDER BY s.i),
                  nullif(jsonb_path_query_array(answers, '$$[*].why'), '[]'::jsonb),
                  failure, oa ->> 'scripts', oa ->> 'status', oa ->> 'url', oa ->> 'licence', legacy_reason, legacy_checks
             FROM acquire_attempts"""
@@ -195,7 +197,10 @@ private[acquisition] object AcquireCheckRepo:
                                           oa, legacy_reason, legacy_checks)
             VALUES ($item, $at::timestamptz, $trigger, ${attempt.generation}, $outcome, $citekey, $source,
                     coalesce(
-                      (SELECT jsonb_agg(jsonb_build_object('fetcher', a.f, 'said', a.s, 'why', $whys::jsonb -> (a.n - 1)::int))
+                      (SELECT jsonb_agg(
+                                jsonb_build_object('fetcher', a.f, 'said', a.s, 'why', $whys::jsonb -> (a.n - 1)::int)
+                                ORDER BY a.n
+                              )
                          FROM unnest($fetchers::text[], $saids::text[]) WITH ORDINALITY AS a(f, s, n)),
                       '[]'::jsonb),
                     $failure::jsonb,
