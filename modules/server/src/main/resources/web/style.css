@@ -522,6 +522,11 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .hd-marker.hd-spider-legs { pointer-events:none; }
 .hd-spider-legs svg { display:block; overflow:visible; }
 .hd-spider-legs line { stroke:var(--ink); stroke-width:1; stroke-opacity:.55; }
+.hd-marker-canvas { position:absolute; left:0; top:0; pointer-events:none; }
+.hd-marker-proxies { position:absolute; left:0; top:0; width:0; height:0; overflow:visible; pointer-events:none; contain:layout style; }
+.hd-marker-proxies > .hd-marker { transform:translate(-9999px, -9999px); pointer-events:none; }
+.hd-marker-proxies .hd-marker, .hd-marker-proxies .hd-marker *, .hd-marker-proxies .hd-marker *::before {
+  animation:none !important; transition:none !important; }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */
 .pick-head { padding:10px 14px; border-bottom:1px solid var(--line); background:var(--sunk); }
 .pick-head .back { color:var(--accent); font-size:var(--fs-xs); text-decoration:none; }

@@ -8,7 +8,7 @@ import { approvals, goal as researchGoal, routeResearch } from './research-fixtu
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
-import { clickMarker, hoverMarker, marks, waitBubble, waitCount, waitGone, waitMarker } from './markers.mjs';
+import { clickMarker, hoverMarker, marks, pixelDiff, waitBubble, waitCount, waitGone, waitMarker } from './markers.mjs';
 
 // Use a separately started test server; these tests only GET data and change browser-local state.
 const baseURL = process.env.HISTMERSION_SERVER_URL;
@@ -4801,4 +4801,44 @@ test('#7382: a source\'s or an article\'s own page has the theme and a width con
     await page.locator('.page-width-btn[data-width="reading"]').click();
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
+});
+
+test('the canvas draws the markers as their elements did: every kind, both themes', async () => {
+  for (const theme of ['light', 'dark']) {
+    const shots = {};
+    for (const mode of ['off', 'on']) {
+      await withPage({ width: 1200, height: 800 }, async page => {
+        trackRequests(page);
+        await routeFullLoad(page);
+        await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events });
+        await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+        await page.evaluate(([m, t]) => { localStorage.setItem('histmersion.ui.markerCanvas', m);
+          localStorage.setItem('histmersion.theme', t);
+          localStorage.setItem('histmersion.ui.layers', '["sites","events","media"]'); }, [mode, theme]);
+        await page.goto(new URL('/explore#from=-3000&to=1500', baseURL).href);
+        await page.reload();
+        await page.waitForFunction(() => window.__testMap);
+        assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-theme')), theme);
+        await page.evaluate(() => window.__testMap.setView([37.9, 23.5], 7, { animate: false }));
+        await page.waitForFunction(() => window.__testMap.isDrawn() && window.__testMap.points() > 0);
+        await quiet(page);
+        await page.waitForTimeout(800);
+        await page.mouse.move(5, 5);
+        const box = await page.locator('#map').boundingBox();
+        const clip = { x: box.x + box.width / 2 - 250, y: box.y + box.height / 2 - 180, width: 500, height: 360 };
+        shots[mode] = await page.screenshot({ clip });
+        if (mode === 'on') {
+          await page.evaluate(() => { document.querySelector('.hd-marker-canvas').style.visibility = 'hidden'; });
+          shots.none = await page.screenshot({ clip });
+        }
+      });
+    }
+    const scratch = await browser.newPage();
+    const same = await pixelDiff(scratch, shots.off, shots.on);
+    const without = await pixelDiff(scratch, shots.off, shots.none);
+    await scratch.close();
+    console.log(`# canvas markers (${theme}): against the elements ${JSON.stringify(same)}, against none ${JSON.stringify(without)}`);
+    assert.ok(without.bigPct > 4, `${theme}: the markers are what the comparison sees: ${JSON.stringify(without)}`);
+    assert.ok(same.bigPct < 1.5 && same.mean < 3, `${theme}: canvas against elements: ${JSON.stringify(same)}`);
+  }
 });

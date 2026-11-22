@@ -63,14 +63,22 @@ final class DomMarker(
     val out = p.x.value < -400 || p.y.value < -400 || p.x.value > w + 400 || p.y.value > h + 400
     if out != hidden then
       hidden = out
-      el.classList.toggle("is-offscreen", out)
+      if painted then el.classList.toggle("is-offscreen", out)
     if !out then
       val rx = math.round(p.x.value).toDouble
       val ry = math.round(p.y.value).toDouble
       if rx != lastX || ry != lastY then
         lastX = rx
         lastY = ry
-        moveTo(ScreenPt.X(rx), ScreenPt.Y(ry))
+        if painted then moveTo(ScreenPt.X(rx), ScreenPt.Y(ry))
+
+  private[map] var painted = true
+
+  private[map] def drawX: Double = lastX
+
+  private[map] def drawY: Double = lastY
+
+  private[map] def offscreen: Boolean = hidden
 
   /** Draw it at screen point (`x`, `y`) now (an animation's start), whatever the map says. */
   def moveTo(x: ScreenPt.X, y: ScreenPt.Y): Unit =
