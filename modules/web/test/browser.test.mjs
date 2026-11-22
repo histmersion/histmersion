@@ -2577,6 +2577,9 @@ test('map options: names off and on, their language, contours only where Physica
     await page.locator('.map-options-reset').click();
     assert.ok(await page.locator('.map-option-names').isChecked());
     assert.equal(await page.locator('.map-language-select').inputValue(), 'en');
+    await page.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
+    assert.ok(await page.evaluate(() => !!document.activeElement?.closest('.map-options')),
+      `Reset, disabled once used, leaves the focus in the options: ${await page.evaluate(() => document.activeElement?.className)}`);
     // Physical over the Argolid's focus region: contours on, and a choice of the viewer's
     await page.keyboard.press('Escape');
     await page.locator('.map-options').waitFor({ state: 'hidden' });

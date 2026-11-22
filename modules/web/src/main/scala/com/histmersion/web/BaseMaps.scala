@@ -631,7 +631,10 @@ object BaseMaps:
           cls := "btn btn--ghost btn--sm map-options-reset",
           "Reset",
           disabled <-- UiState.mapOptions.signal.map(_ == MapPrefs()),
-          onClick --> { _ => setPrefs(_ => MapPrefs()) }
+          onClick --> { _ =>
+            Option(dom.document.querySelector(".map-options-close")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
+            setPrefs(_ => MapPrefs())
+          }
         ),
         button(
           typ := "button",
