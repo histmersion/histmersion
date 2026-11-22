@@ -220,54 +220,60 @@ object ViewportToggle:
         then open.set(false)
       },
       onMountUnmountCallbackWithState(
-        mount = _ =>
-          Option.when(TheMap.isUp)(TheMap.surface).map { map =>
-            // Push bbox on map moveend while "On the map" is chosen — when the view MOVED: the chrome around
-            // the map changing its size (the sidebar dragged) ends with a moveend too, and refetched every
-            // list for the same place
-            // `var`: where the camera stood at the last moveend
-            var camera = (map.center, map.zoom)
-            val sub = map.on(MapEventKind.MoveEnd) { _ =>
-              val now = (map.center, map.zoom)
-              val moved = now != camera
-              camera = now
-              if moved && UiState.inView.now() then
-                dom.window.clearTimeout(timer)
-                timer = dom.window.setTimeout(
-                  () => {
-                    UiState.set(UiState.bbox := Some(bboxOf(map)))()
-                  },
-                  config.viewportDebounceMs.value
-                )
-            }
+        mount = ctx =>
+          val subs = scala.collection.mutable.ListBuffer.empty[web.map.Subscription]
+          TheMap.whenReady { map =>
+            if ctx.thisNode.ref.isConnected then {
+              // Push bbox on map moveend while "On the map" is chosen — when the view MOVED: the chrome around
+              // the map changing its size (the sidebar dragged) ends with a moveend too, and refetched every
+              // list for the same place
+              // `var`: where the camera stood at the last moveend
+              var camera = (map.center, map.zoom)
+              val sub = map.on(MapEventKind.MoveEnd) { _ =>
+                val now = (map.center, map.zoom)
+                val moved = now != camera
+                camera = now
+                if moved && UiState.inView.now() then
+                  dom.window.clearTimeout(timer)
+                  timer = dom.window.setTimeout(
+                    () => {
+                      UiState.set(UiState.bbox := Some(bboxOf(map)))()
+                    },
+                    config.viewportDebounceMs.value
+                  )
+              }
 
-            // If restoring from URL hash with inView = true, fit the map to the saved bbox.
-            if initialInView then
-              val bboxStr = UiState.bbox.now().getOrElse("")
-              val parts = bboxStr.split(",").flatMap(_.toDoubleOption)
-              if parts.length == 4 && parts.forall(java.lang.Double.isFinite) then
-                // minLon > maxLon means the saved viewport crossed the antimeridian: the map needs
-                // a monotonically increasing east bound.
-                val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
-                map.fitBounds(
-                  GeoBounds(
-                    GeoBounds.South(parts(1)),
-                    GeoBounds.West(parts(0)),
-                    GeoBounds.North(parts(3)),
-                    GeoBounds.East(east)
-                  ),
-                  MapSurface.FitBoundsPadding(0),
-                  map.maxZoom,
-                  animate = MapSurface.FitBoundsAnimate(false)
-                )
-              else UiState.set(UiState.bbox := Some(bboxOf(map)))()
-            sub
-          },
+              // If restoring from URL hash with inView = true, fit the map to the saved bbox.
+              if initialInView then
+                val bboxStr = UiState.bbox.now().getOrElse("")
+                val parts = bboxStr.split(",").flatMap(_.toDoubleOption)
+                if parts.length == 4 && parts.forall(java.lang.Double.isFinite) then
+                  // minLon > maxLon means the saved viewport crossed the antimeridian: the map needs
+                  // a monotonically increasing east bound.
+                  val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
+                  map.fitBounds(
+                    GeoBounds(
+                      GeoBounds.South(parts(1)),
+                      GeoBounds.West(parts(0)),
+                      GeoBounds.North(parts(3)),
+                      GeoBounds.East(east)
+                    ),
+                    MapSurface.FitBoundsPadding(0),
+                    map.maxZoom,
+                    animate = MapSurface.FitBoundsAnimate(false)
+                  )
+                else UiState.set(UiState.bbox := Some(bboxOf(map)))()
+              val _ = subs += sub
+            }
+          }
+          subs
+        ,
         // the map outlives this panel: its handlers go with it, and so does a pending bbox write
         unmount = (_, st) =>
-          st.flatten.foreach { sub =>
+          st.foreach { subs =>
             dom.window.clearTimeout(timer)
-            sub.cancel()
+            subs.foreach(_.cancel())
+            subs.clear()
           }
       )
     )

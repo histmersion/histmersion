@@ -83,6 +83,7 @@ object MapView:
     () => tilesConfig.maxZoom
   )
   private var playbackMode: Playback = Playback(false)
+  private var heldPoints: Option[List[GeoHit]] = None
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
   private var playYearsPerSecond: MapView.YearsPerSecond = MapView.YearsPerSecond(0.0)
@@ -510,74 +511,78 @@ object MapView:
       idAttr := "map",
       cls := "map-container",
       onMountCallback { ctx =>
-        // without a GPU the map is drawn at one pixel per CSS pixel: a quarter of the work on a 2× screen;
-        // without WebGL 2 it is not drawn at all, and its place says why (NoMapSurface)
-        val surface =
-          Engines.surface(
-            ctx.thisNode.ref,
-            MapSurface.MaxZoom(ui.tilesMaxZoom.value.toDouble),
-            caps => Option.when(caps.software.value)(MapEngine.PixelRatio(1.0))
-          )
-        TheMap.install(surface)
-        val (startAt, startZoom) = MapStart
-          .initial(ui.mapStart, Store.Browser.get(MapStart.StorageKey).map(MapStart.Encoded(_)))
-        surface.setView(startAt, startZoom)
-        val _ = surface.on(MapEventKind.MoveEnd)(_ => MapStart.remember(ui.mapStart, surface.center, surface.zoom))
-        PlaceHover.shapes(PlaceHover.ShapeSetName("polities"), PlaceHover.Places(polityPlaces.get, spanMid))
-        addLegend(surface)
-        PlaceHover.install(surface)
-        PlaceGlyph.followZoom(surface)
-        MapLabels.install(surface, ui)(using ctx.owner)
-        BaseMaps.install(surface, ui)(using ctx.owner)
-        MapHandle.install(surface)
-        MapMenu.install(surface)
-        NoteMarkers.install()
-        // the overlays and the base map follow UiState (restored from the browser's storage by
-        // UiState.init, before this mounts) — there is no other copy of that state to disagree with
-        UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
-        // the media layer's provider/licence filters reload it, when it is on
-        UiState.mediaProvider.signal
-          .combineWith(UiState.mediaLicense.signal)
-          .changes
-          .foreach(_ => if layerSync.attached(MapLayer.Media) then loadMedia(currentSpan))(using ctx.owner)
-        // the events layer (#1449): its kind/tier menus reload it; the key follows the layers
-        UiState.eventKind.signal
-          .combineWith(UiState.eventTier.signal)
-          .changes
-          .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
-        UiState.siteType.signal
-          .combineWith(UiState.sitesUndated.signal)
-          .changes
-          .foreach(_ => if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan))(using ctx.owner)
-        UiState.eventsUndated.signal.changes
-          .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
-        // the "States shown" menu: the boundaries (the sites, events and pictures are every one of the span)
-        UiState.areaPick.signal.changes.foreach { _ =>
-          if layerSync.attached(MapLayer.Boundaries) then loadOverlay(currentSpan)
-        }(using ctx.owner)
-        UiState.layers.signal
-          .combineWith(UiState.sitesUndated.signal, UiState.eventsUndated.signal)
-          .foreach((ls, su, eu) =>
-            updateKey(
-              MapKey.Events(ls(MapLayer.Events)),
-              MapKey.Sites(ls(MapLayer.Sites)),
-              MapKey.Undated((ls(MapLayer.Sites) && su) || (ls(MapLayer.Events) && eu))
+        afterFirstPaint { () =>
+          // without a GPU the map is drawn at one pixel per CSS pixel: a quarter of the work on a 2× screen;
+          // without WebGL 2 it is not drawn at all, and its place says why (NoMapSurface)
+          val surface =
+            Engines.surface(
+              ctx.thisNode.ref,
+              MapSurface.MaxZoom(ui.tilesMaxZoom.value.toDouble),
+              caps => Option.when(caps.software.value)(MapEngine.PixelRatio(1.0))
             )
-          )(using ctx.owner)
-        // the finding markers follow their switch the same way; `render` keeps their content current
-        // while they are off, so switching them back on shows the current span at once
-        UiState.sources.signal.foreach(on => showSources(ShowSources(on)))(using ctx.owner)
-        surface.container.addEventListener(
-          "click",
-          { (e: dom.MouseEvent) =>
-            val target = e.target.asInstanceOf[dom.Element]
-            Option(target.closest("[data-ck]")).foreach { el =>
-              if !e.metaKey && !e.ctrlKey && !e.shiftKey then
-                e.preventDefault()
-                ArticleModal.open(Citekey(el.getAttribute("data-ck")))
+          TheMap.install(surface)
+          val (startAt, startZoom) = MapStart
+            .initial(ui.mapStart, Store.Browser.get(MapStart.StorageKey).map(MapStart.Encoded(_)))
+          surface.setView(startAt, startZoom)
+          val _ = surface.on(MapEventKind.MoveEnd)(_ => MapStart.remember(ui.mapStart, surface.center, surface.zoom))
+          PlaceHover.shapes(PlaceHover.ShapeSetName("polities"), PlaceHover.Places(polityPlaces.get, spanMid))
+          addLegend(surface)
+          PlaceHover.install(surface)
+          PlaceGlyph.followZoom(surface)
+          MapLabels.install(surface, ui)(using ctx.owner)
+          BaseMaps.install(surface, ui)(using ctx.owner)
+          MapHandle.install(surface)
+          MapMenu.install(surface)
+          NoteMarkers.install()
+          // the overlays and the base map follow UiState (restored from the browser's storage by
+          // UiState.init, before this mounts) — there is no other copy of that state to disagree with
+          UiState.layers.signal.foreach(layerSync(_))(using ctx.owner)
+          // the media layer's provider/licence filters reload it, when it is on
+          UiState.mediaProvider.signal
+            .combineWith(UiState.mediaLicense.signal)
+            .changes
+            .foreach(_ => if layerSync.attached(MapLayer.Media) then loadMedia(currentSpan))(using ctx.owner)
+          // the events layer (#1449): its kind/tier menus reload it; the key follows the layers
+          UiState.eventKind.signal
+            .combineWith(UiState.eventTier.signal)
+            .changes
+            .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
+          UiState.siteType.signal
+            .combineWith(UiState.sitesUndated.signal)
+            .changes
+            .foreach(_ => if layerSync.attached(MapLayer.Sites) then loadSites(currentSpan))(using ctx.owner)
+          UiState.eventsUndated.signal.changes
+            .foreach(_ => if layerSync.attached(MapLayer.Events) then loadEvents(currentSpan))(using ctx.owner)
+          // the "States shown" menu: the boundaries (the sites, events and pictures are every one of the span)
+          UiState.areaPick.signal.changes.foreach { _ =>
+            if layerSync.attached(MapLayer.Boundaries) then loadOverlay(currentSpan)
+          }(using ctx.owner)
+          UiState.layers.signal
+            .combineWith(UiState.sitesUndated.signal, UiState.eventsUndated.signal)
+            .foreach((ls, su, eu) =>
+              updateKey(
+                MapKey.Events(ls(MapLayer.Events)),
+                MapKey.Sites(ls(MapLayer.Sites)),
+                MapKey.Undated((ls(MapLayer.Sites) && su) || (ls(MapLayer.Events) && eu))
+              )
+            )(using ctx.owner)
+          // the finding markers follow their switch the same way; `render` keeps their content current
+          // while they are off, so switching them back on shows the current span at once
+          UiState.sources.signal.foreach(on => showSources(ShowSources(on)))(using ctx.owner)
+          surface.container.addEventListener(
+            "click",
+            { (e: dom.MouseEvent) =>
+              val target = e.target.asInstanceOf[dom.Element]
+              Option(target.closest("[data-ck]")).foreach { el =>
+                if !e.metaKey && !e.ctrlKey && !e.shiftKey then
+                  e.preventDefault()
+                  ArticleModal.open(Citekey(el.getAttribute("data-ck")))
+              }
             }
-          }
-        )
+          )
+          TheMap.markReady()
+          heldPoints.foreach(render(_, currentSpan))
+        }
       },
       onMountUnmountCallbackWithState(
         mount = ctx =>
@@ -597,6 +602,11 @@ object MapView:
           }
       )
     )
+
+  private def afterFirstPaint(f: () => Unit): Unit =
+    val _ = dom.window.requestAnimationFrame { _ =>
+      val _ = dom.window.setTimeout(() => f(), 0)
+    }
 
   /** The findings' switch, as every point layer's: their points join or leave the cluster group, which the other kinds
     * share (so it stays on the map); `render` keeps them current while they are out.
@@ -708,6 +718,7 @@ object MapView:
   /** The findings of `span` (the filter's, a playback frame's): their points, as every kind's. */
   def render(points: List[GeoHit], span: (Years.Astronomical, Years.Astronomical)): Unit =
     currentSpan = span
+    heldPoints = Some(points)
     if TheMap.isUp then
       updateLegend(span)
       findingsLayer.show(Spot.of(points), span)
