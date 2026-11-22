@@ -59,7 +59,6 @@ G44conversion	server	modules/server/src/main/scala/com/histmersion/server/Source
 G44plaindef	core	modules/core/src/main/scala/com/histmersion/domain/Text.scala	5	shout(text:String<-Citekey);calls=1
 G45boundary	core	modules/core/src/main/scala/com/histmersion/util/problem/Edge.scala	6	value:Reported;render
 G45boundary	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	value:Citekey;sql
-G45boundary	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	9	construct:Citekey.assume;expr;sql
 G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	5	Citekey=com/histmersion/domain/Policy$package.Citekey
 G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	Key=com/histmersion/domain/Policy$package.Citekey;renamed
 G47fqn	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	27	same-package:com.histmersion.domain.Citekey
