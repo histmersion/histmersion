@@ -201,7 +201,7 @@
 { "citekey" : "zzalpha2001_storm", "claim" : "the storm god of Hatti is Tarhunna of Arinna", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzalpha2001_storm#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzalpha2001_storm#1", "updated_at" : "TS" }
 { "citekey" : "zzbeta2005_hittites", "claim" : "a kingdom in central Anatolia", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzbeta2005_hittites#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzbeta2005_hittites#1", "updated_at" : "TS" }
 { "citekey" : "zzdelta2020_new", "claim" : "new at work", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzdelta2020_new#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzdelta2020_new#1", "updated_at" : "TS" }
-## flyway_schema_history 4 rows
+## flyway_schema_history 5 rows
 ## gazetteer_sources 0 rows
 ## goal_aliases 0 rows
 ## goal_focus 0 rows
@@ -282,10 +282,10 @@
 ## plan_quota_readings 0 rows
 ## plan_quota_refreshes 0 rows
 ## queue_items 4 rows
-{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 1, "list" : "tasks", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "check the storm god", "topic" : "oracle", "uid" : "queue:tasks:check the storm god", "updated_at" : "TS" }
-{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 2, "list" : "log", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "crafted the oracle", "topic" : "oracle", "uid" : "queue:log:crafted the oracle", "updated_at" : "TS" }
-{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 3, "list" : "acquire", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "Doe, The Lost Book (1900)", "topic" : "oracle", "uid" : "queue:acquire:Doe, The Lost Book (1900)", "updated_at" : "TS" }
-{ "closed_job" : null, "created_at" : "TS", "created_job" : null, "done_at" : null, "goal_slug" : null, "id" : 4, "list" : "tasks", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "a task work added", "topic" : "oracle", "uid" : "queue:tasks:a task work added", "updated_at" : "TS" }
+{ "actor" : "person", "closed_job" : null, "created_at" : "TS", "created_job" : null, "creator" : { "kind" : "unknown" }, "done_at" : null, "goal_slug" : null, "id" : 1, "list" : "tasks", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "check the storm god", "topic" : "oracle", "uid" : "queue:tasks:check the storm god", "updated_at" : "TS" }
+{ "actor" : "person", "closed_job" : null, "created_at" : "TS", "created_job" : null, "creator" : { "kind" : "unknown" }, "done_at" : null, "goal_slug" : null, "id" : 2, "list" : "log", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "crafted the oracle", "topic" : "oracle", "uid" : "queue:log:crafted the oracle", "updated_at" : "TS" }
+{ "actor" : "person", "closed_job" : null, "created_at" : "TS", "created_job" : null, "creator" : { "kind" : "unknown" }, "done_at" : null, "goal_slug" : null, "id" : 3, "list" : "acquire", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "Doe, The Lost Book (1900)", "topic" : "oracle", "uid" : "queue:acquire:Doe, The Lost Book (1900)", "updated_at" : "TS" }
+{ "actor" : "person", "closed_job" : null, "created_at" : "TS", "created_job" : null, "creator" : { "kind" : "unknown" }, "done_at" : null, "goal_slug" : null, "id" : 4, "list" : "tasks", "origin" : "instance:work", "reason" : null, "status" : "open", "text" : "a task work added", "topic" : "oracle", "uid" : "queue:tasks:a task work added", "updated_at" : "TS" }
 ## read_marks 0 rows
 ## retraction_watch 0 rows
 ## review_ledgers 0 rows

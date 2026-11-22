@@ -108,7 +108,9 @@ object OpsTools:
             "due or not, past the daily caps; `dryRun: true` only lists what it would close and try; a pass of more " +
             "than one item runs as a job — follow it with job_status). This is where a queue/tracker/changelog belongs — never write " +
             "one as a new file. `topic` groups items under a heading; on `log` it defaults to today's " +
-            "date, so an added line lands in today's entry."
+            "date, so an added line lands in today's entry. `add` requires `createdBy`, who adds the item: " +
+            "`plugin` and `workflow` (both), and the agent as `agentDefinition`, `provider` and `model` (all three, " +
+            "or none for a step without a model)."
         )
         .input[QueueInput]
         .handle(in => runQueue(h, in))
@@ -153,12 +155,13 @@ object OpsTools:
       case "add" =>
         (in.list, in.text.map(_.trim).filter(_.nonEmpty)) match
           case (Some(list), Some(text)) =>
-            val added = h.workLists.add(
+            val added = h.workLists.addOverMcp(
               WorkListControllers.ListName(list),
               QueueAdd(
                 Queue.QueueItem.Text(text),
                 in.topic.map(Queue.QueueItem.Topic(_)),
-                reason = in.reason.map((text => Queue.Rationale(text)))
+                reason = in.reason.map((text => Queue.Rationale(text))),
+                createdBy = in.createdBy
               )
             )
             McpOut.of(added)(i =>
@@ -241,7 +244,8 @@ object OpsTools:
       id: Option[Int] = None,
       all: Boolean = false,
       dryRun: Boolean = false,
-      limit: Option[Int] = None
+      limit: Option[Int] = None,
+      createdBy: Option[Queue.CreatedBy] = None
   ) derives JsonCodec
   object QueueInput:
     given Schema[QueueInput] = KindlingsSchema

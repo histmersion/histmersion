@@ -18191,7 +18191,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 - **plan_pools** (table) — pool text, held boolean, floors text, refusal jsonb, refusal_until timestamp with time zone, plan_type text, updated_at timestamp with time zone
 - **plan_quota_readings** (table) — pool text, limit_id text, kind text, model text, used_pct double precision, resets_at timestamp with time zone, rejected boolean, observed_at timestamp with time zone, source text
 - **plan_quota_refreshes** (table) — id bigint, pool text, at timestamp with time zone, mode text, trigger text, ok boolean, detail text
-- **queue_items** (table) — id integer, list text, text text, topic text, status text, created_at timestamp with time zone, done_at timestamp with time zone, reason text, uid uuid, origin uuid, updated_at timestamp with time zone, goal_slug text, created_job text, closed_job text
+- **queue_items** (table) — id integer, list text, text text, topic text, status text, created_at timestamp with time zone, done_at timestamp with time zone, reason text, uid uuid, origin uuid, updated_at timestamp with time zone, goal_slug text, created_job text, closed_job text, creator jsonb, actor text
 - **read_marks** (table) — id uuid, user_id text, target_kind text, target_id text, target_uid uuid, target_label text, read_at timestamp with time zone, opened_at timestamp with time zone, origin uuid, created_at timestamp with time zone, updated_at timestamp with time zone
 - **retraction_watch** (table) — doi text, reason text, date date, nature text
 - **review_ledgers** (table) — slug text, ledger jsonb, updated_at timestamp with time zone
@@ -22116,6 +22116,16 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
         {
           "dataType" : "text",
           "name" : "closed_job",
+          "nullable" : true
+        },
+        {
+          "dataType" : "jsonb",
+          "name" : "creator",
+          "nullable" : false
+        },
+        {
+          "dataType" : "text",
+          "name" : "actor",
           "nullable" : true
         }
       ],

@@ -568,7 +568,10 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     a.attach(up)
     val item = h.workLists
-      .add(WorkListControllers.ListName("acquire"), Queue.QueueAdd(Queue.QueueItem.Text("zzagent: buy the tin book")))
+      .addOverRest(
+        WorkListControllers.ListName("acquire"),
+        Queue.QueueAdd(Queue.QueueItem.Text("zzagent: buy the tin book"))
+      )
       .toOption
       .get
     val run =
@@ -910,7 +913,10 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     a.attach(up)
     val item = h.workLists
-      .add(WorkListControllers.ListName("acquire"), Queue.QueueAdd(Queue.QueueItem.Text("zzagent: buy the tin book")))
+      .addOverRest(
+        WorkListControllers.ListName("acquire"),
+        Queue.QueueAdd(Queue.QueueItem.Text("zzagent: buy the tin book"))
+      )
       .toOption
       .get
     val before = CorpusSnapshot.of(ds)

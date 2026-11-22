@@ -107,5 +107,8 @@ final class DrainService(
     agents.autopilot.status(now).copy(changes = List(EngineStatus.Changes(line)))
 
   private def log(line: String): Unit =
-    agents.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))))
+    agents.workLists.logLine(
+      QueueAdd(Queue.QueueItem.Text(line.take(1000))),
+      domain.automation.workflows.InTreeWorkflow.Drain.creator
+    )
     scribe.info(line)

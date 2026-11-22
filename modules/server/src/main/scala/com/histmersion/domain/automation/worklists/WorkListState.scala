@@ -3,7 +3,8 @@ package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem}
-import com.histmersion.domain.Scheduling
+import com.histmersion.domain.{Actor, Creator, Scheduling}
+import com.histmersion.util.database.Jsonb
 
 import hearth.kindlings.optics.syntax.*
 
@@ -51,14 +52,16 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
       )
 
   /** `in` added to `kind` at `now`, as the database inserts it. */
-  def added(kind: Kind, in: QueueAdd, now: Instant): WorkListState = addedAll(kind, List(in), now)
+  def added(kind: Kind, in: QueueAdd, creator: Creator.New, now: Instant): WorkListState =
+    addedAll(kind, List(in), creator, now)
 
   /** Each of `ins` added to `kind` at `now`, in order. */
-  def addedAll(kind: Kind, ins: List[QueueAdd], now: Instant): WorkListState =
+  def addedAll(kind: Kind, ins: List[QueueAdd], creator: Creator.New, now: Instant): WorkListState =
     @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: QueueItemId): WorkListState = rest match
       case Nil        => WorkListState(items ++ made, last)
       case in :: tail =>
-        loop(tail, made :+ WorkListState.item(kind, in, QueueItemId(last.value + 1), now), QueueItemId(last.value + 1))
+        val next = last.next
+        loop(tail, made :+ WorkListState.item(kind, in, creator, next, now), next)
     loop(ins, Vector.empty, lastId)
 
   /** `next` written over its item; a done item keeps its first done time, any other status clears it. */
@@ -88,7 +91,7 @@ object WorkListState:
   def stamp(at: Instant): String = Stamp.format(at.truncatedTo(ChronoUnit.MICROS))
 
   /** Item `id` of `kind` made from `in` at `now`: open unless it says otherwise, done at once when it is done. */
-  def item(kind: Kind, in: QueueAdd, id: QueueItemId, now: Instant): QueueItem =
+  def item(kind: Kind, in: QueueAdd, creator: Creator.New, id: QueueItemId, now: Instant): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Queue.Open)
     QueueItem(
       QueueItem.Id(id.value),
@@ -101,5 +104,11 @@ object WorkListState:
       Option.when(status == Queue.Done)(QueueItem.DoneAt(stamp(now))),
       in.goal.map(_.value.trim).filter(_.nonEmpty).map(Goal.Slug(_)),
       in.job.map(_.value.trim).filter(_.nonEmpty).map(QueueItem.CreatedBy(_)),
-      None
+      None,
+      Some(
+        Jsonb
+          .read[Queue.Creator](StoredCreator.write(creator.stored))
+          .getOrElse(Queue.Creator(Queue.Creation.Unreadable))
+      ),
+      Some(if creator.actor == Actor.Agents then Queue.Creation.Agents else Queue.Creation.Person)
     )

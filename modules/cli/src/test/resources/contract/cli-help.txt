@@ -3642,6 +3642,7 @@ Usage:
     histmersion queue log
     histmersion queue done
     histmersion queue edit
+    histmersion queue patch
     histmersion queue rm
     histmersion queue export
     histmersion queue import
@@ -3663,6 +3664,8 @@ Subcommands:
         Mark an item done
     edit
         Replace an item's text
+    patch
+        Change who acts on an item
     rm
         Remove an item
     export
@@ -3693,7 +3696,7 @@ Subcommands:
         The legal re-check of the acquisition list now: the due items the caps allow, or --all (more than one item runs as a server job it follows)
 
 ==== histmersion queue acquire add
-Usage: histmersion queue acquire add [--topic <string>] [--reason <string>] [--json] <text>
+Usage: histmersion queue acquire add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>
 
 Add an item to the acquire list
 
@@ -3704,6 +3707,16 @@ Options and flags:
         Group the added item under this heading
     --reason <string>
         Why this item is on the list / what research direction it serves
+    --by-plugin <string>
+        An automated caller: the plugin it runs in (else $HISTMERSION_AGENT_PLUGIN)
+    --by-workflow <string>
+        An automated caller: its workflow (else $HISTMERSION_AGENT_WORKFLOW)
+    --by-agent <string>
+        The agent's definition, with --by-provider and --by-model (else $HISTMERSION_AGENT_DEFINITION)
+    --by-provider <string>
+        The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)
+    --by-model <string>
+        The agent's model (else $HISTMERSION_AGENT_MODEL)
     --json
         Print the raw JSON response instead of Markdown
 
@@ -3748,7 +3761,7 @@ Subcommands:
         Add an item to the tasks list
 
 ==== histmersion queue tasks add
-Usage: histmersion queue tasks add [--topic <string>] [--reason <string>] [--json] <text>
+Usage: histmersion queue tasks add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>
 
 Add an item to the tasks list
 
@@ -3759,6 +3772,16 @@ Options and flags:
         Group the added item under this heading
     --reason <string>
         Why this item is on the list / what research direction it serves
+    --by-plugin <string>
+        An automated caller: the plugin it runs in (else $HISTMERSION_AGENT_PLUGIN)
+    --by-workflow <string>
+        An automated caller: its workflow (else $HISTMERSION_AGENT_WORKFLOW)
+    --by-agent <string>
+        The agent's definition, with --by-provider and --by-model (else $HISTMERSION_AGENT_DEFINITION)
+    --by-provider <string>
+        The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)
+    --by-model <string>
+        The agent's model (else $HISTMERSION_AGENT_MODEL)
     --json
         Print the raw JSON response instead of Markdown
 
@@ -3782,7 +3805,7 @@ Subcommands:
         Add an item to the log list
 
 ==== histmersion queue log add
-Usage: histmersion queue log add [--topic <string>] [--reason <string>] [--json] <text>
+Usage: histmersion queue log add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>
 
 Add an item to the log list
 
@@ -3793,6 +3816,16 @@ Options and flags:
         Group the added item under this heading
     --reason <string>
         Why this item is on the list / what research direction it serves
+    --by-plugin <string>
+        An automated caller: the plugin it runs in (else $HISTMERSION_AGENT_PLUGIN)
+    --by-workflow <string>
+        An automated caller: its workflow (else $HISTMERSION_AGENT_WORKFLOW)
+    --by-agent <string>
+        The agent's definition, with --by-provider and --by-model (else $HISTMERSION_AGENT_DEFINITION)
+    --by-provider <string>
+        The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)
+    --by-model <string>
+        The agent's model (else $HISTMERSION_AGENT_MODEL)
     --json
         Print the raw JSON response instead of Markdown
 
@@ -3815,6 +3848,19 @@ Replace an item's text
 Options and flags:
     --help
         Display this help text.
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue patch
+Usage: histmersion queue patch [--actor <string>] [--json] <id>
+
+Change who acts on an item
+
+Options and flags:
+    --help
+        Display this help text.
+    --actor <string>
+        Who does the task: person | agents
     --json
         Print the raw JSON response instead of Markdown
 

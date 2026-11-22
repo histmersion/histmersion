@@ -86,7 +86,7 @@ private[workflows] trait GoalSweep:
         )
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
           site.workLists
-            .add(WorkListControllers.ListName("acquire"), item)
+            .record(WorkListControllers.ListName("acquire"), item, ctx.creator)
             .left
             .map(_.problems.sentences.mkString("; "))
             .map { added =>

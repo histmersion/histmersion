@@ -58,7 +58,8 @@ histmersion queue tasks add "10.1371/journal.pone.0071004 — Kaniewski 2013, cl
 histmersion queue acquire add "Cline, *1177 B.C.* (2014) — buy/borrow → Calibre" --topic "bronze_age_collapse"
 ```
 
-`mcp__histmersion__queue` with `action: "add"`, `list: "tasks"|"acquire"`, `text`, `topic`.
+`mcp__histmersion__queue` with `action: "add"`, `list: "tasks"|"acquire"`, `text`, `topic`, and `createdBy` (who
+adds it — see the **bookkeeping** skill).
 Never write a queue into a markdown file — see the **bookkeeping** skill.
 
 ## 3. Work the queue

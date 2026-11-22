@@ -30,18 +30,60 @@ class OpsArgsSuite extends munit.FunSuite:
           Queue.QueueItem.Text("Eller, Myth of Matriarchal Prehistory"),
           None,
           None,
+          AgentIdentity.Nobody,
           json
         )
       )
     )
     parse("tasks", "add", "enrich x", "--topic", "Backlog", "--reason", "why") match
-      case Right(QueueCmd.Add(list, text, topic, Some(reason), `json`)) =>
+      case Right(QueueCmd.Add(list, text, topic, Some(reason), AgentIdentity.Nobody, `json`)) =>
         assertEquals(
           (list, text, topic),
           (Queue.Kind.Label("tasks"), Queue.QueueItem.Text("enrich x"), Some(Queue.QueueItem.Topic("Backlog")))
         )
         assertEquals(reason, Queue.Rationale("why"))
       case other => fail(s"${other.toString}")
+
+  test("`add --by-…` names the automated caller: each flag one part of its identity"):
+    parse(
+      "tasks",
+      "add",
+      "enrich x",
+      "--by-plugin",
+      "research-workspace",
+      "--by-workflow",
+      "review-article",
+      "--by-agent",
+      "article-skeptic",
+      "--by-provider",
+      "anthropic",
+      "--by-model",
+      "claude-opus-5-5"
+    ) match
+      case Right(QueueCmd.Add(_, _, _, _, by, _)) =>
+        assertEquals(
+          by.createdBy,
+          Some(
+            Queue.CreatedBy(
+              Some(Queue.Creation.Plugin("research-workspace")),
+              Some(Queue.Creation.Workflow("review-article")),
+              Some(Queue.Creation.Definition("article-skeptic")),
+              Some(Queue.Creation.Provider("anthropic")),
+              Some(Queue.Creation.Model("claude-opus-5-5"))
+            )
+          )
+        )
+      case other => fail(s"${other.toString}")
+    parse("tasks", "add", "enrich x", "--by-plugin", "p") match
+      case Right(QueueCmd.Add(_, _, _, _, by, _)) =>
+        assertEquals(by, AgentIdentity(plugin = Some(Queue.Creation.Plugin("p"))))
+      case other => fail(s"${other.toString}")
+
+  test("`queue patch <id> --actor` hands an item to the agents or takes it back"):
+    assertEquals(
+      parse("patch", "7", "--actor", "agents"),
+      Right(QueueCmd.Patch(Queue.Id(7), Some(Queue.Creation.Actor("agents")), json))
+    )
 
   test("`add` without text is a usage error, not an empty item"):
     assert(parse("acquire", "add").isLeft)

@@ -136,8 +136,10 @@ Everything the corpus does not have yet, from OpenAlex. Ingest the ones that mat
 (`ingest_doi`, see **`histmersion-ingest`**); queue the rest:
 
 ```
-queue {action:"add", list:"acquire", text:"<title> — critique of <ck>", topic:"<topic>"}
+queue {action:"add", list:"acquire", text:"<title> — critique of <ck>", topic:"<topic>", createdBy:{…}}
 ```
+
+(`createdBy` is who adds the item — see the **bookkeeping** skill.)
 
 ### 7. Update the articles, and log the pass
 
@@ -146,7 +148,7 @@ source (`get_article` lists **Sources cited**, and each source's status beside i
 *Disagreements* section per `docs/writing-guide.md` rule 6 and the **`histmersion-compile`** skill.
 
 ```
-queue {action:"add", list:"log", text:"currency pass on <topic>: N sources, M statuses changed, K queued"}
+queue {action:"add", list:"log", text:"currency pass on <topic>: N sources, M statuses changed, K queued", createdBy:{…}}
 ```
 
 ## Recording review checkpoints

@@ -422,6 +422,16 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .exists(e => e.kind.value == Feed.Approval && e.text.value.contains("approved by the autopilot"))
     )
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith("autopilot: goal-plan")))
+    assertEquals(
+      QueueRows
+        .list(ds, Queue.Kind.Log, all = true)
+        .filter(i => s"${i.text}".startsWith("autopilot: goal-plan"))
+        .flatMap(_.creator.flatMap(_.workflow))
+        .map(w => s"$w")
+        .distinct,
+      Vector("auto-approvals"),
+      "the automatic approvals wrote it"
+    )
 
     // 2. propose-articles: the article plan is approved by the checks and becomes a compile item
     c.scripts += Seq(text(articlesJson))
@@ -993,4 +1003,14 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       System.currentTimeMillis() < deadline
     do Thread.sleep(200)
     assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith("autopilot: lint --fix")))
+    assertEquals(
+      QueueRows
+        .list(ds, Queue.Kind.Log, all = true)
+        .filter(i => s"${i.text}".startsWith("autopilot: lint --fix"))
+        .flatMap(_.creator.flatMap(_.workflow))
+        .map(w => s"$w")
+        .distinct,
+      Vector("autopilot"),
+      "the autopilot wrote it"
+    )
     assert(!a.autopilot.tick(t0.plusSeconds(3600)).exists(_.contains("lint")), "not due again within the day")

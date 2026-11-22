@@ -48,7 +48,10 @@ Write the DOI into an acquisition item whenever you know it: it is what lets the
 
 `{{tool:queue}}` takes `action: "list" | "add" | "done"` with `list`, `text`, `topic`, `id`,
 `all`. `topic` groups items under a heading; on `log` it defaults to today's date, so an added line
-lands in today's entry.
+lands in today's entry. An `add` names who adds the item, as `createdBy`: `plugin` and `workflow`,
+and your `agentDefinition`, `provider` and `model` (all three, or none); without it the add is refused.
+On the command line the same identity is `--by-plugin --by-workflow --by-agent --by-provider --by-model`,
+or the `HISTMERSION_AGENT_*` variables your environment sets.
 
 ## Routing rule (decide in one step)
 

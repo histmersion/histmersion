@@ -220,8 +220,9 @@ class SourceDeleteSuite extends DbSuite:
       sql"INSERT INTO event_datings (event_id, citekey) VALUES ($Event, $Del)".update.run()
       sql"INSERT INTO goals (slug, title) VALUES ($Goal, 'Zz goal')".update.run()
       sql"INSERT INTO goal_links (goal_slug, kind, ref) VALUES ($Goal, 'source', $Del)".update.run()
-      sql"""INSERT INTO queue_items (list, text, status, reason)
-            VALUES ('acquire', 'zzdel the book', 'done', ${s"ingested as [[$Del]]"})""".update.run()
+      sql"""INSERT INTO queue_items (list, text, status, reason, creator, actor)
+            VALUES ('acquire', 'zzdel the book', 'done', ${s"ingested as [[$Del]]"},
+                    '{"kind":"manual","surface":"cli"}', 'person')""".update.run()
     // an article that leaves it out, with a reason — and cites Other only
     val _ = ArticleFixtures.put(
       ds,

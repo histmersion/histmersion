@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.managers
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -421,14 +422,15 @@ final class ManagerSupervisor(
         val failed = st == RunState.Failed
         val filed = task.flatMap(t =>
           workLists
-            .add(
+            .record(
               WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
               QueueAdd(
                 Queue.QueueItem.Text(t.value),
                 topic = Some(Queue.QueueItem.Topic("agent manager")),
                 goal = m.goal,
                 job = Some(run.transformInto[SpatialHierarchyResult.Job.Id])
-              )
+              ),
+              kind.creator
             )
             .toOption
             .map(_.id)
@@ -678,7 +680,8 @@ final class ManagerSupervisor(
         }
         moved.toList.map { text =>
           workLists.logLine(
-            QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal))
+            QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)),
+            InTreeWorkflow.Managers.creator
           )
           scribe.info(s"goal $g: $text")
           TickLine(s"$id: migrated")
@@ -967,6 +970,7 @@ final class ManagerSupervisor(
   /** An item of a kind no registered kind drives: settled as a finished one-run item. */
   private val Unknown: ManagerKindDefinition = new ManagerKindDefinition:
     val kind: Kind = Kind.Review
+    val creator: domain.Creator.New = InTreeWorkflow.Managers.creator
     override def items: List[ManagerContext.ItemKind] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using
         WritePermit

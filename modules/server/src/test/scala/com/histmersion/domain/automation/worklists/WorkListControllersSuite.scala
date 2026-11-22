@@ -22,25 +22,25 @@ class WorkListControllersSuite extends munit.FunSuite:
   test("a log item with no topic joins the entry of the clock's UTC day; another list's stays without one"):
     val c = controllers()
     assertEquals(
-      c.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text("ran the lint"))).map(_.topic),
+      c.addOverRest(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text("ran the lint"))).map(_.topic),
       Right(Some("2026-10-30"))
     )
     assertEquals(
-      c.add(
+      c.addOverRest(
         WorkListControllers.ListName("log"),
         QueueAdd(Queue.QueueItem.Text("named"), topic = Some(Queue.QueueItem.Topic("Later")))
       ).map(_.topic),
       Right(Some("Later"))
     )
     assertEquals(
-      c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("read Cline"))).map(_.topic),
+      c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("read Cline"))).map(_.topic),
       Right(None)
     )
 
   test("an unknown list, an empty text, a bad status or instant are refused with today's messages"):
     val c = controllers()
     assertEquals(
-      c.add(WorkListControllers.ListName("notes"), QueueAdd(Queue.QueueItem.Text("x")))
+      c.addOverRest(WorkListControllers.ListName("notes"), QueueAdd(Queue.QueueItem.Text("x")))
         .left
         .map(_.problems.head)
         .left
@@ -48,7 +48,7 @@ class WorkListControllersSuite extends munit.FunSuite:
       Left("unknown queue list 'notes' — one of: acquire, tasks, log")
     )
     assertEquals(
-      c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  ")))
+      c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  ")))
         .left
         .map(_.problems.head)
         .left
@@ -56,14 +56,14 @@ class WorkListControllersSuite extends munit.FunSuite:
       Left("queue item text is empty")
     )
     assert(
-      c.add(
+      c.addOverRest(
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text("x"), status = Some(Queue.QueueItem.Status("maybe")))
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("unknown queue item status 'maybe'"))
     )
     assert(
-      c.add(
+      c.addOverRest(
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text("x"), createdAt = Some(Queue.QueueItem.CreatedAt("yesterday")))
       ).left
@@ -81,6 +81,44 @@ class WorkListControllersSuite extends munit.FunSuite:
       c.delete(QueueItemId(42)).left.map(e => (e.problems.sentences.mkString("; "), e.code)),
       Left(("no queue item id '42'", Some("not_found")))
     )
+
+  test("a REST add records its surface; an MCP add needs createdBy and records the workflow; a partial one is refused"):
+    val c = controllers()
+    val byCli = c.addOverRest(
+      WorkListControllers.ListName("tasks"),
+      QueueAdd(Queue.QueueItem.Text("from the cli"), via = Some(Queue.Creation.Cli))
+    )
+    assertEquals(byCli.map(i => (i.creator.flatMap(_.surface), i.actor)), Right((Some("cli"), Some("person"))))
+    val byWeb = c.addOverRest(
+      WorkListControllers.ListName("tasks"),
+      QueueAdd(Queue.QueueItem.Text("web"), via = Some(Queue.Creation.Web))
+    )
+    assertEquals(byWeb.map(_.creator.flatMap(_.surface)), Right(Some("web")))
+    val plain = c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("plain")))
+    assertEquals(plain.map(_.creator.flatMap(_.surface)), Right(Some("rest")))
+    assert(c.addOverMcp(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("anonymous"))).isLeft)
+    val named = Queue.CreatedBy(Some(Queue.Creation.Plugin("research")), Some(Queue.Creation.Workflow("trailhead")))
+    val byAgent = c.addOverMcp(
+      WorkListControllers.ListName("tasks"),
+      QueueAdd(Queue.QueueItem.Text("from an agent"), createdBy = Some(named))
+    )
+    assertEquals(
+      byAgent.map(i => (i.creator.flatMap(_.workflow), i.creator.flatMap(_.agent).map(_.kind), i.actor)),
+      Right((Some("trailhead"), Some("code"), Some("agents")))
+    )
+    val partial = Queue.CreatedBy(Some(Queue.Creation.Plugin("research")), None)
+    assert(
+      c.addOverRest(
+        WorkListControllers.ListName("tasks"),
+        QueueAdd(Queue.QueueItem.Text("x"), createdBy = Some(partial))
+      ).isLeft
+    )
+    val added = plain.toOption.get
+    assert(
+      c.patch(QueueItemId(7), QueuePatch(actor = Some(Queue.Creation.Actor("robot")))).left.exists(_.code.isEmpty),
+      "an actor that is neither is refused before the item is looked up"
+    )
+    assertEquals(added.actor, Some(Queue.Creation.Person))
 
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()

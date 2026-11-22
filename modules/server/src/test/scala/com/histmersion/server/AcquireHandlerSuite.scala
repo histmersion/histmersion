@@ -72,6 +72,7 @@ import com.histmersion.util.database.TestPermits.given
   */
 class AcquireHandlerSuite extends DbSuite:
 
+  private val ByBacklog = domain.automation.workflows.InTreeWorkflow.IngestBacklog.creator
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -597,6 +598,11 @@ class AcquireHandlerSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(items.size, 1, items.toString)
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
+    assertEquals(
+      items.head.creator,
+      Some(Queue.Creator(Queue.Creation.Manual, surface = Some(Queue.Creation.Surface("rest")))),
+      "a person's ingest over REST created it"
+    )
     assert(
       items.head.text.value.contains("download it in the browser") && items.head.text.value
         .contains("--citekey zzacq_ingested"),
@@ -614,7 +620,7 @@ class AcquireHandlerSuite extends DbSuite:
     // a closed work, or a watcher's legal-only ingest, adds none
     dropItems(); wipe("zzacq_ingested")
     val _ = handlers(oa = NoPdf).ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
-    val _ = handlers(gold, oa = NoPdf).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+    val _ = handlers(gold, oa = NoPdf).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")), ByBacklog)
     assertEquals(items.size, 0)
     dropItems(); wipe("zzacq_ingested")
 
@@ -686,7 +692,8 @@ class AcquireHandlerSuite extends DbSuite:
       .setTo(List(WorkRef.OaLocations("https://www.mdpi.com/zz/1")))
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
     val legal =
-      handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+      handlers(FakeDiscovery(gold), oa = NoPdf)
+        .ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")), ByBacklog)
     assert(legal.left.exists(e => IngestBacklog.isNoLegalCopy(e.problems.head)), legal.toString)
     assertEquals(items.map(_.topic), Vector(Some(Acquire.BrowserDownloadTopic)))
     val text = items.head.text
@@ -718,7 +725,7 @@ class AcquireHandlerSuite extends DbSuite:
     // hybrid on the same host, or gold on a host that does not refuse scripts: the watcher adds nothing
     dropItems(); wipe("zzacq_ingested")
     val _ = handlers(FakeDiscovery(gold.modify(_.oaStatus).setTo(Some(WorkRef.OaStatus("hybrid")))), oa = NoPdf)
-      .ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+      .ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")), ByBacklog)
     val _ =
       handlers(
         FakeDiscovery(
@@ -730,7 +737,7 @@ class AcquireHandlerSuite extends DbSuite:
         ),
         oa = NoPdf
       )
-        .ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+        .ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")), ByBacklog)
     assertEquals(items.size, 0)
     // a copy found: nothing to download by hand
     val _ = handlers(FakeDiscovery(gold), oa = SomePdf()).ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
@@ -812,7 +819,8 @@ class AcquireHandlerSuite extends DbSuite:
       .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly(false)))
     assertEquals(asked.get, 1)
     wipe("zzacq_ingested")
-    val legal = handlers(oa = chain, app = allowing).ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
+    val legal = handlers(oa = chain, app = allowing)
+      .ingestLegal(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")), ByBacklog)
     assertEquals(asked.get, 1)
     assert(
       legal.left.exists(_.problems.sentences.mkString("; ").contains("unpaywall: no copy — no open-access location")),

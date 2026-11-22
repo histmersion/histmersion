@@ -673,7 +673,10 @@ final class SchedulerService(
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      agents.workLists.logLine(QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
+      agents.workLists.logLine(
+        QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))),
+        domain.automation.workflows.InTreeWorkflow.Scheduler.creator
+      )
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(SchedulerStatus.Changes(line)))

@@ -181,7 +181,10 @@ class MaintenanceLockSuite extends DbSuite:
   test("the ops writes are refused, while the READS still answer"):
     refused("lint/fix")(h.checks.guardedLintFix())
     refused("queue/add")(
-      h.workLists.add(WorkListControllers.ListName("tasks"), Queue.QueueAdd(text = Queue.QueueItem.Text("zzlock item")))
+      h.workLists.addOverRest(
+        WorkListControllers.ListName("tasks"),
+        Queue.QueueAdd(text = Queue.QueueItem.Text("zzlock item"))
+      )
     )
     refused("queue/patch")(
       h.workLists.patch(QueueItemId(1), Queue.QueuePatch(status = Some(Queue.QueueItem.Status("done"))))

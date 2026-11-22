@@ -16857,6 +16857,27 @@
           }
         }
       },
+      "Agent" : {
+        "title" : "Agent",
+        "type" : "object",
+        "required" : [
+          "kind"
+        ],
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "definition" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "model" : {
+            "type" : "string"
+          }
+        }
+      },
       "AgentLeaseInfo" : {
         "title" : "AgentLeaseInfo",
         "type" : "object",
@@ -19852,6 +19873,54 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "CreatedBy" : {
+        "title" : "CreatedBy",
+        "type" : "object",
+        "properties" : {
+          "plugin" : {
+            "type" : "string"
+          },
+          "workflow" : {
+            "type" : "string"
+          },
+          "agentDefinition" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "model" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Creator" : {
+        "title" : "Creator",
+        "type" : "object",
+        "required" : [
+          "kind"
+        ],
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "surface" : {
+            "type" : "string"
+          },
+          "plugin" : {
+            "type" : "string"
+          },
+          "workflow" : {
+            "type" : "string"
+          },
+          "agent" : {
+            "$ref" : "#/components/schemas/Agent"
+          },
+          "job" : {
+            "type" : "string"
           }
         }
       },
@@ -29035,6 +29104,12 @@
           },
           "job" : {
             "type" : "string"
+          },
+          "createdBy" : {
+            "$ref" : "#/components/schemas/CreatedBy"
+          },
+          "via" : {
+            "type" : "string"
           }
         }
       },
@@ -29123,6 +29198,12 @@
           },
           "closedBy" : {
             "type" : "string"
+          },
+          "creator" : {
+            "$ref" : "#/components/schemas/Creator"
+          },
+          "actor" : {
+            "type" : "string"
           }
         }
       },
@@ -29177,6 +29258,9 @@
             "type" : "string"
           },
           "closedBy" : {
+            "type" : "string"
+          },
+          "actor" : {
             "type" : "string"
           }
         }

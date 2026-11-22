@@ -321,7 +321,7 @@ final class AcquisitionSweepPipeline(
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
       Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
-    )(upstream().ingestLegal(doi).map { r =>
+    )(upstream().ingestLegal(doi, ctx.creator).map { r =>
       goals.linkIfThere(
         goal,
         Goal.LinkKind.Source,

@@ -6,7 +6,7 @@ import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Queue
-import com.histmersion.domain.MergePlanner
+import com.histmersion.domain.{Creator, MergePlanner}
 import com.histmersion.util.data.exchange.MergeFollowUps
 
 import com.augustnagro.magnum.DbCon
@@ -32,7 +32,8 @@ object WorkListMergeFollowUps extends MergeFollowUps:
           Queue.QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
           topic = Some(Queue.QueueItem.Topic("merge")),
           reason = Some(Queue.Rationale(s"`merge apply` changed the article; a merged text is not reviewed"))
-        )
+        ),
+        ByMerge
       )
       slug
     }
@@ -46,6 +47,9 @@ object WorkListMergeFollowUps extends MergeFollowUps:
             s"${Plural.count(Plural.CountN(reviews.size.toLong), Plural.CountSingular("article"))} to review; backup ${dump.value}"
         ),
         topic = Some(Queue.QueueItem.Topic("merge"))
-      )
+      ),
+      ByMerge
     )
     (reviews, log.id)
+
+  private val ByMerge: Creator.New = Creator.New.Manual(Creator.Surface.Internal)

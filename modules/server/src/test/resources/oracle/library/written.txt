@@ -890,9 +890,18 @@
 }
 == a task mentioning delta
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 1,
@@ -904,9 +913,18 @@
 }
 == a task mentioning alpha
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 2,

@@ -265,7 +265,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     )
     assert(
       h.workLists
-        .add(
+        .addOverRest(
           WorkListControllers.ListName("acquire"),
           Queue.QueueAdd(Queue.QueueItem.Text("Zzagent queued. https://doi.org/10.5555/zzagent.q"))
         )

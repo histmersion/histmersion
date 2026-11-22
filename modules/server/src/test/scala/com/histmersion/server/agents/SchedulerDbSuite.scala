@@ -413,6 +413,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((sw.strategy, sw.strategyFrom), ("type-balanced", "person"))
     assert(QueueRepoLog.has(ds, "agent scheduler: strategy type-balanced"), "a worklog line")
+    assertEquals(QueueRepoLog.writers(ds, "agent scheduler: strategy type-balanced"), Set(("engine", "scheduler")))
     val (b, _, _) = handlers(
       cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(AgentsConfig.MaxConcurrentRuns(6)))
     )
@@ -599,6 +600,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       "the next day, after the hour"
     )
     assert(QueueRepoLog.has(ds, "approval digest: "), "the worklog line")
+    assertEquals(QueueRepoLog.writers(ds, "approval digest: "), Set(("engine", "approval-digest")))
     // a whole kind at once: a dry run lists, then the decision
     assert(
       a.digest.decideAll(ApprovalDigest.BulkDecide(ApprovalDigest.BulkDecide.Decision("approve"))).isLeft,
@@ -703,6 +705,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     note("drained: autopilot", a.autopilotPage(a.managing.autopilot))
     assert(a.autopilotPage(a.managing.autopilot).contains("DRAINED since"))
     assert(QueueRepoLog.has(ds, "autopilot: drained"), "a worklog line")
+    assertEquals(QueueRepoLog.writers(ds, "autopilot: drained"), Set(("engine", "drain")))
     // lifted: work starts; drained again while runs are in flight: draining, not drained, nothing new
     note(
       "drain off",
@@ -794,6 +797,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       connect(ds)(GoalLinkRepo.links(g(1)))
     )
     assert(QueueRepoLog.has(ds, "seed before the plan: "), "a worklog line")
+    assertEquals(QueueRepoLog.writers(ds, "seed before the plan: "), Set(("library", "seed")))
     // the next tick seeds the next two; a goal seeded today is not seeded again
     clock.tick(a)
     assertEquals(seeded, List(g(1), g(2), g(3), g(4)))
@@ -876,3 +880,11 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
 private object QueueRepoLog:
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =
     QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith(prefix))
+
+  def writers(ds: javax.sql.DataSource, prefix: String): Set[(String, String)] =
+    QueueRows
+      .list(ds, Queue.Kind.Log, all = true)
+      .filter(i => s"${i.text}".startsWith(prefix))
+      .flatMap(_.creator)
+      .map(c => (c.plugin.fold("")(p => s"$p"), c.workflow.fold("")(w => s"$w")))
+      .toSet
