@@ -1051,7 +1051,7 @@ final class ReviewArticlePipeline(
           case None =>
             val add = Pipelines.entry(ctx, Pipelines.EntryText(text), Some(Pipelines.EntryTopic("agent review")))
             ctx.write("tasks item", add.asJson)(
-              site.workLists.add(WorkListControllers.ListName(tasks.value), add).toOption.map(_.id)
+              site.workLists.record(WorkListControllers.ListName(tasks.value), add, ctx.creator).toOption.map(_.id)
             )(None)
       case None =>
         current.foreach { item =>

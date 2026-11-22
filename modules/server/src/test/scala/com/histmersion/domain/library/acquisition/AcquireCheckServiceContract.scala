@@ -77,7 +77,14 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     )
 
   private def item(s: AcquisitionStores, text: String): AcquireAttemptRow.Id =
-    s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text(text))).id.transformInto[AcquireAttemptRow.Id]
+    s.queues
+      .add(
+        Queue.Kind.Acquire,
+        Queue.QueueAdd(Queue.QueueItem.Text(text)),
+        domain.Creator.New.Manual(domain.Creator.Surface.Cli)
+      )
+      .id
+      .transformInto[AcquireAttemptRow.Id]
 
   stest("every attempt is kept with each fetcher's typed answer, newest first, the newest `kept` only") { s =>
     val open = item(s, "Get 10.5555/zq.a")

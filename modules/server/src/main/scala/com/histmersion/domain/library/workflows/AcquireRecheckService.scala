@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -469,7 +470,8 @@ final class AcquireRecheckService(
                   stop.fold(")")(why => s"; ${why.sentence})")).take(1000)
               ),
               job = Some(JobInfo.Id(jobId.value))
-            )
+            ),
+            InTreeWorkflow.AcquireRecheck.creator
           )
         stop.fold(BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary(line.value)))(why =>
           BackgroundJob.Outcome(Some(BackgroundJob.Outcome.Summary(line.value)), Some(why))
@@ -579,7 +581,10 @@ final class AcquireRecheckService(
         .setTo(capNote)
       if r.closed.value + r.fetched.value + r.noCopy.value + r.failed.value > 0 then
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
-        site.workLists.logLine(QueueAdd(Queue.QueueItem.Text(s"${summary(r)} (by $by)".take(1000))))
+        site.workLists.logLine(
+          QueueAdd(Queue.QueueItem.Text(s"${summary(r)} (by $by)".take(1000))),
+          InTreeWorkflow.AcquireRecheck.creator
+        )
       r
 
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
@@ -639,7 +644,7 @@ final class AcquireRecheckService(
         )
       case Some(d) =>
         try
-          upstream().ingestLegalInto(d, into) match
+          upstream().ingestLegalInto(d, into, InTreeWorkflow.AcquireRecheck.creator) match
             case Right(r) =>
               (
                 AcquireAttempt.Outcome.Fetched(

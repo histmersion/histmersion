@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -50,6 +51,8 @@ import com.histmersion.util.database.WritePermit
 final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerService, cfg: => ResearchAgentsConfig)
     extends ManagerKindDefinition:
   val kind: Kind = Kind.Review
+  val creator: domain.Creator.New =
+    domain.Creator.code(InTreeWorkflow.Research, domain.Creator.Workflow.Name("review-manager"))
 
   /** Research's defaults of a review manager (`agents.managers.review`). */
   private def reviewDefaults: ReviewManagerDefaults = ReviewManagerKind.defaultsOf(cfg.managers.review)
@@ -220,9 +223,10 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .map(_.id)
       case None =>
         site.workLists
-          .add(
+          .record(
             WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
-            QueueAdd(Queue.QueueItem.Text(text.value), topic = Some(Queue.QueueItem.Topic("agent review")))
+            QueueAdd(Queue.QueueItem.Text(text.value), topic = Some(Queue.QueueItem.Topic("agent review"))),
+            creator
           )
           .toOption
           .map(_.id)

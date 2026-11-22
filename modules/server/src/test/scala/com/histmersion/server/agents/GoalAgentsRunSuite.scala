@@ -120,7 +120,7 @@ final class StubUpstream extends AgentUpstream:
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
   @volatile var onIngest: String => Either[Problem, Ingest.Report] = _ =>
     Left(Problem.Unclassified(Legacy.Text("not stubbed")))
-  override def ingestLegal(doi: Doi) = {
+  override def ingestLegal(doi: Doi, by: domain.Creator.New) = {
     calls.add(s"ingest $doi"); onIngest(doi.value)
   }
 

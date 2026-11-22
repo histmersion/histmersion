@@ -478,7 +478,7 @@ final class Engine(
                     () => beat(id)
                   )
                   CliProcess.withHooks(hooks)(
-                    p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this))
+                    p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this, p))
                       .map(_.value)
                   )
             catch
@@ -569,7 +569,8 @@ final class Engine(
             topic = Some(Queue.QueueItem.Topic(if scheduled then "agent schedules" else "auto-enrich")),
             goal = Pipelines.goalOf(run).map(g => Goal.Slug(g.value)),
             job = Some(SpatialHierarchyResult.Job.Id(run.id.value))
-          )
+          ),
+          domain.automation.workflows.InTreeWorkflow.RunNotices.creator
         )
       }
 

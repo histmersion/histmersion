@@ -166,7 +166,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
-    override def ingestLegalInto(doi: Doi, into: Option[Citekey]) = { asked.add(doi -> into); answer(doi, into) }
+    val askedBy = java.util.concurrent.ConcurrentLinkedQueue[domain.Creator.New]()
+    override def ingestLegalInto(doi: Doi, into: Option[Citekey], by: domain.Creator.New) = {
+      asked.add(doi -> into); askedBy.add(by); answer(doi, into)
+    }
     override def fetcherGeneration = generation
 
   private def setup(cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring, RecheckUpstream) =
@@ -203,7 +206,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     Job.Id.applyUnsafe(id.value)
   private def item(h: ServerWiring, n: String): Queue.QueueItem.Id =
     h.workLists
-      .add(
+      .addOverRest(
         WorkListControllers.ListName("acquire"),
         QueueAdd(
           Queue.QueueItem.Text(s"Zzrecheck $n, A work — https://doi.org/${doi(n)}"),
@@ -215,6 +218,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       .id
   private def asked(up: RecheckUpstream): List[(Doi, Option[Citekey])] =
     import scala.jdk.CollectionConverters.*
+    assert(
+      up.askedBy.asScala.forall(_ == domain.automation.workflows.InTreeWorkflow.AcquireRecheck.creator),
+      s"every legal ingest is the re-check's own: ${up.askedBy}"
+    )
     up.asked.asScala.toList
   private def found(d: Doi, ck: Citekey) =
     Right(
@@ -274,7 +281,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     val full = item(h, "full"); val meta = item(h, "meta"); val none = item(h, "none")
     val noDoi = h.workLists
-      .add(WorkListControllers.ListName("acquire"), QueueAdd(Queue.QueueItem.Text("Zzrecheck, a book with no DOI")))
+      .addOverRest(
+        WorkListControllers.ListName("acquire"),
+        QueueAdd(Queue.QueueItem.Text("Zzrecheck, a book with no DOI"))
+      )
       .toOption
       .get
       .id
@@ -624,7 +634,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     connect(ds)(sql"UPDATE agent_autopilot SET enabled = true".update.run())
     val ids = (1 to 6).toList.map(i => item(h, s"a$i"))
     val _ = h.workLists
-      .add(WorkListControllers.ListName("acquire"), QueueAdd(Queue.QueueItem.Text("Zzrecheck, a book with no DOI")))
+      .addOverRest(
+        WorkListControllers.ListName("acquire"),
+        QueueAdd(Queue.QueueItem.Text("Zzrecheck, a book with no DOI"))
+      )
       .toOption
       .get
       .id

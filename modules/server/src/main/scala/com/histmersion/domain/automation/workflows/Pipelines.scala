@@ -48,7 +48,7 @@ private[histmersion] object Pipelines:
     val entry = Pipelines.entry(ctx, EntryText(line.value))
     ctx.write("log line", entry.asJson)(
       workLists
-        .add(WorkListControllers.ListName("log"), entry)
+        .record(WorkListControllers.ListName("log"), entry, ctx.creator)
         .left
         .map(e => e.problems)
         .map(_ => line)

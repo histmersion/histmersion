@@ -280,14 +280,15 @@ final class PlanGoalPipeline(
         .map(Right(_))
         .getOrElse(
           workLists
-            .add(
+            .record(
               WorkListControllers.ListName("acquire"),
               QueueAdd(
                 Queue.QueueItem.Text(PlanGoal.acquireText(w, slug).value),
                 topic = Some(Queue.QueueItem.Topic(s"goal ${slug.value}")),
                 goal = Some(Goal.Slug(slug.value)),
                 job = Some(SpatialHierarchyResult.Job.Id(ctx.run.id.value))
-              )
+              ),
+              ctx.creator
             )
             .map(_.id)
         ) match

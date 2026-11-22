@@ -37,10 +37,50 @@ guessed by reading text.
    NoFreeCopy | NoIdentifier` (the person). It depends on the clock, the fetcher generation and the give-up threshold
    (`acquire.recheck.give-up-checks` 5 / `give-up-days` 14), so storing it would make it stale. Only the legal chain's
    attempts are recorded, so an unauthorised fetcher never makes an item the agents'.
-5. **Tasks carry their actor.** `queue_items.actor` (`person | agents`) is required for every task. The migration sets
-   `agents` for the reviewer's own `agent review` tasks and `person` for every other task (a one-time reading of the
-   stored topic). Afterwards a task's actor is set when it is created and changed only explicitly.
-6. **No sentence is read back.** The text readers of the re-check (`AcquireRecheck.replies`, `reason`'s parsing) are
+5. **Tasks carry their actor.** `queue_items.actor` (`person | agents`, V113) is required for every open task
+   (`CHECK (list <> 'tasks' OR status <> 'open' OR actor IS NOT NULL)`). The migration sets `agents` for the reviewer's
+   own `agent review` items and `person` for every other item (a one-time reading of the stored topic). Afterwards an
+   item's actor is set when it is created, from its creator (`Manual` → person, `Automated` → agents), and changed only
+   explicitly (`queue patch <id> --actor`, `PATCH /api/queue/items/{id}` with `actor`, the web page's toggle).
+6. **Every work-list item records who created it** (owner decision 2026-11-22, queue row 32; queue items first).
+   `queue_items.creator` (V113, `jsonb NOT NULL`, no default) holds the domain's `Creator`:
+   - `Manual(surface)`: the person, through `rest | mcp | cli | web | internal`. `internal` is a record the server writes
+     itself as part of a person's operation that reaches it without a surface of its own: a merge's follow-up tasks and
+     worklog line, a source deletion's worklog line, a person's bulk decision's worklog line.
+   - `Automated(plugin, workflow, agent)`: a named plugin and a named workflow (both required), and the agent as
+     `Model(definition, provider, model)` or `Code` (a step that calls no model). The names are newtypes checked by
+     their rules: `Creator.Plugin.Name`, `Workflow.Name`, `Definition.Name` (the agent definition), `Provider.Name`
+     (the AI provider) and `LanguageModel.Name`, each read from a wire value by its companion's `from`.
+   - `Unknown(facts)`: only what the migration could not attribute from stored facts — `Unrecorded(job)` (made before
+     creators were recorded; the job it names, if any) — and `Unreadable(stored)`, a stored document this build cannot
+     read. The wire's `Queue.Creator` has the stored document's own shape (`kind`, `surface`, `plugin`, `workflow`,
+     `agent{kind, definition, provider, model}`, `job`), so a read decodes the column straight into it, no name is
+     unwrapped and rebuilt on the way, and a document that does not decode shows as kind `unreadable`; the row keeps
+     what it holds and is never rewritten.
+   When is `created_at`. Each part of a stored `Automated` is `Known(name) | Unknown`, and only the migration writes an
+   `Unknown` part: the write path takes `Creator.New` (`Manual(surface) | Automated(plugin, workflow, agent)`), which has
+   no unknown, so no new write can carry one. The migration reads stored facts only: an item whose `created_job` names a
+   job with a `pipeline` becomes `Automated(Unknown, Known(pipeline), Unknown)`; every other item `Unknown(Unrecorded)`.
+   A bundle's queue line carries no creator yet (row 32), so an imported item that is new here is stored as
+   `Unknown(Unrecorded)` with the actor the migration's rule gives; an item already here keeps its own.
+7. **Who an outside caller is, at one parse boundary.** `QueueAdd.createdBy` (`api.automation.Queue.CreatedBy`:
+   `plugin`, `workflow`, `agentDefinition`, `provider`, `model`) and `QueueAdd.via` (`cli | web | rest`) are read by
+   `WorkListControllers.creatorOf`: plugin and workflow both, or no record; the agent's three names all, or none
+   (`Code`); a partial record or a name its rule refuses is a typed `Invalid`. Without a record the item is
+   `Manual(via)` (`rest` when the client names none); an MCP add without one is refused (`Invalid.Missing`), since an
+   agent is the MCP's usual caller. The CLI sends `via = cli` and the identity from `--by-plugin --by-workflow
+   --by-agent --by-provider --by-model`, each else `histmersion.cli.agent.*` (`HISTMERSION_AGENT_PLUGIN`, `_WORKFLOW`,
+   `_DEFINITION`, `_PROVIDER`, `_MODEL`); the web page `via = web`. An ingest that lists a browser download takes its
+   creator from its door: `Manual(rest)` for `POST /api/acquire/ingest`, `Manual(mcp)` for the MCP tool (the ingest
+   request carries no identity yet, row 32), and the calling workflow for the legal re-check and the watchers.
+8. **In-process writers name their workflow.** Every `WorkflowDefinition` names its `contributor`, the plugin it comes
+   from, and gives `creator(agent)`; a run's writes take `RunCtx.creator` (the run's workflow, agent `Code`, since the
+   items are written by code steps). Every `ManagerKindDefinition` names its `creator`. The engine's own processes that
+   are no workflow definition are the closed set `InTreeWorkflow` (run notices, scheduler, autopilot, auto-approvals,
+   approval digest, drain, goal focus, managers, the acquisition re-check, the ingest backlog, the seed). The in-tree
+   contributors are named `engine`, `library` and `research`: these stand as the plugin names until the workflows move
+   into plugins of their own.
+9. **No sentence is read back.** The text readers of the re-check (`AcquireRecheck.replies`, `reason`'s parsing) are
    deleted. The page's wording comes from the types.
 
 ## Consequences

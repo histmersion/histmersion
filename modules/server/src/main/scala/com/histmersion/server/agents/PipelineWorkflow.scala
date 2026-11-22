@@ -7,6 +7,8 @@ import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.domain.automation.workflows.WorkflowDefinition
 import com.histmersion.domain.automation.workflows.WorkflowId
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
+import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.AgentRole
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.automation.TargetKind
@@ -24,6 +26,7 @@ final class PipelineWorkflow(
     impl: PipelineDef
 ) extends WorkflowDefinition:
   val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire.value)
+  def contributor: Creator.Plugin.Name = InTreeWorkflow.Engine
   def version: domain.automation.Pipeline.Version =
     domain.automation.Pipeline.Version(pipeline.version.value)
   def target: TargetKind = io.scalaland.chimney.Transformer

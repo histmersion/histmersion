@@ -34,8 +34,14 @@ import com.histmersion.util.database.WritePermit
   * before running step `n` the context looks for a finished attempt of `n` and, if there is one, REPLAYS its output
   * instead — so a resumed run never repeats a completed step, and never pays for an LLM answer twice.
   */
-final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
+final class RunCtx private[automation] (
+    val run: RunInfo,
+    engine: Engine,
+    workflow: domain.automation.workflows.WorkflowDefinition
+):
   private val ds = engine.ds
+
+  def creator: Creator.New = workflow.creator(Creator.Agent.Code)
 
   /** The approvals a run's steps open and wait on (and a pipeline records). */
   def approvalStore: ApprovalService = engine.agents.approvalStore

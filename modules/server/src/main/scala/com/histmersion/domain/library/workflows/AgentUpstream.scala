@@ -67,14 +67,15 @@ trait AgentUpstream:
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: Doi): Either[Problems, Ingest.Report] = Left(
+  def ingestLegal(doi: Doi, by: domain.Creator.New): Either[Problems, Ingest.Report] = Left(
     Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected"))
   )
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
     */
-  def ingestLegalInto(doi: Doi, into: Option[Citekey]): Either[Problems, Ingest.Report] = ingestLegal(doi)
+  def ingestLegalInto(doi: Doi, into: Option[Citekey], by: domain.Creator.New): Either[Problems, Ingest.Report] =
+    ingestLegal(doi, by)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
   def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation("")
@@ -159,12 +160,13 @@ object AgentUpstream:
       a.discover(AcquireApi.Query(query.value), None, None, Some(AcquireApi.Limit(limit.value)), notInDb = false)
         .left
         .map(problem)
-    override def ingestLegal(doi: Doi) =
-      a.ingestLegal(Ingest.Request(Ingest.Request.Id(doi.value))).left.map(problem)
-    override def ingestLegalInto(doi: Doi, into: Option[Citekey]) =
+    override def ingestLegal(doi: Doi, by: domain.Creator.New) =
+      a.ingestLegal(Ingest.Request(Ingest.Request.Id(doi.value)), by).left.map(problem)
+    override def ingestLegalInto(doi: Doi, into: Option[Citekey], by: domain.Creator.New) =
       a.ingestLegal(
         Ingest
-          .Request(Ingest.Request.Id(doi.value), citekey = into.map(c => com.histmersion.api.library.Citekey(c.value)))
+          .Request(Ingest.Request.Id(doi.value), citekey = into.map(c => com.histmersion.api.library.Citekey(c.value))),
+        by
       ).left
         .map(problem)
     override def fetcherGeneration = a.fetcherGeneration

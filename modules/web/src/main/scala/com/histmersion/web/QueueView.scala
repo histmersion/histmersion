@@ -280,7 +280,8 @@ object QueueView:
           reason = Some(d.reason.sentence.trim)
             .filter(_ => sp.reasons)
             .filter(_.nonEmpty)
-            .map((text => Queue.Rationale(text)))
+            .map((text => Queue.Rationale(text))),
+          via = Some(Queue.Creation.Web)
         )
       )
 

@@ -678,7 +678,7 @@ class ToolsSuite extends munit.FunSuite:
           Problem.Unclassified(Legacy.Text(" "))
         )
       ),
-      Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None))
+      Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None, via = Some(Queue.Creation.Web)))
     )
     assertEquals(
       QueueView.validateAdd(
@@ -693,7 +693,8 @@ class ToolsSuite extends munit.FunSuite:
         Queue.QueueAdd(
           QueueItem.Text("x"),
           Some(QueueItem.Topic("Corpus hygiene")),
-          reason = Some(Queue.Rationale("because"))
+          reason = Some(Queue.Rationale("because")),
+          via = Some(Queue.Creation.Web)
         )
       )
     )
@@ -706,7 +707,14 @@ class ToolsSuite extends munit.FunSuite:
           Problem.Unclassified(Legacy.Text("ignored"))
         )
       ),
-      Right(Queue.QueueAdd(QueueItem.Text("ran the lint"), Some(QueueItem.Topic("2026-09-27")), reason = None))
+      Right(
+        Queue.QueueAdd(
+          QueueItem.Text("ran the lint"),
+          Some(QueueItem.Topic("2026-09-27")),
+          reason = None,
+          via = Some(Queue.Creation.Web)
+        )
+      )
     )
     // a multi-line item keeps its inner lines
     assertEquals(

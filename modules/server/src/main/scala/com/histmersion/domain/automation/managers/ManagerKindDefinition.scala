@@ -3,7 +3,7 @@ package domain.automation.managers
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
-import com.histmersion.domain.AutopilotPolicy
+import com.histmersion.domain.{AutopilotPolicy, Creator}
 import com.histmersion.domain.automation.approvals.ApprovalChecks
 import com.histmersion.api.automation.Autopilot.EngineStatus
 import com.histmersion.api.automation.Managers
@@ -29,6 +29,7 @@ import com.histmersion.util.database.WritePermit
   */
 trait ManagerKindDefinition:
   def kind: Kind
+  def creator: Creator.New
 
   /** The item kinds it drives: an item is evaluated, followed up and started by the kind that lists its kind. */
   def items: List[ManagerContext.ItemKind] = Managers.itemKinds(kind).map(k => ManagerContext.ItemKind(k.value))

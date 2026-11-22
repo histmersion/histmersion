@@ -12,6 +12,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.Timestamps
+import com.histmersion.domain.Creator
 
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.
@@ -43,10 +44,13 @@ private[worklists] object QueueBundleRepo:
 
   def queueItemsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
+    val unrecorded = StoredCreator.write(Creator.Unknown(Creator.Facts.Unrecorded(None)))
     w.es.queue.filter(q => w.writes(q.uid)).foreach { q =>
-      sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at)
+      sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at,
+                                     creator, actor)
             VALUES (${q.uid}, ${q.origin}, ${q.list}, ${q.text}, ${q.topic}, ${q.status}, ${q.reason},
-              ${q.createdAt}::timestamptz, ${q.doneAt}::timestamptz, ${q.updatedAt}::timestamptz)
+              ${q.createdAt}::timestamptz, ${q.doneAt}::timestamptz, ${q.updatedAt}::timestamptz,
+              $unrecorded::jsonb, CASE WHEN ${q.topic} = 'agent review' THEN 'agents' ELSE 'person' END)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, list = EXCLUDED.list,
               text = EXCLUDED.text, topic = EXCLUDED.topic, status = EXCLUDED.status,
               reason = EXCLUDED.reason, created_at = EXCLUDED.created_at, done_at = EXCLUDED.done_at,

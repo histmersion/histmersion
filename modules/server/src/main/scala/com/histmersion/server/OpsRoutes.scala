@@ -47,7 +47,9 @@ object OpsRoutes:
         r <- w.workListView.list(WorkListControllers.KindOfList(list.value), WorkListView.IncludeAll(all), g, j)
       yield r
     ),
-    OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(WorkListControllers.ListName(list.value), in)),
+    OpsApi.queueAdd.serverLogic[Identity]((list, in) =>
+      w.workLists.addOverRest(WorkListControllers.ListName(list.value), in)
+    ),
     OpsApi.goalsExport.serverLogicSuccess[Identity](_ =>
       com.histmersion.api.automation.Goal.Export(w.goals.exportText())
     )

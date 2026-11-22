@@ -116,7 +116,7 @@ G44	plugins/media	main	103
 G44	plugins/media	test	57
 G44	problem	main	5
 G44	problem	test	1
-G44	server	main	10350
+G44	server	main	10346
 G44	server	test	3946
 G44	upstreams	main	147
 G44	upstreams	test	44
@@ -138,7 +138,7 @@ G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	25
 G45boundary	api	main	592
-G45boundary	cli	main	1013
+G45boundary	cli	main	1011
 G45boundary	config	main	63
 G45boundary	console	main	4
 G45boundary	core	main	10
@@ -209,7 +209,7 @@ G47self	plugins/events	main	39
 G47self	plugins/fetchers	main	20
 G47self	plugins/gazetteers	main	11
 G47self	plugins/media	main	88
-G47self	server	main	1578
+G47self	server	main	1577
 G47self	server	test	25
 G47self	upstreams	main	122
 G47self	values	main	156

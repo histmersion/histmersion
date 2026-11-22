@@ -46,8 +46,12 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   /** The migrations since the squash, by version, in order: each new migration adds itself here. */
-  private val Chain = List("109", "110", "111", "112")
-  private val Latest = Migrate.Version("112")
+  private val Chain = List("109", "110", "111", "112", "113")
+  private val Latest = Migrate.Version("113")
+
+  private val QueueRowsAtSquash =
+    "SELECT md5(string_agg((t.id, t.list, t.text, t.topic, t.status, t.created_at, t.done_at, t.reason, t.uid, " +
+      "t.origin, t.updated_at, t.goal_slug, t.created_job, t.closed_job)::text, ',' ORDER BY t.id)) FROM queue_items t"
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
@@ -107,12 +111,12 @@ class MigrateSquashSuite extends DbSuite with Bounded:
     val ds = emptyDatabase("histmersion_squash_old_test")
     atSquash(ds)
     exec(ds, "INSERT INTO queue_items (list, text) VALUES ('tasks', 'kept')")
-    val before = strings(ds, "SELECT md5(string_agg(t::text, ',' ORDER BY t::text)) FROM queue_items t")
+    val before = strings(ds, QueueRowsAtSquash)
     oldChain(ds, 109)
     assertEquals(Migrate.run(ds), Latest)
     val baseline = s"${Migrate.SquashedAt} BASELINE" :: Chain.drop(1).map(v => s"$v SQL")
     assertEquals(strings(ds, history), baseline)
-    assertEquals(strings(ds, "SELECT md5(string_agg(t::text, ',' ORDER BY t::text)) FROM queue_items t"), before)
+    assertEquals(strings(ds, QueueRowsAtSquash), before)
     assert(Migrate.validate(ds).isRight, Migrate.validate(ds).toString)
     assertEquals(Migrate.run(ds), Latest, "idempotent")
     assertEquals(strings(ds, history), baseline)
@@ -273,3 +277,41 @@ class MigrateSquashSuite extends DbSuite with Bounded:
       )
     )
     assertEquals(strings(ds, "SELECT to_regclass('public.acquire_checks')::text"), List(null))
+
+  test("V113: each item's creator from stored facts only, its actor from its topic; nothing else of the row moves"):
+    val ds = emptyDatabase("histmersion_squash_creator_test")
+    Migrate.ensureRole(ds, Migrate.QueryRole)
+    val _ = Flyway.configure().configuration(Migrate.flyway(ds).getConfiguration).target("112").load().migrate()
+    exec(
+      ds,
+      """INSERT INTO jobs (id, kind, status, pipeline) VALUES
+        |  ('11111111-1111-4111-8111-111111111111', 'agent', 'done', 'review-article'),
+        |  ('22222222-2222-4222-8222-222222222222', 'ocr', 'done', NULL)""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO queue_items (id, list, text, topic, status, created_job, updated_at) VALUES
+        |  (1, 'tasks', 'review the article', 'agent review', 'open', '11111111-1111-4111-8111-111111111111', '2026-01-01T00:00:00Z'),
+        |  (2, 'log', 'converted', NULL, 'open', '22222222-2222-4222-8222-222222222222', '2026-01-01T00:00:00Z'),
+        |  (3, 'tasks', 'buy the book', 'Backlog', 'open', NULL, '2026-01-01T00:00:00Z'),
+        |  (4, 'acquire', 'gone job', NULL, 'done', 'zz-missing-job', '2026-01-01T00:00:00Z')""".stripMargin
+    )
+    val before = strings(ds, QueueRowsAtSquash)
+    assertEquals(Migrate.run(ds), Latest)
+    assertEquals(
+      strings(ds, "SELECT id || '|' || creator::text || '|' || actor FROM queue_items ORDER BY id"),
+      List(
+        """1|{"kind": "automated", "workflow": "review-article"}|agents""",
+        """2|{"job": "22222222-2222-4222-8222-222222222222", "kind": "unknown"}|person""",
+        """3|{"kind": "unknown"}|person""",
+        """4|{"job": "zz-missing-job", "kind": "unknown"}|person"""
+      )
+    )
+    assertEquals(strings(ds, QueueRowsAtSquash), before, "no other column moved, updated_at included")
+    assertEquals(
+      strings(
+        ds,
+        "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'queue_items' AND column_name = 'creator'"
+      ),
+      List("NO")
+    )

@@ -36,10 +36,12 @@ object Ops:
         text: Queue.QueueItem.Text,
         topic: Option[Queue.QueueItem.Topic],
         reason: Option[Queue.Rationale],
+        by: AgentIdentity,
         json: Cli.JsonOutput
     )
     case Done(id: Queue.Id, json: Cli.JsonOutput)
     case Edit(id: Queue.Id, text: Queue.QueueItem.Text, json: Cli.JsonOutput)
+    case Patch(id: Queue.Id, actor: Option[Queue.Creation.Actor], json: Cli.JsonOutput)
     case Rm(id: Queue.Id, json: Cli.JsonOutput)
     case Export(dir: String)
     case Import(dir: String)
@@ -188,13 +190,16 @@ object Ops:
     def apply(cmd: QueueCmd): Either[Cli.Error, Unit] =
       cmd match
         case QueueCmd.Show(list, all, json) =>
-          c.queueList(Queue.Wire(list.value), all)
+          c.queueList(list, all)
             .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
-        case QueueCmd.Add(list, text, topic, reason, json) =>
-          c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
-            .map(i =>
-              Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
-            )
+        case QueueCmd.Add(list, text, topic, reason, by, json) =>
+          val createdBy = by.orElse(AgentIdentity.configured(Settings.app.cli.agent)).createdBy
+          c.queueAdd(
+            list,
+            QueueAdd(text, topic, reason = reason, createdBy = createdBy, via = Some(Queue.Creation.Cli))
+          ).map(i =>
+            Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
+          )
         // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
         case QueueCmd.Done(id, json) =>
           c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
@@ -202,6 +207,9 @@ object Ops:
         case QueueCmd.Edit(id, text, json) =>
           c.queuePatch(id, QueuePatch(text = Some(text)))
             .map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
+        case QueueCmd.Patch(id, actor, json) =>
+          c.queuePatch(id, QueuePatch(actor = actor))
+            .map(i => Output.emit(json, i)(i => s"#${i.id}: ${i.actor.fold("")(a => s"$a acts · ")}${i.text}"))
         case QueueCmd.Rm(id, json) =>
           c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
         case QueueCmd.Export(dir) =>

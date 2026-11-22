@@ -1,12 +1,12 @@
-definitions	701b98e8e6c8da6b4ce4221bfd7d1548444599779ea7d4b209e536c1fb289a28
+definitions	8125ecd37820192945dd089f98aea69c7ef5d907d54c83fe50865977107107af
 answer	runtimes=claude-code,codex,opencode files=206 written=206 removed=0
 known tools	archive,article_coverage,assess,check_edits,discover,events,facets,followups,geo_when,get_article,get_source,histogram,ingest,ingest_doi,job_status,lint,list_articles,manager,neighbors,passages,patch_article,patch_source,place_names,place_override,places,put_article,query,queue,refs,run_status,search
 claude-code/
 claude-code/.claude-plugin/
-claude-code/.claude-plugin/marketplace.json	602	dd068e3fc7db7fdfbc48de901b0e26e3c6bd73618785c686635fedc24536aa3d
+claude-code/.claude-plugin/marketplace.json	602	babba1de597052f59c355c05999c7c1052a3e880641f0123ff667552f10606ce
 claude-code/headless/
 claude-code/headless/.claude-plugin/
-claude-code/headless/.claude-plugin/plugin.json	407	fa3ae16c6f5ffc982ad6cbd6656e7fe9152da91790aa75d68359762254d1c242
+claude-code/headless/.claude-plugin/plugin.json	407	c4a58db6277d4f40a3c1c2c8777012038d94d9dfc4668b83bd62e3f6111bdbe6
 claude-code/headless/agents/
 claude-code/headless/agents/acquisition-ranker.md	1234	82f939e55cb47389e98169f1a617d315afae5da96ea67eb343fb665542fa921f
 claude-code/headless/agents/article-cold-reader.md	5674	6f27000cd1573ae6401e4aca3a8d16bc38dc0f41afb9d80ddd4893bf9eed3306
@@ -30,7 +30,7 @@ claude-code/headless/skills/
 claude-code/headless/skills/assess-paper/
 claude-code/headless/skills/assess-paper/SKILL.md	3125	5463b41a0e4226a151f66c26f39312b7ae2cf59d3791176eef0ecbb19e7ea919
 claude-code/headless/skills/bookkeeping/
-claude-code/headless/skills/bookkeeping/SKILL.md	4964	20e2c1434284b331960004c3648bb66876f46554bfbd35c3f04cab9fb1de9bfb
+claude-code/headless/skills/bookkeeping/SKILL.md	5311	550d9addd8c9f4b38d7e2bedb15df9917fa725d07eeaa26f0dd9ab8b83ac6181
 claude-code/headless/skills/enrich-calibre/
 claude-code/headless/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
 claude-code/headless/skills/find-followups/
@@ -38,7 +38,7 @@ claude-code/headless/skills/find-followups/SKILL.md	3640	7459cad69314f546be7fdcc
 claude-code/headless/skills/histmersion-compile/
 claude-code/headless/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
 claude-code/headless/skills/histmersion-currency/
-claude-code/headless/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+claude-code/headless/skills/histmersion-currency/SKILL.md	7857	9d129367b205740536fb75cfdcefdd4e1e753d4b9edc63316412b5239285e53c
 claude-code/headless/skills/histmersion-dev/
 claude-code/headless/skills/histmersion-dev/SKILL.md	26070	3b0b181618e2a3d177c9637bacd21c943111488c756f82ab723e2912035ddad9
 claude-code/headless/skills/histmersion-ingest/
@@ -62,12 +62,12 @@ claude-code/headless/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872
 claude-code/headless/skills/sync-calibre/
 claude-code/headless/skills/sync-calibre/SKILL.md	4952	2e89f58ed24beca3ed985d40cc5623c209219b61a875ebde34afa9856e81520c
 claude-code/headless/skills/trailhead/
-claude-code/headless/skills/trailhead/SKILL.md	5780	7cf3e69b1315dcbc36c5b9a6fe071836fb17ddee24a1c005f422c2d1ddd04951
+claude-code/headless/skills/trailhead/SKILL.md	5845	3422bb09a8c7cd68a131385611631f50d353fd40a36d3d10ca27d307195c0d33
 claude-code/headless/skills/update-topic/
 claude-code/headless/skills/update-topic/SKILL.md	4745	d160f2d36b96d317cec2d58c5641191d1a53c863f931a3e4763f1f380c68cff9
 claude-code/histmersion/
 claude-code/histmersion/.claude-plugin/
-claude-code/histmersion/.claude-plugin/plugin.json	502	ad69b904219da567c7d995f17a3f0a5695ee36e1881a726cf6e64313e1f60109
+claude-code/histmersion/.claude-plugin/plugin.json	502	e9b2e2e8c95fc5d8e46afecef8b076f753a6e7f2d6cd9a33a1f22101ac00863b
 claude-code/histmersion/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
 claude-code/histmersion/agents/
 claude-code/histmersion/agents/article-cold-reader.md	5548	b9cdb9b646a27e80f3fa5a7d3eab9bd634644c44e05aca2a0499127bbaa3c6dd
@@ -78,7 +78,7 @@ claude-code/histmersion/skills/
 claude-code/histmersion/skills/assess-paper/
 claude-code/histmersion/skills/assess-paper/SKILL.md	3181	6293030d18c9d58e6fb31418d3bc131ebf8ceb99ba5c9a9526f506814f1c3fbc
 claude-code/histmersion/skills/bookkeeping/
-claude-code/histmersion/skills/bookkeeping/SKILL.md	5020	adf3becb660fcfd63a2a7457db2e4e2d1a939c462b91773dd10f415c767c2a6b
+claude-code/histmersion/skills/bookkeeping/SKILL.md	5367	1511f67d45af06631208f6578a5a85dacd92ac2e72f2646f0778a2b6a295188b
 claude-code/histmersion/skills/enrich-calibre/
 claude-code/histmersion/skills/enrich-calibre/SKILL.md	7459	4b4e0070ede15bc7ae3c6945951cd9ee3a94b7dda27d40ba4a2db75a74021012
 claude-code/histmersion/skills/find-followups/
@@ -86,7 +86,7 @@ claude-code/histmersion/skills/find-followups/SKILL.md	3696	b233db1aa517f9a9e678
 claude-code/histmersion/skills/histmersion-compile/
 claude-code/histmersion/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
 claude-code/histmersion/skills/histmersion-currency/
-claude-code/histmersion/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+claude-code/histmersion/skills/histmersion-currency/SKILL.md	7857	9d129367b205740536fb75cfdcefdd4e1e753d4b9edc63316412b5239285e53c
 claude-code/histmersion/skills/histmersion-dev/
 claude-code/histmersion/skills/histmersion-dev/SKILL.md	26070	3b0b181618e2a3d177c9637bacd21c943111488c756f82ab723e2912035ddad9
 claude-code/histmersion/skills/histmersion-ingest/
@@ -110,7 +110,7 @@ claude-code/histmersion/skills/review-article/SKILL.md	10332	6056bfc8ca6cacbf58c
 claude-code/histmersion/skills/sync-calibre/
 claude-code/histmersion/skills/sync-calibre/SKILL.md	5008	8e701c61bac6c65daef7c1d34c3a695b1f32819613fb76910e1cfcf1c8f6eeb2
 claude-code/histmersion/skills/trailhead/
-claude-code/histmersion/skills/trailhead/SKILL.md	5843	0d82cd70d62fa1537a77108daaedd35262e41933d1891d5caeef12738c4590be
+claude-code/histmersion/skills/trailhead/SKILL.md	5908	d01c54158fc719e9ba5c6b8333764c0a9cbc717df7a421c302fca14ce16b9949
 claude-code/histmersion/skills/update-topic/
 claude-code/histmersion/skills/update-topic/SKILL.md	4808	927509a0726bc67235647f9f89587a13a8188ccb67664064bf91a25bbf831141
 claude-code/login/
@@ -184,7 +184,7 @@ codex/home/skills/
 codex/home/skills/assess-paper/
 codex/home/skills/assess-paper/SKILL.md	2999	88dc4e382434e491b815f6b4761aaf193060850f3ed099a42bf085f9a0e93997
 codex/home/skills/bookkeeping/
-codex/home/skills/bookkeeping/SKILL.md	4892	cc99b5d1dd6484232d241879935c53d357ad04ae10f84fb36ba0c6990078d478
+codex/home/skills/bookkeeping/SKILL.md	5239	2bf286b6a255d2bf64797dc9ccb7b10393abe3044e74294d40b5a60056ecafe2
 codex/home/skills/enrich-calibre/
 codex/home/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
 codex/home/skills/find-followups/
@@ -192,7 +192,7 @@ codex/home/skills/find-followups/SKILL.md	3550	e552f86a2a046aed523337111ad01b54b
 codex/home/skills/histmersion-compile/
 codex/home/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
 codex/home/skills/histmersion-currency/
-codex/home/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+codex/home/skills/histmersion-currency/SKILL.md	7857	9d129367b205740536fb75cfdcefdd4e1e753d4b9edc63316412b5239285e53c
 codex/home/skills/histmersion-dev/
 codex/home/skills/histmersion-dev/SKILL.md	26072	af6ca823bc4e685a40921528c828cc0a79f83202f5846a39ba4e6067a296e794
 codex/home/skills/histmersion-ingest/
@@ -216,18 +216,18 @@ codex/home/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b22360
 codex/home/skills/sync-calibre/
 codex/home/skills/sync-calibre/SKILL.md	4916	af8427de923b808f3636bf98f21c0e4b334fe4c04f507bd45a2d0a48f19351ef
 codex/home/skills/trailhead/
-codex/home/skills/trailhead/SKILL.md	5620	98672d78cb85c7318e47f823bb0df2cf9607cca5a52b19044b661c088040cd14
+codex/home/skills/trailhead/SKILL.md	5685	7b8385b72a2fc624632e27191a6e685822d12cc511d5226359f5e93ceb795cc5
 codex/home/skills/update-topic/
 codex/home/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
 codex/plugin/
 codex/plugin/.codex-plugin/
-codex/plugin/.codex-plugin/plugin.json	334	98472eed41fc3581c43f723a8fd03fd7ce256033f03e64bdf5737566cb794ae6
+codex/plugin/.codex-plugin/plugin.json	334	73fd126b0d876da8b694c357785bc5b31464db97f7be2bbc3cf5c11a10583bc6
 codex/plugin/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
 codex/plugin/skills/
 codex/plugin/skills/assess-paper/
 codex/plugin/skills/assess-paper/SKILL.md	2999	88dc4e382434e491b815f6b4761aaf193060850f3ed099a42bf085f9a0e93997
 codex/plugin/skills/bookkeeping/
-codex/plugin/skills/bookkeeping/SKILL.md	4892	cc99b5d1dd6484232d241879935c53d357ad04ae10f84fb36ba0c6990078d478
+codex/plugin/skills/bookkeeping/SKILL.md	5239	2bf286b6a255d2bf64797dc9ccb7b10393abe3044e74294d40b5a60056ecafe2
 codex/plugin/skills/enrich-calibre/
 codex/plugin/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
 codex/plugin/skills/find-followups/
@@ -235,7 +235,7 @@ codex/plugin/skills/find-followups/SKILL.md	3550	e552f86a2a046aed523337111ad01b5
 codex/plugin/skills/histmersion-compile/
 codex/plugin/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
 codex/plugin/skills/histmersion-currency/
-codex/plugin/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+codex/plugin/skills/histmersion-currency/SKILL.md	7857	9d129367b205740536fb75cfdcefdd4e1e753d4b9edc63316412b5239285e53c
 codex/plugin/skills/histmersion-dev/
 codex/plugin/skills/histmersion-dev/SKILL.md	26072	af6ca823bc4e685a40921528c828cc0a79f83202f5846a39ba4e6067a296e794
 codex/plugin/skills/histmersion-ingest/
@@ -259,10 +259,10 @@ codex/plugin/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b223
 codex/plugin/skills/sync-calibre/
 codex/plugin/skills/sync-calibre/SKILL.md	4916	af8427de923b808f3636bf98f21c0e4b334fe4c04f507bd45a2d0a48f19351ef
 codex/plugin/skills/trailhead/
-codex/plugin/skills/trailhead/SKILL.md	5620	98672d78cb85c7318e47f823bb0df2cf9607cca5a52b19044b661c088040cd14
+codex/plugin/skills/trailhead/SKILL.md	5685	7b8385b72a2fc624632e27191a6e685822d12cc511d5226359f5e93ceb795cc5
 codex/plugin/skills/update-topic/
 codex/plugin/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
-manifest.json	25014	dae95b432ed3f07473feea424767f104978babda6d69886e463756c904b980bd
+manifest.json	25014	70e38ac80eba6fb93f3c243dd546f8890a09976a5c30758aa01d2b39cb538e4c
 opencode/
 opencode/config/
 opencode/config/agents/
@@ -286,7 +286,7 @@ opencode/config/skills/
 opencode/config/skills/assess-paper/
 opencode/config/skills/assess-paper/SKILL.md	3083	aaec603c346747e647128e6c8cbb304f3a11b4d1e91a5845bfbd3b2a333dae73
 opencode/config/skills/bookkeeping/
-opencode/config/skills/bookkeeping/SKILL.md	4940	8c3ca1f91f74b5b733debff396aebf1495802c3e5f904ed8c6bf37ce773f8857
+opencode/config/skills/bookkeeping/SKILL.md	5287	8d852d5db4806197b29c3c56b2186f49b3ffe0781e7e7d898a3c17f6fcb0ba4a
 opencode/config/skills/enrich-calibre/
 opencode/config/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
 opencode/config/skills/find-followups/
@@ -294,7 +294,7 @@ opencode/config/skills/find-followups/SKILL.md	3610	88842116de735dbf35ef4cbb6996
 opencode/config/skills/histmersion-compile/
 opencode/config/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
 opencode/config/skills/histmersion-currency/
-opencode/config/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+opencode/config/skills/histmersion-currency/SKILL.md	7857	9d129367b205740536fb75cfdcefdd4e1e753d4b9edc63316412b5239285e53c
 opencode/config/skills/histmersion-dev/
 opencode/config/skills/histmersion-dev/SKILL.md	26064	409be7fd03f149f1e22b561523b0c4e1c8d7788bd656c9f1544beffff731cf16
 opencode/config/skills/histmersion-ingest/
@@ -318,7 +318,7 @@ opencode/config/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872d347b
 opencode/config/skills/sync-calibre/
 opencode/config/skills/sync-calibre/SKILL.md	4940	dae52581e1a992a2839f5a6d4f369585fe0ce4bc50569b3b91d803ba136fe5fa
 opencode/config/skills/trailhead/
-opencode/config/skills/trailhead/SKILL.md	5720	c1aac95a11be769689ba922b19281b10f5110eb69ee3dbb180bcb6cd71488251
+opencode/config/skills/trailhead/SKILL.md	5785	a9b014189989c515db3c2a6620fa9f94038b595d704e9e404bcb6a22ce74350d
 opencode/config/skills/update-topic/
 opencode/config/skills/update-topic/SKILL.md	4691	8016fb036374755574e381f15f4394fd293d50b231e82e5e6a0376fd4d2a5b56
 opencode/interactive/
@@ -327,7 +327,7 @@ opencode/interactive/skills/
 opencode/interactive/skills/assess-paper/
 opencode/interactive/skills/assess-paper/SKILL.md	3083	aaec603c346747e647128e6c8cbb304f3a11b4d1e91a5845bfbd3b2a333dae73
 opencode/interactive/skills/bookkeeping/
-opencode/interactive/skills/bookkeeping/SKILL.md	4940	8c3ca1f91f74b5b733debff396aebf1495802c3e5f904ed8c6bf37ce773f8857
+opencode/interactive/skills/bookkeeping/SKILL.md	5287	8d852d5db4806197b29c3c56b2186f49b3ffe0781e7e7d898a3c17f6fcb0ba4a
 opencode/interactive/skills/enrich-calibre/
 opencode/interactive/skills/enrich-calibre/SKILL.md	7411	3d7f8a2276cad6826b4d99bea40ac3da940c534a529f3838d6f78050e6b36795
 opencode/interactive/skills/find-followups/
@@ -335,7 +335,7 @@ opencode/interactive/skills/find-followups/SKILL.md	3610	88842116de735dbf35ef4cb
 opencode/interactive/skills/histmersion-compile/
 opencode/interactive/skills/histmersion-compile/SKILL.md	9679	d086242d6cae1a03c07c0ed9c961116aaaeef664cc31ea2df76d6c52597b8342
 opencode/interactive/skills/histmersion-currency/
-opencode/interactive/skills/histmersion-currency/SKILL.md	7752	e00170dbdcc3afec32bbf612fbf9a623f9c1356c395f485bb6261c6f43f9ea7a
+opencode/interactive/skills/histmersion-currency/SKILL.md	7857	9d129367b205740536fb75cfdcefdd4e1e753d4b9edc63316412b5239285e53c
 opencode/interactive/skills/histmersion-dev/
 opencode/interactive/skills/histmersion-dev/SKILL.md	26064	409be7fd03f149f1e22b561523b0c4e1c8d7788bd656c9f1544beffff731cf16
 opencode/interactive/skills/histmersion-ingest/
@@ -359,7 +359,7 @@ opencode/interactive/skills/review-article/SKILL.md	10256	5e673318c69033bf09b872
 opencode/interactive/skills/sync-calibre/
 opencode/interactive/skills/sync-calibre/SKILL.md	4940	dae52581e1a992a2839f5a6d4f369585fe0ce4bc50569b3b91d803ba136fe5fa
 opencode/interactive/skills/trailhead/
-opencode/interactive/skills/trailhead/SKILL.md	5720	c1aac95a11be769689ba922b19281b10f5110eb69ee3dbb180bcb6cd71488251
+opencode/interactive/skills/trailhead/SKILL.md	5785	a9b014189989c515db3c2a6620fa9f94038b595d704e9e404bcb6a22ce74350d
 opencode/interactive/skills/update-topic/
 opencode/interactive/skills/update-topic/SKILL.md	4691	8016fb036374755574e381f15f4394fd293d50b231e82e5e6a0376fd4d2a5b56
 opencode/xdg/

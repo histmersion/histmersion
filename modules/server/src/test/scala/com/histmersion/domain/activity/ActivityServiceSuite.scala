@@ -141,12 +141,16 @@ class ActivityServiceSuite extends DbSuite:
           ago(60 * 24 * 9)
         )}::timestamptz)""".update.run()
       // three lines of one instant (by a run, by a job, by a person), a note block and a backlog item (neither listed)
-      sql"""INSERT INTO queue_items (list, text, status, created_at, goal_slug, created_job) VALUES
-            ('log', 'reviewed', 'open', ${t(ago(3))}::timestamptz, 'g1', 'r1'),
-            ('log', 'fetched', 'open', ${t(ago(3))}::timestamptz, NULL, 'j1'),
-            ('log', 'a person''s note', 'open', ${t(ago(3))}::timestamptz, NULL, NULL),
-            ('log', '## preamble', 'note', ${t(ago(3))}::timestamptz, NULL, NULL),
-            ('tasks', 'a backlog item', 'open', ${t(ago(3))}::timestamptz, 'g1', 'r1')""".update.run()
+      sql"""INSERT INTO queue_items (list, text, status, created_at, goal_slug, created_job, creator, actor) VALUES
+            ('log', 'reviewed', 'open', ${t(ago(3))}::timestamptz, 'g1', 'r1', '{"kind":"unknown"}', 'agents'),
+            ('log', 'fetched', 'open', ${t(ago(3))}::timestamptz, NULL, 'j1', '{"kind":"unknown"}', 'agents'),
+            ('log', 'a person''s note', 'open', ${t(
+          ago(3)
+        )}::timestamptz, NULL, NULL, '{"kind":"manual","surface":"cli"}', 'person'),
+            ('log', '## preamble', 'note', ${t(ago(3))}::timestamptz, NULL, NULL, '{"kind":"unknown"}', 'person'),
+            ('tasks', 'a backlog item', 'open', ${t(
+          ago(3)
+        )}::timestamptz, 'g1', 'r1', '{"kind":"unknown"}', 'agents')""".update.run()
       // a person's decision, one the autopilot made, one still open
       sql"""INSERT INTO approvals (job_id, kind, citekey, proposal, state, note, result, created_at, decided_at) VALUES
             ('r1', 'edge', 'drake2012', '{}'::jsonb, 'approved', 'looks right', 'applied', ${t(

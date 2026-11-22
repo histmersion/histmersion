@@ -568,7 +568,10 @@ final class AutopilotService(
     log(line)
 
   private def log(line: String): Unit =
-    agents.workLists.logLine(QueueAdd(QueueItem.Text(line.take(1000))))
+    agents.workLists.logLine(
+      QueueAdd(QueueItem.Text(line.take(1000))),
+      domain.automation.workflows.InTreeWorkflow.Autopilot.creator
+    )
     scribe.info(line)
 
   // ── status ─────────────────────────────────────────────────────────────────────────────────────

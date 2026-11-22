@@ -1232,7 +1232,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   ):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val legacy = h.workLists
-      .add(
+      .addOverRest(
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text(s"review-article [[$Slug]]: MAJOR open — R9 major (x): an old finding"))
       )
@@ -1361,14 +1361,14 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val mine =
       h.workLists
-        .add(
+        .addOverRest(
           WorkListControllers.ListName("tasks"),
           QueueAdd(Queue.QueueItem.Text(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding"))
         )
         .toOption
         .get
     val twice = h.workLists
-      .add(
+      .addOverRest(
         WorkListControllers.ListName("tasks"),
         QueueAdd(Queue.QueueItem.Text(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)"))
       )

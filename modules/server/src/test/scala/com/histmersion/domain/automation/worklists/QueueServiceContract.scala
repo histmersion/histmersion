@@ -13,6 +13,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.domain.Creator
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status
@@ -66,8 +67,21 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
       |""".stripMargin
   )
 
+  private val ByPerson: Creator.New = Creator.New.Manual(Creator.Surface.Cli)
+  private val ByWorkflow: Creator.New = Creator.New.Automated(
+    Creator.Plugin.Name("research"),
+    Creator.Workflow.Name("review-article"),
+    Creator.Agent.Model(
+      Creator.Definition.Name("article-skeptic"),
+      Creator.Provider.Name("anthropic"),
+      Creator.LanguageModel.Name("claude-opus-5-5")
+    )
+  )
+
+  private def put(q: QueueService, kind: Kind, in: QueueAdd): QueueItem = q.add(kind, in, ByPerson)
+
   private def importFile(q: QueueService, kind: Kind, text: Queue.FileText): (Int, Int) =
-    val c = q.replace(kind, Queue.parse(kind, text), ImportMode.Replace)
+    val c = q.replace(kind, Queue.parse(kind, text), ImportMode.Replace, ByPerson)
     (c.written.value, c.removed.value)
 
   private def exported(q: QueueService, kind: Kind) = Queue.render(kind, q.list(kind, QueueScope.All))
@@ -79,7 +93,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   // ── CRUD ─────────────────────────────────────────────────────────────────────────────────────
 
   qtest("add → list → done → list: an item leaves the open list when it is closed") { q =>
-    val item = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("enrich heggarty2023"), Some(QueueItem.Topic("Backlog"))))
+    val item = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("enrich heggarty2023"), Some(QueueItem.Topic("Backlog"))))
     assertEquals(item.list, "tasks")
     assertEquals(item.status, Open)
     assertEquals(item.topic, Some("Backlog"))
@@ -94,7 +108,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("an item marked done keeps its first done time when patched again") { q =>
-    val t = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("read Cline 2014")))
+    val t = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("read Cline 2014")))
     val done = q.patch(id(t), QueuePatch(status = Some(status(Done)))).toOption.get
     val again = q.patch(id(t), QueuePatch(text = Some(QueueItem.Text("read Cline 2014, ch. 3")))).toOption.get
     assertEquals(again.doneAt, done.doneAt)
@@ -102,7 +116,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("reopening an item clears its completion date") { q =>
-    val i = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("x")))
+    val i = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("x")))
     val _ = q.patch(id(i), QueuePatch(status = Some(status(Done))))
     val reopened = q.patch(id(i), QueuePatch(status = Some(status(Open)))).toOption.get
     assertEquals(reopened.status, Open)
@@ -110,12 +124,12 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("an item made done is stamped done at once") { q =>
-    val i = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("already done"), status = Some(status(Done))))
+    val i = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("already done"), status = Some(status(Done))))
     assert(i.doneAt.isDefined, i)
   }
 
   qtest("patch changes only what it carries") { q =>
-    val i = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("a book"), Some(QueueItem.Topic("Books"))))
+    val i = put(q, Kind.Acquire, QueueAdd(QueueItem.Text("a book"), Some(QueueItem.Topic("Books"))))
     val p = q.patch(id(i), QueuePatch(text = Some(QueueItem.Text("a better book")))).toOption.get
     assertEquals(p.text, "a better book")
     assertEquals(p.topic, Some("Books"))
@@ -123,7 +137,8 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("a blank topic or reason in a patch clears it; the rest of the row stays") { q =>
-    val i = q.add(
+    val i = put(
+      q,
       Kind.Tasks,
       QueueAdd(
         QueueItem.Text("tidy up"),
@@ -143,7 +158,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("delete removes the row and returns what was removed") { q =>
-    val i = q.add(Kind.Log, QueueAdd(QueueItem.Text("did a thing")))
+    val i = put(q, Kind.Log, QueueAdd(QueueItem.Text("did a thing")))
     assertEquals(q.delete(id(i)).map(_.text), Right("did a thing"))
     assertEquals(q.get(id(i)), None)
   }
@@ -159,22 +174,22 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
 
   qtest("the three lists are independent") { q =>
     Kind.values.foreach { k =>
-      val _ = q.add(k, QueueAdd(QueueItem.Text(s"item for ${k.label}")))
+      val _ = put(q, k, QueueAdd(QueueItem.Text(s"item for ${k.label}")))
     }
     Kind.values.foreach(k => assertEquals(every(q, k).map(_.text), List(s"item for ${k.label}")))
   }
 
   qtest("byIds: any list and status, by id; an unknown id is left out") { q =>
-    val a = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("a")))
-    val b = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("b"), status = Some(status(Done))))
+    val a = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("a")))
+    val b = put(q, Kind.Acquire, QueueAdd(QueueItem.Text("b"), status = Some(status(Done))))
     assertEquals(q.byIds(List(id(b), QueueItemId(987654321), id(a))).map(_.id), List(a.id, b.id))
     assertEquals(q.byIds(Nil), Nil)
   }
 
   qtest("naming: the items of a list whose text names the DOI, any status") { q =>
-    val a = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/XYZ.1")))
-    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/xyz.1")))
-    val _ = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/xyz.10")))
+    val a = put(q, Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/XYZ.1")))
+    val _ = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/xyz.1")))
+    val _ = put(q, Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012 doi:10.1000/xyz.10")))
     assertEquals(q.naming(Kind.Acquire, Doi.assume(" 10.1000/XYZ.1 ")).map(_.id), List(a.id))
     assertEquals(q.naming(Kind.Acquire, Doi.assume("")), Nil)
   }
@@ -208,7 +223,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest("an append import adds instead") { q =>
     val _ = importFile(q, Kind.Acquire, acquireFile)
     val before = every(q, Kind.Acquire).size
-    val c = q.replace(Kind.Acquire, Queue.parse(Kind.Acquire, acquireFile), ImportMode.Append)
+    val c = q.replace(Kind.Acquire, Queue.parse(Kind.Acquire, acquireFile), ImportMode.Append, ByPerson)
     assertEquals(c.removed, 0)
     assertEquals(every(q, Kind.Acquire).size, before * 2)
   }
@@ -216,7 +231,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest("an item added after an import lands in its topic group and re-exports cleanly") { q =>
     val _ = importFile(q, Kind.Acquire, acquireFile)
     val topic = QueueItem.Topic(s"🟡 Outstanding${Sep}Historiography$Sep**Highest value**")
-    val _ = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("**J.Z. Smith**, *Drudgery Divine* (1990)"), Some(topic)))
+    val _ = put(q, Kind.Acquire, QueueAdd(QueueItem.Text("**J.Z. Smith**, *Drudgery Divine* (1990)"), Some(topic)))
     val out = exported(q, Kind.Acquire)
     assertEquals(out.value.linesIterator.count(_ == "**Highest value**"), 1, out)
     assert(out.value.contains("- [ ] **Ronald Hutton**, *The Triumph of the Moon* (1999)\n- [ ] **J.Z. Smith**"), out)
@@ -229,7 +244,8 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest(
     "an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it"
   ) { q =>
-    val added = q.add(
+    val added = put(
+      q,
       Kind.Acquire,
       QueueAdd(
         QueueItem.Text("Drake 2012"),
@@ -246,14 +262,16 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("a goal's items: its own, and those its links name; open only unless done ones are asked for") { q =>
-    val own = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("own item"), goal = Some(Goal.Slug("zz-links-goal"))))
-    val linked = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("linked item")))
-    val other = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("someone else's")))
-    val closed = q.add(
+    val own = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("own item"), goal = Some(Goal.Slug("zz-links-goal"))))
+    val linked = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("linked item")))
+    val other = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("someone else's")))
+    val closed = put(
+      q,
       Kind.Tasks,
       QueueAdd(QueueItem.Text("closed item"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Done)))
     )
-    val _ = q.add(
+    val _ = put(
+      q,
       Kind.Tasks,
       QueueAdd(QueueItem.Text("a note"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Note)))
     )
@@ -274,11 +292,12 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
 
   qtest("a run's or job's items: those it wrote and those it ticked off") { q =>
     val wrote =
-      q.add(Kind.Tasks, QueueAdd(QueueItem.Text("wrote"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-7"))))
-    val ticked = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("ticked")))
+      put(q, Kind.Tasks, QueueAdd(QueueItem.Text("wrote"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-7"))))
+    val ticked = put(q, Kind.Tasks, QueueAdd(QueueItem.Text("ticked")))
     val _ =
       q.patch(id(ticked), QueuePatch(status = Some(status(Done)), closedBy = Some(QueuePatch.ClosedBy("zz-run-7"))))
-    val _ = q.add(
+    val _ = put(
+      q,
       Kind.Tasks,
       QueueAdd(QueueItem.Text("another run's"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-8")))
     )
@@ -286,4 +305,52 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
       q.list(Kind.Tasks, QueueScope.ForJob(QueueScope.ForJob.Job("zz-run-7"))).map(_.id),
       List(wrote.id, ticked.id)
     )
+  }
+
+  qtest(
+    "an item records who created it, and its actor follows: the person for a manual add, the agents for a workflow's"
+  ) { q =>
+    val mine = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("mine")), ByPerson)
+    val theirs = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("theirs")), ByWorkflow)
+    assertEquals(mine.creator, Some(Queue.Creator(Creation.Manual, surface = Some(Creation.Surface("cli")))))
+    assertEquals(mine.actor, Some(Creation.Person))
+    assertEquals(
+      theirs.creator,
+      Some(
+        Queue.Creator(
+          Creation.Automated,
+          plugin = Some(Creation.Plugin("research")),
+          workflow = Some(Creation.Workflow("review-article")),
+          agent = Some(
+            Queue.Agent(
+              Creation.ByModel,
+              Some(Creation.Definition("article-skeptic")),
+              Some(Creation.Provider("anthropic")),
+              Some(Creation.Model("claude-opus-5-5"))
+            )
+          )
+        )
+      )
+    )
+    assertEquals(theirs.actor, Some(Creation.Agents))
+    assertEquals(q.get(id(theirs)).flatMap(_.creator), theirs.creator, "read back as written")
+  }
+
+  qtest(
+    "a task is handed to the agents and taken back; a patch without an actor keeps it, and the creator never changes"
+  ) { q =>
+    val t = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("hand me over")), ByPerson)
+    val handed = q.patch(id(t), QueuePatch(actor = Some(Creation.Agents))).toOption.get
+    assertEquals(handed.actor, Some(Creation.Agents))
+    val edited = q.patch(id(t), QueuePatch(text = Some(QueueItem.Text("edited")))).toOption.get
+    assertEquals(edited.actor, Some(Creation.Agents))
+    val back = q.patch(id(t), QueuePatch(actor = Some(Creation.Person))).toOption.get
+    assertEquals(back.actor, Some(Creation.Person))
+    assertEquals(back.creator, t.creator)
+  }
+
+  qtest("an import's items are the importer's, each of them") { q =>
+    val _ = importFile(q, Kind.Acquire, acquireFile)
+    assert(every(q, Kind.Acquire).nonEmpty)
+    every(q, Kind.Acquire).foreach(i => assertEquals(i.creator.map(_.kind), Some(Creation.Manual), i))
   }

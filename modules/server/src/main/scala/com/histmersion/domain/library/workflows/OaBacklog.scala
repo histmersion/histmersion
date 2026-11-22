@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -293,7 +294,7 @@ final class OaBacklog(
              else "") +
             (if known > 0 then s", $known in the corpus already" else "") +
             (if retried > 0 then s", $retried to try again later" else "") + s"; $waiting waiting"
-        site.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))))
+        site.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))), InTreeWorkflow.IngestBacklog.creator)
         List(line)
 
   private enum Drained derives CanEqual:
@@ -343,7 +344,7 @@ final class OaBacklog(
           Drained.Known
         )
       case None =>
-        upstream().ingestLegal(doi) match
+        upstream().ingestLegal(doi, InTreeWorkflow.IngestBacklog.creator) match
           case Right(r) =>
             goals.foreach(g =>
               Unused(
@@ -459,13 +460,14 @@ final class OaBacklog(
         )
       text.flatMap(t =>
         site.workLists
-          .add(
+          .record(
             WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
             QueueAdd(
               t,
               topic = goal.map(g => Queue.QueueItem.Topic(s"goal $g")),
               goal = goal.map(g => com.histmersion.api.automation.Goal.Slug(g.value))
-            )
+            ),
+            InTreeWorkflow.IngestBacklog.creator
           )
           .toOption
           .map(_.id)
@@ -612,7 +614,8 @@ final class OaBacklog(
               s"acquisition list into the watchers' ingest backlogs, ${result.removed} in the corpus already removed, ${result.kept} kept; " +
               s"${result.backlog} waiting in the backlog").take(1000)
           )
-        )
+        ),
+        InTreeWorkflow.IngestBacklog.creator
       )
       agents.managers.nudge()
     result

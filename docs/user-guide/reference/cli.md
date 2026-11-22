@@ -234,15 +234,16 @@ hand.
 | `histmersion asset-links add --citekey <string> --asset <string> --relation <string> --target-type <string> --target-id <string> [--xywh <string>] [--notes <string>] [--json]` | Create an asset link |
 | `histmersion asset-links rm [--json] <id>` | Delete an asset link by id |
 | `histmersion lint [--rule <string>]... [--fix] [--article <string>] [--source <string>] [--file <string>] [--json]` | Health-check the corpus (34 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, article-critique-pairing, superseded-without-edge, article-markdown, note-markdown, finding-geocode, finding-unplaced, place-kind, place-grid-point, place-imported-point-area, finding-placeholder, media-licence, event-correction-conflict) |
-| `histmersion queue acquire add [--topic <string>] [--reason <string>] [--json] <text>` | Add an item to the acquire list |
+| `histmersion queue acquire add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>` | Add an item to the acquire list |
 | `histmersion queue acquire recheck [--all] [--dry-run] [--limit <integer>] [--id <integer>] [--no-wait] [--json]` | The legal re-check of the acquisition list now: the due items the caps allow, or --all (more than one item runs as a server job it follows) |
 | `histmersion queue acquire [--all] [--json]` | Show the acquire list (add: put an item on it) |
-| `histmersion queue tasks add [--topic <string>] [--reason <string>] [--json] <text>` | Add an item to the tasks list |
+| `histmersion queue tasks add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>` | Add an item to the tasks list |
 | `histmersion queue tasks [--all] [--json]` | Show the tasks list (add: put an item on it) |
-| `histmersion queue log add [--topic <string>] [--reason <string>] [--json] <text>` | Add an item to the log list |
+| `histmersion queue log add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>` | Add an item to the log list |
 | `histmersion queue log [--all] [--json]` | Show the log list (add: put an item on it) |
 | `histmersion queue done [--json] <id>` | Mark an item done |
 | `histmersion queue edit [--json] <id> <text>` | Replace an item's text |
+| `histmersion queue patch [--actor <string>] [--json] <id>` | Change who acts on an item |
 | `histmersion queue rm [--json] <id>` | Remove an item |
 | `histmersion queue export [--json] <dir>` | Write ACQUIRE.md, TASKS.md, LOG.md and GOALS.md into a directory |
 | `histmersion queue import [--json] <dir>` | Read ACQUIRE.md, TASKS.md and LOG.md back from a directory (replacing the lists) |

@@ -2863,9 +2863,32 @@
       },
       {
         "name" : "queue",
-        "description" : "The project's bookkeeping, as three lists: `acquire` (what the USER must buy/borrow/download), `tasks` (the agent's backlog) and `log` (the dated worklog). One tool, one `action`: `list` shows the open items of `list` with their ids (`all: true` also shows done items and the file's prose blocks), `add` appends `text` under an optional `topic`, `done` closes item `id`, `recheck` runs the acquisition list's legal re-check now (closes the items the corpus holds with their text, tries a few due ones through the legal open-access chain only; `id` = that item alone, `limit` = at most that many tried, `all: true` = every open item with a DOI, due or not, past the daily caps; `dryRun: true` only lists what it would close and try; a pass of more than one item runs as a job — follow it with job_status). This is where a queue/tracker/changelog belongs — never write one as a new file. `topic` groups items under a heading; on `log` it defaults to today's date, so an added line lands in today's entry.",
+        "description" : "The project's bookkeeping, as three lists: `acquire` (what the USER must buy/borrow/download), `tasks` (the agent's backlog) and `log` (the dated worklog). One tool, one `action`: `list` shows the open items of `list` with their ids (`all: true` also shows done items and the file's prose blocks), `add` appends `text` under an optional `topic`, `done` closes item `id`, `recheck` runs the acquisition list's legal re-check now (closes the items the corpus holds with their text, tries a few due ones through the legal open-access chain only; `id` = that item alone, `limit` = at most that many tried, `all: true` = every open item with a DOI, due or not, past the daily caps; `dryRun: true` only lists what it would close and try; a pass of more than one item runs as a job — follow it with job_status). This is where a queue/tracker/changelog belongs — never write one as a new file. `topic` groups items under a heading; on `log` it defaults to today's date, so an added line lands in today's entry. `add` requires `createdBy`, who adds the item: `plugin` and `workflow` (both), and the agent as `agentDefinition`, `provider` and `model` (all three, or none for a step without a model).",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "CreatedBy" : {
+              "title" : "CreatedBy",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "QueueInput",
           "type" : "object",
           "required" : [
@@ -2909,6 +2932,9 @@
               "description" : "action=recheck: try at most this many due items (default acquire.recheck.per-pass)",
               "type" : "integer",
               "format" : "int32"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/CreatedBy"
             }
           }
         }

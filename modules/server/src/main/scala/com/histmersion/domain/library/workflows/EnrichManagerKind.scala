@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -40,6 +41,8 @@ import com.histmersion.util.database.Unused
   */
 final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Enrich
+  val creator: domain.Creator.New =
+    domain.Creator.code(InTreeWorkflow.Library, domain.Creator.Workflow.Name("enrich-manager"))
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     ReviewSettings.defaultsFor(kind.transformInto[Manager.Kind], m)

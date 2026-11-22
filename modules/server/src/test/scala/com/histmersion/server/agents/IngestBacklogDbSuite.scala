@@ -385,6 +385,19 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
         .items
         .exists(_.text.value.startsWith("ingest backlog: 3 ingested"))
     )
+    assertEquals(
+      h.workListView
+        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+        .toOption
+        .get
+        .items
+        .filter(i => s"${i.text}".startsWith("ingest backlog: 3 ingested"))
+        .flatMap(_.creator)
+        .map(c => (c.plugin.fold("")(p => s"$p"), c.workflow.fold("")(w => s"$w")))
+        .distinct,
+      List(("library", "ingest-backlog")),
+      "the ingest backlog wrote it"
+    )
     assertEquals(b.managing.get(ApiIds.manager(m.id)).toOption.get.manager.backlog, 0)
 
   test(
@@ -513,7 +526,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5), auto = ManagerConfig.AutoIngest(false))
     // a person's own item, in the same words, linked to the goal by its DOI
     val mine = h.workLists
-      .add(
+      .addOverRest(
         WorkListControllers.ListName("acquire"),
         QueueAdd(
           Queue.QueueItem.Text(s"Zz (2023). Mine. https://doi.org/${doi("p")} (open access) — for goal $Goal: mine"),

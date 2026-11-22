@@ -1,8 +1,17 @@
 == acquire add (an open copy)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 3,
@@ -14,9 +23,18 @@
 }
 == acquire add (held already)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 4,
@@ -28,9 +46,18 @@
 }
 == acquire add (no legal copy)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 5,
@@ -42,9 +69,18 @@
 }
 == acquire add (no copy)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 6,
@@ -56,9 +92,18 @@
 }
 == acquire add (to remove)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 7,
@@ -70,9 +115,18 @@
 }
 == acquire add (to close by hand)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 8,
@@ -98,9 +152,18 @@
 }
 == acquire done
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : "TS",
   "goal" : null,
   "id" : 8,
@@ -112,9 +175,18 @@
 }
 == acquire rm
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 7,
@@ -154,9 +226,18 @@
   ],
   "items" : [
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 1,
@@ -167,9 +248,18 @@
       "topic" : "browser download"
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 3,
@@ -180,9 +270,18 @@
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 4,
@@ -193,9 +292,18 @@
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 5,
@@ -206,9 +314,18 @@
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 6,
@@ -417,9 +534,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
   ],
   "items" : [
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 1,
@@ -430,9 +556,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "topic" : "browser download"
     },
     {
+      "actor" : "person",
       "closedBy" : "UUID",
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : "TS",
       "goal" : null,
       "id" : 2,
@@ -443,9 +578,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : "UUID",
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : "TS",
       "goal" : null,
       "id" : 3,
@@ -456,9 +600,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : "UUID",
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : "TS",
       "goal" : null,
       "id" : 4,
@@ -469,9 +622,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 5,
@@ -482,9 +644,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "topic" : null
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : null,
       "goal" : null,
       "id" : 6,
@@ -495,9 +666,18 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "topic" : "zq"
     },
     {
+      "actor" : "person",
       "closedBy" : null,
       "createdAt" : "TS",
       "createdBy" : null,
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "manual",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "doneAt" : "TS",
       "goal" : null,
       "id" : 8,

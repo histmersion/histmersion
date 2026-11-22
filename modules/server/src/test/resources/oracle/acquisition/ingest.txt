@@ -946,9 +946,18 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_dup","progr
 }
 == acquire add (an item an upload fulfils)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 2,
@@ -1694,9 +1703,18 @@ _only legal open-access copies may be fetched_
 1 time(s)
 == acquire add (an item with a DOI)
 200 {
+  "actor" : "person",
   "closedBy" : null,
   "createdAt" : "TS",
   "createdBy" : null,
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "manual",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "doneAt" : null,
   "goal" : null,
   "id" : 1,

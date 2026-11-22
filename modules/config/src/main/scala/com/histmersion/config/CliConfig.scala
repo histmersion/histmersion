@@ -6,14 +6,16 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import scala.concurrent.duration.{DurationLong, FiniteDuration}
 
-import CliConfig.{FollowTimeoutSeconds, ServerUrl, TokenFile}
+import CliConfig.{Agent, FollowTimeoutSeconds, ServerUrl, TokenFile}
+import CliConfig.Agent.Name
 
 final case class CliConfig(
     serverUrl: ServerUrl,
     tokenFile: TokenFile,
     followTimeoutSeconds: FollowTimeoutSeconds,
     calibre: CalibreCliConfig,
-    plugins: CliPluginsConfig
+    plugins: CliPluginsConfig,
+    agent: Agent
 ) derives ConfigReader
 
 object CliConfig:
@@ -25,3 +27,10 @@ object CliConfig:
   object FollowTimeoutSeconds extends Newtype[Long, Pure]:
     extension (seconds: FollowTimeoutSeconds)
       def duration: Option[FiniteDuration] = Option.when(seconds.value > 0)(seconds.value.seconds)
+
+  final case class Agent(plugin: Name, workflow: Name, definition: Name, provider: Name, model: Name)
+      derives ConfigReader
+
+  object Agent:
+    type Name = Name.T
+    object Name extends Newtype[String, Pure]

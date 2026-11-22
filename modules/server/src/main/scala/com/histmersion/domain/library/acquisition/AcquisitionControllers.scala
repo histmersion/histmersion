@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.domain.Creator
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Problem, ProblemLog, Problems}
@@ -578,7 +579,9 @@ final class AcquisitionControllers(
     * Every step is reported, including the ones that failed, because "no OA copy" is a normal outcome that the user
     * answers with a manual drop-in.
     */
-  private def ingestNow(req: Ingest.Request, path: IngestPath)(using WritePermit): Either[Api.Error, Ingest.Report] =
+  private def ingestNow(req: Ingest.Request, path: IngestPath, by: Creator.New)(using
+      WritePermit
+  ): Either[Api.Error, Ingest.Report] =
     Ident.parse(Ident.Written(req.id.value)).left.map(e => err(e)).flatMap { ident =>
       val steps = List.newBuilder[Ingest.Step]
 
@@ -626,7 +629,7 @@ final class AcquisitionControllers(
           .parse(citekey.get)
           .left
           .map(p => Write.invalid(p))
-          .flatMap(ck => ingestWith(doi, arxiv, work, ck, steps, req.refetch.value, path))
+          .flatMap(ck => ingestWith(doi, arxiv, work, ck, steps, req.refetch.value, path, by))
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
@@ -635,7 +638,8 @@ final class AcquisitionControllers(
       text: Queue.QueueItem.Text,
       answers: List[FetchChain.Answer],
       work: Option[WorkRef],
-      scripts: AcquireAttempt.Oa.Scripts
+      scripts: AcquireAttempt.Oa.Scripts,
+      by: Creator.New
   )(using WritePermit): (Queue.QueueItem.Id, Boolean) =
     val (id, added) = queues.naming(Queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
@@ -644,7 +648,8 @@ final class AcquisitionControllers(
           queues
             .add(
               Queue.Kind.Acquire,
-              Queue.QueueAdd(text, topic = Some(Queue.QueueItem.Topic(Acquire.BrowserDownloadTopic)))
+              Queue.QueueAdd(text, topic = Some(Queue.QueueItem.Topic(Acquire.BrowserDownloadTopic))),
+              by
             )
             .id,
           true
@@ -678,7 +683,8 @@ final class AcquisitionControllers(
       citekey: Citekey,
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]],
       refetch: Boolean,
-      path: IngestPath
+      path: IngestPath,
+      by: Creator.New
   )(using WritePermit): Either[Api.Error, Ingest.Report] = {
     // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
     // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
@@ -743,7 +749,7 @@ final class AcquisitionControllers(
       )
     browserOnly.foreach { b =>
       val (id, added) =
-        acquireOnce(b.doi, Queue.QueueItem.Text(b.text.value), answers, work, AcquireAttempt.Oa.Scripts.Refused)
+        acquireOnce(b.doi, Queue.QueueItem.Text(b.text.value), answers, work, AcquireAttempt.Oa.Scripts.Refused, by)
       if added then
         scribe.info(
           s"acquire: ${b.doi.value} is gold open access on ${b.publisher.value}, which refuses scripts: acquisition item #$id"
@@ -825,7 +831,14 @@ final class AcquisitionControllers(
             // an item already naming the DOI was reported just above
             if queues.naming(Queue.Kind.Acquire, d).isEmpty then
               val (id, _) =
-                acquireOnce(d, Queue.QueueItem.Text(text.value), answers, Some(w), AcquireAttempt.Oa.Scripts.Allowed)
+                acquireOnce(
+                  d,
+                  Queue.QueueItem.Text(text.value),
+                  answers,
+                  Some(w),
+                  AcquireAttempt.Oa.Scripts.Allowed,
+                  by
+                )
               steps += step(
                 "acquire",
                 true,
@@ -1025,10 +1038,14 @@ final class AcquisitionControllers(
     * the same.
     */
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
+    ingestAs(req, Creator.New.Manual(Creator.Surface.Rest))
+
+  private def ingestAs(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
       ingestNow(
         req,
-        if req.legalOnly.value then IngestPath.PersonLegal else IngestPath.Person
+        if req.legalOnly.value then IngestPath.PersonLegal else IngestPath.Person,
+        by
       )
     )
 
@@ -1039,7 +1056,7 @@ final class AcquisitionControllers(
     import AcquisitionControllers.agentChain
     agentChain(req.legalOnly, acq.agentsMayUseUnauthorised).left
       .map(Api.Error(_))
-      .flatMap(_ => ingest(req))
+      .flatMap(_ => ingestAs(req, Creator.New.Manual(Creator.Surface.Mcp)))
 
   /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition list's
     * re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever
@@ -1047,9 +1064,9 @@ final class AcquisitionControllers(
     * alone, so it goes to (or stays on) the acquisition list instead. An existing source with its original is never
     * fetched again; a metadata-only one named by `req.citekey` is fetched and converted into, keeping its enrichment.
     */
-  def ingestLegal(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
+  def ingestLegal(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
-      ingestNow(req.modify(_.refetch).setTo(Ingest.Request.Refetch(false)), IngestPath.Watcher)
+      ingestNow(req.modify(_.refetch).setTo(Ingest.Request.Refetch(false)), IngestPath.Watcher, by)
     )
 
   /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's

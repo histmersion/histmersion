@@ -5,6 +5,7 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.api.automation.Goal.Plans.GoalLink
 import com.histmersion.util.database.Transactor
+import com.histmersion.domain.Creator
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
@@ -26,7 +27,7 @@ trait QueueService:
   def naming(list: Kind, doi: Doi): List[QueueItem]
 
   /** A new item of `list`, as stored (its status checked by the caller). */
-  def add(list: Kind, item: QueueAdd)(using WritePermit): QueueItem
+  def add(list: Kind, item: QueueAdd, creator: Creator.New)(using WritePermit): QueueItem
 
   /** Only the parts present change (`Queue.applyPatch`); a done item keeps its first done time. */
   def patch(id: QueueItemId, patch: QueuePatch)(using WritePermit): Either[QueueError, QueueItem]
@@ -35,7 +36,9 @@ trait QueueService:
   def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem]
 
   /** `items` written into `list` in one transaction, after emptying it when `mode` replaces. */
-  def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts
+  def replace(list: Kind, items: List[QueueAdd], mode: ImportMode, creator: Creator.New)(using
+      WritePermit
+  ): ImportCounts
 
 object QueueService:
   def apply(db: Transactor): QueueService = Implementation(db)
@@ -59,7 +62,8 @@ object QueueService:
     def byIds(ids: List[QueueItemId]): List[QueueItem] =
       db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
     def naming(list: Kind, doi: Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
-    def add(list: Kind, item: QueueAdd)(using WritePermit): QueueItem = db.write(QueueRepo.insert(list, item))
+    def add(list: Kind, item: QueueAdd, creator: Creator.New)(using WritePermit): QueueItem =
+      db.write(QueueRepo.insert(list, item, creator))
 
     def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
@@ -75,10 +79,12 @@ object QueueService:
         Either.cond(QueueRepo.delete(rid), item, QueueError.NotFound(id))
       }
 
-    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts = db.write:
+    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode, creator: Creator.New)(using
+        WritePermit
+    ): ImportCounts = db.write:
       val removed: Int = if mode == ImportMode.Replace then QueueRepo.deleteList(list).value else 0
       items.foreach { i =>
-        val _ = QueueRepo.insert(list, i)
+        val _ = QueueRepo.insert(list, i, creator)
       }
       ImportCounts(ImportCounts.Written(items.size), ImportCounts.Removed(removed))
 
@@ -94,8 +100,8 @@ object QueueService:
       state.get.items.filter(i => wanted(i.id.value)).toList
 
     def naming(list: Kind, doi: Doi): List[QueueItem] = state.get.naming(list, doi).toList
-    def add(list: Kind, item: QueueAdd)(using WritePermit): QueueItem =
-      state.updateAndGet(_.added(list, item, now)).items.last
+    def add(list: Kind, item: QueueAdd, creator: Creator.New)(using WritePermit): QueueItem =
+      state.updateAndGet(_.added(list, item, creator, now)).items.last
 
     def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] =
       val after = state.updateAndGet(s => s.get(id).fold(s)(cur => s.updated(Queue.applyPatch(cur, p), now)))
@@ -105,11 +111,13 @@ object QueueService:
       val before = state.getAndUpdate(_.removed(id))
       before.get(id).toRight(QueueError.NotFound(id))
 
-    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode)(using WritePermit): ImportCounts =
+    def replace(list: Kind, items: List[QueueAdd], mode: ImportMode, creator: Creator.New)(using
+        WritePermit
+    ): ImportCounts =
       val at = now
       val before = state.getAndUpdate { s =>
         val start = if mode == ImportMode.Replace then s.emptied(list) else s
-        start.addedAll(list, items, at)
+        start.addedAll(list, items, creator, at)
       }
       ImportCounts(
         ImportCounts.Written(items.size),

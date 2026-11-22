@@ -4,6 +4,7 @@ package domain.automation.workflows
 import com.histmersion.domain.automation.agents.{Halt, OutputComparison, RunCtx}
 import com.histmersion.domain.automation.{AgentRole, TargetKind}
 import com.histmersion.domain.automation.Pipeline
+import com.histmersion.domain.Creator
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 
@@ -13,6 +14,9 @@ import com.histmersion.util.database.WritePermit
   */
 trait WorkflowDefinition:
   def id: WorkflowId
+  def contributor: Creator.Plugin.Name
+
+  def creator(agent: Creator.Agent): Creator.New = Creator.New.Automated(contributor, id.creatorName, agent)
 
   /** A run started under another version is not resumed (its checkpoints may not line up). */
   def version: Pipeline.Version

@@ -43,6 +43,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.automation.approvals.ProposalEvidence
+import com.histmersion.domain.automation.worklists.StoredCreator
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
@@ -320,6 +321,16 @@ object StoredShapesSuite:
       column[MergeResolutions]("merges-resolutions", 16, Arbitrary.derived[MergeResolutions].arbitrary),
       column[Ledger]("review-ledgers-ledger", 17, Arbitrary.derived[Ledger].arbitrary),
       column[List[LimitSpec]]("agent-allowances-limits", 18, Arbitrary.derived[List[LimitSpec]].arbitrary),
+      Shape(
+        "queue-items-creator",
+        () => (),
+        line =>
+          summon[Codec[StoredCreator]].decode(line) match
+            case Left(e)  => Some(s"does not decode: $e")
+            case Right(c) =>
+              val again = summon[Codec[StoredCreator]].write(c, true)
+              Option.unless(sameJson(again, line))(s"writes $again")
+      ),
       bundle[Bundle.Source]("sources", 30, Arbitrary.derived[Bundle.Source].arbitrary),
       bundle[Bundle.Finding]("findings", 31, Arbitrary.derived[Bundle.Finding].arbitrary),
       bundle[Bundle.Edge]("edges", 32, Arbitrary.derived[Bundle.Edge].arbitrary, stamped = false),

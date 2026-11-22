@@ -13,6 +13,8 @@ import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, LocalDate}
 import com.histmersion.api.Api
+import com.histmersion.domain.Creator
+import com.histmersion.util.nonempty.NonEmptyVector
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The work lists' operations as REST, MCP and the CLI reach them: the list named by its word, the inputs checked, a
@@ -30,7 +32,15 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
         )
       )
 
-  def add(list: WorkListControllers.ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
+  import WorkListControllers.{actorOf, creatorOf, surfaceOf, Imported, ListName}
+
+  def addOverRest(list: ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
+    surfaceOf(in.via).flatMap(creatorOf(in.createdBy, _)).left.map(Api.Error(_)).flatMap(record(list, in, _))
+
+  def addOverMcp(list: ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
+    creatorOf(in.createdBy, Creator.Surface.Mcp).left.map(Api.Error(_)).flatMap(record(list, in, _))
+
+  def record(list: ListName, in: QueueAdd, creator: Creator.New): Either[Api.Error, QueueItem] =
     maintenance.guard(WriteGate.OperationName("queue/add")):
       kindOf(WorkListControllers.KindOfList(list.value)).flatMap { k =>
         if in.text.value.trim.isEmpty then
@@ -50,7 +60,8 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
               .map(p => WorkListControllers.bad(p))
           yield queues.add(
             k,
-            in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt)
+            in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt),
+            creator
           )
       }
 
@@ -60,7 +71,8 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
         for
           status <- Queue.statusOf(p.status)
           _ <- Queue.textOf(p.text)
-        yield p.modify(_.status).setTo(status)
+          actor <- actorOf(p.actor)
+        yield p.modify(_.status).setTo(status).modify(_.actor).setTo(actor)
       checked.left
         .map(p => WorkListControllers.bad(p))
         .flatMap(c => queues.patch(id, c).left.map(WorkListControllers.error))
@@ -76,7 +88,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     maintenance.guard(WriteGate.OperationName("queue/import")):
       kindOf(WorkListControllers.KindOfList(list.value)).map { k =>
         val rows = Queue.parse(k, Queue.FileText(req.text.value))
-        val counts = queues.replace(k, rows, ImportMode.of(req.replace.value))
+        val counts = queues.replace(k, rows, ImportMode.of(req.replace.value), Imported)
         val notes = rows.count(_.status.exists(_.value == Queue.Note))
         QueueImported(
           k.label,
@@ -98,6 +110,81 @@ object WorkListControllers:
 
   private def bad(message: Problem): Api.Error = Api.Error(message)
 
+  private val Imported: Creator.New = Creator.New.Manual(Creator.Surface.Rest)
+
+  private val surfaces: List[(Queue.Creation.Via, Creator.Surface)] =
+    List(
+      Queue.Creation.Rest -> Creator.Surface.Rest,
+      Queue.Creation.Cli -> Creator.Surface.Cli,
+      Queue.Creation.Web -> Creator.Surface.Web
+    )
+
+  def surfaceOf(via: Option[Queue.Creation.Via]): Either[Problem, Creator.Surface] =
+    via.fold(Right(Creator.Surface.Rest)) { v =>
+      surfaces
+        .collectFirst { case (w, s) if w == v => s }
+        .toRight(
+          Problem.Invalid.Unknown(
+            Problem.TypeName.of(Queue.Creation.Via),
+            Problem.Raw.of(v),
+            Queue.Creation.Vias.map(Problem.Raw.of(_)).toVector,
+            Vector(Problem.Field("via"))
+          )
+        )
+    }
+
+  def actorOf(raw: Option[Queue.Creation.Actor]): Either[Problem, Option[Queue.Creation.Actor]] =
+    raw match
+      case None                                         => Right(None)
+      case Some(a) if Queue.Creation.Actors.contains(a) => Right(Some(a))
+      case Some(a)                                      =>
+        Left(
+          Problem.Invalid.Unknown(
+            Problem.TypeName.of(Queue.Creation.Actor),
+            Problem.Raw.of(a),
+            Queue.Creation.Actors.map(Problem.Raw.of(_)).toVector,
+            Vector(Problem.Field("actor"))
+          )
+        )
+
+  def creatorOf(by: Option[Queue.CreatedBy], surface: Creator.Surface): Either[Problem, Creator.New] =
+    by match
+      case None if surface == Creator.Surface.Mcp => Left(Problem.Invalid.Missing.here(Problem.Field("createdBy")))
+      case None                                   => Right(Creator.New.Manual(surface))
+      case Some(b)                                =>
+        for
+          plugin <- named(b.plugin, Problem.Field("plugin"))(Creator.Plugin.Name.from(_))
+          workflow <- named(b.workflow, Problem.Field("workflow"))(Creator.Workflow.Name.from(_))
+          agent <- agentOf(b)
+        yield Creator.New.Automated(plugin, workflow, agent)
+
+  private def named[R, A](raw: Option[R], field: Problem.Field)(
+      check: R => Either[Newtype.Refusal, A]
+  ): Either[Problem, A] =
+    raw
+      .toRight(Problem.Invalid.Missing(field, Vector(CreatedByField)))
+      .flatMap(check(_).left.map(Problem.Invalid.malformed))
+
+  private val CreatedByField = Problem.Field("createdBy")
+
+  private def agentOf(b: Queue.CreatedBy): Either[Problem, Creator.Agent] =
+    (b.agentDefinition, b.provider, b.model) match
+      case (None, None, None)          => Right(Creator.Agent.Code)
+      case (Some(d), Some(p), Some(m)) =>
+        for
+          definition <- Creator.Definition.Name.from(d).left.map(Problem.Invalid.malformed)
+          provider <- Creator.Provider.Name.from(p).left.map(Problem.Invalid.malformed)
+          model <- Creator.LanguageModel.Name.from(m).left.map(Problem.Invalid.malformed)
+        yield Creator.Agent.Model(definition, provider, model)
+      case _ =>
+        Left(
+          Problem.Invalid.Inconsistent(
+            NonEmptyVector.of(Problem.Field("agentDefinition"), Problem.Field("provider"), Problem.Field("model")),
+            Problem.Invalid.Exclusion.Together,
+            Vector(CreatedByField)
+          )
+        )
+
   /** The code of a refusal for an item that is not there. */
   private val NotFound: Api.Error.Code = Api.Error.Code(Write.CodeNotFound)
 
@@ -105,9 +192,9 @@ object WorkListControllers:
     /** A line the server writes on the worklog itself (a digest, a sweep's summary, a migration): `in` added to `log`.
       * A refusal (a restore holds the database, the text is empty) is logged with why, never dropped.
       */
-    def logLine(in: QueueAdd): Unit =
+    def logLine(in: QueueAdd, creator: Creator.New): Unit =
       lists
-        .add(ListName("log"), in)
+        .record(ListName("log"), in, creator)
         .left
         .foreach(e => scribe.warn(s"a worklog line was not written: ${e.problems.sentences.mkString("; ")}"))
 

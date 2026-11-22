@@ -463,5 +463,8 @@ final class GoalFocusService(
     }
 
   private def log(line: String): Unit =
-    agents.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))))
+    agents.workLists.logLine(
+      QueueAdd(Queue.QueueItem.Text(line.take(1000))),
+      domain.automation.workflows.InTreeWorkflow.GoalFocus.creator
+    )
     scribe.info(line)

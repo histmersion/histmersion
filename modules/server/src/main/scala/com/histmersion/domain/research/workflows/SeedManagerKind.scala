@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.research.workflows
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -46,6 +47,8 @@ import com.histmersion.util.database.Unused
   */
 final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) extends ManagerKindDefinition:
   val kind: Kind = Kind.Seed
+  val creator: domain.Creator.New =
+    domain.Creator.code(InTreeWorkflow.Research, domain.Creator.Workflow.Name("seed-manager"))
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     SeedManagerKind.plan(lib.seed).managerDefaults(m)

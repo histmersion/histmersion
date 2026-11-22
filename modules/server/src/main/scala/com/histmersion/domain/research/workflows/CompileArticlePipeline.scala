@@ -355,7 +355,7 @@ final class CompileArticlePipeline(
         Some(Pipelines.EntryTopic("agent compile"))
       )
       val _ = ctx.write("tasks item", item.asJson)(
-        site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ())
+        site.workLists.record(WorkListControllers.ListName("tasks"), item, ctx.creator).map(_ => ())
       )(Right(()))
     if !decided.approved.value then
       Right(Written(written = Written.Value(false), Rationale("the draft was rejected"), None))

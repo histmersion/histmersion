@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.workflows
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
@@ -44,6 +45,8 @@ import com.histmersion.util.database.WritePermit
 final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: => LibraryAgentsConfig)
     extends ManagerKindDefinition:
   val kind: Kind = Kind.Watch
+  val creator: domain.Creator.New =
+    domain.Creator.code(InTreeWorkflow.Library, domain.Creator.Workflow.Name("watch-manager"))
 
   private def watch = lib.managers.watch
   private def watchDefaults = WatchManagerDefaults(
