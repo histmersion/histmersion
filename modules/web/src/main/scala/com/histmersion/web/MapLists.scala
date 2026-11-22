@@ -138,8 +138,9 @@ object MapLists:
     MapView.sitesLayer.changed.signal.foreach(_ => if UiState.inView.now() then refresh(config))
     MapView.mediaLayer.changed.signal.foreach(_ => if UiState.inView.now() then refresh(config))
     UiState.signal.foreach(_ => refresh(config))
-    if TheMap.isUp then
-      val _ = TheMap.surface.on(MapEventKind.MoveEnd)(_ => if UiState.inView.now() then refresh(config))
+    TheMap.whenReady { surface =>
+      val _ = surface.on(MapEventKind.MoveEnd)(_ => if UiState.inView.now() then refresh(config))
+    }
 
   /** Read both lists again: from the map's layers, or (everywhere) from the server when what is asked changed. */
   def refresh(config: UiConfig): Unit =

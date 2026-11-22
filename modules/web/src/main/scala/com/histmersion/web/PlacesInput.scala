@@ -464,11 +464,12 @@ object PlacesInput:
       ),
       // Wire to state changes: redraw when ids/places change
       onMountCallback { _ =>
-        layer = TheMap.isUp
-        if layer then
+        TheMap.whenReady { _ =>
+          layer = true
           PlaceHover.shapes(PlaceHover.ShapeSetName("place-pick"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
           PlaceHover.shapes(PlaceHover.ShapeSetName("place-preview"), PlaceHover.Places(drawnPlaces.get, () => asOf()))
-        draw(fit = true)
+          draw(fit = true)
+        }
 
         // Subscribe to UiState changes
         var lastIds = js.JSON.stringify(ids().toJSArray)

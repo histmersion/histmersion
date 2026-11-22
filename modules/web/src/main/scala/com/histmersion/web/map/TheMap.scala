@@ -18,6 +18,17 @@ object TheMap:
 
   private val panes = mutable.LinkedHashMap.empty[MapStack.Pane.Name, MarkerPane]
 
+  private var ready = false
+  private val waiting = mutable.ListBuffer.empty[MapSurface => Unit]
+
+  def whenReady(f: MapSurface => Unit): Unit = if ready then f(s) else waiting += f
+
+  def markReady(): Unit =
+    ready = true
+    val due = waiting.toList
+    waiting.clear()
+    due.foreach(_(s))
+
   def pane(p: MapStack.Pane): MarkerPane = panes(p.name)
 
   /** Take `surface` as the page's map: its panes over it, every marker following each frame of a move. */
