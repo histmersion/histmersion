@@ -233,7 +233,7 @@
       "creator" : {
         "agent" : null,
         "job" : null,
-        "kind" : "manual",
+        "kind" : "unattributed",
         "plugin" : null,
         "surface" : "rest",
         "workflow" : null
@@ -541,7 +541,7 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "creator" : {
         "agent" : null,
         "job" : null,
-        "kind" : "manual",
+        "kind" : "unattributed",
         "plugin" : null,
         "surface" : "rest",
         "workflow" : null

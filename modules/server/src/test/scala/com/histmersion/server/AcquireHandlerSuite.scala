@@ -600,8 +600,8 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
     assertEquals(
       items.head.creator,
-      Some(Queue.Creator(Queue.Creation.Manual, surface = Some(Queue.Creation.Surface("rest")))),
-      "a person's ingest over REST created it"
+      Some(Queue.Creator(Queue.Creation.Unattributed, surface = Some(Queue.Creation.Surface("rest")))),
+      "an ingest over REST, which carries no identity yet: unattributed, never a guessed person"
     )
     assert(
       items.head.text.value.contains("download it in the browser") && items.head.text.value

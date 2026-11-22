@@ -58,8 +58,11 @@ guessed by reading text.
      unwrapped and rebuilt on the way, and a document that does not decode shows as kind `unreadable`; the row keeps
      what it holds and is never rewritten.
    When is `created_at`. Each part of a stored `Automated` is `Known(name) | Unknown`, and only the migration writes an
-   `Unknown` part: the write path takes `Creator.New` (`Manual(surface) | Automated(plugin, workflow, agent)`), which has
-   no unknown, so no new write can carry one. The migration reads stored facts only: an item whose `created_job` names a
+   `Unknown` part: the write path takes `Creator.New` (`Manual(surface) | Automated(plugin, workflow, agent) |
+   Unattributed(surface)`), which has no unknown, so no new write can carry one. `Unattributed(surface)` is the named
+   case for a write that arrives through a surface that cannot carry an identity yet — an ingest's browser-download item,
+   over MCP (agents only, so never `Manual`) or over REST (the web page and the CLI both call it, so a person cannot be
+   told from a script) — so the State tab can say "creator not recorded" instead of guessing. The migration reads stored facts only: an item whose `created_job` names a
    job with a `pipeline` becomes `Automated(Unknown, Known(pipeline), Unknown)`; every other item `Unknown(Unrecorded)`.
    A bundle's queue line carries no creator yet (row 32), so an imported item that is new here is stored as
    `Unknown(Unrecorded)` with the actor the migration's rule gives; an item already here keeps its own.
@@ -71,8 +74,8 @@ guessed by reading text.
    agent is the MCP's usual caller. The CLI sends `via = cli` and the identity from `--by-plugin --by-workflow
    --by-agent --by-provider --by-model`, each else `histmersion.cli.agent.*` (`HISTMERSION_AGENT_PLUGIN`, `_WORKFLOW`,
    `_DEFINITION`, `_PROVIDER`, `_MODEL`); the web page `via = web`. An ingest that lists a browser download takes its
-   creator from its door: `Manual(rest)` for `POST /api/acquire/ingest`, `Manual(mcp)` for the MCP tool (the ingest
-   request carries no identity yet, row 32), and the calling workflow for the legal re-check and the watchers.
+   creator from its door: `Unattributed(rest)` for `POST /api/acquire/ingest`, `Unattributed(mcp)` for the MCP tool (the
+   ingest request carries no identity yet, row 32), and the calling workflow for the legal re-check and the watchers.
 8. **In-process writers name their workflow.** Every `WorkflowDefinition` names its `contributor`, the plugin it comes
    from, and gives `creator(agent)`; a run's writes take `RunCtx.creator` (the run's workflow, agent `Code`, since the
    items are written by code steps). Every `ManagerKindDefinition` names its `creator`. The engine's own processes that

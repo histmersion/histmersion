@@ -1038,7 +1038,7 @@ final class AcquisitionControllers(
     * the same.
     */
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
-    ingestAs(req, Creator.New.Manual(Creator.Surface.Rest))
+    ingestAs(req, Creator.New.Unattributed(Creator.Surface.Rest))
 
   private def ingestAs(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
@@ -1056,7 +1056,7 @@ final class AcquisitionControllers(
     import AcquisitionControllers.agentChain
     agentChain(req.legalOnly, acq.agentsMayUseUnauthorised).left
       .map(Api.Error(_))
-      .flatMap(_ => ingestAs(req, Creator.New.Manual(Creator.Surface.Mcp)))
+      .flatMap(_ => ingestAs(req, Creator.New.Unattributed(Creator.Surface.Mcp)))
 
   /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition list's
     * re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever
