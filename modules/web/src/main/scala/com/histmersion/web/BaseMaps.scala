@@ -350,26 +350,29 @@ object BaseMaps:
         body.appendChild(c)
       surface.corner(Corner.BottomLeft).appendChild(box)
       noticeEl = Some(box)
+      cornerWatch.foreach(_.observe(box))
       dom.window.requestAnimationFrame((_: Double) => fitNotice())
     else
       noticeLifted = 0.0
       surface.container.style.setProperty("--terrain-notice-lift", "0px")
 
   // the notice's watcher of the right-hand corner (the credits, the legend), made once
-  private lazy val cornerWatch: Unit =
+  private lazy val cornerWatch: Option[scala.scalajs.js.Dynamic] =
     val ro = scala.scalajs.js.Dynamic.global.ResizeObserver
-    if !scala.scalajs.js.isUndefined(ro) then
+    Option.when(!scala.scalajs.js.isUndefined(ro)) {
       val o = scala.scalajs.js.Dynamic.newInstance(ro)(
         ((_: scala.scalajs.js.Any) => fitNotice()): scala.scalajs.js.Function1[scala.scalajs.js.Any, Unit]
       )
       o.observe(surface.corner(Corner.BottomRight))
       o.observe(surface.container)
+      o
+    }
 
   /** The notice shares the map's foot with the right-hand corner (the credits, the legend and its key): where they
     * would meet, the notice's corner rises above that corner.
     */
   private def fitNotice(): Unit =
-    cornerWatch
+    val _ = cornerWatch
     noticeEl.foreach { n =>
       val boxes = surface
         .corner(Corner.BottomRight)
