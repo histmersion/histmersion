@@ -20,6 +20,8 @@ export function gpuArgs() {
 /** Whether the run asked for the GPU path: Chromium with the GPU flags, or Firefox (its own default). */
 export const wantsGpu = () => isFirefox || gpuArgs().length > 0;
 
+export const virtualGpu = renderer => /\bparavirtual\b/i.test(renderer ?? '');
+
 /** The engine's browser, launched headless. */
 export function launch(extra = {}) {
   if (isFirefox) return firefox.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_FIREFOX_EXECUTABLE || undefined, ...extra });

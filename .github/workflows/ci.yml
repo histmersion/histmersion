@@ -18,8 +18,8 @@ name: ci
 #   macos      on macOS arm64 (the platform the owner runs): the scripts' tests, the CLI reference against the
 #              CLI's help (on the JVM), and the browser tests (Playwright, modules/web/test) against the server on
 #              the JVM but the `budgets: …` ones, one file at a time — a skipped browser test fails (G125)
-#   macos-budgets  the `budgets: …` browser tests alone (the same files, the complementary name pattern): timing on
-#              a shared runner, so a budget over its figure warns and never blocks; a skip or no test run fails
+#   macos-budgets  the `budgets: …` browser tests alone (the same files, the complementary name pattern); on the
+#              runner's virtual GPU the main-thread figures are held and the frame-bound ones printed (perf.test.mjs)
 #
 # The ratchet suites compare against the merge base with contracts3-pilot: the test jobs check out the full
 # history, so origin/contracts3-pilot is there (RatchetBase's fallback; HISTMERSION_RATCHET_BASE overrides it).
@@ -431,7 +431,7 @@ jobs:
         run: just test-db-down
 
   macos-budgets:
-    name: macos-budgets (browser speed budgets, timing, never blocks)
+    name: macos-budgets (browser speed budgets; main-thread figures on the virtual GPU)
     needs: build
     runs-on: macos-15
     timeout-minutes: 90
@@ -489,10 +489,11 @@ jobs:
         run: |
           sysctl -n machdep.cpu.brand_string hw.ncpu hw.memsize
           system_profiler SPDisplaysDataType || true
-      - name: the speed budgets (the `budgets:` tests of the files of `npm run test:browser`; over a budget warns)
-        continue-on-error: true
+      - name: the speed budgets (the `budgets:` tests of the files of `npm run test:browser`; on the virtual GPU the main-thread figures)
         timeout-minutes: 40
         working-directory: modules/web
+        env:
+          HISTMERSION_BUDGETS_VIRTUAL_GPU: "1"
         run: |
           files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
           HISTMERSION_PERF_REPORT=1 node --test --test-concurrency=1 --test-force-exit --test-name-pattern='^budgets: ' \
@@ -508,7 +509,7 @@ jobs:
           failed="$(grep -c '<failure' "$report" || true)"
           echo "budget tests: $tests run, $failed failed, $skipped skipped"
           if [ "$failed" != 0 ]; then
-            echo "::warning::$failed browser budget test(s) failed on the macOS runner (the timing job, never blocking)"
+            echo "::error::$failed browser budget test(s) failed: a held figure over its budget, or a test's own failure"
           fi
           if [ "$tests" = 0 ]; then
             echo "::error::no budget test ran"

@@ -70,6 +70,20 @@ sea's depth, the contours inside the Argolid focus region).
 settings file at once and measured the budgets while two other browsers were busy; the budgets and the soak
 test take ~3 minutes of it (100 soak rounds). In CI the `budgets: …` tests run in their own job (`macos-budgets`,
 `--test-name-pattern='^budgets: '`), the rest in `macos` (`--test-skip-pattern`, the same pattern).
+
+**Budgets on a virtual GPU** (owner decision 2026-11-22). GitHub's macOS runner is an Apple M1 virtual machine (3
+cores) whose WebGL renderer is "Apple Paravirtual device": it paints about 8 frames a second however idle the page's
+main thread is (a pan drops 49 % of its frames with no long task; the same pan, the CPU throttled 3× on a real GPU,
+drops none). There, and only there, the budgets hold the main-thread figures — every `longTaskMax`, the first
+render's and the loads' times (`mapMs`, `markersMs`, `listMs`, `drawnMs`), the playback's request rates, the cluster
+zoom's `notAnimated`, the heap, the DOM and the listeners — and print the frame-bound ones without failing on them:
+dropped frames (`droppedPct`, `stillFramesPct`) and every input-to-next-paint figure (`inputP95`, the hover cards'
+`shownMax`/`filledMax`/`warmMax`, the typing's `keyP95`/`keyMax`/`suggestMs`/`previewToListMs`, the article's
+`windowMs`/`contentMs`, the release's `releaseToListMs`, Library's `clickMs`/`keyMs`/`pageMs`). The limits are the
+same. The mode needs both the job's `HISTMERSION_BUDGETS_VIRTUAL_GPU=1` and a WebGL renderer naming a paravirtual
+device; anything else — a real GPU, Firefox, an unknown renderer — holds every figure. The first line of the run says
+which mode is in force. The job's colour is its own verdict: red when a held figure is over its budget (or a budget
+test fails otherwise, is skipped or none ran); it is not a required check.
 `npm --prefix modules/web run test:perf` runs them alone; `HISTMERSION_SOAK_ROUNDS=20` shortens the
 soak, `HISTMERSION_PERF_REPORT=1` prints every measured figure. `perf-baseline.mjs` measures the
 same paths on any server, read-only (non-GET requests are refused) — the live baseline in the doc:

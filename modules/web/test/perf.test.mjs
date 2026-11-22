@@ -16,7 +16,7 @@
 
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
-import { engineName, isChromium, launch, wantsGpu } from './engine.mjs';
+import { engineName, isChromium, launch, virtualGpu, wantsGpu } from './engine.mjs';
 import { inputToUpdate, memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
 import { eventsIn, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
@@ -92,8 +92,23 @@ const BUDGETS = {
 };
 
 let browser;
+const FRAME_BOUND = new Set(['droppedPct', 'inputP95', 'stillFramesPct', 'releaseToListMs', 'shownMax', 'filledMax',
+  'warmMax', 'keyP95', 'keyMax', 'suggestMs', 'previewToListMs', 'windowMs', 'contentMs', 'clickMs', 'keyMs', 'pageMs']);
+let mainThreadOnly = false;
+
 before(async () => {
   browser = await launch();
+  const probe = await browser.newPage();
+  const renderer = await probe.evaluate(() => {
+    const gl = document.createElement('canvas').getContext('webgl2') ?? document.createElement('canvas').getContext('webgl');
+    const ext = gl?.getExtension('WEBGL_debug_renderer_info');
+    return (ext && gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) || gl?.getParameter(gl.RENDERER) || '';
+  });
+  await probe.close();
+  const asked = process.env.HISTMERSION_BUDGETS_VIRTUAL_GPU === '1';
+  mainThreadOnly = asked && isChromium && virtualGpu(renderer);
+  console.log(`# budgets: ${mainThreadOnly ? 'main-thread figures held, frame-bound figures reported'
+    : 'every figure held'} (renderer "${renderer || 'unknown'}"${asked && !mainThreadOnly ? ', not a virtual GPU' : ''})`);
 });
 after(async () => { await browser?.close(); });
 
@@ -111,6 +126,10 @@ function within(name, measured, budget = BUDGETS[name]) {
     const v = get(measured, k);
     if (v === null && UNMEASURABLE.has(k.split('.').at(-1))) { if (report) console.log(`# ${name}.${k}: not measurable in ${engineName}`); continue; }
     assert.equal(typeof v, 'number', `${name}.${k} was measured (${JSON.stringify(measured)})`);
+    if (mainThreadOnly && FRAME_BOUND.has(k.split('.').at(-1))) {
+      if (v > max) console.log(`# ${name}.${k} = ${v}, over its budget of ${max}: reported, not held (frame-bound, virtual GPU)`);
+      continue;
+    }
     assert.ok(v <= max, `${name}.${k} = ${v}, over its budget of ${max} (${JSON.stringify(measured)})`);
   }
 }
