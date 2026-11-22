@@ -12,8 +12,12 @@ chromium.launch = async (...a) => {
         const M = window.maplibregl?.Map;
         if (!M) return setTimeout(hook, 5);
         const fire = M.prototype.fire;
+        let zooming = false;
         M.prototype.fire = function (e, ...r) {
-          if ((typeof e === 'string' ? e : e?.type) === 'zoomend') { const t = performance.now(); while (performance.now() - t < busy); }
+          const type = typeof e === 'string' ? e : e?.type;
+          if (type === 'zoomstart') zooming = true;
+          else if (type === 'zoomend') zooming = false;
+          else if (type === 'render' && zooming) { const t = performance.now(); while (performance.now() - t < busy); }
           return fire.call(this, e, ...r);
         };
       };

@@ -91,10 +91,12 @@ makes `perf.test.mjs` write every figure instead of holding it), and compares fi
 the base and the medians differ by more than the runs' own spread (the larger of the two sides') and a floor (20 ms;
 3 MB of heap; 5 % of the DOM nodes and listeners; nothing for the counts that must not move, such as `notAnimated`).
 Frame-bound figures (below) are printed, not compared. A budget run of the change that fails, skips a test or runs
-none fails the job too. `HISTMERSION_BUDGETS_INJECT_ZOOM_MS=60` in the job's step adds a 60 ms task to every zoom of
-the change's runs (`budgets-inject.mjs`): the check that the job turns red. Measured here (M4 Pro, the same server
-on both sides, three rounds): the base against itself 73 figures, no regression; with the 60 ms task, 7 regressions —
-the six zooms' longest tasks (0 → 72–107 ms) and Readable's draw.
+none fails the job too. `HISTMERSION_BUDGETS_INJECT_ZOOM_MS=60` in the job's step adds 60 ms of work to every frame
+the map draws during a zoom (zoomstart to zoomend) in the change's runs (`budgets-inject.mjs`), so a zoom's longest
+task grows by 60 ms however long it already was; it adds no listener and touches nothing outside a zoom. It is the
+check that the job turns red. Measured here (M4 Pro, the same server on both sides, three rounds): the base against
+itself 73 figures, no regression; with the injection exactly the six zooms' longest tasks (0 → 67–84 ms) and nothing
+else.
 
 **Main-thread and frame-bound figures on a virtual GPU** (owner decision 2026-11-22). The runner paints about 8
 frames a second however idle the page's main thread is (a pan drops 49 % of its frames with no long task; the same
