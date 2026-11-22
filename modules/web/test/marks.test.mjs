@@ -309,6 +309,8 @@ test('read marks: a dot for not read, Mark as read and unread, "Not read yet" an
     await page.locator('.reading-item[data-key="zz_lib_4"]').waitFor();
     await page.locator('.my-library [data-shelf="recent"]').click();
     await page.waitForFunction(() => document.querySelectorAll('.shelf-row').length >= 2);
+    await page.waitForFunction(() => /^Zz library source 4\b/.test(document.querySelector('.shelf-row .shelf-title')?.innerText ?? ''),
+      null, { timeout: 5000 }).catch(() => {});
     const recent = (await page.locator('.shelf-row .shelf-title').allInnerTexts()).slice(0, 2);
     assert.match(recent[0], /^Zz library source 4\b/);
     assert.match(recent[1], /Zz library source 1\b/);
