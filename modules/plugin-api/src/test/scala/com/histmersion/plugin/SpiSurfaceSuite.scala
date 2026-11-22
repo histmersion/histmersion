@@ -45,8 +45,7 @@ class SpiSurfaceSuite extends munit.FunSuite:
   private def listed: (Option[Int], List[String]) =
     val lines =
       if !Files.exists(contract) then Nil
-      else
-        Files.readAllLines(contract, UTF_8).asScala.toList.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
+      else Files.readAllLines(contract, UTF_8).asScala.toList.map(_.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
     (
       lines.collectFirst { case l if l.startsWith(VersionLine) => l.drop(VersionLine.length).trim.toIntOption }.flatten,
       lines.filterNot(_.startsWith(VersionLine))

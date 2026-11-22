@@ -20,7 +20,11 @@ class AcquireVerdictSuite extends munit.FunSuite:
   private val withId = AcquireVerdict.Identifier.Named
 
   private def answer(said: Problem.NotFound.Said): Problem.NotFound.Answer =
-    Problem.NotFound.Answer(Problem.NotFound.Fetcher("zq"), said, Problem.Upstream.Offline(Problem.Upstream.Name("zq"), None))
+    Problem.NotFound.Answer(
+      Problem.NotFound.Fetcher("zq"),
+      said,
+      Problem.Upstream.Offline(Problem.Upstream.Name("zq"), None)
+    )
 
   private val notHeld = answer(Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NotHeld))
   private val unanswered = answer(Problem.NotFound.Said.Miss(Problem.NotFound.Absence.Unanswered))
@@ -72,7 +76,10 @@ class AcquireVerdictSuite extends munit.FunSuite:
     )
 
   test("every fetcher looked and had none, with no open-access location known: no free legal copy, re-checked later"):
-    assertEquals(verdict(attempt(2, Vector(notHeld, notHeld))), AcquireVerdict.NoFreeCopy(now.plusSeconds(7L * 86400 - 7200)))
+    assertEquals(
+      verdict(attempt(2, Vector(notHeld, notHeld))),
+      AcquireVerdict.NoFreeCopy(now.plusSeconds(7L * 86400 - 7200))
+    )
 
   test("a bot challenge, or a host known to refuse scripts, is a download in the browser"):
     val challenged = answer(Problem.NotFound.Said.Refused(Problem.NotFound.Refusal.BotChallenge))
@@ -100,23 +107,51 @@ class AcquireVerdictSuite extends munit.FunSuite:
 
   test("no answer: the agents retry until the give-up threshold, then it is the person's"):
     val one = verdict(attempt(1, Vector(notHeld, unanswered)))
-    assertEquals(one, AcquireVerdict.Retrying(AcquireVerdict.Failures(1), now.plusSeconds(5L * 3600), Problems.from(Vector(unanswered.why))))
+    assertEquals(
+      one,
+      AcquireVerdict.Retrying(
+        AcquireVerdict.Failures(1),
+        now.plusSeconds(5L * 3600),
+        Problems.from(Vector(unanswered.why))
+      )
+    )
     assertEquals(one.actor, Actor.Agents)
     val four = verdict((1 to 4).map(h => attempt(h.toLong, Vector(unanswered)))*)
     assert(four.isInstanceOf[AcquireVerdict.Retrying], four)
     val five = verdict((1 to 5).map(h => attempt(h.toLong, Vector(unanswered)))*)
-    assertEquals(five, AcquireVerdict.Stuck(AcquireVerdict.Failures(5), now.minusSeconds(5L * 3600), Problems.from(Vector(unanswered.why))))
+    assertEquals(
+      five,
+      AcquireVerdict.Stuck(
+        AcquireVerdict.Failures(5),
+        now.minusSeconds(5L * 3600),
+        Problems.from(Vector(unanswered.why))
+      )
+    )
     assertEquals(five.actor, Actor.Person)
 
   test("no answer for give-up-days since the first of the streak is the person's even below the count"):
     val old = verdict(attempt(1, Vector(unanswered)), attempt(14L * 24, Vector(unanswered)))
-    assertEquals(old, AcquireVerdict.Stuck(AcquireVerdict.Failures(2), now.minusSeconds(14L * 86400), Problems.from(Vector(unanswered.why))))
+    assertEquals(
+      old,
+      AcquireVerdict.Stuck(
+        AcquireVerdict.Failures(2),
+        now.minusSeconds(14L * 86400),
+        Problems.from(Vector(unanswered.why))
+      )
+    )
     val younger = verdict(attempt(1, Vector(unanswered)), attempt(14L * 24 - 1, Vector(unanswered)))
     assert(younger.isInstanceOf[AcquireVerdict.Retrying], younger)
 
   test("the streak ends at the last check that got an answer"):
     val v = verdict(attempt(1, Vector(unanswered)), attempt(2, Vector(notHeld)), attempt(3, Vector(unanswered)))
-    assertEquals(v, AcquireVerdict.Retrying(AcquireVerdict.Failures(1), now.plusSeconds(5L * 3600), Problems.from(Vector(unanswered.why))))
+    assertEquals(
+      v,
+      AcquireVerdict.Retrying(
+        AcquireVerdict.Failures(1),
+        now.plusSeconds(5L * 3600),
+        Problems.from(Vector(unanswered.why))
+      )
+    )
 
   test("a check where no fetcher looked (all unconfigured or reading other identifiers) counts as no answer"):
     val unset = answer(Problem.NotFound.Said.Miss(Problem.NotFound.Absence.Unconfigured))
@@ -129,9 +164,13 @@ class AcquireVerdictSuite extends munit.FunSuite:
       verdict(attempt(1, Vector.empty, AcquireAttempt.Outcome.Failed(Problems.of(why)))),
       AcquireVerdict.Retrying(AcquireVerdict.Failures(1), now.plusSeconds(5L * 3600), Some(Problems.of(why)))
     )
-    val fetched = verdict(attempt(1, Vector.empty, AcquireAttempt.Outcome.Fetched(AcquireAttempt.Outcome.Source("unpaywall"))))
+    val fetched =
+      verdict(attempt(1, Vector.empty, AcquireAttempt.Outcome.Fetched(AcquireAttempt.Outcome.Source("unpaywall"))))
     assertEquals(fetched, AcquireVerdict.Converting(Some(AcquireAttempt.Outcome.Source("unpaywall"))))
-    assertEquals(verdict(attempt(1, Vector.empty, AcquireAttempt.Outcome.Closed(Citekey("zq2020")))).actor, Actor.Agents)
+    assertEquals(
+      verdict(attempt(1, Vector.empty, AcquireAttempt.Outcome.Closed(Citekey("zq2020")))).actor,
+      Actor.Agents
+    )
 
   test("every answer a fetcher can give reaches a verdict, and the same attempts always give the same one"):
     val all = Problem.NotFound.Absence.values.toList.map(Problem.NotFound.Said.Miss(_)) ++
