@@ -12,5 +12,5 @@ final case class MapEvent(point: Option[ScreenPt] = None, at: Option[LatLon] = N
     */
   def overMarker: Boolean = native.flatMap(e => Option(e.target)).exists { t =>
     t.isInstanceOf[dom.Element] && t.asInstanceOf[dom.Element].closest(".hd-marker, .hd-popup, .hd-map-control") != null
-  }
+  } || native.collect { case e: dom.MouseEvent => e }.exists(e => TheMap.drawnMarkerAt(e.clientX, e.clientY))
   def clientXY: Option[(Double, Double)] = native.collect { case e: dom.MouseEvent => (e.clientX, e.clientY) }

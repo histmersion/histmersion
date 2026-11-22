@@ -28,34 +28,35 @@ final class MarkerPane(
       .flatMap(e =>
         Option(e.asInstanceOf[js.Dynamic].hdMarker).filterNot(js.isUndefined).map(_.asInstanceOf[DomMarker])
       )
+      .filter(m => markers.contains(m))
   private def related(e: dom.MouseEvent): Option[DomMarker] = markerOf(e.relatedTarget)
-  el.addEventListener(
+  host.addEventListener(
     "mouseover",
     (e: dom.MouseEvent) =>
       markerOf(e.target).filter(m => !related(e).contains(m)).foreach(m => Option(m.handlers).foreach(_.over(e)))
   )
-  el.addEventListener(
+  host.addEventListener(
     "mouseout",
     (e: dom.MouseEvent) =>
       markerOf(e.target).filter(m => !related(e).contains(m)).foreach(m => Option(m.handlers).foreach(_.out(e)))
   )
-  el.addEventListener(
+  host.addEventListener(
     "mousemove",
     (e: dom.MouseEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.move(e)))
   )
-  el.addEventListener(
+  host.addEventListener(
     "click",
     (e: dom.MouseEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.click(e)))
   )
-  el.addEventListener(
+  host.addEventListener(
     "focusin",
     (e: dom.FocusEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.focus(e)))
   )
-  el.addEventListener(
+  host.addEventListener(
     "focusout",
     (e: dom.FocusEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.blur(e)))
   )
-  el.addEventListener(
+  host.addEventListener(
     "keydown",
     (e: dom.KeyboardEvent) => markerOf(e.target).foreach(m => Option(m.handlers).foreach(_.key(e)))
   )

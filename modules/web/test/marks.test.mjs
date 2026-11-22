@@ -251,7 +251,7 @@ test('notes: written with a preview, the draft kept, saved, changed, listed wher
 test('a note at a place on the map: left from the map\'s menu by keyboard, shown on the "My notes" layer', async () => {
   await withPage(desk, async page => {
     await page.evaluate(() => window.__testMap.setView([37.6, 22.8], 7));
-    await page.locator('#map canvas').focus();
+    await page.locator('#map canvas.maplibregl-canvas').focus();
     await page.keyboard.press('Shift+F10');
     const menu = page.locator('.context-menu[role=menu]');
     await menu.waitFor();
@@ -470,7 +470,7 @@ test('start the map here and start the timeline at its years: written to the set
       'ui.time.default-from', 'ui.time.default-to'];
     try {
       await page.evaluate(() => window.__testMap.setView([37.6, 22.8], 6));
-      await page.locator('#map canvas').focus();
+      await page.locator('#map canvas.maplibregl-canvas').focus();
       const centre = await page.evaluate(() => window.__testMap.getCenter());
       await page.keyboard.press('Shift+F10');
       await page.locator('.context-menu [role^=menuitem]', { hasText: 'Start the map here' }).click();

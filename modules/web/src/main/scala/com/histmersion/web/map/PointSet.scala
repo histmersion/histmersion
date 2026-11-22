@@ -83,7 +83,11 @@ final class PointSet[D](
           if spider.isDefined then
             val t = e.target.asInstanceOf[dom.Element]
             val onMap = t != null && surface().container.contains(t)
-            if onMap && t.closest(s".${Spiderfy.Member}, .${Spiderfy.Fanned}, .hd-popup") == null then unspiderfy(),
+            val drawn = TheMap
+              .drawnMarkerElAt(e.clientX, e.clientY)
+              .exists(el => el.classList.contains(Spiderfy.Member) || el.classList.contains(Spiderfy.Fanned))
+            if onMap && !drawn && t.closest(s".${Spiderfy.Member}, .${Spiderfy.Fanned}, .hd-popup") == null then
+              unspiderfy(),
         true
       )
 

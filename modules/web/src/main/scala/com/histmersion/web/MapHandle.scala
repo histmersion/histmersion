@@ -78,6 +78,22 @@ object MapHandle:
       countOnTop = (for c <- count; d <- disc yield zOf(c) > zOf(d)).getOrElse(false)
     )
 
+  private def where(origin: dom.DOMRect, m: DomMarker): js.Dynamic =
+    TheMap.markerCanvas
+      .filter(c => m.el.parentNode eq c.proxies)
+      .fold {
+        val r = m.el.getBoundingClientRect()
+        js.Dynamic.literal(
+          x = r.left + r.width / 2 - origin.left,
+          y = r.top + r.height / 2 - origin.top,
+          clientX = r.left + r.width / 2,
+          clientY = r.top + r.height / 2,
+          w = r.width,
+          h = r.height,
+          offscreen = m.el.classList.contains("is-offscreen")
+        )
+      }(_.placed(m))
+
   private def describe(
       origin: dom.DOMRect,
       pane: MapStack.Pane,
@@ -88,7 +104,7 @@ object MapHandle:
     val els = within(m.el)
     val flags = els.flatMap(e => (0 until e.classList.length).map(e.classList(_))).distinct
     val face = Option(m.el.querySelector(faceSelector)).filterNot(_ => m.el.matches(faceSelector)).getOrElse(m.el)
-    val r = m.el.getBoundingClientRect()
+    val at = where(origin, m)
     val look = dom.window.getComputedStyle(face)
     val count = Option(m.el.querySelector(".hd-dot-count")).flatMap(_.textContent.trim.toIntOption)
     val tag = m.el.asInstanceOf[js.Dynamic]
@@ -98,12 +114,12 @@ object MapHandle:
     js.Dynamic.literal(
       serial = tag.hdSerial,
       pane = paneName(pane),
-      x = r.left + r.width / 2 - origin.left,
-      y = r.top + r.height / 2 - origin.top,
-      clientX = r.left + r.width / 2,
-      clientY = r.top + r.height / 2,
-      w = r.width,
-      h = r.height,
+      x = at.x,
+      y = at.y,
+      clientX = at.clientX,
+      clientY = at.clientY,
+      w = at.w,
+      h = at.h,
       z = zOf(m.el),
       flags = flags.toJSArray,
       id = attr(els, "data-id"),
@@ -133,7 +149,7 @@ object MapHandle:
       border = look.borderStyle,
       opacity = look.opacity.toDoubleOption.getOrElse(1.0),
       ghost = ghost,
-      offscreen = flags.contains("is-offscreen")
+      offscreen = at.offscreen
     )
 
   private def matches(d: js.Dynamic, spec: js.Dynamic): Boolean =
@@ -169,11 +185,15 @@ object MapHandle:
     if !TheMap.isUp then null
     else
       val origin = TheMap.surface.container.getBoundingClientRect()
-      val hit = Option(dom.document.elementFromPoint(origin.left + at(0), origin.top + at(1)))
-        .flatMap(e => Option(e.closest(".hd-marker")))
+      val hit = TheMap.markerCanvas.fold(
+        Option(dom.document.elementFromPoint(origin.left + at(0), origin.top + at(1)))
+          .flatMap(e => Option(e.closest(".hd-marker")))
+      )(c => c.hit(origin.left + at(0), origin.top + at(1)).map(_.el))
       val found = for
         el <- hit
-        p <- MapStack.domPanes.filter(pointPane).find(p => TheMap.pane(p).el.contains(el))
+        p <- MapStack.domPanes
+          .filter(pointPane)
+          .find(p => TheMap.pane(p).live.exists(_.el eq el) || TheMap.pane(p).leaving.exists(_.el eq el))
         m <- (TheMap.pane(p).live.map(_ -> false) ++ TheMap.pane(p).leaving.map(_ -> true)).find(_._1.el eq el)
       yield describe(origin, p, m._1, m._2, false)
       found.orNull
@@ -300,18 +320,12 @@ object MapHandle:
                 pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true)
               }
               .map { (m, ghost) =>
-                val r = m.el.getBoundingClientRect()
+                val at = where(origin, m)
                 val tag = m.el.asInstanceOf[js.Dynamic]
                 if js.isUndefined(tag.hdSerial) then
                   serial += 1
                   tag.hdSerial = serial
-                js.Dynamic.literal(
-                  serial = tag.hdSerial,
-                  x = r.left + r.width / 2 - origin.left,
-                  y = r.top + r.height / 2 - origin.top,
-                  offscreen = m.el.classList.contains("is-offscreen"),
-                  ghost = ghost
-                )
+                js.Dynamic.literal(serial = tag.hdSerial, x = at.x, y = at.y, offscreen = at.offscreen, ghost = ghost)
               }
               .toJSArray
       ): js.Function1[js.UndefOr[js.Array[String]], js.Array[js.Dynamic]],
