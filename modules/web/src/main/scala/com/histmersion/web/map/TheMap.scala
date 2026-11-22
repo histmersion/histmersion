@@ -43,7 +43,7 @@ object TheMap:
     }
     canvas = Option
       .when(
-        Store.Browser.get(MarkerCanvas.StorageKey).contains("on") &&
+        !Store.Browser.get(MarkerCanvas.StorageKey).contains("off") &&
           surface.capabilities.webgl == Capabilities.Webgl(true) &&
           surface.capabilities.webgl2 == Capabilities.Webgl2(true)
       )(())

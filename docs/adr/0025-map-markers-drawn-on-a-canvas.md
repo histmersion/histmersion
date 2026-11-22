@@ -50,5 +50,7 @@ drawn, and the browser test that compares the canvas with the elements pixel by 
 ## Code
 
 `web/map/MarkerPane.scala`, `web/map/DomMarker.scala`, `web/map/MarkerCanvas.scala` (the canvas, the looks held, the
-paint), `web/map/MarkerLook.scala` (a look read from computed style, its sprite), `web/map/TheMap.scala` (the switch,
-`localStorage` `histmersion.ui.markerCanvas`, until the canvas is the default), `web/MapHandle.scala`.
+atlas, the paint, the pointer), `web/map/MarkerLook.scala` (a look read from computed style),
+`web/map/MarkerPaint.scala` (what a look draws, as data: no closure keeps the elements it was read from alive),
+`web/map/MarkerMotion.scala` (the motion), `web/map/TheMap.scala` (the canvas by default; `localStorage`
+`histmersion.ui.markerCanvas` = `off` paints the elements, the pixel test's reference), `web/MapHandle.scala`.
