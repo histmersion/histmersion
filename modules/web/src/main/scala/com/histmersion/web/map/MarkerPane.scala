@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
   private val markers = js.Set[DomMarker]()
+  private val retiring = js.Set[DomMarker]()
 
   // the pointer and the keyboard, for every marker of the pane at once (one set of listeners, not one per
   // marker: a few thousand points are drawn and re-drawn as the map zooms)
@@ -75,9 +76,20 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
       markers.remove(m)
       m.el.classList.add("hd-cluster-ghost")
       m.removed()
-      dom.window.setTimeout(() => if m.el.parentNode eq el then { val _ = el.removeChild(m.el) }, ms.value.toDouble)
+      retiring.add(m)
+      dom.window.setTimeout(
+        () => {
+          retiring.remove(m)
+          if m.el.parentNode eq el then { val _ = el.removeChild(m.el) }
+        },
+        ms.value.toDouble
+      )
 
   def has(m: DomMarker): Boolean = markers.contains(m)
+
+  def live: List[DomMarker] = markers.toList
+
+  def leaving: List[DomMarker] = retiring.toList.filter(m => (m.el.parentNode eq el) && !markers.contains(m))
 
   def size: MarkerPane.MarkerCount = MarkerPane.MarkerCount(markers.size)
 

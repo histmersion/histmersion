@@ -51,7 +51,7 @@ async function tilesIn(page) {
 
 /** What the map holds and draws now. */
 const held = page => page.evaluate(() => ({ points: window.__testMap.points(), tiled: window.__testMap.tiled?.() ?? null,
-  drawn: document.querySelectorAll('#map .hd-pane--markers .hd-marker, #map .hd-pane--events .hd-marker, #map .hd-pane--sites .hd-marker').length }));
+  drawn: window.__testMap.markersIn(['markers', 'events', 'sites']) }));
 
 const out = { url: baseURL, at: new Date().toISOString(), views: [], gestures: {} };
 const record = async (name, f) => { try { out.gestures[name] = await f(); } catch (e) { out.gestures[name] = { error: e.message }; } };

@@ -7,6 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
+import com.histmersion.api.MapStack
 import com.histmersion.api.Html.html as markup
 
 /** `window.histmersionMap`: the map from the browser's console and the browser regressions (modules/web/test), in the
@@ -19,6 +20,159 @@ object MapHandle:
 
   // `var`: how many times a base map was drawn whole (the regressions wait for the next one)
   private var drawn = 0
+
+  private var serial = 0
+
+  private val faceSelector = ".hd-ev, .hd-find, .hd-site-marker, .hd-cluster, .hd-point, .hd-note"
+
+  private def within(el: dom.Element): List[dom.Element] =
+    val all = el.querySelectorAll("*")
+    el :: (0 until all.length).map(all(_)).toList
+
+  private def attr(els: List[dom.Element], name: String): js.Any =
+    els.find(_.hasAttribute(name)).map(e => e.getAttribute(name): js.Any).getOrElse(null)
+
+  private def stroke(face: dom.Element, part: String): js.Any =
+    Option(face.querySelector(part)).fold(null: js.Any) { e =>
+      val s = dom.window.getComputedStyle(e)
+      js.Dynamic.literal(
+        colour = s.getPropertyValue("stroke"),
+        width = s.getPropertyValue("stroke-width").stripSuffix("px").toDoubleOption.getOrElse(0.0)
+      )
+    }
+
+  private def px(v: String): Double = v.stripSuffix("px").toDoubleOption.getOrElse(0.0)
+
+  private def zOf(e: dom.Element): Int = dom.window.getComputedStyle(e).zIndex.toIntOption.getOrElse(0)
+
+  private def shape(face: dom.Element): js.Dynamic =
+    val s = dom.window.getComputedStyle(face)
+    val before = dom.window.getComputedStyle(face, "::before")
+    val r = face.getBoundingClientRect()
+    val (cx, cy) = (r.left + r.width / 2, r.top + r.height / 2)
+    def centred(e: dom.Element): js.Dynamic =
+      val b = e.getBoundingClientRect()
+      js.Dynamic.literal(dx = b.left + b.width / 2 - cx, dy = b.top + b.height / 2 - cy, w = b.width)
+    val rings = face.querySelectorAll(".hd-bubble circle")
+    val count = Option(face.querySelector(".hd-dot-count"))
+    val disc = Option(face.querySelector(".hd-bubble"))
+    js.Dynamic.literal(
+      w = r.width,
+      h = r.height,
+      radius = px(s.getPropertyValue("border-top-left-radius")),
+      radiusRaw = s.getPropertyValue("border-top-left-radius"),
+      edge = s.getPropertyValue("border-top-color"),
+      edgeW = px(s.getPropertyValue("border-top-width")),
+      glyph = Option(face.querySelector("svg.glyph")).fold(0.0)(_.getBoundingClientRect().width),
+      ink = Option(face.querySelector(".glyph-ink"))
+        .fold(0.0)(e => px(dom.window.getComputedStyle(e).getPropertyValue("stroke-width"))),
+      turned = before.getPropertyValue("transform"),
+      beforeW = px(before.getPropertyValue("width")),
+      beforeEdge = before.getPropertyValue("border-top-style"),
+      rings = (0 until rings.length).map(i => centred(rings(i))).toJSArray,
+      countAt = count.fold(null: js.Any)(centred),
+      countOnTop = (for c <- count; d <- disc yield zOf(c) > zOf(d)).getOrElse(false)
+    )
+
+  private def describe(
+      pane: MapStack.Pane,
+      m: DomMarker,
+      ghost: Boolean,
+      origin: dom.DOMRect,
+      detail: Boolean
+  ): js.Dynamic =
+    val els = within(m.el)
+    val flags = els.flatMap(e => (0 until e.classList.length).map(e.classList(_))).distinct
+    val face = Option(m.el.querySelector(faceSelector)).filterNot(_ => m.el.matches(faceSelector)).getOrElse(m.el)
+    val r = m.el.getBoundingClientRect()
+    val look = dom.window.getComputedStyle(face)
+    val count = Option(m.el.querySelector(".hd-dot-count")).flatMap(_.textContent.trim.toIntOption)
+    val tag = m.el.asInstanceOf[js.Dynamic]
+    if js.isUndefined(tag.hdSerial) then
+      serial += 1
+      tag.hdSerial = serial
+    js.Dynamic.literal(
+      serial = tag.hdSerial,
+      pane = pane.name.value,
+      x = r.left + r.width / 2 - origin.left,
+      y = r.top + r.height / 2 - origin.top,
+      clientX = r.left + r.width / 2,
+      clientY = r.top + r.height / 2,
+      w = r.width,
+      h = r.height,
+      z = zOf(m.el),
+      flags = flags.toJSArray,
+      id = attr(els, "data-id"),
+      ck = attr(els, "data-ck"),
+      label = attr(els, "aria-label"),
+      title = attr(List(m.el), "title"),
+      data = {
+        val o = js.Dictionary.empty[String]
+        els.reverse.foreach { e =>
+          val ds = e.asInstanceOf[dom.HTMLElement].dataset
+          ds.keys.foreach(k => o(k) = ds(k))
+        }
+        o
+      },
+      count = count.fold(null: js.Any)(n => n),
+      glyphs = face.querySelectorAll("svg.glyph").length,
+      badges = face.querySelectorAll("svg.glyph--badge").length,
+      rects = face.querySelectorAll("svg rect").length,
+      circles = face.querySelectorAll("svg circle").length,
+      radius = look.borderRadius,
+      edge = look.borderTopWidth.stripSuffix("px").toDoubleOption.getOrElse(0.0),
+      colour = face.asInstanceOf[dom.HTMLElement].style.getPropertyValue("--c").trim,
+      shape = if detail then shape(face) else null,
+      ink = stroke(face, ".glyph-ink"),
+      halo = stroke(face, ".glyph-halo"),
+      fill = look.backgroundColor,
+      border = look.borderStyle,
+      opacity = look.opacity.toDoubleOption.getOrElse(1.0),
+      ghost = ghost,
+      offscreen = flags.contains("is-offscreen")
+    )
+
+  private def matches(d: js.Dynamic, spec: js.Dynamic): Boolean =
+    def list(v: js.Dynamic): List[String] =
+      if js.isUndefined(v) || v == null then Nil
+      else if js.Array.isArray(v) then v.asInstanceOf[js.Array[String]].toList
+      else List(v.asInstanceOf[String])
+    val flags = d.flags.asInstanceOf[js.Array[String]].toSet
+    def same(k: String): Boolean =
+      val want = spec.selectDynamic(k)
+      js.isUndefined(want) || (d.selectDynamic(k): js.Any).equals(want: js.Any)
+    val data = d.data.asInstanceOf[js.Dictionary[String]]
+    val wantData =
+      if js.isUndefined(spec.data) then Map.empty[String, js.Any]
+      else spec.data.asInstanceOf[js.Dictionary[js.Any]].toMap
+    list(spec.flag).forall(flags) && !list(spec.not).exists(flags) &&
+    List("id", "ck", "pane", "ghost", "offscreen").forall(same) &&
+    wantData.forall((k, v) => if v == null then !data.contains(k) else data.get(k).exists(x => (x: js.Any).equals(v)))
+
+  private def markers(spec: js.UndefOr[js.Dynamic]): js.Array[js.Dynamic] =
+    if !TheMap.isUp then js.Array()
+    else
+      val origin = TheMap.surface.container.getBoundingClientRect()
+      val detail = spec.exists(sp => !js.isUndefined(sp.detail) && sp.detail.asInstanceOf[Boolean])
+      val every = spec.exists(sp => !js.isUndefined(sp.every) && sp.every.asInstanceOf[Boolean])
+      val all = MapStack.domPanes.filter(p => every || p.point.value).flatMap { p =>
+        val pane = TheMap.pane(p)
+        pane.live.map(describe(p, _, false, origin, detail)) ++ pane.leaving.map(describe(p, _, true, origin, detail))
+      }
+      spec.fold(all)(sp => all.filter(matches(_, sp))).toJSArray
+
+  private def markerAt(at: js.Array[Double]): js.Dynamic =
+    if !TheMap.isUp then null
+    else
+      val origin = TheMap.surface.container.getBoundingClientRect()
+      val hit = Option(dom.document.elementFromPoint(origin.left + at(0), origin.top + at(1)))
+        .flatMap(e => Option(e.closest(".hd-marker")))
+      val found = for
+        el <- hit
+        p <- MapStack.domPanes.filter(_.point.value).find(p => TheMap.pane(p).el.contains(el))
+        m <- (TheMap.pane(p).live.map(_ -> false) ++ TheMap.pane(p).leaving.map(_ -> true)).find(_._1.el eq el)
+      yield describe(p, m._1, m._2, origin, false)
+      found.orNull
 
   def install(s: MapSurface): Unit =
     s.on(MapEventKind.BaseMapReady)(_ => drawn += 1)
@@ -127,6 +281,46 @@ object MapHandle:
       /** How many of a base-map layer's features (`contours`, …) are drawn in the view now. */
       layerDrawn = ((id: String) => s.baseMapDrawn(MapSurface.LayerId(id)).value): js.Function1[String, Int],
       /** How many points the cluster layer holds, and how many zooms animated its bubbles. */
+      markers = ((spec: js.UndefOr[js.Dynamic]) => markers(spec)): js.Function1[js.UndefOr[js.Dynamic], js.Array[
+        js.Dynamic
+      ]],
+      markerAt = ((at: js.Array[Double]) => markerAt(at)): js.Function1[js.Array[Double], js.Dynamic],
+      spiderLegs = (() => s.container.querySelectorAll(".hd-spider-legs line").length): js.Function0[Int],
+      spots = (
+          (names: js.UndefOr[js.Array[String]]) =>
+            val origin = s.container.getBoundingClientRect()
+            MapStack.domPanes
+              .filter(p => names.fold(p.point.value)(_.contains(p.name.value)))
+              .flatMap { p =>
+                val pane = TheMap.pane(p)
+                pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true)
+              }
+              .map { (m, ghost) =>
+                val r = m.el.getBoundingClientRect()
+                val tag = m.el.asInstanceOf[js.Dynamic]
+                if js.isUndefined(tag.hdSerial) then
+                  serial += 1
+                  tag.hdSerial = serial
+                js.Dynamic.literal(
+                  serial = tag.hdSerial,
+                  x = r.left + r.width / 2 - origin.left,
+                  y = r.top + r.height / 2 - origin.top,
+                  offscreen = m.el.classList.contains("is-offscreen"),
+                  ghost = ghost
+                )
+              }
+              .toJSArray
+      ): js.Function1[js.UndefOr[js.Array[String]], js.Array[js.Dynamic]],
+      markersIn = (
+          (names: js.UndefOr[js.Array[String]]) =>
+            MapStack.domPanes
+              .filter(p => names.fold(true)(_.contains(p.name.value)))
+              .map { p =>
+                val pane = TheMap.pane(p)
+                pane.size.value + pane.leaving.size
+              }
+              .sum
+      ): js.Function1[js.UndefOr[js.Array[String]], Int],
       points = (() => MapView.dots.size.value): js.Function0[Int],
       clusterAnimations = (() => MapView.dots.animations.value): js.Function0[Int],
       /** What each tiled layer shows: `{items, cells, counted}` — its items drawn as themselves, the cells of its
