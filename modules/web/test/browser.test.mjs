@@ -2885,6 +2885,30 @@ test('the past-landscape notice never lies under the credits or the map key, wid
   }
 });
 
+test('the notice rises again when its own box grows into the right-hand controls (late text, a font swapped in)', async t => {
+  const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
+  if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }
+  await withPage({ width: 390, height: 844 }, async page => {
+    await page.evaluate(() => localStorage.setItem('histmersion.ui.baseMap', '["physical"]'));
+    await page.reload();
+    await page.waitForFunction(() => window.__testMap);
+    await page.locator('.map-foot .map-credits').waitFor({ state: 'attached' });
+    await page.waitForTimeout(800);
+    const overlaps = () => page.evaluate(() => {
+      const n = document.querySelector('.map-foot').getBoundingClientRect();
+      return [...document.querySelectorAll('.maplibregl-ctrl-bottom-right > *')].map(e => e.getBoundingClientRect())
+        .filter(r => r.width > 0 && n.left < r.right && r.left < n.right && n.top < r.bottom && r.top < n.bottom).length;
+    });
+    assert.equal(await overlaps(), 0, 'settled');
+    await page.evaluate(() => { const c = document.querySelector('.map-foot .map-credits'); c.dataset.zz = c.innerHTML; c.textContent = 'zz'; });
+    await page.setViewportSize({ width: 390, height: 840 });
+    await page.waitForTimeout(800);
+    await page.evaluate(() => { const c = document.querySelector('.map-foot .map-credits'); c.innerHTML = c.dataset.zz; });
+    await page.waitForTimeout(800);
+    assert.equal(await overlaps(), 0, 'the box grew back without being drawn again: the notice rose with it');
+  });
+});
+
 // #4292: on a phone the map's legend and its foot (the past-landscape notice with the credits) took a third of
 // the map, and the key, opened, was wider than the screen with its close control off it. In the narrow layout
 // each is folded to a button; opened, the legend fits the screen less its 16 px gutters and the map, scrolls
