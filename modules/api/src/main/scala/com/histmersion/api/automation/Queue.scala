@@ -121,6 +121,7 @@ object Queue:
 
     val Manual: Kind = Kind("manual")
     val Automated: Kind = Kind("automated")
+    val Unattributed: Kind = Kind("unattributed")
     val Unknown: Kind = Kind("unknown")
     val Unreadable: Kind = Kind("unreadable")
     val Code: Runner = Runner("code")

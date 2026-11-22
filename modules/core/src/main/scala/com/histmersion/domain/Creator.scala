@@ -11,6 +11,7 @@ import Creator.Facts.{Job, Stored}
 enum Creator derives CanEqual:
   case Manual(surface: Surface)
   case Automated(plugin: Part[Plugin.Name], workflow: Part[Workflow.Name], agent: Part[Agent])
+  case Unattributed(surface: Surface)
   case Unknown(facts: Facts)
 
 object Creator:
@@ -67,14 +68,17 @@ object Creator:
   enum New derives CanEqual:
     case Manual(surface: Surface)
     case Automated(plugin: Plugin.Name, workflow: Workflow.Name, agent: Agent)
+    case Unattributed(surface: Surface)
 
   extension (creator: New)
     def stored: Creator = creator match
       case New.Manual(surface)                    => Manual(surface)
-      case New.Automated(plugin, workflow, agent) => Automated(Part.Known(plugin), Part.Known(workflow), Part.Known(agent))
+      case New.Automated(plugin, workflow, agent) =>
+        Automated(Part.Known(plugin), Part.Known(workflow), Part.Known(agent))
+      case New.Unattributed(surface) => Unattributed(surface)
 
     def actor: Actor = creator match
-      case New.Manual(_)          => Actor.Person
-      case New.Automated(_, _, _) => Actor.Agents
+      case New.Manual(_) | New.Unattributed(_) => Actor.Person
+      case New.Automated(_, _, _)              => Actor.Agents
 
   def code(plugin: Plugin.Name, workflow: Workflow.Name): New = New.Automated(plugin, workflow, Agent.Code)

@@ -41,6 +41,7 @@ object StoredCreator:
         known(workflow).map(w => s"$w"),
         known(agent).map(Agent.of)
       )
+    case Creator.Unattributed(surface) => StoredCreator("unattributed", Some(surface.toString.toLowerCase))
     case Creator.Unknown(Creator.Facts.Unrecorded(job)) => StoredCreator("unknown", job = job.map(j => s"$j"))
     case Creator.Unknown(Creator.Facts.Unreadable(_))   => StoredCreator("unknown")
 

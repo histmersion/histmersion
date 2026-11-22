@@ -36,7 +36,9 @@ class CreatorParseSuite extends munit.FunSuite:
     Creator.LanguageModel.Name("claude-opus-5-5")
   )
 
-  test("every record of present and absent names: accepted exactly when plugin and workflow are both there and the agent's three names are all there or none"):
+  test(
+    "every record of present and absent names: accepted exactly when plugin and workflow are both there and the agent's three names are all there or none"
+  ):
     val agentParts = Set(Part.Definition, Part.Provider, Part.Model)
     for
       present <- subsets(Part.values.toList).map(_.toSet)

@@ -25,7 +25,9 @@ class StoredCreatorSuite extends munit.FunSuite:
 
   test("a workflow's item shows its plugin, workflow and agent: the model's three names, or code"):
     assertEquals(
-      shown(Creator.New.Automated(Creator.Plugin.Name("research"), Creator.Workflow.Name("review-article"), skeptic).stored),
+      shown(
+        Creator.New.Automated(Creator.Plugin.Name("research"), Creator.Workflow.Name("review-article"), skeptic).stored
+      ),
       Some(
         Queue.Creator(
           Creation.Automated,
@@ -61,6 +63,16 @@ class StoredCreatorSuite extends munit.FunSuite:
       Some(Queue.Creator(Creation.Unknown, job = Some(Creation.Job("zz-missing-job"))))
     )
 
+  test("an item from a surface that cannot carry identity yet shows as unattributed, with its surface"):
+    assertEquals(
+      shown(Creator.New.Unattributed(Creator.Surface.Mcp).stored),
+      Some(Queue.Creator(Creation.Unattributed, surface = Some(Creation.Surface("mcp"))))
+    )
+    assertEquals(StoredCreator.actor(Creator.New.Unattributed(Creator.Surface.Rest)), "person")
+
   test("the actor a new item gets: the person for a person's item, the agents for a workflow's"):
     assertEquals(StoredCreator.actor(Creator.New.Manual(Creator.Surface.Web)), "person")
-    assertEquals(StoredCreator.actor(Creator.code(Creator.Plugin.Name("engine"), Creator.Workflow.Name("drain"))), "agents")
+    assertEquals(
+      StoredCreator.actor(Creator.code(Creator.Plugin.Name("engine"), Creator.Workflow.Name("drain"))),
+      "agents"
+    )
