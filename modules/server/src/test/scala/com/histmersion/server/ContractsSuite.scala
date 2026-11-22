@@ -299,6 +299,24 @@ class ContractsSuite extends munit.FunSuite:
     val escaped = "def c = sql\"\"\"SELECT id FROM events e ORDER BY e.id COLLATE \"C\\\"\"\"\"\n"
     assertEquals(TotalOrder.clauses("db:x/Repo.scala", escaped).map(_._1.text), List("e.id COLLATE \"C\""))
 
+  test("the ordinal of one set-returning function WITH ORDINALITY orders its rows totally, wherever the FROM stands"):
+    val keys = TotalOrder.keys("")
+    val code =
+      """object Repo:
+        |  def a = sql\"\"\"SELECT jsonb_agg(a.f ORDER BY a.n)
+        |              FROM unnest($fs::text[], $ss::text[]) WITH ORDINALITY AS a(f, s, n)\"\"\"
+        |  def b = sql\"\"\"SELECT x FROM unnest($xs::text[]) WITH ORDINALITY AS u(x, i) ORDER BY i LIMIT $n\"\"\"
+        |  def c = sql\"\"\"SELECT jsonb_agg(a.f ORDER BY a.s) FROM unnest($fs, $ss) WITH ORDINALITY AS a(f, s, n)\"\"\"
+        |  def d = sql\"\"\"SELECT jsonb_agg(x ORDER BY b.n) FROM unnest($xs) WITH ORDINALITY AS a(x, n)\"\"\"
+        |""".stripMargin
+    val source = SourceFile("db:x/Repo.scala", "com.histmersion.x", Blank(code), code)
+    assertEquals(TotalOrder.ordinals("FROM unnest($fs, $ss) WITH ORDINALITY AS a(f, s, n)"), Set("a" -> "n"))
+    assertEquals(
+      TotalOrder.partial(List(source), keys).map(c => (c.line, c.text)),
+      List((5, "a.s"), (6, "b.n")),
+      "another column, or another alias's ordinal, is no key"
+    )
+
   test("a default parameter of a case is found, in a class or an enum case, on one line or several"):
     val code =
       """object Cases:
