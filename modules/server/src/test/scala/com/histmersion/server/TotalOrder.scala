@@ -69,15 +69,35 @@ object TotalOrder:
     * (where its tables and its pinned columns are). A clause in a comment is none.
     */
   def clauses(key: String, raw: String): List[(Clause, String)] =
+    clausesAround(key, raw).map((c, before, _) => c -> before)
+
+  private def clausesAround(key: String, raw: String): List[(Clause, String, String)] =
     OrderBy.findAllMatchIn(raw).toList.flatMap { m =>
       val lineStart = raw.lastIndexOf('\n', m.start) + 1
       val lead = raw.substring(lineStart, m.start).trim
       if lead.startsWith("*") || lead.startsWith("//") || lead.startsWith("/*") then Nil
       else
         val text = clauseAt(raw, m.end)
-        val before = raw.substring(math.max(0, statementStart(raw, m.start)), m.start)
-        List(Clause(key, raw.substring(0, m.start).count(_ == '\n') + 1, text) -> before)
+        val start = math.max(0, statementStart(raw, m.start))
+        val before = raw.substring(start, m.start)
+        val around = raw.substring(start, math.min(raw.length, m.end + AroundAfter))
+        List((Clause(key, raw.substring(0, m.start).count(_ == '\n') + 1, text), before, around))
     }
+
+  private val AroundAfter = 600
+
+  private val Ordinality =
+    """(?i)\)\s*WITH\s+ORDINALITY\s+(?:AS\s+)?([a-z_][a-z0-9_]*)\s*\(([^)]*)\)""".r
+
+  def ordinals(sql: String): Set[(String, String)] =
+    Ordinality
+      .findAllMatchIn(sql)
+      .flatMap(m => m.group(2).split(',').map(_.trim.toLowerCase).lastOption.map(m.group(1).toLowerCase -> _))
+      .toSet
+
+  def byOrdinal(clause: String, sql: String): Boolean =
+    val ords = ordinals(sql)
+    columns(clause).exists((alias, col) => ords.exists((a, o) => o == col && alias.forall(_ == a)))
 
   private def clauseAt(raw: String, from: Int): String =
     val out = new StringBuilder
@@ -197,4 +217,6 @@ object TotalOrder:
 
   /** The clauses of the sources that do not order totally. */
   def partial(sources: List[SourceFile], keys: Keys): List[Clause] =
-    sources.flatMap(s => clauses(s.key, s.raw)).collect { case (c, statement) if !total(c.text, statement, keys) => c }
+    sources.flatMap(s => clausesAround(s.key, s.raw)).collect {
+      case (c, statement, around) if !total(c.text, statement, keys) && !byOrdinal(c.text, around) => c
+    }
