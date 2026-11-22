@@ -9,7 +9,7 @@ import hearth.kindlings.jsoniterjson.Json
 import util.problem.{External, Problem, Problems}
 import util.problem.Problem.*
 import Answer.{answer, decoded, entry, problem, retryAfter, status}
-import util.problem.Text.{sentence, sentences}
+import util.problem.Text.{label, sentence, sentences}
 import json.NewtypeCodecs.{list, problemCodec}
 
 /** Every case of [[Problem]], through every renderer the api owns: its HTTP status, its English sentence and its JSON
@@ -250,12 +250,12 @@ class RenderSuite extends munit.FunSuite:
       Vector(
         NotFound.Answer(
           NotFound.Fetcher("unpaywall"),
-          NotFound.Kind.Miss,
+          NotFound.Said.Miss(NotFound.Absence.NotHeld),
           NotFound.Copy(Raw("doi:10.1/x"), Vector.empty)
         ),
         NotFound.Answer(
           NotFound.Fetcher("landing"),
-          NotFound.Kind.Refused,
+          NotFound.Said.Refused(NotFound.Refusal.BotChallenge),
           Upstream.Challenged(
             Upstream.Name("landing"),
             Upstream.Url("https://x.example/f"),
@@ -268,9 +268,15 @@ class RenderSuite extends munit.FunSuite:
     assertEquals(
       copy.sentence,
       "no legal open-access PDF found for 10.1/x — unpaywall: no copy — no legal open-access PDF found for doi:10.1/x; " +
-        "landing: refused — landing answered HTTP 403 at https://x.example/f with a bot-protection challenge, not the page"
+        "landing: refused (scripts refused) — landing answered HTTP 403 at https://x.example/f with a bot-protection " +
+        "challenge, not the page"
     )
     assertEquals(copy.status.code, 404)
+
+  test("every way a fetcher comes back without a copy has words of its own"):
+    val all = NotFound.Absence.values.toList.map(NotFound.Said.Miss(_)) ++
+      NotFound.Refusal.values.toList.map(NotFound.Said.Refused(_))
+    assertEquals(all.map(_.label).distinct.size, all.size)
 
   test("the hints a refusal gave before its case was typed are in its sentence, word for word"):
     val agentsOff = Refused.Disabled(

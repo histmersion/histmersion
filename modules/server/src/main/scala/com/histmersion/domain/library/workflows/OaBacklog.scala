@@ -41,6 +41,7 @@ import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow, AcquireCheckService}
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the
@@ -57,9 +58,11 @@ import com.histmersion.util.database.Unused
 final class OaBacklog(
     cfg: => AgentsConfig,
     lib: => LibraryAgentsConfig,
+    rcfg: => RecheckConfig,
     site: LibrarySite,
     upstream: () => AgentUpstream,
-    agents: AgentsControllers
+    agents: AgentsControllers,
+    attempts: AcquireCheckService
 ):
 
   private def watch = lib.managers.watch
@@ -398,6 +401,18 @@ final class OaBacklog(
               case Failure.ToAcquire(why) =>
                 acquireOnce(goals, doi, w) match
                   case Some(id) =>
+                    attempts.record(
+                      id.transformInto[AcquireAttemptRow.Id],
+                      AcquireAttempt(
+                        now,
+                        AcquireAttempt.Trigger.WatcherBacklog,
+                        upstream().fetcherGeneration,
+                        AcquireAttempt.Outcome.NoCopy,
+                        AcquireRecheck.answers(m),
+                        None
+                      ),
+                      rcfg.attemptsKept.transformInto[AcquireAttempt.Kept]
+                    )
                     settle(
                       ItemStatus.Stopped,
                       s"to the acquisition list (#$id): ${why.said}",

@@ -15,23 +15,17 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.archive match
-      case None     => Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("archive.org identifier")))
+      case None     => ByDoi.noIdentifier(Problem.Field("archive.org identifier"))
       case Some(id) =>
         val archive = client()
         archive.info(ArchiveId(id.value)) match
-          case Left(e)                               => Fetch.Miss(e)
+          case Left(e)                               => Fetch.failed(e)
           case Right(item) if item.lendingOnly.value =>
-            Fetch.Refused(
-              Problem.Refused.Policy(Problem.Refused.Rule.LendingOnly)
-            )
+            Fetch.Refused(Fetch.Refusal.LendingOnly, Problem.Refused.Policy(Problem.Refused.Rule.LendingOnly))
           case Right(item) =>
             AcquireParse.pickArchiveFile(item.files, work.format.map(f => AcquireParse.WantedFileKind(f.value))) match
-              case None =>
-                Fetch.Miss(
-                  Problem.NotFound
-                    .Entity(Problem.TypeName("Copy"), Problem.Raw(s"${item.identifier}"))
-                )
+              case None       => ByDoi.notHeld(Problem.Raw(s"${item.identifier}"))
               case Some(file) =>
                 archive
                   .download(ArchiveId(item.identifier.value), ArchiveOrg.DownloadFile(file.name.value))
-                  .fold[Fetch](e => Fetch.Miss(e), Fetch.Found(_))
+                  .fold[Fetch](Fetch.failed, Fetch.Found(_))

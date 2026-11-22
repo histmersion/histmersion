@@ -21,7 +21,7 @@ import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.Api
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.Doi
-import com.histmersion.domain.library.acquisition.AcquireCheckRow
+import com.histmersion.domain.library.acquisition.AcquireAttemptRow
 import com.histmersion.api.library.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
@@ -106,7 +106,7 @@ final class IngestControllers(
       authors: List[IngestMeta.Authors],
       year: Option[Year],
       doi: Option[Doi],
-      acquireItem: Option[AcquireCheckRow.Id] = None
+      acquireItem: Option[AcquireAttemptRow.Id] = None
   ): Either[Api.Error, Ingest.Accepted] =
     def params(name: Ingest.Params.Filename) =
       Ingest.Params(

@@ -61,14 +61,14 @@ GET https://archive.org/metadata/zqlent
   User-Agent: histmersion/0.1
   -> 200
 no copy: no legal open-access PDF found for archive.org:zqlent; the item is lending-only: borrow it on its site
-  archive-org: refused — the item is lending-only: borrow it on its site
-  unpaywall: no copy — doi is required
-  core: no copy — doi is required
-  openalex: no copy — doi is required
-  pmc: no copy — doi is required
-  arxiv: no copy — arxiv is required
-  landing: no copy — doi is required
-  pmc-text: no copy — doi is required
+  archive-org: refused (lending only) — the item is lending-only: borrow it on its site
+  unpaywall: no identifier it reads — doi is required
+  core: no identifier it reads — doi is required
+  openalex: no identifier it reads — doi is required
+  pmc: no identifier it reads — doi is required
+  arxiv: no identifier it reads — arxiv is required
+  landing: no identifier it reads — doi is required
+  pmc-text: no identifier it reads — doi is required
 ### doi:10.1/none
 GET https://api.unpaywall.org/v2/10.1/none?email=host@example.org
   User-Agent: histmersion/0.1
@@ -87,12 +87,12 @@ GET https://api.datacite.org/dois/10.1/none
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.1/none
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.1/none'
   core: no copy — no copy '10.1/none'
   openalex: no copy — no copy '10.1/none'
   pmc: no copy — no copy '10.1/none'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.1/none'
   pmc-text: no copy — no copy '10.1/none'
 budget: lookups 3 searches 0
@@ -194,12 +194,12 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -233,12 +233,12 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -272,12 +272,12 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -305,11 +305,11 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
-  core: no copy — no copy '10.9999/landing.1'
+  archive-org: no identifier it reads — archive.org identifier is required
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -337,11 +337,11 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -363,10 +363,10 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
-  core: no copy — no copy '10.9999/landing.1'
+  archive-org: no identifier it reads — archive.org identifier is required
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 ### doi:10.5281/zenodo.3695551
@@ -384,10 +384,10 @@ GET https://api.datacite.org/dois/10.5281/zenodo.3695551
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.5281/zenodo.3695551
-  archive-org: no copy — archive.org identifier is required
-  core: no copy — no copy '10.5281/zenodo.3695551'
+  archive-org: no identifier it reads — archive.org identifier is required
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.5281/zenodo.3695551%22&limit=1 — not found
   pmc: no copy — no copy '10.5281/zenodo.3695551'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.5281/zenodo.3695551'
   pmc-text: no copy — no copy '10.5281/zenodo.3695551'
 budget: lookups 2 searches 0
@@ -415,12 +415,12 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -454,12 +454,12 @@ GET https://repo-d.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -548,12 +548,12 @@ GET https://publikationen.uni-tuebingen.de/xmlui/bitstream/10900/73561/1/StTrMon
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.15496/publikation-14969
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.15496/publikation-14969'
-  core: no copy — no copy '10.15496/publikation-14969'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.15496/publikation-14969%22&limit=1 — not found
   openalex: no copy — no copy '10.15496/publikation-14969'
   pmc: no copy — no copy '10.15496/publikation-14969'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.15496/publikation-14969'
   pmc-text: no copy — no copy '10.15496/publikation-14969'
 ### doi:10.12688/openreseurope.20351.3
@@ -608,12 +608,12 @@ GET https://repo-u.example.org/item/1
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.9999/landing.1
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.9999/landing.1'
-  core: no copy — no copy '10.9999/landing.1'
+  core: no copy — core answered HTTP 404 at https://api.core.ac.uk/v3/search/works/?q=doi:%2210.9999/landing.1%22&limit=1 — not found
   openalex: no copy — no copy '10.9999/landing.1'
   pmc: no copy — no copy '10.9999/landing.1'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.9999/landing.1'
   pmc-text: no copy — no copy '10.9999/landing.1'
 budget: lookups 1 searches 0
@@ -678,11 +678,11 @@ GET https://api.datacite.org/dois/10.1/core
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.1/core
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.1/core'
   openalex: no copy — no copy '10.1/core'
   pmc: no copy — no copy '10.1/core'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.1/core'
   pmc-text: no copy — no copy '10.1/core'
 ### core index search
@@ -709,12 +709,12 @@ GET https://api.datacite.org/dois/10.1/core
   User-Agent: histmersion/0.1
   -> 404
 no copy: no legal open-access PDF found for doi:10.1/core
-  archive-org: no copy — archive.org identifier is required
+  archive-org: no identifier it reads — archive.org identifier is required
   unpaywall: no copy — no copy '10.1/core'
-  core: no copy — histmersion.plugins.oa-core.api-key is empty
+  core: not set up — histmersion.plugins.oa-core.api-key is empty
   openalex: no copy — no copy '10.1/core'
   pmc: no copy — no copy '10.1/core'
-  arxiv: no copy — arxiv is required
+  arxiv: no identifier it reads — arxiv is required
   landing: no copy — no copy '10.1/core'
   pmc-text: no copy — no copy '10.1/core'
 ### core index search
@@ -737,10 +737,10 @@ budget: lookups 0 searches 0
 chain: unpaywall, core, openalex, landing
 ### arxiv:2101.00001
 no copy: no legal open-access PDF found for arxiv:2101.00001
-  unpaywall: no copy — doi is required
-  core: no copy — doi is required
-  openalex: no copy — doi is required
-  landing: no copy — doi is required
+  unpaywall: no identifier it reads — doi is required
+  core: no identifier it reads — doi is required
+  openalex: no identifier it reads — doi is required
+  landing: no identifier it reads — doi is required
 ### doi:10.1038/nature25778
 GET https://api.unpaywall.org/v2/10.1038/nature25778?email=host@example.org
   User-Agent: histmersion/0.1

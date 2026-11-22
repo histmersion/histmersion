@@ -34,7 +34,7 @@ final class LibraryData(referrers: SourceReferrers) extends DataContribution:
     "assessments",
     "retraction_watch",
     "candidate_watches",
-    "acquire_checks",
+    "acquire_attempts",
     "upstream_quota"
   )
 

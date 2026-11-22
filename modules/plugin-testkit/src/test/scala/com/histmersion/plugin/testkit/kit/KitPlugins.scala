@@ -31,12 +31,13 @@ final class KitFetcherPlugin extends Plugin:
               val access = Access.Open
               def fetch(work: WorkKey, fc: Fetch.Context): Fetch =
                 work.doi match
-                  case None      => Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("doi")))
+                  case None =>
+                    Fetch.Miss(Fetch.Absence.NoIdentifier, Problem.Invalid.Missing.here(Problem.Field("doi")))
                   case Some(doi) =>
                     val url = s"${c.baseUrl.stripSuffix("/")}/$doi.pdf" + key.fold("")(k => s"?key=$k")
                     ctx.http.get(Plugin.Http.Url(url)) match
-                      case Left(why) if why.accessRefused => Fetch.Refused(why)
-                      case Left(why)                      => Fetch.Miss(why)
+                      case Left(why) if why.accessRefused => Fetch.Refused(Fetch.Refusal.NoEntitlement, why)
+                      case Left(why)                      => Fetch.failed(why)
                       case Right(bytes)                   =>
                         fc.log.info(Plugin.Log.Line(s"$doi: licence CC-BY-4.0"))
                         Fetch.Found(

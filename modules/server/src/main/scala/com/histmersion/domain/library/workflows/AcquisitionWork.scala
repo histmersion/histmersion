@@ -34,11 +34,14 @@ final class AcquisitionWork(
   /** The watchers' ingest backlog: the legal open-access picks past a day's allowance, ingested on later days (the
     * sweep parks them, the managers' tick drains them).
     */
-  val oaBacklog: OaBacklog = OaBacklog(cfg().agents, cfg().libraryAgents, site, () => upstream, agents)
+  val attempts: AcquireCheckService = AcquireCheckService(transactor)
+
+  val oaBacklog: OaBacklog =
+    OaBacklog(cfg().agents, cfg().libraryAgents, cfg().acquire.recheck, site, () => upstream, agents, attempts)
 
   /** The acquisition list's legal re-check (the managers' tick runs it; `queue acquire recheck` by hand). */
   val acquireRecheck: AcquireRecheckService =
-    AcquireRecheckService(ds, AcquireCheckService(transactor), cfg().acquire.recheck, site, () => upstream, agents)
+    AcquireRecheckService(ds, attempts, cfg().acquire.recheck, site, () => upstream, agents)
 
   /** Seed before the plan: goals with no source gather candidates (no model) before their plan is approved. */
   val seeding: SeedService =

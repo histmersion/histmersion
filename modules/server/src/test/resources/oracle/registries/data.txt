@@ -46,7 +46,7 @@ owner media
   cache	thumbnails	picture thumbnails	InTables(List(assets))	stale=
   check	media-licence	fix=false
 owner library
-  tables	sources,source_aliases,source_candidates,source_chunks,source_identifiers,findings,finding_places,edges,unresolved_edges,assessments,retraction_watch,candidate_watches,acquire_checks,upstream_quota
+  tables	sources,source_aliases,source_candidates,source_chunks,source_identifiers,findings,finding_places,edges,unresolved_edges,assessments,retraction_watch,candidate_watches,acquire_attempts,upstream_quota
   stores	IngestOriginals,Spool,CorpusFolder
   backup	stores= guarded=sources:source
   carried	entities/sources.ndjson	record=Source	table=sources	steps=Rows@10,AfterBlobs@100,Derived@200

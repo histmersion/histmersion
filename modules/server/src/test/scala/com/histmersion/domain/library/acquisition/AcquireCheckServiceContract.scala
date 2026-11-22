@@ -8,6 +8,8 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Source
 import com.histmersion.domain.{AcquireRecheck, Caller}
 import com.histmersion.domain.automation.worklists.QueueItemId
+import com.histmersion.util.problem.{Problem, Problems}
+import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import com.histmersion.api.library.Citekey
@@ -16,12 +18,10 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 
-/** The acquisition list's checks, the same on the database and in memory: a check replaced with its count kept, the
-  * checks of the open items only, counted since a time, and what the corpus holds of the items' DOIs.
-  */
 abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
 
   private val T0 = Instant.parse("2026-10-20T10:00:00Z")
+  private val Kept = AcquireAttempt.Kept(3)
 
   private def source(ck: Citekey, doi: Option[Doi], body: Option[Source.OcrMarkdown]) =
     Source(
@@ -44,49 +44,78 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     )
       .copy(ocrMarkdown = body)
 
-  stest("a check is replaced with its count kept; the open items' checks; counted since a time") { s =>
-    val open = AcquireCheckRow.Id(
-      s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.a"))).id.value
+  private val challenged = Problem.NotFound.Answer(
+    Problem.NotFound.Fetcher("landing"),
+    Problem.NotFound.Said.Refused(Problem.NotFound.Refusal.BotChallenge),
+    Problem.Upstream.Challenged(
+      Problem.Upstream.Name("landing"),
+      Problem.Upstream.Url("https://landing.example/f"),
+      Problem.Upstream.Status(403),
+      Vector.empty
     )
-    val done = AcquireCheckRow.Id(
-      s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.b"))).id.value
-    )
-    s.checks.record(
-      open,
-      T0,
+  )
+
+  private def attempt(
+      seconds: Long,
+      outcome: AcquireAttempt.Outcome,
+      answers: Vector[Problem.NotFound.Answer] = Vector.empty
+  ) =
+    AcquireAttempt(
+      T0.plusSeconds(seconds),
+      AcquireAttempt.Trigger.Recheck,
       AcquireRecheck.LastCheck.Generation("g1"),
-      AcquireRecheck.Outcome.NoCopy,
-      AcquireRecheck.reason(T0, AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("no copy"))
+      outcome,
+      answers,
+      Some(
+        AcquireAttempt.Oa(
+          Some(AcquireAttempt.Oa.OaStatus("gold")),
+          Some(AcquireAttempt.Oa.OaUrl("https://pub.example/a")),
+          None,
+          AcquireAttempt.Oa.Scripts.Refused
+        )
+      )
     )
-    s.checks.record(
-      open,
-      T0.plusSeconds(60),
-      AcquireRecheck.LastCheck.Generation("g2"),
-      AcquireRecheck.Outcome.Fetched,
-      AcquireRecheck.reason(T0, AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("fetched"))
-    )
-    s.checks.record(
+
+  private def item(s: AcquisitionStores, text: String): AcquireAttemptRow.Id =
+    s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text(text))).id.transformInto[AcquireAttemptRow.Id]
+
+  stest("every attempt is kept with each fetcher's typed answer, newest first, the newest `kept` only") { s =>
+    val open = item(s, "Get 10.5555/zq.a")
+    val done = item(s, "Get 10.5555/zq.b")
+    val first = attempt(0, AcquireAttempt.Outcome.NoCopy, Vector(challenged))
+    val failed =
+      attempt(
+        60,
+        AcquireAttempt.Outcome.Failed(Problems.of(Problem.Upstream.Offline(Problem.Upstream.Name("zq"), None)))
+      )
+    val third = attempt(120, AcquireAttempt.Outcome.NoCopy)
+    val fetched = attempt(180, AcquireAttempt.Outcome.Fetched(AcquireAttempt.Outcome.Source("unpaywall")))
+    List(first, failed, third, fetched).foreach(s.attempts.record(open, _, Kept))
+    s.attempts.record(
       done,
-      T0.plusSeconds(120),
-      AcquireRecheck.LastCheck.Generation("g2"),
-      AcquireRecheck.Outcome.Closed,
-      AcquireRecheck.reason(T0, AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("held"))
+      attempt(240, AcquireAttempt.Outcome.Closed(domain.library.Citekey("zqa_one"))),
+      Kept
     )
-    val _ = s.queues.patch(
-      QueueItemId(done.value),
-      Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
-    )
-    val got = s.checks.of(List(open, done))
-    assertEquals(got(open).checks, 2)
-    assertEquals(got(open).generation, "g2")
-    assertEquals(got(open).outcome, AcquireRecheck.Outcome.Fetched.wire)
-    assertEquals(got(open).at, T0.plusSeconds(60))
-    assertEquals(s.checks.of(Nil), Map.empty)
-    assertEquals(s.checks.open.keySet, Set(open))
+    val _ = s.queues.patch(QueueItemId(done.value), Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
+    val got = s.attempts.of(List(open, done))
+    assertEquals(got(open), List(fetched, third, failed))
+    assertEquals(s.attempts.of(Nil), Map.empty)
+    assertEquals(s.attempts.open.keySet, Set(open))
     assertEquals(
-      s.checks.countSince(T0.plusSeconds(30)),
-      Map(AcquireRecheck.Outcome.Fetched.wire -> 1, AcquireRecheck.Outcome.Closed.wire -> 1)
+      s.attempts.countSince(T0.plusSeconds(90)),
+      Map(
+        AcquireRecheck.Outcome.NoCopy.wire -> 1,
+        AcquireRecheck.Outcome.Fetched.wire -> 1,
+        AcquireRecheck.Outcome.Closed.wire -> 1
+      )
     )
+  }
+
+  stest("a typed answer, a failure and the open-access facts read back as they were written") { s =>
+    val one = item(s, "Get 10.5555/zq.c")
+    val written = attempt(0, AcquireAttempt.Outcome.NoCopy, Vector(challenged))
+    s.attempts.record(one, written, Kept)
+    assertEquals(s.attempts.of(List(one))(one), List(written))
   }
 
   stest("the sources holding the items' DOIs, the first citekey, and whether it has its original") { s =>
@@ -102,7 +131,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       Caller.Local
     )
     assertEquals(
-      s.checks.heldByDoi(
+      s.attempts.heldByDoi(
         List(
           domain.library.Doi.assume(" 10.5555/zq.a"),
           domain.library.Doi("10.5555/zq.b"),
@@ -119,7 +148,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
         )
       )
     )
-    assertEquals(s.checks.heldByDoi(Nil), Map.empty)
+    assertEquals(s.attempts.heldByDoi(Nil), Map.empty)
   }
 
 class AcquireCheckServiceInMemorySuite extends AcquireCheckServiceContract with AcquisitionStoreSuite.InMemory

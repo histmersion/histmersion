@@ -346,14 +346,14 @@ object Acquire:
     }
 
   object Checks:
-    import AcquireCheck.Rationale
+    import AcquireCheck.Said
 
     final case class AcquireCheck(
         item: Queue.QueueItem.Id,
         checkedAt: AcquireCheck.CheckedAt,
         outcome: AcquireCheck.Outcome,
-        reason: Rationale,
-        checks: AcquireCheck.Checks = AcquireCheck.Checks(1)
+        reason: Said,
+        checks: AcquireCheck.Tries = AcquireCheck.Tries(1)
     ) derives JsonCodec,
           KindlingsSchema,
           api.json.Schema
@@ -363,12 +363,12 @@ object Acquire:
       object CheckedAt extends Newtype[String, Pure]
       type Outcome = Outcome.T
       object Outcome extends Newtype[String, Pure]
-      type Checks = Checks.T
-      object Checks extends Newtype[Int, Pure]
+      type Tries = Tries.T
+      object Tries extends Newtype[Int, Pure]
 
       /** The short reason the item carries after the check: `checked 2026-10-27: no legal copy (…)`. */
-      type Rationale = Rationale.T
-      object Rationale extends Newtype[String, Pure]
+      type Said = Said.T
+      object Said extends Newtype[String, Pure]
 
     final case class RecheckRequest(
         dryRun: RecheckRequest.DryRun = RecheckRequest.DryRun(false),

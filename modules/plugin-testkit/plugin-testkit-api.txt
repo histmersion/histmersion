@@ -362,17 +362,17 @@ com.histmersion.plugin.testkit.FetchReport$ fromProduct(scala.Product): com.hist
 com.histmersion.plugin.testkit.FetchReport$ toString(): java.lang.String
 com.histmersion.plugin.testkit.FetchReport$ unapply(com.histmersion.plugin.testkit.FetchReport): com.histmersion.plugin.testkit.FetchReport
 com.histmersion.plugin.testkit.FetcherAnswer _1(): java.lang.String
-com.histmersion.plugin.testkit.FetcherAnswer _2(): boolean
+com.histmersion.plugin.testkit.FetcherAnswer _2(): com.histmersion.util.problem.Problem$NotFound$Said
 com.histmersion.plugin.testkit.FetcherAnswer _3(): com.histmersion.util.problem.Problem
-com.histmersion.plugin.testkit.FetcherAnswer apply(java.lang.String, boolean, com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer apply(java.lang.String, com.histmersion.util.problem.Problem$NotFound$Said, com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer canEqual(java.lang.Object): boolean
 com.histmersion.plugin.testkit.FetcherAnswer class
-com.histmersion.plugin.testkit.FetcherAnswer copy(java.lang.String, boolean, com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer copy(java.lang.String, com.histmersion.util.problem.Problem$NotFound$Said, com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer equals(java.lang.Object): boolean
 com.histmersion.plugin.testkit.FetcherAnswer fetcher(): java.lang.String
 com.histmersion.plugin.testkit.FetcherAnswer fromProduct(scala.Product): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer hashCode(): int
-com.histmersion.plugin.testkit.FetcherAnswer new(java.lang.String, boolean, com.histmersion.util.problem.Problem)
+com.histmersion.plugin.testkit.FetcherAnswer new(java.lang.String, com.histmersion.util.problem.Problem$NotFound$Said, com.histmersion.util.problem.Problem)
 com.histmersion.plugin.testkit.FetcherAnswer productArity(): int
 com.histmersion.plugin.testkit.FetcherAnswer productElement(int): java.lang.Object
 com.histmersion.plugin.testkit.FetcherAnswer productElementName(int): java.lang.String
@@ -380,10 +380,11 @@ com.histmersion.plugin.testkit.FetcherAnswer productElementNames(): scala.collec
 com.histmersion.plugin.testkit.FetcherAnswer productIterator(): scala.collection.Iterator
 com.histmersion.plugin.testkit.FetcherAnswer productPrefix(): java.lang.String
 com.histmersion.plugin.testkit.FetcherAnswer refused(): boolean
+com.histmersion.plugin.testkit.FetcherAnswer said(): com.histmersion.util.problem.Problem$NotFound$Said
 com.histmersion.plugin.testkit.FetcherAnswer toString(): java.lang.String
 com.histmersion.plugin.testkit.FetcherAnswer unapply(com.histmersion.plugin.testkit.FetcherAnswer): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer why(): com.histmersion.util.problem.Problem
-com.histmersion.plugin.testkit.FetcherAnswer$ apply(java.lang.String, boolean, com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetcherAnswer
+com.histmersion.plugin.testkit.FetcherAnswer$ apply(java.lang.String, com.histmersion.util.problem.Problem$NotFound$Said, com.histmersion.util.problem.Problem): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer$ class
 com.histmersion.plugin.testkit.FetcherAnswer$ fromProduct(scala.Product): com.histmersion.plugin.testkit.FetcherAnswer
 com.histmersion.plugin.testkit.FetcherAnswer$ toString(): java.lang.String

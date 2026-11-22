@@ -31,10 +31,6 @@ object AcquireRecheck:
   object GenerationPart extends Newtype[String, Pure]
   type ProgressLine = ProgressLine.T
   object ProgressLine extends Newtype[String, Pure]
-  type ReplyText = ReplyText.T
-  object ReplyText extends Newtype[String, Pure]:
-    /** The fetchers' answers as the reason shows them: `unpaywall: no copy — …; landing: refused — …`. */
-    def of(answers: Vector[Problem.NotFound.Answer]): ReplyText = ReplyText(answers.map(_.line).mkString("; "))
 
   /** `acquire.recheck.*` as the rules read them: on or off, how many days an item's check holds, at most how many items
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
@@ -59,7 +55,8 @@ object AcquireRecheck:
     type Enabled = Enabled.T
     object Enabled extends Newtype[Boolean, Pure]
     type EveryDays = EveryDays.T
-    object EveryDays extends Newtype[Int, Pure]
+    object EveryDays extends Newtype[Int, Pure]:
+      extension (d: EveryDays) def after(at: Instant): Instant = at.plusSeconds(math.max(1, d.value).toLong * 86400L)
     type PerDay = PerDay.T
     object PerDay extends Newtype[Int, Pure]
     type PerPass = PerPass.T
@@ -69,7 +66,8 @@ object AcquireRecheck:
     type SharePercent = SharePercent.T
     object SharePercent extends Newtype[Int, Pure]
     type RetryHours = RetryHours.T
-    object RetryHours extends Newtype[Int, Pure]
+    object RetryHours extends Newtype[Int, Pure]:
+      extension (h: RetryHours) def after(at: Instant): Instant = at.plusSeconds(math.max(1, h.value).toLong * 3600L)
 
   /** An item's last check: when, under which fetcher generation ([[generation]]), and whether it got no answer
     * ([[Outcome.Failed]]: a rate limit, an upstream down).
@@ -84,7 +82,11 @@ object AcquireRecheck:
     type Generation = Generation.T
     object Generation extends Newtype[String, Pure]
     type Failed = Failed.T
-    object Failed extends Newtype[Boolean, Pure]
+    object Failed extends Newtype[Boolean, Pure]:
+      def of(attempt: library.acquisition.AcquireAttempt): Failed = Failed(attempt.failed)
+
+    def of(attempt: library.acquisition.AcquireAttempt): LastCheck =
+      LastCheck(attempt.at, attempt.generation, Failed.of(attempt))
 
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
@@ -140,8 +142,8 @@ object AcquireRecheck:
           case Some(h) if h.hasOriginal.value => Action.Close(h.citekey)
           case other                          => Action.Fetch(doi, other.map(_.citekey))
 
-  /** What a check found, as stored (`acquire_checks.outcome`). */
-  enum Outcome(val wire: Outcome.Wire):
+  /** What a check found, as stored (`acquire_attempts.outcome`). */
+  enum Outcome(val wire: Outcome.Wire) derives CanEqual:
     /** In the corpus with its original: closed. */
     case Closed extends Outcome(Outcome.Wire("closed"))
 
@@ -160,77 +162,58 @@ object AcquireRecheck:
 
     def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
 
+    def of(o: library.acquisition.AcquireAttempt.Outcome): Option[Outcome] = o match
+      case library.acquisition.AcquireAttempt.Outcome.Closed(_)    => Some(Closed)
+      case library.acquisition.AcquireAttempt.Outcome.Fetched(_)   => Some(Fetched)
+      case library.acquisition.AcquireAttempt.Outcome.NoCopy       => Some(NoCopy)
+      case library.acquisition.AcquireAttempt.Outcome.Failed(_)    => Some(Failed)
+      case library.acquisition.AcquireAttempt.Outcome.Legacy(_, _) => None
+
   /** A failed legal ingest: no legal copy, or something else in the way. */
   def failure(message: Problems): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
-  /** What each fetcher answered, from the legal ingest's refusal ([[Problem.NotFound.Copy]]'s answers; from an earlier
-    * version's stored text `no legal open-access copy of <doi>: <the chain's message> — <fetcher>: <answer>; …`, the
-    * part after the message): the answers when there are any, else the message.
-    */
-  def answers(message: Problems): ReplyText =
-    message.toVector
-      .collectFirst { case Problem.NotFound.Copy(_, said) if said.nonEmpty => ReplyText.of(said) }
-      .getOrElse(replies(message.sentences.mkString("; ").trim))
+  /** What each fetcher answered when a legal ingest found no copy ([[Problem.NotFound.Copy]]'s answers). */
+  def answers(message: Problems): Vector[Problem.NotFound.Answer] =
+    message.toVector.collectFirst { case Problem.NotFound.Copy(_, said) => said }.getOrElse(Vector.empty)
 
-  /** The reason an item carries after a check at `at` whose legal ingest found no legal copy (`message`): the fetchers'
-    * [[answers]].
-    */
-  def noCopy(at: Instant, message: Problems): Rationale =
-    Rationale.NoCopy(LocalDate.ofInstant(at, ZoneOffset.UTC), answers(message))
-
-  /** The fetchers' answers in an earlier version's stored refusal, as [[answers]] reads them from its text `m`. */
-  private def replies(m: String): ReplyText =
-    val rest =
-      if !m.startsWith(IngestBacklog.NoLegalCopy) then m
-      else
-        m.indexOf(": ") match
-          case -1 => ""
-          case i  => m.drop(i + 2).trim
-    val replies = rest.indexOf(" — ") match
-      case -1 => rest
-      case i  => rest.drop(i + 3).trim
-    ReplyText(replies)
-
-  /** Why an item carries what it carries after a check on `day`: the account of the re-check, not a failure. */
+  /** Why an item carries what it carries after one attempt: the account of the re-check, not a failure. */
   enum Rationale:
-    /** In the corpus with its original, as `citekey`: the item closes. */
-    case Closed(day: LocalDate, citekey: Detail)
-
-    /** A legal copy was found at `source`: it is converting. */
-    case Fetched(day: LocalDate, source: Detail)
-
-    /** No legal copy; the fetchers answered `replies` (empty when they said nothing). */
-    case NoCopy(day: LocalDate, replies: ReplyText)
-
-    /** No answer: the chain said `detail` (empty when it said nothing). */
-    case Failed(day: LocalDate, detail: Detail)
+    case Closed(day: LocalDate, citekey: Citekey)
+    case Fetched(day: LocalDate, source: library.acquisition.AcquireAttempt.Outcome.Source)
+    case NoCopy(day: LocalDate, answers: Vector[Problem.NotFound.Answer])
+    case Failed(day: LocalDate, why: Problems)
+    case Legacy(day: LocalDate, note: library.acquisition.AcquireAttempt.Outcome.LegacyNote)
 
     /** The short reason an item carries, at most 500 characters: `checked 2026-10-27: no legal copy (unpaywall: no copy
       * — none; …)`.
       */
     def said: String =
-      def trimmed(detail: Detail): String = Option(detail).fold("")(d => s"$d".trim)
       val text = this match
         case Closed(day, citekey) =>
-          s"checked $day: in the corpus with its original as [[${trimmed(citekey)}]] — closed"
+          s"checked $day: in the corpus with its original as [[$citekey]] — closed"
         case Fetched(day, source) =>
-          s"checked $day: a legal copy found (${trimmed(source)}) — converting; the item closes once it is stored"
-        case NoCopy(day, replies) =>
-          s"checked $day: no legal copy" + (if s"$replies".isEmpty then "" else s" ($replies)")
-        case Failed(day, detail) =>
-          val d = trimmed(detail)
-          s"checked $day: no answer (${if d.isEmpty then "the ingest failed" else d})"
+          s"checked $day: a legal copy found ($source) — converting; the item closes once it is stored"
+        case NoCopy(day, answers) =>
+          s"checked $day: no legal copy" + (if answers.isEmpty then ""
+                                            else answers.map(_.line).mkString(" (", "; ", ")"))
+        case Failed(day, why) => s"checked $day: no answer (${why.sentences.mkString("; ")})"
+        case Legacy(_, note)  => s"$note"
       text.take(500)
 
-  /** The reason an item carries after a check at `at` that ended `outcome`, the fetcher's or chain's words `detail`. */
-  def reason(at: Instant, outcome: Outcome, detail: Detail): Rationale =
-    val day = LocalDate.ofInstant(at, ZoneOffset.UTC)
-    outcome match
-      case Outcome.Closed  => Rationale.Closed(day, detail)
-      case Outcome.Fetched => Rationale.Fetched(day, detail)
-      case Outcome.NoCopy  => Rationale.NoCopy(day, replies(Option(detail).fold("")(d => s"$d".trim)))
-      case Outcome.Failed  => Rationale.Failed(day, detail)
+  object Rationale:
+    type Said = Said.T
+    object Said extends Newtype[String, Pure]:
+      def of(rationale: Rationale): Said = Said(rationale.said)
+
+    def of(attempt: library.acquisition.AcquireAttempt): Rationale =
+      val day = LocalDate.ofInstant(attempt.at, ZoneOffset.UTC)
+      attempt.outcome match
+        case library.acquisition.AcquireAttempt.Outcome.Closed(ck)      => Closed(day, ck)
+        case library.acquisition.AcquireAttempt.Outcome.Fetched(source) => Fetched(day, source)
+        case library.acquisition.AcquireAttempt.Outcome.NoCopy          => NoCopy(day, attempt.answers)
+        case library.acquisition.AcquireAttempt.Outcome.Failed(why)     => Failed(day, why)
+        case library.acquisition.AcquireAttempt.Outcome.Legacy(note, _) => Legacy(day, note)
 
   /** What the shared daily legal ingest allowance leaves the re-check (the autopilot's: absent when it is off or has no
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched

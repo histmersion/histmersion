@@ -4,9 +4,11 @@ package plugins.fetchers
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Header
 
-import com.histmersion.plugin.FetchedFile
+import com.histmersion.plugin.{Fetch, FetchedFile}
 import com.histmersion.plugin.Plugin
+import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
+import Downloads.NotPdf
 
 /** One download the fetchers make, checked: a copy only when it is a PDF. Any other answer is logged and is no copy. */
 final class Downloads(http: Plugin.Http):
@@ -16,21 +18,29 @@ final class Downloads(http: Plugin.Http):
       source: FetchedFile.Source,
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value] = Map.empty
-  ): Option[FetchedFile] =
+  ): Fetch =
     http.get(url, headers).map(body => FetchedFile.Bytes(body.value)) match
       case Right(b) if Downloads.looksLikePdf(b) =>
-        Some(FetchedFile(source, Some(FetchedFile.Url(url.value)), b, FetchedFile.Extension("pdf")))
+        Fetch.Found(FetchedFile(source, Some(FetchedFile.Url(url.value)), b, FetchedFile.Extension("pdf")))
       case Right(b) =>
         log.info(
           Plugin.Log.Line(s"$source: $url returned ${b.value.length} bytes that are not a PDF — skipping")
         )
-        None
+        NotPdf
       case Left(e) =>
         log.info(Plugin.Log.Line(s"$source fetch failed (${e.sentence})"))
-        None
+        Fetch.failed(e)
 
 object Downloads:
   export com.histmersion.upstreams.identifiers.Md5
+
+  val NotPdf: Fetch = Fetch.Miss(
+    Fetch.Absence.NotHeld,
+    Problem.Io.Corrupt(Problem.Io.Format.Pdf, Problem.Where("the download"), Problem.Io.Damage.Undecodable)
+  )
+
+  val NoPage: Fetch =
+    Fetch.Miss(Fetch.Absence.NotHeld, Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw("landing page")))
 
   /** A PDF that is really a PDF: the magic bytes within the first KiB and a plausible size (the host checks the same).
     */

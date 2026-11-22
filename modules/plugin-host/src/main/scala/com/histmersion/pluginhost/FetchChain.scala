@@ -1,7 +1,7 @@
 package com.histmersion
 package pluginhost
 import com.histmersion.util.problem.{Problem, Problems}
-import com.histmersion.util.problem.Text.sentence
+import com.histmersion.util.problem.Text.{label, sentence}
 import FetchChain.describe
 
 import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
@@ -59,22 +59,14 @@ final class FetchChain(
     tried.collectFirst { case (id, Fetch.Found(f)) => id -> f } match
       case Some((id, f)) => FetchChain.Outcome(Right(f), Nil, Some(FetchChain.Outcome.FoundBy(id.value)))
       case None          =>
-        val refused = tried.collect { case (_, Fetch.Refused(why)) => why }.toList
+        val refused = tried.collect { case (_, Fetch.Refused(_, why)) => why }.toList
         FetchChain.Outcome(
           Left(Problems.of(Problem.NotFound.Copy(Problem.Raw(s"${describe(work)}"), Vector.empty), refused*)),
           tried.toList.collect {
-            case (id, Fetch.Miss(why)) =>
-              FetchChain.Answer(
-                FetchChain.Answer.Fetcher(id.value),
-                FetchChain.Answer.Kind.Miss,
-                why
-              )
-            case (id, Fetch.Refused(why)) =>
-              FetchChain.Answer(
-                FetchChain.Answer.Fetcher(id.value),
-                FetchChain.Answer.Kind.Refused,
-                why
-              )
+            case (id, Fetch.Miss(absence, why)) =>
+              FetchChain.Answer(FetchChain.Answer.Fetcher(id.value), FetchChain.said(absence), why)
+            case (id, Fetch.Refused(refusal, why)) =>
+              FetchChain.Answer(FetchChain.Answer.Fetcher(id.value), FetchChain.said(refusal), why)
           }
         )
 
@@ -101,7 +93,10 @@ final class FetchChain(
       try s.fetcher.fetch(work, ctx)
       catch
         case NonFatal(e) =>
-          Fetch.Miss(Problem.from(e, Problem.Where(s"fetcher ${s.id}"), Problem.Internal.Id.mint()))
+          Fetch.Miss(
+            Fetch.Absence.Unanswered,
+            Problem.from(e, Problem.Where(s"fetcher ${s.id}"), Problem.Internal.Id.mint())
+          )
     answer match
       case Fetch.Found(f) if f.extension.value.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
         log.info(
@@ -110,16 +105,17 @@ final class FetchChain(
           )
         )
         Fetch.Miss(
+          Fetch.Absence.NotHeld,
           Problem.Io.Corrupt(
             Problem.Io.Format.Pdf,
             Problem.Where(f.url.fold(s"${describe(work)}")(u => s"$u")),
             Problem.Io.Damage.Undecodable
           )
         )
-      case Fetch.Refused(why) =>
+      case Fetch.Refused(_, why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${describe(work).value}: ${why.sentence}"))
         answer
-      case Fetch.Miss(why) =>
+      case Fetch.Miss(_, why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value}: no copy — ${why.sentence}"))
         answer
       case other => other
@@ -147,9 +143,14 @@ object FetchChain:
     object Id extends Newtype[String, Pure]
 
   /** What one fetcher that ran answered, when it had no copy. */
-  final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Problem):
+  final case class Answer(fetcher: Answer.Fetcher, said: Problem.NotFound.Said, why: Problem):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
-    def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.sentence}")
+    def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${said.label} — ${why.sentence}")
+
+    def refused: Boolean = said match
+      case _: Problem.NotFound.Said.Refused => true
+      case _: Problem.NotFound.Said.Miss    => false
+
   object Answer:
     type Line = Line.T
     object Line extends Newtype[String, Pure]
@@ -157,13 +158,20 @@ object FetchChain:
     type Fetcher = Fetcher.T
     object Fetcher extends Newtype[String, Pure]
 
-    enum Kind(val label: Kind.Label) derives CanEqual:
-      case Miss extends Kind(Kind.Label("no copy"))
-      case Refused extends Kind(Kind.Label("refused"))
+  def said(absence: Fetch.Absence): Problem.NotFound.Said =
+    Problem.NotFound.Said.Miss(absence match
+      case Fetch.Absence.NoIdentifier => Problem.NotFound.Absence.NoIdentifier
+      case Fetch.Absence.NotHeld      => Problem.NotFound.Absence.NotHeld
+      case Fetch.Absence.Unanswered   => Problem.NotFound.Absence.Unanswered
+      case Fetch.Absence.RateLimited  => Problem.NotFound.Absence.RateLimited
+      case Fetch.Absence.Unconfigured => Problem.NotFound.Absence.Unconfigured)
 
-    object Kind:
-      type Label = Label.T
-      object Label extends Newtype[String, Pure]
+  def said(refusal: Fetch.Refusal): Problem.NotFound.Said =
+    Problem.NotFound.Said.Refused(refusal match
+      case Fetch.Refusal.BotChallenge   => Problem.NotFound.Refusal.BotChallenge
+      case Fetch.Refusal.LendingOnly    => Problem.NotFound.Refusal.LendingOnly
+      case Fetch.Refusal.NoEntitlement  => Problem.NotFound.Refusal.NoEntitlement
+      case Fetch.Refusal.LicenceForbids => Problem.NotFound.Refusal.LicenceForbids)
 
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no copy, the answer of
     * each fetcher that ran, in chain order; the fetcher that found the copy.

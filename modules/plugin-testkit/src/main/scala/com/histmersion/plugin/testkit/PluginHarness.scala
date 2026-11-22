@@ -180,7 +180,7 @@ final class PluginHarness private (
       notes.foreach(n => hostLog.info(HostLog.Line(n.sentence)))
       chain.fetchWorkExplained(work, legalOnly)
     }
-    val answers = outcome.answers.map(a => FetcherAnswer(a.fetcher, a.kind == FetchChain.Answer.Kind.Refused, a.why))
+    val answers = outcome.answers.map(a => FetcherAnswer(a.fetcher, a.said, a.why))
     val result = outcome.file match
       case Right(file) =>
         val fetcher = outcome.foundBy.getOrElse(FetchChain.Outcome.FoundBy("?"))

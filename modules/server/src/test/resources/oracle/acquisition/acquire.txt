@@ -142,6 +142,13 @@
 == acquire list
 200 {
   "checks" : [
+    {
+      "checkedAt" : "TS",
+      "checks" : 1,
+      "item" : 1,
+      "outcome" : "no-copy",
+      "reason" : "checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: no copy — no copy '10.5555/zq.gold'; openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no identifier it reads — arxiv is required; landing: no answer — cannot reach refusing.zq.example at https://refusing.zq.example/article/zq.gold — sttp.client4.SttpClientException$ConnectException: Except"
+    }
   ],
   "goals" : [
   ],
@@ -219,12 +226,12 @@
   "allowance" : 3,
   "closed" : 0,
   "dryRun" : true,
-  "due" : 4,
+  "due" : 3,
   "failed" : 0,
   "fetched" : 0,
   "job" : null,
   "noCopy" : 0,
-  "note" : "1 due item(s) wait for the next pass: at most 3 a pass, 40 a day (0 tried today)",
+  "note" : null,
   "open" : 5,
   "rows" : [
     {
@@ -233,13 +240,6 @@
       "detail" : "in the corpus with its original",
       "doi" : "10.5555/zq.open",
       "item" : 4
-    },
-    {
-      "action" : "would-try",
-      "citekey" : "zqgold2022_gold",
-      "detail" : "never checked",
-      "doi" : "10.5555/zq.gold",
-      "item" : 1
     },
     {
       "action" : "would-try",
@@ -256,7 +256,7 @@
       "item" : 5
     },
     {
-      "action" : "due",
+      "action" : "would-try",
       "citekey" : "zqa_legal",
       "detail" : "never checked",
       "doi" : "10.5555/zq.closed",
@@ -336,11 +336,6 @@
   "withDoi" : 5
 }
 job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"progress":"4/4 items · 1 closed · 1 fetched · 3 no legal copy · 0 failed","problems":null,"sha256":null,"createdAt":"TS","updatedAt":"TS","acquireItem":null,"detail":{"init":null,"skippedPeriods":[],"skippedPeriodCount":0,"planHash":null,"vacuum":null,"media":null,"events":null,"eventImport":null,"eventRederive":null,"about":null,"recheck":{"all":true,"upTo":0,"since":"TS","by":"person","resumes":null}}}
-  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
-  > GET /unpaywall/10.5555/zq.gold?email=oracle@example.org
-  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
-  > GET /europepmc/search?query=DOI:%2210.5555/zq.gold%22&resultType=core&format=json&pageSize=5
-  > GET /datacite/dois/10.5555/zq.gold
   > GET /openalex/works/https://doi.org/10.5555/zq.open2?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /unpaywall/10.5555/zq.open2?email=oracle@example.org
   > GET /files/zq-open2.pdf
@@ -358,6 +353,11 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
   > GET /openalex/works/https://doi.org/10.5555/zq.closed?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
   > GET /europepmc/search?query=DOI:%2210.5555/zq.closed%22&resultType=core&format=json&pageSize=5
   > GET /datacite/dois/10.5555/zq.closed
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /unpaywall/10.5555/zq.gold?email=oracle@example.org
+  > GET /openalex/works/https://doi.org/10.5555/zq.gold?select=id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location,locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works&mailto=oracle@example.org
+  > GET /europepmc/search?query=DOI:%2210.5555/zq.gold%22&resultType=core&format=json&pageSize=5
+  > GET /datacite/dois/10.5555/zq.gold
 == recheck again (nothing due)
 200 {
   "allowance" : 3,
@@ -379,10 +379,10 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
   "checks" : [
     {
       "checkedAt" : "TS",
-      "checks" : 1,
+      "checks" : 2,
       "item" : 1,
       "outcome" : "no-copy",
-      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.gold'; pmc-text: no copy — no copy '10.5555/zq.gold'; zq-shelf: no copy — the "
+      "reason" : "checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no identifier it reads — arxiv is required; landing: no answer — cannot reach refusing.zq.example at https://refusing.zq.exam"
     },
     {
       "checkedAt" : "TS",
@@ -403,14 +403,14 @@ job: 200 {"id":"UUID","kind":"acquire_recheck","status":"done","citekey":null,"p
       "checks" : 1,
       "item" : 5,
       "outcome" : "no-copy",
-      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.ref1'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.ref1'; pmc: no copy — no copy '10.5555/zq.ref1'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.ref1'; pmc-text: no copy — no copy '10.5555/zq.ref1'; zq-shelf: no copy — the "
+      "reason" : "checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.ref1'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.ref1'; pmc: no copy — no copy '10.5555/zq.ref1'; arxiv: no identifier it reads — arxiv is required; landing: no copy — no copy '10.5555/zq.ref1'; pmc-text: no copy — no copy '10.555"
     },
     {
       "checkedAt" : "TS",
       "checks" : 1,
       "item" : 6,
       "outcome" : "no-copy",
-      "reason" : "checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no c"
+      "reason" : "checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no identifier it reads — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy"
     }
   ],
   "goals" : [
@@ -539,7 +539,7 @@ A Zq atlas (buy)
   "nextPass" : "when the next item falls due, TS",
   "note" : "it runs on the managers' tick, which is not running on this server",
   "perDay" : 40,
-  "triedToday" : 4,
+  "triedToday" : 5,
   "withDoi" : 3
 }
 == mcp queue acquire
@@ -547,7 +547,7 @@ A Zq atlas (buy)
 
 **browser download**
 - [ ] Fay Zqgold (2022). Gold open access on a refusing host. https://doi.org/10.5555/zq.gold — gold open access, but no script may download it: download it in the browser, then histmersion ingest <file> --citekey zqgold2022_gold  `#1`
-  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.gold'; pmc-text: no copy — no copy '10.5555/zq.gold'; zq-shelf: no copy — the _
+  - _checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.gold'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.gold'; pmc: no copy — no copy '10.5555/zq.gold'; arxiv: no identifier it reads — arxiv is required; landing: no answer — cannot reach refusing.zq.example at https://refusing.zq.exam_
 
 **(no topic)**
 - [x] Find the Zq ledger (no DOI) — _ingested as [[zqa_ledger]]_  `#2`
@@ -556,12 +556,12 @@ A Zq atlas (buy)
 - [x] Have we 10.5555/zq.open? — _ingested as [[zqauthor2019_roads]]_  `#4`
   - _checked DAY: in the corpus with its original as [[zqauthor2019_roads]] — closed_
 - [ ] Get 10.5555/zq.ref1  `#5`
-  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.ref1'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.ref1'; pmc: no copy — no copy '10.5555/zq.ref1'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.ref1'; pmc-text: no copy — no copy '10.5555/zq.ref1'; zq-shelf: no copy — the _
+  - _checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.ref1'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.ref1'; pmc: no copy — no copy '10.5555/zq.ref1'; arxiv: no identifier it reads — arxiv is required; landing: no copy — no copy '10.5555/zq.ref1'; pmc-text: no copy — no copy '10.555_
 - [x] A Zq atlas (buy) — _bought_  `#8`
 
 **zq**
 - [ ] Wanted: doi:10.5555/zq.closed  `#6`
-  - _checked DAY: no legal copy (archive-org: no copy — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: no copy — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no copy — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy '10.5555/zq.closed'; zq-shelf: no c_
+  - _checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no identifier it reads — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy_
 == put goal zqa-goal
 200 {
   "notes" : null,

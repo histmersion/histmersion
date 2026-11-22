@@ -195,7 +195,7 @@ class PluginHarnessSuite extends munit.FunSuite:
       List(
         FetcherAnswer(
           FetchChain.Answer.Fetcher("kit-fetcher"),
-          false,
+          Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NoIdentifier),
           Problem.Invalid.Missing.here(Problem.Field("doi"))
         )
       )

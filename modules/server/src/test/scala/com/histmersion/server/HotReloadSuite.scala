@@ -25,6 +25,7 @@ import com.histmersion.util.storage.Blob
 import com.histmersion.config.ServerConfig
 import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.Migrate
 
 /** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped between two
   * test databases on the same Postgres, with a request and an OCR job that started on the old one finishing there and
@@ -219,7 +220,9 @@ class HotReloadSuite extends DbSuite:
       // the request that started on A answered from A; a new one goes to B
       assertEquals(inFlight.get(30, TimeUnit.SECONDS), DbA)
       assertEquals(database(url), DbB)
-      assert(on(DbB, "SELECT count(*) FROM flyway_schema_history WHERE success") == 3)
+      assert(
+        on(DbB, "SELECT count(*) FROM flyway_schema_history WHERE success") == Migrate.migrationNames.size
+      )
 
       // the held job finishes on A — its row and its source are there, not in B
       conv.gate.countDown()

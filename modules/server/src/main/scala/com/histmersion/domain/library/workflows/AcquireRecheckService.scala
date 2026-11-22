@@ -1,6 +1,6 @@
 package com.histmersion
 package domain.library.workflows
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentsControllers
@@ -16,7 +16,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Acquire.Checks.*
 import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.domain.library.acquisition.{AcquireCheckRow, AcquireCheckService}
+import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow, AcquireCheckService}
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
 
 import java.time.Instant
@@ -78,6 +78,10 @@ final class AcquireRecheckService(
       Settings.RetryHours(c.retryHours.value)
     )
 
+  private def kept: AcquireAttempt.Kept = rcfg.attemptsKept.transformInto[AcquireAttempt.Kept]
+
+  private def keyOf(item: Queue.QueueItem): AcquireAttemptRow.Id = item.id.transformInto[AcquireAttemptRow.Id]
+
   /** When the last scheduled pass ran (epoch ms; 0 = not since the start). */
   private val lastPass = AtomicLong(0L)
 
@@ -116,19 +120,20 @@ final class AcquireRecheckService(
 
   /** One open item with what the rules need: its DOIs (in the order its text names them), the action, its last check.
     */
-  final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRow])
+  final private case class Facts(item: Queue.QueueItem, action: Action, attempts: List[AcquireAttempt]):
+    def last: Option[AcquireAttempt] = attempts.headOption
 
   private def facts(only: Option[RecheckRequest.Id]): List[Facts] =
     val items =
       site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_.value == i.id.value))
     val dois = items.map(i => i.id.value -> orderedDois(i.text)).toMap
     val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
-    val last = checks.of(items.map(_.id.transformInto[AcquireCheckRow.Id]))
+    val attempts = checks.of(items.map(keyOf))
     items.map(i =>
       Facts(
         i,
         AcquireRecheck.action(dois.getOrElse(i.id.value, Nil), held.get),
-        last.get(i.id.transformInto[AcquireCheckRow.Id])
+        attempts.getOrElse(keyOf(i), Nil)
       )
     )
 
@@ -160,7 +165,8 @@ final class AcquireRecheckService(
         )
       )
 
-  private def candidate(f: Facts): Candidate = Candidate(Candidate.Item(f.item.id.value), f.last.map(_.last))
+  private def candidate(f: Facts): Candidate =
+    Candidate(Candidate.Item(f.item.id.value), f.last.map(AcquireRecheck.LastCheck.of))
 
   private def isDue(c: Candidate, generation: AcquireRecheck.LastCheck.Generation, now: Instant): Boolean =
     val s = settings
@@ -541,7 +547,7 @@ final class AcquireRecheckService(
             RecheckRow.Item(f.item.id.value),
             doiOf(f).map(apiDoi),
             RecheckRow.Action(if i < picks.size then WouldTry else Due),
-            RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${l.reason}")),
+            RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${AcquireRecheck.Rationale.of(l).said}")),
             into.map(apiCk)
           )
         } ++ (if in.id.isDefined then noDoi else Nil)
@@ -593,11 +599,16 @@ final class AcquireRecheckService(
         None
       case Right(_) =>
         checks.record(
-          f.item.id.transformInto[AcquireCheckRow.Id],
-          now,
-          generation,
-          Outcome.Closed,
-          AcquireRecheck.reason(now, Outcome.Closed, AcquireRecheck.Detail(citekey.value))
+          keyOf(f.item),
+          AcquireAttempt(
+            now,
+            AcquireAttempt.Trigger.Recheck,
+            generation,
+            AcquireAttempt.Outcome.Closed(citekey),
+            Vector.empty,
+            None
+          ),
+          kept
         )
         Some(
           RecheckRow(
@@ -619,23 +630,42 @@ final class AcquireRecheckService(
     val (doi, into) = f.action match
       case Action.Fetch(d, i) => (Some(d), i)
       case _                  => (None, None)
-    val (outcome, detail, ck, noCopy) = doi match
-      case None    => (Outcome.Failed, "no DOI in its text", None, None)
+    val (found, answers, ck) = doi match
+      case None =>
+        (
+          AcquireAttempt.Outcome.Failed(Problems.of(Problem.Invalid.Missing.here(Problem.Field("doi")))),
+          Vector.empty,
+          None
+        )
       case Some(d) =>
         try
           upstream().ingestLegalInto(d, into) match
-            case Right(r) => (Outcome.Fetched, r.pdf.fold("no file")(_.source.value), Some(r.citekey), None)
-            case Left(m)  =>
+            case Right(r) =>
+              (
+                AcquireAttempt.Outcome.Fetched(
+                  r.pdf.fold(AcquireRecheckService.NoFile)(_.source.transformInto[AcquireAttempt.Outcome.Source])
+                ),
+                Vector.empty,
+                Some(r.citekey)
+              )
+            case Left(m) =>
               AcquireRecheck.failure(m) match
-                case Outcome.NoCopy => (Outcome.NoCopy, m.sentences.mkString("; "), into.map(apiCk), Some(m))
-                case outcome        => (outcome, m.sentences.mkString("; "), into.map(apiCk), None)
+                case Outcome.NoCopy => (AcquireAttempt.Outcome.NoCopy, AcquireRecheck.answers(m), into.map(apiCk))
+                case _              => (AcquireAttempt.Outcome.Failed(m), Vector.empty, into.map(apiCk))
         catch
           case e: InterruptedException => throw e
           case e: Exception            =>
-            (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk), None)
-    val why =
-      noCopy.fold(AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail)))(AcquireRecheck.noCopy(now, _))
-    checks.record(f.item.id.transformInto[AcquireCheckRow.Id], now, generation, outcome, why)
+            (
+              AcquireAttempt.Outcome.Failed(
+                Problems.of(Problem.from(e, Problem.Where("the acquisition re-check"), Problem.Internal.Id.mint()))
+              ),
+              Vector.empty,
+              into.map(apiCk)
+            )
+    val tried = AcquireAttempt(now, AcquireAttempt.Trigger.Recheck, generation, found, answers, None)
+    checks.record(keyOf(f.item), tried, kept)
+    val why = AcquireRecheck.Rationale.of(tried)
+    val outcome = AcquireRecheck.Outcome.of(found).getOrElse(Outcome.Failed)
     Tried(
       RecheckRow(
         RecheckRow.Item(f.item.id.value),
@@ -645,7 +675,7 @@ final class AcquireRecheckService(
         ck
       ),
       outcome,
-      detail
+      tried.lastProblem.fold(why.said)(_.sentences.mkString("; "))
     )
 
   private def summary(r: RecheckResult): String =
@@ -679,7 +709,7 @@ final class AcquireRecheckService(
         if dueNow.isEmpty then
           AcquireRecheck
             .nextDue(
-              fs.filter(_.action.isInstanceOf[Action.Fetch]).flatMap(_.last.map(_.last)),
+              fs.filter(_.action.isInstanceOf[Action.Fetch]).flatMap(_.last.map(AcquireRecheck.LastCheck.of)),
               gen,
               s.everyDays,
               s.retryHours
@@ -742,3 +772,5 @@ object AcquireRecheckService:
   /** One worklog line a pass wrote. */
   type Line = Line.T
   object Line extends Newtype[String, Pure]
+
+  val NoFile: AcquireAttempt.Outcome.Source = AcquireAttempt.Outcome.Source("no file")

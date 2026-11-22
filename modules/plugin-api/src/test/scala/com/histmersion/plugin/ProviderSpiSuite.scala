@@ -117,4 +117,4 @@ class ProviderSpiSuite extends munit.FunSuite:
         .left
         .exists(_.sentence.contains("no event catalogues"))
     )
-    assertEquals(Spi.Version, 2)
+    assertEquals(Spi.Version, 3)

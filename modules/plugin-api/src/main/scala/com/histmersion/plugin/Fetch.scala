@@ -3,19 +3,58 @@ package plugin
 
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
+import Fetch.{Absence, Refusal}
 
 enum Fetch:
   case Found(file: FetchedFile)
 
-  /** No copy here (no identifier this fetcher reads, nothing found, the upstream did not answer). */
-  case Miss(why: Problem)
-
-  /** A copy exists but may not be taken (a lending-only item, a bot challenge, no entitlement). The host logs it and
-    * moves on; it never asks the same fetcher again for this work.
+  /** No copy here. The host stores `absence` with the attempt and decides from it who acts next: `Unanswered` and
+    * `RateLimited` are tried again by the agents, `NotHeld` from every fetcher means no free legal copy was found.
     */
-  case Refused(why: Problem)
+  case Miss(absence: Absence, why: Problem)
+
+  /** A copy exists but may not be taken. The host stores `refusal` with the attempt: `BotChallenge` tells the person to
+    * download it in a browser, `LendingOnly` to borrow it. It never asks the same fetcher again for this work.
+    */
+  case Refused(refusal: Refusal, why: Problem)
 
 object Fetch:
+
+  enum Absence derives CanEqual:
+    case NoIdentifier, NotHeld, Unanswered, RateLimited, Unconfigured
+
+  enum Refusal derives CanEqual:
+    case BotChallenge, LendingOnly, NoEntitlement, LicenceForbids
+
+  def failed(why: Problem): Fetch = why match
+    case _: Problem.Upstream.Challenged => Refused(Refusal.BotChallenge, why)
+    case Problem.Upstream.Http(_, _, status, _, _) if status == Problem.Upstream.Status.Forbidden =>
+      Refused(Refusal.BotChallenge, why)
+    case Problem.Upstream.Http(_, _, status, _, _) if status.refusesAccess || status.wantsPayment =>
+      Refused(Refusal.NoEntitlement, why)
+    case Problem.Upstream.Http(_, _, status, _, _) if status.asksToWait    => Miss(Absence.RateLimited, why)
+    case Problem.Upstream.Http(_, _, status, _, _) if status.isServerError => Miss(Absence.Unanswered, why)
+    case _: Problem.Upstream.Limited | _: Problem.Upstream.Unasked         => Miss(Absence.RateLimited, why)
+    case _: Problem.Upstream.Unreachable | _: Problem.Upstream.Timeout | _: Problem.Upstream.Offline |
+        _: Problem.Upstream.Unanswered =>
+      Miss(Absence.Unanswered, why)
+    case _ => Miss(Absence.NotHeld, why)
+
+  def firstFound(tries: Iterator[Fetch], none: => Fetch): Fetch =
+    @scala.annotation.tailrec
+    def loop(strongest: Option[Fetch]): Fetch =
+      if !tries.hasNext then strongest.filter(weight(_) > 0).getOrElse(none)
+      else
+        tries.next() match
+          case found: Found => found
+          case other        => loop(Some(strongest.filter(s => weight(s) >= weight(other)).getOrElse(other)))
+    loop(None)
+
+  private def weight(answer: Fetch): Int = answer match
+    case _: Found                                          => 3
+    case _: Refused                                        => 2
+    case Miss(Absence.Unanswered | Absence.RateLimited, _) => 1
+    case _: Miss                                           => 0
 
   /** What the host lends a fetcher for ONE fetch of one work. */
 

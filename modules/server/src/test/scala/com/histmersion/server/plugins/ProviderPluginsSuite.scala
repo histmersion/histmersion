@@ -432,7 +432,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("x")))
     assert(ctx.mediaCollections.add(Registry.AddId("x"), Collection(MediaItem.Role("object"))).isLeft)
     assert(ctx.eventCatalogues.add(Registry.AddId("x"), Catalogue).isLeft)
-    assertEquals(Spi.Version, 2)
+    assertEquals(Spi.Version, 3)
 
   // ── reloads ────────────────────────────────────────────────────────────────────────────────────
 

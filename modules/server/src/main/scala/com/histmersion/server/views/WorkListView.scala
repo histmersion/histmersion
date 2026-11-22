@@ -15,11 +15,10 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.automation.worklists.WorkListControllers
-import com.histmersion.domain.library.acquisition.AcquireCheckService
+import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow, AcquireCheckService}
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal as ApiGoal
 import com.histmersion.domain.automation.goals.GoalLinkRepo
-import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.Acquire
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.Job
@@ -33,7 +32,7 @@ final class WorkListView(
     workLists: WorkListControllers,
     queues: QueueService,
     goals: GoalService,
-    acquireChecks: AcquireCheckService
+    acquireAttempts: AcquireCheckService
 ):
   def list(
       list: WorkListControllers.KindOfList,
@@ -58,20 +57,24 @@ final class WorkListView(
       val checks =
         if k != Kind.Acquire then Nil
         else
-          acquireChecks
-            .of(items.map(_.id.transformInto[AcquireCheckRow.Id]))
-            .values
-            .toList
-            .sortBy[Int](_.item.value)
-            .map(r =>
-              Acquire.Checks.AcquireCheck(
-                r.item.transformInto[Queue.QueueItem.Id],
-                Acquire.Checks.AcquireCheck.CheckedAt(r.at.toString),
-                r.outcome.transformInto[Acquire.Checks.AcquireCheck.Outcome],
-                r.reason.transformInto[Acquire.Checks.AcquireCheck.Rationale],
-                r.checks.transformInto[Acquire.Checks.AcquireCheck.Checks]
-              )
-            )
+          val attempts = acquireAttempts.of(items.map(_.id.transformInto[AcquireAttemptRow.Id]))
+          items.flatMap(i =>
+            attempts.get(i.id.transformInto[AcquireAttemptRow.Id]).flatMap(as => as.headOption.map(as -> _)).map {
+              (as, last) =>
+                Acquire.Checks.AcquireCheck(
+                  i.id,
+                  Acquire.Checks.AcquireCheck.CheckedAt(last.at.toString),
+                  AcquireRecheck.Outcome
+                    .of(last.outcome)
+                    .fold(AcquireAttemptRow.LegacyWire)(_.wire)
+                    .transformInto[Acquire.Checks.AcquireCheck.Outcome],
+                  AcquireRecheck.Rationale.Said
+                    .of(AcquireRecheck.Rationale.of(last))
+                    .transformInto[Acquire.Checks.AcquireCheck.Said],
+                  AcquireAttempt.Tries.of(as).transformInto[Acquire.Checks.AcquireCheck.Tries]
+                )
+            }
+          )
       val linked = goals
         .goalsOfItems(items.map(i => GoalLinkRepo.ItemId(i.id.value)))
         .map((id, slug, title) =>

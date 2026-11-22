@@ -46,8 +46,8 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   /** The migrations since the squash, by version, in order: each new migration adds itself here. */
-  private val Chain = List("109", "110", "111")
-  private val Latest = Migrate.Version("111")
+  private val Chain = List("109", "110", "111", "112")
+  private val Latest = Migrate.Version("112")
 
   private def exec(ds: DataSource, stmt: String): Unit =
     val c = ds.getConnection
@@ -249,3 +249,27 @@ class MigrateSquashSuite extends DbSuite with Bounded:
             VALUES ('run-q', 'agent', 'paused', $planQuota, 'm1')""".update.run()
     }
     assertEquals(Transactor(problems).read(ManagerRepo.running(ManagerInfo.Id("m1"))), RowCount(2), "and a plan pool's")
+
+  test("V112: each acquisition check becomes one legacy attempt, its reason and count kept"):
+    val ds = emptyDatabase("histmersion_squash_attempts_test")
+    Migrate.ensureRole(ds, Migrate.QueryRole)
+    val _ = Flyway.configure().configuration(Migrate.flyway(ds).getConfiguration).target("111").load().migrate()
+    exec(ds, "INSERT INTO queue_items (id, list, text) VALUES (41, 'acquire', 'Get https://doi.org/10.5555/zq.a')")
+    exec(
+      ds,
+      """INSERT INTO acquire_checks (item_id, checked_at, generation, outcome, reason, checks) VALUES
+        |  (41, '2026-10-27T10:00:00Z', 'g1', 'no-copy', 'checked 2026-10-27: no legal copy (unpaywall: no copy — none)', 3)""".stripMargin
+    )
+    assertEquals(Migrate.run(ds), Latest)
+    assertEquals(
+      strings(
+        ds,
+        """SELECT item_id || '|' || to_char(at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI') || '|' || trigger || '|' ||
+          |       generation || '|' || outcome || '|' || legacy_reason || '|' || legacy_checks || '|' || answers::text
+          |  FROM acquire_attempts""".stripMargin
+      ),
+      List(
+        "41|2026-10-27T10:00|legacy|legacy|legacy|checked 2026-10-27: no legal copy (unpaywall: no copy — none)|3|[]"
+      )
+    )
+    assertEquals(strings(ds, "SELECT to_regclass('public.acquire_checks')::text"), List(null))

@@ -440,7 +440,7 @@ object Queue:
   def markdown(
       kind: Kind,
       items: List[QueueItem],
-      notes: Map[QueueItem.Id, Acquire.Checks.AcquireCheck.Rationale] = Map.empty
+      notes: Map[QueueItem.Id, Acquire.Checks.AcquireCheck.Said] = Map.empty
   ): Markdown =
     val shown = items.filterNot(_.status == QueueItem.Status(Note))
     if shown.isEmpty then Markdown(s"_${kind.label}: nothing queued._")
