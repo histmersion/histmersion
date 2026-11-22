@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compareFigure, compareRuns, floorOf, frameBound, leaf, median } from './budget-figures.mjs';
+import { changedMeasurement, compareFigure, compareRuns, floorOf, frameBound, importClosure, leaf, median } from './budget-figures.mjs';
 
 test('median of an odd and an even count', () => {
   assert.equal(median([3, 1, 2]), 2);
@@ -45,4 +45,19 @@ test('runs compared figure by figure; a figure on one side only is shown, not fa
     [{ 'a.longTaskMax': 180, 'new.longTaskMax': 1 }, { 'a.longTaskMax': 185, 'new.longTaskMax': 2 }]);
   assert.deepEqual(rows.map(r => [r.key, r.regression, !!r.missing]),
     [['a.longTaskMax', true, false], ['new.longTaskMax', false, true], ['old.longTaskMax', false, true]]);
+});
+
+test('when the measuring code differs between the sides, no figure is compared, and none fails', () => {
+  const rows = compareRuns([{ 'a.longTaskMax': 100 }, { 'a.longTaskMax': 105 }], [{ 'a.longTaskMax': 180 }, { 'a.longTaskMax': 185 }],
+    { measurementChanged: true });
+  assert.deepEqual(rows.map(r => [r.key, r.regression, r.measurementChanged]), [['a.longTaskMax', false, true]]);
+});
+
+test('the measuring code is the perf test and every module it imports, compared file by file', () => {
+  const base = { 'perf.test.mjs': "import { a } from './perf-lib.mjs';", 'perf-lib.mjs': 'old', 'browser.test.mjs': 'x' };
+  const pr = { 'perf.test.mjs': "import { a } from './perf-lib.mjs';\nimport { m } from './markers.mjs';", 'perf-lib.mjs': 'new', 'markers.mjs': 'm' };
+  const read = files => f => files[f] ?? '';
+  assert.deepEqual(importClosure(read(pr), 'perf.test.mjs'), ['markers.mjs', 'perf-lib.mjs', 'perf.test.mjs']);
+  assert.deepEqual(changedMeasurement(read(base), read(pr), 'perf.test.mjs'), ['markers.mjs', 'perf-lib.mjs', 'perf.test.mjs']);
+  assert.deepEqual(changedMeasurement(read(base), read(base), 'perf.test.mjs'), []);
 });
