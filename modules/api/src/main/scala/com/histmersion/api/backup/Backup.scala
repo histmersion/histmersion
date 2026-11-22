@@ -37,7 +37,7 @@ object Backup:
   val Extension = ".dump"
 
   /** No separators, so the names sort chronologically as plain text and are valid on every filesystem. */
-  private val Stamp: DateTimeFormatter =
+  private lazy val Stamp: DateTimeFormatter =
     DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC)
 
   def timestamp(at: Instant): String = (Stamp.format(at.truncatedTo(ChronoUnit.SECONDS)))
