@@ -22,6 +22,26 @@ export const wantsGpu = () => isFirefox || gpuArgs().length > 0;
 
 export const virtualGpu = renderer => /\bparavirtual\b/i.test(renderer ?? '');
 
+export async function rendererOf(browser) {
+  const probe = await browser.newPage();
+  try {
+    return await probe.evaluate(() => {
+      const gl = document.createElement('canvas').getContext('webgl2') ?? document.createElement('canvas').getContext('webgl');
+      const ext = gl?.getExtension('WEBGL_debug_renderer_info');
+      return (ext && gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) || gl?.getParameter(gl.RENDERER) || '';
+    });
+  } finally { await probe.close(); }
+}
+
+export async function frameMode(browser, what, held) {
+  const renderer = await rendererOf(browser);
+  const asked = process.env.HISTMERSION_VIRTUAL_GPU === '1';
+  const mainThreadOnly = asked && isChromium && virtualGpu(renderer);
+  console.log(`# ${what}: ${mainThreadOnly ? `main-thread figures held, ${held} reported` : 'every figure held'} ` +
+    `(renderer "${renderer || 'unknown'}"${asked && !mainThreadOnly ? ', not a virtual GPU' : ''})`);
+  return mainThreadOnly;
+}
+
 /** The engine's browser, launched headless. */
 export function launch(extra = {}) {
   if (isFirefox) return firefox.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_FIREFOX_EXECUTABLE || undefined, ...extra });

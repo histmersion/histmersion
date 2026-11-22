@@ -80,10 +80,16 @@ zoom's `notAnimated`, the heap, the DOM and the listeners — and print the fram
 dropped frames (`droppedPct`, `stillFramesPct`) and every input-to-next-paint figure (`inputP95`, the hover cards'
 `shownMax`/`filledMax`/`warmMax`, the typing's `keyP95`/`keyMax`/`suggestMs`/`previewToListMs`, the article's
 `windowMs`/`contentMs`, the release's `releaseToListMs`, Library's `clickMs`/`keyMs`/`pageMs`). The limits are the
-same. The mode needs both the job's `HISTMERSION_BUDGETS_VIRTUAL_GPU=1` and a WebGL renderer naming a paravirtual
-device; anything else — a real GPU, Firefox, an unknown renderer — holds every figure. The first line of the run says
-which mode is in force. The job's colour is its own verdict: red when a held figure is over its budget (or a budget
-test fails otherwise, is skipped or none ran); it is not a required check.
+same. The mode needs both the job's `HISTMERSION_VIRTUAL_GPU=1` and a WebGL renderer naming a paravirtual
+device (`engine.mjs` `frameMode`); anything else — a real GPU, Firefox, an unknown renderer — holds every figure.
+The first line of the run says which mode is in force. The job's colour is its own verdict: red when a held figure
+is over its budget (or a budget test fails otherwise, is skipped or none ran); it is not a required check.
+
+The same rule, the same switch (the `macos` job sets the variable too), applies to the functional tests' click
+checks (owner decision 2026-11-22): a chip of the approvals, runs and jobs windows, the news mark in Research's side
+navigation, the theme button. Each is measured twice — the click's own work (its handlers and the microtasks after
+them, the theme's restyle), held under 100 ms everywhere, and the click to the next frame, held under 100 ms on a real
+GPU and printed when over on a virtual one. `browser.test.mjs` prints its mode first, like the budgets.
 `npm --prefix modules/web run test:perf` runs them alone; `HISTMERSION_SOAK_ROUNDS=20` shortens the
 soak, `HISTMERSION_PERF_REPORT=1` prints every measured figure. `perf-baseline.mjs` measures the
 same paths on any server, read-only (non-GET requests are refused) — the live baseline in the doc:
