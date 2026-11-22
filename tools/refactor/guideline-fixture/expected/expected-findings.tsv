@@ -72,9 +72,6 @@ G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	ot
 G47package	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	1	com.histmersion.domain
 G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	6	_root_.com
 G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	_root_.com
-G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	20	name-qualified:Status.Wire
-G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	21	name-qualified:Status.Wire
-G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	22	name-qualified:Status.Wire
 G47self	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	26	name-qualified:Status.values
 G48	api	modules/api/src/main/scala/com/histmersion/api/Wire.scala	14	modify(_.citekey)
 G48	api	modules/api/src/main/scala/com/histmersion/api/Wire.scala	15	modify(_.quote)

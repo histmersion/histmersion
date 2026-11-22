@@ -17,9 +17,9 @@ object Slug extends RefinedType[String, Match["[a-z-]+"]]
 type Title = Title.T
 object Title extends RefinedSubtype[String, Pure]
 
-enum Status(val wire: Status.Wire): // assert: GuidelineInventory.G47self
-  case Active extends Status(Status.Wire("active")) // assert: GuidelineInventory
-  case Retired extends Status(Status.Wire("retired")) // assert: GuidelineInventory
+enum Status(val wire: Status.Wire):
+  case Active extends Status(Status.Wire("active"))
+  case Retired extends Status(Status.Wire("retired"))
 object Status:
   type Wire = Wire.T
   object Wire extends RefinedType[String, Pure]
