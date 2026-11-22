@@ -15,81 +15,54 @@ import com.histmersion.domain.library.Doi
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.WritePermit
 
-/** The acquisition list's re-check: one record per acquisition item that was checked, and what the corpus holds of the
-  * DOIs the items name.
-  */
 trait AcquireCheckService:
-  /** The checks of these items (any that has none is absent). */
-  def of(items: List[AcquireCheckRow.Id]): Map[AcquireCheckRow.Id, AcquireCheckRow]
+  def of(items: List[AcquireAttemptRow.Id]): Map[AcquireAttemptRow.Id, List[AcquireAttempt]]
 
-  /** The checks of every OPEN acquisition item. */
-  def open: Map[AcquireCheckRow.Id, AcquireCheckRow]
+  def open: Map[AcquireAttemptRow.Id, List[AcquireAttempt]]
 
-  /** Record one check of `item`, its previous one replaced and the count kept. */
-  def record(
-      item: AcquireCheckRow.Id,
-      at: Instant,
-      generation: AcquireRecheck.LastCheck.Generation,
-      outcome: AcquireRecheck.Outcome,
-      reason: AcquireRecheck.Rationale
-  )(using WritePermit): Unit
+  def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using WritePermit): Unit
 
-  /** How many checks since `since`, per outcome. */
   def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount]
 
-  /** The sources holding these DOIs (lower-cased): the first citekey, and whether it has its original. */
   def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held]
 
 object AcquireCheckService:
   def apply(db: Transactor): AcquireCheckService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AcquireCheckService:
-    def of(items: List[AcquireCheckRow.Id]): Map[AcquireCheckRow.Id, AcquireCheckRow] =
+    def of(items: List[AcquireAttemptRow.Id]): Map[AcquireAttemptRow.Id, List[AcquireAttempt]] =
       db.read(AcquireCheckRepo.of(items))
-    def open: Map[AcquireCheckRow.Id, AcquireCheckRow] = db.read(AcquireCheckRepo.open())
-    def record(
-        item: AcquireCheckRow.Id,
-        at: Instant,
-        generation: AcquireRecheck.LastCheck.Generation,
-        outcome: AcquireRecheck.Outcome,
-        reason: AcquireRecheck.Rationale
-    )(using WritePermit): Unit =
-      db.write(AcquireCheckRepo.record(item, at, generation, outcome, reason))
+    def open: Map[AcquireAttemptRow.Id, List[AcquireAttempt]] = db.read(AcquireCheckRepo.open())
+    def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using
+        WritePermit
+    ): Unit =
+      db.write(AcquireCheckRepo.record(item, attempt, kept))
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
       db.read(AcquireCheckRepo.countSince(since))
     def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held] = db.read(AcquireCheckRepo.heldByDoi(dois))
 
-  /** The checks in memory; the acquisition list is the work lists' `queues`, the sources the library's `sources`. */
   final class InMemory(state: AtomicReference[AcquisitionState], queues: QueueService, sources: SourceService)
       extends AcquireCheckService:
-    def of(items: List[AcquireCheckRow.Id]): Map[AcquireCheckRow.Id, AcquireCheckRow] =
-      state.get.checks.values.filter(r => items.contains(r.item)).map(r => r.item -> r).toMap
-    def open: Map[AcquireCheckRow.Id, AcquireCheckRow] =
-      val ids = queues.list(Queue.Kind.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireCheckRow.Id]).toSet
-      state.get.checks.values.filter(r => ids(r.item)).map(r => r.item -> r).toMap
-    def record(
-        item: AcquireCheckRow.Id,
-        at: Instant,
-        generation: AcquireRecheck.LastCheck.Generation,
-        outcome: AcquireRecheck.Outcome,
-        reason: AcquireRecheck.Rationale
-    )(using WritePermit): Unit =
+    def of(items: List[AcquireAttemptRow.Id]): Map[AcquireAttemptRow.Id, List[AcquireAttempt]] =
+      val wanted = items.toSet
+      state.get.attempts.filter((k, as) => wanted(k) && as.nonEmpty)
+    def open: Map[AcquireAttemptRow.Id, List[AcquireAttempt]] =
+      of(queues.list(Queue.Kind.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireAttemptRow.Id]))
+    def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using
+        WritePermit
+    ): Unit =
       val _ = state.updateAndGet(
-        _.modify(_.checks).using { cs =>
-          val key = AcquisitionState.ChecksKey(item.value)
-          val n = cs.get(key).fold(AcquireCheckRow.Checks(1))(c => AcquireCheckRow.Checks(c.checks.value + 1))
-          cs.updated(
-            key,
-            AcquireCheckRow(item, at, generation, outcome.wire, AcquireCheckRow.Rationale(reason.said), n)
-          )
-        }
+        _.modify(_.attempts).using(all =>
+          all.updated(item, kept.keep((attempt :: all.getOrElse(item, Nil)).sortBy(_.at).reverse))
+        )
       )
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
-      state.get.checks.values
-        .filter(c => !c.at.isBefore(since))
-        .groupBy(_.outcome)
+      state.get.attempts.values.flatten
+        .filter(a => !a.at.isBefore(since))
+        .flatMap(a => AcquireRecheck.Outcome.of(a.outcome).map(_.wire))
+        .groupBy(identity)
         .view
-        .mapValues(cs => RowCount(cs.size))
+        .mapValues(ws => RowCount(ws.size))
         .toMap
     def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held] =
       val wanted = dois.map(_.value.trim.toLowerCase).filter(_.nonEmpty).toSet

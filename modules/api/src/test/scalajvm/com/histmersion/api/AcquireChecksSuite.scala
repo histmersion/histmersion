@@ -31,10 +31,10 @@ class AcquireChecksSuite extends munit.FunSuite:
     Queue.QueueItem.Id(7),
     Acquire.Checks.AcquireCheck.CheckedAt("2026-10-27T10:00:00Z"),
     Acquire.Checks.AcquireCheck.Outcome(NoCopy),
-    Acquire.Checks.AcquireCheck.Rationale(
+    Acquire.Checks.AcquireCheck.Said(
       "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
     ),
-    Acquire.Checks.AcquireCheck.Checks(2)
+    Acquire.Checks.AcquireCheck.Tries(2)
   )
 
   test("`queue acquire` says under an item when it was last checked and what each fetcher answered"):

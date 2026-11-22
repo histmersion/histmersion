@@ -143,7 +143,7 @@
   ]
 }
 # the rows
-## acquire_checks 0 rows
+## acquire_attempts 0 rows
 ## agent_allowances 0 rows
 ## agent_autopilot 1 rows
 { "changed_at" : "TS", "changed_by" : "", "drain_by" : null, "drain_since" : null, "drained_at" : null, "enabled" : false, "id" : true, "last_backup_at" : null, "last_digest_at" : null, "last_ensure_at" : null, "last_lint_at" : null, "max_active_goals" : null, "paused" : [ ], "scheduler_at" : null, "scheduler_by" : null, "scheduler_strategy" : null }
@@ -201,7 +201,7 @@
 { "citekey" : "zzalpha2001_storm", "claim" : "the storm god of Hatti is Tarhunna of Arinna", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzalpha2001_storm#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzalpha2001_storm#1", "updated_at" : "TS" }
 { "citekey" : "zzbeta2005_hittites", "claim" : "a kingdom in central Anatolia", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzbeta2005_hittites#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzbeta2005_hittites#1", "updated_at" : "TS" }
 { "citekey" : "zzdelta2020_new", "claim" : "new at work", "confidence" : "high", "geom" : { "coordinates" : [ 34.6, 40 ], "crs" : { "properties" : { "name" : "EPSG:4326" }, "type" : "name" }, "type" : "Point" }, "id" : "zzdelta2020_new#1", "origin" : "instance:work", "period" : "[-1400,-1199)", "period_name" : "LBA", "region_name" : "Anatolia", "significance" : null, "tags" : [ "oracle" ], "uid" : "finding:zzdelta2020_new#1", "updated_at" : "TS" }
-## flyway_schema_history 3 rows
+## flyway_schema_history 4 rows
 ## gazetteer_sources 0 rows
 ## goal_aliases 0 rows
 ## goal_focus 0 rows

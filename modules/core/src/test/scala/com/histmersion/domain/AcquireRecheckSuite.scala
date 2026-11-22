@@ -1,7 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.util.problem.{Legacy, Problem, Problems}
+import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -158,19 +159,17 @@ class AcquireRecheckSuite extends munit.FunSuite:
     assertEquals(Outcome.values.toList.flatMap(o => Outcome.parse(o.wire)), Outcome.values.toList)
 
   test("the reason: the day, what was found and what each fetcher answered"):
-    val msg = s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found — unpaywall: no copy — none; " +
-      "landing: refused — bot-protection 403"
     val copy = Problem.NotFound.Copy(
       Problem.Raw("10.1/x"),
       Vector(
         Problem.NotFound.Answer(
           Problem.NotFound.Fetcher("unpaywall"),
-          Problem.NotFound.Kind.Miss,
+          Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NotHeld),
           Problem.NotFound.Copy(Problem.Raw("doi:10.1/x"), Vector.empty)
         ),
         Problem.NotFound.Answer(
           Problem.NotFound.Fetcher("landing"),
-          Problem.NotFound.Kind.Refused,
+          Problem.NotFound.Said.Refused(Problem.NotFound.Refusal.BotChallenge),
           Problem.Upstream.Challenged(
             Problem.Upstream.Name("landing"),
             Problem.Upstream.Url("https://x.example/f"),
@@ -181,38 +180,75 @@ class AcquireRecheckSuite extends munit.FunSuite:
       )
     )
     val said = "unpaywall: no copy — no legal open-access PDF found for doi:10.1/x; " +
-      "landing: refused — landing answered HTTP 403 at https://x.example/f with a bot-protection challenge, not the page"
-    assertEquals(answers(copy), ReplyText(said))
-    assertEquals(noCopy(now, copy).said, s"checked 2026-10-27: no legal copy ($said)")
-    assertEquals(
-      noCopy(now, Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)).said,
-      "checked 2026-10-27: no legal copy (no legal open-access PDF found for 10.1/x)"
-    )
-    assertEquals(
-      (reason(now, Outcome.NoCopy, Detail(msg))).said,
-      "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
-    )
-    assertEquals(
-      (reason(
+      "landing: refused (scripts refused) — landing answered HTTP 403 at https://x.example/f with a bot-protection challenge, not the page"
+    val answered = answers(copy)
+    assertEquals(answered.map(_.said), copy.answers.map(_.said))
+    assertEquals(answers(Problem.Upstream.Offline(Problem.Upstream.Name("converter"), None)), Vector.empty)
+    def attempt(
+        outcome: library.acquisition.AcquireAttempt.Outcome,
+        said: Vector[Problem.NotFound.Answer] = Vector.empty
+    ) =
+      library.acquisition.AcquireAttempt(
         now,
-        Outcome.NoCopy,
-        Detail(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")
-      )).said,
-      "checked 2026-10-27: no legal copy (no legal open-access PDF found)"
+        library.acquisition.AcquireAttempt.Trigger.Recheck,
+        Gen,
+        outcome,
+        said,
+        None
+      )
+    assertEquals(
+      Rationale.of(attempt(library.acquisition.AcquireAttempt.Outcome.NoCopy, answered)).said,
+      s"checked 2026-10-27: no legal copy ($said)"
     )
     assertEquals(
-      (reason(now, Outcome.Closed, AcquireRecheck.Detail("a2020_x"))).said,
+      Rationale.of(attempt(library.acquisition.AcquireAttempt.Outcome.NoCopy)).said,
+      "checked 2026-10-27: no legal copy"
+    )
+    assertEquals(
+      Rationale.of(attempt(library.acquisition.AcquireAttempt.Outcome.Closed(Citekey("a2020_x")))).said,
       "checked 2026-10-27: in the corpus with its original as [[a2020_x]] — closed"
     )
     assert(
-      reason(now, Outcome.Fetched, AcquireRecheck.Detail("unpaywall")).said
+      Rationale
+        .of(
+          attempt(
+            library.acquisition.AcquireAttempt.Outcome
+              .Fetched(library.acquisition.AcquireAttempt.Outcome.Source("unpaywall"))
+          )
+        )
+        .said
         .contains("a legal copy found (unpaywall)")
     )
     assertEquals(
-      (reason(now, Outcome.Failed, AcquireRecheck.Detail("HTTP 503"))).said,
-      "checked 2026-10-27: no answer (HTTP 503)"
+      Rationale
+        .of(
+          attempt(
+            library.acquisition.AcquireAttempt.Outcome
+              .Failed(Problems.of(Problem.Upstream.Offline(Problem.Upstream.Name("converter"), None)))
+          )
+        )
+        .said,
+      s"checked 2026-10-27: no answer (${Problem.Upstream.Offline(Problem.Upstream.Name("converter"), None).sentence})"
     )
-    assert(reason(now, Outcome.NoCopy, Detail(msg + ("; x" * 400))).said.length <= 500)
+    assertEquals(
+      Rationale
+        .of(
+          attempt(
+            library.acquisition.AcquireAttempt.Outcome.Legacy(
+              library.acquisition.AcquireAttempt.Outcome.LegacyNote("checked 2026-10-01: no legal copy (as stored)"),
+              library.acquisition.AcquireAttempt.Tries(2)
+            )
+          )
+        )
+        .said,
+      "checked 2026-10-01: no legal copy (as stored)"
+    )
+    assert(
+      Rationale
+        .of(attempt(library.acquisition.AcquireAttempt.Outcome.NoCopy, Vector.fill(50)(answered.head)))
+        .said
+        .length <= 500
+    )
 
   test("a pass's allowance: the day's cap, the pass's, and the shared allowance after the backlog, within the share"):
     assertEquals(allowance(settings, checkedToday = AcquireRecheck.CheckedToday(0), shared = None), 3, "the pass's cap")

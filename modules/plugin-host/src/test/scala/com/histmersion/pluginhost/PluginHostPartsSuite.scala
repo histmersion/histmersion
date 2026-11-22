@@ -223,12 +223,12 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(PluginHost.foreignSpi(spi1), Some(Some(1)))
     assertEquals(
       PluginHost.failure(spi1),
-      Problem.Plugin.Fault.SpiMismatch(Problem.Raw("1"), Problem.Raw("2"))
+      Problem.Plugin.Fault.SpiMismatch(Problem.Raw("1"), Problem.Raw("3"))
     )
     assertEquals(
       Problem.Plugin.Load(Problem.Plugin.Id("old"), PluginHost.failure(spi1)).sentence,
-      "plugin old did not load: it was built against plugin SPI 1; this Histmersion speaks SPI 2 — rebuild the " +
-        "plugin against SPI 2"
+      "plugin old did not load: it was built against plugin SPI 1; this Histmersion speaks SPI 3 — rebuild the " +
+        "plugin against SPI 3"
     )
     val wrapped = java.util.ServiceConfigurationError(
       "com.histmersion.plugin.Plugin: Provider com.example.OldPlugin could not be instantiated",
@@ -240,12 +240,12 @@ class PluginHostPartsSuite extends munit.FunSuite:
   test("another SPI type a plugin links against differently is another SPI; other errors are not"):
     val other = NoSuchMethodError("'scala.Option com.histmersion.plugin.WorkKey.year()'")
     assertEquals(PluginHost.foreignSpi(other), Some(None))
-    assertEquals(PluginHost.failure(other), Problem.Plugin.Fault.ForeignSpi(Problem.Raw("2")))
+    assertEquals(PluginHost.failure(other), Problem.Plugin.Fault.ForeignSpi(Problem.Raw("3")))
     assert(
       Problem.Plugin
         .Load(Problem.Plugin.Id("x"), PluginHost.failure(other))
         .sentence
-        .startsWith("plugin x did not load: it was built against another plugin SPI; this Histmersion speaks SPI 2")
+        .startsWith("plugin x did not load: it was built against another plugin SPI; this Histmersion speaks SPI 3")
     )
     assertEquals(PluginHost.foreignSpi(NoSuchMethodError("'void org.example.Lib.go()'")), None)
     assertEquals(

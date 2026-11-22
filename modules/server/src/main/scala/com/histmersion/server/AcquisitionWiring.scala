@@ -3,6 +3,7 @@ package server
 
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.library.acquisition.{
+  AcquireCheckService,
   AcquireClients,
   AcquisitionControllers,
   AssessmentService,
@@ -20,6 +21,7 @@ import com.histmersion.server.hot.Hot
 final class AcquisitionWiring(deps: Deps, sources: SourceService, ingest: IngestWiring, clients: Hot[AcquireClients]):
   val assessments: AssessmentService = AssessmentService(deps.transactor)
   val candidates: CandidateService = CandidateService(deps.transactor)
+  val attempts: AcquireCheckService = AcquireCheckService(deps.transactor)
 
   val controllers: AcquisitionControllers = AcquisitionControllers(
     sources,
@@ -38,6 +40,7 @@ final class AcquisitionWiring(deps: Deps, sources: SourceService, ingest: Ingest
     wiki = clients.peek.wiki,
     retractionWatch = clients.peek.retractionWatch,
     jobs = ingest.jobs,
+    attempts = attempts,
     indexes = clients.peek.indexes,
     alerts = clients.peek.alerts,
     generation = clients.peek.generation.value

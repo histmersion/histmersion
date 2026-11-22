@@ -27,7 +27,13 @@ class TypedEntrySuite extends munit.FunSuite:
   test("a problem inside a record keeps the type of the problems it carries"):
     val copy: Problem = NotFound.Copy(
       Raw("10.1/x"),
-      Vector(NotFound.Answer(NotFound.Fetcher("core"), NotFound.Kind.Refused, Problem.Run.Interrupted))
+      Vector(
+        NotFound.Answer(
+          NotFound.Fetcher("core"),
+          NotFound.Said.Refused(NotFound.Refusal.LendingOnly),
+          Problem.Run.Interrupted
+        )
+      )
     )
     val written = copy.asJson.noSpaces
     assert(written.contains("\"why\":{\"group\":\"Run\",\"case\":\"Interrupted\""), written)

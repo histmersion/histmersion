@@ -9,6 +9,7 @@ final class HelloDepsFetcher(greeting: HelloDepsFetcher.Greeting) extends Source
   val access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     Fetch.Miss(
+      Fetch.Absence.NotHeld,
       Problem.Plugin.Said(
         Problem.Plugin.Id("hello-deps"),
         Problem.Plugin.Claim.Failed,

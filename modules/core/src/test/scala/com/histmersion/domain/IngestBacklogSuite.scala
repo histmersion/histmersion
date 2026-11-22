@@ -211,10 +211,7 @@ class IngestBacklogSuite extends munit.FunSuite:
         case Failure.ToAcquire(why) => assertEquals(why.said, text)
         case other                  => fail("expected the acquisition list", clues(other))
     }
-    assertEquals(
-      AcquireRecheck.answers(StoredShapes.read(stored(1))),
-      AcquireRecheck.ReplyText("unpaywall: no copy — none")
-    )
+    assertEquals(AcquireRecheck.answers(StoredShapes.read(stored(1))), Vector.empty, "a stored text is never parsed")
 
   test(
     "a failed ingest: no legal copy → the acquisition list at once; another failure → again after the backoff, the list after max-failures"

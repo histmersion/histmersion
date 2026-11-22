@@ -37,7 +37,7 @@ object AcquisitionStoreSuite:
         val assessments = AssessmentService.InMemory(state, clock)
         val candidates = CandidateService.InMemory(state, clock)
         val quotas = UpstreamQuotaService.InMemory(state)
-        val checks = AcquireCheckService.InMemory(state, q, src)
+        val attempts = AcquireCheckService.InMemory(state, q, src)
         val sources = src
         val queues = q
         def goal(slug: String) = ())
@@ -60,7 +60,7 @@ object AcquisitionStoreSuite:
           val assessments = AssessmentService(db)
           val candidates = CandidateService(db)
           val quotas = UpstreamQuotaService(db)
-          val checks = AcquireCheckService(db)
+          val attempts = AcquireCheckService(db)
           val sources = SourceService(db, SourceReferrers(Nil), () => LibraryStoreSuite.Settings)
           val queues = QueueService(db)
           def goal(slug: String) =

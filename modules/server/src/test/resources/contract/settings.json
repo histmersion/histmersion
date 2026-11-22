@@ -5734,6 +5734,51 @@
           "credential" : null,
           "locked" : null,
           "resolved" : null
+        },
+        {
+          "key" : "histmersion.acquire.recheck.give-up-checks",
+          "section" : "acquire",
+          "kind" : "number",
+          "doc" : "The agents keep retrying an item whose providers do not answer until this many checks in a row got no answer, or the first of them is this many days old, whichever comes first; then it waits for you.",
+          "default" : "5",
+          "value" : null,
+          "effective" : "5",
+          "source" : "default",
+          "envVar" : "HISTMERSION_ACQUIRE_RECHECK_GIVE_UP_CHECKS",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null,
+          "resolved" : null
+        },
+        {
+          "key" : "histmersion.acquire.recheck.give-up-days",
+          "section" : "acquire",
+          "kind" : "number",
+          "doc" : "",
+          "default" : "14",
+          "value" : null,
+          "effective" : "14",
+          "source" : "default",
+          "envVar" : "HISTMERSION_ACQUIRE_RECHECK_GIVE_UP_DAYS",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null,
+          "resolved" : null
+        },
+        {
+          "key" : "histmersion.acquire.recheck.attempts-kept",
+          "section" : "acquire",
+          "kind" : "number",
+          "doc" : "the newest attempts kept per item, with what each provider answered",
+          "default" : "20",
+          "value" : null,
+          "effective" : "20",
+          "source" : "default",
+          "envVar" : "HISTMERSION_ACQUIRE_RECHECK_ATTEMPTS_KEPT",
+          "restart" : null,
+          "credential" : null,
+          "locked" : null,
+          "resolved" : null
         }
       ]
     },

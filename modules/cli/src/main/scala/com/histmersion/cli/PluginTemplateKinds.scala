@@ -91,10 +91,10 @@ private[cli] object KindSources:
       |
       |  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       |    work.doi match
-      |      case None => Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("doi")))
+      |      case None => Fetch.Miss(Fetch.Absence.NoIdentifier, Problem.Invalid.Missing.here(Problem.Field("doi")))
       |      case Some(doi) =>
       |        val url = Plugin.Http.Url(s"${baseUrl.value.stripSuffix("/")}/${doi.value}.pdf")
-      |        http.get(url).fold(e => Fetch.Miss(e), body => Fetch.Found(file(url, body)))
+      |        http.get(url).fold(Fetch.failed, body => Fetch.Found(file(url, body)))
       |
       |  private def file(url: Plugin.Http.Url, body: Plugin.HttpResponse.Body): FetchedFile =
       |    FetchedFile(FetchedFile.Source("@id@"), Some(FetchedFile.Url(url.value)), FetchedFile.Bytes(body.value), FetchedFile.Extension("pdf"))

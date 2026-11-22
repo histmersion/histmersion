@@ -12,6 +12,8 @@ object Spi:
     * against SPI 2 on exactly that read, which the host reports as such.)
     *
     * SPI 2 gave the values the SPI exchanges types of their own ([[Year]], [[Period]], [[Latitude]], [[Longitude]],
-    * [[Doi]], [[WikidataId]], [[Licence]]).
+    * [[Doi]], [[WikidataId]], [[Licence]]). SPI 3 made a fetcher say why it has no copy ([[Fetch.Absence]]) or will not
+    * take one ([[Fetch.Refusal]]). `plugin-api-api.txt` holds the surface each version names; `SpiSurfaceSuite` fails
+    * when the surface changes and this number does not.
     */
-  inline val Version = 2
+  inline val Version = 3

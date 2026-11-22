@@ -561,7 +561,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "111",
+  "schemaVersion" : "112",
   "sources" : [
   ]
 }

@@ -24,7 +24,7 @@ object AcquisitionTesting:
 
   def assessments(ds: DataSource): AssessmentService = AssessmentService(Transactor(ds))
   def candidates(ds: DataSource): CandidateService = CandidateService(Transactor(ds))
-  def checks(ds: DataSource): AcquireCheckService = AcquireCheckService(Transactor(ds))
+  def attempts(ds: DataSource): AcquireCheckService = AcquireCheckService(Transactor(ds))
 
   def controllers(
       deps: Deps,
@@ -55,6 +55,7 @@ object AcquisitionTesting:
       wiki,
       retractionWatch,
       jobs,
+      AcquireCheckService(deps.transactor),
       indexes,
       alerts,
       generation

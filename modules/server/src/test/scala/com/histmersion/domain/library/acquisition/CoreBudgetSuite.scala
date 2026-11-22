@@ -152,8 +152,8 @@ class CoreBudgetSuite extends munit.FunSuite:
       .find(_.name.value == "core")
 
   private def missWhy(f: Fetch): String = f match
-    case Fetch.Miss(why) => why.sentence
-    case other           => fail(s"not a miss: $other")
+    case Fetch.Miss(_, why) => why.sentence
+    case other              => fail(s"not a miss: $other")
 
   test("a 429 with X-RateLimit-Retry-After: the chain goes on without core, which is not asked again until that time"):
     withCore { core =>
@@ -174,7 +174,8 @@ class CoreBudgetSuite extends munit.FunSuite:
       )
       val next = new SourceFetcher:
         val access = Access.Open
-        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("nothing here either")))
+        def fetch(w: WorkKey, ctx: Fetch.Context) =
+          Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("nothing here either")))
       val chain = FetchChain(
         List(
           FetchChain.Step.Id("core") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("core")),

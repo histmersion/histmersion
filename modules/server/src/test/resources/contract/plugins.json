@@ -1,10 +1,10 @@
 {
-  "spiVersion" : 2,
+  "spiVersion" : 3,
   "plugins" : [
     {
       "id" : "1password",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : false,
       "state" : "disabled",
       "provides" : [
@@ -35,7 +35,7 @@
     {
       "id" : "ai-anthropic",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -51,7 +51,7 @@
     {
       "id" : "ai-claude-code",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -67,7 +67,7 @@
     {
       "id" : "ai-codex",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -83,7 +83,7 @@
     {
       "id" : "ai-local",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -99,7 +99,7 @@
     {
       "id" : "ai-openai",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -115,7 +115,7 @@
     {
       "id" : "ai-opencode",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -131,7 +131,7 @@
     {
       "id" : "archive-org",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -148,7 +148,7 @@
     {
       "id" : "arxiv",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -164,7 +164,7 @@
     {
       "id" : "bitwarden",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : false,
       "state" : "disabled",
       "provides" : [
@@ -195,7 +195,7 @@
     {
       "id" : "calibre",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -231,7 +231,7 @@
     {
       "id" : "events-gvp",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -247,7 +247,7 @@
     {
       "id" : "events-noaa",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -263,7 +263,7 @@
     {
       "id" : "events-wikidata",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -279,7 +279,7 @@
     {
       "id" : "gazetteer-awmc",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -295,7 +295,7 @@
     {
       "id" : "gazetteer-chronontology",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -311,7 +311,7 @@
     {
       "id" : "gazetteer-cliopatria",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -327,7 +327,7 @@
     {
       "id" : "keepassxc",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : false,
       "state" : "disabled",
       "provides" : [
@@ -378,7 +378,7 @@
     {
       "id" : "media-aic",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -394,7 +394,7 @@
     {
       "id" : "media-cleveland",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -410,7 +410,7 @@
     {
       "id" : "media-depicts",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -426,7 +426,7 @@
     {
       "id" : "media-europeana",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : false,
       "state" : "disabled",
       "provides" : [
@@ -445,7 +445,7 @@
     {
       "id" : "media-loc",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -461,7 +461,7 @@
     {
       "id" : "media-met",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -477,7 +477,7 @@
     {
       "id" : "media-opencontext",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -493,7 +493,7 @@
     {
       "id" : "media-pleiades",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -509,7 +509,7 @@
     {
       "id" : "media-smithsonian",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : false,
       "state" : "disabled",
       "provides" : [
@@ -528,7 +528,7 @@
     {
       "id" : "media-wikidata",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -544,7 +544,7 @@
     {
       "id" : "oa-core",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -564,7 +564,7 @@
     {
       "id" : "oa-landing",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -580,7 +580,7 @@
     {
       "id" : "oa-openalex",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -596,7 +596,7 @@
     {
       "id" : "oa-unpaywall",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [
@@ -616,7 +616,7 @@
     {
       "id" : "pmc",
       "version" : "0.1.0",
-      "spiVersion" : 2,
+      "spiVersion" : 3,
       "enabled" : true,
       "state" : "registered",
       "provides" : [

@@ -1034,7 +1034,7 @@ unwrap	plugin-api:plugin/Plugin.scala	.value outside a boundary	5
 unwrap	plugin-api:plugin/Secret.scala	.value outside a boundary	1
 unwrap	plugin-host:pluginhost/Challenge.scala	.value outside a boundary	7
 unwrap	plugin-host:pluginhost/DiskLocalFiles.scala	.value outside a boundary	4
-unwrap	plugin-host:pluginhost/FetchChain.scala	.value outside a boundary	34
+unwrap	plugin-host:pluginhost/FetchChain.scala	.value outside a boundary	33
 unwrap	plugin-host:pluginhost/FirstPartySettings.scala	.value outside a boundary	4
 unwrap	plugin-host:pluginhost/Generation.scala	.value outside a boundary	3
 unwrap	plugin-host:pluginhost/HostAiHttp.scala	.value outside a boundary	10
@@ -1175,7 +1175,7 @@ unwrap	server:domain/catalogue/places/PlacesControllers.scala	.value outside a b
 unwrap	server:domain/catalogue/places/PlacesData.scala	.value outside a boundary	21
 unwrap	server:domain/catalogue/places/SiteTypeService.scala	.value outside a boundary	18
 unwrap	server:domain/catalogue/places/SiteTypesControllers.scala	.value outside a boundary	29
-unwrap	server:domain/library/acquisition/AcquireCheckService.scala	.value outside a boundary	8
+unwrap	server:domain/library/acquisition/AcquireCheckService.scala	.value outside a boundary	6
 unwrap	server:domain/library/acquisition/AcquireSettings.scala	.value outside a boundary	9
 unwrap	server:domain/library/acquisition/AcquisitionControllers.scala	.value outside a boundary	184
 unwrap	server:domain/library/acquisition/ArxivIndex.scala	.value outside a boundary	4
@@ -1227,7 +1227,7 @@ unwrap	server:domain/library/sources/SourceReadable.scala	.value outside a bound
 unwrap	server:domain/library/sources/SourceService.scala	.value outside a boundary	157
 unwrap	server:domain/library/sources/SourcesControllers.scala	.value outside a boundary	59
 unwrap	server:domain/library/sources/SourcesData.scala	.value outside a boundary	9
-unwrap	server:domain/library/workflows/AcquireRecheckService.scala	.value outside a boundary	113
+unwrap	server:domain/library/workflows/AcquireRecheckService.scala	.value outside a boundary	111
 unwrap	server:domain/library/workflows/AcquisitionSweepPipeline.scala	.value outside a boundary	46
 unwrap	server:domain/library/workflows/AgentGetSourceInput.scala	.value outside a boundary	3
 unwrap	server:domain/library/workflows/AgentUpstream.scala	.value outside a boundary	20
@@ -1343,7 +1343,7 @@ unwrap	server:server/views/FormatView.scala	.value outside a boundary	9
 unwrap	server:server/views/JobListView.scala	.value outside a boundary	8
 unwrap	server:server/views/PlaceCardView.scala	.value outside a boundary	2
 unwrap	server:server/views/ResolveView.scala	.value outside a boundary	2
-unwrap	server:server/views/WorkListView.scala	.value outside a boundary	14
+unwrap	server:server/views/WorkListView.scala	.value outside a boundary	13
 unwrap	server:util/basemap/BasemapFetch.scala	.value outside a boundary	113
 unwrap	server:util/basemap/BasemapLabels.scala	.value outside a boundary	64
 unwrap	server:util/basemap/BasemapService.scala	.value outside a boundary	293

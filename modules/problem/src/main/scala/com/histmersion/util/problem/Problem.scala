@@ -603,19 +603,21 @@ object Problem:
     /** What one fetcher of the chain answered when it brought no copy ([[Copy]]): it had none, or it refused, and
       * `why`.
       */
-    final case class Answer(fetcher: Fetcher, kind: Kind, why: Problem)
+    final case class Answer(fetcher: Fetcher, said: Said, why: Problem)
 
     /** A fetcher's id (`unpaywall`, `landing`). */
     type Fetcher = Fetcher.T
     object Fetcher extends Newtype[String, Pure]
 
-    /** How a fetcher came back without a copy. */
-    enum Kind:
-      /** It looked and found no copy. */
-      case Miss
+    enum Said derives CanEqual:
+      case Miss(absence: Absence)
+      case Refused(refusal: Refusal)
 
-      /** It would not fetch the copy (a challenge, a lending-only item, a licence). */
-      case Refused
+    enum Absence derives CanEqual:
+      case NoIdentifier, NotHeld, Unanswered, RateLimited, Unconfigured
+
+    enum Refusal derives CanEqual:
+      case BotChallenge, LendingOnly, NoEntitlement, LicenceForbids
 
     /** No value of `typeName` has the key `key`; `listing` is the command that lists the keys there are. */
     final case class Listed(typeName: TypeName, key: Raw, listing: Listing) extends NotFound
@@ -1112,6 +1114,15 @@ object Problem:
 
         /** 404: the upstream has no such page. */
         def isNotFound: Boolean = s == NotFound
+
+        def wantsPayment: Boolean = s == PaymentRequired
+
+        def asksToWait: Boolean = s == TooManyRequests
+
+        def isServerError: Boolean = s.value >= 500 && s.value < 600
+
+      val PaymentRequired: Status = Status(402)
+      val TooManyRequests: Status = Status(429)
 
     /** What a reply was expected to be. */
     enum Shape:

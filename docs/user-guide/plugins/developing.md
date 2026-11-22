@@ -349,6 +349,23 @@ flowchart LR
 The settings a plugin finally sees are layered: **environment overrides its defaults declare >
 the user's `plugins.<id>` block > its defaults**.
 
+## SPI 3: what changed
+
+A fetcher now says *why* it has no copy. The server stores each answer with the acquisition attempt, and the
+research-state page decides from it whether the agents try again or the person must act. A plugin built against SPI 2
+is refused the same way an SPI-1 plugin is (`… speaks SPI 3 — rebuild the plugin against SPI 3`).
+
+| where | SPI 2 | SPI 3 |
+|---|---|---|
+| `Fetch.Miss` | `Miss(why)` | `Miss(absence, why)`: `NoIdentifier`, `NotHeld`, `Unanswered`, `RateLimited` or `Unconfigured` |
+| `Fetch.Refused` | `Refused(why)` | `Refused(refusal, why)`: `BotChallenge`, `LendingOnly`, `NoEntitlement` or `LicenceForbids` |
+| failed request | `Fetch.Miss(problem)` | `Fetch.failed(problem)` reads the answer it stands for (403 or a challenge: `BotChallenge`; 429: `RateLimited`; 5xx, timeouts: `Unanswered`; else `NotHeld`) |
+| several locations | first `Some` | `Fetch.firstFound(tries, none)`: the first copy, else the most telling answer |
+| testkit `FetcherAnswer` | `refused: Boolean` | `said: Problem.NotFound.Said` (and `refused` as a method) |
+
+`modules/plugin-api/plugin-api-api.txt` lists the SPI's surface under its version; `SpiSurfaceSuite` fails when the
+surface changes and `Spi.Version` does not.
+
 ## SPI 2: what changed
 
 SPI 2 gave the values the SPI exchanges types of their own. A plugin built against SPI 1 is refused

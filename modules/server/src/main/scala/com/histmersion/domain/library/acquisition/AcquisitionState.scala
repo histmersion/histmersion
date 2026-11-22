@@ -20,7 +20,7 @@ final case class AcquisitionState(
       CandidateWatch
     ],
     quotas: Map[AcquisitionState.QuotasKey, CoreQuota.State],
-    checks: Map[AcquisitionState.ChecksKey, AcquireCheckRow]
+    attempts: Map[AcquireAttemptRow.Id, List[AcquireAttempt]]
 )
 
 object AcquisitionState:
@@ -30,7 +30,5 @@ object AcquisitionState:
   object AssessmentsKey extends Newtype[String, Pure]
   type QuotasKey = QuotasKey.T
   object QuotasKey extends Newtype[String, Pure]
-  type ChecksKey = ChecksKey.T
-  object ChecksKey extends Newtype[Int, Pure]
 
   val empty: AcquisitionState = AcquisitionState(Map.empty, Map.empty, Nil, Map.empty, Map.empty, Map.empty)

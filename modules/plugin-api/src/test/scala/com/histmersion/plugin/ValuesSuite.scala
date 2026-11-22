@@ -49,5 +49,5 @@ class ValuesSuite extends munit.FunSuite:
     )
 
   test("the SPI generation is compiled into the plugin: the host keeps no member a plugin could read it from"):
-    assertEquals(Spi.Version, 2)
+    assertEquals(Spi.Version, 3)
     assertEquals(Spi.getClass.getMethods.filter(_.getName == "Version").toList, Nil)

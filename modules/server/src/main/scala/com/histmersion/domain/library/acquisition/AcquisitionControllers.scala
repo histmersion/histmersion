@@ -101,6 +101,7 @@ final class AcquisitionControllers(
     wiki: => WikiClient,
     retractionWatch: => RetractionWatchClient,
     jobs: IngestJobs,
+    attempts: AcquireCheckService,
     indexes: => List[ScholarlyIndex] = Nil,
     alerts: => CitationAlerts = NoAlerts,
     generation: => String = ""
@@ -629,8 +630,14 @@ final class AcquisitionControllers(
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
-  private def acquireOnce(doi: Doi, text: Queue.QueueItem.Text)(using WritePermit): (Queue.QueueItem.Id, Boolean) =
-    queues.naming(Queue.Kind.Acquire, doi).headOption match
+  private def acquireOnce(
+      doi: Doi,
+      text: Queue.QueueItem.Text,
+      answers: List[FetchChain.Answer],
+      work: Option[WorkRef],
+      scripts: AcquireAttempt.Oa.Scripts
+  )(using WritePermit): (Queue.QueueItem.Id, Boolean) =
+    val (id, added) = queues.naming(Queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
         (
@@ -642,6 +649,26 @@ final class AcquisitionControllers(
             .id,
           true
         )
+    attempts.record(
+      id.transformInto[AcquireAttemptRow.Id],
+      AcquireAttempt(
+        java.time.Instant.now(clock),
+        AcquireAttempt.Trigger.PersonIngest,
+        fetcherGeneration,
+        AcquireAttempt.Outcome.NoCopy,
+        answers.map(_.transformInto[Problem.NotFound.Answer]).toVector,
+        work.map(w =>
+          AcquireAttempt.Oa(
+            w.oaStatus.map(_.transformInto[AcquireAttempt.Oa.OaStatus]),
+            w.oaUrl.map(_.transformInto[AcquireAttempt.Oa.OaUrl]),
+            w.oaLicence.map(_.transformInto[AcquireAttempt.Oa.OaLicence]),
+            scripts
+          )
+        )
+      ),
+      cfg().acquire.recheck.attemptsKept.transformInto[AcquireAttempt.Kept]
+    )
+    (id, added)
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
   private def ingestWith(
@@ -715,7 +742,8 @@ final class AcquisitionControllers(
         )
       )
     browserOnly.foreach { b =>
-      val (id, added) = acquireOnce(b.doi, Queue.QueueItem.Text(b.text.value))
+      val (id, added) =
+        acquireOnce(b.doi, Queue.QueueItem.Text(b.text.value), answers, work, AcquireAttempt.Oa.Scripts.Refused)
       if added then
         scribe.info(
           s"acquire: ${b.doi.value} is gold open access on ${b.publisher.value}, which refuses scripts: acquisition item #$id"
@@ -790,13 +818,14 @@ final class AcquisitionControllers(
               com.histmersion.api.library.Doi(d.value),
               com.histmersion.api.library.Citekey(citekey.value),
               answers
-                .filter(_.kind == FetchChain.Answer.Kind.Refused)
+                .filter(_.refused)
                 .map(_.transformInto[Problem.NotFound.Answer])
             )
           do
             // an item already naming the DOI was reported just above
             if queues.naming(Queue.Kind.Acquire, d).isEmpty then
-              val (id, _) = acquireOnce(d, Queue.QueueItem.Text(text.value))
+              val (id, _) =
+                acquireOnce(d, Queue.QueueItem.Text(text.value), answers, Some(w), AcquireAttempt.Oa.Scripts.Allowed)
               steps += step(
                 "acquire",
                 true,

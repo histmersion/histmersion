@@ -25524,6 +25524,9 @@
       "glob": "db/migration/V111__structured_log.sql"
     },
     {
+      "glob": "db/migration/V112__acquire_attempts.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

@@ -51,7 +51,7 @@ import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.search.Search
-import com.histmersion.domain.library.acquisition.AcquireCheckRow
+import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow}
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.automation.agents.Halt.Stopped
@@ -128,14 +128,14 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       Vector(
         Problem.NotFound.Answer(
           Problem.NotFound.Fetcher("unpaywall"),
-          Problem.NotFound.Kind.Miss,
+          Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NotHeld),
           Problem.NotFound.Copy(Problem.Raw(s"doi:$d"), Vector.empty)
         )
       ) ++ Option
         .when(landingRefused)(
           Problem.NotFound.Answer(
             Problem.NotFound.Fetcher("landing"),
-            Problem.NotFound.Kind.Refused,
+            Problem.NotFound.Said.Refused(Problem.NotFound.Refusal.BotChallenge),
             Problem.Upstream.Challenged(
               Problem.Upstream.Name("landing"),
               Problem.Upstream.Url("https://landing.example/f"),
@@ -178,8 +178,27 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     (a, h, up)
 
   private def doi(n: String) = s"10.5555/zzrecheck.$n"
-  private def checkItem(i: Queue.QueueItem.Id): AcquireCheckRow.Id =
-    AcquireCheckRow.Id(i.value)
+  private def checkItem(i: Queue.QueueItem.Id): AcquireAttemptRow.Id =
+    AcquireAttemptRow.Id(i.value)
+
+  private def lastOf(i: Queue.QueueItem.Id): Option[AcquireAttempt] =
+    AcquisitionTesting.attempts(ds).of(List(checkItem(i))).get(checkItem(i)).flatMap(_.headOption)
+
+  private def checkedAgo(i: Queue.QueueItem.Id, at: Instant): Unit =
+    AcquisitionTesting
+      .attempts(ds)
+      .record(
+        checkItem(i),
+        AcquireAttempt(
+          at,
+          AcquireAttempt.Trigger.Recheck,
+          AcquireRecheck.LastCheck.Generation("g1"),
+          AcquireAttempt.Outcome.NoCopy,
+          Vector.empty,
+          None
+        ),
+        AcquireAttempt.Kept(20)
+      )
   private def jobKey(id: SpatialHierarchyResult.Job.Id): Job.Id =
     Job.Id.applyUnsafe(id.value)
   private def item(h: ServerWiring, n: String): Queue.QueueItem.Id =
@@ -299,7 +318,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       listing.checks.find(_.item == none).map(_.reason),
       Some(
         s"checked $day: no legal copy (unpaywall: no copy — no legal open-access PDF found for doi:${doi("none")}; " +
-          "landing: refused — landing answered HTTP 403 at https://landing.example/f with a bot-protection challenge, not the page)"
+          "landing: refused (scripts refused) — landing answered HTTP 403 at https://landing.example/f with a bot-protection challenge, not the page)"
       )
     )
     assertEquals(listing.checks.find(_.item == meta).map(_.outcome), Some(Fetched))
@@ -345,7 +364,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(byId.rows.map(_.item.value), List(one.value))
     assertEquals(asked(up).size, 3)
-    assertEquals(AcquisitionTesting.checks(ds).of(List(checkItem(one))).get(checkItem(one)).map(_.checks), Some(2))
+    assertEquals(
+      AcquisitionTesting.attempts(ds).of(List(checkItem(one))).get(checkItem(one)).map(AcquireAttempt.Tries.of),
+      Some(AcquireAttempt.Tries(2))
+    )
     assert(
       a.acquireRecheck.run(RecheckRequest(id = Some(Acquire.Checks.RecheckRequest.Id(999999)))).isLeft,
       "no such open item"
@@ -480,7 +502,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
               FetchedFile.Extension("pdf")
             )
           )
-        else Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
+        else Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -535,18 +557,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .isEmpty,
       "no legal copy: no metadata-only source is created"
     )
-    val why =
-      AcquisitionTesting
-        .checks(ds)
-        .of(List(checkItem(closed)))
-        .get(checkItem(closed))
-        .map(r => s"${r.reason}")
-        .getOrElse("")
+    val why = lastOf(closed).map(a => AcquireRecheck.Rationale.of(a).said).getOrElse("")
     assert(why.contains("no legal copy (unpaywall: no copy — no open-access location)"), why)
     assertEquals(
-      AcquisitionTesting.checks(ds).of(List(checkItem(oa))).get(checkItem(oa)).map(_.generation),
-      Some("real")
+      lastOf(closed).map(_.answers.map(_.said)),
+      Some(Vector(Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NotHeld)))
     )
+    assertEquals(lastOf(oa).map(_.generation), Some(AcquireRecheck.LastCheck.Generation("real")))
 
   // ── the re-check job ───────────────────────────────────────────────────────────────────────────
 
@@ -614,17 +631,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     // two of them were checked an hour ago: not due, still tried
     ids
       .take(2)
-      .foreach(i =>
-        AcquisitionTesting
-          .checks(ds)
-          .record(
-            checkItem(i),
-            Instant.now().minusSeconds(3600),
-            AcquireRecheck.LastCheck.Generation("g1"),
-            AcquireRecheck.Outcome.NoCopy,
-            AcquireRecheck.reason(Instant.now(), AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("x"))
-          )
-      )
+      .foreach(i => checkedAgo(i, Instant.now().minusSeconds(3600)))
     assertEquals(
       a.acquireRecheck.run(RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(5)))).toOption.get.allowance,
       0,
@@ -679,12 +686,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       )
     )
     assertEquals(status(h, full), Queue.Done)
-    val checks = AcquisitionTesting.checks(ds).of(ids.map(checkItem))
+    val checks = AcquisitionTesting.attempts(ds).of(ids.map(checkItem)).view.mapValues(_.head).toMap
     assertEquals(
-      checks.values.map(_.outcome.value).toList.sorted,
+      checks.values.flatMap(a => AcquireRecheck.Outcome.of(a.outcome)).map(_.wire.value).toList.sorted,
       List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy)
     )
-    assert(s"${checks(checkItem(ids(3))).reason}".contains("no answer (HTTP 429"), checks(checkItem(ids(3))).reason)
+    val throttled = AcquireRecheck.Rationale.of(checks(checkItem(ids(3)))).said
+    assert(throttled.contains("no answer (HTTP 429"), throttled)
     assertEquals(a.acquireRecheck.fetchedToday(Instant.now()), 1)
     assertEquals(
       a.autopilot.ingestedToday(Instant.now()).value - ingestedBefore.value,
@@ -868,17 +876,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val _ = Transactor(ds).write(JobRepo.transition(jobKey(j.id), JobState.Queued, JobState.Running))
     ids
       .take(2)
-      .foreach(i =>
-        AcquisitionTesting
-          .checks(ds)
-          .record(
-            checkItem(i),
-            since.plusSeconds(60),
-            AcquireRecheck.LastCheck.Generation("g1"),
-            AcquireRecheck.Outcome.NoCopy,
-            AcquireRecheck.reason(Instant.now(), AcquireRecheck.Outcome.NoCopy, AcquireRecheck.Detail("x"))
-          )
-      )
+      .foreach(i => checkedAgo(i, since.plusSeconds(60)))
     val _ = Transactor(ds).write(JobRepo.failInterrupted())
     assertEquals(
       Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.problems),
@@ -946,7 +944,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
+      def fetch(w: WorkKey, c: Fetch.Context) =
+        Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -975,4 +974,4 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val done = ended(a, jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))).id)
     assertEquals(done.progress, Some("3/3 items · 0 closed · 0 fetched · 3 no legal copy · 0 failed"), done.toString)
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
-    assertEquals(AcquisitionTesting.checks(ds).of(ids.map(checkItem)).size, 3)
+    assertEquals(AcquisitionTesting.attempts(ds).of(ids.map(checkItem)).size, 3)

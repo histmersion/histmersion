@@ -18116,7 +18116,7 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
 
 ### 92 table(s)
 
-- **acquire_checks** (table) — item_id integer, checked_at timestamp with time zone, generation text, outcome text, reason text, checks integer
+- **acquire_attempts** (table) — id bigint, item_id integer, at timestamp with time zone, trigger text, generation text, outcome text, citekey text, source text, answers jsonb, failure jsonb, oa jsonb, legacy_reason text, legacy_checks integer
 - **agent_allowances** (table) — target text, limits jsonb, reserve_pct integer, updated_at timestamp with time zone
 - **agent_autopilot** (table) — id boolean, enabled boolean, changed_at timestamp with time zone, changed_by text, paused ARRAY, last_ensure_at timestamp with time zone, last_backup_at timestamp with time zone, last_lint_at timestamp with time zone, max_active_goals integer, scheduler_strategy text, scheduler_by text, scheduler_at timestamp with time zone, last_digest_at timestamp with time zone, drain_since timestamp with time zone, drain_by text, drained_at timestamp with time zone
 - **agent_leases** (table) — name text, owner text, until timestamp with time zone
@@ -18214,13 +18214,23 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
     {
       "columns" : [
         {
+          "dataType" : "bigint",
+          "name" : "id",
+          "nullable" : false
+        },
+        {
           "dataType" : "integer",
           "name" : "item_id",
           "nullable" : false
         },
         {
           "dataType" : "timestamp with time zone",
-          "name" : "checked_at",
+          "name" : "at",
+          "nullable" : false
+        },
+        {
+          "dataType" : "text",
+          "name" : "trigger",
           "nullable" : false
         },
         {
@@ -18235,17 +18245,42 @@ _ERROR: cannot execute DROP TABLE in a read-only transaction_
         },
         {
           "dataType" : "text",
-          "name" : "reason",
+          "name" : "citekey",
+          "nullable" : true
+        },
+        {
+          "dataType" : "text",
+          "name" : "source",
+          "nullable" : true
+        },
+        {
+          "dataType" : "jsonb",
+          "name" : "answers",
           "nullable" : false
         },
         {
+          "dataType" : "jsonb",
+          "name" : "failure",
+          "nullable" : true
+        },
+        {
+          "dataType" : "jsonb",
+          "name" : "oa",
+          "nullable" : true
+        },
+        {
+          "dataType" : "text",
+          "name" : "legacy_reason",
+          "nullable" : true
+        },
+        {
           "dataType" : "integer",
-          "name" : "checks",
-          "nullable" : false
+          "name" : "legacy_checks",
+          "nullable" : true
         }
       ],
       "kind" : "table",
-      "name" : "acquire_checks"
+      "name" : "acquire_attempts"
     },
     {
       "columns" : [

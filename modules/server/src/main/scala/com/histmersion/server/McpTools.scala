@@ -42,7 +42,7 @@ import com.histmersion.api.library.Ingest
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.ingest.IngestMeta
 import com.histmersion.domain.library.Doi
-import com.histmersion.domain.library.acquisition.AcquireCheckRow
+import com.histmersion.domain.library.acquisition.AcquireAttemptRow
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.JobAction
 import com.histmersion.api.automation.Activity
@@ -134,7 +134,7 @@ final class McpTools(
               in.authors.map(IngestMeta.Authors(_)),
               in.year.map(Year(_)),
               in.doi.flatMap(Doi.normalize),
-              in.acquireItem.map(AcquireCheckRow.Id(_))
+              in.acquireItem.map(AcquireAttemptRow.Id(_))
             )
           ) match
           case Right(a) =>

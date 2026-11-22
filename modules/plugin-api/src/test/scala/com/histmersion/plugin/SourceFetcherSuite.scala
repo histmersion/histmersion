@@ -27,6 +27,7 @@ class SourceFetcherSuite extends munit.FunSuite:
     val f = new SourceFetcher:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(
+        Fetch.Absence.NotHeld,
         Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("nothing"))
       )
     assertEquals(
@@ -59,6 +60,7 @@ class SourceFetcherSuite extends munit.FunSuite:
     val f = new SourceFetcher:
       val access = Access.Subscription
       def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(
+        Fetch.Refusal.NoEntitlement,
         Problem.Plugin
           .Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no entitlement"))
       )

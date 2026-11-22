@@ -9,7 +9,7 @@ trait AcquisitionStores:
   def assessments: AssessmentService
   def candidates: CandidateService
   def quotas: UpstreamQuotaService
-  def checks: AcquireCheckService
+  def attempts: AcquireCheckService
   def sources: SourceService
   def queues: QueueService
 

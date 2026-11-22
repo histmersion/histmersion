@@ -364,7 +364,7 @@ class AcquireSuite extends munit.FunSuite:
     )
     val refusal = Problem.NotFound.Answer(
       Problem.NotFound.Fetcher("oapen"),
-      Problem.NotFound.Kind.Refused,
+      Problem.NotFound.Said.Refused(Problem.NotFound.Refusal.LendingOnly),
       Problem.Refused.Policy(Problem.Refused.Rule.LendingOnly)
     )
     val said = "oapen: the item is lending-only: borrow it on its site"

@@ -1011,13 +1011,19 @@ object Text:
 
   extension (answer: NotFound.Answer)
     /** One fetcher's answer as the ingest report and the acquisition list show it: `oapen: no copy — no record`. */
-    def line: String = s"${answer.fetcher}: ${answer.kind.label} — ${answer.why.sentence}"
+    def line: String = s"${answer.fetcher}: ${answer.said.label} — ${answer.why.sentence}"
 
-  extension (kind: NotFound.Kind)
-    /** The words for how a fetcher came back: `no copy`, `refused`. */
-    def label: String = kind match
-      case NotFound.Kind.Miss    => "no copy"
-      case NotFound.Kind.Refused => "refused"
+  extension (said: NotFound.Said)
+    def label: String = said match
+      case NotFound.Said.Miss(NotFound.Absence.NoIdentifier)      => "no identifier it reads"
+      case NotFound.Said.Miss(NotFound.Absence.NotHeld)           => "no copy"
+      case NotFound.Said.Miss(NotFound.Absence.Unanswered)        => "no answer"
+      case NotFound.Said.Miss(NotFound.Absence.RateLimited)       => "asked to wait"
+      case NotFound.Said.Miss(NotFound.Absence.Unconfigured)      => "not set up"
+      case NotFound.Said.Refused(NotFound.Refusal.BotChallenge)   => "refused (scripts refused)"
+      case NotFound.Said.Refused(NotFound.Refusal.LendingOnly)    => "refused (lending only)"
+      case NotFound.Said.Refused(NotFound.Refusal.NoEntitlement)  => "refused (no entitlement)"
+      case NotFound.Said.Refused(NotFound.Refusal.LicenceForbids) => "refused (licence)"
 
   extension (scope: NotFound.Scope)
     private def missed(t: TypeName, key: Raw, from: Where): String = scope match

@@ -85,20 +85,26 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           .flatMap(AcquireParse.pmcRecord)
       }
 
-    def pdf: Option[FetchedFile] =
+    def pdf: Iterator[Fetch] =
       hit.toList
         .flatMap(_.pdfUrls)
         .iterator
         .map(u =>
           Downloads(http).pdf(ctx.log, FetchedFile.Source("europepmc"), Plugin.Http.Url(u.value), pmcGetHeaders)
-        )
-        .collectFirst { case Some(f) => f }
-        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, FetchedFile.Extension("pdf"))(Downloads.looksLikePdf)))
+        ) ++
+        Iterator
+          .single(())
+          .flatMap(_ =>
+            record.flatMap(_.pdf).flatMap(o => dataset(o, FetchedFile.Extension("pdf"))(Downloads.looksLikePdf))
+          )
+          .map(Fetch.Found(_))
 
-    def fullText: Option[FetchedFile] =
+    def fullText: Iterator[Fetch] =
       record
         .flatMap(_.xml)
         .flatMap(o => dataset(o, FetchedFile.Extension("xml"))(b => Jats.isJats(Jats.Xml(String(b.value, "UTF-8")))))
+        .iterator
+        .map(Fetch.Found(_))
 
     private def dataset(o: PmcObject, ext: FetchedFile.Extension)(
         ok: FetchedFile.Bytes => Boolean

@@ -921,7 +921,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "111",
+  "schemaVersion" : "112",
   "sources" : [
     {
       "issue" : null,
@@ -1070,7 +1070,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 1,
-  "schemaVersion" : "111",
+  "schemaVersion" : "112",
   "sources" : [
     {
       "issue" : null,

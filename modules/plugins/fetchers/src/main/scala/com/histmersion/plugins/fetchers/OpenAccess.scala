@@ -50,8 +50,8 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       ctx: Fetch.Context,
       doi: OaRecords.Doi,
       email: Option[UnpaywallConfig.ContactEmail]
-  ): Option[Json] =
-    email.flatMap(e =>
+  ): Option[Either[Problem, Json]] =
+    email.map(e =>
       ctx.memo(Fetch.Context.MemoKey(s"oa:unpaywall:$e:$doi"))(
         http
           .json(
@@ -61,13 +61,28 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
               "email" -> e.value
             ).value
           )
-          .toOption
       )
     )
 
   /** `unpaywall`, asking with `email` (the plugin's `contact-email`, else Histmersion's). */
   def unpaywall(email: Option[UnpaywallConfig.ContactEmail]): SourceFetcher =
-    ByDoi(ByDoi.Step("unpaywall"), (ctx, d) => unpaywallPdf(ctx, unpaywallRecord(ctx, d, email)))
+    ByDoi(
+      ByDoi.Step("unpaywall"),
+      (ctx, d) =>
+        unpaywallRecord(ctx, d, email) match
+          case None =>
+            Iterator(
+              Fetch.Miss(
+                Fetch.Absence.Unconfigured,
+                Problem.Config.Setting(
+                  Problem.SettingKey("histmersion.plugins.oa-unpaywall.contact-email"),
+                  Problem.Config.Fault.Empty
+                )
+              )
+            )
+          case Some(Left(e))       => Iterator(Fetch.failed(e))
+          case Some(Right(record)) => unpaywallPdf(ctx, record)
+    )
 
   /** `core`, with CORE's API key; without one it is never asked (a miss). Asked through the server's CORE budget
     * (`quota`): while CORE asked to wait, or the day's tokens are spent, it is a miss saying so, and the chain goes on.
@@ -77,7 +92,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
         .map(d => OaRecords.Doi(d.value))
-        .fold[Fetch](Fetch.Miss(Problem.Invalid.Missing.here(Problem.Field("doi"))))(corePdf(ctx, _, key, quota))
+        .fold[Fetch](ByDoi.noIdentifier(Problem.Field("doi")))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 
@@ -92,17 +107,17 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         records(ctx, d),
         Option
           .when(ctx.registered(OpenAccess.Unpaywall))(unpaywallEmail)
-          .flatMap(e => unpaywallRecord(ctx, d, e)),
+          .flatMap(e => unpaywallRecord(ctx, d, e).flatMap(_.toOption)),
         ctx.registered(OpenAccess.OpenAlex)
       )
   )
 
-  private def unpaywallPdf(ctx: Fetch.Context, record: Option[Json]): Option[FetchedFile] =
-    record.toList
-      .map(AcquireParse.unpaywall)
-      .flatMap(_._1)
-      .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("unpaywall"), Plugin.Http.Url(u.value)))
-      .headOption
+  private def unpaywallPdf(ctx: Fetch.Context, record: Json): Iterator[Fetch] =
+    AcquireParse
+      .unpaywall(record)
+      ._1
+      .iterator
+      .map(u => downloads.pdf(ctx.log, FetchedFile.Source("unpaywall"), Plugin.Http.Url(u.value)))
 
   private def corePdf(
       ctx: Fetch.Context,
@@ -112,6 +127,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   ): Fetch =
     key.fold[Fetch](
       Fetch.Miss(
+        Fetch.Absence.Unconfigured,
         Problem.Config.Setting(Problem.SettingKey("histmersion.plugins.oa-core.api-key"), Problem.Config.Fault.Empty)
       )
     ) { key =>
@@ -121,26 +137,24 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         PageSize(1),
         OpenAccess.Lookup
       ) match
-        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(skip.message)
+        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(Fetch.Absence.RateLimited, skip.message)
         case Left(CoreFailure.Failed(why))       =>
           ctx.log.info(Plugin.Log.Line(s"CORE lookup failed (${why.sentence})"))
-          Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"$doi")))
+          Fetch.failed(why)
         case Right(json) =>
-          AcquireParse
-            .coreDownloadUrls(json)
-            .iterator
-            .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value)))
-            .nextOption()
-            .fold(
-              Fetch.Miss(Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"$doi")))
-            )(Fetch.Found(_))
+          Fetch.firstFound(
+            AcquireParse
+              .coreDownloadUrls(json)
+              .iterator
+              .map(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value))),
+            ByDoi.notHeld(Problem.Raw(s"$doi"))
+          )
     }
 
-  private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
-    r.openalex.toList
+  private def openalexOa(ctx: Fetch.Context, r: OaRecords): Iterator[Fetch] =
+    r.openalex.iterator
       .flatMap(AcquireParse.openalexPdfUrls)
-      .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("openalex"), Plugin.Http.Url(u.value)))
-      .headOption
+      .map(u => downloads.pdf(ctx.log, FetchedFile.Source("openalex"), Plugin.Http.Url(u.value)))
 
   // ── repository landing pages ────────────────────────────────────────────────────────────────
 
@@ -157,8 +171,19 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       r: OaRecords,
       unpaywall: => Option[Json],
       openalex: Boolean
-  ): Option[FetchedFile] =
-    if !cfg.landing.enabled.value then None
+  ): Iterator[Fetch] =
+    if !cfg.landing.enabled.value then
+      Iterator(
+        Fetch.Miss(
+          Fetch.Absence.Unconfigured,
+          Problem.Refused.Disabled(
+            Problem.Refused.Feature("landing pages"),
+            Problem.SettingKey("histmersion.acquire.landing.enabled"),
+            None,
+            None
+          )
+        )
+      )
     else
       val rules = cfg.landing.rules
       val doiUrl = s"https://doi.org/${r.doi}"
@@ -219,7 +244,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           )
         )
         .take(math.max(0, cfg.landing.maxPages.value))
-      pages.map(resolvePage(ctx, _, rules)).collectFirst { case Some(f) => f }
+      pages.iterator.map(resolvePage(ctx, _, rules))
 
   /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`) — and it is not an
     * open-access publisher's open location (`oa-publisher-hosts`).
@@ -242,18 +267,19 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       ctx: Fetch.Context,
       c: RepositoryLanding.Candidate,
       rules: RepositoryLanding.Rules
-  ): Option[FetchedFile] =
+  ): Fetch =
+    val none = Downloads.NoPage
     RepositoryLanding.zenodoRecordId(RepositoryLanding.ZenodoLocator(c.url.value)) match
-      case Some(id)                             => zenodo(ctx, id)
-      case None if publisherPage(ctx, c, rules) => None
+      case Some(id)                             => zenodo(ctx, id, none)
+      case None if publisherPage(ctx, c, rules) => none
       case None                                 =>
         val oaPub = RepositoryLanding.oaPublisherPage(c, rules)
         val source = FetchedFile.Source(if oaPub then "publisher" else "repository")
         http.get(Plugin.Http.Url(c.url.value)) match
           case Left(e) =>
-            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.sentence})")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed (${e.sentence})")); Fetch.failed(e)
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
-            Some(
+            Fetch.Found(
               FetchedFile(
                 source,
                 Some(FetchedFile.Url(c.url.value)),
@@ -262,7 +288,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
               )
             )
           case Right(b) if !RepositoryLanding.looksLikeHtml(RepositoryLanding.PageBytes(b.value)) =>
-            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} is neither a PDF nor a page — skipping")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} is neither a PDF nor a page — skipping")); none
           case Right(b) =>
             val html = String(b.value, "UTF-8")
             val pdfs = RepositoryLanding.pdfsOf(
@@ -278,30 +304,29 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
                 "names no citation_pdf_url"
               else "is not a repository's page"
               ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} $why — skipping"))
-            pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.Url(u.value))).collectFirst {
-              case Some(f) => f
-            }
+            Fetch.firstFound(pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.Url(u.value))), none)
 
   /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
-  private def zenodo(ctx: Fetch.Context, id: RepositoryLanding.ZenodoRecordId): Option[FetchedFile] =
+  private def zenodo(ctx: Fetch.Context, id: RepositoryLanding.ZenodoRecordId, none: Fetch): Fetch =
     http.json(Url(RepositoryLanding.Candidate.Url(cfg.zenodo.url.value), Url.UrlPath(s"/api/records/$id")).value) match
       case Left(e) =>
-        ctx.log.info(Plugin.Log.Line(s"zenodo: record $id failed ($e)")); None
+        ctx.log.info(Plugin.Log.Line(s"zenodo: record $id failed ($e)")); Fetch.failed(e)
       case Right(j) =>
         val files = RepositoryLanding.zenodoFiles(j)
         if files.isEmpty then ctx.log.info(Plugin.Log.Line(s"zenodo: record $id has no open PDF"))
-        files.iterator
-          .map { f =>
-            downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.Url(f.url.value)).filter { got =>
-              val ok = f.md5.forall(m => Downloads.md5(got.bytes).forall(_ == m))
-              if !ok then
-                ctx.log.warn(
-                  Plugin.Log.Line(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping")
-                )
-              ok
-            }
-          }
-          .collectFirst { case Some(f) => f }
+        Fetch.firstFound(
+          files.iterator
+            .map { f =>
+              downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.Url(f.url.value)) match
+                case Fetch.Found(got) if !f.md5.forall(m => Downloads.md5(got.bytes).forall(_ == m)) =>
+                  ctx.log.warn(
+                    Plugin.Log.Line(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping")
+                  )
+                  Downloads.NotPdf
+                case other => other
+            },
+          none
+        )
 
 object OpenAccess:
   type CoreKey = CoreKey.T

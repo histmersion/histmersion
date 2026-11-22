@@ -639,9 +639,9 @@ class AcquireHandlerSuite extends DbSuite:
     val chain = FetchChain(
       List(
         FetchChain.Step.Id("unpaywall") -> answering(
-          Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
+          Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
         ),
-        FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(why))
+        FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(Fetch.Refusal.BotChallenge, why))
       )
     )
     val open =
@@ -746,10 +746,13 @@ class AcquireHandlerSuite extends DbSuite:
     val chain = FetchChain(
       List(
         FetchChain.Step.Id("unpaywall") -> answering(
-          Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
+          Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
         ),
         FetchChain.Step.Id("oapen") -> answering(
-          Fetch.Refused(Problem.Unclassified(Legacy.Text("20.500.12657/23223: bot challenge")))
+          Fetch.Refused(
+            Fetch.Refusal.BotChallenge,
+            Problem.Unclassified(Legacy.Text("20.500.12657/23223: bot challenge"))
+          )
         )
       )
     )
@@ -758,7 +761,9 @@ class AcquireHandlerSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       r.steps.find(_.step == Ingest.Step.Value("chain")).map(_.detail),
-      Some("unpaywall: no copy — no open-access location; oapen: refused — 20.500.12657/23223: bot challenge")
+      Some(
+        "unpaywall: no copy — no open-access location; oapen: refused (scripts refused) — 20.500.12657/23223: bot challenge"
+      )
     )
     assert(
       r.steps.exists(s =>
@@ -775,11 +780,12 @@ class AcquireHandlerSuite extends DbSuite:
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
       def fetch(w: WorkKey, c: Fetch.Context) = {
-        asked.incrementAndGet(); Fetch.Miss(Problem.Unclassified(Legacy.Text("stub")))
+        asked.incrementAndGet(); Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("stub")))
       }
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem.Unclassified(Legacy.Text("no open-access location")))
+      def fetch(w: WorkKey, c: Fetch.Context) =
+        Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -822,11 +828,11 @@ class AcquireHandlerSuite extends DbSuite:
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
       def fetch(w: WorkKey, c: Fetch.Context) = {
-        asked.incrementAndGet(); Fetch.Miss(noCopy)
+        asked.incrementAndGet(); Fetch.Miss(Fetch.Absence.NotHeld, noCopy)
       }
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(noCopy)
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Fetch.Absence.NotHeld, noCopy)
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -1050,7 +1056,7 @@ class AcquireHandlerSuite extends DbSuite:
     val byIdentifier = new SourceFetcher:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) =
-        work.archive.fold(Fetch.Miss(Problem.Unclassified(Legacy.Text("no identifier"))))(_ =>
+        work.archive.fold(Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no identifier"))))(_ =>
           Fetch.Found(
             FetchedFile(
               plugin.FetchedFile.Source("archive_org"),

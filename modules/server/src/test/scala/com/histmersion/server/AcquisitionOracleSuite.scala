@@ -359,7 +359,7 @@ class AcquisitionOracleSuite extends DbSuite:
             val access = Access.Unauthorised
             def fetch(w: WorkKey, c: Fetch.Context) =
               unauthorisedAsked.incrementAndGet()
-              Fetch.Miss(Problem.Unclassified(Legacy.Text("the zq fixture has no copy")))
+              Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("the zq fixture has no copy")))
         )
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
@@ -385,7 +385,8 @@ class AcquisitionOracleSuite extends DbSuite:
                     Some(Licence("CC BY 4.0"))
                   )
                 )
-              else Fetch.Miss(Problem.Unclassified(Legacy.Text("the zq shelf has only one work")))
+              else
+                Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("the zq shelf has only one work")))
         )
 
   // ── the converter: every document converts, deterministically ──────────────────────────────
@@ -1040,7 +1041,7 @@ class AcquisitionOracleSuite extends DbSuite:
     "assessments" -> "citekey, retracted, notices, cited_by, influential, verdict",
     "retraction_watch" -> "*",
     "queue_items" -> "list, text, topic, status, reason",
-    "acquire_checks" -> "generation IS NOT NULL AS generation, outcome, reason, checks",
+    "acquire_attempts" -> "trigger, generation <> '' AS generation, outcome, citekey, source, answers, failure, oa",
     "source_candidates" -> "goal, doi, title, year, authors, venue, is_oa, arxiv_id, found_by, state",
     "candidate_watches" -> "goal, kind, subject, index_name, last_error, last_found",
     "upstream_quota" -> "upstream, lookup_tokens, search_tokens, blocked_why",
