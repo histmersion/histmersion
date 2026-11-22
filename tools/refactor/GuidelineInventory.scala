@@ -100,7 +100,7 @@ object GuidelineInventory {
     "G46" -> "`type X = a.B.C` immediately followed by `val X: a.B.C.type = a.B.C`",
     "G47root" -> "each `_root_` occurrence",
     "G47fqn" -> "a reference spelled `com.histmersion.` (or `_root_.com.histmersion.`) inside a com.histmersion file, outside imports/package clauses; same-package or other-package",
-    "G47self" -> "`T.Member` (name-qualified) or `a.b.T.Member` (full-path) written inside T or its companion",
+    "G47self" -> "`T.Member` (name-qualified) written inside the object T itself, where the member is in scope by its short name, or `a.b.T.Member` (full-path) written inside T or its companion; not `T.Member` inside the class, trait or enum T (`case class X(f: X.F)`), where the companion's members are out of scope (owner 2026-11-19)",
     "G47package" -> "a file with one `package com.histmersion.x.y` clause instead of chained clauses",
     "G48" -> "`.modify(_.x)(_.description(...))` on a Tapir Schema (one per modify)",
     "G49" -> "no count of its own (owner 2026-11-19): a label `;G49:<shape>` on the G44/G45boundary/G44conversion finding of a `.value` inside a lambda passed to a collection operation, as an argument of contains/indexOf, or in `a.value == b.value` / `.value.equalsIgnoreCase(...)`",
@@ -982,7 +982,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val targetPkg = packageOf(target)
         report("G47fqn", top, (if (targetPkg == here) "same-package:" else "other-package:") + top.syntax.replace("_root_.", "").take(100))
     }
-    // G47self: once per outermost reference whose chain has a qualifier naming an enclosing template (or its companion)
+    // G47self: once per outermost reference that names an enclosing object inside it, or spells a path to an enclosing template (or its companion)
     def qualifiers(t: Tree): List[Term.Name] = t match {
       case x: Term.Select => (x.qual match { case n: Term.Name => List(n); case q: Term.Select => qualifiers(q) :+ q.name; case _ => Nil })
       case x: Type.Select => (x.qual match { case n: Term.Name => List(n); case q: Term.Select => qualifiers(q) :+ q.name; case _ => Nil })
@@ -998,7 +998,11 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         val ref = sel
         val qs = qualifiers(ref)
         val enclosing = enclosingTemplates(sel).map(companionKey).toSet
-        val hit = qs.zipWithIndex.find { case (q, _) => !q.symbol.isNone && enclosing(companionKey(q.symbol)) && !isNewtypeObject(q.symbol) }
+        val enclosingObjects = ancestors(sel).collect { case o: Defn.Object => o.name.symbol.value }.toSet
+        val hit = qs.zipWithIndex.find { case (q, i) =>
+          !q.symbol.isNone && !isNewtypeObject(q.symbol) &&
+            (if (i == 0) enclosingObjects(q.symbol.value) else enclosing(companionKey(q.symbol)))
+        }
         hit.foreach { case (q, i) =>
           val node = (if (i == 0) q.parent else q.parent.flatMap(_.parent)).getOrElse(ref)
           val member = node match { case x: Term.Select => x.name.value; case x: Type.Select => x.name.value; case _ => "" }

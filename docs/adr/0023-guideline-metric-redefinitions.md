@@ -38,6 +38,11 @@ is a Scalafix rule over SemanticDB: the base tree cannot be measured without com
 - **G45boundary counts only taking the raw value out** (decision 2). In a boundary file (`architecture/boundaries.tsv`)
   `.value` is still a finding; building a newtype there from outside data (`apply`, `assume`, `either`, …, or one of
   them passed as a function) is the boundary's job, policed by G68, and no finding of any rule.
+- **G47self counts only a qualifier the short name could replace** (decision 1). `T.Member` is a finding only inside
+  the object `T` itself (its body, at any depth), where `Member` is in scope; inside the class, trait or enum `T`
+  (`case class X(f: X.F)`, an enum's case `Status(Status.Wire(…))`) the companion's members are out of scope and the
+  qualifier is needed. A full path (`a.b.T.Member`) inside `T` or its companion is still a finding: `T.Member` works
+  there.
 
 ## Consequences
 
