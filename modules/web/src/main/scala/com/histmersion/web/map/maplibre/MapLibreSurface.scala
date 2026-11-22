@@ -329,7 +329,8 @@ final class MapLibreSurface(
                         if sameStyle then js.Dynamic.literal(diff = true, transformStyle = carry)
                         else js.Dynamic.literal(diff = false)
                       val _ = gl.setStyle(style, options.asInstanceOf[js.Object])
-                      gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent()))),
+                      gl.once("idle", (_: GlEvent) => if mine == generation then ready.toList.foreach(_(MapEvent())))
+                      gl.triggerRepaint(),
                   0
                 )
               )
