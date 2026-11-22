@@ -125,7 +125,7 @@ object MapHandle:
       circles = face.querySelectorAll("svg circle").length,
       radius = look.borderRadius,
       edge = look.borderTopWidth.stripSuffix("px").toDoubleOption.getOrElse(0.0),
-      colour = face.asInstanceOf[dom.HTMLElement].style.getPropertyValue("--c").trim,
+      colour = look.getPropertyValue("--c").trim,
       shape = if detail then shape(face) else null,
       ink = stroke(face, ".glyph-ink"),
       halo = stroke(face, ".glyph-halo"),
