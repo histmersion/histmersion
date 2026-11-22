@@ -29,6 +29,13 @@ is a Scalafix rule over SemanticDB: the base tree cannot be measured without com
   key. Any other changed input refuses the proof and names the paths: a redefinition lands apart from code changes,
   and the base tree is never compiled.
 
+### The redefinitions
+
+- **G49 is a label, not a count** (decision 3). Every `.value` it named already carried a G44, G45boundary or
+  G44conversion finding at the same place, so it counted those twice. The shape it named (a lambda passed to a
+  collection operation, an argument of contains/indexOf, a comparison of two `.value`s) is now the suffix
+  `;G49:<shape>` of that finding's detail.
+
 ## Consequences
 
 - A checker's redefinition is reviewed as code (owner decision 2026-11-21, point 4) and its count is proven by the
