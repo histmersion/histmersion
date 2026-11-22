@@ -104,6 +104,25 @@ object MapLibreStyles:
         .distinct
         .map(a => BaseMapSpec.Raster.Attribution(a))
 
+  def carryOverlays(previous: js.Dynamic, next: js.Dynamic, overlays: Set[String]): js.Dynamic =
+    def dict(d: js.Dynamic): js.Dictionary[js.Any] =
+      if js.isUndefined(d) || d == null then js.Dictionary.empty[js.Any] else d.asInstanceOf[js.Dictionary[js.Any]]
+    def layers(s: js.Dynamic): js.Array[js.Dynamic] =
+      if js.isUndefined(s.layers) || s.layers == null then js.Array() else s.layers.asInstanceOf[js.Array[js.Dynamic]]
+    if js.isUndefined(previous) || previous == null || js.isUndefined(next) || next == null then next
+    else
+      val nextSources = dict(next.sources)
+      val sources = js.Dictionary.empty[js.Any]
+      nextSources.foreach((k, v) => sources(k) = v)
+      dict(previous.sources).foreach((k, v) => if overlays(k) && !nextSources.contains(k) then sources(k) = v)
+      val ids = layers(next).map(_.id.toString).toSet
+      val carried =
+        layers(previous).filter(l => !js.isUndefined(l.source) && overlays(l.source.toString) && !ids(l.id.toString))
+      val out = js.Object.assign(js.Dynamic.literal(), next.asInstanceOf[js.Object]).asInstanceOf[js.Dynamic]
+      out.sources = sources
+      out.layers = layers(next).concat(carried)
+      out
+
   /** `{s}` → the subdomains a, b, c ([[BaseMapSource.Subdomains]], which the server's policy lists too). Pure. */
   def expand(template: BasemapApi.TileTemplate): js.Array[String] =
     val t = template.value
