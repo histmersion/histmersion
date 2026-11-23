@@ -63,6 +63,11 @@ final class AutoApprovals(
           .getOrElse(cfg.approvals.checked(k.transformInto[Approval.Kind]))
     )
 
+  def decides(a: ApprovalInfo): Actor =
+    val auto = a.approvalKind.exists(Kinds.contains) &&
+      checked(a, runOf(a).flatMap(_.managerId).flatMap(agents.managerStore.get(_)))
+    if auto then Actor.Agents else Actor.Person
+
   /** Decide what can be decided now; one line per decision (for the tick's log). */
   def sweep(now: Instant)(using WritePermit): List[String] =
     // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a

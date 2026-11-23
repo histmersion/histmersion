@@ -53,6 +53,7 @@ Usage:
     histmersion [--server <string>] jobs
     histmersion [--server <string>] activity
     histmersion [--server <string>] log
+    histmersion [--server <string>] state
     histmersion [--server <string>] bookmarks
     histmersion [--server <string>] notes
     histmersion [--server <string>] config
@@ -174,6 +175,8 @@ Subcommands:
         What the agents, the server and you did, one list, newest first: agent runs, background jobs, worklog lines and your decisions, each with what it touched
     log
         What happened, step by step: answered requests, provider calls, problems and database writes, each with the trace that links one request's or job's steps
+    state
+        The research state: what waits for you (decisions, acquisitions, tasks, paused runs) and what the agents will handle
     bookmarks
         Your bookmarks: list, add, rm
     notes
@@ -3677,6 +3680,7 @@ Subcommands:
 Usage:
     histmersion queue acquire add
     histmersion queue acquire recheck
+    histmersion queue acquire why
     histmersion queue acquire [--all] [--json]
 
 Show the acquire list (add: put an item on it)
@@ -3694,6 +3698,8 @@ Subcommands:
         Add an item to the acquire list
     recheck
         The legal re-check of the acquisition list now: the due items the caps allow, or --all (more than one item runs as a server job it follows)
+    why
+        Why an acquisition item is where it is: its verdict and what each provider answered at each attempt
 
 ==== histmersion queue acquire add
 Usage: histmersion queue acquire add [--topic <string>] [--reason <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] [--json] <text>
@@ -3738,6 +3744,17 @@ Options and flags:
         This acquisition item only, due or not
     --no-wait
         Print the job id and return instead of following the job
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion queue acquire why
+Usage: histmersion queue acquire why [--json] <id>
+
+Why an acquisition item is where it is: its verdict and what each provider answered at each attempt
+
+Options and flags:
+    --help
+        Display this help text.
     --json
         Print the raw JSON response instead of Markdown
 
@@ -4460,6 +4477,23 @@ Options and flags:
         The next older page: the cursor the last page printed
     --file
         Read the server's log file, not the database (works while the database is down)
+    --json
+        Print the raw JSON response instead of Markdown
+
+==== histmersion state
+Usage: histmersion state [--who <string>] [--goal <string>] [--kind <string>] [--json]
+
+The research state: what waits for you (decisions, acquisitions, tasks, paused runs) and what the agents will handle
+
+Options and flags:
+    --help
+        Display this help text.
+    --who <string>
+        Only what waits for you (owner) or for the agents (agents)
+    --goal <string>
+        Only this goal's items (its slug)
+    --kind <string>
+        Only decision, acquisition, task or run
     --json
         Print the raw JSON response instead of Markdown
 

@@ -38,6 +38,7 @@ import com.histmersion.util.jobs.JobRow
 import com.histmersion.util.jobs.JobRuns
 import Halt.Stopped
 import com.histmersion.domain.automation.Approval
+import com.histmersion.domain.automation.Pipeline as RunPipeline
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
@@ -53,7 +54,7 @@ final class Engine(
     val agents: AgentsControllers,
     val workflows: Workflows
 ) extends Quiescent:
-  import Engine.Era
+  import Engine.{Era, Paused}
 
   /** Read at each use (a config reload switches it); a run reads it once, into its [[RunCtx]]. */
   def cfg: AgentsConfig = cfgNow
@@ -338,12 +339,22 @@ final class Engine(
     * once per `stale-minutes` per pool), and sees a hold released. A run whose pool is still below its floor stays
     * paused; nothing is read for a server with no such run. Returns the ids.
     */
+  def pausedWaiting(now: java.time.Instant): List[Paused] =
+    agents.jobRuns
+      .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
+      .toList
+      .map { (id, pipeline, _, error, resumes) =>
+        val at = resumes.flatMap(_.instant)
+        val byItself = at.isDefined || error.exists(Stopped.of(_).pausedOn(PauseReason.PlanQuota))
+        Paused(id, pipeline, error, at, if byItself then Actor.Agents else Actor.Person)
+      }
+
   def resumeFreed(now: java.time.Instant)(using WritePermit): List[Run.Id] =
     agents.jobRuns
       .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
       .toList
-      .filter((_, _, _, error) => error.exists(Stopped.of(_).pausedOn(PauseReason.PlanQuota)))
-      .flatMap { (id, pipeline, model, error) =>
+      .filter((_, _, _, error, _) => error.exists(Stopped.of(_).pausedOn(PauseReason.PlanQuota)))
+      .flatMap { (id, pipeline, model, error, _) =>
         val roles = error
           .flatMap(ModelPicker.pausedRole)
           .map(List(_))
@@ -724,6 +735,14 @@ final class Engine(
 object Engine:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
+
+  final case class Paused(
+      run: Run.Id,
+      pipeline: RunPipeline.Wire,
+      cause: Option[Problem],
+      resumes: Option[java.time.Instant],
+      actor: Actor
+  )
 
   /** The time between two restores, as an engine sees it: a new one begins with each restore, told apart by identity.
     */

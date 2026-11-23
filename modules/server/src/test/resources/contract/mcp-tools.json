@@ -4077,6 +4077,44 @@
             }
           }
         }
+      },
+      {
+        "name" : "research_state",
+        "description" : "The research state: every open item and who acts next. Waiting for the owner, grouped by what to do (decide, download in the browser, borrow, buy or borrow, add an identifier, look at a stuck provider, resume a paused run, do a task); what the agents will handle, grouped by when (now, today, later). Filters: `who` (owner | agents), `goal` (a goal's slug), `kind` (decision | acquisition | task | run). Use to see what is yours to do and what to leave to the person.",
+        "inputSchema" : {
+          "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "title" : "Scope",
+          "type" : "object",
+          "properties" : {
+            "who" : {
+              "type" : "string"
+            },
+            "goal" : {
+              "type" : "string"
+            },
+            "kind" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      {
+        "name" : "acquire_why",
+        "description" : "Why one acquisition-list item is where it is: its verdict (who acts and why) and its kept attempts, with what each provider answered. `id`: the item's id (`#123` in `queue acquire`).",
+        "inputSchema" : {
+          "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "title" : "WhyInput",
+          "type" : "object",
+          "required" : [
+            "id"
+          ],
+          "properties" : {
+            "id" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        }
       }
     ]
   }

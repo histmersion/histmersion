@@ -17,7 +17,12 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.Acquire.Checks.*
 import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow, AcquireCheckService}
+import com.histmersion.domain.library.acquisition.{
+  AcquireAttempt,
+  AcquireAttemptRow,
+  AcquireCheckService,
+  AcquireVerdict
+}
 import com.histmersion.domain.AcquireRecheck.{Action, Candidate, Held, JobPlan, Outcome, Settings, Shared, Tally}
 
 import java.time.Instant
@@ -65,7 +70,7 @@ final class AcquireRecheckService(
     agents: AgentsControllers
 ):
 
-  import AcquireRecheckService.{By, Line}
+  import AcquireRecheckService.{By, Judged, Line}
 
   private def settings: Settings =
     val c = rcfg
@@ -770,9 +775,37 @@ final class AcquireRecheckService(
   /** What the re-check fetched today: what the shared legal ingest allowance counts besides the watchers'. */
   def fetchedToday(now: Instant): RowCount = RowCount(triedToday(now)._2)
 
+  private def verdictSettings: AcquireVerdict.Settings =
+    val s = settings
+    val c = rcfg
+    AcquireVerdict.Settings(
+      s.everyDays,
+      s.retryHours,
+      c.giveUpChecks.transformInto[AcquireVerdict.Failures],
+      c.giveUpDays.transformInto[AcquireVerdict.Settings.Days]
+    )
+
+  private def judge(fs: List[Facts], now: Instant): List[Judged] =
+    val gen = upstream().fetcherGeneration
+    val s = verdictSettings
+    fs.map { f =>
+      val verdict = f.action match
+        case Action.NoDoi       => AcquireVerdict.NoIdentifier
+        case Action.Close(_)    => AcquireVerdict.Converting(None)
+        case Action.Fetch(_, _) => AcquireVerdict.of(AcquireVerdict.Identifier.Named, f.attempts, gen, s, now)
+      Judged(f.item, verdict, f.attempts)
+    }
+
+  def verdicts(now: Instant): List[Judged] = judge(facts(None), now)
+
+  def verdict(item: Queue.QueueItem.Id, now: Instant): Option[Judged] =
+    judge(facts(Some(item.transformInto[RecheckRequest.Id])), now).headOption
+
 object AcquireRecheckService:
   type By = By.T
   object By extends Newtype[String, Pure]
+
+  final case class Judged(item: Queue.QueueItem, verdict: AcquireVerdict, attempts: List[AcquireAttempt])
 
   /** One worklog line a pass wrote. */
   type Line = Line.T

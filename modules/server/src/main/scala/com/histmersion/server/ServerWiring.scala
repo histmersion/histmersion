@@ -102,6 +102,7 @@ import com.histmersion.server.instance.MaintenanceControllers
 import com.histmersion.server.instance.SeedControllers
 import com.histmersion.server.instance.InstanceControllers
 import com.histmersion.server.views.AutopilotView
+import com.histmersion.server.views.OpenWorkView
 import com.histmersion.domain.library.acquisition.UpstreamQuotaService
 import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.domain.research.ResearchData
@@ -620,6 +621,9 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** The autopilot's page: the automation's status with the library's upstreams and its acquisition list's re-check. */
   lazy val autopilot: AutopilotView =
     EngineContributions.autopilot(agents)
+
+  lazy val researchState: OpenWorkView =
+    OpenWorkView(agents, EngineContributions.work(agents).acquireRecheck)
 
   /** Every long-running worker of this server, as a restore holds it ([[WriteGate.workers]]): the OCR pool, the paused
     * background jobs' ways to go on, the agent run pool, the managers' loop and the lease's renewal. The work started
