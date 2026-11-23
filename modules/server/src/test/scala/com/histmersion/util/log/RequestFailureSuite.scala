@@ -23,8 +23,11 @@ class RequestFailureSuite extends munit.FunSuite:
       RequestFailure.ClientGone
     )
 
-  test("a statement cut by the interrupt of a cancelled request, met on the interrupted handler, is the client's going"):
-    val cut = SQLException("An I/O error occurred while sending to the backend.", SocketException("Closed by interrupt"))
+  test(
+    "a statement cut by the interrupt of a cancelled request, met on the interrupted handler, is the client's going"
+  ):
+    val cut =
+      SQLException("An I/O error occurred while sending to the backend.", SocketException("Closed by interrupt"))
     assertEquals(onInterruptedThread(RuntimeException("Error executing query", cut)), RequestFailure.ClientGone)
     assertEquals(onInterruptedThread(RuntimeException("any")), RequestFailure.ClientGone)
 
