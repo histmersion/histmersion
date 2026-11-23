@@ -377,13 +377,15 @@ export async function fullLoadView(page, baseURL, { motion = null, at = [40, 24]
   * 600 ms after the zoom's end, every frame: how many markers moved on screen (their centre > 0.5 px since the
   * previous frame) while the camera stood as on the frame before — the regroup's motion — and whether the
   * camera moved.
-  * `zoomMs`: the ask → the zoom's end (an eased zoom ~250–500 ms, a jump a frame or two); `cameraFrames`: frames
+  * `zoomMs`: the ask → the zoom's end (an eased zoom ~250–500 ms; a jump's end comes before the ask returns, after
+  * the page's own work on the zoom's end, which is long where the CPU is slow); `jumped`: the zoom ended before the
+  * ask returned, no frame between them (asked through the app; `null` for the button); `cameraFrames`: frames
   * on which the camera moved; `motionFrames`: frames after the zoom's end on which markers moved; `ghosts`:
   * the most markers flying into a bubble on one frame; `longestFrameMs`: the longest frame interval. */
 export async function motionTrace(page, zoom, { button = null } = {}) {
   const traced = page.evaluate(([z, viaButton]) => new Promise(resolve => {
     const map = window.__testMap, a0 = map.clusterAnimations();
-    const out = { cameraFrames: 0, motionFrames: 0, maxMoved: 0, ghosts: 0, longestFrameMs: 0, frames: 0 };
+    const out = { cameraFrames: 0, motionFrames: 0, maxMoved: 0, ghosts: 0, longestFrameMs: 0, frames: 0, jumped: null };
     let prev = new Map(), tPrev = performance.now(), ended = false, tEnd = 0, camPrev = '';
     const start = performance.now();
     map.once('zoomend', () => { ended = true; tEnd = performance.now(); out.zoomMs = Math.round(tEnd - start); });
@@ -412,7 +414,7 @@ export async function motionTrace(page, zoom, { button = null } = {}) {
       else resolve({ ...out, animated: map.clusterAnimations() > a0, reached: Math.round(map.getZoom() * 100) / 100 });
     };
     requestAnimationFrame(f);
-    if (!viaButton) map.setZoom(z);
+    if (!viaButton) { map.setZoom(z); out.jumped = ended; }
   }), [zoom, button]);
   if (button) await page.locator(button === 'in' ? '.maplibregl-ctrl-zoom-in' : '.maplibregl-ctrl-zoom-out').click();
   const r = await traced;
