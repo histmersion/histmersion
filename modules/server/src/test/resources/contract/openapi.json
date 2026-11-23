@@ -18045,7 +18045,7 @@
           "creator" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/Provenance"
+                "$ref" : "#/components/schemas/Creation"
               },
               {
                 "type" : "null"
@@ -21911,6 +21911,52 @@
             "items" : {
               "type" : "string"
             }
+          }
+        }
+      },
+      "Creation" : {
+        "title" : "Creation",
+        "type" : "object",
+        "required" : [
+          "kind"
+        ],
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "surface" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "plugin" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "workflow" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "agent" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Agent"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "job" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -33205,52 +33251,6 @@
           }
         }
       },
-      "Provenance" : {
-        "title" : "Provenance",
-        "type" : "object",
-        "required" : [
-          "kind"
-        ],
-        "properties" : {
-          "kind" : {
-            "type" : "string"
-          },
-          "surface" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "plugin" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "workflow" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "agent" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/Agent"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "job" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
       "ProviderCalled" : {
         "title" : "ProviderCalled",
         "type" : "object",
@@ -33961,7 +33961,7 @@
           "creator" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/Provenance"
+                "$ref" : "#/components/schemas/Creation"
               },
               {
                 "type" : "null"
@@ -38229,7 +38229,7 @@
           "creator" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/Provenance"
+                "$ref" : "#/components/schemas/Creation"
               },
               {
                 "type" : "null"

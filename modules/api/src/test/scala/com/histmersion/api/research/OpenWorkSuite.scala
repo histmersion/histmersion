@@ -8,7 +8,7 @@ import com.histmersion.util.problem.Problem
 import OpenWork.{NextStep, OpenItem, Terms, Verdict, When, Who}
 
 import java.time.Instant
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 class OpenWorkSuite extends munit.FunSuite:
   private val now = Instant.parse("2026-11-23T12:00:00Z")
@@ -18,7 +18,7 @@ class OpenWorkSuite extends munit.FunSuite:
   private val later = Terms.At("2026-11-30T10:00:00Z")
   private val noAnswer = Problem.NotFound.Entity(Problem.TypeName("Doi"), Problem.Raw("10.1/x"))
 
-  private def acquisition(v: Verdict, creator: Option[Provenance] = None): OpenItem =
+  private def acquisition(v: Verdict, creator: Option[Creation] = None): OpenItem =
     OpenItem.Acquisition(
       Queue.QueueItem.Id(1),
       Queue.QueueItem.Text("Smith 2020, A work"),
@@ -54,7 +54,7 @@ class OpenWorkSuite extends munit.FunSuite:
     Queue.QueueItem.Id(2),
     Queue.QueueItem.Text("Read the review"),
     Who.Agents,
-    Some(Provenance(Provenance.Unattributed, surface = Some(Provenance.Surface("rest")))),
+    Some(Creation(Creation.Unattributed, surface = Some(Creation.Surface("rest")))),
     None
   )
   private val run = OpenItem.PausedRun(

@@ -6,14 +6,14 @@ import com.histmersion.api.automation.Queue.*
 import com.histmersion.domain.{Creator, Scheduling}
 
 import com.histmersion.util.database.given_DbCodec_List
-import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.{Jsonb, StoredCreator}
 import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.library.Doi
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The store of the work lists (`queue_items`, migration `V009__queue.sql`): one table, every list in it by its `list`.
   * Every method runs on the connection it is given; the service ([[QueueService]], in the server) or the import that
@@ -52,7 +52,7 @@ private[worklists] object QueueRepo:
       createdBy: Option[QueueItem.CreatedBy],
       closedBy: Option[QueueItem.ClosedBy],
       creator: Jsonb.JsonText,
-      actor: Option[Provenance.Actor]
+      actor: Option[Creation.Actor]
   ) derives DbCodec:
     def item: QueueItem =
       QueueItem(
@@ -67,7 +67,7 @@ private[worklists] object QueueRepo:
         goal,
         createdBy,
         closedBy,
-        Some(Jsonb.read[Provenance](creator).getOrElse(Provenance(Provenance.Unreadable))),
+        Some(Jsonb.read[Creation](creator).getOrElse(Creation(Creation.Unreadable))),
         actor
       )
 

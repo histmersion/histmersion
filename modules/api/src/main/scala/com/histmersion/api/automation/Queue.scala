@@ -15,7 +15,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 object Queue:
 
@@ -54,8 +54,8 @@ object Queue:
       goal: Option[Goal.Slug] = None,
       createdBy: Option[QueueItem.CreatedBy] = None,
       closedBy: Option[QueueItem.ClosedBy] = None,
-      creator: Option[Provenance] = None,
-      actor: Option[Provenance.Actor] = None
+      creator: Option[Creation] = None,
+      actor: Option[Creation.Actor] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -94,8 +94,8 @@ object Queue:
       createdAt: Option[QueueAdd.CreatedAt] = None,
       goal: Option[Goal.Slug] = None,
       job: Option[SpatialHierarchyResult.Job.Id] = None,
-      createdBy: Option[Provenance.By] = None,
-      via: Option[Provenance.Via] = None
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
   ) derives StrictJson,
         KindlingsSchema,
         api.json.Schema
@@ -110,7 +110,7 @@ object Queue:
       reason: Option[Rationale] = None,
       goal: Option[Goal.Slug] = None,
       closedBy: Option[QueuePatch.ClosedBy] = None,
-      actor: Option[Provenance.Actor] = None
+      actor: Option[Creation.Actor] = None
   ) derives StrictJson,
         KindlingsSchema,
         api.json.Schema

@@ -11,7 +11,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 class QueueServiceDbSuite extends QueueServiceContract("db"):
   private val testDb = TestDb.url
@@ -61,7 +61,7 @@ class QueueServiceDbSuite extends QueueServiceContract("db"):
     connect(ds)(
       sql"""UPDATE queue_items SET creator = '{"kind": 7, "plugin": ["x"]}' WHERE id = ${item.id}""".update.run()
     ): Unit
-    assertEquals(QueueRows.get(ds, item.id).flatMap(_.creator), Some(Provenance(Provenance.Unreadable)))
+    assertEquals(QueueRows.get(ds, item.id).flatMap(_.creator), Some(Creation(Creation.Unreadable)))
     assertEquals(
       connect(ds)(sql"SELECT creator::text FROM queue_items WHERE id = ${item.id}".query[String].run().toList),
       List("""{"kind": 7, "plugin": ["x"]}"""),

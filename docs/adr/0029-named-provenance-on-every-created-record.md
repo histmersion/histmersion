@@ -46,10 +46,12 @@ Scalafix rule rather than by hand.
   without a creator, exactly as it refuses a write without a permit. The work lists' explicit `creator: Creator.New`
   parameter stays as it is (it is handed on as the given).
 - **Providers of the given** (where a creator comes from):
-  - a controller method, from what its binding passes: `Routes` → `Manual(rest)` or the request's `createdBy`;
-    `Tools` → the MCP input's `createdBy` (`Automated(…, mcp)`), refused without one where V113 refuses it
-    (`Invalid.Missing`), else `Unattributed(mcp)`; the web page's requests `via = web`; the CLI's `via = cli` with its
-    identity;
+  - a controller method takes the given too; its binding provides it. A `Routes` or `Tools` class gives its
+    endpoints `Unattributed(rest)` or `Unattributed(mcp)` (the request names no identity yet: the web page, the CLI and
+    a script all call the same REST endpoint, as ADR 0018 item 7 found for the ingest), and an endpoint whose input
+    carries `createdBy`/`via` gives what they say: `Manual(web)` for the web page, `Manual(cli)` or the CLI's
+    identity (`Automated(…, cli)`), the MCP caller's `createdBy` (`Automated(…, mcp)`, refused without one where V113
+    refuses it);
   - a run: `RunCtx.creator`, the run's workflow with the agent of the step that writes (`Code` for a code step, the
     step's model for a model step);
   - an in-process writer that is no workflow definition: its `InTreeWorkflow` case (new cases: `event-import`,
@@ -61,13 +63,18 @@ Scalafix rule rather than by hand.
 
 ### 2. The stored document and the columns
 
-- `StoredCreator` moves from the work lists to the kernel's DB instances (`util.database.CreatorColumn`, db module):
-  a `DbCodec[Creator]` writing the same jsonb document V113 writes (`kind`, `surface`, `plugin`, `workflow`,
-  `agent{kind, definition, provider, model}`, `job`), so a repository binds `$creator` and reads the column into the
-  wire record without unwrapping a name.
-- Each **record table** (below) gets `creator jsonb NOT NULL` and, where it has none, `created_at timestamptz`.
-  `created_at` of an existing row is the stored fact when one exists (`sources.added_date`, an article's first version)
-  and NULL otherwise; new rows default to `now()`. No date is invented.
+- `StoredCreator` moves from the work lists to `util.database` (db module), with its reading back (`read`: a document
+  this build cannot read is `Unknown(Unreadable(text))`). It writes the same jsonb document V113 writes (`kind`,
+  `surface`, `plugin`, `workflow`, `agent{kind, definition, provider, model}`, `job`). A repository binds
+  `${StoredCreator.column(creator)}::jsonb` (no hand-written `DbCodec`: `ContractsSuite` rule `derives`) and reads the
+  column into the wire record without unwrapping a name.
+- Each **record table** (below) gets `creator jsonb NOT NULL` and, where it has no date of its making at all,
+  `created_at timestamptz` (findings, edges, candidate watches, articles, review ledgers, assets, asset links, events,
+  places, periods). A table with one keeps it as the "when" (`sources.added_date`, `assessments.checked_at`,
+  `source_candidates.first_seen`, `event_link_candidates.computed_at`, `created_at` elsewhere). An existing row's new
+  `created_at` is NULL; new rows default to `now()`. No date is invented.
+- An edge waiting for its target (`unresolved_edges`) carries the creator of the edge, and keeps it when the edge is
+  resolved, so the edge's creator is who made the edge, not who added the source it points at.
 - V115 adds the columns with the backfill and a temporary default (`{"kind":"unknown"}`), so every slice between it
   and the create paths stays green. V116, in the slice of the architecture check, drops the default: from then on an
   INSERT that does not name `creator` fails in Postgres too.
@@ -79,7 +86,7 @@ the person may ask who made it.
 
 | area | record tables (carry `creator`) |
 |---|---|
-| library | `sources`, `findings`, `edges`, `assessments`, `source_candidates`, `candidate_watches` |
+| library | `sources`, `findings`, `edges`, `unresolved_edges`, `assessments`, `source_candidates`, `candidate_watches` |
 | research | `articles`, `article_versions`, `review_ledgers` |
 | media | `assets`, `asset_links` |
 | catalogue | `events`, `places`, `periods`, `attestations`, `corrections`, `place_overrides`, `event_link_candidates` |
@@ -90,7 +97,7 @@ Not records, each by kind (the check lists every table that main code inserts in
 
 - **part of a record**, made with it in the same create and attributed through it: `event_datings`, `event_edges`,
   `event_participants`, `place_names`, `place_links`, `place_relations`, `place_types`, `place_descriptions`,
-  `media_links`, `article_links`, `article_critique_reasons`, `source_identifiers`, `unresolved_edges`,
+  `media_links`, `article_links`, `article_critique_reasons`, `source_identifiers`,
   `finding_places`, `manager_items`, `manager_hint_uses`, `goal_focus`;
 - **derived** (rebuilt from records): `source_chunks`, `place_footprints`, `site_undated_cells`, `site_undated_build`,
   `land`, `map_changes`;
@@ -127,12 +134,13 @@ database seeded with synthetic rows of each fact, and its counts are in the slic
 
 ### 5. The wire
 
-`Queue.Creator`, `Queue.Agent`, `Queue.CreatedBy` and `Queue.Creation` move to the api root as `api.Provenance` (with
-`Provenance.Agent`, `Provenance.By` — the input — and the vocabulary on its companion), since every domain shows them;
-the work lists use them from there. The wire's name is not `Creator`, so a server file that converts between the two
-names neither by a qualifier. A record's view gains `creator: Option[Provenance]` and `createdAt` where it had none
-(a source, a finding, an edge in `neighbors`, an article, an asset, a goal, a run, an approval, an event, a place, a
-note). Markdown renders one line, "Created by …, via …, at …"; the web page shows it in the record's card. The CLI
+`Queue.Creator`, `Queue.Agent`, `Queue.CreatedBy` and `Queue.Creation` become one record of their own,
+`api.automation.Creation` (with `Creation.Agent`, `Creation.By` — the input — and the vocabulary on its companion), which
+every domain's view may show (the domains depend on automation; personal does not, so a note's and a bookmark's
+creator is stored, not shown). Its name is neither `Creator` (a server file converting between the two would need a
+qualifier) nor `Provenance` (`api.library.Provenance` is how a source's copy was acquired). A record's view gains
+`creator: Option[Creation]` and `createdAt` where it had none (a source, a finding, an edge in `neighbors`, an
+article, an asset, a goal, a run, an approval, an event, a place). Markdown renders one line, "Created by …, via …, at …"; the web page shows it in the record's card. The CLI
 sends `via = cli` and its identity (`--by-*`, `histmersion.cli.agent.*`) on every write command that creates a record;
 the MCP write tools take `createdBy`.
 
@@ -153,8 +161,8 @@ the MCP write tools take `createdBy`.
 
 | slice | mechanical (a committed rule under `tools/refactor/`) | judgement (by hand) |
 |---|---|---|
-| 1. types | — | `Creator.Automated`'s surface, `Part` surfaces, `CreatorColumn` |
-| 1b. wire move | `RelocateWireCreator` (Scalafix): `Queue.Creator/Agent/CreatedBy/Creation` → `api.Provenance…` at every use | the definitions' move into `api/Provenance.scala` |
+| 1. types | — | `Creator.Automated`'s surface, `Part` surfaces, `StoredCreator` in `util.database` with `read` and `column` |
+| 1b. wire move | `RelocateWireCreator` (Scalafix): `Queue.Creator/Agent/CreatedBy/Creation` → `api.Provenance…` at every use; then `RenameSymbols` (`rename-wire-creation.conf`): `api.Provenance` → `api.automation.Creation` | the definitions' move, twice (`api/Provenance.scala`, then `api/automation/Creation.scala`) |
 | 2. migrations | — | V115 (columns, backfill), its rehearsal |
 | 3. create paths | `CreatorRewrite` (Scalafix, after `WritePermitRewrite`): adds `creator` to each record INSERT's column list, `(using Creator.New)` to the def around it, and follows it up the call graph and across overrides (trait, `Implementation`, `InMemory`), test files getting `TestCreators.given` | each `stop` row: the controller's or worker's provider, the `InMemory` states recording it, the bundle imports' rule |
 | 4. surfaces | — | `createdBy` on the write inputs, the views, Markdown, the CLI flags, the web card |

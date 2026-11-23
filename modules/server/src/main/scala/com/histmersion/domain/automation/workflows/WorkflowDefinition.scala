@@ -16,7 +16,8 @@ trait WorkflowDefinition:
   def id: WorkflowId
   def contributor: Creator.Plugin.Name
 
-  def creator(agent: Creator.Agent): Creator.New = Creator.New.Automated(contributor, id.creatorName, agent)
+  def creator(agent: Creator.Agent): Creator.New =
+    Creator.New.Automated(contributor, id.creatorName, agent, Creator.Surface.Internal)
 
   /** A run started under another version is not resumed (its checkpoints may not line up). */
   def version: Pipeline.Version

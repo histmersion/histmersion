@@ -14,7 +14,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status
@@ -76,7 +76,8 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
       Creator.Definition.Name("article-skeptic"),
       Creator.Provider.Name("anthropic"),
       Creator.LanguageModel.Name("claude-opus-5-5")
-    )
+    ),
+    Creator.Surface.Mcp
   )
 
   private def put(q: QueueService, kind: Kind, in: QueueAdd): QueueItem = q.add(kind, in, ByPerson)
@@ -313,27 +314,28 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   ) { q =>
     val mine = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("mine")), ByPerson)
     val theirs = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("theirs")), ByWorkflow)
-    assertEquals(mine.creator, Some(Provenance(Provenance.Manual, surface = Some(Provenance.Surface("cli")))))
-    assertEquals(mine.actor, Some(Provenance.Person))
+    assertEquals(mine.creator, Some(Creation(Creation.Manual, surface = Some(Creation.Surface("cli")))))
+    assertEquals(mine.actor, Some(Creation.Person))
     assertEquals(
       theirs.creator,
       Some(
-        Provenance(
-          Provenance.Automated,
-          plugin = Some(Provenance.Plugin("research")),
-          workflow = Some(Provenance.Workflow("review-article")),
+        Creation(
+          Creation.Automated,
+          surface = Some(Creation.Surface("mcp")),
+          plugin = Some(Creation.Plugin("research")),
+          workflow = Some(Creation.Workflow("review-article")),
           agent = Some(
-            Provenance.Agent(
-              Provenance.ByModel,
-              Some(Provenance.Definition("article-skeptic")),
-              Some(Provenance.Provider("anthropic")),
-              Some(Provenance.Model("claude-opus-5-5"))
+            Creation.Agent(
+              Creation.ByModel,
+              Some(Creation.Definition("article-skeptic")),
+              Some(Creation.Provider("anthropic")),
+              Some(Creation.Model("claude-opus-5-5"))
             )
           )
         )
       )
     )
-    assertEquals(theirs.actor, Some(Provenance.Agents))
+    assertEquals(theirs.actor, Some(Creation.Agents))
     assertEquals(q.get(id(theirs)).flatMap(_.creator), theirs.creator, "read back as written")
   }
 
@@ -341,17 +343,17 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     "a task is handed to the agents and taken back; a patch without an actor keeps it, and the creator never changes"
   ) { q =>
     val t = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("hand me over")), ByPerson)
-    val handed = q.patch(id(t), QueuePatch(actor = Some(Provenance.Agents))).toOption.get
-    assertEquals(handed.actor, Some(Provenance.Agents))
+    val handed = q.patch(id(t), QueuePatch(actor = Some(Creation.Agents))).toOption.get
+    assertEquals(handed.actor, Some(Creation.Agents))
     val edited = q.patch(id(t), QueuePatch(text = Some(QueueItem.Text("edited")))).toOption.get
-    assertEquals(edited.actor, Some(Provenance.Agents))
-    val back = q.patch(id(t), QueuePatch(actor = Some(Provenance.Person))).toOption.get
-    assertEquals(back.actor, Some(Provenance.Person))
+    assertEquals(edited.actor, Some(Creation.Agents))
+    val back = q.patch(id(t), QueuePatch(actor = Some(Creation.Person))).toOption.get
+    assertEquals(back.actor, Some(Creation.Person))
     assertEquals(back.creator, t.creator)
   }
 
   qtest("an import's items are the importer's, each of them") { q =>
     val _ = importFile(q, Kind.Acquire, acquireFile)
     assert(every(q, Kind.Acquire).nonEmpty)
-    every(q, Kind.Acquire).foreach(i => assertEquals(i.creator.map(_.kind), Some(Provenance.Manual), i))
+    every(q, Kind.Acquire).foreach(i => assertEquals(i.creator.map(_.kind), Some(Creation.Manual), i))
   }

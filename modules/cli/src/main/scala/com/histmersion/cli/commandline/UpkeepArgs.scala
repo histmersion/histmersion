@@ -21,7 +21,7 @@ import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The command line of [[Ops]]. */
 object UpkeepArgs:
@@ -121,22 +121,22 @@ object UpkeepArgs:
     private val text_ = arg[String]("text")
     private val topic_ = value[String]("topic", "Group the added item under this heading")
     private val reason_ = value[String]("reason", "Why this item is on the list / what research direction it serves")
-    private val byPlugin_ = value[Provenance.Plugin](
+    private val byPlugin_ = value[Creation.Plugin](
       "by-plugin",
       "An automated caller: the plugin it runs in (else $HISTMERSION_AGENT_PLUGIN)"
     )
     private val byWorkflow_ =
-      value[Provenance.Workflow](
+      value[Creation.Workflow](
         "by-workflow",
         "An automated caller: its workflow (else $HISTMERSION_AGENT_WORKFLOW)"
       )
-    private val byAgent_ = value[Provenance.Definition](
+    private val byAgent_ = value[Creation.Definition](
       "by-agent",
       "The agent's definition, with --by-provider and --by-model (else $HISTMERSION_AGENT_DEFINITION)"
     )
     private val byProvider_ =
-      value[Provenance.Provider]("by-provider", "The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)")
-    private val byModel_ = value[Provenance.Model]("by-model", "The agent's model (else $HISTMERSION_AGENT_MODEL)")
+      value[Creation.Provider]("by-provider", "The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)")
+    private val byModel_ = value[Creation.Model]("by-model", "The agent's model (else $HISTMERSION_AGENT_MODEL)")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] =
@@ -224,7 +224,7 @@ object UpkeepArgs:
 
   final private class LeafPatch() extends Leaf(QueueParent, "patch", "Change who acts on an item"):
     private val id_ = arg[Queue.Id]("id")
-    private val actor_ = value[Provenance.Actor]("actor", "Who does the task: person | agents")
+    private val actor_ = value[Creation.Actor]("actor", "Who does the task: person | agents")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Patch(id_(), actor_.toOption, json_()))

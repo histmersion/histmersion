@@ -17,7 +17,7 @@ import com.histmersion.util.console.Console
 import com.histmersion.api.Api
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
@@ -42,7 +42,7 @@ object Ops:
     )
     case Done(id: Queue.Id, json: Cli.JsonOutput)
     case Edit(id: Queue.Id, text: Queue.QueueItem.Text, json: Cli.JsonOutput)
-    case Patch(id: Queue.Id, actor: Option[Provenance.Actor], json: Cli.JsonOutput)
+    case Patch(id: Queue.Id, actor: Option[Creation.Actor], json: Cli.JsonOutput)
     case Rm(id: Queue.Id, json: Cli.JsonOutput)
     case Export(dir: String)
     case Import(dir: String)
@@ -197,7 +197,7 @@ object Ops:
           val createdBy = by.orElse(AgentIdentity.configured(Settings.app.cli.agent)).createdBy
           c.queueAdd(
             list,
-            QueueAdd(text, topic, reason = reason, createdBy = createdBy, via = Some(Provenance.Cli))
+            QueueAdd(text, topic, reason = reason, createdBy = createdBy, via = Some(Creation.Cli))
           ).map(i =>
             Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
           )

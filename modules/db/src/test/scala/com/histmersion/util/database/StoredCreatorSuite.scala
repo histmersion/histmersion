@@ -1,14 +1,12 @@
 package com.histmersion
-package domain.automation.worklists
+package util.database
 
-import com.histmersion.api.automation.Queue
 import com.histmersion.domain.Creator
-import com.histmersion.util.database.Jsonb
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 class StoredCreatorSuite extends munit.FunSuite:
 
-  private def shown(creator: Creator): Option[Provenance] = Jsonb.read[Provenance](StoredCreator.write(creator))
+  private def shown(creator: Creator): Option[Creation] = Jsonb.read[Creation](StoredCreator.write(creator))
 
   private val skeptic = Creator.Agent.Model(
     Creator.Definition.Name("article-skeptic"),
@@ -16,57 +14,65 @@ class StoredCreatorSuite extends munit.FunSuite:
     Creator.LanguageModel.Name("claude-opus-5-5")
   )
 
-  test("a person's item shows the surface it came through"):
-    assertEquals(
-      shown(Creator.Manual(Creator.Surface.Cli)),
-      Some(Provenance(Provenance.Manual, surface = Some(Provenance.Surface("cli"))))
+  private val reviewer =
+    Creator.New.Automated(
+      Creator.Plugin.Name("research"),
+      Creator.Workflow.Name("review-article"),
+      skeptic,
+      Creator.Surface.Mcp
     )
-    Creator.Surface.values.foreach(s => assert(shown(Creator.Manual(s)).flatMap(_.surface).isDefined, s.toString))
 
-  test("a workflow's item shows its plugin, workflow and agent: the model's three names, or code"):
+  test("a person's record shows the surface it came through"):
     assertEquals(
-      shown(
-        Creator.New.Automated(Creator.Plugin.Name("research"), Creator.Workflow.Name("review-article"), skeptic).stored
-      ),
+      shown(Creator.New.Manual(Creator.Surface.Cli).stored),
+      Some(Creation(Creation.Manual, surface = Some(Creation.Surface("cli"))))
+    )
+    Creator.Surface.values.foreach(s =>
+      assert(shown(Creator.New.Manual(s).stored).flatMap(_.surface).isDefined, s.toString)
+    )
+
+  test("a workflow's record shows its plugin, workflow, agent (the model's three names, or code) and surface"):
+    assertEquals(
+      shown(reviewer.stored),
       Some(
-        Provenance(
-          Provenance.Automated,
-          plugin = Some(Provenance.Plugin("research")),
-          workflow = Some(Provenance.Workflow("review-article")),
+        Creation(
+          Creation.Automated,
+          surface = Some(Creation.Surface("mcp")),
+          plugin = Some(Creation.Plugin("research")),
+          workflow = Some(Creation.Workflow("review-article")),
           agent = Some(
-            Provenance.Agent(
-              Provenance.ByModel,
-              Some(Provenance.Definition("article-skeptic")),
-              Some(Provenance.Provider("anthropic")),
-              Some(Provenance.Model("claude-opus-5-5"))
+            Creation.Agent(
+              Creation.ByModel,
+              Some(Creation.Definition("article-skeptic")),
+              Some(Creation.Provider("anthropic")),
+              Some(Creation.Model("claude-opus-5-5"))
             )
           )
         )
       )
     )
-    assertEquals(
-      shown(Creator.code(Creator.Plugin.Name("library"), Creator.Workflow.Name("seed")).stored).flatMap(_.agent),
-      Some(Provenance.Agent(Provenance.Code))
-    )
+    val code = shown(Creator.code(Creator.Plugin.Name("library"), Creator.Workflow.Name("seed")).stored)
+    assertEquals(code.flatMap(_.agent), Some(Creation.Agent(Creation.Code)))
+    assertEquals(code.flatMap(_.surface), Some(Creation.Surface("internal")))
 
-  test("what the migration writes shows as it stands: a known workflow alone, or nothing but the job"):
+  test("what the migrations write shows as it stands: a known workflow alone, or nothing but the job"):
     assertEquals(
-      Jsonb.read[Provenance](Jsonb.JsonText("""{"kind": "automated", "workflow": "review-article"}""")),
-      Some(Provenance(Provenance.Automated, workflow = Some(Provenance.Workflow("review-article"))))
+      Jsonb.read[Creation](Jsonb.JsonText("""{"kind": "automated", "workflow": "review-article"}""")),
+      Some(Creation(Creation.Automated, workflow = Some(Creation.Workflow("review-article"))))
     )
     assertEquals(
-      Jsonb.read[Provenance](Jsonb.JsonText("""{"job": "zz-missing-job", "kind": "unknown"}""")),
-      Some(Provenance(Provenance.Unknown, job = Some(Provenance.Job("zz-missing-job"))))
+      Jsonb.read[Creation](Jsonb.JsonText("""{"job": "zz-missing-job", "kind": "unknown"}""")),
+      Some(Creation(Creation.Unknown, job = Some(Creation.Job("zz-missing-job"))))
     )
     assertEquals(
       shown(Creator.Unknown(Creator.Facts.Unrecorded(Some(Creator.Facts.Job("zz-missing-job"))))),
-      Some(Provenance(Provenance.Unknown, job = Some(Provenance.Job("zz-missing-job"))))
+      Some(Creation(Creation.Unknown, job = Some(Creation.Job("zz-missing-job"))))
     )
 
-  test("an item from a surface that cannot carry identity yet shows as unattributed, with its surface"):
+  test("a record from a surface that cannot carry identity yet shows as unattributed, with its surface"):
     assertEquals(
       shown(Creator.New.Unattributed(Creator.Surface.Mcp).stored),
-      Some(Provenance(Provenance.Unattributed, surface = Some(Provenance.Surface("mcp"))))
+      Some(Creation(Creation.Unattributed, surface = Some(Creation.Surface("mcp"))))
     )
     assertEquals(StoredCreator.actor(Creator.New.Unattributed(Creator.Surface.Rest)), "person")
 
@@ -75,4 +81,13 @@ class StoredCreatorSuite extends munit.FunSuite:
     assertEquals(
       StoredCreator.actor(Creator.code(Creator.Plugin.Name("engine"), Creator.Workflow.Name("drain"))),
       "agents"
+    )
+
+  test("a record whose creator was not recorded shows as unknown, and a new one's column is its stored creator"):
+    assertEquals(shown(Creator.unrecorded), Some(Creation(Creation.Unknown)))
+    assertEquals(StoredCreator.column(reviewer), StoredCreator.write(reviewer.stored))
+    assertEquals(
+      Jsonb.read[Creation](Jsonb.JsonText("""{"kind": "manual"}""")),
+      Some(Creation(Creation.Manual)),
+      "a backfilled person's record: the surface unknown"
     )

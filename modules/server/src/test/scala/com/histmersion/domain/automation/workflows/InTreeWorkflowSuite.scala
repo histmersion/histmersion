@@ -9,7 +9,8 @@ class InTreeWorkflowSuite extends munit.FunSuite:
   test("every in-tree process is a model-free workflow of the engine or the library, each named once"):
     val creators = InTreeWorkflow.values.toList.map(_.creator)
     creators.foreach {
-      case Creator.New.Automated(plugin, _, agent) =>
+      case Creator.New.Automated(plugin, _, agent, surface) =>
+        assertEquals(surface, Creator.Surface.Internal)
         assert(Set("engine", "library").contains(s"$plugin"), s"$plugin")
         assertEquals(agent, Creator.Agent.Code)
       case other => fail("not automated: " + other.toString)

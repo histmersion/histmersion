@@ -10,7 +10,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The work lists' controllers over the in-memory kernel: the list parsed from its word, the inputs checked, a log item
   * dated by the clock it is given.
@@ -87,18 +87,18 @@ class WorkListControllersSuite extends munit.FunSuite:
     val c = controllers()
     val byCli = c.addOverRest(
       WorkListControllers.ListName("tasks"),
-      QueueAdd(Queue.QueueItem.Text("from the cli"), via = Some(Provenance.Cli))
+      QueueAdd(Queue.QueueItem.Text("from the cli"), via = Some(Creation.Cli))
     )
     assertEquals(byCli.map(i => (i.creator.flatMap(_.surface), i.actor)), Right((Some("cli"), Some("person"))))
     val byWeb = c.addOverRest(
       WorkListControllers.ListName("tasks"),
-      QueueAdd(Queue.QueueItem.Text("web"), via = Some(Provenance.Web))
+      QueueAdd(Queue.QueueItem.Text("web"), via = Some(Creation.Web))
     )
     assertEquals(byWeb.map(_.creator.flatMap(_.surface)), Right(Some("web")))
     val plain = c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("plain")))
     assertEquals(plain.map(_.creator.flatMap(_.surface)), Right(Some("rest")))
     assert(c.addOverMcp(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("anonymous"))).isLeft)
-    val named = Provenance.By(Some(Provenance.Plugin("research")), Some(Provenance.Workflow("trailhead")))
+    val named = Creation.By(Some(Creation.Plugin("research")), Some(Creation.Workflow("trailhead")))
     val byAgent = c.addOverMcp(
       WorkListControllers.ListName("tasks"),
       QueueAdd(Queue.QueueItem.Text("from an agent"), createdBy = Some(named))
@@ -107,7 +107,7 @@ class WorkListControllersSuite extends munit.FunSuite:
       byAgent.map(i => (i.creator.flatMap(_.workflow), i.creator.flatMap(_.agent).map(_.kind), i.actor)),
       Right((Some("trailhead"), Some("code"), Some("agents")))
     )
-    val partial = Provenance.By(Some(Provenance.Plugin("research")), None)
+    val partial = Creation.By(Some(Creation.Plugin("research")), None)
     assert(
       c.addOverRest(
         WorkListControllers.ListName("tasks"),
@@ -116,10 +116,10 @@ class WorkListControllersSuite extends munit.FunSuite:
     )
     val added = plain.toOption.get
     assert(
-      c.patch(QueueItemId(7), QueuePatch(actor = Some(Provenance.Actor("robot")))).left.exists(_.code.isEmpty),
+      c.patch(QueueItemId(7), QueuePatch(actor = Some(Creation.Actor("robot")))).left.exists(_.code.isEmpty),
       "an actor that is neither is refused before the item is looked up"
     )
-    assertEquals(added.actor, Some(Provenance.Person))
+    assertEquals(added.actor, Some(Creation.Person))
 
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()
