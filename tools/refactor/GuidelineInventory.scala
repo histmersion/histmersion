@@ -93,7 +93,7 @@ object GuidelineInventory {
     "G3misplaced" -> "HEURISTIC: a def in a standalone object (no class/trait/enum/type of that name beside it) whose first explicit parameter has a project type",
     "G9prefix" -> "type `<Entity><Property>` while a top-level (or same-owner) type `<Entity>` exists in the same module",
     "G9prefixRole" -> "as G9prefix, but the suffix is a role word (Suite, Repo, Service, Row, Markdown, ...); a test-scope type named as a test suite (…Suite, …Spec, …Test, …Tests) is none: it is named for its subject",
-    "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"...\")` / `X(f\"...\")` whose every splice is a literal (nothing to validate). An interpolation that splices anything else is built from that value and counts as it would (decision 2026-11-15: `X(s\"$y\")` is `X(y)`): a newtype or plain value spliced is a construction (`;interpolation`), a `.value` spliced is the unwrap alone (as `X(y.value)`); a refined newtype built from any interpolation is one",
+    "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"...\")` / `X(f\"...\")` whose every splice is a literal (nothing to validate). An interpolation that splices anything else is built from that value and counts as it would (decision 2026-11-15: `X(s\"$y\")` is `X(y)`): a newtype or plain value spliced is a construction (`;interpolation`), a `.value` spliced is the unwrap alone (as `X(y.value)`); a refined newtype built from any interpolation is one. In test scope (owner 2026-11-19, decision 4) a construction through any door whose every argument is a constant as Iron's compile-time `apply` reads one (a literal, an s\"\"/f\"\" of literals, `+` of constants, a val or parameterless def of constant type) is no finding: a fixture built from constants",
     "G44conversion" -> "the same inside a *Controller(s)/*Routes file where the value feeds a domain newtype constructor/parse directly, or the construction itself",
     "G44plaindef" -> "a public def with a String/Int/Long/Double/Boolean parameter that some call site feeds with `.value` of a newtype (reported at the def)",
     "G45boundary" -> "hand `.value` inside a boundaries.tsv file (G45: lift type classes instead); building a newtype from outside data there is the boundary's job, policed by G68, and no finding (owner 2026-11-19)",
@@ -366,6 +366,19 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
       case _ => false
     })
 
+    def constantValue(sym: Symbol): Boolean = info(sym).map(_.signature).exists {
+      case v: s.ValueSignature => v.tpe.isInstanceOf[s.ConstantType]
+      case m: s.MethodSignature => m.parameterLists.isEmpty && m.returnType.isInstanceOf[s.ConstantType]
+      case _ => false
+    }
+    def ironConstant(t: Term): Boolean = isLiteral(t) || isLiteralInterpolation(t) || (t match {
+      case i: Term.ApplyInfix => i.op.value == "+" && i.argClause.values.size == 1 && ironConstant(i.lhs) && ironConstant(i.argClause.values.head)
+      case Term.Block(List(only: Term)) => ironConstant(only)
+      case n: Term.Name => constantValue(n.symbol)
+      case sel: Term.Select => constantValue(sel.name.symbol)
+      case _ => false
+    })
+
     // a `.value` handed in, directly (`X(y.value)`) or spliced (`X(s"${y.value}")`): the unwrap is the finding
     def isBridge(t: Term): Boolean = t match {
       case s: Term.Select => isIronValue(s.name)
@@ -464,7 +477,8 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
         // there is no validation to bypass; one that splices a value is built from it (decision 2026-11-15)
         val unconstrained = newtypeParents(obj).exists(_._3.value == pure)
         val literal = how == "apply" && args.nonEmpty && args.forall(arg => isLiteral(arg) || (unconstrained && isLiteralInterpolation(arg)))
-        if (!bridged && !literal && !allowedInCompanion(a, Some(obj))) {
+        val testConstant = scope == "test" && args.nonEmpty && args.forall(ironConstant)
+        if (!bridged && !literal && !testConstant && !allowedInCompanion(a, Some(obj))) {
           // `interpolation`: the findings the 2026-11-15 decision added (a Pure newtype built from a spliced string)
           // `:newtype` when a spliced value is itself a newtype (`Raw(s"$x")`), the case Raw.of and the other `of` helpers cover
           val spliced = args.collect { case i: Term.Interpolate => i.args.map { case Term.Block(List(only: Term)) => only; case t => t } }.flatten
