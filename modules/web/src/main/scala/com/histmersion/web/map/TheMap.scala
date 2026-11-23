@@ -51,7 +51,8 @@ object TheMap:
       .map((_, first) => MarkerCanvas(surface.overlayRoot, first, surface.container))
     els.foreach { (p, el) =>
       val drawing = canvas.filter(_ => pointPane(p))
-      panes(p.name) = MarkerPane(el, surface, drawing.fold(el)(_.proxies), m => drawing.foreach(_.prepare(m)))
+      panes(p.name) =
+        MarkerPane(el, surface, drawing.fold(el)(_.group(s"${p.cssClass}")), m => drawing.foreach(_.prepare(m)))
     }
     surface.on(MapEventKind.Move)(_ => reposition())
     surface.on(MapEventKind.Resize) { _ =>

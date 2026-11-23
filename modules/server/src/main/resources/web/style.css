@@ -526,8 +526,11 @@ header h1 .wiki-link:hover, header h1 .nav-link:hover { text-decoration:underlin
 .is-over-marker, .is-over-marker .maplibregl-canvas-container.maplibregl-interactive { cursor:pointer; }
 .hd-marker-proxies { position:absolute; left:0; top:0; width:0; height:0; overflow:visible; pointer-events:none; contain:layout style; }
 .hd-marker-proxies > .hd-marker { transform:translate(-9999px, -9999px); pointer-events:none; }
-.hd-marker-list { left:-10000px; content-visibility:auto; contain-intrinsic-size:auto 1px; }
-.hd-marker-list > .hd-marker { transform:translate(var(--ax, -9999px), var(--ay, -9999px)); }
+.hd-marker-list { left:-10000px; }
+.hd-marker-group > .hd-marker:not(:focus-within) { clip-path:inset(50%); }
+.hd-marker-group > .hd-marker:not(:focus-within):not([data-measure]) [aria-label],
+.hd-marker-group > .hd-marker[aria-label]:not(:focus-within):not([data-measure]) { content-visibility:hidden; }
+.hd-marker-group > .hd-marker { transform:translate(var(--ax, -9999px), var(--ay, -9999px)); }
 .hd-marker-proxies .hd-marker, .hd-marker-proxies .hd-marker *, .hd-marker-proxies .hd-marker *::before {
   animation:none !important; transition:none !important; }
 /* ── cluster / coincident-dot picker ─────────────────────────────────────────────────────────── */

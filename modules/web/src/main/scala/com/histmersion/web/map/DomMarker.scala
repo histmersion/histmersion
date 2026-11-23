@@ -64,6 +64,7 @@ final class DomMarker(
     if out != hidden then
       hidden = out
       if painted then el.classList.toggle("is-offscreen", out)
+      else el.asInstanceOf[js.Dynamic].inert = out
     if !out then
       val rx = math.round(p.x.value).toDouble
       val ry = math.round(p.y.value).toDouble

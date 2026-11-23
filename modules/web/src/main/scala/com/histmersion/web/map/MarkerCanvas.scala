@@ -17,6 +17,41 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
   root.appendChild(proxies)
   root.appendChild(studio)
 
+  def group(pane: String): dom.HTMLElement =
+    val g = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
+    g.className = "hd-marker-group"
+    g.setAttribute("data-pane", pane)
+    proxies.appendChild(g)
+    g
+
+  private var focused: DomMarker = null
+
+  private def markerOf(t: dom.EventTarget): Option[DomMarker] =
+    Option(t)
+      .collect { case e: dom.Element => e }
+      .flatMap(e => Option(e.closest(".hd-marker")))
+      .flatMap(e =>
+        Option(e.asInstanceOf[js.Dynamic].hdMarker).filterNot(js.isUndefined).map(_.asInstanceOf[DomMarker])
+      )
+
+  proxies.addEventListener(
+    "focusin",
+    (e: dom.FocusEvent) =>
+      markerOf(e.target).foreach { m =>
+        focused = m
+        anchor(m)
+      },
+    true
+  )
+  proxies.addEventListener(
+    "focusout",
+    (e: dom.FocusEvent) =>
+      markerOf(e.target).foreach { m =>
+        if focused eq m then focused = null
+        if m ne hovered then unanchor(m)
+      }
+  )
+
   private val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
   private val looks = mutable.HashMap.empty[String, Option[MarkerLook]]
   private val templates = mutable.HashMap.empty[String, Option[MarkerLook]]
@@ -167,6 +202,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       }
     }
     if animating then schedule()
+    if (focused ne null) && (focused.el.parentNode ne null) then anchor(focused)
 
   private def motionOf(d: js.Dynamic, now: Double, still: Boolean): MarkerMotion.Motion =
     MarkerMotion.motion(
@@ -233,7 +269,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     val now = next.orNull
     if now ne hovered then
       Option(hovered).flatMap(m => Option(m.handlers)).foreach(_.out(e))
-      Option(hovered).foreach(unanchor)
+      Option(hovered).filter(_ ne focused).foreach(unanchor)
       next.foreach(anchor)
       hovered = now
       frame.classList.toggle("is-over-marker", now ne null)
