@@ -3,8 +3,10 @@ package util.database
 
 import com.augustnagro.magnum.{connect as connectTo, transact as transactOn, DbCon}
 import com.histmersion.util.database.Transactor.{onConnection, TimeoutMs}
+import java.util.concurrent.{CompletableFuture, ExecutionException, Executor}
 import javax.sql.DataSource
 import scala.annotation.nowarn
+import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The database's entry points, split by what they may do. A read needs nothing; a write needs a [[WritePermit]], so
@@ -39,6 +41,18 @@ trait Transactor:
   def readOnlyRollback[A](timeoutMs: TimeoutMs)(work: DbCon ?=> A): A =
     read(onConnection.readOnlyRollback(timeoutMs)(work))
 
+  def readToCompletion[A](work: DbCon ?=> A): A =
+    read {
+      val con = summon[DbCon]
+      val running = CompletableFuture.supplyAsync(() => work(using con), Transactor.OwnThread)
+      try running.get()
+      catch
+        case interrupted: InterruptedException =>
+          val _ = Try(running.join())
+          throw interrupted
+        case failed: ExecutionException => throw failed.getCause
+    }
+
   /** One committed transaction, with no permit asked: only [[write]] reaches it. */
   protected def transact[A](work: DbCon ?=> A): A
 
@@ -47,6 +61,9 @@ object Transactor:
   object TimeoutMs extends Newtype[Int, Pure]
 
   def apply(dataSource: DataSource): Transactor = Implementation(dataSource)
+
+  private val OwnThread: Executor = task =>
+    val _ = Thread.ofVirtual().start(task)
   def onConnection(using con: DbCon): Session = new Session(con)
 
   final class Session private[Transactor] (con: DbCon):

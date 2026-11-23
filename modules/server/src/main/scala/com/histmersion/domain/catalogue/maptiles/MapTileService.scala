@@ -95,8 +95,8 @@ final class MapTileService(
 
   /** The groups' versions, their change rows folded first where they have grown many. */
   private def currentVersions(): Map[TileRepo.GroupName, UndatedBuild.Version] =
-    db.read(TileRepo.changeRows).foreach((g, n) => if n.value > CompactAbove then compact(g))
-    db.read(TileRepo.versions)
+    db.readToCompletion(TileRepo.changeRows).foreach((g, n) => if n.value > CompactAbove then compact(g))
+    db.readToCompletion(TileRepo.versions)
 
   /** Fold group `g`'s change rows: an upkeep a tile read triggers, so a tile stays a read while a restore runs — then
     * it is skipped (the versions read the same either way) and a later tile read folds them.
@@ -120,10 +120,10 @@ final class MapTileService(
       siteType: Option[TileRepo.SiteType]
   ): List[TileCell] =
     val dated = TileRepo.datedSites(c, window, siteType, modernFrom())
-    val datedCounts = db.read(TileRepo.gridCells(dated, c, grid))
+    val datedCounts = db.readToCompletion(TileRepo.gridCells(dated, c, grid))
     val undatedCounts = undatedSites.counted(c, grid, siteType)
     if UndatedCells.total(datedCounts, undatedCounts).value <= grid.pointsAt(c).value then
-      val datedItems = db.read(TileRepo.items(dated, c))
+      val datedItems = db.readToCompletion(TileRepo.items(dated, c))
       val shownByFindings = datedItems.filter(_.undated.value > 0).map(cell => TileRepo.SiteId(cell.key.value))
       datedItems.map(_.modify(_.undated).setTo(TileCell.Undated(0))) ++ undatedSites.items(c, siteType, shownByFindings)
     else UndatedCells.merge(c.z, datedCounts, undatedCounts)
@@ -136,8 +136,9 @@ final class MapTileService(
         val siteType = q.siteType.map(t => TileRepo.SiteType(t.value))
         val cells =
           if q.withUndated then sitesWithUndated(c, grid, w, siteType)
-          else db.read(TileRepo.siteCells(c, grid, w, siteType, modernFrom()))
-        val records = db.read(TileRepo.sitesOf(cells.filter(_.isItem).map(cell => TileRepo.SiteId(cell.key.value))))
+          else db.readToCompletion(TileRepo.siteCells(c, grid, w, siteType, modernFrom()))
+        val records =
+          db.readToCompletion(TileRepo.sitesOf(cells.filter(_.isItem).map(cell => TileRepo.SiteId(cell.key.value))))
         TileFeatures.of(c.z, cells, key => records.get(TileRepo.SiteId(key.value)), TileFeatures.site)
       case TileLayer.Events =>
         val f = q.filter
@@ -160,15 +161,15 @@ final class MapTileService(
         ).sql(related)
         val cells: List[TileCell] = place.fold(List.empty[TileCell]) { p =>
           if q.withUndated then
-            db.read(
+            db.readToCompletion(
               TileRepo.eventCellsWithUndated(c, grid, where(f, p), where(f.modify(_.period).setTo(None), p))
             )
-          else db.read(TileRepo.eventCells(c, grid, where(f, p)))
+          else db.readToCompletion(TileRepo.eventCells(c, grid, where(f, p)))
         }
         val records = events.geoOf(cells.filter(_.isItem).map(cell => Event.Id.assume(cell.key.value)))
         TileFeatures.of(c.z, cells, key => records.get(Event.Id.assume(key.value)), TileFeatures.event)
       case TileLayer.Media =>
-        val cells = db.read(
+        val cells = db.readToCompletion(
           TileRepo.cells(
             media.candidates(
               q,

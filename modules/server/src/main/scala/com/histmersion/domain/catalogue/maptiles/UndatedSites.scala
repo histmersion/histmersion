@@ -39,11 +39,11 @@ object UndatedSites:
       val perSide = perSideOf(grid)
       val wanted = keptZoom()
       val fresh = c.z.value <= wanted.value && keptAnswer(perSide, wanted)
-      db.read:
+      db.readToCompletion:
         if fresh then UndatedSiteRepo.kept(c, perSide, siteType) else UndatedSiteRepo.counted(c, grid, siteType)
 
     def items(c: TileCoord, siteType: Option[TileRepo.SiteType], except: List[TileRepo.SiteId]): List[TileCell] =
-      db.read(UndatedSiteRepo.items(c, siteType, except))
+      db.readToCompletion(UndatedSiteRepo.items(c, siteType, except))
 
     /** Do the kept counts answer for every write so far? When not, their rebuild is started. */
     private def keptAnswer(perSide: UndatedBuild.PerSide, wanted: UndatedBuild.MaxZoom): Boolean =
