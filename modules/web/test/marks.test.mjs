@@ -161,8 +161,10 @@ test('bookmarks: an item from a result row and from the reading pane, listed in 
     assert.equal(saved.length, 1);
     assert.deepEqual([saved[0].target.kind, saved[0].target.id], ['source', 'zz_src_0']);
     // clicking again takes it away
+    const removed = written(page, '/api/bookmarks');
     await first.locator('.row-bookmark').click();
-    await page.waitForFunction(async () => (await (await fetch('/api/bookmarks')).json()).length === 0);
+    assert.ok((await removed).ok(), 'the bookmark is taken away');
+    assert.equal((await api(page, '/api/bookmarks')).length, 0);
   });
   await withPage(desk, async page => {
     await page.locator('.lib-row').nth(3).click();
@@ -356,8 +358,10 @@ test('the context menu: a right click and Shift+F10 on a row, the "⋯" button i
     assert.equal(await page.evaluate(() => document.activeElement.classList.contains('hit-source')), true, 'the focus is back on the row');
     // Bookmark from the menu
     await row.click({ button: 'right' });
+    const added = written(page, '/api/bookmarks');
     await menu.locator('[role^=menuitem]', { hasText: 'Bookmark' }).click();
-    await page.waitForFunction(async () => (await (await fetch('/api/bookmarks')).json()).length === 1);
+    assert.ok((await added).ok(), 'the bookmark is saved');
+    assert.equal((await api(page, '/api/bookmarks')).length, 1);
   }, { permissions: ['clipboard-read', 'clipboard-write'] });
   await withPage(desk, async page => {
     await page.locator('.lib-row').first().click();
@@ -448,6 +452,9 @@ async function settingValue(page, key) {
   }, key);
 }
 
+const written = (page, path) =>
+  page.waitForResponse(r => new URL(r.url()).pathname.startsWith(path) && r.request().method() !== 'GET');
+
 async function unset(page, keys) {
   // a change the page itself made a moment ago may still move the file's version: read it again on a 409
   const answer = await page.evaluate(async ks => {
@@ -473,20 +480,18 @@ test('start the map here and start the timeline at its years: written to the set
       await page.locator('#map canvas.maplibregl-canvas').focus();
       const centre = await page.evaluate(() => window.__testMap.getCenter());
       await page.keyboard.press('Shift+F10');
+      const startSaved = written(page, '/api/settings');
       await page.locator('.context-menu [role^=menuitem]', { hasText: 'Start the map here' }).click();
-      await page.waitForFunction(async () => {
-        const p = await (await fetch('/api/settings?prefix=ui.map-start')).json();
-        return p.sections.flatMap(s => s.fields).find(f => f.key === 'histmersion.ui.map-start.mode')?.value === '"place"';
-      });
+      assert.equal((await startSaved).status(), 200, 'the start is saved');
+      assert.equal(await settingValue(page, 'ui.map-start.mode'), '"place"');
       const lat = await settingValue(page, 'ui.map-start.lat');
       assert.ok(Math.abs(Number(lat) - centre.lat) < 0.01, `the map's centre (${centre.lat}) is where it starts: ${lat}`);
       await page.locator('.tl-menu-btn').click();
       const label = await page.locator('.tl-span-label').innerText();
+      const timeSaved = written(page, '/api/settings');
       await page.locator('.context-menu [role^=menuitem]', { hasText: 'Start the timeline at' }).click();
-      await page.waitForFunction(async () => {
-        const p = await (await fetch('/api/settings?prefix=ui.time')).json();
-        return p.sections.flatMap(s => s.fields).some(f => f.key === 'histmersion.ui.time.default-from' && f.value != null);
-      });
+      assert.equal((await timeSaved).status(), 200, 'the timeline\'s start is saved');
+      assert.notEqual(await settingValue(page, 'ui.time.default-from'), null, 'the timeline starts at its years');
       assert.ok(label.length > 0);
     } finally {
       await unset(page, keys);
