@@ -1,8 +1,0 @@
-PASS
-input and expected compile
-exact expected rewrite
-negative check: 2 diagnostics, exit 1
-rewritten output compiles and runs
-positive check: 0 diagnostics
-idempotent second application
-nested automatic derivation and all schema constructor fields preserved

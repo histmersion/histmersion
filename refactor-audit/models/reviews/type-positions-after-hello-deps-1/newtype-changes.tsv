@@ -1,3 +1,0 @@
-definition	status	previous-index
-modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsFetcher.scala::com.histmersion.fixtures.hellodeps.HelloDepsFetcher.Greeting#0	removed-newtype-shape-unverified	refactor-audit/models/reviews/type-positions-after-overloads-2
-modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala::com.histmersion.fixtures.hellodeps.HelloDepsPlugin.RegisterResultPart1#0	removed-newtype-shape-unverified	refactor-audit/models/reviews/type-positions-after-overloads-2

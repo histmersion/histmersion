@@ -1,4 +1,0 @@
-PASS: all 27 applied files reconciled against the frozen preview
-Only three post-preview changes: whitespace-only Subprocess; capture error boundary; anonymous test context capability wiring.
-Test assertions and every unrelated AST remain unchanged.
-build-sha256=43821e2afcddf6f91819958f96704b842fc00e128f98eaef33a6acd356514538

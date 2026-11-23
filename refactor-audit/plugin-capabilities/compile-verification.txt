@@ -1,4 +1,0 @@
-PASS: sbt compile Test/compile with -Xsemanticdb and scalafmtOnCompile disabled
-Application and test definitions/callers compile in their real module classpaths.
-plugin-vaults adds plugin-host only in Test; its production dependency remains plugin-api.
-27 applied application files match the frozen preview.

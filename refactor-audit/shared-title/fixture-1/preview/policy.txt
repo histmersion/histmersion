@@ -1,1 +1,0 @@
-List(Move(refactor-audit/shared-title/fixture-1/work/src/main/scala/Title.scala,refactor-audit/shared-title/fixture-1/work/src/main/scala/kernel/Title.scala,relocation.library,relocation.kernel,List(Title),Map(relocation/library/Title$package.Title# -> Title, relocation/library/Title$package.Title. -> Title)))

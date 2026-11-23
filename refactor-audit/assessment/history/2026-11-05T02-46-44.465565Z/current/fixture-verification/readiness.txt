@@ -1,8 +1,0 @@
-ready=false
-uncovered-goals=G1,G2,G3,G4,G5,G6,G7,G8,G9,G11,G12,G13,G14,G15,G16,G17,G18,G19,G20,G21,G22,G23,G24,G25,G26,G27,G28,G29,G30,G31,G32,G33,G34,G35,G36,G37,G38,G39,G40,G41,G42,G43
-missing-files=0
-missing-fixtures=0
-assertion-failures=0
-unchecked-examples=0
-changed-during-scan=0
-readiness concerns detector coverage, not whether migration violations are zero

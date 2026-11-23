@@ -1,8 +1,0 @@
-sbt
---server
--batch
-set every scalafmtOnCompile := false
-set ThisBuild / scalacOptions += "-Xsemanticdb"
-core/compile
-core/Test/compile
-core/testOnly *BrowserDownloadSuite *EnrichSourceSuite *AcquisitionSweepRulesSuite *CandidateDedupeSuite *JobControlRulesSuite *EventLinksSuite

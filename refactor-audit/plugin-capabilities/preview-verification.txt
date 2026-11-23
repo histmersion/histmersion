@@ -1,3 +1,0 @@
-PASS
-Combined preview definitions and callers, including tests, compile against evaluated server test classpath.
-Module-local dependency validation is still required; combined compilation does not prove module isolation.

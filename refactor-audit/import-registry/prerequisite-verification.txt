@@ -1,7 +1,0 @@
-PASS
-39 identical test identities: 10 failures before, 39 passes after, no skips.
-All applied files match their frozen AST preview chain; expected assertEquals arguments are unchanged.
-This is a prerequisite regression repair, not an import-registry isolation repair or detector-quality sample.
-modules/db/src/test/scala/com/histmersion/db/BundleSuite.scala	78
-modules/db/src/test/scala/com/histmersion/db/MergeExtrasDbSuite.scala	70
-modules/db/src/test/scala/com/histmersion/db/MergeSuite.scala	82

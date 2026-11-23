@@ -1,9 +1,0 @@
-REGRESSION
-reviewed-production=11
-reviewed-tests=0
-verified-fixed=8
-outstanding=3
-unresolved=0
-reopened=1
-sources=78db33f2f08af46ffb64b28baf76f907859717a9c961cf8a0a85587a4411a7e6
-Scope: original eleven reviewed pagination findings only; no whole-model regression or 90% claim. Container-level unresolved evidence remains in the full inventory.

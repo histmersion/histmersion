@@ -1,2 +1,0 @@
-path	before-sha256	after-sha256
-modules/cli/src/main/scala/com/histmersion/cli/Patches.scala	b5da63e0332b6a2af1e4a06d3247a28cf6bc3de6d84437bf5419cc8ac7eaf926	f12d9c1cddec6c5a7ddfb5d8c7717457f44f5c9f62a0ecac38687fcade193b04

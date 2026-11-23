@@ -1,3 +1,0 @@
-BOUNDED_CONSUMER_EVIDENCE
-files=3149
-Macro-generated consumers may be absent from SemanticDB; zero synthetic matches is not proof of no consumers.

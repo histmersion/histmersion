@@ -1,9 +1,0 @@
-path	sha256
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentRepo.scala	94fdb6fa2b0de18c5c22dd753f5738826ca7480dd0d1e258349c46f91f4094e5
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/automation/agents/ApprovalService.scala	9d298dd2f425bb4b1b4fa6c0fc0ecb158ec2a9266c1ee1febac09d3f9c38916b
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/automation/agents/RunService.scala	76ec99d23c1a95f3db33de1ee5094316d38a682d12bc638d19064c754132014d
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/automation/approvals/Approvals.scala	24de54f19e17508f0ee96c5fce6b09375e2858a373e42031365822a4ea3bbc8c
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/workflows/CurrencyCheckPipeline.scala	326caea61d128977a3c2723ce60b59e7df5f11f983b1339ab7a6a8085ee17e6b
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/workflows/SourceProposals.scala	16a43fdd590617de1886fd1a6d3486f4222b5f53fcf1fd072fdefb3e33ea6960
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/ApprovalServiceContract.scala	b855762b6124404c18490189b0b9b1ca811c6038903b30272e3e16c8c62f8599
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/agents/ModelChainRunSuite.scala	47921427629f86c57cd3ecb68084979491278edf21b9c6ebf3cd3aacdb9a977c

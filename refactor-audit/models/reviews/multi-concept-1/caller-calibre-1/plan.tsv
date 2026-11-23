@@ -1,3 +1,0 @@
-path	before-sha256	after-sha256
-modules/cli/src/main/scala/com/histmersion/cli/Calibre.scala	8200a32939deebfdc00393676631db110a09d053908da6b803c82fca2c0f7717	790e78e0348d7b618379997659e8282bb1cb46d366e75eaaf3e6f8951a656453
-modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	26537cdba16733b4c57bc60f136cb6c4c6fcc246de6e5353d9b53a2ba802d21a	b440381d729a7040dcce4fc616ae47f2831501d2bb025d3936abb5c3b1a38c8e

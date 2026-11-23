@@ -1,2 +1,0 @@
-READY_FOR_COMPILER_PROPAGATION: generic/known-value fixture passes; application compilation still required.
-Six files; original source hashes unchanged.

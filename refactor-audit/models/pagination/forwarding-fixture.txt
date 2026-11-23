@@ -1,2 +1,0 @@
-PASS: two-stage migration from primitive wire record to generic consumer, including explicit type application, generated copy, defaults and unrelated look-alike. Each output matches frozen expectations; final definitions/callers compile and behavior/type separation pass.
-Consumer source remained unchanged between baseline compilation and its own rewrite; stale-source bypass was not used.

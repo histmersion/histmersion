@@ -1,7 +1,0 @@
-PRODUCTION_REPAIR_VERIFIED
-54 confirmed production relationships removed; all other production relationship identities retained.
-38 unchanged passing test identities; original 30 codec failures retained separately and corrected before ownership application.
-New test relationships requiring review=10
-Test relationship absences requiring review=0
-Integrated gate status must be read separately; no automatic acceptance of new test evidence.
-Overall migration and independent detector quality remain open.

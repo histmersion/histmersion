@@ -1,8 +1,0 @@
-sbt
--J-Xss16m
---server
--batch
-set every scalafmtOnCompile := false
-set ThisBuild / scalacOptions += "-Xsemanticdb"
-set every maxErrors := 10000
-pluginApi/testOnly *

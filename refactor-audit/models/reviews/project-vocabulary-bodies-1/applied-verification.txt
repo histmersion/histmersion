@@ -1,2 +1,0 @@
-PASS
-48 application files exactly match the frozen preview.

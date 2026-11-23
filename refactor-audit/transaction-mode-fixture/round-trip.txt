@@ -1,4 +1,0 @@
-PASS
-Compiled Scala 3 fixture; six exact expected diagnostics; negative lookalikes unchanged.
-Dynamic, comment-prefixed and compound SQL retained as three unresolved cases.
-Normal enforcement rejects direct and helper-mediated violations with exit 1.

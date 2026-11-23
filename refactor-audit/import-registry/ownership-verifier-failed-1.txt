@@ -1,5 +1,0 @@
-VERIFIER_FAILURE_NOT_APPLICATION_FAILURE
-The first compiled ImportRegistryVerification run ended with java.lang.OutOfMemoryError and produced no verification directory.
-Its test normalization matched newly produced nodes: dropping an argument retained the same callee, and wrapping LibraryExchange.carried retained that selection inside the new call.
-The corrected normalization requires exactly four original options arguments (and checks the removed registry), then produces three; the injected carried-kind application normalizes to its function instead of wrapping the same selection.
-Application sources, all 46 passing test results, compiled source hashes and project-wide inventories were unchanged. No failed assertion or test expectation was weakened.

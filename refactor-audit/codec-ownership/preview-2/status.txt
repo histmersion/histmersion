@@ -1,3 +1,0 @@
-PREVIEW_ONLY
-files=14
-Given ASTs preserved exactly; removal still requires compilation and fallback verification.

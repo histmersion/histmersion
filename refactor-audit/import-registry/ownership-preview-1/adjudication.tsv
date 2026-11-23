@@ -1,5 +1,0 @@
-id	before	after	treatment	evidence
-ISO-2a677bd9926ba3d3011b5bc27a1ffa42364fbd9b12c27ce7aff7641cd90c1ddb	unresolved	confirmed	manual/design	Only library sourcesIn consumes the registry; inject through the library carried-kind factory, retaining both rename paths and the writer transaction.
-ISO-82f5bdc03defdeead4ea9bdcc7ff86abd4a7bde513e4437d3e53b844181022ad	unresolved	confirmed	manual/design	Only library sourcesIn consumes the registry; inject through the library carried-kind factory, retaining both rename paths and the writer transaction.
-ISO-d1d75a26c4e9368ec7386a4ed4708ca3fcd107039c9eb82d938511a4817cb859	unresolved	confirmed	manual/design	Only library sourcesIn consumes the registry; inject through the library carried-kind factory, retaining both rename paths and the writer transaction.
-ISO-ea74340420100075d29527262d20bc67f2113d9ea0f701e74836a326dfa9b30b	unresolved	confirmed	manual/design	Only library sourcesIn consumes the registry; inject through the library carried-kind factory, retaining both rename paths and the writer transaction.

@@ -1,5 +1,0 @@
-bucket
-handlers
-object-main
-primitive-role
-repo-visibility

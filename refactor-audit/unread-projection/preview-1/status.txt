@@ -1,3 +1,0 @@
-PREVIEW_ONLY
-files=3
-Exact AST recipes scoped to frozen source hashes; not a semantic generalization or repair proof.

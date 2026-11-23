@@ -1,4 +1,0 @@
-MEASUREMENT_COMPLETE
-zero-gate=true
-no-regression-gate=true
-Architectural readiness remains separate; see structure/coverage-matrix.md

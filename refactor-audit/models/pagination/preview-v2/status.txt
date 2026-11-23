@@ -1,4 +1,0 @@
-GENERATED_UNCOMPILED
-19 preview source files; all original source hashes unchanged.
-Nine result records plus Pure wire Offset/RowCount definitions. Wider record fields remain proposed propagation candidates, not newly adjudicated violations.
-Arithmetic, factory parameter typing, codecs and caller closure still require compilation and repair before application.

@@ -66,3 +66,6 @@ db/gazetteer/*.ndjson.gz
 
 # sbt projectMatrix: the base directories of its generated projects
 /.sbt/
+
+# the refactor's audit output (tools/refactor writes it): kept locally, never committed
+/refactor-audit/

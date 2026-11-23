@@ -1,5 +1,0 @@
-shape	count	example
-comparison-side-type-unresolved	1949	modules/core/src/test/scala/com/histmersion/api/MergeFixture.scala:178
-contains-receiver-element-unresolved	225	modules/core/src/test/scala/com/histmersion/util/ocr/ChunkerSuite.scala:71
-interpolation-arg-type-unresolved	4892	modules/core/src/test/scala/com/histmersion/util/jobs/JobControlRulesSuite.scala:105
-value-receiver-type-unresolved	1997	modules/core/src/test/scala/com/histmersion/util/jobs/JobControlRulesSuite.scala:41

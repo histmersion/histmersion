@@ -1,6 +1,0 @@
-negative-methods=10
-false-positives=0
-positive-methods=0
-precision=undefined
-recall=undefined
-Source hashes match the completed pre-repair project-wide detector observation. The entire method owner is checked, not only a declaration line. Parent deduplication turns twelve auditor snippets into ten methods: EventRepo.put and LabelRepo.facets were each sampled twice. Query SQL discovery is a separate supplemental positive, not part of this negative holdout.

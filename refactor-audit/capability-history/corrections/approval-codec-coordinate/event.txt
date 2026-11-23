@@ -1,6 +1,0 @@
-SOURCE_COORDINATE_CORRECTION
-SourceRepo.putIn moved three lines after owner-local API status codec insertion; expected zero and snippet unchanged.
-No detector semantics, assertion counts or original finding denominator changed.
-before-examples-sha256=22826c4d0b4816798cc628a5acd931bda1b2161a67c6b8c2ae07dc35b2addace
-after-examples-sha256=655865f7c050906dc5d3d5e3d4d117902fcd5da83d00d12a8fb03886b8f0dbc7
-baseline-sha256=9c0b8f7e202c07586fd891fcf0016b8d559945009186940195c55456b4cd575e

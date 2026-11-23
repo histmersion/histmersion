@@ -1,2 +1,0 @@
-test	reason
-com.histmersion.plugins.vaults.VaultsSuite::keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)	Existing opt-in installed-KeePassXC integration test; baseline skip retained, not counted as passing coverage.

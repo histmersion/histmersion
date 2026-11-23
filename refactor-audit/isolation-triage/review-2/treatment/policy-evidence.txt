@@ -1,5 +1,0 @@
-AGENTS.md=2434508c9749c133e4b2030e9055be085d4839c7212bb0af529a44095cd053a3
-docs/research-domain-model.md=6cfe7452f62d4b52d4cf6cdb30500bae72a3bacd03b7c2a237c9535d0f5229c4
-source-referrers=AGENTS domain.library; approved design section 23 explicitly lists all eight table owners
-personal-readable=AGENTS domain.research; lower-owned interfaces; Readable SPI source contract
-No detector suppression or baseline change. Accepted decisions bind only these frozen identities; new relationships still fail the identity gate.

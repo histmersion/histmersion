@@ -1,5 +1,0 @@
-PASS: current complete source universe=3140
-Reviewed record owners=5; reference evidence=1734; files=129
-Direct reviewed-member references=115; one-hop caller candidates=235
-This is bounded reference impact, not complete dataflow or rewrite eligibility. Compiler synthetics, implicit conversions, generated defaults and transitive propagation require semantic AST analysis and compilation.
-Reference rows are not additional confirmed primitive violations. No inventory refinement or application rewrite applied.

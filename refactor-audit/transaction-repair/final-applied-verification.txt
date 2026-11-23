@@ -1,2 +1,0 @@
-PASS
-12 files match the compiled AST preview with recorded trivia-only corrections; old test paths removed.

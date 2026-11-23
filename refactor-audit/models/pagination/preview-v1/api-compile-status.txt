@@ -1,5 +1,0 @@
-COMPILE_FAILED
-exit=1
-API production overlay sources=479
-Dependency classpath from evaluated server build; not a substitute for actual API JVM/JS and dependent-module builds.
-All original source hashes unchanged.

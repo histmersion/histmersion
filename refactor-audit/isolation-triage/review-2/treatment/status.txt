@@ -1,3 +1,0 @@
-REVIEWED_NOT_REPAIRED
-346 original relationships retained; production adjudicated; earlier test decisions retained by exact ID.
-No independent detector sample or precision/recall claim; no refinement round spent.

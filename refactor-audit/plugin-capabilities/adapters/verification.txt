@@ -1,9 +1,0 @@
-PASS: standalone Scala 3.10.0 contract execution with -source:future
-Generated LocalFiles, Processes, DiskLocalFiles and SystemProcesses compile together.
-Staged files and directories are removed on callback success, Left and thrown exception.
-Path-like staging names are refused before the callback runs.
-File reads and bounded prefix reads preserve bytes.
-Unavailable capabilities refuse operations without creating real backends.
-JVM child-process checks cover stdin and environment, separate stdout/stderr, timeout and interactive closure.
-This validates generated adapters only; application callers and module boundaries require separate compilation.
-No installed vault or Calibre executable was used by these standalone checks.

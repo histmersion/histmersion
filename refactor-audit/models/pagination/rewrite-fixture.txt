@@ -1,5 +1,0 @@
-PASS: baseline, expected and rewritten definitions/callers compile; exact expected output matches.
-Covers defaults, positional/named construction, generated copy arguments, forwarding typed fields and an unrelated text-offset look-alike.
-Wrong constructor order is rejected without modifying the source. Opaque types are defined in a separate file.
-Runtime assertions preserve values; compile-time checks reject raw Int and RowCount as Offset and raw Int at the migrated constructor.
-Development fixture only. Option leaves, arithmetic, method arguments, inferred results and cross-file transitive closure remain unsupported; no production application authorized by this check alone.

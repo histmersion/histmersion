@@ -1,3 +1,0 @@
-19 preview files match frozen hashes; production sources unchanged.
-479-source API production overlay compiles after boundary and generic-codec import rewrites. No applied fixes or dependent-module/test compile claim.
-rule-sha256=26c01c797677c3c85218f75fb3218cfd950eb1b1a107532debc6bd92ff579215

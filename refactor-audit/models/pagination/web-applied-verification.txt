@@ -1,2 +1,0 @@
-PASS
-6 application files exactly match the frozen preview.

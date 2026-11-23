@@ -1,7 +1,0 @@
-PASS
-Resolved implementations exclude unrelated same-name InMemory and parent type arguments
-Public implementation rejected; private indirect implementation accepted
-Behavioral parity remains unproven despite matching structure
-Constructor visibility and method-reference edges retained
-Every object-plan row reconciled; missing originals never count as completion
-Omitted source file and absent configured service rejected

@@ -1,1 +1,0 @@
-List(Move(modules/server/src/main/scala/com/histmersion/util/ocr/Spool.scala,modules/server/src/main/scala/com/histmersion/domain/library/acquisition/Spool.scala,com.histmersion.util.ocr,com.histmersion.domain.library.acquisition,List(Spool),Map(com/histmersion/util/ocr/Spool# -> Spool)))

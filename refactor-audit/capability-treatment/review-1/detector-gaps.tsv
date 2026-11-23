@@ -1,2 +1,0 @@
-id	scope	classification	treatment	batch	path	line	symbol	ast	evidence
-CAP-GAP-0001	production	confirmed	targeted-rewrite	agent-storage	modules/server/src/main/scala/com/histmersion/domain/automation/agents/Prompts.scala	32	java/lang/ClassLoader#getResourceAsStream().	Term.Select(\n  Term.Select(Term.Name("getClass"), Term.Name("getClassLoader")),\n  Term.Name("getResourceAsStream")\n)	Prompts.load opens bundled resources directly; inject a resource reader with the override Store. Existing capability rules do not cover classloader access.

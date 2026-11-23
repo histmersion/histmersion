@@ -1,3 +1,0 @@
-FAILED
-requirement failed: example-preflight failed with exit 1; see refactor-audit/assessment/current/example-preflight.log
-Do not treat prior reports as current passing evidence.

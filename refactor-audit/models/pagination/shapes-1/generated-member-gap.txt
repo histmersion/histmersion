@@ -1,3 +1,0 @@
-371 generated member/parameter names absent from existing use inventory.
-All missing symbols are absent from the source declaration catalogue; ModelInventory filters uses to that catalogue. Some generated symbols additionally lack signatures.
-These are not independent violations or independent quality samples. Match copy/apply symbols and constructor metadata without requiring symbol.info; fail closed when argument mapping cannot be established.
