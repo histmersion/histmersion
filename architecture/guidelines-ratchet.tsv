@@ -1,6 +1,6 @@
 # rule	module	scope	count — guideline findings (GuidelineInventory) that may only go down (G57); regenerate with HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *GuidelineRatchetSuite'
 G22comment	api	main	703
-G22comment	api	test	370
+G22comment	api	test	369
 G22comment	cli	main	595
 G22comment	cli	test	95
 G22comment	config	main	393

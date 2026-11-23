@@ -140,13 +140,20 @@ object Answer:
         .toLeft(read.collect { case Right(problem) => problem })
         .flatMap(all => Problems.from(all).toRight("no problems"))
 
+  final case class Former(group: Group, `case`: Case)
+
+  val translations: Map[Former, Entry => Entry] = Map.empty
+
   extension (entry: Entry)
+    def current: Entry = translations.get(Former(entry.group, entry.`case`)).fold(entry)(_(entry))
+
     /** The problem one entry of the body names. */
     def problem: Either[String, Problem] =
-      val wrapped = Json.obj(s"${entry.`case`}" -> entry.data)
+      val now = entry.current
+      val wrapped = Json.obj(s"${now.`case`}" -> now.data)
       Problem.Group.values
-        .find(g => g.productPrefix == s"${entry.group}")
-        .toRight(s"no group ${entry.group}")
+        .find(g => g.productPrefix == s"${now.group}")
+        .toRight(s"no group ${now.group}")
         .flatMap[String, Problem] {
           case Problem.Group.Invalid      => wrapped.as(using invalid)
           case Problem.Group.NotFound     => wrapped.as(using notFound)
@@ -159,9 +166,9 @@ object Answer:
           case Problem.Group.Run          => wrapped.as(using run)
           case Problem.Group.Content      => wrapped.as(using ContentCodec.content)
           case Problem.Group.Internal     => wrapped.as(using internal)
-          case Problem.Group.Unclassified => entry.data.as(using unclassified)
+          case Problem.Group.Unclassified => now.data.as(using unclassified)
           case Problem.Group.Stored       => wrapped.as(using stored)
-          case Problem.Group.Relayed      => Right(Relayed(entry.text))
+          case Problem.Group.Relayed      => Right(Relayed(now.text))
         }
 
   extension (json: Json)
