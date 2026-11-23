@@ -165,6 +165,7 @@ object Pages:
     case Route.Research(s) =>
       val body = s match
         case ResearchSection.Overview  => ResearchOverview.pane(ui)
+        case ResearchSection.State     => ResearchState.pane
         case ResearchSection.Decisions =>
           if ui.agentsEnabled.value then ApprovalsView.pane
           else agentsOff(UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))

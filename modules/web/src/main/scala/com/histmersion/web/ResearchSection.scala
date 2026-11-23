@@ -4,6 +4,7 @@ package web
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
+import ResearchSection.{Agents, Label, Slug}
 
 /** Research's sections, in the order of its side navigation. `agents`: shown only where the server runs research
   * agents.
@@ -19,6 +20,7 @@ enum ResearchSection(
         ResearchSection.Label("Overview"),
         agents = ResearchSection.Agents(false)
       )
+  case State extends ResearchSection(Slug("state"), Label("State"), agents = Agents(false))
   case Decisions
       extends ResearchSection(
         ResearchSection.Slug("decisions"),

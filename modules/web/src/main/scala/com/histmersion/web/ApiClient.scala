@@ -118,7 +118,7 @@ object ApiClient:
     if f.unauthorized then Auth.rejected()
     f
 
-  private def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Future[O] =
+  private[web] def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Future[O] =
     val req = authorize(interp.toRequest(ep, None).apply(in))
     // no answer at all (the fetch itself failed) is a transport failure, never a problem the server sent
     unreachable(req.send(backend)).flatMap { resp =>
