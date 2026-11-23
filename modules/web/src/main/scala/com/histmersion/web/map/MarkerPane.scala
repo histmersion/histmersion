@@ -99,6 +99,9 @@ final class MarkerPane(
 
   def leaving: List[DomMarker] = retiring.toList.filter(m => (m.el.parentNode eq host) && !markers.contains(m))
 
+  def shown: List[(DomMarker, Boolean)] =
+    (live.map(_ -> false) ++ leaving.map(_ -> true)).filterNot(_._1.el.classList.contains(ClusterMotion.Pending))
+
   def size: MarkerPane.MarkerCount = MarkerPane.MarkerCount(markers.size)
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))

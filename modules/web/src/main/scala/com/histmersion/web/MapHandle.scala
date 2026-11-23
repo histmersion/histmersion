@@ -29,10 +29,6 @@ object MapHandle:
 
   private val faceSelector = ".hd-ev, .hd-find, .hd-site-marker, .hd-cluster, .hd-point, .hd-note"
 
-  private def shown(pane: MarkerPane): List[(DomMarker, Boolean)] =
-    (pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true))
-      .filterNot(_._1.el.classList.contains(ClusterMotion.Pending))
-
   private def within(el: dom.Element): List[dom.Element] =
     val all = el.querySelectorAll("*")
     el :: (0 until all.length).map(all(_)).toList
@@ -187,7 +183,7 @@ object MapHandle:
       val detail = spec.exists(sp => !js.isUndefined(sp.detail) && sp.detail.asInstanceOf[Boolean])
       val every = spec.exists(sp => !js.isUndefined(sp.every) && sp.every.asInstanceOf[Boolean])
       val all = MapStack.domPanes.filter(p => every || pointPane(p)).flatMap { p =>
-        shown(TheMap.pane(p)).map((m, ghost) => describe(origin, p, m, ghost, detail))
+        TheMap.pane(p).shown.map((m, ghost) => describe(origin, p, m, ghost, detail))
       }
       spec.fold(all)(sp => all.filter(matches(_, sp))).toJSArray
 
@@ -325,7 +321,7 @@ object MapHandle:
             val origin = s.container.getBoundingClientRect()
             MapStack.domPanes
               .filter(p => names.fold(pointPane(p))(_.contains(paneName(p))))
-              .flatMap(p => shown(TheMap.pane(p)))
+              .flatMap(p => TheMap.pane(p).shown)
               .map { (m, ghost) =>
                 val at = where(origin, m)
                 val tag = m.el.asInstanceOf[js.Dynamic]
