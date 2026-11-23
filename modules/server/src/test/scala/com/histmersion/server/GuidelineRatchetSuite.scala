@@ -187,7 +187,10 @@ class GuidelineRatchetSuite extends munit.FunSuite:
     assert(!Inventory.input("tools/refactor/GuidelineInventory.scala") && !Inventory.input("docs/adr/0001.md"))
     assertEquals(
       Inventory.outsideCheckers(
-        Set("modules/server/src/test/scala/com/histmersion/server/RatchetBase.scala", "modules/a/src/main/scala/B.scala")
+        Set(
+          "modules/server/src/test/scala/com/histmersion/server/RatchetBase.scala",
+          "modules/a/src/main/scala/B.scala"
+        )
       ),
       List("modules/a/src/main/scala/B.scala")
     )
