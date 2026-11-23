@@ -55,11 +55,13 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
   private val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
   private val looks = mutable.HashMap.empty[String, Option[MarkerLook]]
   private val templates = mutable.HashMap.empty[String, Option[MarkerLook]]
+  private val validated = mutable.HashMap.empty[String, Boolean]
   private val noColours = js.Array[String]()
   private var queued = false
   private var lastPanes: () => List[List[DomMarker]] = () => Nil
 
   private val byEl = js.Dynamic.newInstance(js.Dynamic.global.WeakMap)()
+  private val keys = js.Dynamic.newInstance(js.Dynamic.global.WeakMap)()
 
   private val observer = new dom.MutationObserver((records, _) => {
     records.foreach { r =>
@@ -69,6 +71,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
           Option(n.parentNode).collect { case e: dom.Element => e }.flatMap(e => Option(e.closest(".hd-marker")))
       el.foreach { e =>
         byEl.delete(e)
+        keys.delete(e)
         if r.attributeName == "class" then e.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
       }
       (0 until r.addedNodes.length).map(r.addedNodes(_)).foreach { n =>
@@ -148,9 +151,41 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       r
 
   def prepare(m: DomMarker): Unit =
+    warm(List(m))
     info(m).foreach(d =>
       region(d.look.asInstanceOf[MarkerLook], d.colours.asInstanceOf[js.Array[String]], dom.window.devicePixelRatio)
     )
+    schedule()
+
+  private def batch(els: List[dom.Element], cs: List[String]): List[Option[MarkerLook]] =
+    val clones = els.map(MarkerLook.withColours(_, cs))
+    clones.foreach(studio.appendChild)
+    val read = clones.map(MarkerLook.of)
+    clones.foreach(studio.removeChild)
+    read
+
+  private def warm(ms: List[DomMarker]): Unit =
+    val fresh = mutable.LinkedHashMap.empty[String, dom.Element]
+    ms.foreach { m =>
+      if m.el.isConnected && js.isUndefined(byEl.get(m.el)) then
+        val key = MarkerLook.templateKey(m.el)
+        val _ = keys.set(m.el, key)
+        if !templates.contains(key) && !fresh.contains(key) then fresh(key) = m.el
+    }
+    if fresh.nonEmpty then
+      if templates.size + fresh.size > 500 then templates.clear()
+      if validated.size > 2000 then validated.clear()
+      val firsts = fresh.toList.zip(batch(fresh.values.toList, MarkerLook.Sentinels))
+      val asked = firsts
+        .collect { case ((key, el), Some(look)) if !validated.contains(MarkerLook.shapeKey(key)) => (key, el, look) }
+        .distinctBy((key, _, _) => MarkerLook.shapeKey(key))
+      asked.zip(batch(asked.map(_._2), MarkerLook.Second)).foreach { case ((key, _, a), b) =>
+        validated(MarkerLook.shapeKey(key)) =
+          b.exists(b => sameSprites(a.sprite(js.Array(MarkerLook.Second*), 1), b.sprite(noColours, 1)))
+      }
+      firsts.foreach { case ((key, _), first) =>
+        templates(key) = first.filter(_ => validated.getOrElse(MarkerLook.shapeKey(key), false))
+      }
 
   def paint(panes: () => List[List[DomMarker]]): Unit =
     lastPanes = panes
@@ -323,16 +358,20 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
 
   private def template(el: dom.Element): Option[MarkerLook] =
     if templates.size > 500 then templates.clear()
+    if validated.size > 2000 then validated.clear()
+    val warmed = keys.get(el)
+    val key = if js.isUndefined(warmed) then MarkerLook.templateKey(el) else warmed.asInstanceOf[String]
+    val _ = keys.delete(el)
     templates.getOrElseUpdate(
-      MarkerLook.templateKey(el), {
-        val first = snapshot(el, MarkerLook.Sentinels)
-        val second = snapshot(el, MarkerLook.Second)
-        for
-          a <- first
-          b <- second
-          if sameSprites(a.sprite(js.Array(MarkerLook.Second*), 1), b.sprite(noColours, 1))
-        yield a
-      }
+      key,
+      snapshot(el, MarkerLook.Sentinels).filter(a =>
+        validated.getOrElseUpdate(
+          MarkerLook.shapeKey(key),
+          snapshot(el, MarkerLook.Second).exists(b =>
+            sameSprites(a.sprite(js.Array(MarkerLook.Second*), 1), b.sprite(noColours, 1))
+          )
+        )
+      )
     )
 
   private def held(m: DomMarker): Option[js.Dynamic] = info(m).filterNot(_.pending.asInstanceOf[Boolean])
