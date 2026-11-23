@@ -93,7 +93,7 @@ abstract class EventLinkServiceContract extends CatalogueStoreSuite:
       l.candidates(Event.Id("zz_ev")).map(c => (c.citekey, c.status)),
       List("zzl2020_a" -> "confirmed", "zzl2020_b" -> "proposed")
     )
-    assertEquals(l.candidates(Event.Id("zz_ev"), withRejected = true).size, 3)
+    assertEquals(l.candidates(Event.Id("zz_ev"), RejectedLinks.Listed).size, 3)
     l.saveCandidates(
       Event.Id("zz_ev"),
       List(
@@ -102,11 +102,11 @@ abstract class EventLinkServiceContract extends CatalogueStoreSuite:
       )
     )
     assertEquals(
-      l.candidates(Event.Id("zz_ev"), withRejected = true).map(c => (c.citekey, c.status, c.score)),
+      l.candidates(Event.Id("zz_ev"), RejectedLinks.Listed).map(c => (c.citekey, c.status, c.score)),
       List(("zzl2020_a", "confirmed", 0.1), ("zzl2020_c", "rejected", 0.8)),
       "the proposals replaced, a decided status kept, its evidence refreshed"
     )
-    assertEquals(l.eventsToCheck(all = false, PageSize(10)), List("zz_other"))
-    assertEquals(l.eventsToCheck(all = true, PageSize(10)), List("zz_ev", "zz_other"))
-    assertEquals(l.eventsToCheck(all = true, PageSize(1)), List("zz_ev"))
+    assertEquals(l.eventsToCheck(EventsToCheck.Unchecked, PageSize(10)), List("zz_other"))
+    assertEquals(l.eventsToCheck(EventsToCheck.Every, PageSize(10)), List("zz_ev", "zz_other"))
+    assertEquals(l.eventsToCheck(EventsToCheck.Every, PageSize(1)), List("zz_ev"))
   }

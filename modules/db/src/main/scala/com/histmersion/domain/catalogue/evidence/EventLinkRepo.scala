@@ -20,12 +20,15 @@ import com.histmersion.util.database.Unused
   */
 private[evidence] object EventLinkRepo:
 
-  /** The stored candidates of one event, best first; `withRejected` includes the rejected ones. */
+  /** The stored candidates of one event, best first; the rejected ones only when `rejected` lists them. */
 
-  def candidates(id: BEventRow.Id, withRejected: Boolean = false)(using DbCon): List[EventLinkCandidate] =
+  def candidates(id: BEventRow.Id, rejected: RejectedLinks = RejectedLinks.Hidden)(using
+      DbCon
+  ): List[EventLinkCandidate] =
+    val listed = rejected == RejectedLinks.Listed
     sql"""SELECT c.event_id, c.citekey, c.score, c.status, s.title, c.findings, c.passages::text, c.reasons
           FROM event_link_candidates c JOIN sources s ON s.citekey = c.citekey
-          WHERE c.event_id = $id AND ($withRejected OR c.status <> 'rejected')
+          WHERE c.event_id = $id AND ($listed OR c.status <> 'rejected')
           ORDER BY c.status = 'confirmed' DESC, c.score DESC, c.citekey"""
       .query[CandidateRow]
       .run()

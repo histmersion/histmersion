@@ -18,10 +18,10 @@ import com.histmersion.util.database.WritePermit
   * computed.
   */
 trait EventLinkService:
-  /** One event's candidates, the confirmed first, then by score; `withRejected` includes the rejected ones. A candidate
-    * whose source is gone is not listed.
+  /** One event's candidates, the confirmed first, then by score; the rejected ones only when `rejected` lists them. A
+    * candidate whose source is gone is not listed.
     */
-  def candidates(id: Event.Id, withRejected: Boolean = false): List[EventLinkCandidate]
+  def candidates(id: Event.Id, rejected: RejectedLinks = RejectedLinks.Hidden): List[EventLinkCandidate]
 
   /** Replace the event's proposed candidates with `cs` (one confirmed or rejected before keeps its status) and record
     * the check.
@@ -33,33 +33,36 @@ trait EventLinkService:
 
   def isChecked(id: Event.Id): Boolean
 
-  /** The events whose candidates were never computed (every one, with `all`), the catalogue's first, by id. */
-  def eventsToCheck(all: Boolean, limit: PageSize): List[Event.Id]
+  /** The events whose candidates were never computed (or every one), the catalogue's first, by id. */
+  def eventsToCheck(which: EventsToCheck, limit: PageSize): List[Event.Id]
 
 object EventLinkService:
 
   def apply(db: Transactor): EventLinkService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends EventLinkService:
-    def candidates(id: Event.Id, withRejected: Boolean): List[EventLinkCandidate] =
-      db.read(EventLinkRepo.candidates(BEventRow.Id(id.value), withRejected))
+    def candidates(id: Event.Id, rejected: RejectedLinks): List[EventLinkCandidate] =
+      db.read(EventLinkRepo.candidates(BEventRow.Id(id.value), rejected))
     def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit =
       db.write(EventLinkRepo.saveCandidates(BEventRow.Id(id.value), cs))
     def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean =
       db.write(EventLinkRepo.setStatus(BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
     def isChecked(id: Event.Id): Boolean = db.read(EventLinkRepo.isChecked(BEventRow.Id(id.value)))
-    def eventsToCheck(all: Boolean, limit: PageSize): List[Event.Id] =
-      db.read(EventLinkRepo.eventsToCheck(all, limit)).map(i => Event.Id.assume(i.value))
+    def eventsToCheck(which: EventsToCheck, limit: PageSize): List[Event.Id] =
+      val all = which == EventsToCheck.Every
+      db.read(EventLinkRepo.eventsToCheck(all = all, limit)).map(i => Event.Id.assume(i.value))
 
   /** The same rules over the shared in-memory state; `title` names a source by its citekey (the library's), `None` for
     * one that is gone.
     */
   final class InMemory(state: AtomicReference[CatalogueState], title: Citekey => Option[Option[Title]])
       extends EventLinkService:
-    def candidates(id: Event.Id, withRejected: Boolean): List[EventLinkCandidate] =
+    def candidates(id: Event.Id, rejected: RejectedLinks): List[EventLinkCandidate] =
       val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
       state.get.candidates
-        .filter(c => c.eventId == apiId && (withRejected || c.status.value != Event.LinkStatus.Rejected))
+        .filter(c =>
+          c.eventId == apiId && (rejected == RejectedLinks.Listed || c.status.value != Event.LinkStatus.Rejected)
+        )
         .flatMap(c =>
           Citekey
             .option(c.citekey.value)
@@ -121,10 +124,10 @@ object EventLinkService:
 
     def isChecked(id: Event.Id): Boolean = state.get.checked(CatalogueState.Checked(id.value))
 
-    def eventsToCheck(all: Boolean, limit: PageSize): List[Event.Id] =
+    def eventsToCheck(which: EventsToCheck, limit: PageSize): List[Event.Id] =
       val s = state.get
       s.events
-        .filter(e => all || !s.checked(CatalogueState.Checked(e.id.value)))
+        .filter(e => which == EventsToCheck.Every || !s.checked(CatalogueState.Checked(e.id.value)))
         .sortBy(e => (e.catalogue.isEmpty, e.id.value))
         .take(limit.value.max(0))
         .map(_.id)
