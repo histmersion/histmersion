@@ -22,7 +22,10 @@ class MarkerLookSuite extends munit.FunSuite:
       ),
       still
     )
-    assertEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box hd-cluster-pending", "--mw: 24px; --mh: 24px;"), still)
+    assertEquals(
+      MarkerLook.rootKey("hd-point-wrap hd-marker has-box hd-cluster-pending", "--mw: 24px; --mh: 24px;"),
+      still
+    )
     assertEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box", "--mw: 24px; --z: 5; --mh: 24px;"), still)
     assertNotEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box", "--mw: 34px; --mh: 34px;"), still)
     assertNotEquals(MarkerLook.rootKey("hd-point-wrap hd-marker", "--mw: 24px; --mh: 24px;"), still)
