@@ -3062,7 +3062,7 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       await page.locator('.mb-filters').focus();
       await page.keyboard.press('Enter');
       await page.waitForFunction(() => document.querySelector('.fbar').getBoundingClientRect().left >= 0);
-      await page.waitForTimeout(300);
+      await page.locator('.fbar').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
       assert.ok(await reachable('.fbar .drawer-close'), `${at}: the filters drawer is open`);
       assert.equal(await sideways(), 0, `${at}: the open drawer scrolls nothing sideways`);
       await page.keyboard.press('Escape');
@@ -3070,7 +3070,7 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       // the map & tools drawer, by pointer: its button, then its ✕
       await page.locator('.mb-maptools').click();
       await page.waitForFunction(() => document.querySelector('.viewport-toggle').getBoundingClientRect().right <= innerWidth + 1);
-      await page.waitForTimeout(300);
+      await page.locator('.viewport-toggle').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
       // the drawer scrolls inside itself: its last controls are reached by scrolling it, not the page
       await page.locator('.viewport-toggle .map-base-select').scrollIntoViewIfNeeded();
       assert.ok(await reachable('.viewport-toggle .map-base-select'), `${at}: the base map's menu in the drawer`);
@@ -3104,7 +3104,7 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
         `${at}: the list's sheet at the right: ${JSON.stringify(peek)}`);
       await page.locator('.sheet-handle').click();
       await page.waitForFunction(() => document.querySelector('.sidebar').classList.contains('sheet-half'));
-      await page.waitForTimeout(300);
+      await page.locator('.sidebar').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
       assert.ok((await box('.sidebar')).h > peek.h + 100, `${at}: the handle pulls the list up`);
       assert.ok(await reachable('.sidebar .tabs .tab'), `${at}: the list's tabs`);
       assert.equal(await sideways(), 0);
@@ -3112,7 +3112,7 @@ test('#4431: at tablet widths the map keeps most of the screen, and every panel 
       await page.locator('.sheet-handle').click();
       await page.waitForFunction(() => !document.querySelector('.sidebar').classList.contains('sheet-half') &&
         !document.querySelector('.sidebar').classList.contains('sheet-full'));
-      await page.waitForTimeout(300);
+      await page.locator('.sidebar').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
       // the legend: folded to its button, which opens and folds it (#4292)
       assert.ok(await reachable('.hd-legend-toggle'), `${at}: the legend's button`);
       await page.locator('.hd-legend-toggle').click();
