@@ -4961,6 +4961,7 @@ test('the canvas markers meet the keyboard and a screen reader as their elements
       await page.waitForFunction(() => window.__testMap.isDrawn() && window.__testMap.points() > 0);
       await quiet(page);
       await page.waitForTimeout(800);
+      await page.waitForFunction(() => window.__testMap.markersSettled());
       await page.mouse.move(5, 5);
       assert.equal(await page.evaluate(() => document.querySelector('.hd-marker-canvas') != null), mode === 'on');
       const run = { stops: await stops(page), spoken: await spoken(page), rings: {}, cards: {} };
