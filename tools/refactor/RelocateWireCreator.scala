@@ -2,20 +2,6 @@ import scalafix.v1._
 import scala.meta._
 import metaconfig.{ConfDecoder, Configured, generic}
 
-/** Row 32 (ADR 0029 §5): the wire's creator records leave the work lists' `Queue` for the api root's `Provenance`, which
-  * every domain's view shows. Every reference to a moved symbol, by SemanticDB symbol, is rewritten:
-  *
-  *   - a qualified reference (`Queue.Creator`, `api.automation.Queue.Creation`) becomes the new name, fully qualified
-  *     in an import's path and short (`Provenance`, `Provenance.Agent`, `Provenance.By`) elsewhere;
-  *   - a bare reference (one imported, or seen through `Queue.*`) becomes the short new name;
-  *   - an importee naming a moved symbol is removed;
-  *   - a file with a rewritten reference outside an import gets `import com.histmersion.api.Provenance`.
-  *
-  * The definitions themselves (in `Queue.scala`) are not touched: they are moved by hand, after this rule ran on the
-  * SemanticDB that still has them where they were.
-  *
-  *   bash tools/refactor/scalafix.sh --config tools/refactor/relocate-wire-creator.conf --sourceroot . --files modules
-  */
 object RelocateWireCreator {
   case class Config(
       moves: Map[String, String] = Map(
