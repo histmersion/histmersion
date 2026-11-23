@@ -4922,15 +4922,22 @@ test('the canvas markers meet the keyboard and a screen reader as their elements
       outline: `${s.outlineStyle} ${s.outlineWidth}`, visible: e.matches(':focus-visible'),
       proxy: e.closest('.hd-marker-list') != null };
   });
-  const cardOf = { 'hd-find': '.hd-popup' };
+  const cardOf = { 'hd-find': '.hd-popup', 'hd-site-marker': '.cite-tooltip.is-pinned' };
   const card = async (page, selector) => {
     await page.keyboard.press('Enter');
     await page.waitForSelector(selector);
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(800);
     return page.evaluate(selector => {
-      const r = document.querySelector(selector).getBoundingClientRect();
-      return { left: Math.round(r.left), top: Math.round(r.top) };
+      const box = document.querySelector(selector);
+      const r = box?.getBoundingClientRect();
+      return box ? { left: Math.round(r.left), top: Math.round(r.top), focusIn: box.contains(document.activeElement) } : null;
     }, selector);
+  };
+  const placeCard = route => {
+    const id = decodeURIComponent(new URL(route.request().url()).pathname.split('/').pop());
+    return route.fulfill({ json: { place: { id, label: id, kind: 'site', periodStart: -1600, periodEnd: -1100, source: null,
+      names: id }, geometry: '{"type":"Point","coordinates":[23.5,37.9]}', parents: [], children: [], findings: 0, asOf: null,
+    media: [] } });
   };
   const runs = {};
   for (const [mode, reduced] of [['off', 'reduce'], ['on', 'reduce'], ['on', 'no-preference']]) {
@@ -4938,6 +4945,7 @@ test('the canvas markers meet the keyboard and a screen reader as their elements
       trackRequests(page);
       await routeFullLoad(page);
       await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events });
+      await page.route(u => /\/api\/places\/(?!geo)[^/]+$/.test(u.pathname), placeCard);
       await page.emulateMedia({ reducedMotion: reduced });
       await page.evaluate(m => { localStorage.setItem('histmersion.ui.markerCanvas', m);
         localStorage.setItem('histmersion.ui.layers', '["sites","events","media"]'); }, mode);
@@ -5012,11 +5020,14 @@ test('the canvas markers meet the keyboard and a screen reader as their elements
       assert.ok(was.painted.bigPct > 2 && r.painted.bigPct > 0.5 * was.painted.bigPct,
         `${key}: ${name}'s ring is painted as the element's was: ${JSON.stringify(r.painted)} against ${JSON.stringify(was.painted)}`);
     }
-    assert.equal(Object.keys(off.cards).length, 1, `a finding's popup: ${JSON.stringify(off.cards)}`);
+    assert.equal(Object.keys(off.cards).length, 2, `a finding's popup and a place's pinned card: ${JSON.stringify(off.cards)}`);
     for (const [name, d] of Object.entries(off.cards)) {
       const c = on.cards[name];
-      assert.ok(c && Math.abs(c.left - d.left) <= 2 && Math.abs(c.top - d.top) <= 2,
-        `${key}: Enter opens ${name}'s card where it opened before: ${JSON.stringify(c)} against ${JSON.stringify(d)}`);
+      assert.ok(d && c && Math.abs(c.left - d.left) <= 2 && Math.abs(c.top - d.top) <= 2,
+        `${key}: Enter opens ${name}'s card, and it stays where it opened before: ${JSON.stringify(c)} against ${JSON.stringify(d)}`);
     }
+    const pinnedName = Object.keys(off.cards).find(n => off.stops.find(s => s.name === n)?.kind === 'hd-site-marker');
+    assert.ok(off.cards[pinnedName].focusIn && on.cards[pinnedName].focusIn,
+      `${key}: the place's card pinned with Enter holds the focus: ${JSON.stringify(on.cards[pinnedName])}`);
   }
 });

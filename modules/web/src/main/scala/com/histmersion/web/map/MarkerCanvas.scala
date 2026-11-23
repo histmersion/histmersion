@@ -38,18 +38,11 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     "focusin",
     (e: dom.FocusEvent) =>
       markerOf(e.target).foreach { m =>
+        if (focused ne null) && (focused ne m) && (focused ne hovered) then unanchor(focused)
         focused = m
         anchor(m)
       },
     true
-  )
-  proxies.addEventListener(
-    "focusout",
-    (e: dom.FocusEvent) =>
-      markerOf(e.target).foreach { m =>
-        if focused eq m then focused = null
-        if m ne hovered then unanchor(m)
-      }
   )
 
   private val ctx = canvas.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
@@ -237,7 +230,8 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       }
     }
     if animating then schedule()
-    if (focused ne null) && (focused.el.parentNode ne null) then anchor(focused)
+    if (focused ne null) && (focused.el.parentNode eq null) then focused = null
+    if focused ne null then anchor(focused)
 
   private def motionOf(d: js.Dynamic, now: Double, still: Boolean): MarkerMotion.Motion =
     MarkerMotion.motion(
