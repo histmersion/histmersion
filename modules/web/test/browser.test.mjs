@@ -1313,7 +1313,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 390, height: 844
         } else {
           assert.ok(zooms.every(z => !z.animated && z.ghosts === 0), `${what}: no regroup motion: ${JSON.stringify(zooms)}`);
           assert.equal(motionFrames, 0, `${what}: no marker moves while the camera stands`);
-          for (const z of zooms) assert.ok(z.zoomMs < 100 && z.cameraFrames <= 3, `${what}: the camera jumps: ${JSON.stringify(z)}`);
+          for (const z of zooms) assert.ok(z.jumped && z.cameraFrames <= 3, `${what}: the camera jumps: ${JSON.stringify(z)}`);
           assert.ok(button.cameraFrames <= 3, `${what}: MapLibre's zoom button jumps: ${JSON.stringify(button)}`);
         }
         // the note: only while following the system and the system asks for reduced motion (on a phone the map's
