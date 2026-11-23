@@ -383,18 +383,32 @@ test('#1440: playback draws local and regional events, fades the local one, and 
     await page.goto(new URL('/explore#from=-1300&to=-1200', baseURL).href);
     await page.reload();
     await page.waitForFunction(() => window.__testMap);
+    await page.evaluate(() => {
+      const seen = window.__localEvent = { dot: false, name: null, alphas: [], fadeFrom: null, goneAt: null };
+      const look = t => {
+        const el = document.querySelector('.hd-event--local');
+        if (el) {
+          const a = parseFloat(el.style.getPropertyValue('--a'));
+          seen.dot ||= el.querySelector('.hd-event-dot') !== null;
+          seen.name ??= el.querySelector('.hd-area-point-name')?.textContent ?? null;
+          seen.alphas.push(a);
+          if (a < 1) seen.fadeFrom ??= t;
+        } else if (seen.alphas.length) { seen.goneAt = t; return; }
+        requestAnimationFrame(look);
+      };
+      requestAnimationFrame(look);
+    });
     await page.locator('.tl-playback button').first().click();
-    await page.waitForSelector('.hd-event--local .hd-event-dot');
     await page.waitForSelector('.hd-event--regional');
     await page.waitForFunction(() => window.__testMap.shapes('event-outlines').length === 1);
     assert.equal(asked, 1, 'the feed is fetched once per playback, not per frame');
-    assert.match(await page.locator('.hd-event--local .hd-area-point-name').textContent(), /Zz battle/);
-    // after its year the local event fades (its --a drops below 1), then goes
-    await page.waitForFunction(() => {
-      const el = document.querySelector('.hd-event--local');
-      return el && parseFloat(el.style.getPropertyValue('--a')) < 1;
-    });
-    await page.waitForFunction(() => !document.querySelector('.hd-event--local'), null, { timeout: 15000 });
+    // after its year the local event fades (its --a drops below 1) over its 2.5 s of playback, then goes
+    await page.waitForFunction(() => window.__localEvent.goneAt !== null, null, { timeout: 15000 });
+    const local = await page.evaluate(() => window.__localEvent);
+    assert.ok(local.dot, 'the local event is drawn with its dot');
+    assert.match(local.name ?? '', /Zz battle/);
+    assert.ok(local.alphas.some(a => a > 0 && a < 1), `it fades before it goes: ${local.alphas}`);
+    assert.ok(local.goneAt - local.fadeFrom >= 1800, `its fade takes its 2.5 s of playback (whole years: about 2.4 s): ${Math.round(local.goneAt - local.fadeFrom)} ms`);
     assert.ok(await page.locator('.hd-event--regional').count() === 1, 'the era is still on');
     await page.locator('.tl-playback button[aria-label="stop and reset"]').click();
     await page.waitForFunction(() => !document.querySelector('.hd-event') && window.__testMap.shapes('event-outlines').length === 0);
@@ -3329,7 +3343,8 @@ test('playback stopped or run out restores the whole span on the map', async () 
     // ⏹ part-way
     await page.locator('button[aria-label="play"]').click();
     await page.waitForFunction(() => document.querySelector('.tl-play-year')?.textContent);
-    await page.waitForTimeout(2500);
+    await page.waitForFunction(b => `${document.querySelector('.hd-legend .lo')?.textContent}–${document.querySelector('.hd-legend .hi')?.textContent}` !==
+      `${b.lo}–${b.hi}`, before, { timeout: 15000 }).catch(() => {});
     const playing = await state();
     assert.notEqual(`${playing.lo}–${playing.hi}`, `${before.lo}–${before.hi}`, `the frames draw their window: ${JSON.stringify(playing)}`);
     await page.locator('button[aria-label="stop and reset"]').click();
