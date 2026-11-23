@@ -50,6 +50,15 @@ is a Scalafix rule over SemanticDB: the base tree cannot be measured without com
   `s""`/`f""` of literals, is no G44 finding: it is a fixture, not raw data crossing in. A test that builds a newtype
   from computed data (`s"key$i"`), and every `.value` in a test (an assertion compares newtypes instead), still counts;
   main scope is unchanged.
+- **A newtype spliced into a string is an unwrap** (decision 5, the interpolation hole). `s"$c"`, `f"$c"` and
+  `raw"$c"` give the raw value through `toString` as `c.value` would, so outside the newtype's companion each spliced
+  newtype is a finding `splice:X`: G44, or G45boundary in a boundary file. An interpolation that is directly a
+  construction's argument (`Note(s"$c")`) is not counted again: the construction is the finding. This is the one
+  redefinition that finds more; its rise is proven by the merge-base tree as above.
+- **The contracts' unwrap rule reads the syntax tree** (decision 5). `ContractsSuite`'s `unwrap` count parses each
+  file with the Scala 3 parser (`ScalaSyntax`) instead of matching `.value` in text: a companion is skipped however
+  its header is written (braces, a wrapped `extends`), and a file the parser refuses is reported as `unparsed`, never
+  counted as clean.
 
 ## Consequences
 
@@ -61,4 +70,5 @@ is a Scalafix rule over SemanticDB: the base tree cannot be measured without com
 ## Code
 
 `RatchetBase.TreeCount`, `GuidelineRatchetSuite.Inventory.AtBase` (and their tests in `RatchetLimitsSuite` and
-`GuidelineRatchetSuite`).
+`GuidelineRatchetSuite`); the redefinitions in `tools/refactor/GuidelineInventory.scala` (fixture
+`tools/refactor/guideline-fixture/`); `ScalaSyntax` and `ContractsSuite.Rules.unwraps`.

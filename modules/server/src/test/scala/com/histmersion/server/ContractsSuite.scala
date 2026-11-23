@@ -700,8 +700,27 @@ class ContractsSuite extends munit.FunSuite:
         |  def twice(l: Legacy.T): Int = l.value * 2
         |val c = Legacy(1).value
         |""".stripMargin
-    val lines = Rules.unwraps(code).map(at => code.substring(0, at).count(_ == '\n') + 1)
-    assertEquals(lines, List(2, 11, 14), "the companions' bodies (lines 5, 8, 13) are skipped, the code after them not")
+    val lines = Rules.unwraps(code).map(_.map(at => code.substring(0, at).count(_ == '\n') + 1))
+    assertEquals(
+      lines,
+      Right(List(2, 11, 14)),
+      "the companions' bodies (lines 5, 8, 13) are skipped, the code after them not"
+    )
+
+  test("the unwrap rule reads the syntax tree: a braced or wrapped companion is skipped, a string is not code"):
+    val code =
+      """object Braced extends RefinedType[String, Pure] {
+        |  def len(b: Braced.T): Int = b.value.length
+        |}
+        |object Wrapped
+        |    extends Newtype[Int, Pure]:
+        |  def twice(w: Wrapped.T): Int = w.value * 2
+        |val text = "x.value"
+        |val shown = s"${Wrapped(1).value}"
+        |""".stripMargin
+    val lines = Rules.unwraps(code).map(_.map(at => code.substring(0, at).count(_ == '\n') + 1))
+    assertEquals(lines, Right(List(8)), "only the splice's .value is code outside a companion")
+    assert(Rules.unwraps("object {").isLeft, "a file the parser refuses is reported, never counted as clean")
 
   test("a type named for an entity and a property is the property, a component of the entity is not"):
     val entities = Set("Approval", "Source", "PeriodO", "Citekey")
@@ -982,31 +1001,14 @@ object ContractsSuite:
 
     private def unwrap(s: SourceFile): List[Violation] =
       if isBoundary(s) then Nil
-      else counted("unwrap", s, ".value outside a boundary", unwraps(s.code))
-
-    def unwraps(code: String): List[Int] =
-      val bodies =
-        NewtypeCompanion.findAllMatchIn(code).map(m => m.end -> bodyEnd(code, m.end, m.group(1).length)).toList
-      "\\.value\\b".r
-        .findAllMatchIn(code)
-        .map(_.start)
-        .filterNot(at => bodies.exists((from, to) => at >= from && at < to))
-        .toList
-
-    private val NewtypeCompanion =
-      "(?m)^([ \\t]*)object\\s+[A-Z]\\w*\\s+extends\\s+(?:Newtype|Refined(?:Sub)?Type)\\b[^\\n]*:[ \\t]*$".r
-
-    @tailrec private def bodyEnd(code: String, from: Int, indent: Int): Int =
-      val next = code.indexOf('\n', from)
-      if next < 0 then code.length
       else
-        val lineEnd = code.indexOf('\n', next + 1) match
-          case -1  => code.length
-          case end => end
-        val line = code.substring(next + 1, lineEnd)
-        if line.isBlank || line.takeWhile(c => c == ' ' || c == '\t').length > indent then
-          bodyEnd(code, lineEnd, indent)
-        else next + 1
+        Syntax.unwraps(s.key, s.raw) match
+          case Right(hits) => counted("unwrap", s, ".value outside a boundary", hits)
+          case Left(why)   => counted("unparsed", s, why.linesIterator.nextOption.getOrElse(why), List(0))
+
+    private lazy val Syntax = new ScalaSyntax
+
+    def unwraps(code: String): Either[String, List[Int]] = Syntax.unwraps("unwraps.scala", code)
 
     private val TopLevel =
       "(?m)^(?:(?:final|sealed|abstract|private|protected|open|case|implicit|transparent|inline|opaque)(?:\\[\\w+\\])?\\s+)*(class|trait|object|enum|type)\\s+([A-Z]\\w*)".r
