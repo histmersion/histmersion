@@ -32,9 +32,19 @@ object TimelinePlayback:
   private var lastTs: ResearchOverview.EpochMillis = ResearchOverview.EpochMillis(0.0)
   private var spanFrom: Years.Astronomical = Years.Astronomical(0)
   private var spanTo: Years.Astronomical = Years.Astronomical(0)
+  private var carry: Double = 0.0
 
-  /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`. */
+  /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`, whatever its
+    * length: a frame moves the playhead by the whole years its time covers at that speed, and carries the fraction left
+    * to the next frame (`wholeYears`, pure: the years due before the frame, the years a second, the frame's seconds →
+    * the whole years to move, the fraction carried). A whole year a frame at least played a century in about 100
+    * frames, under 2 s, and a local event's 2.5 s fade in about 8 frames.
+    */
   private[web] val Speeds: List[Speed] = List(0.25, 0.5, 1.0, 2.0, 4.0).map(Speed(_))
+  private[web] def wholeYears(carried: Double, yearsPerSecond: Double, seconds: Double): (Long, Double) =
+    val due = carried + yearsPerSecond * seconds
+    val whole = math.floor(due).toLong
+    (whole, due - whole)
 
   /** How a speed reads in the menu: in plain words. Pure. */
   private[web] def speedWords(s: Speed): UiLabels.Text = s.value match
@@ -144,6 +154,7 @@ object TimelinePlayback:
       )
     playing.set(true)
     lastTs = ResearchOverview.EpochMillis(0.0)
+    carry = 0.0
     tick(ResearchOverview.EpochMillis(0.0))
 
   private def pause(): Unit =
@@ -171,7 +182,8 @@ object TimelinePlayback:
 
       val totalYears = (spanTo.value - spanFrom.value).toDouble
       val yearsPerSecond = totalYears / Layout.playbackDuration.value * speed.now().value
-      val advance = (yearsPerSecond * dt).toLong.max(1)
+      val (advance, left) = wholeYears(carry, yearsPerSecond, dt)
+      carry = left
       val next = Years.Astronomical(playhead.now().value + advance)
 
       if next >= spanTo then
@@ -179,13 +191,14 @@ object TimelinePlayback:
         playheadPos.set(Some(spanTo))
         stop()
       else
-        playhead.set(next)
-        playheadPos.set(Some(next))
-        EventLayer.frame(
-          Year(next.value),
-          EventLayer.YearsPerSecond(yearsPerSecond)
-        )
-        feed.frame(next, PlaybackBuckets.YearsPerSecond(yearsPerSecond))
+        if advance > 0 then
+          playhead.set(next)
+          playheadPos.set(Some(next))
+          EventLayer.frame(
+            Year(next.value),
+            EventLayer.YearsPerSecond(yearsPerSecond)
+          )
+          feed.frame(next, PlaybackBuckets.YearsPerSecond(yearsPerSecond))
 
         frameId = dom.window.requestAnimationFrame((t: Double) => tick(ResearchOverview.EpochMillis(t)))
 

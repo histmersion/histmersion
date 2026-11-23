@@ -24,6 +24,21 @@ class ControlsSuite extends munit.FunSuite:
     assertEquals(TimelinePlayback.parseSpeed(UiLabels.Text("3×")), None)
     assertEquals(TimelinePlayback.parseSpeed(UiLabels.Text(" 2× ")).map(_.value), Some(2.0))
 
+  test("playback moves by whole years and carries the fraction: a century at 1× takes its 30 s at 60 frames a second"):
+    val (years, carried, frames) = Iterator
+      .iterate((0L, 0.0, 0)) { (y, c, n) =>
+        val (whole, left) = TimelinePlayback.wholeYears(c, 100.0 / 30, 1.0 / 60)
+        (y + whole, left, n + 1)
+      }
+      .dropWhile(_._1 < 100)
+      .next()
+    assertEquals(years, 100L)
+    assert(frames >= 1795 && frames <= 1805, s"$frames frames")
+    assert(carried >= 0 && carried < 1, s"carried $carried")
+    assertEquals(TimelinePlayback.wholeYears(0.0, 2.0, 0.25), (0L, 0.5))
+    assertEquals(TimelinePlayback.wholeYears(0.5, 2.0, 0.25), (1L, 0.0))
+    assertEquals(TimelinePlayback.wholeYears(0.25, 1000.0, 0.1)._1, 100L)
+
   // ── the period-preset menu ─────────────────────────────────────────────────────────────────────
 
   private def preset(
