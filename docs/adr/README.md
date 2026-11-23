@@ -58,3 +58,4 @@ audited and moved here.
 | [0021](0021-stall-watchdog-interrupts-before-killing.md) | The stall watchdog interrupts a run before it kills its processes, and a stalled run checkpoints nothing |
 | [0022](0022-process-session-output-read-to-end.md) | A process session's output is read to the end before its exit is reported |
 | [0025](0025-map-markers-drawn-on-a-canvas.md) | The map's point markers are drawn on a canvas; their elements stay as the accessible proxies |
+| [0026](0026-wire-enums-and-schemas-from-one-config.md) | A wire enum of words is a string; codecs and schemas read one config, and a refused input is a problem |

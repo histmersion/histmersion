@@ -8,8 +8,6 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Api
-import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
-import hearth.kindlings.tapiropenapijsoniter.OpenApiJsoniter
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.config.{AppConfig, LoadedConfig}
@@ -74,9 +72,8 @@ class ContractSnapshotSuite extends munit.FunSuite:
   private val loaded: LoadedConfig = AppConfig.loadWithUserText(env, "").fold(e => throw AssertionError(e), identity)
 
   test("openapi.json: the OpenAPI document of Api.all"):
-    val doc = sttp.tapir.docs.openapi.OpenAPIDocsInterpreter().toOpenAPI(Api.all, "Histmersion", "contract")
-    val json = writeToString(doc)(using OpenApiJsoniter.openapi_3_1.openAPICodec)
-    check("openapi.json", RawJson.parse(json).fold(e => throw AssertionError(e), identity).withoutNulls.spaces2)
+    val doc = OpenApiDocument.of(Api.all)
+    check("openapi.json", OpenApiDocument.json(Api.all).spaces2)
     // an enum without its WireEnum schema is derived from its case objects: anonymous `type`, `type1`, ... schemas
     val anonymous = doc.components.toList.flatMap(_.schemas.keys).filter(_.matches("type[0-9]*")).sorted
     assertEquals(anonymous, Nil, "a wire enum lacks `given Schema[E] = WireEnum.schema` (and its codec)")

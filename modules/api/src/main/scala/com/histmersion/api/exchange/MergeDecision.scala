@@ -8,7 +8,7 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.WireEnumValues
-import sttp.tapir.Schema
+import sttp.tapir.{Schema, Validator}
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -120,4 +120,11 @@ object MergeDecision:
     (refactorCallback => (refactorCallback.wire).value),
     s => parse(Wire(s)).left.map(_.sentence)
   )
-  given Schema[MergeDecision] = Schema.string[MergeDecision]
+  given Schema[MergeDecision] = Schema
+    .string[MergeDecision]
+    .validate(
+      Validator
+        .pattern[String](Kind.values.map(k => s"${Kind.wireOf(k)}").mkString("^(", "|", ")(:.+)?$"))
+        .contramap((d: MergeDecision) => s"${d.wire}")
+    )
+    .encodedExample(s"${of(Kind.values.head).wire}")
