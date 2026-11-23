@@ -5,6 +5,7 @@ import { configOverride, engineName, frameMode, isChromium, isFirefox, launch, l
 import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { LIBRARY_SOURCES, routeLibrary } from './library-fixtures.mjs';
 import { approvals, goal as researchGoal, routeResearch } from './research-fixtures.mjs';
+import { routeResearchState } from './research-state-fixtures.mjs';
 import { fullLoadView, motionTrace } from './perf-paths.mjs';
 import { quiet, trackRequests } from './perf-lib.mjs';
 import { routeTiles } from './tile-fixtures.mjs';
@@ -4376,6 +4377,57 @@ test('Research overview: ONE three-way control of the agents, what runs, the wee
     await radios.nth(0).click();
     await card.locator('.research-agents-head', { hasText: 'Research agents are working' }).waitFor();
     assert.deepEqual(writes.mode, ['finish', 'pause', 'working']);
+  });
+});
+
+test('Research › State: every kind of open item and verdict, grouped by what to do and by when; a history expands; a task changes hands', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const writes = await routeResearchState(page);
+    await page.goto(new URL('/research/state', baseURL).href);
+    await page.locator('.state-totals', { hasText: '8 wait for you · 5 the agents will handle' }).waitFor();
+    const waiting = page.locator('.state-waiting');
+    const shownGroups = async section => page.locator(`${section} .state-group:not(.is-empty)`).evaluateAll(gs =>
+      gs.map(g => [g.dataset.group, [...g.querySelectorAll('.state-row')].map(r => r.dataset.item)]));
+    assert.deepEqual(await shownGroups('.state-waiting'), [
+      ['decide', ['decision-901']],
+      ['download', ['acquisition-105']],
+      ['borrow', ['acquisition-106']],
+      ['buy-or-borrow', ['acquisition-107']],
+      ['add-identifier', ['acquisition-108']],
+      ['stuck-provider', ['acquisition-104']],
+      ['resume-run', ['run-0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f']],
+      ['task', ['task-201']],
+    ]);
+    assert.equal(await waiting.locator('[data-group="buy-or-borrow"] .state-group-head').innerText().then(t => t.split('\n')[0].replace(/\s*\d+$/, '')),
+      'No free legal copy found: buy or borrow');
+    assert.deepEqual(await shownGroups('.state-agents'), [
+      ['now', ['decision-902', 'acquisition-102', 'task-202']],
+      ['today', ['acquisition-103']],
+      ['later', ['acquisition-101']],
+    ]);
+    assert.match(await waiting.locator('[data-item="acquisition-108"] .state-reason').innerText(), /No DOI or arXiv id/);
+    assert.equal(await waiting.locator('[data-item="acquisition-105"] .state-evidence').getAttribute('href'), 'https://zz.example.org/open.pdf');
+    assert.equal(await waiting.locator('[data-item="decision-901"] .state-evidence').getAttribute('href'), '/article/zz-hittite-storm-god');
+    assert.equal(await page.locator('.state-agents [data-item="task-202"] .state-tag').innerText(), 'creator not recorded');
+    assert.equal(await waiting.locator('[data-item="task-201"] .state-tag').count(), 0);
+    const table = page.locator('.state-acquisitions .state-acq');
+    assert.deepEqual(await table.evaluateAll(rs => rs.map(r => r.dataset.verdict)), ['not checked yet', 'converting', 'retrying',
+      'stuck provider', 'download in the browser', 'borrow', 'buy or borrow', 'no identifier']);
+    const stuck = page.locator('.state-acquisitions .state-acq[data-item="104"]');
+    await stuck.locator('.state-why').click();
+    assert.equal(await stuck.locator('.state-why').getAttribute('aria-expanded'), 'true');
+    await stuck.locator('.state-answer', { hasText: 'unpaywall does not have it' }).waitFor();
+    await stuck.locator('.state-attempt', { hasText: 'an older check (3 tries): zz checked 2026-11-01: no copy' }).waitFor();
+    await page.locator('.state-filter').fill('kristiansen');
+    await page.waitForFunction(() => document.querySelectorAll('.state-acquisitions .state-acq').length === 1);
+    assert.deepEqual(await shownGroups('.state-waiting'), [['buy-or-borrow', ['acquisition-107']]]);
+    await page.locator('.state-filter').fill('');
+    await waiting.locator('[data-item="task-201"] .state-hand', { hasText: 'Hand to the agents' }).click();
+    await page.locator('.state-agents [data-item="task-201"] .state-hand', { hasText: 'Take it back' }).waitFor();
+    await page.locator('.state-totals', { hasText: '7 wait for you · 6 the agents will handle' }).waitFor();
+    await page.locator('.state-agents [data-item="task-201"] .state-hand').click();
+    await waiting.locator('[data-item="task-201"] .state-hand', { hasText: 'Hand to the agents' }).waitFor();
+    assert.deepEqual(writes.actor, ['201:agents', '201:person']);
   });
 });
 
