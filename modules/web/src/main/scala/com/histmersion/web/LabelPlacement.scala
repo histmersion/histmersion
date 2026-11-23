@@ -500,9 +500,15 @@ object LabelPlacement:
 
   /** Pure: which labels are drawn — greedily, highest rank first (ties by key, so the answer is stable), a label is
     * kept unless its box (padded by [[PadPx]], or by [[PadPx]] + [[AppearPadPx]] when it is not in `shown`) overlaps
-    * one already kept. A grid of `cell`-pixel buckets keeps it near-linear: 400 labels are a few thousand box tests.
+    * one already kept. A grid of `cell`-pixel buckets keeps it near-linear: 400 labels are a few thousand box tests,
+    * each one reported to `tested` (the unit tests count them: the cost held on any machine, not a time).
     */
-  def cull(boxes: Seq[Box], cell: Double = 128.0, shown: String => Boolean = _ => true): Set[String] =
+  def cull(
+      boxes: Seq[Box],
+      cell: Double = 128.0,
+      shown: String => Boolean = _ => true,
+      tested: () => Unit = () => ()
+  ): Set[String] =
     val grid = mutable.HashMap.empty[(Int, Int), mutable.ArrayBuffer[Box]]
     val kept = mutable.Set.empty[String]
     def cells(b: Box, pad: Double): Seq[(Int, Int)] =
@@ -512,6 +518,7 @@ object LabelPlacement:
       val y1 = math.floor((b.cy + b.h / 2 + pad) / cell).toInt
       for gx <- x0 to x1; gy <- y0 to y1 yield (gx, gy)
     def overlaps(a: Box, b: Box, pad: Double): Boolean =
+      tested()
       math.abs(a.cx - b.cx) * 2 < a.w + b.w + 2 * pad && math.abs(a.cy - b.cy) * 2 < a.h + b.h + 2 * pad
     for b <- boxes.sortBy(b => (-b.rank, b.key)) do
       val pad = if shown(b.key) then PadPx else PadPx + AppearPadPx
