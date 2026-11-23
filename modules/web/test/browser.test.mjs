@@ -1518,14 +1518,15 @@ test('the icon menus: icons per option, keyboard choice updates the filter; the 
     const activeId = await list.getAttribute('aria-activedescendant');
     assert.match(await page.locator(`#${activeId}`).innerText(), /siege/);
     const before = asked.length;
+    const siege = u => u.pathname.startsWith('/api/tiles/events/') && u.searchParams.get('kind') === 'siege';
+    const siegeAsked = page.waitForResponse(r => siege(new URL(r.url())));
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => !document.querySelector('.icon-select-list:not(.is-hidden)[aria-label="event kind"]'));
     assert.match(await kind.innerText(), /event kind: siege/);
     assert.equal(await kind.locator('.icon-select-icon .hd-badge--square').count(), 1);
     assert.ok(await kind.evaluate(el => el === document.activeElement), 'the focus is back on the button');
-    await page.waitForTimeout(400);
-    assert.ok(asked.slice(before).some(u => u.pathname.startsWith('/api/tiles/events/') && u.searchParams.get('kind') === 'siege'),
-      'kind=siege was asked for');
+    await siegeAsked;
+    assert.ok(asked.slice(before).some(siege), 'kind=siege was asked for');
     // Escape closes without choosing; a click outside closes too
     await page.keyboard.press('ArrowDown');
     await list.waitFor();
