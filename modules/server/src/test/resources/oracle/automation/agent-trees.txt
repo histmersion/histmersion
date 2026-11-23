@@ -1,16 +1,16 @@
-definitions	8125ecd37820192945dd089f98aea69c7ef5d907d54c83fe50865977107107af
+definitions	539934c53ae561b21a59a28fad161f3238cd204ab7099e3c8ec9e49679c9b270
 answer	runtimes=claude-code,codex,opencode files=206 written=206 removed=0
 known tools	archive,article_coverage,assess,check_edits,discover,events,facets,followups,geo_when,get_article,get_source,histogram,ingest,ingest_doi,job_status,lint,list_articles,manager,neighbors,passages,patch_article,patch_source,place_names,place_override,places,put_article,query,queue,refs,run_status,search
 claude-code/
 claude-code/.claude-plugin/
-claude-code/.claude-plugin/marketplace.json	602	babba1de597052f59c355c05999c7c1052a3e880641f0123ff667552f10606ce
+claude-code/.claude-plugin/marketplace.json	602	1d397ab926b7efb8afddb8cf7ba77b56cf82921788a79269e6f6914cab33df67
 claude-code/headless/
 claude-code/headless/.claude-plugin/
-claude-code/headless/.claude-plugin/plugin.json	407	c4a58db6277d4f40a3c1c2c8777012038d94d9dfc4668b83bd62e3f6111bdbe6
+claude-code/headless/.claude-plugin/plugin.json	407	d53651f18ace56bbfbed332ff078a3e97789e6e16d26a1cd5b950566571ab95a
 claude-code/headless/agents/
 claude-code/headless/agents/acquisition-ranker.md	1234	82f939e55cb47389e98169f1a617d315afae5da96ea67eb343fb665542fa921f
 claude-code/headless/agents/article-cold-reader.md	5674	6f27000cd1573ae6401e4aca3a8d16bc38dc0f41afb9d80ddd4893bf9eed3306
-claude-code/headless/agents/article-fixer.md	22334	a9c68e8a48d005aa0fd485349da4166614e9c58d44d13347d75134b6e238e639
+claude-code/headless/agents/article-fixer.md	22266	9487410b6963ff6f24cae0a044f9d534cdb36510d2d203c3c7ec2b0881f0dfb2
 claude-code/headless/agents/article-planner.md	2645	d6f62c65db85715952e9858c224f9278f7f4db0c3de7a8f98f2f2edfbf0d39cb
 claude-code/headless/agents/article-rules-reviewer.md	19824	b9c4181ad714c254bb50d0dbb41c1fb3619747f75002c4e3a4725da74376f85d
 claude-code/headless/agents/article-skeptic.md	20269	1ef34b670d5d54a725630ce14fd6dc6325c3634e497da5605a4aa657551e7930
@@ -67,11 +67,11 @@ claude-code/headless/skills/update-topic/
 claude-code/headless/skills/update-topic/SKILL.md	4745	d160f2d36b96d317cec2d58c5641191d1a53c863f931a3e4763f1f380c68cff9
 claude-code/histmersion/
 claude-code/histmersion/.claude-plugin/
-claude-code/histmersion/.claude-plugin/plugin.json	502	e9b2e2e8c95fc5d8e46afecef8b076f753a6e7f2d6cd9a33a1f22101ac00863b
+claude-code/histmersion/.claude-plugin/plugin.json	502	70e2e262cf8d8e756c4cee9ff870f66f75dc9ad4546c31f3aac590cc495d45bd
 claude-code/histmersion/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
 claude-code/histmersion/agents/
 claude-code/histmersion/agents/article-cold-reader.md	5548	b9cdb9b646a27e80f3fa5a7d3eab9bd634644c44e05aca2a0499127bbaa3c6dd
-claude-code/histmersion/agents/article-fixer.md	7800	2dc701e06cb792ccf506b0ef6017d509242ed6f7277dedfe21e64d19c4fa7261
+claude-code/histmersion/agents/article-fixer.md	7732	f6c9ddcc22f28cb9083f46f26ae3e73db2f48f8741f57a113e9ab0c195362ecf
 claude-code/histmersion/agents/article-rules-reviewer.md	7406	c5fcca559006a7fdf599d93058bb3d50bc5a973485c61d46fc6cede0c9a59afd
 claude-code/histmersion/agents/article-skeptic.md	7557	4155fca875d9b1423b35c73ef8b21a5fc50e39034c272e2e07fc8ec32c55dceb
 claude-code/histmersion/skills/
@@ -151,7 +151,7 @@ codex/home/acquisition-ranker.config.toml	1248	2feabc58bcd31e6b19b80c0cd2ba8fdf1
 codex/home/agents/
 codex/home/agents/acquisition-ranker.toml	1235	22a3faf464cb32b541e22a57d009968bc741312a222aa368902ada80ee4cd708
 codex/home/agents/article-cold-reader.toml	5744	c886bd2c687242267886a09b28ce62d6163b4250b776f5d7ae042778fedbf34e
-codex/home/agents/article-fixer.toml	22304	2d4b2689cc243a20fcbcd3ddc7a3c6bd5ba82e08af0495f18875b4639d9e8bbd
+codex/home/agents/article-fixer.toml	22236	f1c5b2202e9b5d04bc46da8c437a49f37587f1012983d20c1a8a1fbb0d39ddae
 codex/home/agents/article-planner.toml	2437	8215ebefda7938321c42b9027bf80d736a0d06440dcfd64a0fa28e71c20cc986
 codex/home/agents/article-rules-reviewer.toml	19742	acd03fcff0b2965ab9b5fbe387d0e67d54566c709056b58968f87d49d3ea2410
 codex/home/agents/article-skeptic.toml	20232	05d539f4380ce7bd9c023aa168af37c0cad36fd6115c8f8cd12342f52121e10b
@@ -165,7 +165,7 @@ codex/home/agents/goal-planner.toml	2179	edfce941cecec1dfb92022948be610e712e2376
 codex/home/agents/hint-reader.toml	2447	63f9334f4bb69bed8efba6b8f90941493824405b146ef1a3da5cbee5ca0b4c4e
 codex/home/agents/probe.toml	346	86f522e7c61d65cd8e5faf51ad58a71ab0cd2d83754ae28b6d53920fb8249d47
 codex/home/article-cold-reader.config.toml	5530	164c07a82505894826be69202ec26560cf738cbe9d1712f128d0ec5d2ee27666
-codex/home/article-fixer.config.toml	22503	e33ed252797f02ec75e4082a9a66cd5e8397bf70af861352e3cc5ad6fe4ebdda
+codex/home/article-fixer.config.toml	22435	e281317017ce523337f540e66aea4095b7e2c7e49f1254e769ded94e470dae52
 codex/home/article-planner.config.toml	2785	c39bec2b353a875a1c3fff717807cf1012d8c85afd51e48a2234fa1d466ae8eb
 codex/home/article-rules-reviewer.config.toml	19987	14b5e51f2e12d0c238196b3ec305f07beca41dbc3acac1ecf3f420d21788e34a
 codex/home/article-skeptic.config.toml	20465	abf809ea7ed629db5b590b3e4f3dbefa953ed0ab34ef8a84bd8c234e4c209b80
@@ -221,7 +221,7 @@ codex/home/skills/update-topic/
 codex/home/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
 codex/plugin/
 codex/plugin/.codex-plugin/
-codex/plugin/.codex-plugin/plugin.json	334	73fd126b0d876da8b694c357785bc5b31464db97f7be2bbc3cf5c11a10583bc6
+codex/plugin/.codex-plugin/plugin.json	334	da01a1edc65ee3e08e3529551b79dbd80f006166a44312c07b8c546e0c6cdbc9
 codex/plugin/.mcp.json	116	09a2ac5ff5dba4d58fd4b1675d84ee202c33931b0b74eab808b4913f8096ebd9
 codex/plugin/skills/
 codex/plugin/skills/assess-paper/
@@ -262,13 +262,13 @@ codex/plugin/skills/trailhead/
 codex/plugin/skills/trailhead/SKILL.md	5685	7b8385b72a2fc624632e27191a6e685822d12cc511d5226359f5e93ceb795cc5
 codex/plugin/skills/update-topic/
 codex/plugin/skills/update-topic/SKILL.md	4583	0754307a6bdd11839bf16562e6edf6009016c7e36c202de7c35d9b985e6a160e
-manifest.json	25014	70e38ac80eba6fb93f3c243dd546f8890a09976a5c30758aa01d2b39cb538e4c
+manifest.json	25014	9827dc9d8dc59381036398e8905922f116dd27f1cba9c1cc090e5d3367857e94
 opencode/
 opencode/config/
 opencode/config/agents/
 opencode/config/agents/acquisition-ranker.md	1220	08eccd2651e2c0e4f47f646319b65cf8d5cdd0b5f8616714f8a8e341baadab5d
 opencode/config/agents/article-cold-reader.md	5659	3125d26bfa6b8c05b3d081abd4705dc3adc46e05c3396b793a30f0af4f729a17
-opencode/config/agents/article-fixer.md	22271	0642a22fce94cb029f994828cac0b69b9a453ccdbfb98fb017c95a773dea0856
+opencode/config/agents/article-fixer.md	22203	16748e948b66a6185c6bd5dbeb7145217b75c835fc0fed2d01142312fda17c9e
 opencode/config/agents/article-planner.md	2630	2bf139fd118903ca313043cabea64e6045f9fb1bd218873b4e12b390767f43d0
 opencode/config/agents/article-rules-reviewer.md	19746	51ff8562ddd5daa505260cced4e778542519cc10dadca7e68c7036bbb4b0893d
 opencode/config/agents/article-skeptic.md	20204	73ce362eedd323cb286c6e6c5828604ba4ff1dd7a5d8e1f65ba4e00cfec343de
