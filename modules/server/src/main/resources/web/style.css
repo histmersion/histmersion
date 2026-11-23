@@ -2070,6 +2070,25 @@ img.is-zoomable { cursor:zoom-in; }
 .card .row { padding:10px var(--space-6); border-bottom:1px solid var(--line); }
 .card .row:last-child { border-bottom:0; }
 .research-overview { display:flex; flex-direction:column; gap:20px; max-width:1240px; }
+.research-state-line { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3) 10px; padding:var(--space-5) var(--space-6); font-weight:var(--fw-strong); }
+.research-state-line .ch-link { margin-left:auto; font-size:var(--fs-sm); font-weight:var(--fw-normal); }
+.research-state { display:flex; flex-direction:column; gap:20px; max-width:1240px; }
+.state-head { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3) 18px; }
+.state-totals { margin:0; font-size:var(--fs-xl); font-weight:var(--fw-strong); }
+.state-filter { margin-left:auto; min-width:240px; }
+.state-group.is-empty { display:none; }
+.state-group-head { margin:0; padding:var(--space-4) var(--space-6); font-size:var(--fs-md); font-weight:var(--fw-strong); border-bottom:1px solid var(--line); }
+.state-title { font-weight:var(--fw-strong); overflow-wrap:anywhere; }
+.state-reason { margin-top:var(--space-2); }
+.state-actions { margin-top:var(--space-3); flex-wrap:wrap; }
+.state-tag { float:right; margin-left:var(--space-3); font-size:var(--fs-sm); color:var(--ink3); border:1px solid var(--line); border-radius:var(--radius-lg); padding:0 var(--space-3); }
+.state-table { width:100%; border-collapse:collapse; font-size:var(--fs-sm); }
+.state-table th, .state-table td { text-align:left; vertical-align:top; padding:var(--space-3) var(--space-4); border-bottom:1px solid var(--line); }
+.state-table td:first-child { overflow-wrap:anywhere; }
+.state-history { margin-top:var(--space-3); }
+.state-attempts { margin:0; padding-left:var(--space-6); }
+.state-attempt + .state-attempt { margin-top:var(--space-3); }
+.state-answer { color:var(--ink2); }
 .research-columns { display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(0, 1fr); gap:20px; align-items:start; }
 .research-agents { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-5) 18px; padding:14px var(--space-6); }
 .research-agents-text { flex:1 1 320px; min-width:0; }

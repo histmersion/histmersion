@@ -73,7 +73,8 @@ object Route:
   type ManagerId = ManagerId.T
   object ManagerId extends Newtype[String, Pure]
   type RunId = RunId.T
-  object RunId extends Newtype[String, Pure]
+  object RunId extends Newtype[String, Pure]:
+    def of(run: api.automation.Agents.RunInfo.Id): RunId = RunId(s"$run")
 
   /** The front page of each place. */
   object Goal:

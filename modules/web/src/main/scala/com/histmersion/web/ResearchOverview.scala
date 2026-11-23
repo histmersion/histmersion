@@ -17,6 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
+import com.histmersion.api.research.{OpenWork, ResearchApi}
 import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.Paging
 
@@ -345,6 +346,16 @@ object ResearchOverview:
       ActivityView.short(Paging.Limit(6))
     )
 
+  private def stateLine(): HtmlElement =
+    val state = Request[OpenWork.State]()
+    div(
+      cls := "card research-state-line",
+      onMountCallback(_ => state.ask(ApiClient.call(ResearchApi.state)(OpenWork.Scope()))),
+      span(child.text <-- state.signal.map(_.shown.fold("Who acts next…")(_.totals.wording))),
+      ErrorLine.of(state.signal),
+      RouteLink(Route.Research(ResearchSection.State), cls := "ch-link", "See the research state")
+    )
+
   /** The page. */
   def pane(ui: UiConfig): HtmlElement =
     val status = Var(Option.empty[AutopilotStatus])
@@ -355,6 +366,7 @@ object ResearchOverview:
         ApiClient.autopilot.foreach(s => status.set(Some(s)))
         if ui.agentsEnabled.value then ApiClient.managers.foreach(managers.set)
       },
+      stateLine(),
       if ui.agentsEnabled.value then agentsCard(status)
       else
         p(
