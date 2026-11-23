@@ -78,9 +78,16 @@ object MapHandle:
       countOnTop = (for c <- count; d <- disc yield zOf(c) > zOf(d)).getOrElse(false)
     )
 
+  private def measured[A](el: dom.Element)(read: => A): A =
+    if el.closest(".hd-marker-list") == null then read
+    else
+      el.setAttribute("data-measure", "")
+      try read
+      finally el.removeAttribute("data-measure")
+
   private def where(origin: dom.DOMRect, m: DomMarker): js.Dynamic =
     TheMap.markerCanvas
-      .filter(c => m.el.parentNode eq c.proxies)
+      .filter(c => c.proxies.contains(m.el))
       .fold {
         val r = m.el.getBoundingClientRect()
         js.Dynamic.literal(
@@ -142,7 +149,7 @@ object MapHandle:
       radius = look.borderRadius,
       edge = look.borderTopWidth.stripSuffix("px").toDoubleOption.getOrElse(0.0),
       colour = look.getPropertyValue("--c").trim,
-      shape = if detail then shape(face) else null,
+      shape = if detail then measured(m.el)(shape(face)) else null,
       ink = stroke(face, ".glyph-ink"),
       halo = stroke(face, ".glyph-halo"),
       fill = look.backgroundColor,

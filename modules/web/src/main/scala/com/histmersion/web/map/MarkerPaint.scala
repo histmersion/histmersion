@@ -21,13 +21,20 @@ enum MarkerPaint:
       opacity: Double
   )
   case Svg(shape: MarkerLook.SvgShape, at: (Double, Double, Double, Double, Double, Double), opacity: Double)
-  case Text(own: String, font: String, colour: String, shadows: List[MarkerLook.Shadow], at: (Double, Double), opacity: Double)
+  case Text(
+      own: String,
+      font: String,
+      colour: String,
+      shadows: List[MarkerLook.Shadow],
+      at: (Double, Double),
+      opacity: Double
+  )
 
   def run(ctx: dom.CanvasRenderingContext2D): Unit = this match
     case Alpha(o) =>
       ctx.save()
       ctx.globalAlpha = ctx.globalAlpha * o
-    case Restore => ctx.restore()
+    case Restore                                                                     => ctx.restore()
     case Box(at, transform, shadows, bg, image, outline, inner, edge, dash, opacity) =>
       val (x, y, w, h) = at
       val (bw, bstyle, bcolour) = edge

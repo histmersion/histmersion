@@ -4894,3 +4894,129 @@ test('the canvas draws the markers as their elements did: every kind, both theme
     assert.ok(same.bigPct < 1.5 && same.mean < 3, `${theme}: canvas against elements: ${JSON.stringify(same)}`);
   }
 });
+
+test('the canvas markers meet the keyboard and a screen reader as their elements did: stops, names, the accessibility tree, focus ring and card at the drawn marker, reduced motion', async () => {
+  const kinds = ['hd-ev', 'hd-find', 'hd-site-marker', 'hd-cluster', 'hd-point', 'hd-note'];
+  const stops = page => page.evaluate(kinds => [...document.querySelectorAll('#map .hd-marker')]
+    .filter(m => !m.closest('.hd-marker-proxies:not(.hd-marker-list)') && !m.parentElement.closest('.hd-marker'))
+    .flatMap(m => [m, ...m.querySelectorAll('[tabindex]')].filter(e => e.tabIndex >= 0 && !e.closest('[inert]') &&
+        getComputedStyle(e).visibility === 'visible').slice(0, 1)
+      .map(e => ({ kind: kinds.find(k => m.classList.contains(k) || m.querySelector(`.${k}`)) ?? 'other',
+        pane: m.parentElement.getAttribute('data-pane') ?? [...m.parentElement.classList].find(c => c.startsWith('hd-pane--')),
+        x: e.getBoundingClientRect().left, y: e.getBoundingClientRect().top,
+        role: e.getAttribute('role'), name: e.getAttribute('aria-label') ?? e.getAttribute('title') ?? e.textContent.trim() }))), kinds);
+  const spoken = async page => {
+    const cdp = await page.context().newCDPSession(page);
+    const { nodes } = await cdp.send('Accessibility.getFullAXTree');
+    await cdp.detach();
+    return nodes.filter(n => !n.ignored && n.name?.value).map(n => `${n.role?.value}|${n.name.value}`);
+  };
+  const focusOn = async (page, name) => {
+    await page.keyboard.press('Shift');
+    await page.evaluate(name => [...document.querySelectorAll('#map [aria-label]')]
+      .find(e => e.getAttribute('aria-label') === name && !e.closest('.hd-marker-proxies:not(.hd-marker-list)')).focus(), name);
+  };
+  const ring = page => page.evaluate(() => {
+    const e = document.activeElement, r = e.getBoundingClientRect(), s = getComputedStyle(e);
+    return { name: e.getAttribute('aria-label'), x: r.left + r.width / 2, y: r.top + r.height / 2,
+      outline: `${s.outlineStyle} ${s.outlineWidth}`, visible: e.matches(':focus-visible'),
+      proxy: e.closest('.hd-marker-list') != null };
+  });
+  const cardOf = { 'hd-find': '.hd-popup' };
+  const card = async (page, selector) => {
+    await page.keyboard.press('Enter');
+    await page.waitForSelector(selector);
+    await page.waitForTimeout(300);
+    return page.evaluate(selector => {
+      const r = document.querySelector(selector).getBoundingClientRect();
+      return { left: Math.round(r.left), top: Math.round(r.top) };
+    }, selector);
+  };
+  const runs = {};
+  for (const [mode, reduced] of [['off', 'reduce'], ['on', 'reduce'], ['on', 'no-preference']]) {
+    await withPage({ width: 1200, height: 800 }, async page => {
+      trackRequests(page);
+      await routeFullLoad(page);
+      await routeTiles(page, { sites: fullLoad.sites.features, media: fullLoad.media, events: fullLoad.events });
+      await page.emulateMedia({ reducedMotion: reduced });
+      await page.evaluate(m => { localStorage.setItem('histmersion.ui.markerCanvas', m);
+        localStorage.setItem('histmersion.ui.layers', '["sites","events","media"]'); }, mode);
+      await page.goto(new URL('/explore#from=-3000&to=1500', baseURL).href);
+      await page.reload();
+      await page.waitForFunction(() => window.__testMap);
+      await page.evaluate(() => window.__testMap.setView([37.9, 23.5], 7, { animate: false }));
+      await page.waitForFunction(() => window.__testMap.isDrawn() && window.__testMap.points() > 0);
+      await quiet(page);
+      await page.waitForTimeout(800);
+      await page.mouse.move(5, 5);
+      assert.equal(await page.evaluate(() => document.querySelector('.hd-marker-canvas') != null), mode === 'on');
+      const run = { stops: await stops(page), spoken: await spoken(page), rings: {}, cards: {} };
+      const first = runs.off ?? run;
+      await focusOn(page, run.stops[0].name);
+      run.tabbed = [];
+      for (let i = 0; i < Math.min(5, run.stops.length - 1); i++) {
+        await page.keyboard.press('Tab');
+        run.tabbed.push(await page.evaluate(() => document.activeElement?.getAttribute('aria-label')));
+      }
+      const picks = ['hd-ev', 'hd-find', 'hd-point', 'hd-note', 'hd-site-marker']
+        .map(k => first.stops.find(s => s.kind === k && s.x > 80 && s.x < 1100 && s.y > 80 && s.y < 700 &&
+          first.stops.filter(t => t.name === s.name).length === 1))
+        .filter(s => s);
+      for (const s of picks) {
+        await focusOn(page, s.name);
+        run.rings[s.name] = await ring(page);
+        const r = run.rings[s.name], clip = { x: r.x - 24, y: r.y - 24, width: 48, height: 48 };
+        const focused = await page.screenshot({ clip });
+        await page.evaluate(() => document.activeElement.blur());
+        await page.waitForTimeout(100);
+        run.rings[s.name].painted = await pixelDiff(page, focused, await page.screenshot({ clip }));
+        await focusOn(page, s.name);
+        if (cardOf[s.kind]) run.cards[s.name] = await card(page, cardOf[s.kind]);
+      }
+      runs[mode === 'off' ? 'off' : reduced] = run;
+    });
+  }
+  const off = runs.off;
+  const runsOf = run => run.stops.map(s => s.pane).filter((p, i, all) => i === 0 || all[i - 1] !== p);
+  const kindsOf = run => [...new Set(run.stops.map(s => `${s.pane}:${s.kind}`))].sort();
+  const names = (run, kind) => run.stops.filter(s => s.kind === kind).map(s => `${s.role}|${s.name}`).sort();
+  const spokenOf = (run, kind) => {
+    const of = new Set(names(off, kind));
+    return run.spoken.filter(n => of.has(n)).sort();
+  };
+  const seen = new Set(off.stops.map(s => s.kind));
+  assert.ok(off.stops.length > 20 && seen.has('hd-site-marker') && seen.has('hd-ev'),
+    `the view has markers of several kinds to reach: ${JSON.stringify([...seen])}, ${off.stops.length}`);
+  for (const key of ['reduce', 'no-preference']) {
+    const on = runs[key];
+    console.log(`# canvas keyboard (${key}): ${on.stops.length} stops (elements ${off.stops.length}), ` +
+      `kinds ${JSON.stringify([...seen])}, rings painted ${JSON.stringify(Object.values(on.rings).map(r => Math.round(r.painted.bigPct)))} ` +
+      `against ${JSON.stringify(Object.values(off.rings).map(r => Math.round(r.painted.bigPct)))}, cards ${JSON.stringify(on.cards)} against ${JSON.stringify(off.cards)}`);
+    assert.deepEqual(runsOf(on), runsOf(off), `${key}: the stops pane by pane, in the panes' order`);
+    assert.deepEqual(kindsOf(on), kindsOf(off), `${key}: each kind in its pane`);
+    assert.equal(new Set(runsOf(off)).size, runsOf(off).length, 'each pane is one run of stops');
+    assert.deepEqual(on.tabbed, on.stops.slice(1, 1 + on.tabbed.length).map(s => s.name), `${key}: Tab walks them in that order`);
+    assert.deepEqual(off.tabbed, off.stops.slice(1, 1 + off.tabbed.length).map(s => s.name), 'as Tab walked the elements');
+    for (const kind of seen) {
+      assert.deepEqual(spokenOf(off, kind), names(off, kind), `the accessibility tree holds every ${kind} marker drawn as an element`);
+      assert.deepEqual(names(on, kind), names(off, kind), `${key}: ${kind} markers carry the same names and roles`);
+      assert.deepEqual(spokenOf(on, kind), spokenOf(off, kind), `${key}: a screen reader hears the same ${kind} markers`);
+    }
+    assert.ok(Object.keys(off.rings).length >= 2, `rings checked on several kinds: ${Object.keys(off.rings)}`);
+    for (const [name, r] of Object.entries(on.rings)) {
+      const was = off.rings[name];
+      assert.ok(r.proxy && r.visible && r.outline === was.outline && r.outline.startsWith('solid'),
+        `${key}: ${name} shows its focus ring: ${JSON.stringify(r)} against ${JSON.stringify(was)}`);
+      assert.ok(Math.hypot(r.x - was.x, r.y - was.y) <= 2,
+        `${key}: ${name} has its ring at the drawn marker: ${JSON.stringify(r)} against ${JSON.stringify(was)}`);
+      assert.ok(was.painted.bigPct > 2 && r.painted.bigPct > 0.5 * was.painted.bigPct,
+        `${key}: ${name}'s ring is painted as the element's was: ${JSON.stringify(r.painted)} against ${JSON.stringify(was.painted)}`);
+    }
+    assert.equal(Object.keys(off.cards).length, 1, `a finding's popup: ${JSON.stringify(off.cards)}`);
+    for (const [name, d] of Object.entries(off.cards)) {
+      const c = on.cards[name];
+      assert.ok(c && Math.abs(c.left - d.left) <= 2 && Math.abs(c.top - d.top) <= 2,
+        `${key}: Enter opens ${name}'s card where it opened before: ${JSON.stringify(c)} against ${JSON.stringify(d)}`);
+    }
+  }
+});

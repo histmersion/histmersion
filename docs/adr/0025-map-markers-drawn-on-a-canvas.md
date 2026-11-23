@@ -36,6 +36,16 @@ glyph bitmaps in 1–3 ms and keeps all of it in the app's hands.
 - The element becomes the marker's accessible proxy: it stays in the document in an off-screen list, focusable,
   with its name and keyboard handlers, and is not moved per frame. The focused proxy alone is placed over its marker,
   so the focus ring and a card opened from the keyboard stand where the marker is drawn.
+- The proxies keep the DOM mode's reading order: one group per point pane, in the panes' order, each holding its
+  pane's markers in the order they were added. A proxy of a marker far outside the view is `inert`, as the painted
+  element of such a marker is hidden, so Tab and a screen reader meet the same markers in both modes.
+- An unfocused proxy is clipped away (`clip-path`), and its labelled element (the element carrying `aria-label`)
+  is `content-visibility: hidden`: the element stays in the accessibility tree with its name and role, and nothing
+  inside it is styled or laid out, so a zoom that adds thousands of markers restyles about one element per marker.
+  The whole list is not `content-visibility: auto`, which was faster (3× CPU, the longest zoom task: 0–65 ms
+  against 58–63 ms) but took every proxy out of Chromium's accessibility tree. When focused, a proxy shows its
+  content and ring. The test handle measures a drawn marker's face with its content shown for that read
+  (`data-measure`).
 - The tests read markers through `window.histmersionMap.markers` (row 31 step 1), which the canvas answers from the
   same looks it draws.
 
@@ -45,7 +55,11 @@ A zoom's frames restyle no marker elements. The canvas is one more layer to keep
 redrawn in the same frame as the map, or markers lag the tiles. Hover effects the stylesheet gave for free (the
 point's 12 % growth, the cursor) are drawn and set by the pane. The playback event markers (a few, with text labels)
 stay DOM elements. A look may only use what the painter reads (the subset above); a property outside it is not
-drawn, and the browser test that compares the canvas with the elements pixel by pixel catches it.
+drawn, and the browser test that compares the canvas with the elements pixel by pixel catches it. A browser test
+holds the keyboard and the screen reader to the DOM mode: the same stops pane by pane, the same names and roles per
+marker kind, every marker button in Chromium's accessibility tree (`Accessibility.getFullAXTree`), the focus ring
+painted at the drawn marker, a finding's popup opened with Enter where it opened before, with and without reduced
+motion.
 
 ## Code
 
