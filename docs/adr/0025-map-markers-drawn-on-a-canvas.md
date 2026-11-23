@@ -48,6 +48,22 @@ glyph bitmaps in 1–3 ms and keeps all of it in the app's hands.
   (`data-measure`).
 - The tests read markers through `window.histmersionMap.markers` (row 31 step 1), which the canvas answers from the
   same looks it draws.
+- A zoom that regroups the cluster layer spreads its work over frames (2026-11-23, row 31's last step). The regroup,
+  the markers wanted and the moves' start and end points are decided in the zoom's frame, so the counts, the handle
+  and the animation are those of one regroup; the markers are then made a slice at a time (6 ms each), markers on
+  screen first. The first slice has only what the layout left of its 6 ms (it always makes at least one marker). The
+  moves start in a slice of their own, once the markers on screen are made, and a layout queued meanwhile (the zoom's
+  points reloaded) waits a frame after the moves started: each had been ~10–25 ms at 3× CPU, and together with the
+  slices and the tiles' read they made the 50–60 ms frames. A layout that must see its marker at once (zooming to
+  show a point) keeps a whole slice.
+- A marker whose own `class` or `style` changes keeps its look when the change is only its motion or placement (the
+  transient classes; `--move-x`/`--move-y`, `--z`, `--sx`/`--sy`, `--ax`/`--ay`, `--tx`/`--ty`): only its state is
+  read again. A regroup's moves restyle every moving marker, and reading each one's look again (an event's look is
+  read per marker, its fill being a `color-mix` of its colour) made the frame after the moves 15–31 ms of painting.
+  A look's place in the atlas is kept with the marker while the atlas holds it, not looked up by a string key per
+  marker per frame.
+- The two sprites that check a look's colours are canvases the CPU draws (`willReadFrequently`): reading them back
+  from the GPU took 3–8 ms each, ~20 a full-window zoom sequence, and up to 500 ms when the GPU was busy.
 
 ## Consequences
 
