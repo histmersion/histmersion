@@ -57,19 +57,29 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
   private val keys = js.Dynamic.newInstance(js.Dynamic.global.WeakMap)()
 
   private val observer = new dom.MutationObserver((records, _) => {
+    val restyled = js.Set[dom.Element]()
     records.foreach { r =>
       val el = r.target match
         case e: dom.Element => Option(e.closest(".hd-marker"))
         case n              =>
           Option(n.parentNode).collect { case e: dom.Element => e }.flatMap(e => Option(e.closest(".hd-marker")))
       el.foreach { e =>
-        byEl.delete(e)
-        keys.delete(e)
+        if (r.target eq e) && (r.attributeName == "class" || r.attributeName == "style") then restyled.add(e)
+        else
+          byEl.delete(e)
+          keys.delete(e)
         if r.attributeName == "class" then e.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
       }
       (0 until r.addedNodes.length).map(r.addedNodes(_)).foreach { n =>
         n.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
       }
+    }
+    restyled.foreach { e =>
+      val held = byEl.get(e)
+      if !js.isUndefined(held) && held.sig.asInstanceOf[String] == MarkerLook.rootKey(e) then held.stale = true
+      else
+        byEl.delete(e)
+        keys.delete(e)
     }
     schedule()
   })
@@ -145,10 +155,16 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
 
   def prepare(m: DomMarker): Unit =
     warm(List(m))
-    info(m).foreach(d =>
-      region(d.look.asInstanceOf[MarkerLook], d.colours.asInstanceOf[js.Array[String]], dom.window.devicePixelRatio)
-    )
+    info(m).foreach(d => regionOf(d, dom.window.devicePixelRatio))
     schedule()
+
+  private def regionOf(d: js.Dynamic, dpr: Double): js.Array[Double] =
+    val held = d.region.asInstanceOf[js.Array[Double]]
+    if held != null && dpr == atlasDpr && held(0) == generation then held
+    else
+      val r = region(d.look.asInstanceOf[MarkerLook], d.colours.asInstanceOf[js.Array[String]], dpr)
+      d.region = r
+      r
 
   private def batch(els: List[dom.Element], cs: List[String]): List[Option[MarkerLook]] =
     val clones = els.map(MarkerLook.withColours(_, cs))
@@ -213,7 +229,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
           .sort((a: js.Dynamic, b: js.Dynamic) => a.z.asInstanceOf[Int] - b.z.asInstanceOf[Int])
       layer.foreach { d =>
         val look = d.look.asInstanceOf[MarkerLook]
-        val r = region(look, d.colours.asInstanceOf[js.Array[String]], dpr)
+        val r = regionOf(d, dpr)
         val mo = motionOf(d, now, still)
         animating ||= mo.running
         val x = d.x.asInstanceOf[Double] + d.sx.asInstanceOf[Double] + mo.dx
@@ -372,7 +388,9 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
 
   private def info(m: DomMarker): Option[js.Dynamic] =
     val cached = byEl.get(m.el)
-    if !js.isUndefined(cached) then Option(cached)
+    if !js.isUndefined(cached) then
+      if cached.stale.asInstanceOf[Boolean] then restate(m.el, cached)
+      Option(cached)
     else
       val made = template(m.el).map(t => (t, MarkerLook.colours(m.el))).orElse {
         val key = MarkerLook.key(m.el)
@@ -383,30 +401,37 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
         val d = js.Dynamic.literal(
           look = l.asInstanceOf[js.Any],
           colours = c,
-          z = MarkerLook.inlineVar(m.el, "--z").toIntOption.getOrElse(0),
-          sx = MarkerLook.num(MarkerLook.inlineVar(m.el, "--sx")),
-          sy = MarkerLook.num(MarkerLook.inlineVar(m.el, "--sy")),
-          alpha = if m.el.classList.contains("hd-spidered") then 0.3 else 1.0,
-          pending = m.el.classList.contains(ClusterMotion.Pending),
-          inert = m.el.classList.contains("hd-cluster-ghost") || m.el.classList.contains("hd-spider-legs"),
-          grows = m.el.querySelector(".hd-point") != null,
-          present = MarkerLook.Transient
-            .filter(t => m.el.classList.contains(t) || m.el.querySelector(s".$t") != null)
-            .toSet
-            .asInstanceOf[js.Any],
-          mx = MarkerLook.num(MarkerLook.inlineVar(m.el, "--move-x")),
-          my = MarkerLook.num(MarkerLook.inlineVar(m.el, "--move-y")),
-          t0 = Option(m.el.asInstanceOf[js.Dynamic].hdT0)
-            .filterNot(js.isUndefined)
-            .map(_.asInstanceOf[Double])
-            .getOrElse(dom.window.performance.now()),
+          sig = MarkerLook.rootKey(m.el),
+          region = null,
+          stale = true,
           marker = null,
           x = 0.0,
           y = 0.0
         )
+        restate(m.el, d)
         byEl.set(m.el, d)
         d
       }
+
+  private def restate(el: dom.Element, d: js.Dynamic): Unit =
+    d.stale = false
+    d.z = MarkerLook.inlineVar(el, "--z").toIntOption.getOrElse(0)
+    d.sx = MarkerLook.num(MarkerLook.inlineVar(el, "--sx"))
+    d.sy = MarkerLook.num(MarkerLook.inlineVar(el, "--sy"))
+    d.alpha = if el.classList.contains("hd-spidered") then 0.3 else 1.0
+    d.pending = el.classList.contains(ClusterMotion.Pending)
+    d.inert = el.classList.contains("hd-cluster-ghost") || el.classList.contains("hd-spider-legs")
+    d.grows = el.querySelector(".hd-point") != null
+    d.present = MarkerLook.Transient
+      .filter(t => el.classList.contains(t) || el.querySelector(s".$t") != null)
+      .toSet
+      .asInstanceOf[js.Any]
+    d.mx = MarkerLook.num(MarkerLook.inlineVar(el, "--move-x"))
+    d.my = MarkerLook.num(MarkerLook.inlineVar(el, "--move-y"))
+    d.t0 = Option(el.asInstanceOf[js.Dynamic].hdT0)
+      .filterNot(js.isUndefined)
+      .map(_.asInstanceOf[Double])
+      .getOrElse(dom.window.performance.now())
 
 object MarkerCanvas:
   val StorageKey = "histmersion.ui.markerCanvas"

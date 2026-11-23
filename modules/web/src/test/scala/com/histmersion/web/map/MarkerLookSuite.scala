@@ -13,6 +13,21 @@ class MarkerLookSuite extends munit.FunSuite:
     )
     assertEquals(MarkerLook.shapeKey("hd-marker|"), "hd-marker|")
 
+  test("a marker's own key ignores its motion and placement, not its look"):
+    val still = MarkerLook.rootKey("hd-point-wrap hd-marker has-box", "--mw: 24px; --mh: 24px;")
+    assertEquals(
+      MarkerLook.rootKey(
+        "hd-point-wrap hd-marker has-box hd-cluster-move hd-fade-in",
+        "--mw: 24px; --mh: 24px; --move-x: -43px; --move-y: 2px; --z: 500; --ax: 10px; --ay: 3px;"
+      ),
+      still
+    )
+    assertEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box hd-cluster-pending", "--mw: 24px; --mh: 24px;"), still)
+    assertEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box", "--mw: 24px; --z: 5; --mh: 24px;"), still)
+    assertNotEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box", "--mw: 34px; --mh: 34px;"), still)
+    assertNotEquals(MarkerLook.rootKey("hd-point-wrap hd-marker", "--mw: 24px; --mh: 24px;"), still)
+    assertNotEquals(MarkerLook.rootKey("hd-point-wrap hd-marker has-box", "--mw: 24px; --mh: 24px; --c: red;"), still)
+
   test("a list is split at its top-level commas only"):
     assertEquals(
       MarkerLook.splitTop("rgba(0, 0, 0, 0.5) 0px 1px 2px 0px, rgb(1, 2, 3) 0px 0px 0px 2px"),
