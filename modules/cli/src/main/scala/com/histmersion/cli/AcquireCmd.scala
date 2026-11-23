@@ -119,7 +119,7 @@ object AcquireCmd:
         year: Option[Int],
         doi: Option[String],
         prov: Option[String],
-        noWait: Boolean,
+        following: Cli.Following,
         refetch: Boolean,
         legalOnly: Boolean,
         item: Option[Int],
@@ -183,7 +183,7 @@ object AcquireCmd:
               year,
               doi,
               prov,
-              noWait,
+              following,
               refetch,
               legalOnly,
               item,
@@ -201,7 +201,7 @@ object AcquireCmd:
                 authors.map(AuthorName(_)),
                 year.map(y => Year(y.toLong)),
                 doi.map(Doi(_)),
-                Cli.NoWait(noWait),
+                following,
                 prov.map(Ingest.Params.Provenance(_)),
                 item.map(Ingest.Params.AcquireItem(_))
               )

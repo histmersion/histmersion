@@ -128,7 +128,7 @@ object CalibreCmd:
       citekey: Option[Citekey],
       format: Option[CollectionImportRequest.Format],
       noConvert: Boolean,
-      noWait: Boolean,
+      following: Cli.Following,
       item: Option[Queue.QueueItem.Id],
       json: Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
@@ -161,7 +161,7 @@ object CalibreCmd:
                 s"queued job ${a.jobId} for ${a.citekey}" +
                   item.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
               )
-              if noWait || json.value then Right(()) else IngestCmd.pollJob(c, a.jobId, 0)
+              json.choose(Cli.Following.Return, following).follow(IngestCmd.pollJob(c, a.jobId, 0))
             }
     }
 
@@ -171,7 +171,7 @@ object CalibreCmd:
       citekey: Option[Citekey],
       format: Option[Calibre.Book.Format],
       noConvert: Boolean,
-      noWait: Boolean,
+      following: Cli.Following,
       item: Option[Queue.QueueItem.Id],
       json: Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
@@ -236,7 +236,7 @@ object CalibreCmd:
             authors = Nil,
             year = None,
             doi = None,
-            noWait = Cli.NoWait(noWait || json.value),
+            following = json.choose(Cli.Following.Return, following),
             provenance = Some(Source.Provenance("calibre")),
             acquireItem = item.map(i => Ingest.Params.AcquireItem(i.value))
           )
@@ -661,7 +661,7 @@ object CalibreCmd:
         citekey: Option[String],
         format: Option[String],
         noConvert: Boolean,
-        noWait: Boolean,
+        following: Cli.Following,
         item: Option[Int],
         json: Cli.JsonOutput
     )
@@ -778,7 +778,7 @@ object CalibreCmd:
                 )
               }
             case None => hostSearch(c, query, Unlinked(unlinked), max, json)
-        case Command.Import(id, citekey, format, noConvert, noWait, item, json) =>
+        case Command.Import(id, citekey, format, noConvert, following, item, json) =>
           server(c) match
             case Some(s) =>
               serverImport(
@@ -787,8 +787,8 @@ object CalibreCmd:
                 Calibre.Book.Id(id),
                 citekey.map(Citekey(_)),
                 format.map(CollectionImportRequest.Format(_)),
-                noConvert,
-                noWait,
+                noConvert = noConvert,
+                following,
                 item.map(Queue.QueueItem.Id(_)),
                 json
               )
@@ -798,8 +798,8 @@ object CalibreCmd:
                 Calibre.Book.Id(id),
                 citekey.map(Citekey(_)),
                 format.map(Calibre.Book.Format(_)),
-                noConvert,
-                noWait,
+                noConvert = noConvert,
+                following,
                 item.map(Queue.QueueItem.Id(_)),
                 json
               )

@@ -485,7 +485,7 @@ object TopArgs:
     private val analyze_ = flag("analyze", "VACUUM (ANALYZE): also refresh the planner's statistics")
     private val tables_ =
       values[String]("table", "A table to vacuum (repeatable; default: config maintenance.vacuum-tables)")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] =
-      Right(Cli.TopCommand.Vacuum(analyze_.getOrElse(false), tables_.getOrElse(Nil), noWait_.getOrElse(false)))
+      Right(Cli.TopCommand.Vacuum(analyze = analyze_.getOrElse(false), tables_.getOrElse(Nil), following_()))

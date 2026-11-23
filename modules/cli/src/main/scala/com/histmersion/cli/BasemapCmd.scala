@@ -24,7 +24,7 @@ object BasemapCmd:
         focus: Option[String],
         dry: Boolean,
         keepAll: Boolean,
-        noWait: Boolean
+        following: Cli.Following
     )
     case Rm(layer: Option[String], focus: Option[String], cache: Boolean)
 
@@ -36,7 +36,7 @@ object BasemapCmd:
       cmd match
         case Command.Status(json) =>
           c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
-        case Command.Fetch(layer, z, tz, bbox, focus, dry, keepAll, noWait) =>
+        case Command.Fetch(layer, z, tz, bbox, focus, dry, keepAll, following) =>
           c.basemapFetch(
             Basemap.FetchQuery(
               Basemap.FetchQuery.Layer(if focus.isDefined then "terrain" else layer),
@@ -51,7 +51,7 @@ object BasemapCmd:
             Cli.out.println(
               s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
             )
-            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+            following.follow(IngestCmd.pollJob(c, j.id, 0))
           }
         case Command.Rm(layer, focus, cache) =>
           val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")

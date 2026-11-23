@@ -356,6 +356,10 @@ object CommandLine:
       val f = flag("json", Output.JsonHelp)
       () => jsonOutput(f.getOrElse(false))
 
+    def noWait(descr: String): () => Cli.Following =
+      val f = flag("no-wait", descr)
+      () => if f.getOrElse(false) then Cli.Following.Return else Cli.Following.Follow
+
     /** A positional argument. */
     def arg[T](name: String, required: Boolean = true)(using
         c: ValueConverter[T],

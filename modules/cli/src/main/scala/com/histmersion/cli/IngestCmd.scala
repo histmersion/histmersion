@@ -36,7 +36,7 @@ object IngestCmd:
   private[cli] def followLimits: Either[Cli.Error, JobFollow.Limits] =
     JobFollow.Limits.of(Settings.app.cli.followTimeoutSeconds).left.map(Cli.Error(_))
 
-  /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
+  /** Upload one document and (unless told to return) follow its OCR job to completion. */
   def upload(using
       console: Console
   )(
@@ -49,7 +49,7 @@ object IngestCmd:
       authors: List[AuthorName],
       year: Option[Year],
       doi: Option[Doi],
-      noWait: Cli.NoWait,
+      following: Cli.Following,
       provenance: Option[Ingest.Params.Provenance] = None,
       acquireItem: Option[Ingest.Params.AcquireItem] = None
   ): Either[Cli.Error, Unit] =
@@ -88,7 +88,7 @@ object IngestCmd:
           s"queued job ${a.jobId} for ${a.citekey}" +
             acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
         )
-        if noWait.value then Right(()) else pollJob(c, a.jobId, 0)
+        following.follow(pollJob(c, a.jobId, 0))
       }
 
   /** The help of `jobs pause|resume|cancel`. */
@@ -101,7 +101,7 @@ object IngestCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
-    case Reocr(ck: String, quality: Boolean, noWait: Boolean)
+    case Reocr(ck: String, quality: Boolean, following: Cli.Following)
     case Assets(ck: String)
     case Jobs(
         id: Option[String],
@@ -118,10 +118,10 @@ object IngestCmd:
   final private[cli] class Perform(c: Client)(using console: Console):
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
-        case Command.Reocr(ck, quality, noWait) =>
+        case Command.Reocr(ck, quality, following) =>
           c.reocr(Citekey(ck), Api.Overwrite(quality)).flatMap { a =>
             Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
-            if noWait then Right(()) else pollJob(c, a.jobId, 0)
+            following.follow(pollJob(c, a.jobId, 0))
           }
         case Command.Assets(ck) =>
           c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))

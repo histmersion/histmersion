@@ -114,8 +114,8 @@ object PeriodsArgs:
       )
       with SharedFlags:
     private val fetch_ = flag("fetch", "Also download the network gazetteers and PeriodO (config init.fetch-sources)")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
-      PeriodsCmd.Command.Init(fetch_.getOrElse(false), noWait_.getOrElse(false))
+      PeriodsCmd.Command.Init(fetch = fetch_.getOrElse(false), following_())
     )

@@ -135,12 +135,12 @@ object PlacesCmd:
     * file-name ordering.
     */
 
-  /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
-  private def started(c: Client, id: SpatialHierarchyResult.Job.Id, noWait: Boolean)(using
+  /** A places job started on the server (#1946): say so, and follow it unless told to return. */
+  private def started(c: Client, id: SpatialHierarchyResult.Job.Id, following: Cli.Following)(using
       console: Console
   ): Either[Cli.Error, Unit] =
     Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
-    if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
+    following.follow(IngestCmd.pollJob(c, id, 0))
 
   // ── the external sources (#1064) ───────────────────────────────────────────────────────────────
 
@@ -155,7 +155,7 @@ object PlacesCmd:
     case Search(q: Option[String], asOf: Option[Api.AggregateQuery.AsOf], limit: Option[Int])
     case Show(id: String, asOf: Option[Api.AggregateQuery.AsOf], depth: Option[Int], noTree: Boolean)
     case Children(id: String, asOf: Option[Api.AggregateQuery.AsOf])
-    case SiteTypes(dry: Boolean, limit: Option[Int], refresh: Boolean, noWait: Boolean)
+    case SiteTypes(dry: Boolean, limit: Option[Int], refresh: Boolean, following: Cli.Following)
     case NameAdd(id: String, name: String, lang: Option[String])
     case NameRm(id: String, name: String, lang: Option[String])
     case NameListing(place: Option[String], csv: Boolean)
@@ -185,11 +185,11 @@ object PlacesCmd:
     )
     case Import(file: String, kind: Option[String], batch: Option[Int], dataset: Dataset)
     case Seed(dir: Option[String], batch: Option[Int], noRebuild: Boolean)
-    case Fetch(source: String, dryRun: Boolean, nw: Boolean)
+    case Fetch(source: String, dryRun: Boolean, following: Cli.Following)
     case Sources()
-    case Load(source: String, apply: Boolean, noWait: Boolean)
+    case Load(source: String, apply: Boolean, following: Cli.Following)
     case Rebuild()
-    case BuildHierarchy(nw: Boolean)
+    case BuildHierarchy(following: Cli.Following)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
@@ -210,14 +210,14 @@ object PlacesCmd:
             if rows.isEmpty then Cli.out.println("_No children._")
             else Cli.out.println(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
           }
-        case Command.SiteTypes(dry, limit, refresh, noWait) =>
+        case Command.SiteTypes(dry, limit, refresh, following) =>
           c.call(EventsApi.refineSiteTypes)(
             SiteTypes.Request(
               SiteTypes.Request.DryRun(dry),
               limit.map(SiteTypes.Request.Limit(_)),
               SiteTypes.Request.Refresh(refresh)
             )
-          ).flatMap(EventsCmd.follow(c, _, Cli.NoWait(noWait)))
+          ).flatMap(EventsCmd.follow(c, _, following))
         case Command.NameAdd(id, name, lang) =>
           c.addPlaceName(Place.Id(id), Place.NameAdd(Place.NameAdd.Name(name), lang.map(Place.NameAdd.Lang(_))))
             .map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
@@ -331,29 +331,29 @@ object PlacesCmd:
                   if noRebuild then Right(())
                   else c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
               yield ()
-        case Command.Fetch(source, dryRun, nw) =>
+        case Command.Fetch(source, dryRun, following) =>
           c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
             r.job match
-              case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), nw)
+              case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), following)
               case None     =>
                 Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
           }
         case Command.Sources() =>
           c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows)))
-        case Command.Load(source, apply, noWait) =>
+        case Command.Load(source, apply, following) =>
           c.loadPlaces(Api.ExternalPlaces.Source(source), Api.Apply(apply)).flatMap { j =>
             Cli.out.println(
               s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
             )
-            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+            following.follow(IngestCmd.pollJob(c, j.id, 0))
           }
         case Command.Rebuild() =>
           c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
-        case Command.BuildHierarchy(nw) =>
+        case Command.BuildHierarchy(following) =>
           c.buildHierarchy.flatMap { r =>
             r.job match
               // a server that runs it as a job (#1946) answers the job; the counts are its summary
-              case Some(id) => started(c, id, nw)
+              case Some(id) => started(c, id, following)
               case None     =>
                 Right(
                   Cli.out.println(

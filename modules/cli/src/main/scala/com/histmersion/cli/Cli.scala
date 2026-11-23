@@ -43,8 +43,15 @@ object Cli:
   type JsonOutput = JsonOutput.T
   object JsonOutput extends Newtype[Boolean, Pure]:
     extension (json: JsonOutput) def choose[A](asJson: => A, asText: => A): A = if json.value then asJson else asText
-  type NoWait = NoWait.T
-  object NoWait extends Newtype[Boolean, Pure]
+  enum Following derives CanEqual:
+    case Follow, Return
+
+  object Following:
+    extension (following: Following)
+      def follow(job: => Either[Error, Unit]): Either[Error, Unit] = following match
+        case Follow => job
+        case Return => Right(())
+
   type Question = Question.T
   object Question extends Newtype[String, Pure]
   type QuietOutput = QuietOutput.T
@@ -292,7 +299,7 @@ object Cli:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:
-    case Vacuum(analyze: Boolean, tables: List[String], noWait: Boolean)
+    case Vacuum(analyze: Boolean, tables: List[String], following: Following)
     case Version()
     case Health()
     case About(json: JsonOutput)
@@ -635,11 +642,11 @@ object Cli:
           else
             c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
               .map(r => out.println(Markdown.restored(r)))
-        case TopCommand.Vacuum(analyze, tables, noWait) =>
+        case TopCommand.Vacuum(analyze, tables, following) =>
           c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
             out.println(
               s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
                 "(`histmersion jobs` lists it)"
             )
-            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+            following.follow(IngestCmd.pollJob(c, j.id, 0))
           }

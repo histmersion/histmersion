@@ -168,7 +168,7 @@ object UpkeepArgs:
     private val dryRun_ = flag("dry-run", "List what it would close and try; no fetcher is asked, nothing stored")
     private val limit_ = value[Int]("limit", "Try at most this many due items (default acquire.recheck.per-pass)")
     private val id_ = value[Int]("id", "This acquisition item only, due or not")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following the job")
+    private val following_ = noWait("Print the job id and return instead of following the job")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] =
@@ -192,7 +192,7 @@ object UpkeepArgs:
       else
         Right(
           Ops.QueueCmd
-            .Recheck(dryRun_.getOrElse(false), limit_.toOption, id_.toOption, all, noWait_.getOrElse(false), json_())
+            .Recheck(dryRun = dryRun_.getOrElse(false), limit_.toOption, id_.toOption, all = all, following_(), json_())
         )
 
   final private class LeafWhy()
