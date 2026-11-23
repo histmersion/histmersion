@@ -55,7 +55,9 @@ glyph bitmaps in 1–3 ms and keeps all of it in the app's hands.
   moves start in a slice of their own, once the markers on screen are made, and a layout queued meanwhile (the zoom's
   points reloaded) waits a frame after the moves started: each had been ~10–25 ms at 3× CPU, and together with the
   slices and the tiles' read they made the 50–60 ms frames. A layout that must see its marker at once (zooming to
-  show a point) keeps a whole slice.
+  show a point) keeps a whole slice. Until its moves start a made marker is pending: not drawn (the canvas skips it,
+  the stylesheet hides it) and not listed by the handle's `markers`/`spots`, which had read the points of a split at
+  their ends for the frame before their slide.
 - A marker whose own `class` or `style` changes keeps its look when the change is only its motion or placement (the
   transient classes; `--move-x`/`--move-y`, `--z`, `--sx`/`--sy`, `--ax`/`--ay`, `--tx`/`--ty`): only its state is
   read again. A regroup's moves restyle every moving marker, and reading each one's look again (an event's look is

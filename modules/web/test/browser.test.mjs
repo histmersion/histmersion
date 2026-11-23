@@ -1235,6 +1235,10 @@ test('a zoom slides the points of a split bubble out and flies merging points in
         // they start together (where the bubble stood) and end apart
         const spread = pts => Math.max(...pts.flatMap(a => pts.map(b => dist(a, b))));
         assert.ok(spread(firstOnes) < spread(ends) / 2, `they start near one another: ${JSON.stringify(firstOnes)} → ${JSON.stringify(ends)}`);
+        // the first frame that draws all three (the first traced frame may still show the bubble alone, its points
+        // being made over a few frames) draws them where the bubble stood, not where they end
+        const firstAll = split.frames.map(fr => fr.filter(m => !m.bubble).map(m => m.at)).find(pts => pts.length === 3);
+        assert.ok(firstAll && spread(firstAll) < spread(ends) / 2, `they are first drawn near one another: ${JSON.stringify(firstAll)} → ${JSON.stringify(ends)}`);
       }
       await idleMarker(page, { flag: 'hd-find' });
       // the merge: three points into one bubble

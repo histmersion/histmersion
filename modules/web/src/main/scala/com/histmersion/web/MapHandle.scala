@@ -29,6 +29,14 @@ object MapHandle:
 
   private val faceSelector = ".hd-ev, .hd-find, .hd-site-marker, .hd-cluster, .hd-point, .hd-note"
 
+  /** A pane's markers as drawn, each with whether it is leaving. A marker made for a zoom's moves before they start
+    * ([[ClusterMotion.Pending]]) is left out: it is not drawn yet (the canvas skips it, the stylesheet hides it), and
+    * it stands at its end, so the frames before the moves read it as drawn there before it slid.
+    */
+  private def shown(pane: MarkerPane): List[(DomMarker, Boolean)] =
+    (pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true))
+      .filterNot(_._1.el.classList.contains(ClusterMotion.Pending))
+
   private def within(el: dom.Element): List[dom.Element] =
     val all = el.querySelectorAll("*")
     el :: (0 until all.length).map(all(_)).toList
@@ -183,8 +191,7 @@ object MapHandle:
       val detail = spec.exists(sp => !js.isUndefined(sp.detail) && sp.detail.asInstanceOf[Boolean])
       val every = spec.exists(sp => !js.isUndefined(sp.every) && sp.every.asInstanceOf[Boolean])
       val all = MapStack.domPanes.filter(p => every || pointPane(p)).flatMap { p =>
-        val pane = TheMap.pane(p)
-        pane.live.map(describe(origin, p, _, false, detail)) ++ pane.leaving.map(describe(origin, p, _, true, detail))
+        shown(TheMap.pane(p)).map((m, ghost) => describe(origin, p, m, ghost, detail))
       }
       spec.fold(all)(sp => all.filter(matches(_, sp))).toJSArray
 
@@ -322,10 +329,7 @@ object MapHandle:
             val origin = s.container.getBoundingClientRect()
             MapStack.domPanes
               .filter(p => names.fold(pointPane(p))(_.contains(paneName(p))))
-              .flatMap { p =>
-                val pane = TheMap.pane(p)
-                pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true)
-              }
+              .flatMap(p => shown(TheMap.pane(p)))
               .map { (m, ghost) =>
                 val at = where(origin, m)
                 val tag = m.el.asInstanceOf[js.Dynamic]
