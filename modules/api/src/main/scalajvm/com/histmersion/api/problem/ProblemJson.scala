@@ -14,9 +14,7 @@ private[api] object ProblemJson:
   /** The problem a master version stored as this text. */
   def bare(text: String): Problem = StoredShapes.read(text)
 
-  /** An entry whose case this build does not know: on the JVM a failure (`None`), since stored columns and records are
-    * decoded without a fallback (G91); only the browser shows such an entry by its sentence (E19).
+  /** An entry whose case this build does not know, after [[Answer.translations]]: the sentence it was stored with, kept
+    * whole (owner decision 7 of row 18, 2026-11-23).
     */
-  def unknown(sentence: Problem.Sentence): Option[Problem] =
-    val _ = sentence
-    None
+  def unknown(sentence: Problem.Sentence): Option[Problem] = Some(sentence.kept)

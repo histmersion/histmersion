@@ -1,6 +1,10 @@
 package com.histmersion
 package api
 package problem
+import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.{Files, Path}
+import scala.jdk.CollectionConverters.*
+
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -8,7 +12,7 @@ import hearth.kindlings.jsoniterjson.Json
 import util.problem.{External, Problem}
 import util.problem.Problem.*
 import util.problem.Text.{sentence, word}
-import Answer.entry
+import Answer.{current, entry, problem}
 import json.NewtypeCodecs.{problemCodec, vector}
 
 /** What the store holds, read back on the JVM. A column keeps every problem as its derived entry, in an array: every
@@ -17,6 +21,8 @@ import json.NewtypeCodecs.{problemCodec, vector}
   * writer wrote as their case, any other text kept whole.
   */
 class ReadBackSuite extends munit.FunSuite:
+
+  private val FrozenEntries = Path.of("modules/api/src/test/resources/problem/problem-entries-v1.json")
 
   examples.foreach { p =>
     test(s"${p.group.productPrefix}.${p.productPrefix}: its entry, as a column keeps it, reads back as the case"):
@@ -189,10 +195,30 @@ class ReadBackSuite extends munit.FunSuite:
         """"data":{"rule":{"SlugFree":{}},"at":"'old'"},"text":"'old': an article with this slug exists (or did)"}]}"""
     )
 
-  test("an entry of a case this build does not know is a failure on the JVM: a column is read without a fallback"):
-    // only the browser shows such an entry by its sentence (E19); the store and the CLI never guess it (G91)
+  test("an entry of a case this build does not know, translated or not, is kept as the sentence it was stored with"):
     List(
-      """{"group":"Run","case":"Nope","data":{},"text":"x"}""",
-      """{"group":"Conflict","case":"Invented","data":{"x":1},"text":"the server's own sentence"}""",
-      """{"group":"Galaxy","case":"Far","data":{},"text":"another sentence"}"""
-    ).foreach(e => assert(RawJson.decode[Problem](e).isLeft, e))
+      """{"group":"Run","case":"Nope","data":{},"text":"x"}""" -> Stored.Unrecognised(Stored.Text("x")),
+      """{"group":"Conflict","case":"Invented","data":{"x":1},"text":"the server's own sentence"}""" ->
+        Stored.Unrecognised(Stored.Text("the server's own sentence")),
+      """{"group":"Galaxy","case":"Far","data":{},"text":"another sentence"}""" ->
+        Stored.Unrecognised(Stored.Text("another sentence"))
+    ).foreach((e, kept) => assertEquals(RawJson.decode[Problem](e), Right(kept), e))
+
+  test("the frozen entries are written once, from the cases as they were on 2026-11-23"):
+    val written = (examples ++ MasterShapes.map(_._2)).distinct.map(_.entry.asJson.noSpaces)
+    if !Files.exists(FrozenEntries) && sys.env.get("HISTMERSION_FREEZE_PROBLEM_ENTRIES").contains("1") then
+      val _ = Files.write(FrozenEntries, ("[" +: written.map(_ + ",").init :+ written.last :+ "]").asJava, UTF_8)
+    assert(Files.exists(FrozenEntries), s"$FrozenEntries is missing")
+
+  test("every frozen entry reads back as the case that holds it now, with the sentence it was stored with"):
+    val frozen = Files.readAllLines(FrozenEntries, UTF_8).asScala.toVector.filter(_.startsWith("{"))
+    assert(frozen.size >= examples.size, s"${frozen.size} frozen entries")
+    frozen.foreach { line =>
+      RawJson.decode[Answer.Entry](line.stripSuffix(",")).flatMap(e => e.problem.map(e -> _)) match
+        case Left(why)     => fail(s"$line does not read: $why")
+        case Right((e, p)) =>
+          val now = e.current
+          assertEquals(p.entry.text, e.text, line)
+          assertEquals((p.entry.group, p.entry.`case`), (now.group, now.`case`), line)
+          if !Answer.translations.contains(Answer.Former(e.group, e.`case`)) then assertEquals(p.entry, e, line)
+    }

@@ -179,6 +179,7 @@ com/histmersion/api/problem/StoredShapes.Details.#0	modules/api/src/main/scala/c
 com/histmersion/api/problem/StoredShapes.Details.#1	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Run.Paused	Run.PauseReason.Requested	paused for allowance until 2025-11-10T00:00:00Z	same	
 com/histmersion/api/problem/StoredShapes.Details.#2	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Run.Unstarted		paused before it started	same	
 com/histmersion/api/problem/StoredShapes.Details.#3	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Run.UploadUnheld		the upload is no longer held by this process	same	
+com/histmersion/api/problem/StoredShapes.kept().#0	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Stored.Unrecognised		merge apply crashed: NullPointerException	removed	
 com/histmersion/api/problem/StoredShapes.read().#0	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Run.Interrupted		interrupted by a restart	same	
 com/histmersion/api/problem/StoredShapes.read().#1	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Run.Draining		stopped while the autopilot drains (since 2025-11-10T00:00:00Z)	same	
 com/histmersion/api/problem/StoredShapes.read().#2	modules/api/src/main/scala/com/histmersion/api/problem/StoredShapes.scala	Upstream.Unasked		not asked this sweep — CORE asked to wait until 2025-11-10T00:00:00Z	same	

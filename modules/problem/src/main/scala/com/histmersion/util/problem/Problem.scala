@@ -144,7 +144,8 @@ object Problem:
 
   /** A problem's English sentence, as its renderer wrote it: what a [[Relayed]] problem holds. */
   type Sentence = Sentence.T
-  object Sentence extends Newtype[String, Pure]
+  object Sentence extends Newtype[String, Pure]:
+    extension (sentence: Sentence) def kept: Problem = Stored.Unrecognised(Stored.Text(sentence.value))
 
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T
@@ -3191,7 +3192,7 @@ object Problem:
         External.Reported("java.lang.IllegalStateException: pg_dump vanished")
       ),
       Unclassified(Legacy.Text("cannot open the bundle")),
-      Stored.Unrecognised(Stored.Text("merge apply crashed: NullPointerException")),
+      Sentence("merge apply crashed: NullPointerException").kept,
       Relayed(Sentence("the server is reindexing"))
     )
 
