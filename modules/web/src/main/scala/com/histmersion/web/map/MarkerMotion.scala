@@ -5,6 +5,18 @@ object MarkerMotion:
 
   final case class Motion(dx: Double, dy: Double, alpha: Double, scale: Double, running: Boolean)
 
+  enum Clock derives CanEqual:
+    case Pending
+    case Started(at: Double)
+
+    def elapsed(now: Double): Double = this match
+      case Clock.Pending     => 0.0
+      case Clock.Started(at) => now - at
+
+    def startedBy(frame: Double): Clock = this match
+      case Clock.Pending => Clock.Started(frame)
+      case started       => started
+
   def bezier(x1: Double, y1: Double, x2: Double, y2: Double, t: Double): Double =
     if t <= 0 then 0.0
     else if t >= 1 then 1.0

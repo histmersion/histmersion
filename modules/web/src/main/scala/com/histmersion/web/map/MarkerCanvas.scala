@@ -55,6 +55,28 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
 
   private val byEl = js.Dynamic.newInstance(js.Dynamic.global.WeakMap)()
   private val keys = js.Dynamic.newInstance(js.Dynamic.global.WeakMap)()
+  private val clocks = js.Dynamic.newInstance(js.Dynamic.global.WeakMap)()
+  private val unstarted = js.Array[dom.Node]()
+
+  private def restart(n: dom.Node): Unit =
+    val _ = clocks.set(n, MarkerMotion.Clock.Pending.asInstanceOf[js.Any])
+    val _ = unstarted.push(n)
+
+  private def clockOf(n: dom.Node): MarkerMotion.Clock =
+    val held = clocks.get(n)
+    if js.isUndefined(held) then MarkerMotion.Clock.Pending else held.asInstanceOf[MarkerMotion.Clock]
+
+  private def startedClock(n: dom.Node, frame: Double): MarkerMotion.Clock =
+    clockOf(n) match
+      case started: MarkerMotion.Clock.Started => started
+      case pending                             =>
+        val started = pending.startedBy(frame)
+        val _ = clocks.set(n, started.asInstanceOf[js.Any])
+        started
+
+  private def startUnstarted(frame: Double): Unit =
+    unstarted.foreach(n => startedClock(n, frame))
+    unstarted.length = 0
 
   private val observer = new dom.MutationObserver((records, _) => {
     val restyled = js.Set[dom.Element]()
@@ -68,11 +90,9 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
         else
           byEl.delete(e)
           keys.delete(e)
-        if r.attributeName == "class" then e.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
+        if r.attributeName == "class" then restart(e)
       }
-      (0 until r.addedNodes.length).map(r.addedNodes(_)).foreach { n =>
-        n.asInstanceOf[js.Dynamic].hdT0 = dom.window.performance.now()
-      }
+      (0 until r.addedNodes.length).map(r.addedNodes(_)).foreach(restart)
     }
     restyled.foreach { e =>
       val held = byEl.get(e)
@@ -210,6 +230,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     ctx.clearRect(0, 0, width, height)
     val layer = js.Array[js.Dynamic]()
     val now = dom.window.performance.now()
+    startUnstarted(now)
     val still = stillNow
     var animating = false
     panes().foreach { ms =>
@@ -230,7 +251,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       layer.foreach { d =>
         val look = d.look.asInstanceOf[MarkerLook]
         val r = regionOf(d, dpr)
-        val mo = motionOf(d, now, still)
+        val mo = motionOf(d, startedClock(d.marker.asInstanceOf[DomMarker].el, now).elapsed(now), still)
         animating ||= mo.running
         val x = d.x.asInstanceOf[Double] + d.sx.asInstanceOf[Double] + mo.dx
         val y = d.y.asInstanceOf[Double] + d.sy.asInstanceOf[Double] + mo.dy
@@ -249,12 +270,12 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     if (focused ne null) && (focused.el.parentNode eq null) then focused = null
     if focused ne null then anchor(focused)
 
-  private def motionOf(d: js.Dynamic, now: Double, still: Boolean): MarkerMotion.Motion =
+  private def motionOf(d: js.Dynamic, elapsed: Double, still: Boolean): MarkerMotion.Motion =
     MarkerMotion.motion(
       d.present.asInstanceOf[Set[String]],
       d.mx.asInstanceOf[Double],
       d.my.asInstanceOf[Double],
-      now - d.t0.asInstanceOf[Double],
+      elapsed,
       still
     )
 
@@ -266,7 +287,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
   def placed(m: DomMarker): js.Dynamic =
     val r = frame.getBoundingClientRect()
     val d = info(m)
-    val mo = d.map(motionOf(_, dom.window.performance.now(), stillNow))
+    val mo = d.map(motionOf(_, clockOf(m.el).elapsed(dom.window.performance.now()), stillNow))
     val sx = d.fold(0.0)(_.sx.asInstanceOf[Double]) + mo.fold(0.0)(_.dx)
     val sy = d.fold(0.0)(_.sy.asInstanceOf[Double]) + mo.fold(0.0)(_.dy)
     val look = d.map(_.look.asInstanceOf[MarkerLook])
@@ -294,7 +315,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       }
       .find { (m, d) =>
         val look = d.look.asInstanceOf[MarkerLook]
-        val mo = motionOf(d, now, still)
+        val mo = motionOf(d, clockOf(m.el).elapsed(now), still)
         !d.inert.asInstanceOf[Boolean] && mo.alpha > 0 &&
         math.abs(x - m.drawX - d.sx.asInstanceOf[Double] - mo.dx) <= look.w / 2 &&
         math.abs(y - m.drawY - d.sy.asInstanceOf[Double] - mo.dy) <= look.h / 2
@@ -428,10 +449,6 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       .asInstanceOf[js.Any]
     d.mx = MarkerLook.num(MarkerLook.inlineVar(el, "--move-x"))
     d.my = MarkerLook.num(MarkerLook.inlineVar(el, "--move-y"))
-    d.t0 = Option(el.asInstanceOf[js.Dynamic].hdT0)
-      .filterNot(js.isUndefined)
-      .map(_.asInstanceOf[Double])
-      .getOrElse(dom.window.performance.now())
 
 object MarkerCanvas:
   val StorageKey = "histmersion.ui.markerCanvas"

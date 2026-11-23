@@ -69,6 +69,16 @@ glyph bitmaps in 1–3 ms and keeps all of it in the app's hands.
   read per marker, its fill being a `color-mix` of its colour) made the frame after the moves 15–31 ms of painting.
   A look's place in the atlas is kept with the marker while the atlas holds it, not looked up by a string key per
   marker per frame.
+- A marker's motion (a slide, an arrival, a fade in or out, a dot entering or leaving) starts at the first frame the
+  canvas paints after its motion class is added, as a pending CSS animation takes the time of its next frame
+  (2026-11-23). The clock had been the time the class was added: the moves start in a task a few ms after the zoom's
+  end, and on a page painting 10–17 frames a second the next frame came 55 ms or more later, when the slide's
+  front-loaded ease (`cubic-bezier(0, 0, .25, 1)`) had already covered half its 250 ms, so the points of a split
+  appeared halfway out and jumped (3× CPU, frames capped at 15 a second: the split test passed 1 of 10 runs, 10 of 10
+  with the clock started by the frame). Until a frame starts it, a motion is pending: the handle's positions and the
+  pointer's hit test see it at its start. Every motion class added is started by the next paint, drawn or not, so a
+  marker outside the view does not replay its motion when it comes into view. At 8 frames a second a 250 ms slide is
+  still drawn in two frames.
 - The two sprites that check a look's colours are canvases the CPU draws (`willReadFrequently`): reading them back
   from the GPU took 3–8 ms each, ~20 a full-window zoom sequence, and up to 500 ms when the GPU was busy.
 
