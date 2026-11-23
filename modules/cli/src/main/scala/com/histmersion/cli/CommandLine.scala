@@ -360,6 +360,14 @@ object CommandLine:
       val f = flag("no-wait", descr)
       () => if f.getOrElse(false) then Cli.Following.Return else Cli.Following.Follow
 
+    def dryRun(descr: String): () => Cli.Writes =
+      val f = flag("dry-run", descr)
+      () => if f.getOrElse(false) then Cli.Writes.DryRun else Cli.Writes.Apply
+
+    def applyFlag(descr: String): () => Cli.Writes =
+      val f = flag("apply", descr)
+      () => if f.getOrElse(false) then Cli.Writes.Apply else Cli.Writes.DryRun
+
     /** A positional argument. */
     def arg[T](name: String, required: Boolean = true)(using
         c: ValueConverter[T],

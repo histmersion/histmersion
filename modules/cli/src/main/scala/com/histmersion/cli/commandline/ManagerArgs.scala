@@ -115,7 +115,7 @@ object ManagerArgs:
     private val ids_ = values[Long]("id", "Only these approvals (repeatable)")
     private val note_ = value[String]("note", "Why — kept with every decision")
     private val limit_ = value[Int]("limit", "At most this many (the oldest first)")
-    private val dry_ = flag("dry-run", "List what it would decide; decide nothing")
+    private val writes_ = dryRun("List what it would decide; decide nothing")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(
@@ -126,7 +126,7 @@ object ManagerArgs:
         ids_.getOrElse(Nil),
         note_.toOption,
         limit_.toOption,
-        dry_.getOrElse(false),
+        writes_(),
         json_()
       )
     )
@@ -317,8 +317,8 @@ object ManagerArgs:
         "repair-acquire",
         "Move the acquisition items a watcher's sweep created for legal open-access works into the ingest backlog"
       )(v =>
-        val dry = v.flag("dry-run", "List what it would do, change nothing")
-        () => Right(ManagerCmd.AutopilotVerb.RepairAcquire(dry.getOrElse(false)))
+        val writes = v.dryRun("List what it would do, change nothing")
+        () => Right(ManagerCmd.AutopilotVerb.RepairAcquire(writes()))
       ),
       LeafAutopilotVerb(
         "focus",

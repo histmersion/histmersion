@@ -111,7 +111,7 @@ object ManagerCmd:
     case Off
     case Drain
     case Undrain
-    case RepairAcquire(dryRun: Boolean)
+    case RepairAcquire(writes: Cli.Writes)
     case Focus(request: Option[Autopilot.FocusSet])
     case Mode(mode: String)
 
@@ -161,7 +161,7 @@ object ManagerCmd:
         ids: List[Long],
         note: Option[String],
         limit: Option[Int],
-        dry: Boolean,
+        writes: Cli.Writes,
         json: Cli.JsonOutput
     )
 
@@ -181,7 +181,7 @@ object ManagerCmd:
           c.call(ManagersApi.stalls)(days.map(Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
         case Command.Digest(json) =>
           c.call(ManagersApi.digest)(()).map(d => Output.emit(json, d)(ApprovalDigestMarkdown.digest))
-        case Command.DecideAll(d, kind, subject, ids, note, limit, dry, json) =>
+        case Command.DecideAll(d, kind, subject, ids, note, limit, writes, json) =>
           c.call(ManagersApi.decideAll)(
             ApprovalDigest.BulkDecide(
               ApprovalDigest.BulkDecide.Decision(d),
@@ -189,7 +189,7 @@ object ManagerCmd:
               subject.map(ApprovalDigest.BulkDecide.Subject(_)),
               ids.map(ApprovalDigest.Open.Id(_)),
               note.map(ApprovalDigest.BulkDecide.Note(_)),
-              ApprovalDigest.BulkDecide.DryRun(dry),
+              ApprovalDigest.BulkDecide.DryRun(writes.dry),
               limit.map(ApprovalDigest.BulkDecide.Limit(_)),
               Some(ApprovalDigest.BulkDecide.By("cli"))
             )
@@ -238,9 +238,9 @@ object ManagerCmd:
                   Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))
                 )
               )
-            case AutopilotVerb.RepairAcquire(dry) =>
+            case AutopilotVerb.RepairAcquire(writes) =>
               c.call(AcquisitionWorkApi.repairAcquire)(
-                RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(Activity.Actor("cli")))
+                RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(writes.dry), Some(Activity.Actor("cli")))
               ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
             case AutopilotVerb.Focus(request) =>
               request

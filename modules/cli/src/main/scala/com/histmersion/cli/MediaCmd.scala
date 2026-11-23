@@ -40,7 +40,7 @@ object MediaCmd:
   enum Command extends Cli.Command:
     case Import(
         name: String,
-        dry: Boolean,
+        writes: Cli.Writes,
         limit: Option[Int],
         place: Option[String],
         event: Option[String],
@@ -49,7 +49,7 @@ object MediaCmd:
     )
     case Providers()
     case Covers(
-        dry: Boolean,
+        writes: Cli.Writes,
         limit: Option[Int],
         ck: Option[String],
         refresh: Boolean,
@@ -69,7 +69,7 @@ object MediaCmd:
         facets: Boolean
     )
     case Show(uid: String)
-    case FillLicences(apply: Boolean)
+    case FillLicences(writes: Cli.Writes)
     case Detail(ck: String, name: String)
     case Patch(
         ck: String,
@@ -89,7 +89,8 @@ object MediaCmd:
   final private[cli] class Perform(c: Client)(using console: Console):
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
-        case Command.Import(name, dry, limit, place, event, refresh, following) =>
+        case Command.Import(name, writes, limit, place, event, refresh, following) =>
+          val dry = writes.dry
           val req = MediaImportRequest(
             MediaItem.Provider(name),
             MediaImportRequest.DryRun(dry),
@@ -108,7 +109,8 @@ object MediaCmd:
             }
         case Command.Providers() =>
           c.mediaProviders.map(ps => Cli.out.println(MediaMarkdown.mediaProviders(ps)))
-        case Command.Covers(dry, limit, ck, refresh, noCalibre, noOl, noIll, following) =>
+        case Command.Covers(writes, limit, ck, refresh, noCalibre, noOl, noIll, following) =>
+          val dry = writes.dry
           val only = ck.map(_.trim).filter(_.nonEmpty)
           for
             // 1. the Calibre library, here on the host (the server may not see it)
@@ -178,8 +180,8 @@ object MediaCmd:
             ).map(l => Cli.out.println(MediaMarkdown.mediaList(l)))
         case Command.Show(uid) =>
           c.mediaShow(Bundle.Asset.Uid(uid.stripPrefix("media:"))).map(m => Cli.out.println(MediaMarkdown.mediaItem(m)))
-        case Command.FillLicences(apply) =>
-          c.fillFigureLicences(Api.Apply(apply)).map(f => Cli.out.println(MediaMarkdown.figureLicenceFill(f)))
+        case Command.FillLicences(writes) =>
+          c.fillFigureLicences(Api.Apply(writes.applies)).map(f => Cli.out.println(MediaMarkdown.figureLicenceFill(f)))
         case Command.Detail(ck, name) =>
           c.assetDetail(Citekey(ck), Bundle.Asset.Variant(name))
             .map(d => Cli.out.println(MediaMarkdown.assetDetail(Citekey(ck), d)))

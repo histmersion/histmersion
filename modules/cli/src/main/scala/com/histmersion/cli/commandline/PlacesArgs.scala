@@ -70,14 +70,14 @@ object PlacesArgs:
           "classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already"
       )
       with SharedFlags:
-    private val dry_ = flag("dry-run", "Count the sites it would ask about")
+    private val writes_ = dryRun("Count the sites it would ask about")
     private val limit_ = value[Int]("limit", "Sites at most")
     private val refresh_ = flag("refresh", "Ask again about sites asked before")
     private val following_ = noWait("Print the job id and return")
 
     def command: Either[Problem, Cli.Command] = Right(
       PlacesCmd.Command
-        .SiteTypes(dry = dry_.getOrElse(false), limit_.toOption, refresh = refresh_.getOrElse(false), following_())
+        .SiteTypes(writes_(), limit_.toOption, refresh = refresh_.getOrElse(false), following_())
     )
 
   final private class LeafNameAdd()
@@ -270,11 +270,11 @@ object PlacesArgs:
       )
       with SharedFlags:
     private val source_ = arg[String]("source")
-    private val dryRun_ = flag("dry-run", "Parse and transform only — do not upsert")
+    private val writes_ = dryRun("Parse and transform only — do not upsert")
     private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
-      PlacesCmd.Command.Fetch(source_(), dryRun = dryRun_.getOrElse(false), following_())
+      PlacesCmd.Command.Fetch(source_(), writes_(), following_())
     )
 
   final private class LeafSources()
@@ -294,12 +294,12 @@ object PlacesArgs:
       )
       with SharedFlags:
     private val source_ = arg[String]("geonames|wikidata|tgn|lpf")
-    private val apply_ =
-      flag("apply", "Import for real (without it: a dry run that reports what would change and keeps nothing)")
+    private val writes_ =
+      applyFlag("Import for real (without it: a dry run that reports what would change and keeps nothing)")
     private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
-      PlacesCmd.Command.Load(source_(), apply = apply_.getOrElse(false), following_())
+      PlacesCmd.Command.Load(source_(), writes_(), following_())
     )
 
   final private class LeafRebuild()

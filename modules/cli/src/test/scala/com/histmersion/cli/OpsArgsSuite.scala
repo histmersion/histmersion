@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.cli.Cli.Following.{Follow, Return}
+import com.histmersion.cli.Cli.Writes.{Apply, DryRun}
 import com.histmersion.cli.Ops.QueueCmd
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.problem.Problem
@@ -118,15 +119,15 @@ class OpsArgsSuite extends munit.FunSuite:
   test("`queue acquire recheck` takes --dry-run, --limit and --id; only the acquisition list has it"):
     assertEquals(
       parse("acquire", "recheck"),
-      Right(QueueCmd.Recheck(dryRun = false, None, None, all = false, Follow, json))
+      Right(QueueCmd.Recheck(Apply, None, None, all = false, Follow, json))
     )
     assertEquals(
       parse("acquire", "recheck", "--dry-run", "--limit", "5"),
-      Right(QueueCmd.Recheck(dryRun = true, Some(5), None, all = false, Follow, json))
+      Right(QueueCmd.Recheck(DryRun, Some(5), None, all = false, Follow, json))
     )
     assertEquals(
       parse("acquire", "recheck", "--id", "42"),
-      Right(QueueCmd.Recheck(dryRun = false, None, Some(42), all = false, Follow, json))
+      Right(QueueCmd.Recheck(Apply, None, Some(42), all = false, Follow, json))
     )
     assert(parse("acquire", "recheck", "--limit", "-1").isLeft)
     assert(parse("acquire", "recheck", "--id", "x").isLeft)
@@ -137,20 +138,20 @@ class OpsArgsSuite extends munit.FunSuite:
   test("`queue acquire recheck --all`: every open item; --no-wait returns with the job id; not with --id or --limit"):
     assertEquals(
       parse("acquire", "recheck", "--all"),
-      Right(QueueCmd.Recheck(dryRun = false, None, None, all = true, Follow, json))
+      Right(QueueCmd.Recheck(Apply, None, None, all = true, Follow, json))
     )
     assertEquals(
       parse("acquire", "recheck", "--all", "--no-wait"),
-      Right(QueueCmd.Recheck(dryRun = false, None, None, all = true, Return, json))
+      Right(QueueCmd.Recheck(Apply, None, None, all = true, Return, json))
     )
     assertEquals(
       parse("acquire", "recheck", "--all", "--dry-run"),
-      Right(QueueCmd.Recheck(dryRun = true, None, None, all = true, Follow, json)),
+      Right(QueueCmd.Recheck(DryRun, None, None, all = true, Follow, json)),
       "a dry run of --all lists every item it would try"
     )
     assertEquals(
       parse("acquire", "recheck", "--limit", "20", "--no-wait", "--json"),
-      Right(QueueCmd.Recheck(dryRun = false, Some(20), None, all = false, Return, Cli.JsonOutput(true)))
+      Right(QueueCmd.Recheck(Apply, Some(20), None, all = false, Return, Cli.JsonOutput(true)))
     )
     assert(parse("acquire", "recheck", "--all", "--id", "4").isLeft)
     assert(parse("acquire", "recheck", "--all", "--limit", "4").isLeft)

@@ -38,7 +38,7 @@ object BundleCmd:
   enum Command extends Cli.Command:
     case Export(file: String, since: Option[String])
     case Verify(file: String, json: Cli.JsonOutput)
-    case Import(file: String, dryRun: Boolean, res: MergeCmd.ResolutionFlags, json: Cli.JsonOutput)
+    case Import(file: String, writes: Cli.Writes, res: MergeCmd.ResolutionFlags, json: Cli.JsonOutput)
     case Instance(label: Option[String])
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
@@ -77,19 +77,23 @@ object BundleCmd:
                 Cli.Error.answered(Problem.Unclassified(Legacy.Text("the bundle did not verify")))
               )
           }
-        case Command.Import(file, dryRun, res, json) =>
+        case Command.Import(file, writes, res, json) =>
           val run: Either[Cli.Error, Bundle.ImportResult] =
             if res.isEmpty then
               existing(file).left
                 .map(Cli.Error(_))
-                .flatMap(c.importBundle(Cli.DryRun(dryRun), _))
+                .flatMap(c.importBundle(writes, _))
             else
               for
                 f <- existing(file).left.map(Cli.Error(_))
                 r <- MergeCmd.resolutions(res).left.map(Cli.Error(_))
                 u <- MergeCmd.upload(c, f)
                 x <- c.mergeImport(
-                  MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun))
+                  MergeImportRequest(
+                    MergeImportRequest.Bundle(u.sha256.value),
+                    r,
+                    MergeImportRequest.DryRun(writes.dry)
+                  )
                 )
               yield x
           run.flatMap { r =>

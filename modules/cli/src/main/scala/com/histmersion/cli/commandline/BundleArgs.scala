@@ -55,12 +55,12 @@ object BundleArgs:
       )
       with SharedFlags:
     private val file_ = arg[String]("file.hmx")
-    private val dryRun_ = flag("dry-run", "Report what the import would do, and write nothing")
+    private val writes_ = dryRun("Report what the import would do, and write nothing")
     private val res_ = resolutionFlags()
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(
-      BundleCmd.Command.Import(file_(), dryRun_.getOrElse(false), res_(), json_())
+      BundleCmd.Command.Import(file_(), writes_(), res_(), json_())
     )
 
   final private class LeafInstance()

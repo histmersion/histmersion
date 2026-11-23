@@ -206,12 +206,12 @@ object LibraryArgs:
         "Push every source with a fetched file that is not in Calibre yet (dry run unless --apply)"
       )
       with SharedFlags:
-    private val apply_ = flag("apply", "Actually add them (Calibre GUI must be closed)")
+    private val writes_ = applyFlag("Actually add them (Calibre GUI must be closed)")
     private val limit_ = value[Int]("limit", "Only consider this many gaps")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(
-      CalibreCmd.Command.Sync(apply_.getOrElse(false), limit_.toOption, json_())
+      CalibreCmd.Command.Sync(writes_(), limit_.toOption, json_())
     )
 
   final private class LeafGaps()
