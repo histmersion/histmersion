@@ -1013,7 +1013,27 @@ _No source 'zqnone2000_x'_
   }
 }
 == PATCH zqgamma1975_kings: metadata refused: a null title
-400 Invalid value for: body (metadata: metadata.title cannot be cleared — null is accepted only on year, venue, doi, provenance, calibreId; omit a field to leave it alone)
+400 {
+  "code" : null,
+  "problems" : [
+    {
+      "case" : "Unparsable",
+      "data" : {
+        "at" : [
+        ],
+        "damage" : {
+          "Unreadable" : {
+            "reported" : "metadata: metadata.title cannot be cleared — null is accepted only on year, venue, doi, provenance, calibreId; omit a field to leave it alone"
+          }
+        },
+        "format" : "Json",
+        "where" : "body"
+      },
+      "group" : "Invalid",
+      "text" : "the json data at body cannot be read — metadata: metadata.title cannot be cleared — null is accepted only on year, venue, doi, provenance, calibreId; omit a field to leave it alone"
+    }
+  ]
+}
 == PATCH zqgamma1975_kings: summary
 200 {
   "findings" : [
@@ -1924,7 +1944,27 @@ _No source 'zqnone2000_x'_
   }
 }
 == PATCH zqgamma1975_kings: refused: an unknown key
-400 Invalid value for: body (unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt); 'status' belongs under 'metadata' (metadata.status))
+400 {
+  "code" : null,
+  "problems" : [
+    {
+      "case" : "Unparsable",
+      "data" : {
+        "at" : [
+        ],
+        "damage" : {
+          "Unreadable" : {
+            "reported" : "unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt); 'status' belongs under 'metadata' (metadata.status)"
+          }
+        },
+        "format" : "Json",
+        "where" : "body"
+      },
+      "group" : "Invalid",
+      "text" : "the json data at body cannot be read — unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt); 'status' belongs under 'metadata' (metadata.status)"
+    }
+  ]
+}
 == PATCH zqgamma1975_kings: refused: a stale token
 412 {
   "code" : "precondition_failed",
