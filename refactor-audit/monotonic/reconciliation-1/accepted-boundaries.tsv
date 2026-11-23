@@ -1,5 +1,0 @@
-id	scope	occurrences	classification	reason
-monotonic-adapter	production	2	allowed-adapter	SystemTimer implements supplied elapsed-time capability
-deps-timing-composition	production	2	allowed-composition	Deps chooses replaceable adapters
-deps-timing-factory	production	2	allowed-composition	Deps factory forwards overrides
-system-timing-composition	production	2	allowed-composition	SystemContext passes selected adapters into hot graph

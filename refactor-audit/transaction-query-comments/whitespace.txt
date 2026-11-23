@@ -1,4 +1,0 @@
-path=modules/api/src/test/scalajvm/com/histmersion/api/QuerySuite.scala
-before=7569687e019f2c773b7b05125a7d613477ac20a68e04c25b6e8772eb54c89654
-after=0e5e2738fdc57858b8d21bfa1e91871a5cbab1c4df1e1e55e149c2448804a121
-AST unchanged; one trailing blank-line token removed after successful compilation and tests.

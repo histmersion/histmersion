@@ -1,7 +1,0 @@
-SOURCE_ASSERTION_CORRECTION_AFTER_VERIFIED_REPAIR
-TX-0001
-Only the repaired QueryRepo helper assertion changes from positive to negative; all other assertions and detector rules remain identical.
-Positive direct and helper-mediated rejection fixtures still pass; no findings or denominators removed from baseline.
-before-examples-sha256=c9de797bfcb9bb9f628da0dbb98cdafb37aefba27bf753b2af16f225534865a4
-after-examples-sha256=ca5682a6ef7890811eb7a07b5526e3fc4aeba1c96d9bc68207dcf711c094ef2b
-baseline-sha256=9c0b8f7e202c07586fd891fcf0016b8d559945009186940195c55456b4cd575e

@@ -1,5 +1,0 @@
-PASS
-Compilation, selected tests, assessment and configured original-ID checks passed.
-verified-capability-ids=2
-verified-capability-occurrences=2
-Repair counts remain in the existing family histories; no overall percentage implied.

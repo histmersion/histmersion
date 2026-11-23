@@ -1,3 +1,0 @@
-CREATED_BY_SCALAFIX
-Five parsed source files created; adapters are not wired and no migration fixes are claimed.
-Timer is an abstract core mechanism; real adapters are server-only; no global singleton or default.

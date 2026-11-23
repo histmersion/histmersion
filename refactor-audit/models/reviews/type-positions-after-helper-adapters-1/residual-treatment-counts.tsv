@@ -1,8 +1,0 @@
-category	proposed-treatment	leaves
-alias-signature-review	bulk-rewrite-candidate	35
-buffer-or-native-array-review	targeted-or-design-review	33
-declaration-owner-or-name-review	targeted-or-design-review	118
-lambda-propagation-review	type-propagation-candidate	343
-native-contract-review	targeted-or-design-review	41
-override-contract-review	targeted-or-design-review	243
-wrapper-shape-review	bulk-rewrite-candidate	73

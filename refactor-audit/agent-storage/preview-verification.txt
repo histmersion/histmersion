@@ -1,2 +1,0 @@
-PASS
-All preview sources compile together against the evaluated server test classpath; application unchanged.

@@ -1,3 +1,0 @@
-PASS
-identity replacement, reopening, scope, ambiguous owners and contribution-review guard checks
-rule-sha256=b9650783edd53904f19b92e36acff7f07bf86d13edbc0e6a39c5517f4087ca59

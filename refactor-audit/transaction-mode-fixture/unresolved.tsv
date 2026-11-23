@@ -1,4 +1,0 @@
-path	line	column	owner	source	ast
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/tools/refactor/transaction-mode-fixture/Examples.scala	12	65	com/histmersion/domain/transactionmodefixtures/ModeRepo.dynamic().	text	Term.Name("text")
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/tools/refactor/transaction-mode-fixture/Examples.scala	13	53	com/histmersion/domain/transactionmodefixtures/ModeRepo.commented().	"/* prefix */ COMMIT"	Lit.String("/* prefix */ COMMIT")
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/tools/refactor/transaction-mode-fixture/Examples.scala	14	52	com/histmersion/domain/transactionmodefixtures/ModeRepo.compound().	"SELECT 1; COMMIT"	Lit.String("SELECT 1; COMMIT")

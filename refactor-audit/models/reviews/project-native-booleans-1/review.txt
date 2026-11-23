@@ -1,6 +1,0 @@
-REJECTED_NOT_APPLIED
-The preview includes an unrelated E134 adapter proposing .value on a callback block.
-nativeBooleans now excludes E134. The corrected applied previews are
-project-native-booleans-2 and project-native-booleans-3. Preserve this proposal as
-rejected evidence; it contributes no repair credit. The general E134 adapter still
-needs a separate correction and is not enabled by this Boolean consumer mode.

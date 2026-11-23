@@ -1,3 +1,0 @@
-path	before-sha256	after-sha256
-modules/console/src/main/scala/com/histmersion/util/console/Console.scala	db7e1741162e0c2d1f20400b85688157a1fc646bbd94d53dda2734ea8f423ac6	e5864adfde9925eb5e2a042ffca81f8e52a53c8f60fdc7b8548bf611f832517b
-modules/plugin-fixtures/hello-lib/src/main/scala/com/histmersion/fixtures/hellolib/Shout.scala	040987949da09c0b873948f6c4ad3e9550a3c66f2e500239812c7751bb0c8398	62f28f7544faa24eed48b9b5af79f386d369f6ecf2282a6023e329e79198ba00

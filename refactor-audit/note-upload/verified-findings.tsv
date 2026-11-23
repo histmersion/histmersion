@@ -1,5 +1,0 @@
-id	occurrences	scope	status	evidence
-CAP-1c9db0a3726d85a6f21b82345f9cdd53bffbedbf43ec43f19cd0ccdaf6318f02	1	production	verified-targeted-rewrite	plan.tsv; applied-verification.txt; preview-verification.txt; refactor-audit/capability-history/observations/2026-11-05T00-43-45.555810Z
-CAP-2a9872bd5b0fb21739add8f66e504bda91852c400bdb56dc30ef7c07cf0bbbd8	1	production	verified-targeted-rewrite	plan.tsv; applied-verification.txt; preview-verification.txt; refactor-audit/capability-history/observations/2026-11-05T00-43-45.555810Z
-CAP-33bfb81bbcaa36426a732dafa1a11e12d12c45c7e2d4e3e716db7f38af22ce9e	1	production	verified-targeted-rewrite	plan.tsv; applied-verification.txt; preview-verification.txt; refactor-audit/capability-history/observations/2026-11-05T00-43-45.555810Z
-CAP-b723daae887093650fe1383e4fb8024bf0cdcbeb7121e45d07fd858522f7fdb6	1	production	verified-targeted-rewrite	plan.tsv; applied-verification.txt; preview-verification.txt; refactor-audit/capability-history/observations/2026-11-05T00-43-45.555810Z

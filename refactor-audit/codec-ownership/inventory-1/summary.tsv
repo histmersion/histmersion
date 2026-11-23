@@ -1,6 +1,0 @@
-scope	symbol	evidence	rows	files
-production	com/histmersion/util/database/Codecs$package.given_DbCodec_EdgeKind.	source-name	1	1
-production	com/histmersion/util/database/Codecs$package.given_DbCodec_List.	compiler-synthetic	9	5
-production	com/histmersion/util/database/Codecs$package.given_DbCodec_List.	source-name	10	10
-production	com/histmersion/util/database/Codecs$package.given_DbCodec_PlacePrecision.	source-name	1	1
-production	com/histmersion/util/database/Codecs$package.given_DbCodec_SourceStatus.	source-name	1	1

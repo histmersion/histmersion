@@ -1,2 +1,0 @@
-id	scope	occurrences	classification	owner	reason	predecessor
-CAP-6b311385bbd89f6c7625e3c5102964eab94b39bd8b7450766a94ba8a73713f55	production	3	accepted-exception	com/histmersion/pluginhost/SystemProcesses#Session#await().	Monotonic waiting is owned by the supplied host process adapter; plugins receive Processes, including replaceable sessions. Permission is limited to this exact method; this is not counted as a verified fix.	CAP-0bf5328a3a7bc0e268c496b338d77706b1a2e416da8ac015fa785ab12673748d

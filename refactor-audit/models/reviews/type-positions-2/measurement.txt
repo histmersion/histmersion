@@ -1,2 +1,0 @@
-3167 files; 113827 positions; 28022 explicit primitive leaves; 3 confirmed occurrences.
-AST-only: inference, aliases, named references and primitive shadowing require semantic review. Candidates are not confirmed violations; no accepted exceptions inferred. IDs omit line numbers; same-name overloads use source-order ordinals. Historical semantic inventory remains unchanged.

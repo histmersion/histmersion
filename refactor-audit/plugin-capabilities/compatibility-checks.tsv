@@ -1,6 +1,0 @@
-check	passed	failed	skipped	evidence-limit
-pluginApi/testOnly *	42	3	0	Current run; no pre-batch execution captured. Failing ValuesSuite and implicated Pure type sources are unchanged by this batch.
-pluginHost/testOnly *	41	0	0	All seven current host suites passed after the process-capture correction.
-pluginTestkit/testOnly *TestkitApiSuite	1	0	0	Compiled public testkit API matches its existing snapshot.
-pluginVaults/testOnly *VaultsSuite	28	0	1	Same 29 test identities and existing opt-in installed-KeePassXC skip as the frozen baseline.
-pluginsCalibre selected four suites	45	0	0	Same 45 test identities as baseline; first failed after-run retained separately; final run includes both post-preview corrections.

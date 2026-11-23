@@ -1,2 +1,0 @@
-path	line	patches	offsets	source
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/core/src/main/scala/com/histmersion/domain/ReviewArticle.scala	1973	2	97024,97056	r.copy(citekey = ck)

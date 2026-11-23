@@ -1,2 +1,0 @@
-from	to
-modules/server/src/main/scala/com/histmersion/util/ocr/Spool.scala	modules/server/src/main/scala/com/histmersion/domain/library/acquisition/Spool.scala

@@ -1,3 +1,0 @@
-PASS
-All preview production and test sources compile against the evaluated server test classpath.
-Recording JDBC lifecycle fixtures pass; real database validation remains required after application.

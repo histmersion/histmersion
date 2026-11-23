@@ -1,3 +1,0 @@
-Anonymous Plugin.Context in CalibreCollectionSuite receives existing supplied capabilities.
-Original test assertions unchanged. First failing test reports retained; subsequent after reports describe the corrected wiring.
-This correction follows the initial frozen preview; applied-verification.txt records that earlier snapshot, not this corrected test file.

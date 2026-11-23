@@ -1,1 +1,0 @@
-PASS: exact-type factory fixture; source assertions unchanged; failed prefix observation retained.

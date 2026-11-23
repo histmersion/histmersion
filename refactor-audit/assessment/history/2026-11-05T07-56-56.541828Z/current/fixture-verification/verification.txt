@@ -1,2 +1,0 @@
-examples=28/28
-failures=0

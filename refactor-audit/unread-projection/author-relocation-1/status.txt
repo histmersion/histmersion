@@ -1,3 +1,0 @@
-PREVIEW_ONLY
-files=2
-references-and-declarations=5

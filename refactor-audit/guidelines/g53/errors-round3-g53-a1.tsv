@@ -1,8 +1,0 @@
-modules/api/src/main/scala/com/histmersion/api/automation/ModelChains.scala:162:27	com.histmersion.api.automation.Agents.ModelRef and com.histmersion.api.automation.Agents.ModelRef	case Model(r)    => (r == m)
-modules/api/src/main/scala/com/histmersion/api/catalogue/Corrections.scala:25:7	io.circe.Json and io.circe.Json	if upstreamNow == value then Outcome.Retire
-modules/api/src/main/scala/com/histmersion/api/catalogue/Corrections.scala:26:12	io.circe.Json and io.circe.Json	else if upstreamNow == upstreamThen then Outcome.Keep
-modules/api/src/main/scala/com/histmersion/api/jobs/JobDetail.scala:75:87	io.circe.Json and io.circe.Json	private[histmersion] def jsonOf(a: A): Option[Json] = Option(encoder(a)).filterNot(_ == defaultJson)
-modules/api/src/main/scala/com/histmersion/api/library/Source.scala:203:15	object scala.collection.immutable.Nil and List[String | com.histmersion.api.Plural.Phrase.T].	case Nil => ""
-modules/api/src/main/scala/com/histmersion/api/research/Article.scala:916:35	com.histmersion.api.research.Article.Patch and com.histmersion.api.research.Article.Patch	(critiqueReasons.nonEmpty && this.modify(_.critiqueReasons).setTo(Nil).modify(_.ifUpdatedAt).setTo(None) == Patch())
-modules/api/src/main/scala/com/histmersion/api/research/Articles.scala:111:11	com.histmersion.api.research.Article.UpdatedAt.T and com.histmersion.api.research.Article.UpdatedAt | String	if want == actual then Right(())
-modules/api/src/main/scala/com/histmersion/api/settings/ConfigEdit.scala:107:18	com.histmersion.api.settings.ConfigEdit.Field.Key and com.histmersion.api.settings.ConfigEdit.Field.Key | String	fields.find(_.key == full)

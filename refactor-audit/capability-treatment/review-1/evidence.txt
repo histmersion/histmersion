@@ -1,3 +1,0 @@
-sources=8b851ab88ce0c3e829004254eba7acce89338af16fec54b8a2997dda275a45f7
-review=3cca181f41319a75952841aae0c461288ce88b9e18ec6d6917eee3a73f21da06
-baseline-observation=refactor-audit/capability-history/observations/2026-11-04T23-19-19.607608Z

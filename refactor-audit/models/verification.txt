@@ -1,8 +1,0 @@
-PASS
-37 exact primitive occurrences
-opaque/Iron and cross-file alias classification
-shadowed primitive names excluded
-nested, inferred, union, by-name, repeated and singleton types
-phantom-vs-represented type parameter evidence
-resolved consumer relationship
-negative assertion and missing-file coverage rejected

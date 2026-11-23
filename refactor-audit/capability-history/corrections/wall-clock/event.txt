@@ -1,6 +1,0 @@
-VERIFIED_SOURCE_REPAIR_ASSERTION
-RunTokens default now uses its injected Clock. Expected clock diagnostic changes from one to zero, with both versions retained.
-Global-clock detector positives remain unchanged in clock-fixtures.scala; no ban or permission changed.
-before-examples-sha256=655865f7c050906dc5d3d5e3d4d117902fcd5da83d00d12a8fb03886b8f0dbc7
-after-examples-sha256=80efe69a661e5285538679459f46c23abb639b19fceaf003cfe92e13f5ccb847
-baseline-sha256=9c0b8f7e202c07586fd891fcf0016b8d559945009186940195c55456b4cd575e

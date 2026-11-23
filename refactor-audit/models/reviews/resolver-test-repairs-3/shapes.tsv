@@ -1,2 +1,0 @@
-path	line	before-ast	after-ast
-modules/plugin-resolver/src/test/scala/com/histmersion/pluginresolver/PluginResolverSuite.scala	54	COMPILER E007 com.histmersion.pluginresolver.DependencyResolver.ResolveResult -> Int Term.Name("rc")	(rc).value

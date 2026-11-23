@@ -1,8 +1,0 @@
-sbt
---server
--batch
-set every scalafmtOnCompile := false
-set ThisBuild / scalacOptions += "-Xsemanticdb"
-cli/compile
-cli/Test/compile
-cli/testOnly *Calibre* *JobFollowSuite

@@ -1,2 +1,0 @@
-path	before-sha256	after-sha256
-modules/plugin-resolver/src/test/scala/com/histmersion/pluginresolver/PluginResolverSuite.scala	13bf8a318334b1bc6a6c1ea951b55294169bdf8af01392bde4c2bba8e7bcce71	290362f5b14ba349c3d8d8344a5ed160ce798afbe65b99891c88d55833076832

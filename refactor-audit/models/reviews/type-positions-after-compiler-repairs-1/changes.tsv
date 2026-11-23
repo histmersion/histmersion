@@ -1,6 +1,0 @@
-change	stable-position-and-route
-raw-primitive-eliminated-unverified	modules/cli/src/test/scala/com/histmersion/cli/PluginCmdSuite.scala::com.histmersion.cli.PluginCmdSuite.consoleFor.readLine:method-result#0|type
-raw-primitive-eliminated-unverified	modules/console/src/main/scala/com/histmersion/util/console/Console.scala::com.histmersion.util.console.Console.Streams.readTerminalLine.prompt:method-parameter#0|type
-raw-primitive-eliminated-unverified	modules/console/src/main/scala/com/histmersion/util/console/Console.scala::com.histmersion.util.console.Console.Streams.readTerminalLine:method-result#0|type/argument[0]
-raw-primitive-eliminated-unverified	modules/plugin-resolver/src/test/scala/com/histmersion/pluginresolver/PluginResolverSuite.scala::com.histmersion.pluginresolver.PluginResolverSuite.consoleFor.readLine:method-result#0|type
-raw-primitive-eliminated-unverified	modules/server/src/test/scala/com/histmersion/server/plugins/PluginToolSuite.scala::com.histmersion.server.plugins.PluginToolSuite.consoleFor.readLine:method-result#0|type

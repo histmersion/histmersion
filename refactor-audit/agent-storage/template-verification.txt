@@ -1,3 +1,0 @@
-PASS
-Replacement templates compile and execute capability contracts against the evaluated server classpath.
-This is template validation, not an applied application repair or caller-compilation proof.

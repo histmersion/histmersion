@@ -1,7 +1,0 @@
-format=1
-scope=production-only
-identity=rule,path,owner,symbol,AST;line-independent
-classification=detector-evidence;not-blanket-confirmed
-ambiguity=local-owners-and-repeated-identical-anchors
-rules=2f7ed9ac4a9c8f0a8be281e7ad8156a1a422b5505faff19364d288d628050c6c
-detector-and-policy=423407f8e1857886559d75912bdca4f410fbe4f21124ffc38310902282bbdb53

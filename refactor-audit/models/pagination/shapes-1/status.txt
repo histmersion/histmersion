@@ -1,2 +1,0 @@
-PASS: semantic AST scan of 3140 source/test files; 2370 matching names.
-Includes declarations, imports and references; rows are evidence, not violations. Enclosing operations may include unrelated arguments; eligibility still requires exact symbol and argument mapping.

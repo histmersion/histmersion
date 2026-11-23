@@ -1,6 +1,0 @@
-VERIFIED_REPAIR_ASSERTIONS_AND_EXACT_ENTRY_PERMISSION
-Repaired AgentTrees, PluginTree and Prompts guards follow their new source locations; positive controls remain.
-Generator exit is permitted only at the resolved @main method; domain lifecycle remains forbidden.
-before-examples-sha256=ca5682a6ef7890811eb7a07b5526e3fc4aeba1c96d9bc68207dcf711c094ef2b
-after-examples-sha256=035013be28cf6dcbd9b8fd98a5f56dbf26be3877766e3638c5cd6a1478c3d9b8
-baseline-sha256=9c0b8f7e202c07586fd891fcf0016b8d559945009186940195c55456b4cd575e

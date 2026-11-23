@@ -1,2 +1,0 @@
-REJECTED: boundary/forwarding patch interaction; never applied.
-Six files; original source hashes unchanged.

@@ -1,2 +1,0 @@
-symbol	path	line	module	parent	base	constraint	classification	resolved	status
-com/histmersion/domain/Title$package.Title.	/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/Title.scala	8	values	io/github/iltotore/iron/RefinedType#	String	Pure	pure	io/github/iltotore/iron/constraint/any.Pure#	inventory

@@ -1,8 +1,0 @@
-## modules/config/src/main/scala/com/histmersion/config/PlacesConfig.scala
-45:26 [E049] 45 |      def atLeastOne: T = apply(l.value.max(1)) / |                          Reference to apply is ambiguous. / |                          It is both defined in object PlacesConfig / |                          and inherited subsequently in object GeoLimit
-46:30 [E049] 46 |      def atMost(cap: T): T = apply(l.value.min(cap.value)) / |                           Reference to apply is ambiguous. / |                           It is both defined in object PlacesConfig / |                           and inherited subsequently in object GeoLimit
-
-## modules/config/src/main/scala/com/histmersion/config/edit/SettingEdit.scala
-13:55 [E007] 13 |    SettingKey.parse(key).left.map(SettingError.BadKey(_)).flatMap { k => / |        Found:    (_$1 : com.histmersion.config.edit.SettingKey.Problem) / |        Required: com.histmersion.config.edit.SettingError.BadKey.Why
-19:77 [E007] 19 |          else SettingValue.parse(v, kind).left.map(SettingError.BadValue(k, _)).map(Set(k, _)) / |      Found:    (_$3 : com.histmersion.config.edit.SettingValue.Problem) / |      Required: com.histmersion.config.edit.SettingError.BadValue.Why
-

@@ -1,6 +1,0 @@
-GENERATED_UNCOMPILED
-reviewed-fields=79
-concepts=17
-new-definitions=12
-preview-files=207
-Original sources unchanged. Boundary and caller compilation still required; no repair credit.

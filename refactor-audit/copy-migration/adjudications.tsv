@@ -1,2 +1,0 @@
-symbol	classification	definition	usage	reason
-com/histmersion/util/data/exchange/BlobOut#copy.	confirmed-non-violation	modules/db/src/main/scala/com/histmersion/util/data/exchange/BlobOut.scala	modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleExport.scala	Function-valued constructor field copy: OutputStream => Unit; b.copy selects the supplied blob writer, not the generated case-class copy method.

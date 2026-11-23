@@ -1,5 +1,0 @@
-files=3138
-bridges=0
-eligible=0
-review=0
-explicit-references=0

@@ -1,2 +1,0 @@
-path	before-sha256	after-sha256
-modules/server/src/main/scala/com/histmersion/domain/library/citations/CitationService.scala	d9bc7e37c1d39d639012fc4319749cc1b70b47a3f5c39284eea117bc2ff95bb7	d4f82cb5427c5942fe8571389fdc39b4669f9f02dd90465822c1d0ca9dd4e4b9

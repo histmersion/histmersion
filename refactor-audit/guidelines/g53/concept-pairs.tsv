@@ -1,2 +1,0 @@
-type_a	type_b	layer	where	note
-com.histmersion.api.SpatialHierarchyResult.Job.Id	com.histmersion.util.jobs.Job.Id	api vs util (test)	modules/server/src/test/scala/com/histmersion/server/BundleHttpSuite.scala:357	a job id across layers: a copy per layer is allowed by G5; listed because the test compares them. Kept: the wire contract and the server each own a job id by design (a copy per layer, converted at the controller); the test compares the two on purpose

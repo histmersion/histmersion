@@ -1,7 +1,0 @@
-tp=21
-fp=0
-fn=0
-tn=2
-precision=1.0
-recall=1.0
-Independent source audit; 21 grouped locations, not a random population sample. Only two legitimate comparison locations; limited negative diversity. Unclassified dependency-owned Printer.copy excluded explicitly. No population confidence claim.

@@ -1,3 +1,0 @@
-examples=28/28
-failures=0
-unchecked-examples=0

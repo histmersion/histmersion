@@ -1,3 +1,0 @@
-path	before-sha256	after-sha256
-modules/api/src/main/scala/com/histmersion/api/Api.scala	56f67afbf623b5a4e46ce65956d4384e3285efadd1e791bc4f07b737ec4f1b35	12217a53e3c04a2130d2b6ccdba7b4e83e947d55eb34de24ed918a3b181c5f43
-modules/api/src/main/scala/com/histmersion/api/OpsApi.scala	e1d833657a9fd9b46a23862a5f5c154c5754e1825518c2694d5bd7fc082108a7	c966a29b53333d73ef690c3a68c7499cd87f8ee0f7ad3138b4bd7a37c556ab28

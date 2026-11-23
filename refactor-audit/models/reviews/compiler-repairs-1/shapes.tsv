@@ -1,5 +1,0 @@
-path	line	before-ast	after-ast
-modules/plugin-fixtures/hello-lib/src/main/scala/com/histmersion/fixtures/hellolib/Shout.scala	12	COMPILER E008 primitive String member toUpperCase Term.Name("text")	(text).value
-modules/console/src/main/scala/com/histmersion/util/console/Console.scala	44	COMPILER E007 String -> com.histmersion.util.console.Console.Streams.InputResult Term.Name("readLine")	_root_.com.histmersion.util.console.Console.ReadLineResult(readLine)
-modules/console/src/main/scala/com/histmersion/util/console/Console.scala	47	COMPILER E007 String -> com.histmersion.util.console.Console.Streams.InputResult Term.Name("readLine")	_root_.com.histmersion.util.console.Console.ReadLineResult(readLine)
-modules/console/src/main/scala/com/histmersion/util/console/Console.scala	45	COMPILER E007 com.histmersion.util.console.Console.Streams.TerminalArg1 -> String Term.Apply(\n  Term.Select(Term.Name("c"), Term.Name("readLine")),\n  Term.ArgClause(List(Term.Name("prompt")), None)\n)	(c.readLine(prompt)).value

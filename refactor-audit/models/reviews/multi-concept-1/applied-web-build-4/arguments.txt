@@ -1,8 +1,0 @@
-sbt
---server
--batch
-set every scalafmtOnCompile := false
-set ThisBuild / scalacOptions += "-Xsemanticdb"
-web/compile
-web/Test/compile
-web/testOnly *EventPlaybackSuite *PointKindsSuite *RouteSuite *ListPagingSuite *PolledListSuite *ActivityViewSuite *MapRegionsSuite *PreviewSuite

@@ -1,2 +1,0 @@
-definition	status	previous-index
-modules/console/src/main/scala/com/histmersion/util/console/Console.scala::com.histmersion.util.console.Console.Streams.TerminalArg1#0	removed-newtype-shape-unverified	refactor-audit/models/reviews/newtype-index-after-consolidation-1

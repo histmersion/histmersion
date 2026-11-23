@@ -1,6 +1,0 @@
-examples=28/28
-failures=3
-unchecked-examples=0
-modules/db/src/main/scala/com/histmersion/domain/library/search/QueryRepo.scala:54 repo-transaction: expected 1, got 0
-modules/db/src/main/scala/com/histmersion/domain/library/search/QueryRepo.scala:59 repo-transaction: expected 1, got 0
-modules/db/src/main/scala/com/histmersion/domain/library/search/QueryRepo.scala:77 repo-transaction: expected 1, got 0

@@ -1,3 +1,0 @@
-FAILED
-requirement failed: isolation-history failed with exit 1; see refactor-audit/assessment/current/isolation-history.log
-Do not treat prior reports as current passing evidence.

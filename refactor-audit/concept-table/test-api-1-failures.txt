@@ -1,5 +1,0 @@
-==> X com.histmersion.api.personal.TargetSuite.the wire: kinds by name, out-of-range coordinates and unknown kinds refused 0.032s munit.FailException:
-==> X com.histmersion.api.MarkdownHopsSuite.neighbors renders each row by its classified target: source, article, unresolved 0.032s munit.FailExceptio
-==> X com.histmersion.api.WireSnapshotSuite.the moved records' Markdown and JSON are the recorded ones 0.211s munit.ComparisonFailException: modules/a
-==> X com.histmersion.api.ArticlesSuite.put normalises the slug and derives the summary from the lede when none is given 0.012s munit.ComparisonFailEx
-==> X com.histmersion.api.ArticlesSuite.put rejects a slug that is not a filename, an empty title and an inverted period 0.001s munit.FailException: m

@@ -1,5 +1,0 @@
-PASS: baseline, expected and rewritten definitions/callers compile; exact expected output matches.
-The configured fixture covers defaults, positional/named construction, generated copy arguments, typed forwarding and unchanged unrelated records.
-Wrong constructor order is rejected without modifying the source. Opaque types are defined in a separate file.
-Configured runtime and compile-time assertions passed; inspect Checks.scala for the exact concepts, raw-value and substitution checks.
-Development fixture only; coverage is exactly the configured input, expected output and behavioral checks. It does not establish whole-project caller closure or repair readiness.

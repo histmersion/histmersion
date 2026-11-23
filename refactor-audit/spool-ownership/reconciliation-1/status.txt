@@ -1,8 +1,0 @@
-PASS
-verified-production-relationships=3
-remaining-production=123
-remaining-test=191
-new=0
-source-files=3156
-isolation-observation=refactor-audit/isolation-history/observations/2026-11-05T04-43-20.649046Z
-Definition ASTs unchanged; configured ownership decision and caller compilation establish this bounded relocation. No detector-quality or migration-wide automation claim.
