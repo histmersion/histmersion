@@ -70,5 +70,9 @@ object WorkersSuite:
     "server:server/agents/Codex.scala" -> Place.Exempt("the retention of Codex homes on disk"),
     "server:util/basemap/BasemapService.scala" -> Place.Exempt("closes a downloaded file later"),
     "server:util/data/diagnostics/StorageCache.scala" -> Place.Exempt("measures the disk"),
+    "db:util/database/Transactor.scala" -> Place.Exempt(
+      "readToCompletion: a read on its caller's connection, which the caller waits for, so an interrupt does not cut " +
+        "the statement"
+    ),
     "plugin-host:pluginhost/SystemProcesses.scala" -> Place.Exempt("the pipes of a plugin's process")
   )
