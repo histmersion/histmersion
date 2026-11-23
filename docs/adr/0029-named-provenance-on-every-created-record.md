@@ -127,9 +127,10 @@ database seeded with synthetic rows of each fact, and its counts are in the slic
 
 ### 5. The wire
 
-`Queue.Creator`, `Queue.Agent`, `Queue.CreatedBy` and `Queue.Creation` move to the api root as `api.Creator` (with
-`Creator.Agent`, `Creator.By` — the input — and the `Creator.Creation` vocabulary), since every domain shows them; the
-work lists use them from there. A record's view gains `creator: Option[api.Creator]` and `createdAt` where it had none
+`Queue.Creator`, `Queue.Agent`, `Queue.CreatedBy` and `Queue.Creation` move to the api root as `api.Provenance` (with
+`Provenance.Agent`, `Provenance.By` — the input — and the vocabulary on its companion), since every domain shows them;
+the work lists use them from there. The wire's name is not `Creator`, so a server file that converts between the two
+names neither by a qualifier. A record's view gains `creator: Option[Provenance]` and `createdAt` where it had none
 (a source, a finding, an edge in `neighbors`, an article, an asset, a goal, a run, an approval, an event, a place, a
 note). Markdown renders one line, "Created by …, via …, at …"; the web page shows it in the record's card. The CLI
 sends `via = cli` and its identity (`--by-*`, `histmersion.cli.agent.*`) on every write command that creates a record;
@@ -152,8 +153,8 @@ the MCP write tools take `createdBy`.
 
 | slice | mechanical (a committed rule under `tools/refactor/`) | judgement (by hand) |
 |---|---|---|
-| 1. types | — | `Creator.Automated`'s surface, `Part` surfaces, `CreatorColumn`, `api.Creator` |
-| 1b. wire move | `RelocateCreatorWire` (Scalafix): `Queue.Creator/Agent/CreatedBy/Creation` → `api.Creator…` at every use | — |
+| 1. types | — | `Creator.Automated`'s surface, `Part` surfaces, `CreatorColumn` |
+| 1b. wire move | `RelocateWireCreator` (Scalafix): `Queue.Creator/Agent/CreatedBy/Creation` → `api.Provenance…` at every use | the definitions' move into `api/Provenance.scala` |
 | 2. migrations | — | V115 (columns, backfill), its rehearsal |
 | 3. create paths | `CreatorRewrite` (Scalafix, after `WritePermitRewrite`): adds `creator` to each record INSERT's column list, `(using Creator.New)` to the def around it, and follows it up the call graph and across overrides (trait, `Implementation`, `InMemory`), test files getting `TestCreators.given` | each `stop` row: the controller's or worker's provider, the `InMemory` states recording it, the bundle imports' rule |
 | 4. surfaces | — | `createdBy` on the write inputs, the views, Markdown, the CLI flags, the web card |

@@ -67,6 +67,7 @@ import com.histmersion.config.AcquireConfig
 import com.histmersion.util.jobs.JobQuery
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.api.Provenance
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched
@@ -405,7 +406,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       QueueAdd(
         Queue.QueueItem.Text("zzrecheck: enrich the source"),
         createdBy = Some(
-          Queue.CreatedBy(Some(Queue.Creation.Plugin("research")), Some(Queue.Creation.Workflow("review-article")))
+          Provenance.By(Some(Provenance.Plugin("research")), Some(Provenance.Workflow("review-article")))
         )
       )
     )

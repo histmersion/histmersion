@@ -13,9 +13,9 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import io.github.iltotore.iron.RefinedType
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.Provenance
 
 object Queue:
 
@@ -54,85 +54,11 @@ object Queue:
       goal: Option[Goal.Slug] = None,
       createdBy: Option[QueueItem.CreatedBy] = None,
       closedBy: Option[QueueItem.ClosedBy] = None,
-      creator: Option[Creator] = None,
-      actor: Option[Creation.Actor] = None
+      creator: Option[Provenance] = None,
+      actor: Option[Provenance.Actor] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
-
-  final case class CreatedBy(
-      plugin: Option[Creation.Plugin] = None,
-      workflow: Option[Creation.Workflow] = None,
-      agentDefinition: Option[Creation.Definition] = None,
-      provider: Option[Creation.Provider] = None,
-      model: Option[Creation.Model] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  final case class Creator(
-      kind: Creation.Kind,
-      surface: Option[Creation.Surface] = None,
-      plugin: Option[Creation.Plugin] = None,
-      workflow: Option[Creation.Workflow] = None,
-      agent: Option[Agent] = None,
-      job: Option[Creation.Job] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  final case class Agent(
-      kind: Creation.Runner,
-      definition: Option[Creation.Definition] = None,
-      provider: Option[Creation.Provider] = None,
-      model: Option[Creation.Model] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object Creation:
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
-    type Surface = Surface.T
-    object Surface extends Newtype[String, Pure]
-    type Runner = Runner.T
-    object Runner extends Newtype[String, Pure]
-    type Job = Job.T
-    object Job extends Newtype[String, Pure]
-    type Actor = Actor.T
-    object Actor extends Newtype[String, Pure]
-    type Via = Via.T
-    object Via extends Newtype[String, Pure]
-    type Plugin = Plugin.T
-    object Plugin extends Newtype[String, Pure]:
-      def of[T](name: T)(using RefinedType.Mirror[T]): Plugin = Plugin(s"$name")
-    type Workflow = Workflow.T
-    object Workflow extends Newtype[String, Pure]:
-      def of[T](name: T)(using RefinedType.Mirror[T]): Workflow = Workflow(s"$name")
-    type Definition = Definition.T
-    object Definition extends Newtype[String, Pure]:
-      def of[T](name: T)(using RefinedType.Mirror[T]): Definition = Definition(s"$name")
-    type Provider = Provider.T
-    object Provider extends Newtype[String, Pure]:
-      def of[T](name: T)(using RefinedType.Mirror[T]): Provider = Provider(s"$name")
-    type Model = Model.T
-    object Model extends Newtype[String, Pure]:
-      def of[T](name: T)(using RefinedType.Mirror[T]): Model = Model(s"$name")
-
-    val Manual: Kind = Kind("manual")
-    val Automated: Kind = Kind("automated")
-    val Unattributed: Kind = Kind("unattributed")
-    val Unknown: Kind = Kind("unknown")
-    val Unreadable: Kind = Kind("unreadable")
-    val Code: Runner = Runner("code")
-    val ByModel: Runner = Runner("model")
-    val Person: Actor = Actor("person")
-    val Agents: Actor = Actor("agents")
-    val Actors: List[Actor] = List(Person, Agents)
-    val Cli: Via = Via("cli")
-    val Web: Via = Via("web")
-    val Rest: Via = Via("rest")
-    val Vias: List[Via] = List(Rest, Cli, Web)
 
   object QueueItem:
     type Id = Id.T
@@ -168,8 +94,8 @@ object Queue:
       createdAt: Option[QueueAdd.CreatedAt] = None,
       goal: Option[Goal.Slug] = None,
       job: Option[SpatialHierarchyResult.Job.Id] = None,
-      createdBy: Option[CreatedBy] = None,
-      via: Option[Creation.Via] = None
+      createdBy: Option[Provenance.By] = None,
+      via: Option[Provenance.Via] = None
   ) derives StrictJson,
         KindlingsSchema,
         api.json.Schema
@@ -184,7 +110,7 @@ object Queue:
       reason: Option[Rationale] = None,
       goal: Option[Goal.Slug] = None,
       closedBy: Option[QueuePatch.ClosedBy] = None,
-      actor: Option[Creation.Actor] = None
+      actor: Option[Provenance.Actor] = None
   ) derives StrictJson,
         KindlingsSchema,
         api.json.Schema

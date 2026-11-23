@@ -1,15 +1,15 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.automation.Queue.{CreatedBy, Creation}
 import com.histmersion.config.CliConfig
+import com.histmersion.api.Provenance
 
 final case class AgentIdentity(
-    plugin: Option[Creation.Plugin] = None,
-    workflow: Option[Creation.Workflow] = None,
-    definition: Option[Creation.Definition] = None,
-    provider: Option[Creation.Provider] = None,
-    model: Option[Creation.Model] = None
+    plugin: Option[Provenance.Plugin] = None,
+    workflow: Option[Provenance.Workflow] = None,
+    definition: Option[Provenance.Definition] = None,
+    provider: Option[Provenance.Provider] = None,
+    model: Option[Provenance.Model] = None
 ) derives CanEqual:
   def orElse(fallback: AgentIdentity): AgentIdentity =
     AgentIdentity(
@@ -20,9 +20,9 @@ final case class AgentIdentity(
       model.orElse(fallback.model)
     )
 
-  def createdBy: Option[CreatedBy] =
+  def createdBy: Option[Provenance.By] =
     Option.when(List(plugin, workflow, definition, provider, model).exists(_.isDefined))(
-      CreatedBy(plugin, workflow, definition, provider, model)
+      Provenance.By(plugin, workflow, definition, provider, model)
     )
 
 object AgentIdentity:
@@ -31,9 +31,9 @@ object AgentIdentity:
   def configured(agent: CliConfig.Agent): AgentIdentity =
     def named(name: CliConfig.Agent.Name): Option[CliConfig.Agent.Name] = Option.when(s"$name".trim.nonEmpty)(name)
     AgentIdentity(
-      named(agent.plugin).map(Creation.Plugin.of(_)),
-      named(agent.workflow).map(Creation.Workflow.of(_)),
-      named(agent.definition).map(Creation.Definition.of(_)),
-      named(agent.provider).map(Creation.Provider.of(_)),
-      named(agent.model).map(Creation.Model.of(_))
+      named(agent.plugin).map(Provenance.Plugin.of(_)),
+      named(agent.workflow).map(Provenance.Workflow.of(_)),
+      named(agent.definition).map(Provenance.Definition.of(_)),
+      named(agent.provider).map(Provenance.Provider.of(_)),
+      named(agent.model).map(Provenance.Model.of(_))
     )

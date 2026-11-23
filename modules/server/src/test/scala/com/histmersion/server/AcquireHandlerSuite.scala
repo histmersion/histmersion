@@ -64,6 +64,7 @@ import com.histmersion.plugin.Fetch
 import com.histmersion.config.ConverterConfig
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.api.Provenance
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing
@@ -600,7 +601,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
     assertEquals(
       items.head.creator,
-      Some(Queue.Creator(Queue.Creation.Unattributed, surface = Some(Queue.Creation.Surface("rest")))),
+      Some(Provenance(Provenance.Unattributed, surface = Some(Provenance.Surface("rest")))),
       "an ingest over REST, which carries no identity yet: unattributed, never a guessed person"
     )
     assert(

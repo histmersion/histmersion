@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Goal
+import com.histmersion.api.Provenance
 
 /** The work lists held in memory: every item in id order, and the last id handed out. The rules are the database's: an
   * item is stamped when it is made (or keeps the instant it was imported with) and when it is first done, its times
@@ -107,8 +108,8 @@ object WorkListState:
       None,
       Some(
         Jsonb
-          .read[Queue.Creator](StoredCreator.write(creator.stored))
-          .getOrElse(Queue.Creator(Queue.Creation.Unreadable))
+          .read[Provenance](StoredCreator.write(creator.stored))
+          .getOrElse(Provenance(Provenance.Unreadable))
       ),
-      Some(if creator.actor == Actor.Agents then Queue.Creation.Agents else Queue.Creation.Person)
+      Some(if creator.actor == Actor.Agents then Provenance.Agents else Provenance.Person)
     )
