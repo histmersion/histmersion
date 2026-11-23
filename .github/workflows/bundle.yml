@@ -3,9 +3,11 @@ name: bundle
 # on every platform we ship, and prove each one works: scripts/bundle/smoke.sh starts it in
 # isolation (first-run initdb, children, health, CLI, offline OCR, clean stop).
 #
-# Runs when the bundle can change, on demand, and for releases. A `v*` tag attaches the archives
-# to a GitHub release; other runs upload no bundle (a bundle is ~1 GB compressed — artifact storage
-# on a private repo is far smaller). macOS minutes cost 10x on private repos, hence the path filter.
+# Runs on demand (workflow_dispatch) and for releases, never on a push or a pull request: no PR check
+# waits for it, and it becomes a required check at the first release (docs/adr/0028-ci-on-linux-bundles-on-demand.md).
+# The application code is the same on every platform and is tested on Linux by ci.yml; what differs per
+# platform is the packaging, which this workflow builds, self-checks and smoke-starts. A `v*` tag attaches
+# the archives to a GitHub release; other runs upload no bundle (a bundle is ~1 GB compressed).
 #
 # The RELINK KIT of each platform (docs/research-plugins.md §21.1) is packaged on every run, after its
 # checksums are verified: kit/ (the server's Sloth-patched jars in class-path order, the native-image
@@ -22,24 +24,6 @@ name: bundle
 on:
   push:
     tags: ['v*']
-    branches: [master]
-    paths:
-      - scripts/bundle/**
-      - runtime/**
-      - converter/**
-      - modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
-      - modules/config/src/main/resources/reference.conf
-      - .sdkmanrc
-      - .github/workflows/bundle.yml
-  pull_request:
-    paths:
-      - scripts/bundle/**
-      - runtime/**
-      - converter/**
-      - modules/server/src/main/scala/com/histmersion/server/Supervisor.scala
-      - modules/config/src/main/resources/reference.conf
-      - .sdkmanrc
-      - .github/workflows/bundle.yml
   workflow_dispatch: {}
 # read-only by default (a public repository); the bundle job asks for write, which only a tag's release upload uses
 permissions:
@@ -106,8 +90,19 @@ jobs:
       - name: install script tests (macOS — the LaunchAgent environment merge)
         if: runner.os == 'macOS'
         run: just test-scripts
+      - name: more swap for the native-image builder (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo fallocate -l 10G /mnt/hm-swap && sudo chmod 600 /mnt/hm-swap
+          sudo mkswap /mnt/hm-swap >/dev/null && sudo swapon /mnt/hm-swap
+          free -g
       - name: build the bundle
+        env:
+          SBT_OPTS: -Xss16m -Xmx2g
+          HISTMERSION_NATIVE_XMX: ${{ runner.os == 'Linux' && '14g' || '' }}
         run: just bundle dist/histmersion
+      - name: the native server's self-check (time zones, the linked resources)
+        run: dist/histmersion/bin/histmersion-server --self-check
       - name: smoke test
         run: scripts/bundle/smoke.sh dist/histmersion
       - name: install as a systemd user service, then uninstall (Linux)
