@@ -1,6 +1,7 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.given
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.api.json.NewtypeCodecs.given
 

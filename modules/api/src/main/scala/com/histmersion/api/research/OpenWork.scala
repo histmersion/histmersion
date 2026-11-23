@@ -1,6 +1,7 @@
 package com.histmersion
 package api.research
 
+import com.histmersion.api.given
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence

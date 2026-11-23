@@ -8,7 +8,7 @@ enum Colour derives CanEqual:
 /** What raw JSON accepts and how it writes a number back, as Kindlings 0.4.0's `JsonNumber` decides: a number outside
   * the JSON grammar (`+1`, `01`, `1.`, `.5`) is refused, `-0` keeps its sign, and raw JSON is read by our own reader,
   * so Kindlings' depth limit of 128 (its `Json` codec's) does not apply to it. And how a derived codec reads an enum
-  * case: as the object it writes (`{"Red":{}}`), not as a bare string, unless it is derived with words.
+  * case: as the word it writes (`"Red"`), and as the object a former version wrote (`{"Red":{}}`).
   */
 class ParsingRulesSuite extends munit.FunSuite:
   import RawJson.noSpaces
@@ -29,13 +29,15 @@ class ParsingRulesSuite extends munit.FunSuite:
     val deep = "[" * 200 + "]" * 200
     assertEquals(RawJson.parse(deep).map(_.noSpaces), Right(deep))
 
-  test("a derived codec reads an enum case as the object it writes; a bare string only with words"):
+  test("a derived codec writes an enum of words as the word, and reads the word and the object a former version wrote"):
     val codec = JsonCodec.derived[Colour]
     val words = JsonCodec.derivedWords[Colour]
+    assertEquals(writeJson(Colour.Red)(using codec), "\"Red\"")
+    assertEquals(writeJson(Colour.Red)(using words), "\"Red\"")
+    assertEquals(RawJson.decode("\"Red\"")(using codec), Right(Colour.Red))
     assertEquals(RawJson.decode("""{"Red":{}}""")(using codec), Right(Colour.Red))
-    assert(RawJson.decode("\"Red\"")(using codec).isLeft, "a bare string is no case of a circe-like codec")
     assertEquals(RawJson.decode("\"Red\"")(using words), Right(Colour.Red))
-    assertEquals(writeJson(Colour.Red)(using codec), """{"Red":{}}""")
+    assert(RawJson.decode("\"Green\"")(using codec).isLeft, "a word that is no case")
 
   private def writeJson[A](a: A)(using c: com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[A]): String =
     com.github.plokhotnyuk.jsoniter_scala.core.writeToString(a)
