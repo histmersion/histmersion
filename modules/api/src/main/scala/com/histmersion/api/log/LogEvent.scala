@@ -1,6 +1,7 @@
 package com.histmersion
 package api.log
 
+import com.histmersion.api.given
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.json.NewtypeCodecs.given

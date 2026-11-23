@@ -9,8 +9,10 @@ import scala.collection.immutable.ListMap
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import hearth.kindlings.jsoniterderivation.{JsoniterConfig, KindlingsJsonValueCodec}
 
-/** A record's JSON codec, derived by Kindlings (`derives JsonCodec`) and written as circe wrote it before: every field
-  * written, `None` as `null`, an enum case without fields as `{"Case":{}}`, a sum type wrapped in its case's name.
+/** A record's JSON codec, derived by Kindlings (`derives JsonCodec`): every field written, `None` as `null`, an enum
+  * whose cases all lack fields as its case's name (`"Case"`), any other sum type wrapped in its case's name
+  * (`{"Case":{…}}`, a case without fields as `{"Case":{}}`). An enum of words also reads the wrapped form a former
+  * version stored.
   *
   * Reading is lenient where the old decoders were: an absent `Option` field is `None`, an absent field with a default
   * takes it. Any other absent field fails as missing (`missing required field "name"`), a collection without a default
@@ -35,7 +37,7 @@ object JsonCodec:
     * field's default is not, so that what is written reads back.
     */
   def config(unknown: Unknown): JsoniterConfig =
-    JsoniterConfig.default.withCirceLikeObjectEncoding.withRequireCollectionFields.withEmptyCollectionsAsEmpty
+    JsoniterConfig.default.withCirceLikeObjectEncoding.withEnumAsStrings.withRequireCollectionFields.withEmptyCollectionsAsEmpty
       .withSkipUnexpectedFields(unknown == Unknown.Skipped)
 
   /** What a schema derived beside a codec is told of it (Kindlings' Tapir schemas read it): the codecs' own config, so
@@ -47,9 +49,9 @@ object JsonCodec:
   inline def derived[A](using unknown: Unknown): JsonCodec[A] =
     of(KindlingsJsonValueCodec.derived[A](using config(unknown)))
 
-  /** The codec with code words (enum cases without fields) written as strings (`"Read"`), for the problems' cases. */
+  /** The codec of a type that cannot say `derives JsonCodec` (the problems' cases, in a module without JSON). */
   inline def derivedWords[A]: JsonCodec[A] =
-    of(KindlingsJsonValueCodec.derived[A](using config(Unknown.Skipped).withEnumAsStrings))
+    of(KindlingsJsonValueCodec.derived[A](using config(Unknown.Skipped)))
 
   private def of[A](codec: JsonValueCodec[A]): JsonCodec[A] =
     new JsonCodec[A]:

@@ -106,10 +106,11 @@ class AbsentFieldsSuite extends munit.FunSuite:
     assert(RawJson.decode[Shape](extra).isRight)
     assert(RawJson.decode[Shape](extra)(using Shape.strict).isLeft)
 
-  test("an enum case without fields is an empty object, or a word where the codec writes words"):
+  test("an enum of words is a word; a case without fields of an enum with fields is an empty object"):
     assertEquals(
       com.github.plokhotnyuk.jsoniter_scala.core.writeToString(Coded(Code.Read))(using Coded.words),
       """{"code":"Read"}"""
     )
     assertEquals(Kind.Plain.asJson.noSpaces, """{"Plain":{}}""")
+    assert(RawJson.decode[Kind]("\"Plain\"").isLeft, "a word is no case of an enum with fields")
     assertEquals(RawJson.decode[Kind]("""{"Named":{"name":"x"}}"""), Right(Kind.Named("x")))

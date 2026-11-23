@@ -1,6 +1,7 @@
 package com.histmersion
 package api.json
 
+import com.histmersion.api.given
 import scala.language.adhocExtensions
 final class Schema[A] private (schema: sttp.tapir.Schema[A])
     extends sttp.tapir.Schema[A](

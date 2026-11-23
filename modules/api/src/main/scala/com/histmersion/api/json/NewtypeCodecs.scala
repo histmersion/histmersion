@@ -1,5 +1,6 @@
 package com.histmersion
 package api.json
+import com.histmersion.api.given
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure

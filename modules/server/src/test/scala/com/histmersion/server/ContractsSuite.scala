@@ -484,6 +484,38 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(found("web:web/Request.scala"), Nil)
     assertEquals(found("server:x/View.scala"), Nil)
 
+  test("a schema is derived only where the codecs' config is in scope, and every JsoniterConfig given is that one"):
+    def file(key: String, pkg: String, code: String) = ArchitectureSuite.SourceFile(key, pkg, Blank(code), code)
+    def found(files: ArchitectureSuite.SourceFile*) =
+      Rules.all(files.toList).filter(_.rule == "schema-config").map(v => (v.count, v.at))
+    val derived = "final case class A(n: Int) derives JsonCodec,\n  KindlingsSchema\n"
+    val head = "package com.histmersion\npackage api.x\n"
+    assertEquals(
+      found(file("api:api/x/A.scala", "com.histmersion.api.x", s"${head}import com.histmersion.api.given\n$derived")),
+      Nil
+    )
+    assertEquals(
+      found(file("api:api/x/A.scala", "com.histmersion.api.x", s"$head$derived")),
+      List((1, "api:api/x/A.scala:4"))
+    )
+    val write = "package com.histmersion\npackage api\ngiven JsoniterConfig = JsonCodec.schemas\n"
+    val chained = s"package com.histmersion\npackage api\npackage problem\n$derived"
+    assertEquals(
+      found(
+        file("api:api/Write.scala", "com.histmersion.api", write),
+        file("api:api/problem/A.scala", "com.histmersion.api.problem", chained)
+      ),
+      Nil
+    )
+    assertEquals(found(file("api:api/problem/A.scala", "com.histmersion.api.problem", chained)).size, 1)
+    val shared = file("server:w/G.scala", "com.histmersion.w", "private given JsoniterConfig = JsonCodec.schemas\n")
+    assertEquals(found(shared, file("server:w/A.scala", "com.histmersion.w", derived)), Nil)
+    assertEquals(
+      found(file("server:w/G.scala", "com.histmersion.w", "given JsoniterConfig = JsoniterConfig.default\n")),
+      List((1, "server:w/G.scala:1"))
+    )
+    assertEquals(found(file("api:api/x/B.scala", "com.histmersion.api.x", "import x.KindlingsSchema\n")), Nil)
+
   test("a newtype …Html over String is a violation: the one markup type is api.Html"):
     val code =
       """object Render:
@@ -759,6 +791,7 @@ object ContractsSuite:
   object Rules:
     def all(sources: List[SourceFile]): List[Violation] =
       val concepts = newtypes(sources)
+      val configured = sources.filter(s => TheConfig.findFirstIn(s.code).isDefined).map(_.pkg).toSet
       sources.flatMap(s =>
         primitive(s, concepts) ++ unwrap(s) ++ derives(s) ++ copies(s) ++ oneType(s) ++ transaction(s) ++
           global(s) ++ service(s) ++ layer(s) ++ clientRefined(s) ++ bucket(s) ++
@@ -820,6 +853,12 @@ object ContractsSuite:
             s,
             "requests consumed outside the one request type: no newest-wins guard, failures dropped or flattened",
             if module(s) == "web" && !RequestFiles(s.key) then rawRequests(s.code) else Nil
+          )
+          ++ counted(
+            "schema-config",
+            s,
+            "a schema derived where the codecs' JsoniterConfig is not in scope, or a JsoniterConfig of its own (ADR-0026)",
+            schemaConfigMisses(s.code, (s.pkg :: packagesInScope(s.code)).exists(configured))
           )
       ) ++ concept(sources) ++ helper(sources) ++ prefix(sources) ++ problemFields(sources)
 
@@ -1343,6 +1382,31 @@ object ContractsSuite:
       */
     private val HtmlNewtype =
       "\\bobject\\s+\\w*Html\\s+extends\\s+(?:Newtype|Refined(?:Sub)?Type)\\s*\\[\\s*String\\b".r
+
+    private val SchemaDerivation = "(?m)^(?![ \\t]*import\\b).*?\\bKindlingsSchema\\b".r
+    private val ConfigGiven = "\\bgiven\\b[^=\\n]*\\bJsoniterConfig\\b".r
+    private val TheConfig = "\\bgiven\\b[^=\\n]*\\bJsoniterConfig\\s*=\\s*JsonCodec\\.schemas\\b".r
+    private val ConfigImport =
+      "(?m)^[ \\t]*(?:import|export)\\s+(?:com\\.histmersion\\.)?(?:api|util\\.mcp\\.ToolInputs)\\.given\\b".r
+    private val PackageClause = "(?m)^package\\s+([\\w.]+)[ \\t]*$".r
+
+    def packagesInScope(code: String): List[String] =
+      PackageClause
+        .findAllMatchIn(code)
+        .map(_.group(1))
+        .toList
+        .scanLeft("")((outer, p) => if outer.isEmpty then p else s"$outer.$p")
+        .drop(1)
+
+    def schemaConfigMisses(code: String, configHere: Boolean): List[Int] =
+      val seen = configHere || ConfigImport.findFirstIn(code).isDefined
+      val unseen = if seen then Nil else SchemaDerivation.findFirstMatchIn(code).map(_.start).toList
+      val divergent = ConfigGiven
+        .findAllMatchIn(code)
+        .map(_.start)
+        .toList
+        .filterNot(at => TheConfig.findPrefixOf(code.substring(at)).isDefined)
+      (unseen ++ divergent).sorted
 
     /** Where a failure branch starts: a `case Failure(…)` (of a `Try`, the branch runs to the next line at its own
       * indentation or less, or to the bracket that closes its block), and a `.recover`/`.recoverWith`/`.fallbackTo`
