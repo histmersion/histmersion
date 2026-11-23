@@ -20,6 +20,7 @@
 # For example:
 #
 # histmersion {
+#   server.host = "127.0.0.1"   # where it listens: one address, "127.0.0.1,100.101.102.103", or ["127.0.0.1", "::1"]
 #   converter.parallelism = 2
 #   backups.keep = 10
 #   agents {

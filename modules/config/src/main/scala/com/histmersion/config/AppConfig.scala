@@ -4,7 +4,7 @@ package config
 import com.histmersion.util.problem.{Problem, Problems, Raised}
 import com.histmersion.util.mcp.McpConfig
 import com.histmersion.util.log.LogConfig
-import org.ekrich.config.ConfigFactory
+import org.ekrich.config.{ConfigFactory, ConfigResolveOptions}
 import hearth.kindlings.sconfigderivation.ConfigReader
 import hearth.kindlings.sconfigderivation.annotations.configKey
 
@@ -127,11 +127,11 @@ object AppConfig:
     for
       // the settings and the KIND of each from the defaults alone: an env value is always a
       // string, and would make every key it overrides look like a string setting
-      known <- resolved(reference)
+      known <- resolved(reference.resolve(ConfigResolveOptions.noSystem))
       keys <- ConfigLayers.check(user, known)
       // the file's OWN values are checked, not what the environment leaves of them: a mistyped
       // setting that an env var happens to shadow today is still a broken file
-      asFiled <- resolved(user.withFallback(reference).withFallback(env))
+      asFiled <- resolved(EnvOverrides.textAsLists(reference, user.withFallback(reference).withFallback(env).resolve()))
       _ <- ConfigLayers.typeCheck(keys.settings, asFiled, known)
       merged <- resolved(ConfigLayers.merged(reference, user, env))
       cfg <- decode(merged)

@@ -3,6 +3,7 @@ package config
 
 import com.histmersion.util.problem.{Problem, Raised}
 import com.histmersion.util.problem.Text.{sentence, sentences}
+import com.histmersion.util.nonempty.NonEmptyVector
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -327,6 +328,52 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(
       EnvOverrides.layer(defaults, env("P_HOSTS" -> "0.0.0.0")).getStringList("hosts").asScala.toList,
       List("0.0.0.0")
+    )
+
+  test("a variable the process itself has set is still read as the list it overrides, from the given environment"):
+    val defaults = org.ekrich.config.ConfigFactory.parseString("hosts = [\"127.0.0.1\"]\nhosts = ${?HOME}")
+    val layer = EnvOverrides.layer(defaults, env("HOME" -> "127.0.0.1,::1"))
+    assertEquals(layer.getStringList("hosts").asScala.toList, List("127.0.0.1", "::1"))
+    assertEquals(EnvOverrides.layer(defaults, env()).isEmpty, true)
+    val filed = org.ekrich.config.ConfigFactory.parseString("hosts = \"0.0.0.0\"").resolve()
+    assertEquals(EnvOverrides.textAsLists(defaults, filed).getStringList("hosts").asScala.toList, List("0.0.0.0"))
+
+  test("only a list a variable can set is read from text; a list no variable sets keeps its text"):
+    val defaults = org.ekrich.config.ConfigFactory.parseString("hosts = []\nhosts = ${?P_HOSTS}\nregions = [\"a 1,2\"]")
+    val filed = org.ekrich.config.ConfigFactory.parseString("hosts = \"a, b\"\nregions = \"b 3,4\"").resolve()
+    val read = EnvOverrides.textAsLists(defaults, filed)
+    assertEquals(read.getStringList("hosts").asScala.toList, List("a", "b"))
+    assertEquals(read.getString("regions"), "b 3,4")
+
+  test("HISTMERSION_BIND: one address and several comma-separated are the server's hosts"):
+    assertEquals(
+      AppConfig.load(env("HISTMERSION_BIND" -> "127.0.0.1")).server.host,
+      NonEmptyVector.of(ServerConfig.Host("127.0.0.1"))
+    )
+    assertEquals(
+      AppConfig.load(env("HISTMERSION_BIND" -> "127.0.0.1, 100.101.102.103")).server.host,
+      NonEmptyVector.of(ServerConfig.Host("127.0.0.1"), ServerConfig.Host("100.101.102.103"))
+    )
+    assertEquals(
+      AppConfig.loadWithUserFile(env("HISTMERSION_BIND" -> "0.0.0.0"), None).map(_.config.server.host),
+      Right(NonEmptyVector.of(ServerConfig.Host("0.0.0.0")))
+    )
+
+  test("server.host in a config file: one address, several comma-separated, or a list"):
+    def hosts(text: String) = loaded(env(), confFile(s"histmersion.server.host = $text")).config.server.host
+    assertEquals(hosts("\"127.0.0.1\""), NonEmptyVector.of(ServerConfig.Host("127.0.0.1")))
+    assertEquals(
+      hosts("\"127.0.0.1,100.101.102.103\""),
+      NonEmptyVector.of(ServerConfig.Host("127.0.0.1"), ServerConfig.Host("100.101.102.103"))
+    )
+    assertEquals(
+      hosts("[\"127.0.0.1\", \"::1\"]"),
+      NonEmptyVector.of(ServerConfig.Host("127.0.0.1"), ServerConfig.Host("::1"))
+    )
+    assertEquals(
+      loaded(env("HISTMERSION_BIND" -> "0.0.0.0"), confFile("histmersion.server.host = [\"::1\"]")).config.server.host,
+      NonEmptyVector.of(ServerConfig.Host("0.0.0.0")),
+      "the variable beats the file"
     )
 
   test("the cache directory: XDG_CACHE_HOME, else ~/.cache, on every platform (#1403)"):
