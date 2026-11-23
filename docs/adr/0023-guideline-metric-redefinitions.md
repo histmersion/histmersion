@@ -43,6 +43,13 @@ is a Scalafix rule over SemanticDB: the base tree cannot be measured without com
   (`case class X(f: X.F)`, an enum's case `Status(Status.Wire(…))`) the companion's members are out of scope and the
   qualifier is needed. A full path (`a.b.T.Member`) inside `T` or its companion is still a finding: `T.Member` works
   there.
+- **Tests may build a newtype from constants through any door** (decision 4). Iron 3.4.1's `apply` checks its
+  argument when compiling and refuses one it cannot evaluate (notes/iron-magnum-checks.md): literals, string
+  concatenations of constants, and `final`/`inline val`s or parameterless defs of constant type. In test scope a
+  construction (`apply`, `applyUnsafe`, `assume`, `either`, `option`, …) whose every argument is such a constant, or an
+  `s""`/`f""` of literals, is no G44 finding: it is a fixture, not raw data crossing in. A test that builds a newtype
+  from computed data (`s"key$i"`), and every `.value` in a test (an assertion compares newtypes instead), still counts;
+  main scope is unchanged.
 
 ## Consequences
 
