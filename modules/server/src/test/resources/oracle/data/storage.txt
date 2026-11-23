@@ -258,11 +258,11 @@
       },
       {
         "bytes" : "N",
-        "name" : "log_events"
+        "name" : "articles"
       },
       {
         "bytes" : "N",
-        "name" : "articles"
+        "name" : "log_events"
       }
     ],
     "tookMillis" : "N",
