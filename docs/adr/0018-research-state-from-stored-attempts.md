@@ -85,6 +85,26 @@ guessed by reading text.
    into plugins of their own.
 9. **No sentence is read back.** The text readers of the re-check (`AcquireRecheck.replies`, `reason`'s parsing) are
    deleted. The page's wording comes from the types.
+10. **One read of the state, three surfaces** (C5). `GET /api/research/state?who=&goal=&kind=` answers
+    `OpenWork.State(totals, items, at)` (`at`: when it was read, which the "now / today / later" grouping is
+    measured from, so no client needs a clock of its own); `GET /api/research/state/acquisitions/{id}` one item's `OpenWork.History`. The CLI
+    (`histmersion state`, `histmersion queue acquire why <id>`) and the MCP tools (`research_state`, `acquire_why`)
+    call the same view, `server.views.OpenWorkView`, which reads one source per kind:
+    - **Decisions**: the open approvals; who decides is `AutoApprovals.decides`, the very check the autopilot's sweep
+      applies (`checked(a, manager of the run)`): agents when the config or the manager auto-approves the kind, else
+      the owner. A held auto approval (a cap reached) stays the agents' until row 33a records why it waits.
+    - **Acquisitions**: `AcquireRecheckService.verdicts(now)`, the re-check's own facts (open items, held DOIs,
+      kept attempts) through `AcquireVerdict.of` with the fetcher generation and the give-up settings. An item naming
+      no DOI is `NoIdentifier`; one whose DOI the corpus holds with its text is `Converting` (the next pass closes it).
+    - **Tasks**: the open tasks' stored `actor` and `creator`; an `Unattributed` creator is shown as "creator not
+      recorded".
+    - **Paused runs**: `Engine.pausedWaiting(now)`, the paused runs that do not resume before now, with their stored
+      problem and resume time (`JobRepo.runsPausedUntil` now returns it): the agents' when a resume time is set or the
+      run waits for a plan pool (`resumeFreed` resumes it), else the owner's ("resume a paused run").
+    The goal filter keeps the items whose own goal is the goal (a decision: its subject); paused runs name no goal and
+    are left out. The totals count both sides of the kind asked for, so a page can say "n wait for you · m the agents
+    will handle" whichever side it lists. Every sentence comes from the wire types (`Verdict.wording`,
+    `NextStep.wording`, `Said.wording`, …); the only stored text shown is a legacy attempt's note, verbatim.
 
 ## Consequences
 

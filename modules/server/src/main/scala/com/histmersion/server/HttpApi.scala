@@ -23,6 +23,7 @@ import com.histmersion.api.instance.{UiApi, UiConfig}
 import com.histmersion.util.access.Admission
 import com.histmersion.api.settings.ConfigEditApi
 import com.histmersion.api.views.AutopilotApi
+import com.histmersion.server.views.OpenWorkRoutes
 import com.histmersion.domain.library.acquisition.AcquisitionControllers
 import com.histmersion.domain.library.collections.CollectionsControllers
 import com.histmersion.api.basemap.Basemap
@@ -413,6 +414,7 @@ final class HttpApi(
         List(AutopilotApi.drain.serverLogic[Identity](in => h.autopilot.drain(in).left.map(Api.Error(_))))
       ) ++ acquireRoutes ++
       IiifRoutes(h.media.iiif) ++
+      OpenWorkRoutes(h.researchState).endpoints ++
       List(sourcePage, static, apiNotFound, index)
 
 object HttpApi:

@@ -16655,6 +16655,132 @@
           }
         }
       }
+    },
+    "/api/research/state" : {
+      "get" : {
+        "description" : "Every open item and who acts next: the decisions, acquisitions, tasks and paused runs that wait for the owner, and what the agents will handle.",
+        "operationId" : "getApiResearchState",
+        "parameters" : [
+          {
+            "name" : "who",
+            "in" : "query",
+            "description" : "owner (what waits for you) or agents (what the agents will handle)",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "enum" : [
+                "owner",
+                "agents"
+              ]
+            }
+          },
+          {
+            "name" : "goal",
+            "in" : "query",
+            "description" : "the items of this goal only",
+            "required" : false,
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          {
+            "name" : "kind",
+            "in" : "query",
+            "description" : "decision, acquisition, task or run",
+            "required" : false,
+            "schema" : {
+              "type" : "string",
+              "enum" : [
+                "decision",
+                "acquisition",
+                "task",
+                "run"
+              ]
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/State"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: query parameter who, Invalid value for: query parameter kind",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/research/state/acquisitions/{id}" : {
+      "get" : {
+        "description" : "One acquisition's verdict and its kept attempts, with what each provider answered.",
+        "operationId" : "getApiResearchStateAcquisitionsId",
+        "parameters" : [
+          {
+            "name" : "id",
+            "in" : "path",
+            "required" : true,
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/History"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid value for: path parameter id",
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {
@@ -16769,6 +16895,41 @@
           "checks" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "Acquisition" : {
+        "title" : "Acquisition",
+        "type" : "object",
+        "required" : [
+          "item",
+          "text",
+          "verdict",
+          "tries"
+        ],
+        "properties" : {
+          "item" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "verdict" : {
+            "$ref" : "#/components/schemas/Verdict"
+          },
+          "last" : {
+            "type" : "string"
+          },
+          "tries" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "creator" : {
+            "$ref" : "#/components/schemas/Creator"
+          },
+          "goal" : {
+            "type" : "string"
           }
         }
       },
@@ -17054,6 +17215,26 @@
           },
           "note" : {
             "type" : "string"
+          }
+        }
+      },
+      "Answer" : {
+        "title" : "Answer",
+        "type" : "object",
+        "required" : [
+          "fetcher",
+          "said",
+          "why"
+        ],
+        "properties" : {
+          "fetcher" : {
+            "type" : "string"
+          },
+          "said" : {
+            "$ref" : "#/components/schemas/Said"
+          },
+          "why" : {
+            "$ref" : "#/components/schemas/Problem"
           }
         }
       },
@@ -17811,6 +17992,39 @@
           }
         }
       },
+      "Attempt" : {
+        "title" : "Attempt",
+        "type" : "object",
+        "required" : [
+          "at",
+          "trigger",
+          "generation",
+          "outcome"
+        ],
+        "properties" : {
+          "at" : {
+            "type" : "string"
+          },
+          "trigger" : {
+            "$ref" : "#/components/schemas/Trigger"
+          },
+          "generation" : {
+            "type" : "string"
+          },
+          "outcome" : {
+            "$ref" : "#/components/schemas/Outcome"
+          },
+          "answers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Answer"
+            }
+          },
+          "oa" : {
+            "$ref" : "#/components/schemas/Oa"
+          }
+        }
+      },
       "Attestation" : {
         "title" : "Attestation",
         "type" : "object",
@@ -18073,6 +18287,13 @@
             "type" : "string"
           }
         }
+      },
+      "Borrow" : {
+        "title" : "Borrow",
+        "type" : "string",
+        "enum" : [
+          "Borrow"
+        ]
       },
       "Bucket" : {
         "title" : "Bucket",
@@ -18739,6 +18960,18 @@
             }
           },
           "doi" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Closed" : {
+        "title" : "Closed",
+        "type" : "object",
+        "required" : [
+          "citekey"
+        ],
+        "properties" : {
+          "citekey" : {
             "type" : "string"
           }
         }
@@ -19476,6 +19709,15 @@
           }
         }
       },
+      "Converting" : {
+        "title" : "Converting",
+        "type" : "object",
+        "properties" : {
+          "source" : {
+            "type" : "string"
+          }
+        }
+      },
       "Cooldown" : {
         "title" : "Cooldown",
         "type" : "object",
@@ -20055,6 +20297,22 @@
           "previewMs" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "Decision" : {
+        "title" : "Decision",
+        "type" : "object",
+        "required" : [
+          "approval",
+          "actor"
+        ],
+        "properties" : {
+          "approval" : {
+            "$ref" : "#/components/schemas/ApprovalInfo"
+          },
+          "actor" : {
+            "$ref" : "#/components/schemas/Who"
           }
         }
       },
@@ -22067,6 +22325,18 @@
           }
         }
       },
+      "Failed" : {
+        "title" : "Failed",
+        "type" : "object",
+        "properties" : {
+          "why" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
       "FallthroughSet" : {
         "title" : "FallthroughSet",
         "type" : "object",
@@ -22076,6 +22346,18 @@
         "properties" : {
           "fallthrough" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "Fetched" : {
+        "title" : "Fetched",
+        "type" : "object",
+        "required" : [
+          "source"
+        ],
+        "properties" : {
+          "source" : {
+            "type" : "string"
           }
         }
       },
@@ -23374,6 +23656,33 @@
           },
           "preset" : {
             "type" : "string"
+          }
+        }
+      },
+      "History" : {
+        "title" : "History",
+        "type" : "object",
+        "required" : [
+          "item",
+          "text",
+          "verdict"
+        ],
+        "properties" : {
+          "item" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "verdict" : {
+            "$ref" : "#/components/schemas/Verdict"
+          },
+          "attempts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Attempt"
+            }
           }
         }
       },
@@ -25615,6 +25924,15 @@
           }
         }
       },
+      "ManualDownload" : {
+        "title" : "ManualDownload",
+        "type" : "object",
+        "properties" : {
+          "url" : {
+            "type" : "string"
+          }
+        }
+      },
       "ManualPlaceName" : {
         "title" : "ManualPlaceName",
         "type" : "object",
@@ -27273,6 +27591,32 @@
           }
         }
       },
+      "NoCopy" : {
+        "title" : "NoCopy",
+        "type" : "string",
+        "enum" : [
+          "NoCopy"
+        ]
+      },
+      "NoFreeCopy" : {
+        "title" : "NoFreeCopy",
+        "type" : "object",
+        "required" : [
+          "recheck"
+        ],
+        "properties" : {
+          "recheck" : {
+            "type" : "string"
+          }
+        }
+      },
+      "NoIdentifier" : {
+        "title" : "NoIdentifier",
+        "type" : "string",
+        "enum" : [
+          "NoIdentifier"
+        ]
+      },
       "Note" : {
         "title" : "Note",
         "type" : "object",
@@ -27334,6 +27678,27 @@
           }
         }
       },
+      "Oa" : {
+        "title" : "Oa",
+        "type" : "object",
+        "required" : [
+          "scripts"
+        ],
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "licence" : {
+            "type" : "string"
+          },
+          "scripts" : {
+            "$ref" : "#/components/schemas/Scripts"
+          }
+        }
+      },
       "OaWork" : {
         "title" : "OaWork",
         "type" : "object",
@@ -27377,6 +27742,23 @@
           }
         }
       },
+      "OldCheck" : {
+        "title" : "OldCheck",
+        "type" : "object",
+        "required" : [
+          "note",
+          "checks"
+        ],
+        "properties" : {
+          "note" : {
+            "type" : "string"
+          },
+          "checks" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "OnDemand" : {
         "title" : "OnDemand",
         "type" : "object",
@@ -27416,12 +27798,113 @@
           }
         }
       },
+      "OpenItem" : {
+        "title" : "OpenItem",
+        "oneOf" : [
+          {
+            "type" : "object",
+            "required" : [
+              "Acquisition"
+            ],
+            "properties" : {
+              "Acquisition" : {
+                "$ref" : "#/components/schemas/Acquisition"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Decision"
+            ],
+            "properties" : {
+              "Decision" : {
+                "$ref" : "#/components/schemas/Decision"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "PausedRun"
+            ],
+            "properties" : {
+              "PausedRun" : {
+                "$ref" : "#/components/schemas/PausedRun"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Task"
+            ],
+            "properties" : {
+              "Task" : {
+                "$ref" : "#/components/schemas/Task"
+              }
+            }
+          }
+        ]
+      },
       "Origin" : {
         "title" : "Origin",
         "type" : "string",
         "enum" : [
           "Database",
           "File"
+        ]
+      },
+      "Outcome" : {
+        "title" : "Outcome",
+        "oneOf" : [
+          {
+            "$ref" : "#/components/schemas/NoCopy"
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Closed"
+            ],
+            "properties" : {
+              "Closed" : {
+                "$ref" : "#/components/schemas/Closed"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Failed"
+            ],
+            "properties" : {
+              "Failed" : {
+                "$ref" : "#/components/schemas/Failed"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Fetched"
+            ],
+            "properties" : {
+              "Fetched" : {
+                "$ref" : "#/components/schemas/Fetched"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "OldCheck"
+            ],
+            "properties" : {
+              "OldCheck" : {
+                "$ref" : "#/components/schemas/OldCheck"
+              }
+            }
+          }
         ]
       },
       "Override" : {
@@ -27899,6 +28382,32 @@
           "budgetUsd" : {
             "type" : "number",
             "format" : "double"
+          }
+        }
+      },
+      "PausedRun" : {
+        "title" : "PausedRun",
+        "type" : "object",
+        "required" : [
+          "run",
+          "pipeline",
+          "actor"
+        ],
+        "properties" : {
+          "run" : {
+            "type" : "string"
+          },
+          "pipeline" : {
+            "type" : "string"
+          },
+          "cause" : {
+            "$ref" : "#/components/schemas/Problem"
+          },
+          "resumes" : {
+            "type" : "string"
+          },
+          "actor" : {
+            "$ref" : "#/components/schemas/Who"
           }
         }
       },
@@ -30558,6 +31067,29 @@
           }
         }
       },
+      "Retrying" : {
+        "title" : "Retrying",
+        "type" : "object",
+        "required" : [
+          "failures",
+          "next"
+        ],
+        "properties" : {
+          "failures" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "next" : {
+            "type" : "string"
+          },
+          "last" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
       "ReviewApproval" : {
         "title" : "ReviewApproval",
         "type" : "object",
@@ -31402,6 +31934,21 @@
           }
         }
       },
+      "Said" : {
+        "title" : "Said",
+        "type" : "string",
+        "enum" : [
+          "NoIdentifier",
+          "NotHeld",
+          "Unanswered",
+          "RateLimited",
+          "Unconfigured",
+          "BotChallenge",
+          "LendingOnly",
+          "NoEntitlement",
+          "LicenceForbids"
+        ]
+      },
       "Sample" : {
         "title" : "Sample",
         "type" : "object",
@@ -31591,6 +32138,14 @@
             }
           }
         }
+      },
+      "Scripts" : {
+        "title" : "Scripts",
+        "type" : "string",
+        "enum" : [
+          "Allowed",
+          "Refused"
+        ]
       },
       "SearchHit" : {
         "title" : "SearchHit",
@@ -32039,6 +32594,28 @@
           }
         }
       },
+      "State" : {
+        "title" : "State",
+        "type" : "object",
+        "required" : [
+          "totals",
+          "at"
+        ],
+        "properties" : {
+          "totals" : {
+            "$ref" : "#/components/schemas/Totals"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OpenItem"
+            }
+          },
+          "at" : {
+            "type" : "string"
+          }
+        }
+      },
       "Status" : {
         "title" : "Status",
         "type" : "object",
@@ -32360,6 +32937,29 @@
           }
         }
       },
+      "Stuck" : {
+        "title" : "Stuck",
+        "type" : "object",
+        "required" : [
+          "failures",
+          "since"
+        ],
+        "properties" : {
+          "failures" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "since" : {
+            "type" : "string"
+          },
+          "last" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
       "StyleState" : {
         "title" : "StyleState",
         "type" : "object",
@@ -32609,6 +33209,33 @@
           }
         }
       },
+      "Task" : {
+        "title" : "Task",
+        "type" : "object",
+        "required" : [
+          "item",
+          "text",
+          "actor"
+        ],
+        "properties" : {
+          "item" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "actor" : {
+            "$ref" : "#/components/schemas/Who"
+          },
+          "creator" : {
+            "$ref" : "#/components/schemas/Creator"
+          },
+          "goal" : {
+            "type" : "string"
+          }
+        }
+      },
       "TimeBucket" : {
         "title" : "TimeBucket",
         "type" : "object",
@@ -32748,6 +33375,24 @@
           }
         }
       },
+      "Totals" : {
+        "title" : "Totals",
+        "type" : "object",
+        "required" : [
+          "owner",
+          "agents"
+        ],
+        "properties" : {
+          "owner" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "agents" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "TreeRow" : {
         "title" : "TreeRow",
         "type" : "object",
@@ -32780,6 +33425,16 @@
             "type" : "boolean"
           }
         }
+      },
+      "Trigger" : {
+        "title" : "Trigger",
+        "type" : "string",
+        "enum" : [
+          "PersonIngest",
+          "WatcherBacklog",
+          "Recheck",
+          "OldCheck"
+        ]
       },
       "Type" : {
         "title" : "Type",
@@ -32977,6 +33632,18 @@
           "mergeId" : {
             "type" : "string",
             "format" : "uuid"
+          }
+        }
+      },
+      "Unchecked" : {
+        "title" : "Unchecked",
+        "type" : "object",
+        "required" : [
+          "due"
+        ],
+        "properties" : {
+          "due" : {
+            "type" : "string"
           }
         }
       },
@@ -33185,6 +33852,83 @@
             }
           }
         }
+      },
+      "Verdict" : {
+        "title" : "Verdict",
+        "oneOf" : [
+          {
+            "$ref" : "#/components/schemas/Borrow"
+          },
+          {
+            "$ref" : "#/components/schemas/NoIdentifier"
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Converting"
+            ],
+            "properties" : {
+              "Converting" : {
+                "$ref" : "#/components/schemas/Converting"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "ManualDownload"
+            ],
+            "properties" : {
+              "ManualDownload" : {
+                "$ref" : "#/components/schemas/ManualDownload"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "NoFreeCopy"
+            ],
+            "properties" : {
+              "NoFreeCopy" : {
+                "$ref" : "#/components/schemas/NoFreeCopy"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Retrying"
+            ],
+            "properties" : {
+              "Retrying" : {
+                "$ref" : "#/components/schemas/Retrying"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Stuck"
+            ],
+            "properties" : {
+              "Stuck" : {
+                "$ref" : "#/components/schemas/Stuck"
+              }
+            }
+          },
+          {
+            "type" : "object",
+            "required" : [
+              "Unchecked"
+            ],
+            "properties" : {
+              "Unchecked" : {
+                "$ref" : "#/components/schemas/Unchecked"
+              }
+            }
+          }
+        ]
       },
       "VerifyResult" : {
         "title" : "VerifyResult",
@@ -33482,6 +34226,14 @@
               }
             }
           }
+        ]
+      },
+      "Who" : {
+        "title" : "Who",
+        "type" : "string",
+        "enum" : [
+          "Owner",
+          "Agents"
         ]
       },
       "WhyInfo" : {

@@ -42,7 +42,11 @@ object JobRepo:
   type PageCursor = PageCursor.T
   object PageCursor extends Newtype[String, Pure]
   type ResumeAt = ResumeAt.T
-  object ResumeAt extends Newtype[String, Pure]
+  object ResumeAt extends Newtype[String, Pure]:
+    def of(at: java.time.Instant): ResumeAt = ResumeAt(at.toString)
+
+    extension (r: ResumeAt)
+      def instant: Option[java.time.Instant] = scala.util.Try(java.time.Instant.parse(r.value)).toOption
   type TokenBudget = TokenBudget.T
   object TokenBudget extends Newtype[Long, Pure]
   type WarningText = WarningText.T
@@ -294,20 +298,22 @@ object JobRepo:
                                 AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
           ORDER BY resume_at, created_at, id""".query[Run.Id].run()
 
-  /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, the problem its row keeps).
+  /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, the problem its row keeps,
+    * the time it resumes by itself, if any).
     */
   def runsPausedUntil(
       kind: Job.Kind,
       paused: RunRow.Status,
       at: DueAt
-  )(using DbCon): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
-    sql"""SELECT id, coalesce(pipeline, ''), model, error FROM jobs
+  )(using DbCon): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem], Option[ResumeAt])] =
+    sql"""SELECT id, coalesce(pipeline, ''), model, error,
+                 to_char(resume_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') FROM jobs
           WHERE kind = $kind AND status = $paused
             AND (resume_at IS NULL OR resume_at > $at::timestamptz)
           ORDER BY updated_at, created_at, id"""
-      .query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[NonEmptyVector[Problem]])]
+      .query[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[NonEmptyVector[Problem]], Option[ResumeAt])]
       .run()
-      .map((id, pipeline, model, error) => (id, pipeline, model, error.map(Problems.asOne)))
+      .map((id, pipeline, model, error, resumes) => (id, pipeline, model, error.map(Problems.asOne), resumes))
 
   def runProgress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using DbCon): Unit =
     Unused(

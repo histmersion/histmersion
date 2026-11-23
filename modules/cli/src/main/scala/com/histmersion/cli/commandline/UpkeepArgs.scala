@@ -110,7 +110,7 @@ object UpkeepArgs:
     )
     private val json_ = json()
     holds(
-      LeafAdd(list) :: (if list == Queue.Kind.Acquire.label then List(LeafRecheck()) else Nil)*
+      LeafAdd(list) :: (if list == Queue.Kind.Acquire.label then List(LeafRecheck(), LeafWhy()) else Nil)*
     )
 
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Show(list, all_.getOrElse(false), json_()))
@@ -194,6 +194,17 @@ object UpkeepArgs:
           Ops.QueueCmd
             .Recheck(dryRun_.getOrElse(false), limit_.toOption, id_.toOption, all, noWait_.getOrElse(false), json_())
         )
+
+  final private class LeafWhy()
+      extends Leaf(
+        s"$QueueParent acquire",
+        "why",
+        "Why an acquisition item is where it is: its verdict and what each provider answered at each attempt"
+      ):
+    private val id_ = arg[Queue.QueueItem.Id]("id")
+    private val json_ = json()
+
+    def command: Either[Problem, Cli.Command] = Right(StateCmd.Command.Why(id_(), json_()))
 
   final private class LeafDone() extends Leaf(QueueParent, "done", "Mark an item done"):
     private val id_ = arg[Queue.Id]("id")

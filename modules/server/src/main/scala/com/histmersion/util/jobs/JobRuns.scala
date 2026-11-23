@@ -47,14 +47,14 @@ trait JobRuns:
   /** The `paused` runs whose resume time has come by `now`, oldest resume first. */
   def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id]
 
-  /** The `paused` runs that do not resume by themselves before `now`: (id, pipeline, model, error), the longest waiting
-    * first.
+  /** The `paused` runs that do not resume by themselves before `now`: (id, pipeline, model, error, the time it resumes
+    * by itself), the longest waiting first.
     */
   def pausedWaiting(
       kind: Job.Kind,
       paused: RunRow.Status,
       now: Instant
-  ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])]
+  ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem], Option[JobRepo.ResumeAt])]
 
   def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using WritePermit): Unit
   def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText)(using WritePermit): Unit
@@ -104,7 +104,7 @@ object JobRuns:
         kind: Job.Kind,
         paused: RunRow.Status,
         now: Instant
-    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
+    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem], Option[JobRepo.ResumeAt])] =
       db.read(JobRepo.runsPausedUntil(kind, paused, JobRepo.DueAt(now.toString)))
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using WritePermit): Unit =
       db.write(JobRepo.runProgress(kind, id, text))
@@ -219,7 +219,7 @@ object JobRuns:
         kind: Job.Kind,
         paused: RunRow.Status,
         now: Instant
-    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem])] =
+    ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], Option[Problem], Option[JobRepo.ResumeAt])] =
       mine(kind)
         .filter((_, r) => r.row.status == paused && r.resumeAt.forall(_.isAfter(now)))
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
@@ -228,7 +228,8 @@ object JobRuns:
             id,
             Pipeline.Wire(r.row.pipeline.value),
             r.row.model,
-            r.error
+            r.error,
+            r.resumeAt.map(JobRepo.ResumeAt.of)
           )
         )
         .toVector

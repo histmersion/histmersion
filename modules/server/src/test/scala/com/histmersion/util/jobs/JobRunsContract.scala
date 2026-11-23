@@ -161,6 +161,12 @@ abstract class JobRunsContract(name: String) extends DbSuite:
         (later, Some(pause(Problem.Run.PauseCause.Allowance, "y")))
       )
     )
+    assertEquals(
+      r.pausedWaiting(Kind, RunRow.Status("paused"), now)
+        .map(r => (r._1, r._5.flatMap(_.instant).map(_.getEpochSecond)))
+        .toSet,
+      Set((held, None), (later, Some(now.plusSeconds(3600).getEpochSecond)))
+    )
     assert(r.resumeAt(Kind, later, RunRow.Status("paused"), now.minusSeconds(1)))
     assertEquals(r.due(Kind, RunRow.Status("paused"), now).toSet, Set(soon, later))
     assert(!r.resumeAt(Kind, soon, RunRow.Status("queued"), now), "not in that state")

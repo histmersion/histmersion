@@ -58,6 +58,8 @@ import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.ByteCount
 import com.histmersion.server.views.WorkListView
+import com.histmersion.server.views.OpenWorkView
+import com.histmersion.api.research.OpenWork
 import com.histmersion.api.library.Acquire
 import com.histmersion.server.AcquisitionTesting
 import com.histmersion.domain.library.acquisition.RetractionWatchClient
@@ -383,6 +385,54 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       "no such open item"
     )
     val _ = two
+
+  test("the research state: each acquisition's verdict and who acts, its history, each task's actor"):
+    val (a, h, _) = setup()
+    val one = item(h, "state")
+    def add(list: WorkListControllers.ListName, in: QueueAdd) =
+      h.workLists.addOverRest(list, in).toOption.get.id
+    val tasksList = WorkListControllers.ListName("tasks")
+    val bare = add(
+      WorkListControllers.ListName("acquire"),
+      QueueAdd(
+        Queue.QueueItem.Text("Zzrecheck without an identifier"),
+        topic = Some(Queue.QueueItem.Topic("zzrecheck"))
+      )
+    )
+    val mine = add(tasksList, QueueAdd(Queue.QueueItem.Text("zzrecheck: read the review")))
+    val theirs = add(
+      tasksList,
+      QueueAdd(
+        Queue.QueueItem.Text("zzrecheck: enrich the source"),
+        createdBy = Some(
+          Queue.CreatedBy(Some(Queue.Creation.Plugin("research")), Some(Queue.Creation.Workflow("review-article")))
+        )
+      )
+    )
+    val view = OpenWorkView(a, a.acquireRecheck)
+    def items(scope: OpenWork.Scope = OpenWork.Scope()) =
+      view.state(scope.parsed).items
+    def verdict(id: Queue.QueueItem.Id) =
+      items().collectFirst { case x: OpenWork.OpenItem.Acquisition if x.item == id => x.verdict }
+    assert(verdict(one).exists(_.isInstanceOf[OpenWork.Verdict.Unchecked]), s"not checked yet: ${verdict(one)}")
+    assertEquals(verdict(bare), Some(OpenWork.Verdict.NoIdentifier))
+    val _ = passNow(a, RecheckRequest(limit = Some(Acquire.Checks.RecheckRequest.Limit(10))))
+    assert(verdict(one).exists(_.isInstanceOf[OpenWork.Verdict.NoFreeCopy]), s"no free copy: ${verdict(one)}")
+    assertEquals(verdict(one).map(_.who), Some(OpenWork.Who.Owner))
+    val history = view.acquisition(one).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
+    assertEquals(
+      history.attempts.flatMap(_.answers.map(x => (x.fetcher, x.said))),
+      Vector((OpenWork.Terms.Fetcher("unpaywall"), OpenWork.Said.NotHeld))
+    )
+    assertEquals(history.attempts.map(_.trigger), Vector(OpenWork.Trigger.Recheck))
+    def task(id: Queue.QueueItem.Id) = items().collectFirst { case t: OpenWork.OpenItem.Task if t.item == id => t.who }
+    assertEquals(task(mine), Some(OpenWork.Who.Owner))
+    assertEquals(task(theirs), Some(OpenWork.Who.Agents))
+    val owner = items(OpenWork.Scope(who = Some(OpenWork.Terms.Who("owner"))))
+    assert(owner.forall(_.who == OpenWork.Who.Owner) && owner.nonEmpty)
+    val tasks = items(OpenWork.Scope(kind = Some(OpenWork.Terms.Kind("task"))))
+    assert(tasks.forall(_.kind == OpenWork.Kind.Task) && tasks.size >= 2)
+    assert(view.acquisition(Queue.QueueItem.Id(999999)).isLeft, "no such open item")
 
   test("the caps: per pass, per day; a status line with what is due"):
     val (a, h, up) = setup(

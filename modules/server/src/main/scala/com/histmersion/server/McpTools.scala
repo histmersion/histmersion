@@ -62,6 +62,7 @@ import com.histmersion.domain.research.articles.ArticleTools
 import com.histmersion.domain.catalogue.places.PlacesTools
 import com.histmersion.domain.catalogue.periods.PeriodsTools
 import com.histmersion.server.views.EventCardTools
+import com.histmersion.server.views.OpenWorkTools
 import com.histmersion.domain.catalogue.evidence.AttestationsTools
 import com.histmersion.domain.media.MediaTools
 import com.histmersion.domain.personal.PersonalTools
@@ -658,6 +659,7 @@ final class McpTools(
       // stream 2.6: discover / refs / assess / followups / ingest_doi / archive
       ++ AcquisitionTools(acquire, collections).tools
       ++ CollectionsTools(collections) // the Calibre library, archive.org
+      ++ OpenWorkTools(h.researchState).tools
   )
 
   val endpoint = server.endpoint(List("mcp"))
