@@ -35,3 +35,25 @@ class TransactorSuite extends DbSuite:
       throw IllegalStateException("refused")
     })
     assertEquals(count(), before)
+
+  test("a read to completion interrupted mid-statement finishes the statement, then is interrupted; its session lives"):
+    val started = java.util.concurrent.CountDownLatch(1)
+    val backend = java.util.concurrent.atomic.AtomicReference[Option[Int]](None)
+    val answered = java.util.concurrent.atomic.AtomicReference[Option[Int]](None)
+    val interrupted = java.util.concurrent.atomic.AtomicReference[Option[InterruptedException]](None)
+    val reader = Thread.ofVirtual().start { () =>
+      try
+        db.readToCompletion {
+          backend.set(sql"SELECT pg_backend_pid()".query[Int].run().headOption)
+          started.countDown()
+          answered.set(sql"SELECT 7 FROM pg_sleep(0.5)".query[Int].run().headOption)
+        }
+      catch case e: InterruptedException => interrupted.set(Some(e))
+    }
+    started.await()
+    reader.interrupt()
+    reader.join()
+    assert(interrupted.get.isDefined, "the reader's thread learns of its interrupt")
+    assertEquals(answered.get, Some(7))
+    val pid = backend.get.getOrElse(fail("no backend pid"))
+    assertEquals(db.read(sql"SELECT count(*)::int FROM pg_stat_activity WHERE pid = $pid".query[Int].run().head), 1)

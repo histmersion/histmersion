@@ -31,7 +31,7 @@ import com.histmersion.api.media.{MediaCoversRequest, SourceCoverParams}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.server.hot.Pin
-import com.histmersion.util.log.RequestLog
+import com.histmersion.util.log.{RequestFailure, RequestLog}
 import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
@@ -220,6 +220,7 @@ object Composition:
       try h.maintenance.writing(h.bootstrap.autoStart())
       catch case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     val options = NettySyncServerOptions.customiseInterceptors
+      .serverLog(NettySyncServerOptions.defaultServerLog.doLogExceptions(RequestFailure.log))
       .decodeFailureHandler(DecodeFailures.handler)
       .prependInterceptor(Pin.Requests(sg.graph))
       .prependInterceptor(RequestLog(logWriter, () => deps.cfg.log))
