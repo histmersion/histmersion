@@ -396,8 +396,8 @@ final class PointSet[D](
         val starting = !started && firstLeft == 0
         if starting then start()
         var count = if starting && before.isDefined then 1 else 0
-        while queue.nonEmpty && (started || firstLeft > 0) && (count == 0 || dom.window.performance.now() - t0 < SliceMs)
-        do
+        def room: Boolean = count == 0 || dom.window.performance.now() - t0 < SliceMs
+        while queue.nonEmpty && (started || firstLeft > 0) && room do
           make(queue.dequeue())
           count += 1
           if !started then firstLeft -= 1
