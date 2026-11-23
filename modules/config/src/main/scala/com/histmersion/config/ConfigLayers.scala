@@ -214,4 +214,7 @@ private[config] object ConfigLayers:
     * substitutions (`${?VAR}`) in the user file.
     */
   def merged(reference: Config, user: Config, env: Config): Config =
-    envOverrides(reference, env).withFallback(user).withFallback(reference).withFallback(env).resolve()
+    EnvOverrides.textAsLists(
+      reference,
+      envOverrides(reference, env).withFallback(user).withFallback(reference).withFallback(env).resolve()
+    )

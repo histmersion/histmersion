@@ -1,23 +1,17 @@
 package com.histmersion
 package config
 
-import scala.annotation.tailrec
 import org.ekrich.config.{
   Config,
-  ConfigException,
   ConfigFactory,
-  ConfigObject,
-  ConfigOrigin,
-  ConfigParseOptions,
-  ConfigRenderOptions,
-  ConfigUtil,
+  ConfigResolveOptions,
+  ConfigResolver,
   ConfigValue,
   ConfigValueFactory,
   ConfigValueType
 }
-import hearth.kindlings.sconfigderivation.ConfigDecodingError
+import com.histmersion.config.edit.SettingKind.valueTypeEquality
 
-import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
@@ -26,33 +20,52 @@ import scala.util.Try
   * hold although the defaults carry their overrides as substitutions (see [[ConfigLayers]] for why
   * `user.withFallback(defaults)` alone loses them). Used for `reference.conf` and for each plugin's defaults resource.
   * A variable is text; where the default it overrides is a list (`host = ["127.0.0.1"]`), the text is that list's
-  * elements, comma-separated (`HISTMERSION_BIND=127.0.0.1,100.101.102.103`). Pure.
+  * elements, comma-separated (`HISTMERSION_BIND=127.0.0.1,100.101.102.103`), and a config file may give that list as
+  * the same text ([[textAsLists]]). The defaults are read without the process's own environment, which only `env`
+  * stands for. Pure.
   */
 object EnvOverrides:
   private val Marker = "\u0001histmersion-env\u0001"
 
+  final private class EveryVariable extends ConfigResolver:
+    def lookup(path: String): ConfigValue = ConfigValueFactory.fromAnyRef(Marker + path)
+    def withFallback(fallback: ConfigResolver): ConfigResolver = this
+
   def layer(defaults: Config, env: Config): Config =
-    val names = env.root.keySet.asScala.toList
-    val markers = ConfigValueFactory.fromMap(names.map(n => n -> (Marker + n)).toMap.asJava).toConfig
-    val own = defaults.root.keySet.asScala.toSet
-    val marked = defaults.withFallback(markers).resolve()
-    // the defaults with no variable set: an unset `${?VAR}` leaves the value written before it
-    val plain = Try(defaults.resolve()).toOption
-    def isList(key: String): Boolean =
-      plain.exists(p =>
-        Try(p.getValue(key).valueType match
-          case ConfigValueType.LIST => true
-          case _                    => false).getOrElse(false)
-      )
-    marked.entrySet.asScala.foldLeft(ConfigFactory.empty) { (acc, e) =>
-      // the markers' own keys (the variable names at the root) are no setting of `defaults`
-      val first = ConfigUtil.splitPath(e.getKey).asScala.headOption
-      e.getValue.unwrapped match
-        case s: String if first.exists(own) && s.startsWith(Marker) && env.root.containsKey(s.drop(Marker.length)) =>
-          val value = env.root.get(s.drop(Marker.length))
-          acc.withValue(e.getKey, if isList(e.getKey) then elements(value) else value)
-        case _ => acc
+    val listed = lists(defaults)
+    variables(defaults).foldLeft(ConfigFactory.empty) { case (acc, (key, variable)) =>
+      Option(env.root.get(variable)) match
+        case Some(value) => acc.withValue(key, if listed.contains(key) then elements(value) else value)
+        case None        => acc
     }
+
+  /** `settings` (resolved) with the text at each list setting of `defaults` that a variable can set read as that list:
+    * `host = "127.0.0.1,100.101.102.103"` in a file is `host = ["127.0.0.1", "100.101.102.103"]`, as from the variable.
+    */
+  def textAsLists(defaults: Config, settings: Config): Config =
+    lists(defaults).foldLeft(settings) { (acc, key) =>
+      Try(acc.getValue(key)).toOption match
+        case Some(text) if text.valueType == ConfigValueType.STRING => acc.withValue(key, elements(text))
+        case _                                                      => acc
+    }
+
+  private def variables(defaults: Config): List[(String, String)] =
+    Try(defaults.resolve(ConfigResolveOptions.noSystem.appendResolver(EveryVariable()))).toOption.toList
+      .flatMap(_.entrySet.asScala.toList)
+      .flatMap(e =>
+        e.getValue.unwrapped match
+          case s: String if s.startsWith(Marker) => List(e.getKey -> s.drop(Marker.length))
+          case _                                 => Nil
+      )
+
+  private def lists(defaults: Config): Set[String] =
+    Try(defaults.resolve(ConfigResolveOptions.noSystem)).toOption.toList
+      .flatMap(plain =>
+        variables(defaults)
+          .map(_._1)
+          .filter(key => Try(plain.getValue(key).valueType == ConfigValueType.LIST).getOrElse(false))
+      )
+      .toSet
 
   /** A variable's text as the list it gives: its comma-separated elements, trimmed, the empty ones left out. */
   private def elements(value: ConfigValue): ConfigValue =

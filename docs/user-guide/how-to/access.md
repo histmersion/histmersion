@@ -13,8 +13,9 @@ for each one what a request from it gets:
 When several listed networks hold an address, the narrowest one (the longest prefix) decides. So
 `127.0.0.0/8` can be trusted inside an authenticated or refused `0.0.0.0/0`.
 
-The server listens on every address in `server.host` (a list; `HISTMERSION_BIND` gives it
-comma-separated, e.g. `127.0.0.1,100.101.102.103`). The bundled app keeps that setting: loopback only,
+The server listens on every address in `server.host`: a list (`["127.0.0.1", "100.101.102.103"]`), or
+one address or several comma-separated as text (`"127.0.0.1"`, `"127.0.0.1,100.101.102.103"`), which
+is how `HISTMERSION_BIND` gives it (`HISTMERSION_BIND=127.0.0.1,100.101.102.103`). The bundled app keeps that setting: loopback only,
 unless your config file or `HISTMERSION_BIND` lists more.
 
 ## Pick one of these setups

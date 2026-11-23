@@ -18,7 +18,8 @@ import com.histmersion.util.nonempty.NonEmptyVector
   */
 /** `sourceUrl`: the repository the About window and `histmersion about` link as this program's source. `host`: every
   * address the server listens on, at least one (`["127.0.0.1", "100.101.102.103"]`: loopback and a tailnet address, not
-  * the LAN); `HISTMERSION_BIND` gives them comma-separated.
+  * the LAN), or one text of them comma-separated (`"127.0.0.1"`, `"127.0.0.1,100.101.102.103"`), as `HISTMERSION_BIND`
+  * gives them ([[EnvOverrides.textAsLists]]).
   */
 final case class ServerConfig(
     host: NonEmptyVector[ServerConfig.Host],
