@@ -61,3 +61,4 @@ audited and moved here.
 | [0025](0025-map-markers-drawn-on-a-canvas.md) | The map's point markers are drawn on a canvas; their elements stay as the accessible proxies |
 | [0026](0026-wire-enums-and-schemas-from-one-config.md) | A wire enum of words is a string; codecs and schemas read one config, and a refused input is a problem |
 | [0027](0027-booleans-are-enums-and-passed-by-name.md) | A state is an enum, and a Boolean left is passed by name |
+| [0028](0028-declared-proxy-client-address.md) | A declared proxy's reported client address decides, read from the right and failing closed |

@@ -30,15 +30,18 @@ final case class AccessPolicy private (
       if networks.isEmpty then "no network accepted"
       else networks.map(n => s"${n.cidr} ${n.requires.toString.toLowerCase(Locale.ROOT)}").mkString(", ")
     val proxied =
-      if proxies.isEmpty then "" else s"; forwarded requests from ${proxies.mkString(", ")} authenticated"
+      if proxies.isEmpty then ""
+      else s"; forwarded requests from ${proxies.mkString(", ")} judged by the client address they report"
     s"$listed$proxied; answers to ${hosts.toList.map(h => s"$h").sorted.mkString(", ")}"
 
   /** What a request from `peer` gets: the requirement of the longest listed prefix that holds it, if any does. */
   def requirementOf(peer: InetAddress): Option[Requirement] =
     networks.filter(_.cidr.holds(peer)).maxByOption(_.cidr.prefix).map(_.requires)
 
-  /** Whether a request `peer` sent, marked as forwarded, may come from a proxy: `peer` is in a proxy network. */
-  def proxiedFrom(peer: InetAddress): Boolean = proxies.exists(_.holds(peer))
+  /** Whether `address` is a declared proxy's: it is in a proxy network. A forwarded request is read only from such a
+    * peer, and the hops of the chain it reports that are such addresses are passed over ([[ForwardedChain]]).
+    */
+  def proxiedFrom(address: InetAddress): Boolean = proxies.exists(_.holds(address))
 
   /** Whether a request may give `host` (a `Host` header, its port ignored) as the name it asked for. */
   def answersTo(host: HostName): Boolean = hosts.contains(host)

@@ -245,15 +245,89 @@ class AuthHttpSuite extends munit.FunSuite:
   private def proxyNetworks(networks: AuthConfig.Network*)(auth: AuthConfig): AuthConfig =
     trustedWithKey(auth).modify(_.proxyNetworks).setTo(networks.toList)
 
+  private val loopbackProxy = proxyNetworks(AuthConfig.Network("127.0.0.0/8"), AuthConfig.Network("::1/128"))
+
   test(
-    "from a proxy network (loopback: a proxy on this machine), a forwarded request earns no trust: it needs the key"
+    "from a proxy network (loopback: a proxy on this machine), a forwarded request with no client address needs the key"
   ):
-    withServer(proxyNetworks(AuthConfig.Network("127.0.0.0/8"), AuthConfig.Network("::1/128"))) { (url, _) =>
-      marks.foreach { mark =>
-        assertEquals(send(s"$url/api/backups/$Dump", headers = List(mark)).status, 401, mark._1)
-        assertEquals(send(s"$url/api/backups/$Dump", key = Some(Key), headers = List(mark)).status, 200, mark._1)
+    withServer(loopbackProxy) { (url, _) =>
+      val addressless = List(
+        "X-Forwarded-Host" -> "histmersion.example.edu",
+        "X-Forwarded-Proto" -> "https",
+        "Via" -> "1.1 proxy.example",
+        "Forwarded" -> "proto=https;host=histmersion.example.edu",
+        "Forwarded" -> "for=unknown",
+        "X-Forwarded-For" -> "garbage"
+      )
+      addressless.foreach { mark =>
+        assertEquals(send(s"$url/api/backups/$Dump", headers = List(mark)).status, 401, s"$mark")
+        assertEquals(send(s"$url/api/backups/$Dump", key = Some(Key), headers = List(mark)).status, 200, s"$mark")
       }
       assertEquals(send(s"$url/api/backups/$Dump").status, 200, "the owner's own request, unmarked")
+    }
+
+  private def tailnetBehindLoopbackProxy(auth: AuthConfig): AuthConfig =
+    loopbackProxy(auth)
+      .modify(_.trustedNetworks)
+      .setTo(
+        List(
+          AuthConfig.Network("127.0.0.0/8"),
+          AuthConfig.Network("::1/128"),
+          AuthConfig.Network("100.64.0.0/10"),
+          AuthConfig.Network("fd7a:115c:a1e0::/48")
+        )
+      )
+      .modify(_.authenticatedNetworks)
+      .setTo(List(AuthConfig.Network("192.168.0.0/16")))
+      .modify(_.refusedNetworks)
+      .setTo(List(AuthConfig.Network("10.0.0.0/8")))
+
+  test("from a declared proxy, the client address it reports decides, as a direct connection from it would"):
+    withServer(tailnetBehindLoopbackProxy) { (url, _) =>
+      def backup(headers: (String, String)*)(key: Option[String] = None) =
+        send(s"$url/api/backups/$Dump", key = key, headers = headers.toList)
+      val tailnet = List(
+        "X-Forwarded-For" -> "100.101.102.103",
+        "X-Forwarded-Proto" -> "https",
+        "X-Forwarded-Host" -> "mymac.tail1234.ts.net:8443"
+      )
+      assertEquals(backup(tailnet*)().status, 200, "a tailnet device through tailscale serve: trusted, no key")
+      val config = send(s"$url/api/config", headers = tailnet)
+      assert(config.body.contains("\"keyRequired\":false"), config.body)
+      assertEquals(backup("Forwarded" -> "for=\"[fd7a:115c:a1e0::1]:4711\"")().status, 200, "a tailnet IPv6 address")
+      assertEquals(backup("X-Forwarded-For" -> "203.0.113.9, 100.101.102.103")().status, 200, "the rightmost client")
+      assertEquals(
+        backup("X-Forwarded-For" -> "203.0.113.9", "X-Forwarded-For" -> "100.101.102.103")().status,
+        200,
+        "two header lines read as one list"
+      )
+
+      assertEquals(backup("X-Forwarded-For" -> "192.168.1.20")().status, 401, "an authenticated network's client")
+      assertEquals(backup("X-Forwarded-For" -> "192.168.1.20")(Some(Key)).status, 200)
+      val keyed = send(s"$url/api/config", key = Some(Key), headers = List("X-Forwarded-For" -> "192.168.1.20"))
+      assert(keyed.body.contains("\"keyRequired\":true"), keyed.body)
+
+      val refused = backup("X-Forwarded-For" -> "10.1.2.3")(Some(Key))
+      assertEquals(refused.status, 403)
+      assert(refused.body.contains("NetworkRefused"), refused.body)
+      val unlisted = backup("X-Forwarded-For" -> "100.101.102.103, 203.0.113.9")(Some(Key))
+      assertEquals(unlisted.status, 403)
+      assert(unlisted.body.contains("NetworkNotAccepted"), unlisted.body)
+      assertEquals(send(s"$url/api/health", headers = List("X-Forwarded-For" -> "203.0.113.9")).status, 403)
+
+      assertEquals(backup("X-Forwarded-For" -> "garbage")().status, 401, "an unusable report fails closed")
+      assertEquals(backup("Forwarded" -> "for=100.101.102.103", "X-Forwarded-For" -> "203.0.113.9")().status, 401)
+      assertEquals(backup()().status, 200, "the owner's own request on this machine, unmarked")
+    }
+
+  test("a forged X-Forwarded-For naming a trusted address, from a peer in no proxy network, is refused (403)"):
+    val proxyElsewhere = (auth: AuthConfig) =>
+      tailnetBehindLoopbackProxy(auth).modify(_.proxyNetworks).setTo(List(AuthConfig.Network("192.168.1.2/32")))
+    withServer(proxyElsewhere) { (url, _) =>
+      for chain <- List("100.101.102.103", "127.0.0.1") do
+        val forged = send(s"$url/api/backups/$Dump", headers = List("X-Forwarded-For" -> chain))
+        assertEquals(forged.status, 403, chain)
+        assert(forged.body.contains("UndeclaredProxy"), forged.body)
     }
 
   test("with no proxy network, or none holding the peer, a forwarded request is refused (403), the probes included"):

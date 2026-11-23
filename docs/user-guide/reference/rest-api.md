@@ -6,7 +6,9 @@ network needs `Authorization: Bearer <auth.api-key>` for every method, reads inc
 `GET /api/health`, `GET /api/version` and the web page and its files. A request from a refused network
 (`auth.refused-networks`), or from one no list names, is refused (403) whatever it carries, and so is one that carries
 `Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Proto`, `X-Real-IP` or `Via` from a peer in no
-network of `auth.proxy-networks` (`UndeclaredProxy`; from a peer in one, it needs the key). Every request must name
+network of `auth.proxy-networks` (`UndeclaredProxy`; from a peer in one, the client address the proxy reports is
+judged as a direct connection from it would be, and a request it reports no usable address for needs the key). Every
+request must name
 the server by one of its own host names (421 otherwise), and a change sent by another site's page is refused (403).
 No `GET` or `HEAD` endpoint is meant to change anything (a check over the compiled routes holds them to it; the ones
 that still do are listed in `architecture/get-writes.tsv`). See [Who can reach your server](../how-to/access.md).

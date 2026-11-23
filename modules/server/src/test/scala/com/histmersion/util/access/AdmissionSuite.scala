@@ -3,6 +3,8 @@ package util.access
 
 import java.net.InetAddress
 
+import scala.jdk.CollectionConverters.*
+
 import hearth.kindlings.optics.syntax.*
 import org.ekrich.config.ConfigFactory
 
@@ -62,7 +64,7 @@ class AdmissionSuite extends munit.FunSuite:
       host: Option[String] = Some("localhost:8000"),
       origin: Option[String] = None,
       referer: Option[String] = None,
-      forwarded: Boolean = false,
+      forwarding: Forwarding = Forwarding.Absent,
       presented: Presented = Presented.Absent
   ): Request =
     Request(
@@ -73,9 +75,15 @@ class AdmissionSuite extends munit.FunSuite:
       host.map(HeaderText(_)),
       origin.map(HeaderText(_)),
       referer.map(HeaderText(_)),
-      Forwarded.of(forwarded),
+      forwarding,
       presented
     )
+
+  private def headers(named: (String, String)*): Forwarding =
+    Forwarding.of(name => HeaderText.all(named.collect { case (n, v) if n.equalsIgnoreCase(name) => v }.asJava))
+
+  private val viaOnly: Forwarding = headers("Via" -> "1.1 proxy.example")
+  private def forwardedFor(chain: String): Forwarding = headers("X-Forwarded-For" -> chain)
 
   private def decided(r: Request, p: AccessPolicy = policy): Either[Problem, Admission] = decide(r, p, agent)
 
@@ -248,13 +256,13 @@ class AdmissionSuite extends munit.FunSuite:
       (peer, net) <- peers
       method <- Method.values.toList
       presented <- Presented.values.toList
-      forwarded <- List(false, true)
+      (forwarding, forwarded) <- List(Forwarding.Absent -> false, viaOnly -> true)
       proxies <- Proxies.values.toList
       (host, hostOk) <- hosts
       (origin, referer, ownPage) <- pages
       path <- paths
     do
-      val r = request(peer, method, path, host, origin, referer, forwarded, presented)
+      val r = request(peer, method, path, host, origin, referer, forwarding, presented)
       assertEquals(
         decided(r, policyOf(peer, proxies)),
         expected(net, method, presented, forwarded, proxies, host, hostOk, ownPage, path),
@@ -264,29 +272,196 @@ class AdmissionSuite extends munit.FunSuite:
       cases += 1
     assertEquals(cases, 6 * 3 * 4 * 2 * 3 * 3 * 7 * 4)
 
-  test("from a proxy network, a proxied request earns no trust from its peer address: it needs the key"):
-    assertEquals(decided(request(loopback, forwarded = true), proxied), unauthenticated)
-    assertEquals(decided(request(loopback, forwarded = true, presented = Presented.ApiKey), proxied), Right(KeyHolder))
-    assertEquals(decided(request(loopback, forwarded = true, path = "/api/health"), proxied), Right(Public))
+  test("from a proxy network, a request that reports no usable client address earns no trust: it needs the key"):
+    for (label, forwarding) <- List(
+        "Via only" -> viaOnly,
+        "garbage" -> forwardedFor("garbage"),
+        "empty" -> forwardedFor(""),
+        "unknown" -> headers("Forwarded" -> "for=unknown")
+      )
+    do
+      assertEquals(decided(request(loopback, forwarding = forwarding), proxied), unauthenticated, label)
+      assertEquals(
+        decided(request(loopback, forwarding = forwarding, presented = Presented.ApiKey), proxied),
+        Right(KeyHolder),
+        label
+      )
+      assertEquals(decided(request(loopback, forwarding = forwarding, path = "/api/health"), proxied), Right(Public))
     assertEquals(decided(request(loopback), proxied), Right(Trusted), "the owner's own unmarked request")
     // a load balancer elsewhere: its network authenticated (or trusted) and named as a proxy network
     val balancer = policyWith(List("192.168.1.20/32"))
-    assertEquals(decided(request(lan, forwarded = true), balancer), unauthenticated)
-    assertEquals(decided(request(lan, forwarded = true, presented = Presented.ApiKey), balancer), Right(KeyHolder))
+    assertEquals(decided(request(lan, forwarding = viaOnly), balancer), unauthenticated)
+    assertEquals(decided(request(lan, forwarding = viaOnly, presented = Presented.ApiKey), balancer), Right(KeyHolder))
     assertEquals(
-      decided(request(InetAddress.getByName("192.168.1.21"), forwarded = true, presented = Presented.ApiKey), balancer),
+      decided(
+        request(InetAddress.getByName("192.168.1.21"), forwarding = viaOnly, presented = Presented.ApiKey),
+        balancer
+      ),
       undeclaredProxy,
       "its neighbour on the LAN is no proxy"
     )
 
+  test("a declared proxy's reported client is judged as a direct peer: trusted with no key"):
+    for
+      (label, forwarding) <- List(
+        "X-Forwarded-For" -> forwardedFor("100.101.102.103"),
+        "Forwarded" -> headers("Forwarded" -> "for=100.101.102.103;proto=https"),
+        "X-Real-IP" -> headers("X-Real-IP" -> "100.101.102.103"),
+        "tailscale serve" -> headers(
+          "X-Forwarded-For" -> "100.101.102.103",
+          "X-Forwarded-Proto" -> "https",
+          "X-Forwarded-Host" -> "mymac.tail1234.ts.net"
+        )
+      )
+      method <- Method.values.toList
+      presented <- Presented.values.toList
+    do
+      assertEquals(
+        decided(request(loopback, method, forwarding = forwarding, presented = presented), proxied),
+        Right(Trusted),
+        s"$label ${method.productPrefix} ${presented.productPrefix}"
+      )
+
+  test("a declared proxy's reported client in an authenticated network needs the key"):
+    val lanClient = forwardedFor("192.168.1.20")
+    assertEquals(decided(request(loopback, forwarding = lanClient), proxied), unauthenticated)
+    assertEquals(
+      decided(request(loopback, forwarding = lanClient, presented = Presented.Wrong), proxied),
+      unauthenticated
+    )
+    assertEquals(
+      decided(request(loopback, forwarding = lanClient, presented = Presented.ApiKey), proxied),
+      Right(KeyHolder)
+    )
+    assertEquals(decided(request(loopback, forwarding = lanClient, path = "/api/health"), proxied), Right(Public))
+
+  test("a declared proxy's reported client that is refused or unlisted gets what a direct peer from it gets"):
+    for
+      (client, rule) <- List(
+        "10.1.2.3" -> Problem.Refused.Rule.NetworkRefused,
+        "192.168.50.7" -> Problem.Refused.Rule.NetworkRefused,
+        "203.0.113.9" -> Problem.Refused.Rule.NetworkNotAccepted
+      )
+      presented <- Presented.values.toList
+      path <- List("/api/health", "/", "/api/backups/x", "/mcp/agent")
+    do
+      val direct = decided(request(InetAddress.getByName(client), path = path, presented = presented))
+      val forwarded =
+        decided(request(loopback, path = path, forwarding = forwardedFor(client), presented = presented), proxied)
+      assertEquals(forwarded, Left(Problem.Refused.Policy(rule)), s"$client $path")
+      assertEquals(forwarded, direct, s"$client $path")
+
+  test("for every peer kind, a declared proxy's report decides as a direct connection from that address would"):
+    val peers = List(loopback, tailnet, lan, refusedPeer, guest, stranger, InetAddress.getByName("::1"))
+    for
+      client <- peers
+      method <- Method.values.toList
+      presented <- Presented.values.toList
+      path <- List("/api/health", "/api/backups/x", "/mcp/agent", "/api/agents/quota/claude")
+    do
+      assertEquals(
+        decided(
+          request(loopback, method, path, forwarding = forwardedFor(client.getHostAddress), presented = presented),
+          proxied
+        ),
+        decided(request(client, method, path, presented = presented), proxied),
+        s"$client ${method.productPrefix} ${presented.productPrefix} $path"
+      )
+
+  test("chains: the rightmost address that is no declared proxy is the client"):
+    val front = InetAddress.getByName("192.168.1.2")
+    val twoProxies = policyWith(List("127.0.0.0/8", "::1/128", "192.168.1.2/32"))
+    val chain = forwardedFor("203.0.113.9, 100.101.102.103")
+    assertEquals(
+      decided(request(loopback, forwarding = chain), proxied),
+      Right(Trusted),
+      "client 203.0.113.9, proxy1 100.101.102.103, proxy2 the loopback peer, only proxy2 declared: proxy1 is the client"
+    )
+    val both = forwardedFor("100.101.102.103, 192.168.1.2")
+    assertEquals(
+      decided(request(loopback, forwarding = both), twoProxies),
+      Right(Trusted),
+      "client 100.101.102.103, proxy1 192.168.1.2, proxy2 the loopback peer, both declared: the original client"
+    )
+    assertEquals(decided(request(loopback, forwarding = both), proxied), unauthenticated, "192.168.1.2 is the LAN")
+    val strangerBehind = forwardedFor("203.0.113.9, 192.168.1.2")
+    assertEquals(
+      decided(request(loopback, forwarding = strangerBehind, presented = Presented.ApiKey), twoProxies),
+      Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
+    )
+    assertEquals(decided(request(front, forwarding = both), twoProxies), Right(Trusted), "from proxy1 directly")
+    assertEquals(
+      decided(request(loopback, forwarding = forwardedFor("127.0.0.1, ::1")), proxied),
+      Right(Trusted),
+      "a chain of proxies only: its leftmost, a client on this machine"
+    )
+
+  test("RFC 7239 Forwarded from a declared proxy: an IPv6 node with a port, unknown, hidden, several headers"):
+    val v6policy = policyWith(List("127.0.0.0/8", "::1/128"))
+    assertEquals(
+      decided(request(loopback, forwarding = headers("Forwarded" -> "for=\"[2001:db8::1]:4711\"")), v6policy),
+      Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted)),
+      "2001:db8::1 is listed nowhere"
+    )
+    assertEquals(
+      decided(request(loopback, forwarding = headers("Forwarded" -> "for=\"[::1]:4711\"")), v6policy),
+      Right(Trusted),
+      "::1 is trusted: a chain of proxies only"
+    )
+    for hidden <- List("for=unknown", "for=_hidden", "for=_hidden, for=127.0.0.1") do
+      assertEquals(decided(request(loopback, forwarding = headers("Forwarded" -> hidden)), v6policy), unauthenticated)
+    val several = headers("Forwarded" -> "for=203.0.113.9", "Forwarded" -> "for=100.101.102.103;proto=https")
+    assertEquals(decided(request(loopback, forwarding = several), v6policy), Right(Trusted))
+
+  test("garbage, empty, overlong or conflicting reports from a declared proxy fail closed: the key, never trust"):
+    for (label, forwarding) <- List(
+        "garbage" -> forwardedFor("not-an-address"),
+        "empty" -> forwardedFor(""),
+        "empty entry" -> forwardedFor("100.101.102.103,"),
+        "overlong" -> forwardedFor(List.fill(ForwardedChain.MaxHops + 1)("100.101.102.103").mkString(", ")),
+        "open quote" -> headers("Forwarded" -> "for=\"100.101.102.103"),
+        "empty Forwarded" -> headers("Forwarded" -> ""),
+        "two X-Real-IP" -> headers("X-Real-IP" -> "100.101.102.103, 100.101.102.104"),
+        "Forwarded against X-Forwarded-For" ->
+          headers("Forwarded" -> "for=100.101.102.103", "X-Forwarded-For" -> "203.0.113.9"),
+        "X-Forwarded-For against X-Real-IP" ->
+          headers("X-Forwarded-For" -> "100.101.102.103", "X-Real-IP" -> "203.0.113.9")
+      )
+    do
+      assertEquals(decided(request(loopback, forwarding = forwarding), proxied), unauthenticated, label)
+      assertEquals(
+        decided(request(loopback, forwarding = forwarding, presented = Presented.ApiKey), proxied),
+        Right(KeyHolder),
+        label
+      )
+
+  test("a forged X-Forwarded-For from a peer in no proxy network is refused, whatever address it names"):
+    for
+      (p, peers) <- List(
+        policy -> List(loopback, tailnet, lan),
+        proxied -> List(tailnet, lan),
+        proxiedElsewhere -> List(loopback, tailnet, lan)
+      )
+      peer <- peers
+      chain <- List("127.0.0.1", "100.101.102.103", "garbage")
+    do assertEquals(decided(request(peer, forwarding = forwardedFor(chain)), p), undeclaredProxy, s"$peer $chain")
+
+  test("an IPv4-mapped peer and an IPv4-mapped report match their IPv4 networks"):
+    val mapped =
+      java.net.Inet6Address.getByAddress(null, Array.fill[Byte](10)(0) ++ Array[Byte](-1, -1, 127, 0, 0, 1), -1)
+    assertEquals(decided(request(mapped), policy), Right(Trusted))
+    assertEquals(decided(request(mapped, forwarding = forwardedFor("100.101.102.103")), proxied), Right(Trusted))
+    assertEquals(decided(request(mapped, forwarding = forwardedFor("::ffff:192.168.1.20")), proxied), unauthenticated)
+    assertEquals(decided(request(mapped, forwarding = forwardedFor("100.101.102.103")), policy), undeclaredProxy)
+
   test("a proxy network lets nothing in by itself: its peer still needs a trusted or authenticated network"):
     val everywhere = policyWith(List("0.0.0.0/0", "::/0"))
     assertEquals(
-      decided(request(stranger, forwarded = true, presented = Presented.ApiKey), everywhere),
+      decided(request(stranger, forwarding = viaOnly, presented = Presented.ApiKey), everywhere),
       Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
     )
     assertEquals(
-      decided(request(refusedPeer, forwarded = true, presented = Presented.ApiKey), everywhere),
+      decided(request(refusedPeer, forwarding = forwardedFor("100.101.102.103")), everywhere),
       Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
     )
 
@@ -299,26 +474,31 @@ class AdmissionSuite extends munit.FunSuite:
       host <- List(Some("localhost:8000"), Some("rebound.example"), None)
     do
       assertEquals(
-        decided(request(peer, path = path, host = host, presented = presented, forwarded = true), p),
+        decided(request(peer, path = path, host = host, presented = presented, forwarding = viaOnly), p),
         undeclaredProxy
       )
     // the local proxy's networks are loopback only: a tailnet peer that says it was forwarded is refused
-    assertEquals(decided(request(tailnet, forwarded = true, presented = Presented.ApiKey), proxied), undeclaredProxy)
+    assertEquals(
+      decided(request(tailnet, forwarding = viaOnly, presented = Presented.ApiKey), proxied),
+      undeclaredProxy
+    )
     // a refused or unlisted network keeps its own rule
     assertEquals(
-      decided(request(refusedPeer, forwarded = true)),
+      decided(request(refusedPeer, forwarding = viaOnly)),
       Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
     )
     assertEquals(
-      decided(request(stranger, forwarded = true)),
+      decided(request(stranger, forwarding = viaOnly)),
       Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
     )
 
   test("the headers that mark a request as forwarded: the standard one, the four de-facto ones and Via"):
     assertEquals(
-      Forwarded.Headers,
+      Forwarding.Headers,
       List("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP", "Via")
     )
+    Forwarding.Headers.foreach(name => assert(headers(name -> "x") != Forwarding.Absent, name))
+    assertEquals(headers("X-Forwarded-Port" -> "443", "Forwarded-For" -> "1.2.3.4"), Forwarding.Absent)
 
   // ── the public allow-list, pinned ──────────────────────────────────────────────────────────────
 

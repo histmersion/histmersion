@@ -5,6 +5,8 @@ import java.net.InetAddress
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 
+import scala.jdk.CollectionConverters.*
+
 import io.github.iltotore.iron.constraint.any.Pure
 
 import com.histmersion.api.WebPaths
@@ -32,7 +34,9 @@ object Admission:
   /** The request header the gate sets to the admission's [[wire]] spelling, after removing any the client sent. */
   val Header = "X-Histmersion-Admission"
 
-  /** What a request carries that the decision reads. `port` is the port the server received it on. */
+  /** What a request carries that the decision reads. `port` is the port the server received it on; `forwarding` the
+    * headers a reverse proxy marks what it forwards with, as the request carries them ([[ClientAddress]] reads them).
+    */
   final case class Request(
       peer: InetAddress,
       port: AccessPolicy.Port,
@@ -41,7 +45,7 @@ object Admission:
       host: Option[HeaderText],
       origin: Option[HeaderText],
       referer: Option[HeaderText],
-      forwarded: Forwarded,
+      forwarding: Forwarding,
       presented: Presented
   )
 
@@ -70,24 +74,23 @@ object Admission:
 
   /** A header's value as the request sent it. */
   type HeaderText = HeaderText.T
-  object HeaderText extends Newtype[String, Pure]
+  object HeaderText extends Newtype[String, Pure]:
+    def all(values: java.util.List[String]): List[HeaderText] = values.asScala.toList.map(HeaderText(_))
 
-  /** How the request reached the server. One a proxy says it forwarded (any of [[Forwarded.Headers]]) has the proxy's
-    * peer address, never the client's, so it earns no trust; from a peer in no proxy network it is refused.
+    def joined(values: List[HeaderText]): String = values.map(_.value).mkString(",")
+
+  /** Where a request stands once its network, and for a forwarded one the client address its proxy reports, are read:
+    * the address listed nowhere or refused, forwarded by an undeclared proxy, trusted, or held to the key.
     */
-  enum Forwarded derives CanEqual:
-    case Direct, ByProxy
+  private enum Standing derives CanEqual:
+    case Unlisted, Refused, UndeclaredProxy, Trusted, NeedsKey
 
-  object Forwarded:
-    /** The headers a reverse proxy adds to what it forwards: the standard one (RFC 7239), the de-facto ones nginx,
-      * Caddy, Apache and Traefik set, and `Via` (RFC 9110 §7.6.3), which a proxy adds to say it passed the request on.
-      * Any one of them marks the request as forwarded.
-      */
-    val Headers: List[String] =
-      List("Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Real-IP", "Via")
-
-    /** By a proxy when the request carries any of [[Headers]]. */
-    def of(forwardedHeader: Boolean): Forwarded = if forwardedHeader then ByProxy else Direct
+  private object Standing:
+    def of(requirement: Option[AccessPolicy.Requirement]): Standing = requirement match
+      case None                                         => Unlisted
+      case Some(AccessPolicy.Requirement.Refused)       => Refused
+      case Some(AccessPolicy.Requirement.Trusted)       => Trusted
+      case Some(AccessPolicy.Requirement.Authenticated) => NeedsKey
 
   /** The credential a request presented, once the gate checked it. */
   enum Presented derives CanEqual:
@@ -126,34 +129,43 @@ object Admission:
 
   /** Whether the request is let in, and how; or the problem that refuses it. In order: a peer of a refused network, or
     * of no listed network, is refused (403) whatever it sends — the public probes and the agent endpoint included; a
-    * request a proxy forwarded, from a peer in no proxy network, is refused (403) the same way; its `Host` must be one
-    * the server answers to (else 421); a change sent by a browser page must come from an accepted origin (else 403);
-    * the agent endpoint is then left to its run-token gate; otherwise the peer's network decides — trusted (unless a
-    * proxy forwarded the request), or authenticated with the key (or a run token on the quota path), or a public read
-    * (else 401).
+    * request a proxy forwarded, from a peer in no proxy network, is refused (403) the same way; from a peer in a proxy
+    * network, the client address the proxy reports ([[ClientAddress]]) is then judged as a direct peer would be —
+    * refused or unlisted (403), trusted, or authenticated — and one it reports no usable address for is held to the
+    * key. Its `Host` must be one the server answers to (else 421); a change sent by a browser page must come from an
+    * accepted origin (else 403); the agent endpoint is then left to its run-token gate; otherwise trusted, or
+    * authenticated with the key (or a run token on the quota path), or a public read (else 401).
     */
   def decide(request: Request, policy: AccessPolicy, agent: AgentPaths): Either[Problem, Admission] =
-    policy.requirementOf(request.peer) match
-      case None => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
-      case Some(AccessPolicy.Requirement.Refused) => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
-      case Some(_) if request.forwarded == Forwarded.ByProxy && !policy.proxiedFrom(request.peer) =>
-        Left(Problem.Refused.Policy(Problem.Refused.Rule.UndeclaredProxy))
-      case Some(AccessPolicy.Requirement.Trusted)       => accepted(request, policy, agent, trusted = true)
-      case Some(AccessPolicy.Requirement.Authenticated) => accepted(request, policy, agent, trusted = false)
+    standingOf(request, policy) match
+      case Standing.Unlisted        => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkNotAccepted))
+      case Standing.Refused         => Left(Problem.Refused.Policy(Problem.Refused.Rule.NetworkRefused))
+      case Standing.UndeclaredProxy => Left(Problem.Refused.Policy(Problem.Refused.Rule.UndeclaredProxy))
+      case admitted @ (Standing.Trusted | Standing.NeedsKey) => accepted(request, policy, agent, admitted)
 
-  /** [[decide]] for a request from an accepted network, `trusted` or authenticated. */
+  private def standingOf(request: Request, policy: AccessPolicy): Standing =
+    policy.requirementOf(request.peer) match
+      case None                                   => Standing.Unlisted
+      case Some(AccessPolicy.Requirement.Refused) => Standing.Refused
+      case peer @ Some(_)                         =>
+        ClientAddress.of(request.peer, request.forwarding, policy) match
+          case ClientAddress.Undeclared        => Standing.UndeclaredProxy
+          case ClientAddress.Direct(_)         => Standing.of(peer)
+          case ClientAddress.Forwarded(client) => Standing.of(policy.requirementOf(client))
+          case ClientAddress.Unusable(_)       => Standing.NeedsKey
+
   private def accepted(
       request: Request,
       policy: AccessPolicy,
       agent: AgentPaths,
-      trusted: Boolean
+      standing: Standing
   ): Either[Problem, Admission] =
     val host = request.host.map(h => AccessPolicy.HostName.ofHeader(s"$h"))
     if !host.exists(policy.answersTo) then Left(Problem.Refused.Misdirected(Problem.Raw(host.fold("")(h => s"$h"))))
     else if request.method == Method.Change && !sameSite(request, policy) then
       Left(Problem.Refused.Policy(Problem.Refused.Rule.CrossSite))
     else if s"${request.path}" == s"${agent.mcp}" || s"${request.path}".startsWith(s"${agent.mcp}/") then Right(Agent)
-    else if trusted && request.forwarded == Forwarded.Direct then Right(Trusted)
+    else if standing == Standing.Trusted then Right(Trusted)
     else
       request.presented match
         case Presented.ApiKey                                  => Right(KeyHolder)

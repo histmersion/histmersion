@@ -53,6 +53,17 @@ class CidrSuite extends munit.FunSuite:
     assert(cidr("127.0.0.0/8").holds(at("::ffff:127.0.0.1")))
     assert(!cidr("::/0").holds(at("::ffff:127.0.0.1")))
 
+  test("an IPv4-mapped address the JDK keeps as IPv6 (Inet6Address.getByAddress) is its IPv4 address too"):
+    val mapped =
+      java.net.Inet6Address.getByAddress(null, Array.fill[Byte](10)(0) ++ Array[Byte](-1, -1, 127, 0, 0, 1), -1)
+    assert(mapped.isInstanceOf[java.net.Inet6Address], "the JDK keeps this one as IPv6")
+    assert(cidr("127.0.0.0/8").holds(mapped))
+    assert(!cidr("::/0").holds(mapped))
+    assertEquals(Cidr.numbered(mapped), Cidr.numbered(at("127.0.0.1")))
+    assert(Cidr.sameAddress(mapped, at("127.0.0.1")) && Cidr.sameAddress(at("::ffff:127.0.0.1"), at("127.0.0.1")))
+    assert(!Cidr.sameAddress(at("::1"), at("127.0.0.1")))
+    assert(!cidr("127.0.0.0/8").holds(at("::7f00:1")), "an IPv4-compatible (not mapped) address stays IPv6")
+
   test("the first and last address of a network"):
     val n = cidr("192.168.1.0/24")
     assertEquals(n.last - n.first, BigInt(255))
