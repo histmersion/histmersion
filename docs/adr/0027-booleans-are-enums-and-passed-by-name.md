@@ -79,12 +79,39 @@ Counted by the two keys over every module, main and test (no other module has a 
 | web | 67 | 1 | 109 | 46 |
 | **total** | **333** | **24** | **460** | **169** |
 
-Of the 333 in main code, 178 are fields (a class, case class or enum case) and 155 parameters of defs; 23 are in a
-service, repository or controller signature. Of the 629 positional arguments, 191 are literals and 438 values. The
+Of the 333 in main code, 178 are fields (a class, case class or enum case) and 155 parameters of defs; 36 are in the
+implementation of a service, repository or controller (a file `…Service`, `…Repo`, `…Controllers`; an abstract
+declaration in a service trait is not counted, its `Implementation` and `InMemory` are). Of the 629 positional
+arguments, 191 are literals and 438 values. The
 largest groups: the CLI's command records (`noWait` ×14, `dry`/`dryRun`/`apply` ×19, `force`, `refresh`, `all`), the
 server's `dryRun` ×7 and `all` ×5, and the web page's view state (`reduced`, `on`, `soft`, `local`). The callees most
 often given a positional Boolean: `AcquisitionControllers.step` (18), `PluginHost.status` (11), the CLI's command
 cases (`Import`, `Covers`, `Ingest`, `Fetch`, `Rebuild`), `SourcesMarkdown.source` (9) and `ListFilters.many` (8).
+
+## The first migrations
+
+- **`Cli.Following` (`Follow | Return`)** for `--no-wait`: fourteen command records and the upload and events
+  helpers (the Boolean newtype `Cli.NoWait` gone); `CommandLine.noWait(help)` parses the flag once.
+- **`Cli.Writes` (`DryRun | Apply`)** for `--dry-run` and `--apply`: nineteen command records (the Boolean newtype
+  `Cli.DryRun` gone); `CommandLine.dryRun(help)` and `applyFlag(help)` decide each flag's polarity where it is parsed.
+- **`RejectedLinks` (`Hidden | Listed`) and `EventsToCheck` (`Unchecked | Every`)** for the event links' service.
+- A repository keeps a Boolean it binds as an SQL parameter when its first parameter would otherwise be one of our
+  types: the guideline inventory's G3misplaced counts such a repository method (`EventLinkRepo.eventsToCheck`).
+
+No wire, column or web change was needed for these; nothing was migrated in the database. After them (stacked on the
+check): booleanParam main 333 → 293, unnamedBoolean main 460 → 396, test 169 → 147.
+
+## What remains
+
+- The web page's view state (67 fields and parameters), whose change runs the browser suite.
+- The wire's Boolean newtypes and query parameters, which become string enums (ADR 0026): `Api.Apply` is also used for
+  the `dryRun` query parameter of `importBundle` and `fetchExternalPlaces`, so a value named "apply" carries "dry run"
+  there; an enum of the two states removes the inversion.
+- The autopilot's switch and drain (`AutopilotSet.On`, `DrainSet.On`, `setDrain(on)`), across the wire, the CLI, the
+  MCP tool and the web page.
+- The server's MCP tool inputs (`dryRun`, `fix`, `all`, `remove` …), the managers' `upsert(reopen)`,
+  `openOf(focusHeld)` and `hints(live)`, the work lists' `list(all)`, and `AcquisitionControllers.step`, the callee
+  given most positional Booleans.
 
 ## Consequences
 
@@ -95,4 +122,7 @@ are two-state types that an enum would describe better, and are left to the newt
 ## Code
 
 `tools/refactor/GuidelineInventory.scala` (`unnamedBoolean`, `booleanParam`, `reportOnly`), its fixture
-`tools/refactor/guideline-fixture/` (`Switches.scala`), `architecture/guidelines-ratchet.tsv`.
+`tools/refactor/guideline-fixture/` (`Switches.scala`), `architecture/guidelines-ratchet.tsv`; the migrations in
+`modules/cli/src/main/scala/com/histmersion/cli/Cli.scala` (`Following`, `Writes`) and `CommandLine.scala`
+(`noWait`, `dryRun`, `applyFlag`), and `modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/`
+(`RejectedLinks`, `EventsToCheck`).
