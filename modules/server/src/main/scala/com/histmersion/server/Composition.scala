@@ -1,6 +1,6 @@
 package com.histmersion
 package server
-import com.histmersion.util.problem.{Legacy, Problem, Raised}
+import com.histmersion.util.problem.{DecodeFailures, Legacy, Problem, Raised}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission, SecurityHeaders}
 import com.histmersion.domain.automation.agents.RunTokens
@@ -220,6 +220,7 @@ object Composition:
       try h.maintenance.writing(h.bootstrap.autoStart())
       catch case e: Exception => scribe.warn(s"first-run import not started: ${e.getMessage}")
     val options = NettySyncServerOptions.customiseInterceptors
+      .decodeFailureHandler(DecodeFailures.handler)
       .prependInterceptor(Pin.Requests(sg.graph))
       .prependInterceptor(RequestLog(logWriter, () => deps.cfg.log))
       .options
