@@ -47,14 +47,14 @@ object Ops:
     case Import(dir: String)
 
     /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
-      * the caps allow; a pass of more than one item is a server job, followed unless `noWait`.
+      * the caps allow; a pass of more than one item is a server job, followed unless told to return.
       */
     case Recheck(
         dryRun: Boolean,
         limit: Option[Int],
         id: Option[Int],
         all: Boolean,
-        noWait: Boolean,
+        following: Cli.Following,
         json: Cli.JsonOutput
     )
 
@@ -216,7 +216,7 @@ object Ops:
           writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
         case QueueCmd.Import(dir) =>
           readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
-        case QueueCmd.Recheck(dryRun, limit, id, all, noWait, json) =>
+        case QueueCmd.Recheck(dryRun, limit, id, all, following, json) =>
           c.call(AcquisitionWorkApi.acquireRecheck)(
             Acquire.Checks.RecheckRequest(
               Acquire.Checks.RecheckRequest.DryRun(dryRun),
@@ -228,8 +228,8 @@ object Ops:
           ).flatMap { r =>
             Output.emit(json, r)(AcquireChecksMarkdown.result)
             r.job match
-              case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
-              case _                                 => Right(())
+              case Some(j) => json.choose(Cli.Following.Return, following).follow(IngestCmd.pollJob(c, j.id, 0))
+              case None    => Right(())
           }
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */

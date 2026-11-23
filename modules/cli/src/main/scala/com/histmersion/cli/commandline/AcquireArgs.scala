@@ -179,7 +179,7 @@ object AcquireArgs:
       "provenance",
       "How the source was acquired: manual|ill|author|scan|external-file|calibre|archive|oa (default: manual for file, oa for DOI)"
     )
-    private val noWait_ = flag("no-wait", "File upload: print the job id and return instead of following it")
+    private val following_ = noWait("File upload: print the job id and return instead of following it")
     private val refetch_ = flag(
       "refetch",
       "Identifier: fetch and convert again although the source already has its original (replaces its body)"
@@ -207,16 +207,16 @@ object AcquireArgs:
             id_(),
             citekey_.toOption,
             arxiv_.toOption,
-            quality_.getOrElse(false),
-            force_.getOrElse(false),
+            quality = quality_.getOrElse(false),
+            force = force_.getOrElse(false),
             title_.toOption,
             authors_.getOrElse(Nil),
             year_.toOption,
             doi_.toOption,
             prov_.toOption,
-            noWait_.getOrElse(false),
-            refetch_.getOrElse(false),
-            legalOnly,
+            following_(),
+            refetch = refetch_.getOrElse(false),
+            legalOnly = legalOnly,
             item_.toOption,
             json_()
           )

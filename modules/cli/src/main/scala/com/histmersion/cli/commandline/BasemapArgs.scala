@@ -58,7 +58,7 @@ object BasemapArgs:
       "keep-all",
       "Store the vector layer unfiltered — roads, places and borders too, for the Readable map (basemap.vector.drop not applied)"
     )
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
       BasemapCmd.Command.Fetch(
@@ -67,9 +67,9 @@ object BasemapArgs:
         tz_.toOption,
         bbox_.toOption,
         focus_.toOption,
-        dry_.getOrElse(false),
-        keepAll_.getOrElse(false),
-        noWait_.getOrElse(false)
+        dry = dry_.getOrElse(false),
+        keepAll = keepAll_.getOrElse(false),
+        following_()
       )
     )
 

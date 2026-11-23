@@ -138,7 +138,7 @@ G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	25
 G45boundary	api	main	334
-G45boundary	cli	main	492
+G45boundary	cli	main	487
 G45boundary	config	main	28
 G45boundary	console	main	1
 G45boundary	core	main	5
@@ -268,7 +268,7 @@ acceptedOutcome	db	main	225
 acceptedOutcome	server	main	42
 booleanParam	api	main	26
 booleanParam	chimney-iron-tests	test	1
-booleanParam	cli	main	126
+booleanParam	cli	main	110
 booleanParam	cli	test	1
 booleanParam	core	main	9
 booleanParam	core	test	1
@@ -313,8 +313,8 @@ silentPure	plugin-api	test	1
 unnamedBoolean	api	main	29
 unnamedBoolean	api	test	8
 unnamedBoolean	chimney-iron-tests	test	1
-unnamedBoolean	cli	main	149
-unnamedBoolean	cli	test	37
+unnamedBoolean	cli	main	100
+unnamedBoolean	cli	test	16
 unnamedBoolean	core	main	4
 unnamedBoolean	core	test	20
 unnamedBoolean	db	main	26

@@ -45,7 +45,7 @@ object MediaCmd:
         place: Option[String],
         event: Option[String],
         refresh: Boolean,
-        noWait: Boolean
+        following: Cli.Following
     )
     case Providers()
     case Covers(
@@ -56,7 +56,7 @@ object MediaCmd:
         noCalibre: Boolean,
         noOl: Boolean,
         noIll: Boolean,
-        noWait: Boolean
+        following: Cli.Following
     )
     case ListCmd(
         provider: Option[String],
@@ -89,7 +89,7 @@ object MediaCmd:
   final private[cli] class Perform(c: Client)(using console: Console):
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
-        case Command.Import(name, dry, limit, place, event, refresh, noWait) =>
+        case Command.Import(name, dry, limit, place, event, refresh, following) =>
           val req = MediaImportRequest(
             MediaItem.Provider(name),
             MediaImportRequest.DryRun(dry),
@@ -104,11 +104,11 @@ object MediaCmd:
               Cli.out.println(
                 s"media import job `${j.id}` started: ${j.detail.flatMap(ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
               )
-              if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+              following.follow(IngestCmd.pollJob(c, j.id, 0))
             }
         case Command.Providers() =>
           c.mediaProviders.map(ps => Cli.out.println(MediaMarkdown.mediaProviders(ps)))
-        case Command.Covers(dry, limit, ck, refresh, noCalibre, noOl, noIll, noWait) =>
+        case Command.Covers(dry, limit, ck, refresh, noCalibre, noOl, noIll, following) =>
           val only = ck.map(_.trim).filter(_.nonEmpty)
           for
             // 1. the Calibre library, here on the host (the server may not see it)
@@ -159,7 +159,7 @@ object MediaCmd:
                   Cli.out.println(
                     s"media covers job `${j.id}` started: ${j.detail.flatMap(ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
                   )
-                  if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+                  following.follow(IngestCmd.pollJob(c, j.id, 0))
                 }
           yield ()
         case Command.ListCmd(provider, licence, place, event, q, limit, offset, facets) =>

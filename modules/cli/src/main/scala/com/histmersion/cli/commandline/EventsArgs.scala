@@ -162,20 +162,20 @@ object EventsArgs:
     )
     private val mag_ = value[Double]("min-magnitude", "Earthquakes: at least this magnitude, everywhere")
     private val refresh_ = flag("refresh", "Read again the parts an earlier import read")
-    private val noWait_ = flag("no-wait", "Print the job id and return")
+    private val following_ = noWait("Print the job id and return")
 
     def command: Either[Problem, Cli.Command] = Right(
       EventsCmd.Command.Import(
         p_(),
-        dry_.getOrElse(false),
+        dry = dry_.getOrElse(false),
         limit_.toOption,
         bbox_.toOption,
         from_.toOption,
         to_.toOption,
         vei_.toOption,
         mag_.toOption,
-        refresh_.getOrElse(false),
-        noWait_.getOrElse(false)
+        refresh = refresh_.getOrElse(false),
+        following_()
       )
     )
 
@@ -190,10 +190,10 @@ object EventsArgs:
       with SharedFlags:
     private val p_ = value[String]("provider", "Only this catalogue: gvp | noaa | wikidata | a plugin's (default: all)")
     private val dry_ = flag("dry-run", "Count what would change, store nothing")
-    private val noWait_ = flag("no-wait", "Print the job id and return")
+    private val following_ = noWait("Print the job id and return")
 
     def command: Either[Problem, Cli.Command] = Right(
-      EventsCmd.Command.Rederive(p_.toOption, dry_.getOrElse(false), noWait_.getOrElse(false))
+      EventsCmd.Command.Rederive(p_.toOption, dry = dry_.getOrElse(false), following_())
     )
 
   final private class LeafCorrections()
@@ -248,10 +248,10 @@ object EventsArgs:
     private val all_ = flag("all", "Every event, not only those never checked")
     private val ev_ = value[String]("event", "Only this event")
     private val limit_ = value[Int]("limit", "Events at most")
-    private val noWait_ = flag("no-wait", "Print the job id and return")
+    private val following_ = noWait("Print the job id and return")
 
     def command: Either[Problem, Cli.Command] = Right(
-      EventsCmd.Command.Candidates(all_.getOrElse(false), ev_.toOption, limit_.toOption, noWait_.getOrElse(false))
+      EventsCmd.Command.Candidates(all = all_.getOrElse(false), ev_.toOption, limit_.toOption, following_())
     )
 
   final private class LeafLeads()

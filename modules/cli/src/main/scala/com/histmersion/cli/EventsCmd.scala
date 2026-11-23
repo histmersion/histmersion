@@ -97,15 +97,17 @@ object EventsCmd:
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
-  private[cli] def follow(c: Client, j: JobInfo, noWait: Cli.NoWait)(using console: Console): Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, j: JobInfo, following: Cli.Following)(using
+      console: Console
+  ): Either[Cli.Error, Unit] =
     Cli.out.println(
       s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
-    if noWait.value then Right(())
-    else
+    following.follow(
       IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
         done.detail.flatMap(EventImportReport.Detail.of).foreach(r => Cli.out.println(EventImportReport.markdown(r)))
       }
+    )
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
@@ -131,13 +133,13 @@ object EventsCmd:
         vei: Option[Int],
         mag: Option[Double],
         refresh: Boolean,
-        noWait: Boolean
+        following: Cli.Following
     )
-    case Rederive(p: Option[String], dry: Boolean, noWait: Boolean)
+    case Rederive(p: Option[String], dry: Boolean, following: Cli.Following)
     case Corrections(st: Option[String], ev: Option[String], limit: Option[Int])
     case Catalogues()
     case Links(id: String, re: Boolean, confirm: List[String], reject: List[String])
-    case Candidates(all: Boolean, ev: Option[String], limit: Option[Int], noWait: Boolean)
+    case Candidates(all: Boolean, ev: Option[String], limit: Option[Int], following: Cli.Following)
     case Leads(kind: Option[String], tier: Option[String], area: Option[String], f: Filter)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
@@ -160,7 +162,7 @@ object EventsCmd:
           ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
         case Command.Show(id, json) =>
           c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown.value))
-        case Command.Import(p, dry, limit, bbox, from, to, vei, mag, refresh, noWait) =>
+        case Command.Import(p, dry, limit, bbox, from, to, vei, mag, refresh, following) =>
           c.call(EventsApi.importEvents)(
             EventImportRequest(
               EventImportRequest.Provider(p),
@@ -173,21 +175,21 @@ object EventsCmd:
               mag.map(EventImportRequest.MinMagnitude(_)),
               EventImportRequest.Refresh(refresh)
             )
-          ).flatMap(follow(c, _, Cli.NoWait(noWait)))
-        case Command.Rederive(p, dry, noWait) =>
+          ).flatMap(follow(c, _, following))
+        case Command.Rederive(p, dry, following) =>
           c.call(EventsApi.rederive)(
             EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))
           ).flatMap { j =>
             Cli.out.println(
               s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
             )
-            if noWait then Right(())
-            else
+            following.follow(
               IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
                 done.detail
                   .flatMap(EventRederiveReport.Detail.of)
                   .foreach(r => Cli.out.println(EventRederiveReport.markdown(r)))
               }
+            )
           }
         case Command.Corrections(st, ev, limit) =>
           c.call(EventsApi.corrections)(
@@ -215,14 +217,14 @@ object EventsCmd:
               )
             ).map(r => Cli.out.println(EventLinksMarkdown.result(r)))
           else c.call(EventsApi.links)(Event.Id(id)).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
-        case Command.Candidates(all, ev, limit, noWait) =>
+        case Command.Candidates(all, ev, limit, following) =>
           c.call(EventsApi.candidatesJob)(
             EventCandidatesRequest(
               EventCandidatesRequest.All(all),
               ev.map(Event.Id(_)),
               limit.map(EventCandidatesRequest.Limit(_))
             )
-          ).flatMap(follow(c, _, Cli.NoWait(noWait)))
+          ).flatMap(follow(c, _, following))
         case Command.Leads(kind, tier, area, f) =>
           c.call(EventsApi.leads)(
             Api.EventQuery(

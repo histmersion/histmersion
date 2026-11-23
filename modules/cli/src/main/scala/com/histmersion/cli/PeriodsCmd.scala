@@ -29,7 +29,7 @@ object PeriodsCmd:
     case Seed(file: Option[String], replace: Boolean)
     case Import(file: String, cols: List[String], dataset: Dataset)
     case Fetch(source: String, cols: List[String])
-    case Init(fetch: Boolean, noWait: Boolean)
+    case Init(fetch: Boolean, following: Cli.Following)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
@@ -68,8 +68,8 @@ object PeriodsCmd:
         case Command.Fetch(source, cols) =>
           c.fetchPeriods(PeriodsApi.Source(source), cols.map(PeriodsApi.Collection(_)))
             .map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
-        case Command.Init(fetch, noWait) =>
+        case Command.Init(fetch, following) =>
           c.init(Api.Overwrite(fetch)).flatMap { j =>
             Cli.out.println(s"init job `${j.id}` started (`histmersion jobs` lists it)")
-            if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+            following.follow(IngestCmd.pollJob(c, j.id, 0))
           }

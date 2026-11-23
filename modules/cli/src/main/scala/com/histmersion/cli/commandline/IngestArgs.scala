@@ -46,10 +46,10 @@ object IngestArgs:
       with SharedFlags:
     private val ck_ = arg[String]("citekey")
     private val quality_ = flag("quality", "Slow, accurate OCR (docling)")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
-      IngestCmd.Command.Reocr(ck_(), quality_.getOrElse(false), noWait_.getOrElse(false))
+      IngestCmd.Command.Reocr(ck_(), quality = quality_.getOrElse(false), following_())
     )
 
   final private class LeafAssets()

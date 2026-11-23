@@ -73,11 +73,11 @@ object PlacesArgs:
     private val dry_ = flag("dry-run", "Count the sites it would ask about")
     private val limit_ = value[Int]("limit", "Sites at most")
     private val refresh_ = flag("refresh", "Ask again about sites asked before")
-    private val noWait_ = flag("no-wait", "Print the job id and return")
+    private val following_ = noWait("Print the job id and return")
 
     def command: Either[Problem, Cli.Command] = Right(
       PlacesCmd.Command
-        .SiteTypes(dry_.getOrElse(false), limit_.toOption, refresh_.getOrElse(false), noWait_.getOrElse(false))
+        .SiteTypes(dry = dry_.getOrElse(false), limit_.toOption, refresh = refresh_.getOrElse(false), following_())
     )
 
   final private class LeafNameAdd()
@@ -271,10 +271,10 @@ object PlacesArgs:
       with SharedFlags:
     private val source_ = arg[String]("source")
     private val dryRun_ = flag("dry-run", "Parse and transform only — do not upsert")
-    private val nw_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
-      PlacesCmd.Command.Fetch(source_(), dryRun_.getOrElse(false), nw_.getOrElse(false))
+      PlacesCmd.Command.Fetch(source_(), dryRun = dryRun_.getOrElse(false), following_())
     )
 
   final private class LeafSources()
@@ -296,10 +296,10 @@ object PlacesArgs:
     private val source_ = arg[String]("geonames|wikidata|tgn|lpf")
     private val apply_ =
       flag("apply", "Import for real (without it: a dry run that reports what would change and keeps nothing)")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
-      PlacesCmd.Command.Load(source_(), apply_.getOrElse(false), noWait_.getOrElse(false))
+      PlacesCmd.Command.Load(source_(), apply = apply_.getOrElse(false), following_())
     )
 
   final private class LeafRebuild()
@@ -314,9 +314,9 @@ object PlacesArgs:
         "Compute parent-child edges from spatial containment (point inside polygon). Idempotent."
       )
       with SharedFlags:
-    private val nw_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
-    def command: Either[Problem, Cli.Command] = Right(PlacesCmd.Command.BuildHierarchy(nw_.getOrElse(false)))
+    def command: Either[Problem, Cli.Command] = Right(PlacesCmd.Command.BuildHierarchy(following_()))
 
   final private class GroupPlaces()
       extends Group(

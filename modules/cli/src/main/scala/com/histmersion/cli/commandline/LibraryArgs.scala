@@ -81,7 +81,7 @@ object LibraryArgs:
     private val citekey_ = value[String]("citekey", "Override the generated citekey")
     private val format_ = value[String]("format", "pdf | epub")
     private val noConvert_ = flag("no-convert", "Create or enrich the record only; do not upload the file for OCR")
-    private val noWait_ = flag("no-wait", "Queue the conversion and return instead of following it")
+    private val following_ = noWait("Queue the conversion and return instead of following it")
     private val item_ = value[Int](
       "acquire-item",
       "Id of the acquisition-queue item this book fulfils — ticked off when the conversion succeeds (without it, an open item naming the book's DOI is ticked off, and similar ones are listed)"
@@ -103,8 +103,8 @@ object LibraryArgs:
             id_(),
             citekey_.toOption,
             format_.toOption,
-            noConvert_.getOrElse(false),
-            noWait_.getOrElse(false),
+            noConvert = noConvert_.getOrElse(false),
+            following_(),
             item_.toOption,
             json_()
           )

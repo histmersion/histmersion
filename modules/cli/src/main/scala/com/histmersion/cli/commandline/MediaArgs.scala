@@ -57,17 +57,17 @@ object MediaArgs:
       value[String]("event", "Only this event (its --wikidata item; providers that ask about events)")
     private val refresh_ =
       flag("refresh", "Ask again about ones already asked, and re-read the licences of stored pictures")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
       MediaCmd.Command.Import(
         name_(),
-        dry_.getOrElse(false),
+        dry = dry_.getOrElse(false),
         limit_.toOption,
         place_.toOption,
         event_.toOption,
-        refresh_.getOrElse(false),
-        noWait_.getOrElse(false)
+        refresh = refresh_.getOrElse(false),
+        following_()
       )
     )
 
@@ -97,18 +97,18 @@ object MediaArgs:
     private val noCalibre_ = flag("no-calibre", "Skip the Calibre library")
     private val noOl_ = flag("no-open-library", "Do not ask Open Library")
     private val noIll_ = flag("no-illustrations", "Covers only")
-    private val noWait_ = flag("no-wait", "Print the job id and return instead of following it")
+    private val following_ = noWait("Print the job id and return instead of following it")
 
     def command: Either[Problem, Cli.Command] = Right(
       MediaCmd.Command.Covers(
-        dry_.getOrElse(false),
+        dry = dry_.getOrElse(false),
         limit_.toOption,
         ck_.toOption,
-        refresh_.getOrElse(false),
-        noCalibre_.getOrElse(false),
-        noOl_.getOrElse(false),
-        noIll_.getOrElse(false),
-        noWait_.getOrElse(false)
+        refresh = refresh_.getOrElse(false),
+        noCalibre = noCalibre_.getOrElse(false),
+        noOl = noOl_.getOrElse(false),
+        noIll = noIll_.getOrElse(false),
+        following_()
       )
     )
 
