@@ -105,6 +105,14 @@ object MarkerLook:
       ""
     )
 
+  private val Placement = "\\s*--(tx|ty|z|sx|sy|ax|ay|move-x|move-y):[^;]*;?".r
+
+  def rootKey(cls: String, style: String): String =
+    cls.split(" ").filterNot(Transient.contains).mkString(" ") + "|" + Placement.replaceAllIn(style, "").trim
+
+  def rootKey(el: dom.Element): String =
+    rootKey(Option(el.getAttribute("class")).getOrElse(""), Option(el.getAttribute("style")).getOrElse(""))
+
   private val Text = ">[^<]+<".r
 
   def shapeKey(templateKey: String): String = Text.replaceAllIn(templateKey, "><")
