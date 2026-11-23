@@ -137,7 +137,7 @@ G44plaindef	server	main	28
 G44plaindef	server	test	1
 G44plaindef	values	main	4
 G44plaindef	web	main	25
-G45boundary	api	main	592
+G45boundary	api	main	591
 G45boundary	cli	main	1011
 G45boundary	config	main	63
 G45boundary	console	main	4

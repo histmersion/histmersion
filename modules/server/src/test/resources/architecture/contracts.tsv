@@ -791,7 +791,7 @@ unwrap	api:api/TimeSpan.scala	.value outside a boundary	4
 unwrap	api:api/UiLabels.scala	.value outside a boundary	13
 unwrap	api:api/Wcag.scala	.value outside a boundary	7
 unwrap	api:api/WebPaths.scala	.value outside a boundary	3
-unwrap	api:api/WireEnum.scala	.value outside a boundary	2
+unwrap	api:api/WireEnum.scala	.value outside a boundary	1
 unwrap	api:api/Wording.scala	.value outside a boundary	19
 unwrap	api:api/YearFmt.scala	.value outside a boundary	5
 unwrap	api:api/Years.scala	.value outside a boundary	16
