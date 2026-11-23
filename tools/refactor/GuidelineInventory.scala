@@ -19,6 +19,7 @@ object GuidelineInventory {
     notes: List[String] = Nil,
     expected: String = "",
     emitLints: Boolean = false,
+    reportOnly: List[String] = Nil,
     requireCoverage: Boolean = true,
     projectPrefix: String = "com/histmersion/",
     // `{scalaVersion}` is Scalafix's --scala-version: the build's (target/build-versions.properties)
@@ -117,6 +118,8 @@ object GuidelineInventory {
     "G89unguarded" -> "main code only: a transaction opened without a write permit: a call of Magnum's `transact` (straight on a DataSource) outside util/database/Transactor.scala, or of the test-only `WritePermit.standing`. Since X4 the transactor's own entry points take the permit by type (`write`, `writeAutocommit`; the permit-less `transact` is protected, so a call of it, `Transactor#autocommit` or `Session#transact`/`#autocommit` no longer compiles and is still listed here should it come back)",
     "discardedOutcome" -> "main code only (G94): a write's answer dropped. The answer: an Option, Either, Try, Boolean, Int, Long, Int[] or RowCount from Magnum's `Update#run` (and its Repo's insert/update/delete), JDBC's executeUpdate/executeBatch, or a project method that reaches the database (a `DbCon` or a `WritePermit` among its parameters). Dropped: `val _ = …`, a statement, the last expression of a dropped block, a branch of a dropped if/match/try, a `finally`, a loop's body, the body of a def declared `: Unit`, a by-name or function argument run for its effect (`foreach`, a Unit by-name, a Runnable), or the block a dropped call hands back (`write { … }`). The caller decides on the answer (a conflict, a typed problem, a log line), never silence",
     "acceptedOutcome" -> "main code only (G94): a write's answer dropped with its reason, `Unused(answer, Unused.Why.<Idempotent|Held|Reported|ReadBack>)` (util/database/Unused.scala); the detail names the reason and the write. A ratchet: each new site is a reviewed reason",
+    "unnamedBoolean" -> "owner 2026-11-19, decision 6: an argument passed by position to a Boolean parameter of one of our methods or constructors (a project or local symbol; any expression, not only a literal: `f(true)`, `f(isOpen)`, `new X(a && b)`, an extension method's argument, a `using` clause written out, each element of a `Boolean*`). Passed by name (`f(open = isOpen)`) it is none; so are operators (`&&`, `==`) and the methods of libraries, whose parameters we cannot name or turn into an enum. The detail names the callee, the parameter and whether the argument is a literal or a value. A Boolean that means a state becomes an enum (docs/adr/0027)",
+    "booleanParam" -> "owner 2026-11-19, decision 6: a parameter declared Boolean: a field of a class, case class or enum case, or a parameter of a def that is neither private, local nor an override (an override's type is its parent's). `field:Type.name` or `param:Owner.method(name)`. Each is a state the model names with a Boolean instead of an enum (docs/adr/0027)",
     "G58raw" -> "raw SQL text:a call of an Sql operator that takes a String or an Sql.Text (Sql.raw, Sql.of, the constructor, `++ \"...\"`, wrap), or an Sql.Text built (also through an alias such as RawText/OfText), or Magnum's SqlLiteral(...)")
   val ironValue = "io/github/iltotore/iron/"
   val newtypeBase = "com/histmersion/Newtype#"
@@ -197,7 +200,7 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     var patches = List.empty[Patch]
     def report(rule: String, t: Tree, detail: String): Unit = {
       findings.add(Finding(rule, mod, path, t.pos.startLine + 1, detail))
-      if (policy.emitLints) patches ::= Patch.lint(Diagnostic(rule, detail, t.pos, severity = scalafix.lint.LintSeverity.Warning))
+      if (policy.emitLints && !policy.reportOnly.contains(rule)) patches ::= Patch.lint(Diagnostic(rule, detail, t.pos, severity = scalafix.lint.LintSeverity.Warning))
     }
     def where(t: Tree): String = path + ":" + (t.pos.startLine + 1)
 
@@ -1082,6 +1085,87 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
             case Unknown => note("interpolation-arg-type-unresolved", where(arg))
             case _ =>
           }
+        }
+    }
+
+    def isBooleanType(t: s.Type): Boolean = typeSymbol(dealias(t)).value == "scala/Boolean#"
+    def ours(sym: Symbol): Boolean = !sym.isNone && (sym.value.startsWith(policy.projectPrefix) || sym.isLocal)
+    def implicitParam(p: String): Boolean = infoS(p).exists(i =>
+      (i.properties & (s.SymbolInformation.Property.IMPLICIT.value | s.SymbolInformation.Property.GIVEN.value)) != 0)
+    def paramLists(sym: Symbol): Option[List[List[String]]] = info(sym).map(_.signature).collect {
+      case m: s.MethodSignature => m.parameterLists.toList.map(_.symlinks.toList)
+    }
+    def constructorOf(obj: Symbol): Symbol = {
+      val apply = Symbol(obj.value + "apply().")
+      if (paramLists(apply).nonEmpty) apply else Symbol(obj.value.stripSuffix(".") + "#`<init>`().")
+    }
+    def booleanCallee(fun: Term): Option[(Symbol, Boolean)] = fun match {
+      case n: Term.Name if hasKind(n.symbol, Set(s.SymbolInformation.Kind.OBJECT)) => Some(constructorOf(n.symbol) -> false)
+      case n: Term.Name => Some(n.symbol -> false)
+      case Term.Select(_, n) if hasKind(n.symbol, Set(s.SymbolInformation.Kind.OBJECT)) => Some(constructorOf(n.symbol) -> false)
+      case Term.Select(q, n) =>
+        val viaObject = q match {
+          case qn: Term.Name => hasKind(qn.symbol, objectKinds)
+          case qs: Term.Select => hasKind(qs.name.symbol, objectKinds)
+          case _ => false
+        }
+        Some(n.symbol -> (!viaObject && n.symbol.owner.value.endsWith(".")))
+      case Term.ApplyType(f, _) => booleanCallee(f)
+      case _ => None
+    }
+    def isOperator(sym: Symbol): Boolean = !sym.displayName.exists(_.isLetter) && sym.displayName != "<init>"
+    def unnamedBooleans(sym: Symbol, extension: Boolean, clauses: List[Term.ArgClause]): Unit =
+      if (ours(sym) && !isOperator(sym)) paramLists(sym).foreach { lists =>
+        val (contextual, explicit) = lists.partition(l => l.nonEmpty && l.forall(implicitParam))
+        val explicitLists = if (extension) explicit.drop(1) else explicit
+        val usingClause = clauses.map(_.mod.exists(_.is[Mod.Using]))
+        clauses.zipWithIndex.foreach { case (clause, k) =>
+          val nth = usingClause.take(k).count(_ == usingClause(k))
+          (if (usingClause(k)) contextual.lift(nth) else explicitLists.lift(nth)).foreach { params =>
+            clause.values.zipWithIndex.foreach {
+              case (_: Term.Assign, _) =>
+              case (arg, i) =>
+                val param = if (i < params.size) params.lift(i) else params.lastOption.filter(p =>
+                  infoS(p).map(_.signature).exists { case v: s.ValueSignature => v.tpe.isInstanceOf[s.RepeatedType]; case _ => false })
+                param.filter(p => infoS(p).map(_.signature).exists { case v: s.ValueSignature => isBooleanType(v.tpe); case _ => false }).foreach { p =>
+                  val shape = if (arg.is[Lit.Boolean]) "literal" else "value"
+                  val callee = if (sym.displayName == "<init>") "new " + sym.owner.displayName else sym.owner.displayName + "." + sym.displayName
+                  report("unnamedBoolean", arg, s"$callee(${Symbol(p).displayName});$shape")
+                }
+            }
+          }
+        }
+      }
+    def argChain(a: Term.Apply): (Term, List[Term.ArgClause]) = a.fun match {
+      case inner: Term.Apply => val (f, cs) = argChain(inner); (f, cs :+ a.argClause)
+      case f => (f, List(a.argClause))
+    }
+    doc.tree.traverse {
+      case a: Term.Apply if !inImport(a) && !a.parent.exists { case p: Term.Apply => p.fun eq a; case _ => false } =>
+        val (fun, clauses) = argChain(a)
+        booleanCallee(fun).foreach { case (sym, extension) => unnamedBooleans(sym, extension, clauses) }
+      case i: Init if i.argClauses.nonEmpty =>
+        val named = List(i.symbol, i.tpe.symbol).filterNot(_.isNone).map(c => if (c.value.endsWith("#")) Symbol(c.value + "`<init>`().") else c)
+        named.find(c => paramLists(c).nonEmpty).foreach(unnamedBooleans(_, extension = false, i.argClauses.toList))
+    }
+    def local(t: Tree): Boolean = ancestors(t).exists(a => a.is[Defn.Def] || a.is[Defn.Val] || a.is[Defn.Var] || a.is[Term])
+    def plainPrivate(mods: List[Mod]): Boolean = mods.exists {
+      case Mod.Private(w) => w.is[Name.Anonymous] || w.is[Term.This]
+      case _ => false
+    }
+    def booleanDeclared(p: Term.Param): Boolean =
+      resultOf(p.name.symbol).map(isBooleanType).getOrElse(p.decltpe.exists(t => Set("Boolean", "scala.Boolean")(t.syntax.stripSuffix("*").trim)))
+    doc.tree.traverse {
+      case d: Defn.Def if !local(d) && !plainPrivate(d.mods) && !d.mods.exists(_.is[Mod.Override]) =>
+        val owner = enclosingTemplates(d).headOption.fold("")(_.displayName + ".")
+        d.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values).filter(booleanDeclared).foreach { p =>
+          report("booleanParam", p, s"param:$owner${d.name.value}(${p.name.value})")
+        }
+      case c: Defn.Class if !local(c) => c.ctor.paramClauses.flatMap(_.values).filter(booleanDeclared).foreach { p =>
+          report("booleanParam", p, s"field:${c.name.value}.${p.name.value}")
+        }
+      case e: Defn.EnumCase if !local(e) => e.ctor.paramClauses.flatMap(_.values).filter(booleanDeclared).foreach { p =>
+          report("booleanParam", p, s"field:${enclosingTemplates(e).headOption.fold("")(_.displayName + ".")}${e.name.value}.${p.name.value}")
         }
     }
 

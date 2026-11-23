@@ -160,3 +160,25 @@ discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	14
 discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	16	Writes.touched:Boolean
 discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	18	Writes.found:Option
 discardedOutcome	db	modules/db/src/main/scala/com/histmersion/db/Writes.scala	20	Writes.touched:Boolean
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	7	field:Lamp.lit
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	9	field:Panel.shown
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	10	param:Panel.toggle(on)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	11	param:Panel.hide(on)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	12	param:Panel.all(flags)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	14	param:Panel.shared(on)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	15	param:Panel.passedOn(on)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	21	field:Light.On.dim
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	30	param:Switches.lit(on)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	31	param:Switches.configure(dryRun)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	31	param:Switches.configure(verbose)
+booleanParam	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	32	param:Switches.counted(strict)
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	16	Panel.kept(on);value
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	34	Lamp.apply(lit);literal
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	36	new Panel(shown);literal
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	38	Panel.toggle(on);value
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	40	Switches.lit(on);literal
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	42	Switches.configure(dryRun);value
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	44	Switches.counted(strict);literal
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	45	On.apply(dim);value
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	47	Panel.all(flags);literal
+unnamedBoolean	core	modules/core/src/main/scala/com/histmersion/domain/Switches.scala	47	Panel.all(flags);value
