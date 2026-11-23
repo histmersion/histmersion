@@ -52,6 +52,11 @@ glyph bitmaps in 1–3 ms and keeps all of it in the app's hands.
   the markers wanted and the moves' start and end points are decided in the zoom's frame, so the counts, the handle
   and the animation are those of one regroup; the markers are then made a slice at a time (6 ms each), markers on
   screen first. The first slice has only what the layout left of its 6 ms (it always makes at least one marker). The
+  markers on screen are made in tasks posted one after another (a `MessageChannel` message, which no timer clamp
+  delays), not one slice a frame: at a slice a frame the moves started 6–11 frames after the zoom's end at 3× CPU
+  (137 markers), and on CI's runner, which paints about 8 frames a second however idle the page is, that was past
+  the half second the browser regression waits; each task is one slice, so none is a long task and a frame waits at
+  most one slice. The markers in the margin, made after the moves started, stay one slice a frame. The
   moves start in a slice of their own, once the markers on screen are made, and a layout queued meanwhile (the zoom's
   points reloaded) waits a frame after the moves started: each had been ~10–25 ms at 3× CPU, and together with the
   slices and the tiles' read they made the 50–60 ms frames. A layout that must see its marker at once (zooming to
