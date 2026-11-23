@@ -54,6 +54,15 @@ final class PointSet[D](
   // the view of a zoom whose markers on screen are being made, its moves not started yet
   private var awaitingMoves: Option[(LatLon, MapSurface.Zoom)] = None
   private var movesFrame = false
+  private val unclampedTasks = mutable.Queue.empty[() => Unit]
+  private lazy val unclampedTaskChannel =
+    val ch = new dom.MessageChannel()
+    ch.port1.onmessage = _ => if unclampedTasks.nonEmpty then unclampedTasks.dequeue()()
+    ch
+
+  private def inNextTask(f: () => Unit): Unit =
+    unclampedTasks.enqueue(f)
+    unclampedTaskChannel.port2.postMessage(null)
 
   /** How many zooms have animated (the browser regressions read it through the diagnostics). */
   var animations: PointSet.Animations = PointSet.Animations(0)
@@ -327,8 +336,8 @@ final class PointSet[D](
     val fresh = mutable.ListBuffer.empty[(DomMarker, Seq[PointSet.Key])]
     // what comes: a slice at a time, nearest the view's centre first (a zoom over the events layer's thousands
     // made a few hundred markers in one long task). A zoom that animates makes the markers on screen first,
-    // hidden, and starts every move once they are all made, a few frames later (making them all in the zoom's
-    // last frame held that frame long in a wide window); those in the margin around the view follow
+    // hidden, in tasks one after another between the frames, and starts every move once they are all made, in a
+    // task of its own (ADR 0025); those in the margin around the view follow, a slice a frame
     val fadeIn = before.isEmpty && singles.nonEmpty
     type Drawn = Either[PointSet.Key, Clustering.GroupLabel]
     type Todo = (Drawn, Vector[PointSet.Key])
@@ -401,7 +410,8 @@ final class PointSet[D](
           make(queue.dequeue())
           count += 1
           if !started then firstLeft -= 1
-        if queue.nonEmpty || !started then
+        if !started then inNextTask(() => slice(dom.window.performance.now()))
+        else if queue.nonEmpty then
           val _ = dom.window.requestAnimationFrame(_ => slice(dom.window.performance.now()))
       else if !started then
         // a newer drawing took over before the moves started: what was leaving goes, what was made shows
