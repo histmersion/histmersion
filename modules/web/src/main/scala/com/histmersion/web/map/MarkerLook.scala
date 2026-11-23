@@ -11,7 +11,7 @@ final class MarkerLook(ops: List[MarkerPaint], val w: Double, val h: Double):
     val c = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
     c.width = math.ceil((w + 2 * pad) * dpr).toInt
     c.height = math.ceil((h + 2 * pad) * dpr).toInt
-    val g = c.getContext("2d").asInstanceOf[dom.CanvasRenderingContext2D]
+    val g = c.getContext("2d", js.Dynamic.literal(willReadFrequently = true)).asInstanceOf[dom.CanvasRenderingContext2D]
     g.setTransform(dpr, 0, 0, dpr, 0, 0)
     g.translate(w / 2 + pad, h / 2 + pad)
     g.asInstanceOf[js.Dynamic].hdColours = colours
