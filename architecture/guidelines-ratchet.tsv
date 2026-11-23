@@ -43,7 +43,7 @@ G22comment	repo/docs	main	17
 G22comment	repo/project	main	67
 G22comment	repo/spike	main	121
 G22comment	repo/tools	main	1077
-G22comment	server	main	4410
+G22comment	server	main	4407
 G22comment	server	test	2239
 G22comment	upstreams	main	151
 G22comment	upstreams	test	19
@@ -280,7 +280,7 @@ booleanParam	plugin-host	main	1
 booleanParam	plugin-testkit	main	1
 booleanParam	plugins/calibre	test	3
 booleanParam	plugins/media	main	1
-booleanParam	server	main	78
+booleanParam	server	main	77
 booleanParam	server	test	13
 booleanParam	web	main	67
 booleanParam	web	test	1
@@ -328,7 +328,7 @@ unnamedBoolean	plugin-testkit	main	5
 unnamedBoolean	plugins/calibre	test	1
 unnamedBoolean	plugins/fetchers	main	1
 unnamedBoolean	plugins/media	main	1
-unnamedBoolean	server	main	114
-unnamedBoolean	server	test	33
+unnamedBoolean	server	main	113
+unnamedBoolean	server	test	31
 unnamedBoolean	web	main	107
 unnamedBoolean	web	test	46
