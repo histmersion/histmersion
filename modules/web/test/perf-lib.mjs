@@ -47,9 +47,9 @@ export function probe() {
   const matches = (el, r) => (r.includes == null || el.textContent.includes(r.includes)) &&
     (r.lacks == null || !el.textContent.includes(r.lacks)) && (r.equals == null || el.textContent === r.equals) &&
     (r.has == null || !!el.querySelector(r.has)) && (r.hidden == null || el.hidden === r.hidden);
-  P.armUpdate = (selector, ready) => new Promise((resolve, reject) => {
+  const update = (selector, ready) => new Promise((resolve, reject) => {
     let inputTs = null;
-    const types = ['pointerdown', 'pointermove', 'pointerover', 'click', 'keydown', 'input', 'wheel'];
+    const types = ['pointerdown', 'pointermove', 'pointerover', 'pointerup', 'click', 'keydown', 'input', 'wheel'];
     const onInput = e => { if (inputTs === null) inputTs = e.timeStamp; };
     types.forEach(t => window.addEventListener(t, onInput, { capture: true, passive: true }));
     const stop = () => {
@@ -69,6 +69,7 @@ export function probe() {
     const obs = new MutationObserver(records => { try { check(records); } catch (e) { stop(); reject(e); } });
     obs.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
   });
+  P.armUpdate = (selector, ready) => { P.update = update(selector, ready); return true; };
 }
 
 /** A page with the probe and the map handle the browser regressions use; third-party requests (tiles)
@@ -180,12 +181,12 @@ export async function measure(page, gesture) {
 }
 
 /** From the next input to the first painted change under `selector` (that satisfies `ready`: its text
-  * `includes`, `lacks` or `equals` a string, it `has` a descendant, its `hidden` is as given): arm, run `trigger`,
-  * await. */
+  * `includes`, `lacks` or `equals` a string, it `has` a descendant, its `hidden` is as given): arm, and only once
+  * the page holds the probe run `trigger` (the input outranks a script in the page's queue), await. */
 export async function inputToUpdate(page, selector, trigger, ready = null, timeout = 15000) {
-  const done = page.evaluate(([s, r]) => window.__perf.armUpdate(s, r), [selector, ready]);
-  await page.waitForTimeout(0);
+  await page.evaluate(([s, r]) => window.__perf.armUpdate(s, r), [selector, ready]);
   await trigger();
+  const done = page.evaluate(() => window.__perf.update);
   const ms = await Promise.race([done, new Promise((_, rej) => setTimeout(() => rej(new Error(`no update of ${selector}`)), timeout))]);
   return r1(ms);
 }
