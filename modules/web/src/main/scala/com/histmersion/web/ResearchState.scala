@@ -11,7 +11,7 @@ import com.raquo.laminar.api.L.*
 import hearth.kindlings.optics.syntax.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 final class ResearchState:
   import ResearchState.*
@@ -258,7 +258,7 @@ object ResearchState:
   def acquisitions(s: OpenWork.State): Vector[OpenItem.Acquisition] =
     s.items.collect { case a: OpenItem.Acquisition => a }
 
-  def handedTo(t: OpenItem.Task): Provenance.Actor =
-    if t.actor == Who.Owner then Provenance.Agents else Provenance.Person
+  def handedTo(t: OpenItem.Task): Creation.Actor =
+    if t.actor == Who.Owner then Creation.Agents else Creation.Person
 
   def firstLine(text: Queue.QueueItem.Text): String = s"$text".linesIterator.nextOption().getOrElse("")

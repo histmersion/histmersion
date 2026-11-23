@@ -28,7 +28,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.server.views.WorkListView
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.server.agents.EngineContributions
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
@@ -246,7 +246,7 @@ object OpsTools:
       all: Boolean = false,
       dryRun: Boolean = false,
       limit: Option[Int] = None,
-      createdBy: Option[Provenance.By] = None
+      createdBy: Option[Creation.By] = None
   ) derives JsonCodec
   object QueueInput:
     given Schema[QueueInput] = KindlingsSchema

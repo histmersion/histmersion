@@ -43,7 +43,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.automation.approvals.ProposalEvidence
-import com.histmersion.domain.automation.worklists.StoredCreator
+import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*

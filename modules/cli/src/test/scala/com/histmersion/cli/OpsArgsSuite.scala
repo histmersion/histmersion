@@ -7,7 +7,7 @@ import com.histmersion.cli.Ops.QueueCmd
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** `histmersion queue …`: each list and each verb is a subcommand (`queue acquire add "…"`, `queue done 3`, `queue
   * acquire recheck`), parsed into [[QueueCmd]].
@@ -67,25 +67,25 @@ class OpsArgsSuite extends munit.FunSuite:
         assertEquals(
           by.createdBy,
           Some(
-            Provenance.By(
-              Some(Provenance.Plugin("research-workspace")),
-              Some(Provenance.Workflow("review-article")),
-              Some(Provenance.Definition("article-skeptic")),
-              Some(Provenance.Provider("anthropic")),
-              Some(Provenance.Model("claude-opus-5-5"))
+            Creation.By(
+              Some(Creation.Plugin("research-workspace")),
+              Some(Creation.Workflow("review-article")),
+              Some(Creation.Definition("article-skeptic")),
+              Some(Creation.Provider("anthropic")),
+              Some(Creation.Model("claude-opus-5-5"))
             )
           )
         )
       case other => fail(s"${other.toString}")
     parse("tasks", "add", "enrich x", "--by-plugin", "p") match
       case Right(QueueCmd.Add(_, _, _, _, by, _)) =>
-        assertEquals(by, AgentIdentity(plugin = Some(Provenance.Plugin("p"))))
+        assertEquals(by, AgentIdentity(plugin = Some(Creation.Plugin("p"))))
       case other => fail(s"${other.toString}")
 
   test("`queue patch <id> --actor` hands an item to the agents or takes it back"):
     assertEquals(
       parse("patch", "7", "--actor", "agents"),
-      Right(QueueCmd.Patch(Queue.Id(7), Some(Provenance.Actor("agents")), json))
+      Right(QueueCmd.Patch(Queue.Id(7), Some(Creation.Actor("agents")), json))
     )
 
   test("`add` without text is a usage error, not an empty item"):

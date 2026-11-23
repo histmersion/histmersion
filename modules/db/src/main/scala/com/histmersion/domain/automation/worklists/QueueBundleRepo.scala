@@ -11,7 +11,7 @@ import com.augustnagro.magnum.*
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.Queue
-import com.histmersion.util.database.Timestamps
+import com.histmersion.util.database.{StoredCreator, Timestamps}
 import com.histmersion.domain.Creator
 
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
@@ -44,7 +44,7 @@ private[worklists] object QueueBundleRepo:
 
   def queueItemsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    val unrecorded = StoredCreator.write(Creator.Unknown(Creator.Facts.Unrecorded(None)))
+    val unrecorded = StoredCreator.write(Creator.unrecorded)
     w.es.queue.filter(q => w.writes(q.uid)).foreach { q =>
       sql"""INSERT INTO queue_items (uid, origin, list, text, topic, status, reason, created_at, done_at, updated_at,
                                      creator, actor)

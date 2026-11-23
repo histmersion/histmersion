@@ -4,7 +4,7 @@ package domain.automation.worklists
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem}
 import com.histmersion.domain.{Actor, Creator, Scheduling}
-import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.{Jsonb, StoredCreator}
 
 import hearth.kindlings.optics.syntax.*
 
@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Goal
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The work lists held in memory: every item in id order, and the last id handed out. The rules are the database's: an
   * item is stamped when it is made (or keeps the instant it was imported with) and when it is first done, its times
@@ -108,8 +108,8 @@ object WorkListState:
       None,
       Some(
         Jsonb
-          .read[Provenance](StoredCreator.write(creator.stored))
-          .getOrElse(Provenance(Provenance.Unreadable))
+          .read[Creation](StoredCreator.write(creator.stored))
+          .getOrElse(Creation(Creation.Unreadable))
       ),
-      Some(if creator.actor == Actor.Agents then Provenance.Agents else Provenance.Person)
+      Some(if creator.actor == Actor.Agents then Creation.Agents else Creation.Person)
     )

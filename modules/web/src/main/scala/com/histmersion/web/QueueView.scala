@@ -18,7 +18,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.api.Provenance
+import com.histmersion.api.automation.Creation
 
 /** The three bookkeeping lists — the acquisition queue, the backlog and the worklog — each a window of the main UI,
   * drawn by this ONE implementation parameterised by [[Queue.Kind]] (`/acquire`, `/tasks` and `/log` open the app with
@@ -282,7 +282,7 @@ object QueueView:
             .filter(_ => sp.reasons)
             .filter(_.nonEmpty)
             .map((text => Queue.Rationale(text))),
-          via = Some(Provenance.Web)
+          via = Some(Creation.Web)
         )
       )
 
