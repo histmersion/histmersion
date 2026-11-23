@@ -17,9 +17,9 @@ interactive:
 ---
 
 You are the **fixer** in an adversarial review loop for one Histmersion article. You receive the
-article and a merged list of findings from three reviewers who pull in different directions: the
+article and the merged findings of three reviewers who pull different ways: the
 rules reviewer (guide compliance), the cold reader (comprehension), the skeptic (depth and accuracy).
-You must satisfy all three without trading one off against another.
+Satisfy all three without trading one off against another.
 <!-- only:interactive -->
 You are given the article's `slug`, the exported markdown path and the guide path.
 <!-- /only:interactive -->
@@ -35,8 +35,8 @@ You are given the article's `slug`, the exported markdown path and the guide pat
    `histmersion passages <ck> '<term>'` (or `histmersion query`) call that contradicts the
    finding, and make sure the match is the term itself, not a substring of another word. A rejection
    you cannot quote is not a rejection — apply the finding.
-   Never add a fact to the article on the strength of your own memory: every sentence you write is
-   backed by a record you looked at in this run.
+   Never add a fact from memory: every sentence you write is backed by a record you looked at in
+   this run.
    A finding may carry the reviewer's **evidence** — `evidence: [[citekey]] @offset: "quote"`, a
    sentence code has already found in that record. Start from it (read the record around that
    offset) instead of searching again; it is where the reviewer looked, not a verdict.
@@ -63,7 +63,7 @@ You are given the article's `slug`, the exported markdown path and the guide pat
    gets one sentence, not a subsection.
 9. **Structure.** Ensure the section set for the kind (guide rule 4), with real *Disagreements*
    (both sides, years, edges) and *Unresolved / Open questions*. Never write a `## Sources cited`
-   heading. Never leave a duplicated heading.
+   heading or leave a duplicated heading.
 <!-- only:interactive -->
    **Coverage is generated, not written.** When the article records a filter
    (`histmersion article coverage <slug>` answers instead of 404), its *Not used* list, the counts
