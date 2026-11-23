@@ -370,16 +370,31 @@ class LabelPlacementSuite extends munit.FunSuite:
     val under = (0 until 10).map(i => Box(s"s$i", 0.0 + i * 30, 130, 20, 10, rank = 1))
     assertEquals(cull(wide +: under, cell = 64), Set("wide"))
 
-  test("cull of 400 labels stays well under a frame"):
-    val rnd = scala.util.Random(7)
-    val boxes = (0 until 400).map(i =>
-      Box(s"k$i", rnd.nextDouble() * 1600, rnd.nextDouble() * 900, 40 + rnd.nextDouble() * 120, 14, rnd.nextDouble())
-    )
-    val t0 = System.nanoTime()
-    val kept = cull(boxes)
-    val ms = (System.nanoTime() - t0) / 1e6
+  test(
+    "cull of 400 labels stays well under a frame: a few thousand box tests, growing with the labels, not their square"
+  ):
+    def counted(n: Int, side: Double, cell: Double = 128.0): (Set[String], Int) =
+      val rnd = scala.util.Random(7)
+      val boxes = (0 until n).map(i =>
+        Box(
+          s"k$i",
+          rnd.nextDouble() * 1600 * side,
+          rnd.nextDouble() * 900 * side,
+          40 + rnd.nextDouble() * 120,
+          14,
+          rnd.nextDouble()
+        )
+      )
+      var tests = 0
+      val kept = cull(boxes, cell, tested = () => tests += 1)
+      (kept, tests)
+    val (kept, tests) = counted(400, 1)
     assert(kept.nonEmpty && kept.size < 400)
-    assert(ms < 50, s"cull took $ms ms")
+    val (_, wider) = counted(1600, 2)
+    val (same, oneCell) = counted(400, 1, cell = 1e9)
+    assert(tests < 3000 && wider < 5 * tests, s"400 labels: $tests box tests; 1600 at the same density: $wider")
+    assertEquals(same, kept)
+    assert(oneCell > 3000 && oneCell > 10 * tests, s"without the grid (one cell): $oneCell box tests against $tests")
 
   test("placing a 20 000-point outline stays bounded (thinned, probe-capped)"):
     val n = 20000
