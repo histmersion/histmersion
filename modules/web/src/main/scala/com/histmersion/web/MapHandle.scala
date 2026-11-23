@@ -29,10 +29,6 @@ object MapHandle:
 
   private val faceSelector = ".hd-ev, .hd-find, .hd-site-marker, .hd-cluster, .hd-point, .hd-note"
 
-  /** A pane's markers as drawn, each with whether it is leaving. A marker made for a zoom's moves before they start
-    * ([[ClusterMotion.Pending]]) is left out: it is not drawn yet (the canvas skips it, the stylesheet hides it), and
-    * it stands at its end, so the frames before the moves read it as drawn there before it slid.
-    */
   private def shown(pane: MarkerPane): List[(DomMarker, Boolean)] =
     (pane.live.map(_ -> false) ++ pane.leaving.map(_ -> true))
       .filterNot(_._1.el.classList.contains(ClusterMotion.Pending))
