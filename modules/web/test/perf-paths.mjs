@@ -351,7 +351,9 @@ export async function playback(page, baseURL, from, to, seconds = 4) {
 // ── map motion (#4718) ──────────────────────────────────────────────────────────────────────────────
 
 /** The full load (perf-fixtures `fullLoad`, routed by the caller) with every layer on over its period, the
-  * reader's "Map motion" `motion` kept on this device (`null`: never chosen), the view at `at`, zoom `from`. */
+  * reader's "Map motion" `motion` kept on this device (`null`: never chosen), the view at `at`, zoom `from`; answered
+  * once the map has made every marker of the view (`markersSettled`: the cluster layer makes them a slice a frame, a
+  * few hundred over many frames where frames are slow). */
 export async function fullLoadView(page, baseURL, { motion = null, at = [40, 24], from = 5, hash = '#from=-1600&to=-1100',
   layers = '["boundaries","sites","media","events"]' } = {}) {
   await page.goto(new URL('/', baseURL).href);
@@ -365,7 +367,7 @@ export async function fullLoadView(page, baseURL, { motion = null, at = [40, 24]
   await ready(page);
   await page.evaluate(([c, z]) => window.__testMap.setView(c, z, { animate: false }), [at, from]);
   await settled(page);
-  await page.waitForTimeout(300);
+  await valueOf(page, () => window.__testMap.markersSettled());
   return page.evaluate(() => ({ held: window.__testMap.points(),
     drawn: window.__testMap.markersIn(['markers', 'events', 'sites']) }));
 }

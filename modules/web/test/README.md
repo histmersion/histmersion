@@ -72,7 +72,10 @@ centre (`x`/`y` in the map, `clientX`/`clientY` for the pointer), box, stacking,
 `hd-cluster`, `hd-ev--approximate`, `hd-cluster-ghost`, …), id, citekey, accessible name, data, bubble count,
 fill, edge, opacity, and with `detail: true` its drawn shape (outline, glyph, a bubble's rings and count);
 `markerAt([x, y])` is the marker the pointer meets there, `spots(panes)` the markers' centres frame by frame,
-`markersIn(panes)` how many are drawn, `spiderLegs()` the legs of a fanned-out bubble. A spec picks markers by
+`markersIn(panes)` how many are drawn, `markersSettled()` whether every marker of the view is made (the map still,
+its tiles in and read, no layout queued: the cluster layer makes its markers a slice a frame, so on slow frames a
+few hundred take many frames; wait on it before counting or listing the markers), `spiderLegs()` the legs of a
+fanned-out bubble. A spec picks markers by
 `flag` and `not` (a name or a list), `id`, `ck`, `pane`, `ghost`, `offscreen` and `data`; `markers.mjs` holds
 the helpers that wait for, hover and click them with the real pointer.
 `test:browser` runs the three files one at a time (`--test-concurrency=1`): side by side they wrote the same

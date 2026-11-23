@@ -60,6 +60,7 @@ final class TiledPoints[A](
     tiles
 
   def isAttached: Boolean = on
+  def notifying: Boolean = on && tiles.exists(_.notifying)
 
   def attach(): Unit =
     if !on then

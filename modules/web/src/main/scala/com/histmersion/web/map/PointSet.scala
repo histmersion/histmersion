@@ -42,8 +42,9 @@ final class PointSet[D](
   private var groupOf: collection.Map[PointSet.Key, Int] = Map.empty
   private var level: Clustering.ZoomLevel = Clustering.ZoomLevel(Int.MinValue)
   private var queued = false
-  // the newest drawing: an older one's slices still queued stop
+  // the newest drawing: an older one's slices still queued stop; whether its slices still have markers to make
   private var drawGeneration = 0
+  private var slicing = false
 
   /** How long one slice of marker making may take before the page gets a frame. */
   private val SliceMs = 6.0
@@ -64,8 +65,12 @@ final class PointSet[D](
     unclampedTasks.enqueue(f)
     unclampedTaskChannel.port2.postMessage(null)
 
-  /** How many zooms have animated (the browser regressions read it through the diagnostics). */
+  /** How many zooms have animated (the browser regressions read it through the diagnostics); and whether markers are
+    * still to be made or laid out — a layout queued for the next frame, a drawing's slices to come, a zoom's moves
+    * waiting for its markers — which the browser regressions wait out before they count what is drawn.
+    */
   var animations: PointSet.Animations = PointSet.Animations(0)
+  def busy: Boolean = queued || slicing || awaitingMoves.isDefined
 
   def size: PointSet.PointCount = PointSet.PointCount(items.size)
   def keys: Iterable[PointSet.Key] = items.keys
@@ -410,6 +415,7 @@ final class PointSet[D](
           make(queue.dequeue())
           count += 1
           if !started then firstLeft -= 1
+        slicing = !started || queue.nonEmpty
         if !started then inNextTask(() => slice(dom.window.performance.now()))
         else if queue.nonEmpty then
           val _ = dom.window.requestAnimationFrame(_ => slice(dom.window.performance.now()))

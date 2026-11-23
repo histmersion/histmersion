@@ -21,8 +21,11 @@ trait PointTiles:
     */
   def features: Seq[TilePointFeature]
 
-  /** `f` whenever the features may have changed: the tiles of a view, or of a new template, are in. */
+  /** `f` whenever the features may have changed: the tiles of a view, or of a new template, are in; `notifying` while
+    * such a change is queued and its listeners not called yet.
+    */
   def onChange(f: () => Unit): Subscription
+  def notifying: Boolean
 
   /** Every tile of the view at the current template is in. */
   def loaded: Boolean
