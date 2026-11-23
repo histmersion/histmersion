@@ -1,14 +1,14 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { changedMeasurement } from './budget-figures.mjs';
+import { busyJobs, changedMeasurement, compareRuns } from './budget-figures.mjs';
 
 const opt = name => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined; };
 const baseUrl = opt('--base-url'), prUrl = opt('--pr-url'), out = resolve(opt('--out') ?? 'target/budgets-ab');
-const rounds = Number(opt('--rounds') ?? 3);
+const rounds = Number(opt('--rounds') ?? 3), confirm = Number(opt('--confirm') ?? 2);
 const prWeb = resolve('.'), baseWeb = resolve(opt('--base-web') ?? '.');
 if (!baseUrl || !prUrl || !(rounds >= 2)) {
-  console.error('usage: node test/budgets-ab.mjs --base-url <url> --pr-url <url> [--base-web <the merge base\'s modules/web>] [--rounds 3] [--out dir]');
+  console.error('usage: node test/budgets-ab.mjs --base-url <url> --pr-url <url> [--base-web <the merge base\'s modules/web>] [--rounds 3] [--confirm 2] [--idle-timeout 900] [--out dir]');
   process.exit(64);
 }
 mkdirSync(out, { recursive: true });
@@ -18,6 +18,20 @@ const changed = baseWeb === prWeb ? []
   : changedMeasurement(reader(baseWeb), reader(prWeb), 'perf.test.mjs').filter(f => f !== 'budget-figures.mjs');
 console.log(baseWeb === prWeb ? '# both sides run this change\'s test code'
   : `# each side runs its own test code (the merge base's: ${baseWeb}); the measuring code ${changed.length ? `differs: ${changed.join(', ')}` : 'is the same'}`);
+
+const busy = async url => {
+  const r = await fetch(new URL('/api/jobs', url)).catch(() => null);
+  return busyJobs(r?.ok ? await r.json() : [{ kind: `${url} unreachable`, status: 'running' }]);
+};
+const idleSince = Date.now(), idleWait = Number(opt('--idle-timeout') ?? 900) * 1000;
+for (let waiting = [...await busy(baseUrl), ...await busy(prUrl)]; waiting.length; waiting = [...await busy(baseUrl), ...await busy(prUrl)]) {
+  if (Date.now() - idleSince > idleWait) {
+    console.log(`::error::the servers are still busy after ${idleWait / 1000} s (${waiting.join(', ')}): nothing measured`);
+    process.exit(1);
+  }
+  await new Promise(r => setTimeout(r, 2000));
+}
+console.log(`# both servers idle (no job running or queued) after ${Math.round((Date.now() - idleSince) / 1000)} s: the runs measure the app, not a start-up import`);
 
 function run(side, url, round) {
   const web = side === 'base' ? baseWeb : prWeb;
@@ -38,9 +52,16 @@ function run(side, url, round) {
 }
 
 const runs = [];
-for (let i = 1; i <= rounds; i++) {
+const round = i => {
   const order = i % 2 ? [['base', baseUrl], ['pr', prUrl]] : [['pr', prUrl], ['base', baseUrl]];
   for (const [side, url] of order) runs.push(run(side, url, i));
+};
+for (let i = 1; i <= rounds; i++) round(i);
+const figuresOf = side => runs.filter(r => r.side === side && r.recorded).map(r => JSON.parse(readFileSync(r.figures, 'utf8')));
+const past = changed.length ? [] : compareRuns(figuresOf('base'), figuresOf('pr')).filter(r => r.regression).map(r => r.key);
+if (past.length && confirm > 0) {
+  console.log(`# past the noise after ${rounds} rounds: ${past.join(', ')}; ${confirm} more round(s) of each side decide (a chance separation of ${rounds} runs rarely survives ${rounds + confirm})`);
+  for (let i = rounds + 1; i <= rounds + confirm; i++) round(i);
 }
 const bad = runs.filter(r => r.tests === 0 || r.skipped > 0 || r.failed > 0 || !r.recorded);
 for (const r of bad) {
