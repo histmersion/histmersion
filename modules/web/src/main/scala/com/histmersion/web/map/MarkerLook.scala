@@ -105,6 +105,10 @@ object MarkerLook:
       ""
     )
 
+  private val Text = ">[^<]+<".r
+
+  def shapeKey(templateKey: String): String = Text.replaceAllIn(templateKey, "><")
+
   def colours(el: dom.Element): js.Array[String] =
     val all = el.querySelectorAll("[style]")
     val els = (0 until all.length).map(all(_))

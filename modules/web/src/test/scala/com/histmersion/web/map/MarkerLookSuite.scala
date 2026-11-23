@@ -3,6 +3,16 @@ package web.map
 
 class MarkerLookSuite extends munit.FunSuite:
 
+  test("two looks that differ only in their text share a shape (a bubble's count), their markup does not"):
+    val two = """hd-marker|<div class="hd-bubble"><span class="hd-dot-count">2</span></div>"""
+    val many = """hd-marker|<div class="hd-bubble"><span class="hd-dot-count">137</span></div>"""
+    assertEquals(MarkerLook.shapeKey(two), MarkerLook.shapeKey(many))
+    assertNotEquals(
+      MarkerLook.shapeKey(two),
+      MarkerLook.shapeKey("""hd-marker|<div class="hd-ring"><span>2</span></div>""")
+    )
+    assertEquals(MarkerLook.shapeKey("hd-marker|"), "hd-marker|")
+
   test("a list is split at its top-level commas only"):
     assertEquals(
       MarkerLook.splitTop("rgba(0, 0, 0, 0.5) 0px 1px 2px 0px, rgb(1, 2, 3) 0px 0px 0px 2px"),
