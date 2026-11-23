@@ -21,8 +21,12 @@ import com.augustnagro.magnum.Frag
 
 /** The events' links and leads as a db suite writes and reads them: each call on a connection of its own. */
 object EvidenceFixtures:
-  def candidates(ds: DataSource, id: BEventRow.Id, withRejected: Boolean = false): List[EventLinkCandidate] =
-    connect(ds)(EventLinkRepo.candidates(id, withRejected))
+  def candidates(
+      ds: DataSource,
+      id: BEventRow.Id,
+      rejected: RejectedLinks = RejectedLinks.Hidden
+  ): List[EventLinkCandidate] =
+    connect(ds)(EventLinkRepo.candidates(id, rejected))
   def saveCandidates(ds: DataSource, id: BEventRow.Id, cs: List[EventLinkCandidate]): Unit =
     transact(ds)(EventLinkRepo.saveCandidates(id, cs))
   def setStatus(ds: DataSource, id: BEventRow.Id, citekey: Citekey, status: BCandidateRow.Status): Boolean =

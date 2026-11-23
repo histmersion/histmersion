@@ -344,7 +344,7 @@ class EventCatalogRepoSuite extends DbSuite:
     EvidenceFixtures.saveCandidates(ds, BEventRow.Id("zztest_b"), List(c)) // a recompute keeps the rejection
     assertEquals(EvidenceFixtures.candidates(ds, BEventRow.Id("zztest_b")), Nil)
     assertEquals(
-      EvidenceFixtures.candidates(ds, BEventRow.Id("zztest_b"), withRejected = true).map(_.status),
+      EvidenceFixtures.candidates(ds, BEventRow.Id("zztest_b"), RejectedLinks.Listed).map(_.status),
       List("rejected")
     )
 

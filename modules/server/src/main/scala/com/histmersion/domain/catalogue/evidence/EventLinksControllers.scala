@@ -291,7 +291,7 @@ final class EventLinksControllers(
           )
         ) { (_, progress) =>
           val ids = links.eventsToCheck(
-            req.all.value,
+            if req.all.value then EventsToCheck.Every else EventsToCheck.Unchecked,
             req.limit.flatMap(l => PageSize.option(l.value)).getOrElse(PageSize(Int.MaxValue))
           )
           // `var`s: the counts of the walk
