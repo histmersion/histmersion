@@ -9,5 +9,5 @@ final class Branching(why: Problem):
   def numbered: Boolean = why.value.matches("\\d+") // assert: GuidelineInventory
   def offline: Boolean = why.value == "offline" // assert: GuidelineInventory
   def online: Boolean = why.value != "offline" // assert: GuidelineInventory
-  def shown: String = s"failed: $why" // no finding: the Problem is shown, not branched on
+  def shown: String = s"failed: $why" // assert: GuidelineInventory.G44 (a splice unwraps; no G5textBranch: shown, not branched on)
   def sized: Int = why.value.length // assert: GuidelineInventory.G44

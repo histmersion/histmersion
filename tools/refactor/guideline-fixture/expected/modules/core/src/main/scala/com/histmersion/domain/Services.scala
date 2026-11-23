@@ -7,7 +7,7 @@ final case class SourceStatus(value: Int)
 final case class SourceRepo(rows: List[Source])
 
 object Sources:
-  def describe(s: Source): String = s"${s.citekey.value}: ${s.status}" // assert: GuidelineInventory
+  def describe(s: Source): String = s"${s.citekey.value}: ${s.status} ${s.title}" // assert: GuidelineInventory
   def byKey(xs: List[Source], key: Citekey): Option[Source] = xs.find(_.citekey.value == key.value) // assert: GuidelineInventory
   def has(xs: List[Citekey]): Boolean = xs.contains("abc") // assert: GuidelineInventory.silentCompare
   def same(a: Citekey, b: Slug): Boolean = (a: Any) == b // assert: GuidelineInventory.G3misplaced
