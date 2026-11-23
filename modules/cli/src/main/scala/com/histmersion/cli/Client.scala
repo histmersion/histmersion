@@ -229,8 +229,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   /** The bundle file is the request body, streamed from disk. */
   def verifyBundle(file: java.io.File): Either[Cli.Error, Bundle.VerifyResult] = call(Api.verifyBundle)(file)
-  def importBundle(dryRun: Cli.DryRun, file: java.io.File): Either[Cli.Error, Bundle.ImportResult] =
-    call(Api.importBundle)((Api.Apply(dryRun.value), file))
+  def importBundle(writes: Cli.Writes, file: java.io.File): Either[Cli.Error, Bundle.ImportResult] =
+    call(Api.importBundle)((Api.Apply(writes.dry), file))
   // the merge plan (M3): the bundle is uploaded once, then planned and imported by its sha256
   def uploadBundle(file: java.io.File): Either[Cli.Error, Bundle.Upload] = call(Api.uploadBundle)(file)
   def mergePlan(req: MergePlan.Request): Either[Cli.Error, MergePlan] = call(Api.mergePlan)(req)
@@ -324,9 +324,9 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def rebuildPlaces: Either[Cli.Error, Place.RebuildResult] = call(Api.rebuildPlaces)(())
   def fetchExternalPlaces(
       source: Api.ExternalPlaces.Source,
-      dryRun: Cli.DryRun
+      writes: Cli.Writes
   ): Either[Cli.Error, Place.ImportResult] =
-    call(Api.fetchExternalPlaces)((source, Api.Apply(dryRun.value)))
+    call(Api.fetchExternalPlaces)((source, Api.Apply(writes.dry)))
   def placeSources: Either[Cli.Error, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
   def loadPlaces(source: Api.ExternalPlaces.Source, apply: Api.Apply): Either[Cli.Error, JobInfo] =
     call(Api.loadPlaces)((source, apply))

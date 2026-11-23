@@ -22,7 +22,7 @@ object BasemapCmd:
         tz: Option[Int],
         bbox: Option[String],
         focus: Option[String],
-        dry: Boolean,
+        writes: Cli.Writes,
         keepAll: Boolean,
         following: Cli.Following
     )
@@ -36,14 +36,14 @@ object BasemapCmd:
       cmd match
         case Command.Status(json) =>
           c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
-        case Command.Fetch(layer, z, tz, bbox, focus, dry, keepAll, following) =>
+        case Command.Fetch(layer, z, tz, bbox, focus, writes, keepAll, following) =>
           c.basemapFetch(
             Basemap.FetchQuery(
               Basemap.FetchQuery.Layer(if focus.isDefined then "terrain" else layer),
               z.map(Basemap.FetchQuery.MaxZoom(_)),
               tz.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
               bbox.map(Basemap.FetchQuery.Bbox(_)),
-              Basemap.FetchQuery.DryRun(dry),
+              Basemap.FetchQuery.DryRun(writes.dry),
               Basemap.FetchQuery.KeepAll(keepAll),
               focus.map(Basemap.FetchQuery.Focus(_))
             )

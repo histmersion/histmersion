@@ -671,7 +671,7 @@ object CalibreCmd:
     case Push(ckText: String, file: Option[String], replaceFlag: Boolean, json: Cli.JsonOutput)
     case SetCmd(idValue: Int, raw: List[String])
     case Audit(json: Cli.JsonOutput)
-    case Sync(apply: Boolean, limit: Option[Int], json: Cli.JsonOutput)
+    case Sync(writes: Cli.Writes, limit: Option[Int], json: Cli.JsonOutput)
     case Gaps(quiet: Boolean, limit: Option[Int], json: Cli.JsonOutput)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
@@ -752,8 +752,8 @@ object CalibreCmd:
                 Output.emit(json, a.findings.map(Calibre.Json.AuditRow.of(_)))(_ => CollectionsMarkdown.audit(a))
               )
             case None => hostAudit(c, json)
-        case Command.Sync(apply, limit, json) =>
-          val applying = Api.Apply(apply)
+        case Command.Sync(writes, limit, json) =>
+          val applying = Api.Apply(writes.applies)
           val max = limit.map(Paging.Limit(_))
           onServerUnlessLocalOriginals(c).fold(syncGaps(c, applying, max, json))(serverSync(_, applying, max, json))
         case Command.Gaps(quiet, limit, json) =>

@@ -150,7 +150,7 @@ object EventsArgs:
       )
       with SharedFlags:
     private val p_ = arg[String]("provider")
-    private val dry_ = flag("dry-run", "Read the catalogue and count, store nothing")
+    private val writes_ = dryRun("Read the catalogue and count, store nothing")
     private val limit_ = value[Int]("limit", "Records to keep at most")
     private val bbox_ = value[String]("bbox", "Only events inside minLon,minLat,maxLon,maxLat")
     private val from_ =
@@ -167,7 +167,7 @@ object EventsArgs:
     def command: Either[Problem, Cli.Command] = Right(
       EventsCmd.Command.Import(
         p_(),
-        dry = dry_.getOrElse(false),
+        writes_(),
         limit_.toOption,
         bbox_.toOption,
         from_.toOption,
@@ -189,11 +189,11 @@ object EventsArgs:
       )
       with SharedFlags:
     private val p_ = value[String]("provider", "Only this catalogue: gvp | noaa | wikidata | a plugin's (default: all)")
-    private val dry_ = flag("dry-run", "Count what would change, store nothing")
+    private val writes_ = dryRun("Count what would change, store nothing")
     private val following_ = noWait("Print the job id and return")
 
     def command: Either[Problem, Cli.Command] = Right(
-      EventsCmd.Command.Rederive(p_.toOption, dry = dry_.getOrElse(false), following_())
+      EventsCmd.Command.Rederive(p_.toOption, writes_(), following_())
     )
 
   final private class LeafCorrections()

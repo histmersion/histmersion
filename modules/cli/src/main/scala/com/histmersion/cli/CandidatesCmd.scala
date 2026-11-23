@@ -16,7 +16,7 @@ object CandidatesCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
-    case Sweep(goal: String, dry: Boolean)
+    case Sweep(goal: String, writes: Cli.Writes)
     case Mark(ids: List[Long], as: String)
     case Listing(goal: Option[String], state: Option[String], limit: Option[Int], offset: Option[Int])
 
@@ -26,9 +26,9 @@ object CandidatesCmd:
   final private[cli] class Perform(c: Client)(using console: Console):
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
-        case Command.Sweep(goal, dry) =>
+        case Command.Sweep(goal, writes) =>
           c.call(AcquireApi.sweepCandidates)(
-            CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(dry))
+            CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(writes.dry))
           ).map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
         case Command.Mark(ids, as) =>
           c.call(AcquireApi.markCandidates)(

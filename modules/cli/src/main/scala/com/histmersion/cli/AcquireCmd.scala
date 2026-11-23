@@ -104,10 +104,10 @@ object AcquireCmd:
     )
     case DiscoverMeta(doi: String, json: Cli.JsonOutput)
     case DiscoverWikirefs(url: String, json: Cli.JsonOutput)
-    case Refs(id: String, apply: Boolean, json: Cli.JsonOutput)
+    case Refs(id: String, writes: Cli.Writes, json: Cli.JsonOutput)
     case AssessUpdateRetractions(json: Cli.JsonOutput)
-    case Assess(id: String, apply: Boolean, force: Boolean, json: Cli.JsonOutput)
-    case Followups(id: String, since: Option[Int], limit: Option[Int], apply: Boolean, json: Cli.JsonOutput)
+    case Assess(id: String, writes: Cli.Writes, force: Boolean, json: Cli.JsonOutput)
+    case Followups(id: String, since: Option[Int], limit: Option[Int], writes: Cli.Writes, json: Cli.JsonOutput)
     case Ingest(
         id: IngestTarget,
         citekey: Option[String],
@@ -149,9 +149,9 @@ object AcquireCmd:
           AcquireClient(c).meta(AcquireApi.Identifier(doi)).map(w => Output.emit(json, w)(AcquireMarkdown.work))
         case Command.DiscoverWikirefs(url, json) =>
           AcquireClient(c).wikirefs(Title(url)).map(r => Output.emit(json, r)(AcquireMarkdown.wikirefs))
-        case Command.Refs(id, apply, json) =>
+        case Command.Refs(id, writes, json) =>
           AcquireClient(c)
-            .refs(RefsRequest(RefsRequest.Id(id), RefsRequest.Apply(apply)))
+            .refs(RefsRequest(RefsRequest.Id(id), RefsRequest.Apply(writes.applies)))
             .map(r => Output.emit(json, r)(AcquireMarkdown.refs))
         case Command.AssessUpdateRetractions(json) =>
           val client = AcquireClient(c)
@@ -161,14 +161,14 @@ object AcquireCmd:
               Cli.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
               pollRetractions(client, 0).map(r => Cli.out.println(AcquireMarkdown.retractionsUpdate(r)))
           }
-        case Command.Followups(id, since, limit, apply, json) =>
+        case Command.Followups(id, since, limit, writes, json) =>
           AcquireClient(c)
             .followups(
               FollowupsRequest(
                 FollowupsRequest.Id(id),
                 since.map(FollowupsRequest.Since(_)),
                 limit.map(FollowupsRequest.Limit(_)),
-                FollowupsRequest.Apply(apply)
+                FollowupsRequest.Apply(writes.applies)
               )
             )
             .map(r => Output.emit(json, r)(AcquireMarkdown.followups))
@@ -244,7 +244,9 @@ object AcquireCmd:
               )
             )
             .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
-        case Command.Assess(id, apply, force, json) =>
+        case Command.Assess(id, writes, force, json) =>
           AcquireClient(c)
-            .assess(AssessRequest(AssessRequest.Id(id), AssessRequest.Apply(apply), AssessRequest.ForceStatus(force)))
+            .assess(
+              AssessRequest(AssessRequest.Id(id), AssessRequest.Apply(writes.applies), AssessRequest.ForceStatus(force))
+            )
             .map(a => Output.emit(json, a)(AcquireMarkdown.assessment))

@@ -114,7 +114,7 @@ object AgentCmd:
         topics: List[String],
         tags: List[String],
         goal: Option[String],
-        dryRun: Boolean,
+        writes: Cli.Writes,
         modelFor: List[String],
         follow: Boolean
     )
@@ -285,7 +285,7 @@ object AgentCmd:
                   r.topics.map(RunRequest.Topics(_)),
                   r.tags.map(RunRequest.Tags(_)),
                   r.goal.map(Goal.Slug(_)),
-                  Option.when(r.dryRun)(RunRequest.DryRun(true)),
+                  Option.when(r.writes.dry)(RunRequest.DryRun(true)),
                   over
                 )
               ).flatMap(x =>

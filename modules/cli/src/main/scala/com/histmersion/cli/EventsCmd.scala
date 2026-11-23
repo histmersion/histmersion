@@ -125,7 +125,7 @@ object EventsCmd:
     case Show(id: String, json: Cli.JsonOutput)
     case Import(
         p: String,
-        dry: Boolean,
+        writes: Cli.Writes,
         limit: Option[Int],
         bbox: Option[String],
         from: Option[Long],
@@ -135,7 +135,7 @@ object EventsCmd:
         refresh: Boolean,
         following: Cli.Following
     )
-    case Rederive(p: Option[String], dry: Boolean, following: Cli.Following)
+    case Rederive(p: Option[String], writes: Cli.Writes, following: Cli.Following)
     case Corrections(st: Option[String], ev: Option[String], limit: Option[Int])
     case Catalogues()
     case Links(id: String, re: Boolean, confirm: List[String], reject: List[String])
@@ -162,11 +162,11 @@ object EventsCmd:
           ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
         case Command.Show(id, json) =>
           c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown.value))
-        case Command.Import(p, dry, limit, bbox, from, to, vei, mag, refresh, following) =>
+        case Command.Import(p, writes, limit, bbox, from, to, vei, mag, refresh, following) =>
           c.call(EventsApi.importEvents)(
             EventImportRequest(
               EventImportRequest.Provider(p),
-              EventImportRequest.DryRun(dry),
+              EventImportRequest.DryRun(writes.dry),
               limit.map(EventImportRequest.Limit(_)),
               bbox.map(EventImportRequest.Bbox(_)),
               from.map(EventImportRequest.From(_)),
@@ -176,9 +176,9 @@ object EventsCmd:
               EventImportRequest.Refresh(refresh)
             )
           ).flatMap(follow(c, _, following))
-        case Command.Rederive(p, dry, following) =>
+        case Command.Rederive(p, writes, following) =>
           c.call(EventsApi.rederive)(
-            EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))
+            EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(writes.dry))
           ).flatMap { j =>
             Cli.out.println(
               s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"

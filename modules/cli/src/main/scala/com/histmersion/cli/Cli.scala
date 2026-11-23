@@ -38,8 +38,14 @@ import com.histmersion.api.library.Filter
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
   */
 object Cli:
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum Writes derives CanEqual:
+    case DryRun, Apply
+
+  object Writes:
+    extension (writes: Writes)
+      def dry: Boolean = writes == DryRun
+      def applies: Boolean = writes == Apply
+
   type JsonOutput = JsonOutput.T
   object JsonOutput extends Newtype[Boolean, Pure]:
     extension (json: JsonOutput) def choose[A](asJson: => A, asText: => A): A = if json.value then asJson else asText

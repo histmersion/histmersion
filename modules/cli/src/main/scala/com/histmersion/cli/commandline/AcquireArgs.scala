@@ -102,10 +102,10 @@ object AcquireArgs:
       extends Leaf("histmersion", "refs", "The reference list a paper deposited, resolved against the corpus")
       with SharedFlags:
     private val id_ = arg[String]("citekey|doi")
-    private val apply_ = flag("apply", "Write the resolved references as `references` edges")
+    private val writes_ = applyFlag("Write the resolved references as `references` edges")
     private val json_ = json()
 
-    def command: Either[Problem, Cli.Command] = Right(AcquireCmd.Command.Refs(id_(), apply_.getOrElse(false), json_()))
+    def command: Either[Problem, Cli.Command] = Right(AcquireCmd.Command.Refs(id_(), writes_(), json_()))
 
   final private class LeafAssessUpdateRetractions()
       extends Leaf(
@@ -127,14 +127,14 @@ object AcquireArgs:
       )
       with SharedFlags:
     private val id_ = arg[String]("citekey|doi")
-    private val apply_ =
-      flag("apply", "Write the verdict into the source's status (only over 'unassessed'; a retraction always)")
+    private val writes_ =
+      applyFlag("Write the verdict into the source's status (only over 'unassessed'; a retraction always)")
     private val force_ = flag("force-status", "With --apply, overwrite a status that is already set")
     private val json_ = json()
     holds(LeafAssessUpdateRetractions())
 
     def command: Either[Problem, Cli.Command] =
-      Right(AcquireCmd.Command.Assess(id_(), apply_.getOrElse(false), force_.getOrElse(false), json_()))
+      Right(AcquireCmd.Command.Assess(id_(), writes_(), force = force_.getOrElse(false), json_()))
 
   final private class LeafFollowups()
       extends Leaf(
@@ -146,11 +146,11 @@ object AcquireArgs:
     private val id_ = arg[String]("citekey|doi")
     private val since_ = value[Int]("since", "Only citing papers published from this year on")
     private val limit_ = value[Int]("limit", "Max citing papers")
-    private val apply_ = flag("apply", "Record the proposed edges for citing papers already in the corpus")
+    private val writes_ = applyFlag("Record the proposed edges for citing papers already in the corpus")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(
-      AcquireCmd.Command.Followups(id_(), since_.toOption, limit_.toOption, apply_.getOrElse(false), json_())
+      AcquireCmd.Command.Followups(id_(), since_.toOption, limit_.toOption, writes_(), json_())
     )
 
   final private class LeafIngest()

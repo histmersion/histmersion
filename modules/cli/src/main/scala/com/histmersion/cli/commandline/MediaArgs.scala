@@ -46,8 +46,7 @@ object MediaArgs:
       )
       with SharedFlags:
     private val name_ = arg[String]("provider")
-    private val dry_ = flag(
-      "dry-run",
+    private val writes_ = dryRun(
       "Read one batch, store nothing; print the counts per licence (and the matches, with their reasons)"
     )
     private val limit_ =
@@ -62,7 +61,7 @@ object MediaArgs:
     def command: Either[Problem, Cli.Command] = Right(
       MediaCmd.Command.Import(
         name_(),
-        dry = dry_.getOrElse(false),
+        writes_(),
         limit_.toOption,
         place_.toOption,
         event_.toOption,
@@ -90,7 +89,7 @@ object MediaArgs:
           "would be linked; otherwise the server part runs as a job"
       )
       with SharedFlags:
-    private val dry_ = flag("dry-run", "Say what would be linked, store nothing")
+    private val writes_ = dryRun("Say what would be linked, store nothing")
     private val limit_ = value[Int]("limit", "Sources to look at per step")
     private val ck_ = value[String]("citekey", "Only this source")
     private val refresh_ = flag("refresh", "Redo the sources that already have their cover / illustration")
@@ -101,7 +100,7 @@ object MediaArgs:
 
     def command: Either[Problem, Cli.Command] = Right(
       MediaCmd.Command.Covers(
-        dry = dry_.getOrElse(false),
+        writes_(),
         limit_.toOption,
         ck_.toOption,
         refresh = refresh_.getOrElse(false),
@@ -155,9 +154,9 @@ object MediaArgs:
         "Give a source's figures the licence the source records (only figures with none); counts unless --apply"
       )
       with SharedFlags:
-    private val apply_ = flag("apply", "Write the licences")
+    private val writes_ = applyFlag("Write the licences")
 
-    def command: Either[Problem, Cli.Command] = Right(MediaCmd.Command.FillLicences(apply_.getOrElse(false)))
+    def command: Either[Problem, Cli.Command] = Right(MediaCmd.Command.FillLicences(writes_()))
 
   final private class LeafDetail()
       extends Leaf("histmersion media", "detail", "Show asset metadata including spatial/temporal")

@@ -50,7 +50,7 @@ object Ops:
       * the caps allow; a pass of more than one item is a server job, followed unless told to return.
       */
     case Recheck(
-        dryRun: Boolean,
+        writes: Cli.Writes,
         limit: Option[Int],
         id: Option[Int],
         all: Boolean,
@@ -216,10 +216,10 @@ object Ops:
           writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
         case QueueCmd.Import(dir) =>
           readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
-        case QueueCmd.Recheck(dryRun, limit, id, all, following, json) =>
+        case QueueCmd.Recheck(writes, limit, id, all, following, json) =>
           c.call(AcquisitionWorkApi.acquireRecheck)(
             Acquire.Checks.RecheckRequest(
-              Acquire.Checks.RecheckRequest.DryRun(dryRun),
+              Acquire.Checks.RecheckRequest.DryRun(writes.dry),
               limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
               id.map(Acquire.Checks.RecheckRequest.Id(_)),
               Some(Acquire.Checks.RecheckRequest.By("cli")),

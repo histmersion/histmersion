@@ -53,7 +53,7 @@ object BasemapArgs:
       "focus",
       "Keep the relief of a region deeper than the extract, to basemap.terrain.on-demand.max-zoom: " + "a name of basemap.terrain.focus-regions (aegean, anatolia, levant, mesopotamia, nile-delta, argolid) or a new one with --bbox"
     )
-    private val dry_ = flag("dry-run", "Read only the directories and report what the download would take")
+    private val writes_ = dryRun("Read only the directories and report what the download would take")
     private val keepAll_ = flag(
       "keep-all",
       "Store the vector layer unfiltered — roads, places and borders too, for the Readable map (basemap.vector.drop not applied)"
@@ -67,7 +67,7 @@ object BasemapArgs:
         tz_.toOption,
         bbox_.toOption,
         focus_.toOption,
-        dry = dry_.getOrElse(false),
+        writes_(),
         keepAll = keepAll_.getOrElse(false),
         following_()
       )

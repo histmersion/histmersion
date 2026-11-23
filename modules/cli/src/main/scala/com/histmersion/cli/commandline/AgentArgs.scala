@@ -224,8 +224,7 @@ object AgentArgs:
     private val topics_ = values[String]("topic", "compile-article: a topic the sources must have (repeatable)")
     private val tags_ = values[String]("tag", "compile-article: a tag the sources must have (repeatable)")
     private val goal_ = value[String]("goal", "The goal the run works for (a compiled article is linked to it)")
-    private val dry_ = flag(
-      "dry-run",
+    private val writes_ = dryRun(
       "Do every read and every model step but write nothing to the corpus; each write is recorded on its step (agent show)"
     )
     private val modelFor_ = values[String](
@@ -242,7 +241,7 @@ object AgentArgs:
           model_(),
           usd_.toOption,
           tokens_.toOption,
-          fix_.getOrElse(false),
+          fix = fix_.getOrElse(false),
           rounds_.toOption,
           item_.toOption,
           title_.toOption,
@@ -251,7 +250,7 @@ object AgentArgs:
           topics_.getOrElse(Nil),
           tags_.getOrElse(Nil),
           goal_.toOption,
-          dry_.getOrElse(false),
+          writes_(),
           modelFor_.getOrElse(Nil),
           follow_()
         )

@@ -155,7 +155,7 @@ object PlacesCmd:
     case Search(q: Option[String], asOf: Option[Api.AggregateQuery.AsOf], limit: Option[Int])
     case Show(id: String, asOf: Option[Api.AggregateQuery.AsOf], depth: Option[Int], noTree: Boolean)
     case Children(id: String, asOf: Option[Api.AggregateQuery.AsOf])
-    case SiteTypes(dry: Boolean, limit: Option[Int], refresh: Boolean, following: Cli.Following)
+    case SiteTypes(writes: Cli.Writes, limit: Option[Int], refresh: Boolean, following: Cli.Following)
     case NameAdd(id: String, name: String, lang: Option[String])
     case NameRm(id: String, name: String, lang: Option[String])
     case NameListing(place: Option[String], csv: Boolean)
@@ -185,9 +185,9 @@ object PlacesCmd:
     )
     case Import(file: String, kind: Option[String], batch: Option[Int], dataset: Dataset)
     case Seed(dir: Option[String], batch: Option[Int], noRebuild: Boolean)
-    case Fetch(source: String, dryRun: Boolean, following: Cli.Following)
+    case Fetch(source: String, writes: Cli.Writes, following: Cli.Following)
     case Sources()
-    case Load(source: String, apply: Boolean, following: Cli.Following)
+    case Load(source: String, writes: Cli.Writes, following: Cli.Following)
     case Rebuild()
     case BuildHierarchy(following: Cli.Following)
 
@@ -210,10 +210,10 @@ object PlacesCmd:
             if rows.isEmpty then Cli.out.println("_No children._")
             else Cli.out.println(rows.map(x => s"- ${x.label} `${x.id}` _(${x.kind})_").mkString("\n"))
           }
-        case Command.SiteTypes(dry, limit, refresh, following) =>
+        case Command.SiteTypes(writes, limit, refresh, following) =>
           c.call(EventsApi.refineSiteTypes)(
             SiteTypes.Request(
-              SiteTypes.Request.DryRun(dry),
+              SiteTypes.Request.DryRun(writes.dry),
               limit.map(SiteTypes.Request.Limit(_)),
               SiteTypes.Request.Refresh(refresh)
             )
@@ -331,19 +331,19 @@ object PlacesCmd:
                   if noRebuild then Right(())
                   else c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r)))
               yield ()
-        case Command.Fetch(source, dryRun, following) =>
-          c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
+        case Command.Fetch(source, writes, following) =>
+          c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), writes).flatMap { r =>
             r.job match
               case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), following)
               case None     =>
-                Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
+                Right(Cli.out.println(s"${if writes.dry then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
           }
         case Command.Sources() =>
           c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows)))
-        case Command.Load(source, apply, following) =>
-          c.loadPlaces(Api.ExternalPlaces.Source(source), Api.Apply(apply)).flatMap { j =>
+        case Command.Load(source, writes, following) =>
+          c.loadPlaces(Api.ExternalPlaces.Source(source), Api.Apply(writes.applies)).flatMap { j =>
             Cli.out.println(
-              s"${if apply then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
+              s"${if writes.applies then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
             )
             following.follow(IngestCmd.pollJob(c, j.id, 0))
           }

@@ -29,9 +29,9 @@ object CandidatesArgs:
       )
       with SharedFlags:
     private val goal_ = arg[String]("goal")
-    private val dry_ = flag("dry-run", "Read, store nothing (no candidates, no watermarks)")
+    private val writes_ = dryRun("Read, store nothing (no candidates, no watermarks)")
 
-    def command: Either[Problem, Cli.Command] = Right(CandidatesCmd.Command.Sweep(goal_(), dry_.getOrElse(false)))
+    def command: Either[Problem, Cli.Command] = Right(CandidatesCmd.Command.Sweep(goal_(), writes_()))
 
   final private class LeafMark()
       extends Leaf(
