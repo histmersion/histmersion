@@ -46,8 +46,16 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   /** The migrations since the squash, by version, in order: each new migration adds itself here. */
-  private val Chain = List("109", "110", "111", "112", "113")
-  private val Latest = Migrate.Version("113")
+  private val Chain = List("109", "110", "111", "112", "113", "115")
+  private val Latest = Migrate.Version("115")
+
+  private val UpdatedAt =
+    """SELECT t || ':' || string_agg(u::text, ',' ORDER BY k) FROM (
+      |  SELECT 'jobs' t, id k, updated_at u FROM jobs UNION ALL
+      |  SELECT 'events', id, updated_at FROM events UNION ALL
+      |  SELECT 'places', id, updated_at FROM places WHERE id LIKE 'zz-%' UNION ALL
+      |  SELECT 'sources', citekey, updated_at FROM sources UNION ALL
+      |  SELECT 'assets', name, updated_at FROM assets) x GROUP BY t ORDER BY t""".stripMargin
 
   private val QueueRowsAtSquash =
     "SELECT md5(string_agg((t.id, t.list, t.text, t.topic, t.status, t.created_at, t.done_at, t.reason, t.uid, " +
@@ -314,4 +322,116 @@ class MigrateSquashSuite extends DbSuite with Bounded:
         "SELECT is_nullable FROM information_schema.columns WHERE table_name = 'queue_items' AND column_name = 'creator'"
       ),
       List("NO")
+    )
+
+  test("V115: every record table gets its creator from stored facts only; nothing else of a row moves"):
+    val ds = emptyDatabase("histmersion_squash_records_test")
+    Migrate.ensureRole(ds, Migrate.QueryRole)
+    val _ = Flyway.configure().configuration(Migrate.flyway(ds).getConfiguration).target("113").load().migrate()
+    exec(
+      ds,
+      """INSERT INTO jobs (id, kind, status, pipeline, origin, parent_job) VALUES
+        |  ('11111111-1111-4111-8111-111111111111', 'agent', 'done', 'review-article', 'person', NULL),
+        |  ('22222222-2222-4222-8222-222222222222', 'agent', 'done', 'enrich-source', 'scheduler', NULL),
+        |  ('33333333-3333-4333-8333-333333333333', 'agent', 'done', 'enrich-source', 'manager', NULL),
+        |  ('44444444-4444-4444-8444-444444444444', 'agent', 'done', 'compile-article', 'run',
+        |   '11111111-1111-4111-8111-111111111111'),
+        |  ('55555555-5555-4555-8555-555555555555', 'agent', 'done', NULL, 'ingest', NULL),
+        |  ('66666666-6666-4666-8666-666666666666', 'ocr', 'done', NULL, NULL, NULL),
+        |  ('77777777-7777-4777-8777-777777777777', 'agent', 'done', 'Not A Name', 'run',
+        |   '77777777-7777-4777-8777-777777777777')""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO approvals (id, job_id, kind, proposal) VALUES
+        |  (1, '11111111-1111-4111-8111-111111111111', 'status', '{}'),
+        |  (2, '66666666-6666-4666-8666-666666666666', 'status', '{}'),
+        |  (3, NULL, 'status', '{}')""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO events (id, label, catalogue, updated_at) VALUES
+        |  ('zz-ev-1', 'an eruption', 'gvp', '2026-01-01T00:00:00Z'),
+        |  ('zz-ev-2', 'a battle', NULL, '2026-01-01T00:00:00Z')""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO places (id, label, kind, import_source, updated_at) VALUES
+        |  ('zz-pl-1', 'a site', 'site', 'awmc', '2026-01-01T00:00:00Z'),
+        |  ('zz-pl-2', 'a town', 'settlement', NULL, '2026-01-01T00:00:00Z')""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO sources (citekey, title, added_date, updated_at) VALUES
+        |  ('zz-src', 'A source', '2025-05-05', '2026-01-01T00:00:00Z')""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO assets (citekey, name, mime, bytes, sha256, updated_at) VALUES
+        |  ('zz-src', 'fig1.png', 'image/png', '\x00', 'aa', '2026-01-01T00:00:00Z')""".stripMargin
+    )
+    exec(
+      ds,
+      """INSERT INTO assets (provider, provider_key, source_url, retrieved_at, name, mime, bytes, sha256, updated_at)
+        |VALUES ('met', 'k1', 'https://example.org/k1', '2026-01-01T00:00:00Z', 'k1.jpg', 'image/jpeg', '\x00', 'bb',
+        |        '2026-01-01T00:00:00Z')""".stripMargin
+    )
+    val updatedBefore = strings(ds, UpdatedAt)
+    assertEquals(Migrate.run(ds), Latest)
+    assertEquals(
+      strings(ds, "SELECT id || '|' || creator::text FROM jobs ORDER BY id"),
+      List(
+        """11111111-1111-4111-8111-111111111111|{"kind": "manual"}""",
+        """22222222-2222-4222-8222-222222222222|{"kind": "automated", "agent": {"kind": "code"}, "plugin": "engine", "surface": "internal", "workflow": "scheduler"}""",
+        """33333333-3333-4333-8333-333333333333|{"kind": "automated", "agent": {"kind": "code"}, "plugin": "engine", "surface": "internal", "workflow": "managers"}""",
+        """44444444-4444-4444-8444-444444444444|{"kind": "automated", "surface": "internal", "workflow": "review-article"}""",
+        """55555555-5555-4555-8555-555555555555|{"kind": "unknown"}""",
+        """66666666-6666-4666-8666-666666666666|{"kind": "unknown"}""",
+        """77777777-7777-4777-8777-777777777777|{"kind": "unknown"}"""
+      )
+    )
+    assertEquals(
+      strings(ds, "SELECT id || '|' || creator::text FROM approvals ORDER BY id"),
+      List(
+        """1|{"kind": "automated", "surface": "internal", "workflow": "review-article"}""",
+        """2|{"kind": "unknown"}""",
+        """3|{"kind": "unknown"}"""
+      )
+    )
+    assertEquals(
+      strings(ds, "SELECT id || '|' || creator::text FROM events ORDER BY id"),
+      List(
+        """zz-ev-1|{"kind": "automated", "agent": {"kind": "code"}, "surface": "internal", "workflow": "event-import"}""",
+        """zz-ev-2|{"kind": "unknown"}"""
+      )
+    )
+    assertEquals(
+      strings(ds, "SELECT id || '|' || creator::text FROM places WHERE id LIKE 'zz-pl-%' ORDER BY id"),
+      List(
+        """zz-pl-1|{"kind": "automated", "agent": {"kind": "code"}, "surface": "internal", "workflow": "gazetteer-import"}""",
+        """zz-pl-2|{"kind": "unknown"}"""
+      )
+    )
+    assertEquals(
+      strings(ds, "SELECT name || '|' || creator::text FROM assets ORDER BY name"),
+      List(
+        """fig1.png|{"kind": "unknown"}""",
+        """k1.jpg|{"kind": "automated", "agent": {"kind": "code"}, "surface": "internal", "workflow": "media-import"}"""
+      )
+    )
+    assertEquals(strings(ds, "SELECT creator::text FROM sources"), List("""{"kind": "unknown"}"""))
+    assertEquals(
+      strings(ds, "SELECT coalesce(created_at::text, 'unknown') FROM events ORDER BY id"),
+      List("unknown", "unknown"),
+      "an existing row's creation date is not invented"
+    )
+    assertEquals(strings(ds, UpdatedAt), updatedBefore, "updated_at untouched")
+    assertEquals(
+      strings(
+        ds,
+        """SELECT count(*)::text FROM information_schema.columns
+          |WHERE table_schema = 'public' AND column_name = 'creator' AND is_nullable = 'NO'
+          |  AND data_type = 'jsonb'""".stripMargin
+      ),
+      List("29")
     )
