@@ -13,6 +13,7 @@ import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.library.Doi
+import com.histmersion.api.Provenance
 
 /** The store of the work lists (`queue_items`, migration `V009__queue.sql`): one table, every list in it by its `list`.
   * Every method runs on the connection it is given; the service ([[QueueService]], in the server) or the import that
@@ -51,7 +52,7 @@ private[worklists] object QueueRepo:
       createdBy: Option[QueueItem.CreatedBy],
       closedBy: Option[QueueItem.ClosedBy],
       creator: Jsonb.JsonText,
-      actor: Option[Creation.Actor]
+      actor: Option[Provenance.Actor]
   ) derives DbCodec:
     def item: QueueItem =
       QueueItem(
@@ -66,7 +67,7 @@ private[worklists] object QueueRepo:
         goal,
         createdBy,
         closedBy,
-        Some(Jsonb.read[Queue.Creator](creator).getOrElse(Queue.Creator(Creation.Unreadable))),
+        Some(Jsonb.read[Provenance](creator).getOrElse(Provenance(Provenance.Unreadable))),
         actor
       )
 

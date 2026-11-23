@@ -18045,7 +18045,7 @@
           "creator" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/Creator"
+                "$ref" : "#/components/schemas/Provenance"
               },
               {
                 "type" : "null"
@@ -19997,6 +19997,42 @@
           }
         }
       },
+      "By" : {
+        "title" : "By",
+        "type" : "object",
+        "properties" : {
+          "plugin" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "workflow" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "agentDefinition" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "provider" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "model" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "CalibreGap" : {
         "title" : "CalibreGap",
         "type" : "object",
@@ -21875,88 +21911,6 @@
             "items" : {
               "type" : "string"
             }
-          }
-        }
-      },
-      "CreatedBy" : {
-        "title" : "CreatedBy",
-        "type" : "object",
-        "properties" : {
-          "plugin" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "workflow" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "agentDefinition" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "provider" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "model" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "Creator" : {
-        "title" : "Creator",
-        "type" : "object",
-        "required" : [
-          "kind"
-        ],
-        "properties" : {
-          "kind" : {
-            "type" : "string"
-          },
-          "surface" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "plugin" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "workflow" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "agent" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/Agent"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "job" : {
-            "type" : [
-              "string",
-              "null"
-            ]
           }
         }
       },
@@ -33251,6 +33205,52 @@
           }
         }
       },
+      "Provenance" : {
+        "title" : "Provenance",
+        "type" : "object",
+        "required" : [
+          "kind"
+        ],
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "surface" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "plugin" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "workflow" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "agent" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Agent"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "job" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "ProviderCalled" : {
         "title" : "ProviderCalled",
         "type" : "object",
@@ -33836,7 +33836,7 @@
           "createdBy" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/CreatedBy"
+                "$ref" : "#/components/schemas/By"
               },
               {
                 "type" : "null"
@@ -33961,7 +33961,7 @@
           "creator" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/Creator"
+                "$ref" : "#/components/schemas/Provenance"
               },
               {
                 "type" : "null"
@@ -38229,7 +38229,7 @@
           "creator" : {
             "anyOf" : [
               {
-                "$ref" : "#/components/schemas/Creator"
+                "$ref" : "#/components/schemas/Provenance"
               },
               {
                 "type" : "null"

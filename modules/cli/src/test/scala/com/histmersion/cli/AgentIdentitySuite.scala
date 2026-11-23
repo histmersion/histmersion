@@ -1,11 +1,11 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.automation.Queue.{CreatedBy, Creation}
 import com.histmersion.config.AppConfig
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.api.Provenance
 
 class AgentIdentitySuite extends munit.FunSuite:
 
@@ -29,20 +29,20 @@ class AgentIdentitySuite extends munit.FunSuite:
     assertEquals(
       configured(everyVariable).createdBy,
       Some(
-        CreatedBy(
-          Some(Creation.Plugin("research-workspace")),
-          Some(Creation.Workflow("trailhead")),
-          Some(Creation.Definition("article-skeptic")),
-          Some(Creation.Provider("anthropic")),
-          Some(Creation.Model("claude-opus-5-5"))
+        Provenance.By(
+          Some(Provenance.Plugin("research-workspace")),
+          Some(Provenance.Workflow("trailhead")),
+          Some(Provenance.Definition("article-skeptic")),
+          Some(Provenance.Provider("anthropic")),
+          Some(Provenance.Model("claude-opus-5-5"))
         )
       )
     )
 
   test("a flag wins over its variable; a part with no flag falls back to its variable"):
-    val flags = AgentIdentity(workflow = Some(Creation.Workflow("bookkeeping")), model = Some(Creation.Model("m2")))
+    val flags = AgentIdentity(workflow = Some(Provenance.Workflow("bookkeeping")), model = Some(Provenance.Model("m2")))
     val merged = flags.orElse(configured(everyVariable))
-    assertEquals(merged.workflow, Some(Creation.Workflow("bookkeeping")))
-    assertEquals(merged.model, Some(Creation.Model("m2")))
-    assertEquals(merged.plugin, Some(Creation.Plugin("research-workspace")))
-    assertEquals(merged.provider, Some(Creation.Provider("anthropic")))
+    assertEquals(merged.workflow, Some(Provenance.Workflow("bookkeeping")))
+    assertEquals(merged.model, Some(Provenance.Model("m2")))
+    assertEquals(merged.plugin, Some(Provenance.Plugin("research-workspace")))
+    assertEquals(merged.provider, Some(Provenance.Provider("anthropic")))

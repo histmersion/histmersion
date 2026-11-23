@@ -1,19 +1,19 @@
 package com.histmersion
 package domain.automation.worklists
 
-import com.histmersion.api.automation.Queue.{CreatedBy, Creation}
 import com.histmersion.domain.Creator
 import com.histmersion.util.problem.Problem
+import com.histmersion.api.Provenance
 
 class CreatorParseSuite extends munit.FunSuite:
 
   private val surfaces = Creator.Surface.values.toList
 
-  private val plugin = Creation.Plugin("research-workspace")
-  private val workflow = Creation.Workflow("review-article")
-  private val definition = Creation.Definition("article-skeptic")
-  private val provider = Creation.Provider("anthropic")
-  private val model = Creation.Model("claude-opus-5-5")
+  private val plugin = Provenance.Plugin("research-workspace")
+  private val workflow = Provenance.Workflow("review-article")
+  private val definition = Provenance.Definition("article-skeptic")
+  private val provider = Provenance.Provider("anthropic")
+  private val model = Provenance.Model("claude-opus-5-5")
 
   private def subsets[A](as: List[A]): List[List[A]] =
     as.foldRight(List(List.empty[A]))((a, rest) => rest ++ rest.map(a :: _))
@@ -21,8 +21,8 @@ class CreatorParseSuite extends munit.FunSuite:
   private enum Part derives CanEqual:
     case Plugin, Workflow, Definition, Provider, Model
 
-  private def record(present: Set[Part]): CreatedBy =
-    CreatedBy(
+  private def record(present: Set[Part]): Provenance.By =
+    Provenance.By(
       Option.when(present(Part.Plugin))(plugin),
       Option.when(present(Part.Workflow))(workflow),
       Option.when(present(Part.Definition))(definition),
@@ -78,11 +78,18 @@ class CreatorParseSuite extends munit.FunSuite:
 
   test("a name its rule refuses is a malformed value, whichever part it is"):
     val bad = List(
-      CreatedBy(Some(Creation.Plugin("Not A Name")), Some(workflow)),
-      CreatedBy(Some(plugin), Some(Creation.Workflow(""))),
-      CreatedBy(Some(plugin), Some(workflow), Some(Creation.Definition("UPPER")), Some(provider), Some(model)),
-      CreatedBy(Some(plugin), Some(workflow), Some(definition), Some(Creation.Provider("has space")), Some(model)),
-      CreatedBy(Some(plugin), Some(workflow), Some(definition), Some(provider), Some(Creation.Model(" leading-space")))
+      Provenance.By(Some(Provenance.Plugin("Not A Name")), Some(workflow)),
+      Provenance.By(Some(plugin), Some(Provenance.Workflow(""))),
+      Provenance.By(Some(plugin), Some(workflow), Some(Provenance.Definition("UPPER")), Some(provider), Some(model)),
+      Provenance
+        .By(Some(plugin), Some(workflow), Some(definition), Some(Provenance.Provider("has space")), Some(model)),
+      Provenance.By(
+        Some(plugin),
+        Some(workflow),
+        Some(definition),
+        Some(provider),
+        Some(Provenance.Model(" leading-space"))
+      )
     )
     bad.foreach { b =>
       val parsed = WorkListControllers.creatorOf(Some(b), Creator.Surface.Rest)
@@ -102,15 +109,15 @@ class CreatorParseSuite extends munit.FunSuite:
 
   test("the surface a REST client names: cli, web or rest; none is rest; anything else is refused"):
     assertEquals(WorkListControllers.surfaceOf(None), Right(Creator.Surface.Rest))
-    assertEquals(WorkListControllers.surfaceOf(Some(Creation.Cli)), Right(Creator.Surface.Cli))
-    assertEquals(WorkListControllers.surfaceOf(Some(Creation.Web)), Right(Creator.Surface.Web))
-    assertEquals(WorkListControllers.surfaceOf(Some(Creation.Rest)), Right(Creator.Surface.Rest))
-    assert(WorkListControllers.surfaceOf(Some(Creation.Via("mcp"))).isLeft)
+    assertEquals(WorkListControllers.surfaceOf(Some(Provenance.Cli)), Right(Creator.Surface.Cli))
+    assertEquals(WorkListControllers.surfaceOf(Some(Provenance.Web)), Right(Creator.Surface.Web))
+    assertEquals(WorkListControllers.surfaceOf(Some(Provenance.Rest)), Right(Creator.Surface.Rest))
+    assert(WorkListControllers.surfaceOf(Some(Provenance.Via("mcp"))).isLeft)
 
   test("an actor is person or agents; anything else is refused"):
-    assertEquals(WorkListControllers.actorOf(Some(Creation.Agents)), Right(Some(Creation.Agents)))
+    assertEquals(WorkListControllers.actorOf(Some(Provenance.Agents)), Right(Some(Provenance.Agents)))
     assertEquals(WorkListControllers.actorOf(None), Right(None))
-    assert(WorkListControllers.actorOf(Some(Creation.Actor("robot"))).isLeft)
+    assert(WorkListControllers.actorOf(Some(Provenance.Actor("robot"))).isLeft)
 
   test("a new creator's actor: the person for Manual, the agents for Automated"):
     assertEquals(Creator.New.Manual(Creator.Surface.Web).actor, domain.Actor.Person)

@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.Creator
 import com.histmersion.util.nonempty.NonEmptyVector
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Provenance
 
 /** The work lists' operations as REST, MCP and the CLI reach them: the list named by its word, the inputs checked, a
   * write refused during maintenance. A LOG item given no topic joins today's entry (`## 2026-08-25`, the UTC date of
@@ -112,42 +113,42 @@ object WorkListControllers:
 
   private val Imported: Creator.New = Creator.New.Manual(Creator.Surface.Rest)
 
-  private val surfaces: List[(Queue.Creation.Via, Creator.Surface)] =
+  private val surfaces: List[(Provenance.Via, Creator.Surface)] =
     List(
-      Queue.Creation.Rest -> Creator.Surface.Rest,
-      Queue.Creation.Cli -> Creator.Surface.Cli,
-      Queue.Creation.Web -> Creator.Surface.Web
+      Provenance.Rest -> Creator.Surface.Rest,
+      Provenance.Cli -> Creator.Surface.Cli,
+      Provenance.Web -> Creator.Surface.Web
     )
 
-  def surfaceOf(via: Option[Queue.Creation.Via]): Either[Problem, Creator.Surface] =
+  def surfaceOf(via: Option[Provenance.Via]): Either[Problem, Creator.Surface] =
     via.fold(Right(Creator.Surface.Rest)) { v =>
       surfaces
         .collectFirst { case (w, s) if w == v => s }
         .toRight(
           Problem.Invalid.Unknown(
-            Problem.TypeName.of(Queue.Creation.Via),
+            Problem.TypeName.of(Provenance.Via),
             Problem.Raw.of(v),
-            Queue.Creation.Vias.map(Problem.Raw.of(_)).toVector,
+            Provenance.Vias.map(Problem.Raw.of(_)).toVector,
             Vector(Problem.Field("via"))
           )
         )
     }
 
-  def actorOf(raw: Option[Queue.Creation.Actor]): Either[Problem, Option[Queue.Creation.Actor]] =
+  def actorOf(raw: Option[Provenance.Actor]): Either[Problem, Option[Provenance.Actor]] =
     raw match
-      case None                                         => Right(None)
-      case Some(a) if Queue.Creation.Actors.contains(a) => Right(Some(a))
-      case Some(a)                                      =>
+      case None                                     => Right(None)
+      case Some(a) if Provenance.Actors.contains(a) => Right(Some(a))
+      case Some(a)                                  =>
         Left(
           Problem.Invalid.Unknown(
-            Problem.TypeName.of(Queue.Creation.Actor),
+            Problem.TypeName.of(Provenance.Actor),
             Problem.Raw.of(a),
-            Queue.Creation.Actors.map(Problem.Raw.of(_)).toVector,
+            Provenance.Actors.map(Problem.Raw.of(_)).toVector,
             Vector(Problem.Field("actor"))
           )
         )
 
-  def creatorOf(by: Option[Queue.CreatedBy], surface: Creator.Surface): Either[Problem, Creator.New] =
+  def creatorOf(by: Option[Provenance.By], surface: Creator.Surface): Either[Problem, Creator.New] =
     by match
       case None if surface == Creator.Surface.Mcp => Left(Problem.Invalid.Missing.here(Problem.Field("createdBy")))
       case None                                   => Right(Creator.New.Manual(surface))
@@ -167,7 +168,7 @@ object WorkListControllers:
 
   private val CreatedByField = Problem.Field("createdBy")
 
-  private def agentOf(b: Queue.CreatedBy): Either[Problem, Creator.Agent] =
+  private def agentOf(b: Provenance.By): Either[Problem, Creator.Agent] =
     (b.agentDefinition, b.provider, b.model) match
       case (None, None, None)          => Right(Creator.Agent.Code)
       case (Some(d), Some(p), Some(m)) =>

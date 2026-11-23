@@ -2,13 +2,13 @@ package com.histmersion
 package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.automation.Queue.Creation
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.Jsonb
+import com.histmersion.api.Provenance
 
 class StoredCreatorSuite extends munit.FunSuite:
 
-  private def shown(creator: Creator): Option[Queue.Creator] = Jsonb.read[Queue.Creator](StoredCreator.write(creator))
+  private def shown(creator: Creator): Option[Provenance] = Jsonb.read[Provenance](StoredCreator.write(creator))
 
   private val skeptic = Creator.Agent.Model(
     Creator.Definition.Name("article-skeptic"),
@@ -19,7 +19,7 @@ class StoredCreatorSuite extends munit.FunSuite:
   test("a person's item shows the surface it came through"):
     assertEquals(
       shown(Creator.Manual(Creator.Surface.Cli)),
-      Some(Queue.Creator(Creation.Manual, surface = Some(Creation.Surface("cli"))))
+      Some(Provenance(Provenance.Manual, surface = Some(Provenance.Surface("cli"))))
     )
     Creator.Surface.values.foreach(s => assert(shown(Creator.Manual(s)).flatMap(_.surface).isDefined, s.toString))
 
@@ -29,16 +29,16 @@ class StoredCreatorSuite extends munit.FunSuite:
         Creator.New.Automated(Creator.Plugin.Name("research"), Creator.Workflow.Name("review-article"), skeptic).stored
       ),
       Some(
-        Queue.Creator(
-          Creation.Automated,
-          plugin = Some(Creation.Plugin("research")),
-          workflow = Some(Creation.Workflow("review-article")),
+        Provenance(
+          Provenance.Automated,
+          plugin = Some(Provenance.Plugin("research")),
+          workflow = Some(Provenance.Workflow("review-article")),
           agent = Some(
-            Queue.Agent(
-              Creation.ByModel,
-              Some(Creation.Definition("article-skeptic")),
-              Some(Creation.Provider("anthropic")),
-              Some(Creation.Model("claude-opus-5-5"))
+            Provenance.Agent(
+              Provenance.ByModel,
+              Some(Provenance.Definition("article-skeptic")),
+              Some(Provenance.Provider("anthropic")),
+              Some(Provenance.Model("claude-opus-5-5"))
             )
           )
         )
@@ -46,27 +46,27 @@ class StoredCreatorSuite extends munit.FunSuite:
     )
     assertEquals(
       shown(Creator.code(Creator.Plugin.Name("library"), Creator.Workflow.Name("seed")).stored).flatMap(_.agent),
-      Some(Queue.Agent(Creation.Code))
+      Some(Provenance.Agent(Provenance.Code))
     )
 
   test("what the migration writes shows as it stands: a known workflow alone, or nothing but the job"):
     assertEquals(
-      Jsonb.read[Queue.Creator](Jsonb.JsonText("""{"kind": "automated", "workflow": "review-article"}""")),
-      Some(Queue.Creator(Creation.Automated, workflow = Some(Creation.Workflow("review-article"))))
+      Jsonb.read[Provenance](Jsonb.JsonText("""{"kind": "automated", "workflow": "review-article"}""")),
+      Some(Provenance(Provenance.Automated, workflow = Some(Provenance.Workflow("review-article"))))
     )
     assertEquals(
-      Jsonb.read[Queue.Creator](Jsonb.JsonText("""{"job": "zz-missing-job", "kind": "unknown"}""")),
-      Some(Queue.Creator(Creation.Unknown, job = Some(Creation.Job("zz-missing-job"))))
+      Jsonb.read[Provenance](Jsonb.JsonText("""{"job": "zz-missing-job", "kind": "unknown"}""")),
+      Some(Provenance(Provenance.Unknown, job = Some(Provenance.Job("zz-missing-job"))))
     )
     assertEquals(
       shown(Creator.Unknown(Creator.Facts.Unrecorded(Some(Creator.Facts.Job("zz-missing-job"))))),
-      Some(Queue.Creator(Creation.Unknown, job = Some(Creation.Job("zz-missing-job"))))
+      Some(Provenance(Provenance.Unknown, job = Some(Provenance.Job("zz-missing-job"))))
     )
 
   test("an item from a surface that cannot carry identity yet shows as unattributed, with its surface"):
     assertEquals(
       shown(Creator.New.Unattributed(Creator.Surface.Mcp).stored),
-      Some(Queue.Creator(Creation.Unattributed, surface = Some(Creation.Surface("mcp"))))
+      Some(Provenance(Provenance.Unattributed, surface = Some(Provenance.Surface("mcp"))))
     )
     assertEquals(StoredCreator.actor(Creator.New.Unattributed(Creator.Surface.Rest)), "person")
 

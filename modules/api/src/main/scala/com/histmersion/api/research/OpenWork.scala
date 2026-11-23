@@ -13,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import java.time.Instant
 import scala.util.Try
+import com.histmersion.api.Provenance
 
 object OpenWork:
 
@@ -206,14 +207,14 @@ object OpenWork:
         verdict: Verdict,
         last: Option[At],
         tries: Tries,
-        creator: Option[Queue.Creator],
+        creator: Option[Provenance],
         goal: Option[Goal.Slug]
     )
     case Task(
         item: Queue.QueueItem.Id,
         text: Queue.QueueItem.Text,
         actor: Who,
-        creator: Option[Queue.Creator],
+        creator: Option[Provenance],
         goal: Option[Goal.Slug]
     )
     case PausedRun(
@@ -251,8 +252,8 @@ object OpenWork:
       case _              => None
 
     def creatorNotRecorded: Boolean = this match
-      case a: Acquisition => a.creator.exists(_.kind == Queue.Creation.Unattributed)
-      case t: Task        => t.creator.exists(_.kind == Queue.Creation.Unattributed)
+      case a: Acquisition => a.creator.exists(_.kind == Provenance.Unattributed)
+      case t: Task        => t.creator.exists(_.kind == Provenance.Unattributed)
       case _              => false
 
     def line: String = this match

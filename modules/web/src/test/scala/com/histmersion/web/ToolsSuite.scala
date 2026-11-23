@@ -31,6 +31,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Paging
+import com.histmersion.api.Provenance
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
   * lists' text and order.
@@ -678,7 +679,7 @@ class ToolsSuite extends munit.FunSuite:
           Problem.Unclassified(Legacy.Text(" "))
         )
       ),
-      Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None, via = Some(Queue.Creation.Web)))
+      Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None, via = Some(Provenance.Web)))
     )
     assertEquals(
       QueueView.validateAdd(
@@ -694,7 +695,7 @@ class ToolsSuite extends munit.FunSuite:
           QueueItem.Text("x"),
           Some(QueueItem.Topic("Corpus hygiene")),
           reason = Some(Queue.Rationale("because")),
-          via = Some(Queue.Creation.Web)
+          via = Some(Provenance.Web)
         )
       )
     )
@@ -712,7 +713,7 @@ class ToolsSuite extends munit.FunSuite:
           QueueItem.Text("ran the lint"),
           Some(QueueItem.Topic("2026-09-27")),
           reason = None,
-          via = Some(Queue.Creation.Web)
+          via = Some(Provenance.Web)
         )
       )
     )

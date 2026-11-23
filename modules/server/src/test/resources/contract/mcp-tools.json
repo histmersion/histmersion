@@ -2931,8 +2931,8 @@
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
           "$defs" : {
-            "CreatedBy" : {
-              "title" : "CreatedBy",
+            "By" : {
+              "title" : "By",
               "type" : "object",
               "properties" : {
                 "plugin" : {
@@ -2998,7 +2998,7 @@
               "format" : "int32"
             },
             "createdBy" : {
-              "$ref" : "#/$defs/CreatedBy"
+              "$ref" : "#/$defs/By"
             }
           }
         }

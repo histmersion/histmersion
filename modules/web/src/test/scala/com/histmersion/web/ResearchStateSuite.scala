@@ -4,6 +4,7 @@ package web
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.research.OpenWork
 import com.histmersion.api.research.OpenWork.{OpenItem, Terms, Verdict, Who}
+import com.histmersion.api.Provenance
 
 class ResearchStateSuite extends munit.FunSuite:
   private def acquisition(id: Queue.QueueItem.Id, text: Queue.QueueItem.Text, v: Verdict): OpenItem.Acquisition =
@@ -29,7 +30,7 @@ class ResearchStateSuite extends munit.FunSuite:
     assertEquals(ResearchState.acquisitions(state).map(_.item), Vector(Queue.QueueItem.Id(1), Queue.QueueItem.Id(2)))
 
   test("a task's toggle hands it to the other side; a row shows the text's first line"):
-    assertEquals(ResearchState.handedTo(task(Who.Owner)), Queue.Creation.Agents)
-    assertEquals(ResearchState.handedTo(task(Who.Agents)), Queue.Creation.Person)
+    assertEquals(ResearchState.handedTo(task(Who.Owner)), Provenance.Agents)
+    assertEquals(ResearchState.handedTo(task(Who.Agents)), Provenance.Person)
     assertEquals(ResearchState.firstLine(task(Who.Owner).text), "Read the review")
     assertEquals(ResearchState.key(task(Who.Owner)), "task-9")

@@ -17,6 +17,7 @@ import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
+import com.histmersion.api.Provenance
 
 final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckService):
 
@@ -82,7 +83,7 @@ final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckServi
         OpenItem.Task(
           i.id,
           i.text,
-          if i.actor.contains(Queue.Creation.Agents) then Who.Agents else Who.Owner,
+          if i.actor.contains(Provenance.Agents) then Who.Agents else Who.Owner,
           i.creator,
           i.goal
         )
