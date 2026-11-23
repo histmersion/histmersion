@@ -92,6 +92,8 @@ final private[maplibre] class GlPointTiles(
     listeners += f
     () => { val _ = listeners -= f }
 
+  def notifying: Boolean = queued
+
   def features: Seq[TilePointFeature] =
     if template.isEmpty || gl.getSource(sourceId).isEmpty then Nil
     else

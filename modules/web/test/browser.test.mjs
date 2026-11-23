@@ -3236,6 +3236,7 @@ test('the map neither refetches nor rebuilds when the filters fold or the sideba
     await quiet(page, 800);
     await page.waitForFunction(() => !document.querySelector('#count.is-loading'));
     await page.waitForTimeout(500);
+    await page.waitForFunction(() => window.__testMap.markersSettled());
     const asked = [];
     page.on('request', r => asked.push(new URL(r.url())));
     const tilesBefore = new Set(tiles.map(u => u.href));
@@ -3277,6 +3278,7 @@ test('the map neither refetches nor rebuilds when the filters fold or the sideba
     });
     await quiet(page, 800);
     await page.waitForTimeout(800);
+    await page.waitForFunction(() => window.__testMap.markersSettled());
     const last = await markersInView(page);
     const after = await page.evaluate(() => ({ calls: { ...window.__glCalls }, centre: window.__testMap.getCenter(),
       zoom: window.__testMap.getZoom(), size: window.__testMap.getSize(), resizes: window.__testMap.resizes?.() ?? 0 }));

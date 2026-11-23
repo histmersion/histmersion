@@ -343,6 +343,11 @@ object MapHandle:
               .sum
       ): js.Function1[js.UndefOr[js.Array[String]], Int],
       points = (() => MapView.dots.size.value): js.Function0[Int],
+      markersSettled = (
+          () =>
+            s.isDrawn && !MapView.dots.busy &&
+              !List(MapView.sitesLayer, MapView.mediaLayer, EventMarkers.layer).exists(_.notifying)
+      ): js.Function0[Boolean],
       clusterAnimations = (() => MapView.dots.animations.value): js.Function0[Int],
       /** What each tiled layer shows: `{items, cells, counted}` — its items drawn as themselves, the cells of its
         * crowded tiles, and the items those cells count.

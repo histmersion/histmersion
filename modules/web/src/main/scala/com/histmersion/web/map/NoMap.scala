@@ -34,6 +34,7 @@ object NoMap:
     def features: Seq[TilePointFeature] = Nil
     def onChange(f: () => Unit): Subscription = new Subscription { def cancel(): Unit = () }
     def loaded: Boolean = true
+    def notifying: Boolean = false
 
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
   def message(why: Problem): (MessageText, MessageText) =
