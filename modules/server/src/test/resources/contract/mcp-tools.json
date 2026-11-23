@@ -655,7 +655,16 @@
                   "type" : "string"
                 },
                 "status" : {
-                  "type" : "string"
+                  "type" : "string",
+                  "enum" : [
+                    "foundational",
+                    "current",
+                    "contested",
+                    "superseded",
+                    "debunked",
+                    "retracted",
+                    "unassessed"
+                  ]
                 },
                 "topics" : {
                   "type" : "array",
@@ -779,7 +788,21 @@
                   "type" : "string"
                 },
                 "kind" : {
-                  "type" : "string"
+                  "type" : "string",
+                  "enum" : [
+                    "references",
+                    "challenges",
+                    "refutes",
+                    "updates",
+                    "superseded_by",
+                    "supersedes",
+                    "confirms",
+                    "cites",
+                    "foundational_for",
+                    "compilation_of",
+                    "review_of",
+                    "verifies"
+                  ]
                 },
                 "src" : {
                   "type" : "string"
@@ -882,7 +905,16 @@
                   "type" : "string"
                 },
                 "status" : {
-                  "type" : "string"
+                  "type" : "string",
+                  "enum" : [
+                    "foundational",
+                    "current",
+                    "contested",
+                    "superseded",
+                    "debunked",
+                    "retracted",
+                    "unassessed"
+                  ]
                 },
                 "provenance" : {
                   "type" : "string"
@@ -893,7 +925,14 @@
                 "clear" : {
                   "type" : "array",
                   "items" : {
-                    "type" : "string"
+                    "type" : "string",
+                    "enum" : [
+                      "year",
+                      "venue",
+                      "doi",
+                      "provenance",
+                      "calibreId"
+                    ]
                   }
                 }
               }
@@ -1041,7 +1080,21 @@
                   "type" : "string"
                 },
                 "kind" : {
-                  "type" : "string"
+                  "type" : "string",
+                  "enum" : [
+                    "references",
+                    "challenges",
+                    "refutes",
+                    "updates",
+                    "superseded_by",
+                    "supersedes",
+                    "confirms",
+                    "cites",
+                    "foundational_for",
+                    "compilation_of",
+                    "review_of",
+                    "verifies"
+                  ]
                 },
                 "src" : {
                   "type" : "string"
@@ -1642,7 +1695,13 @@
               "properties" : {
                 "op" : {
                   "description" : "replace | insertAfter | insertBefore | delete",
-                  "type" : "string"
+                  "type" : "string",
+                  "enum" : [
+                    "replace",
+                    "insertAfter",
+                    "insertBefore",
+                    "delete"
+                  ]
                 },
                 "anchor" : {
                   "description" : "Text copied EXACTLY from the current body (a sentence, or enough words to occur only once); edits apply in order, so an anchor is looked up in the text the earlier edits produced",
@@ -2856,7 +2915,12 @@
             },
             "field" : {
               "description" : "What `text` is: body (an article body, the default), summary or notes",
-              "type" : "string"
+              "type" : "string",
+              "enum" : [
+                "body",
+                "summary",
+                "notes"
+              ]
             }
           }
         }

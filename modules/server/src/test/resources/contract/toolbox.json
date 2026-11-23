@@ -301,7 +301,13 @@
             "properties" : {
               "op" : {
                 "description" : "replace | insertAfter | insertBefore | delete",
-                "type" : "string"
+                "type" : "string",
+                "enum" : [
+                  "replace",
+                  "insertAfter",
+                  "insertBefore",
+                  "delete"
+                ]
               },
               "anchor" : {
                 "description" : "Text copied EXACTLY from the current body (a sentence, or enough words to occur only once); edits apply in order, so an anchor is looked up in the text the earlier edits produced",
@@ -560,7 +566,13 @@
             "properties" : {
               "op" : {
                 "description" : "replace | insertAfter | insertBefore | delete",
-                "type" : "string"
+                "type" : "string",
+                "enum" : [
+                  "replace",
+                  "insertAfter",
+                  "insertBefore",
+                  "delete"
+                ]
               },
               "anchor" : {
                 "description" : "Text copied EXACTLY from the current body (a sentence, or enough words to occur only once); edits apply in order, so an anchor is looked up in the text the earlier edits produced",

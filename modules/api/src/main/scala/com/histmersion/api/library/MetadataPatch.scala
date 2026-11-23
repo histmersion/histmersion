@@ -7,19 +7,20 @@ import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
+import sttp.tapir.{Schema, SchemaType, Validator}
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.MetadataPatch.absentOnly
 
 final case class MetadataPatch(
-    title: Option[Title] = None,
-    authors: Option[List[AuthorName]] = None,
+    @Schema.annotations.customise(absentOnly) title: Option[Title] = None,
+    @Schema.annotations.customise(absentOnly) authors: Option[List[AuthorName]] = None,
     year: Option[Year] = None,
     venue: Option[Source.Venue] = None,
     doi: Option[Doi] = None,
-    status: Option[Source.Status] = None,
+    @Schema.annotations.customise(absentOnly) status: Option[Source.Status] = None,
     provenance: Option[MetadataPatch.Provenance] = None,
     calibreId: Option[Source.CalibreId] = None,
     clear: List[MetadataField] = Nil
@@ -29,6 +30,35 @@ final case class MetadataPatch(
 object MetadataPatch:
 
   export Source.Provenance
+
+  val absentOnly: Schema[?] => Schema[?] = field =>
+    field.schemaType match
+      case SchemaType.SOption(element) =>
+        Schema[Any](
+          element.schemaType.asInstanceOf[SchemaType[Any]],
+          element.name,
+          isOptional = true,
+          element.description,
+          None,
+          element.format,
+          element.encodedExample,
+          element.deprecated,
+          element.hidden,
+          absentOr(element.validator),
+          element.attributes
+        )
+      case _ => field
+
+  private def absentOr(validator: Validator[?]): Validator[Any] = validator match
+    case e: Validator.Enumeration[?] =>
+      val values = e.possibleValues.asInstanceOf[List[Any]]
+      val encode = e.encode.asInstanceOf[Option[Any => Option[Any]]]
+      Validator.Enumeration[Any](
+        None :: values.map(Some(_)),
+        Some((value: Any) => value.asInstanceOf[Option[Any]].flatMap(v => encode.fold(Some(v))(_(v)))),
+        e.name
+      )
+    case _ => Validator.pass[Any]
 
   private val derived: JsonCodec[MetadataPatch] = JsonCodec.derived[MetadataPatch]
 
