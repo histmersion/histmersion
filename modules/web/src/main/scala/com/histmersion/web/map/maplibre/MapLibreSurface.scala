@@ -59,9 +59,9 @@ final class MapLibreSurface(
     Option(el.querySelector(s".maplibregl-ctrl-$c")).foreach(_.classList.add("hd-map-corner"))
   )
   gl.on("style.load", (_: GlEvent) => { shapeSets.values.foreach(_.restore()); pointSets.values.foreach(_.restore()) })
-  // a tile that could not be read (offline, refused, outside the extract) is not an error of the page:
-  // the map draws without it (MapLibre would otherwise print every one to the console)
-  gl.on("error", (_: GlEvent) => ())
+  // a tile not read (offline, refused, outside the extract) is no page error, nor printed: the map is drawn without it
+  // in a frame asked for here (MapLibre asks none; one refused after the last frame left the map never idle)
+  gl.on("error", (e: GlEvent) => if e.tile.isDefined then gl.triggerRepaint())
 
   // ── the view ─────────────────────────────────────────────────────────────────────────────────
 

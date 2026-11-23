@@ -2554,6 +2554,37 @@ test('the page prints no warning of its own while the map is used (WebGL probing
   }, { source: 'local' });
 });
 
+test('the map is drawn once the last tiles of the view are refused after its last frame', async () => {
+  await withPage({ width: 1440, height: 900 }, async page => {
+    const held = [];
+    let refuse = false, firstHeld;
+    const someHeld = new Promise(r => { firstHeld = r; });
+    await page.route('**/*', r => {
+      if (new URL(r.request().url()).origin === origin) return r.fallback();
+      if (refuse) return r.abort();
+      held.push(r);
+      firstHeld();
+    });
+    let inFlight = 0, lastAnswer = Date.now();
+    const ours = r => new URL(r.url()).origin === origin;
+    page.on('request', r => { if (ours(r)) inFlight++; });
+    const answered = r => { if (ours(r)) { inFlight--; lastAnswer = Date.now(); } };
+    page.on('requestfinished', answered);
+    page.on('requestfailed', answered);
+    await page.evaluate(() => window.__testMap.setView([38.5, 23.5], 6, { animate: false }));
+    await someHeld;
+    const t0 = Date.now();
+    while (inFlight > 0 || Date.now() - lastAnswer < 1000 || await page.evaluate(() => window.__testMap.isMoving())) {
+      assert.ok(Date.now() - t0 < 30000, `the page's own requests answered (${inFlight} in flight)`);
+      await page.waitForTimeout(100);
+    }
+    assert.equal(await page.evaluate(() => window.__testMap.isDrawn()), false, 'not drawn while tiles of the view are out');
+    refuse = true;
+    await Promise.all(held.map(r => r.abort()));
+    await page.waitForFunction(() => window.__testMap.isDrawn(), null, { timeout: 15000 });
+  }, { source: 'online' });
+});
+
 test('map options: names off and on, their language, contours only where Physical has the detailed relief; kept across a reload', async t => {
   const status = await (await fetch(new URL('/api/basemap', baseURL))).json();
   if (!status.available) { t.skip('the test server has no extract (HISTMERSION_BASEMAP_DIR=modules/web/test/fixtures/basemap)'); return; }

@@ -7,13 +7,14 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.*
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** A map event: the map, and for a pointer event where it happened. */
+/** A map event: the map, for a pointer event where it happened, and for an error of a tile that tile. */
 @js.native
 trait GlEvent extends js.Object:
   val `type`: GlEvent.Type = js.native
   val point: js.UndefOr[ScreenPoint] = js.native
   val lngLat: js.UndefOr[LngLat] = js.native
   val originalEvent: js.UndefOr[dom.Event] = js.native
+  val tile: js.UndefOr[js.Object] = js.native
 
 object GlEvent:
   type Type = Type.T
