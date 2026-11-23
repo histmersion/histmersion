@@ -93,10 +93,10 @@ object GuidelineInventory {
     "G3misplaced" -> "HEURISTIC: a def in a standalone object (no class/trait/enum/type of that name beside it) whose first explicit parameter has a project type",
     "G9prefix" -> "type `<Entity><Property>` while a top-level (or same-owner) type `<Entity>` exists in the same module",
     "G9prefixRole" -> "as G9prefix, but the suffix is a role word (Suite, Repo, Service, Row, Markdown, ...); a test-scope type named as a test suite (…Suite, …Spec, …Test, …Tests) is none: it is named for its subject",
-    "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"...\")` / `X(f\"...\")` whose every splice is a literal (nothing to validate). An interpolation that splices anything else is built from that value and counts as it would (decision 2026-11-15: `X(s\"$y\")` is `X(y)`): a newtype or plain value spliced is a construction (`;interpolation`), a `.value` spliced is the unwrap alone (as `X(y.value)`); a refined newtype built from any interpolation is one. In test scope (owner 2026-11-19, decision 4) a construction through any door whose every argument is a constant as Iron's compile-time `apply` reads one (a literal, an s\"\"/f\"\" of literals, `+` of constants, a val or parameterless def of constant type) is no finding: a fixture built from constants",
+    "G44" -> "Iron `.value`, or a newtype built with apply/applyUnsafe/assume/option/either, outside the newtype's companion and outside boundary files. Literal constructors are no finding: `X(\"lit\")`, `X(-3300)`, and, for an unconstrained (Pure) newtype only, `X(s\"...\")` / `X(f\"...\")` whose every splice is a literal (nothing to validate). An interpolation that splices anything else is built from that value and counts as it would (decision 2026-11-15: `X(s\"$y\")` is `X(y)`): a newtype or plain value spliced is a construction (`;interpolation`), a `.value` spliced is the unwrap alone (as `X(y.value)`); a refined newtype built from any interpolation is one. In test scope (owner 2026-11-19, decision 4) a construction through any door whose every argument is a constant as Iron's compile-time `apply` reads one (a literal, an s\"\"/f\"\" of literals, `+` of constants, a val or parameterless def of constant type) is no finding: a fixture built from constants. A newtype spliced into s\"\"/f\"\"/raw\"\" outside its companion is unwrapped by its toString and counts as `splice:X` (row 13), unless the interpolation is directly a construction's argument (counted as that construction)",
     "G44conversion" -> "the same inside a *Controller(s)/*Routes file where the value feeds a domain newtype constructor/parse directly, or the construction itself",
     "G44plaindef" -> "a public def with a String/Int/Long/Double/Boolean parameter that some call site feeds with `.value` of a newtype (reported at the def)",
-    "G45boundary" -> "hand `.value` inside a boundaries.tsv file (G45: lift type classes instead); building a newtype from outside data there is the boundary's job, policed by G68, and no finding (owner 2026-11-19)",
+    "G45boundary" -> "hand `.value`, or a newtype spliced into s\"\"/f\"\"/raw\"\" (`splice:X`), inside a boundaries.tsv file (G45: lift type classes instead); building a newtype from outside data there is the boundary's job, policed by G68, and no finding (owner 2026-11-19)",
     "G46" -> "`type X = a.B.C` immediately followed by `val X: a.B.C.type = a.B.C`",
     "G47root" -> "each `_root_` occurrence",
     "G47fqn" -> "a reference spelled `com.histmersion.` (or `_root_.com.histmersion.`) inside a com.histmersion file, outside imports/package clauses; same-package or other-package",
@@ -506,6 +506,16 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
           else if (isController) report("G44conversion", s, detail)
           else report("G44", s, detail)
           if (Set("option", "either", "optionAll", "eitherAll")(n.value) && newtypeParents(obj).exists(_._3.value == pure)) report("silentPure", s, s"${obj.displayName}.${n.value}")
+        }
+      case i: Term.Interpolate if Set("s", "f", "raw")(i.prefix.value) && !inImport(i) && !(i.parent.flatMap(_.parent) match {
+            case Some(a: Term.Apply) => a.argClause.values.exists(_ eq i) && constructionOf(a.fun).nonEmpty
+            case _ => false
+          }) =>
+        i.args.map { case Term.Block(List(only: Term)) => only; case t => t }.foreach { arg =>
+          termType(arg).flatMap(newtypeOf).filterNot(nt => allowedInCompanion(arg, Some(nt))).foreach { nt =>
+            if (boundary) report("G45boundary", arg, s"splice:${nt.displayName};${boundaryKinds(path)}")
+            else report("G44", arg, s"splice:${nt.displayName}")
+          }
         }
     }
 

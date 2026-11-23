@@ -21,6 +21,7 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	8	va
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	9	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	10	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	11	value:Problem
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	12	splice:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Branching.scala	13	value:Problem
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	13	construct:Citekey.applyUnsafe;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	14	construct:Year.apply;expr
@@ -33,6 +34,7 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	25	va
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	26	construct:Shelf.assume;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	27	construct:Problem.assume;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Problems.scala	28	construct:Problem.applyUnsafe;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	splice:Title
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey;G49:compare:compare-==
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey;G49:lambda:find
@@ -58,6 +60,7 @@ G44conversion	server	modules/server/src/main/scala/com/histmersion/server/Source
 G44conversion	server	modules/server/src/main/scala/com/histmersion/server/SourcesControllers.scala	9	construct:Slug.either;expr
 G44plaindef	core	modules/core/src/main/scala/com/histmersion/domain/Text.scala	5	shout(text:String<-Citekey);calls=1
 G45boundary	core	modules/core/src/main/scala/com/histmersion/util/problem/Edge.scala	6	value:Reported;render
+G45boundary	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	splice:Citekey;sql
 G45boundary	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	value:Citekey;sql
 G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	5	Citekey=com/histmersion/domain/Policy$package.Citekey
 G46	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	11	Key=com/histmersion/domain/Policy$package.Citekey;renamed
