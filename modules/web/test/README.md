@@ -94,8 +94,13 @@ figures.
 **In CI the budgets compare a change with its merge base** (owner decision 2026-11-22). GitHub's macOS runner is a
 shared Apple M1 virtual machine (3 cores, WebGL "Apple Paravirtual device", about 8 frames a second): no user's
 device, so `macos-budgets` holds no absolute limit there. It builds and starts the merge base's server beside this
-change's, runs the budget tests against each three times, alternating, each side with its own test code (the merge
-base's from its worktree, `--base-web`) (`budgets-ab.mjs`; `HISTMERSION_BUDGETS_RECORD`
+change's, waits until neither server runs or queues a job (a fresh database imports the bundled gazetteer for about
+five minutes after start: measured during it, the first round of both sides ran beside two imports), runs the budget
+tests against each three times, alternating, each side with its own test code (the merge base's from its worktree,
+`--base-web`), and when a figure comes out past the noise, two more rounds of each side decide (`--confirm 2`: three
+runs of one side above three of the other happen by chance one time in twenty, five above five one time in 252; a
+longest task is 0 on a run without any long task and 50 ms or more on one with one, so such a figure separates by
+chance more often than its spread suggests) (`budgets-ab.mjs`; `HISTMERSION_BUDGETS_RECORD`
 makes `perf.test.mjs` write every figure instead of holding it), and compares figure by figure (`budgets-compare.mjs`,
 `budget-figures.mjs`): a main-thread figure is a regression when every run of the change is worse than every run of
 the base and the medians differ by more than the runs' own spread (the larger of the two sides') and a floor (20 ms;

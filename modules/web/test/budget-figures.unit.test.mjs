@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { changedMeasurement, compareFigure, compareRuns, floorOf, frameBound, importClosure, leaf, median } from './budget-figures.mjs';
+import { busyJobs, changedMeasurement, compareFigure, compareRuns, floorOf, frameBound, importClosure, leaf, median } from './budget-figures.mjs';
 
 test('median of an odd and an even count', () => {
   assert.equal(median([3, 1, 2]), 2);
@@ -60,4 +60,11 @@ test('the measuring code is the perf test and every module it imports, compared 
   assert.deepEqual(importClosure(read(pr), 'perf.test.mjs'), ['markers.mjs', 'perf-lib.mjs', 'perf.test.mjs']);
   assert.deepEqual(changedMeasurement(read(base), read(pr), 'perf.test.mjs'), ['markers.mjs', 'perf-lib.mjs', 'perf.test.mjs']);
   assert.deepEqual(changedMeasurement(read(base), read(base), 'perf.test.mjs'), []);
+});
+
+test('a server is busy while a job runs or waits: the start-up import holds the runs back, a finished job does not', () => {
+  assert.deepEqual(busyJobs([{ kind: 'init', status: 'running', progress: 'gazetteer: 03-pleiades.json (3/11)' },
+    { kind: 'ingest', status: 'queued' }, { kind: 'init', status: 'done', progress: 'gazetteer: 45965 place(s)' },
+    { kind: 'ingest', status: 'failed' }]), ['init (gazetteer: 03-pleiades.json (3/11))', 'ingest']);
+  assert.deepEqual(busyJobs([]), []);
 });

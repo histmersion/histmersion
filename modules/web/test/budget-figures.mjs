@@ -61,3 +61,6 @@ export function changedMeasurement(readBase, readPr, entry) {
   const files = [...new Set([...importClosure(readBase, entry), ...importClosure(readPr, entry)])].sort();
   return files.filter(f => readBase(f) !== readPr(f));
 }
+
+export const busyJobs = jobs => jobs.filter(j => j.status === 'running' || j.status === 'queued')
+  .map(j => `${j.kind}${j.progress ? ` (${j.progress})` : ''}`);
