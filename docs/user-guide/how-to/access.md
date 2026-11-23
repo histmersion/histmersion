@@ -77,6 +77,43 @@ histmersion {
 List a wildcard (`0.0.0.0` or `::`) alone: it already listens on every address, so the server does not
 start when `server.host` names another address beside it (below). List each address once, too.
 
+### HTTPS on your tailnet with `tailscale serve`
+
+`tailscale serve` gives the server an HTTPS address on your tailnet, with a certificate for this
+computer's `ts.net` name, and forwards each request to the server on loopback. Keep the server on
+loopback and run (add `--bg` to keep it serving after the command exits):
+
+```sh
+tailscale serve --https=8443 http://127.0.0.1:8000
+```
+
+Then declare loopback as the proxy and trust the tailnet:
+
+```hocon
+histmersion {
+  server {
+    host = ["127.0.0.1"]
+    public-url = "https://mymac.tail1234.ts.net:8443"            # this computer's ts.net name and the port
+  }
+  auth {
+    trusted-networks = ["127.0.0.0/8", "::1/128", "100.64.0.0/10", "fd7a:115c:a1e0::/48"]
+    proxy-networks = ["127.0.0.0/8", "::1/128"]                   # tailscale serve connects from loopback
+    hosts = ["mymac.tail1234.ts.net"]
+  }
+}
+```
+
+`tailscale serve` marks every request it forwards with `X-Forwarded-For`, the tailnet address of the
+device that connected. Because loopback is a declared proxy, the server judges that address, not
+loopback's: a device in `100.64.0.0/10` or `fd7a:115c:a1e0::/48` is trusted and needs no key, over
+HTTPS. The `histmersion` command and a browser on this computer still reach `http://localhost:8000`
+directly, trusted as before. `public-url` names the HTTPS address with its port, so the pages served
+there may send changes (the port is part of a page's origin); no key is needed for any of it.
+
+Trusting the tailnet trusts **every device on it** (see the tailnet setup above). The recipe is for
+`tailscale serve`, which only your tailnet reaches; Tailscale Funnel puts the same port on the public
+internet, so do not turn it on for this port without checking what it reports.
+
 ### An institution's or a public server
 
 Trust no network: every request authenticates. Put the server behind a reverse proxy on the same
@@ -99,12 +136,14 @@ histmersion {
 }
 ```
 
-### Behind a reverse proxy on this computer
+### A reverse proxy on this computer
 
-A proxy on the same machine connects from `127.0.0.1` (or `::1`). If loopback stays trusted (so that
-your own `histmersion` command needs no key), **declare the proxy** by listing loopback in
-`auth.proxy-networks`, and make it mark every request it forwards with `X-Forwarded-For` (Caddy does by
-default; in nginx, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`):
+A proxy on the same machine (Caddy, nginx) connects from `127.0.0.1` (or `::1`). If loopback stays
+trusted (so that your own `histmersion` command needs no key), **declare the proxy** by listing loopback
+in `auth.proxy-networks`, make it mark every request it forwards with `X-Forwarded-For` (Caddy does by
+default; in nginx, `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`), and list the
+networks its clients come from, which are judged as if they connected directly — here everyone, with
+the key:
 
 ```hocon
 histmersion {
@@ -114,16 +153,20 @@ histmersion {
   }
   auth {
     api-key = "…"
+    authenticated-networks = ["0.0.0.0/0", "::/0"]
     proxy-networks = ["127.0.0.0/8", "::1/128"]
     hosts = ["histmersion.example.edu"]
   }
 }
 ```
 
+Without `authenticated-networks`, a client the proxy reports from the internet would be in no listed
+network, and refused (403) as a direct connection from it would be.
+
 ### Behind a load balancer on another computer
 
 `auth.proxy-networks` names where a proxy connects from, wherever it runs. A load balancer at
-`192.168.1.2` in front of a server listening on `192.168.1.5`:
+`192.168.1.2` in front of a server listening on `192.168.1.5`, its clients anywhere, with the key:
 
 ```hocon
 histmersion {
@@ -134,8 +177,7 @@ histmersion {
   auth {
     api-key = "…"
     trusted-networks = []
-    authenticated-networks = ["192.168.1.2/32"]
-    refused-networks = ["0.0.0.0/0"]
+    authenticated-networks = ["0.0.0.0/0"]
     proxy-networks = ["192.168.1.2/32"]
     hosts = ["histmersion.example.edu"]
   }
@@ -146,21 +188,51 @@ A proxy network lets nothing in by itself: the load balancer's address must also
 `auth.trusted-networks` or `auth.authenticated-networks`, as here, or its requests are refused like any
 other unlisted network's. Listing it in both is no contradiction (a proxy network may overlap any list);
 the network lists say what a request gets, the proxy networks only where a forwarded one may come from.
+A network listed for the clients the balancer reports admits direct connections from it as well, so
+keep `192.168.1.5` out of their reach (a firewall) when only the balancer should connect.
 
-### What counts as forwarded
+### Behind a reverse proxy
 
 A request that carries any of `Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`,
-`X-Forwarded-Proto`, `X-Real-IP` or `Via` came through a proxy, and its address is the proxy's, not
-the client's. From a peer in `auth.proxy-networks`, the server never trusts such a request, whatever its
-address: it is held to the rules of an authenticated network instead, so it needs the key. A proxy that
-sends none of these headers would hand every client your trust, which is why the server will not start
-in front of one it has not been told about (below). Alternatively take loopback out of
-`auth.trusted-networks` and authenticate everyone.
+`X-Forwarded-Proto`, `X-Real-IP` or `Via` came through a proxy, and its connection's address is the
+proxy's, not the client's.
 
-From any other peer — every peer while `auth.proxy-networks` is empty, the default — a request that
-carries one of these headers is refused (**403**) whatever else it carries, even `/api/health`: no proxy
-is supposed to be there, so something unexpected forwarded it. List the proxy's network to let its
-requests in with the key.
+**From a peer in `auth.proxy-networks`** (a declared proxy), the server reads the client's address
+from what the proxy reports and judges it **exactly as it would judge a direct connection from that
+address**: in a trusted network, it is trusted with no key; in an authenticated one, it needs the key;
+in a refused one, or in none, it is refused (403). `Host`, the page a change comes from, and
+`trusted-as` are checked as for any request.
+
+- **Where the address comes from.** `Forwarded`'s `for=` (RFC 7239) first, else `X-Forwarded-For`,
+  else `X-Real-IP`. Several lines of one header are read as one list, in order. Ports are dropped
+  (`192.0.2.60:5678`, `"[2001:db8::1]:4711"`), and an IPv4-mapped address (`::ffff:127.0.0.1`) is its
+  IPv4 address.
+- **Which entry is the client.** The list is walked from the right — the end the nearest proxy
+  wrote — past every address that is itself in `auth.proxy-networks`; the first address that is not
+  is the client. Entries further left are never read, so a client cannot choose its own address by
+  sending the header itself. A list of proxies only names its leftmost entry: a client on the proxy's
+  own computer.
+- **Every header must agree.** When more than one of those three headers is present, each must name
+  the same client, or a declared proxy. A proxy that writes `X-Forwarded-For` but passes a client's own
+  `Forwarded` on untouched (or the other way round) therefore cannot be tricked into vouching for
+  another address.
+- **Fail closed.** When the proxy reports no usable address — none of the three headers, `for=unknown`
+  or an obfuscated `for=_hidden` where the client would be, an entry that is no address, an empty one,
+  more than 16 entries, or headers that disagree — the request is held to the rules of an authenticated
+  network: it needs the key, and never gets trust. That is what every forwarded request got before the
+  proxy's report was read, so a proxy that sends only `Via` or `X-Forwarded-Proto` keeps working with
+  the key.
+
+The proxy must mark every request it forwards. A proxy that sends none of these headers would hand
+every client loopback's trust, which is why the server will not start in front of one it has not been
+told about (below). Alternatively take loopback out of `auth.trusted-networks` and authenticate
+everyone. `X-Forwarded-Proto` and `X-Forwarded-Host` mark a request as forwarded and change nothing
+else: the server reads neither.
+
+**From any other peer** — every peer while `auth.proxy-networks` is empty, the default — a request that
+carries one of these headers is refused (**403**, `UndeclaredProxy`) whatever else it carries, even
+`/api/health`: no proxy is supposed to be there, so something unexpected forwarded it, and what it
+reports is not believed. List the proxy's network to let its requests in.
 
 Signing in with personal accounts (and with an institution's single sign-on) is planned; until then
 everyone who authenticates uses the one API key.
@@ -203,8 +275,11 @@ second listener cannot bind an address the first already holds — list each add
 ```
 
 It also does not start when `server.public-url` is `https`, loopback is trusted, and no proxy network
-covers loopback: HTTPS means a proxy serves the page, and it may well connect from loopback. A proxy
-network elsewhere (a load balancer) does not count: take loopback out of the trusted networks then.
+covers loopback: HTTPS means a proxy serves the page, and it may well connect from loopback. Undeclared,
+such a proxy's requests would either be refused (it marks them) or all be trusted as loopback (it does
+not); declared, the address each one reports decides. A proxy network elsewhere (a load balancer) does
+not count: take loopback out of the trusted networks then. The setups above that serve HTTPS from this
+computer (`tailscale serve`, a reverse proxy) declare loopback, so they start.
 
 ```text
 Histmersion does not start: server.public-url = 'https://histmersion.example.edu' is https, so a reverse
@@ -212,6 +287,9 @@ proxy serves it, and auth.trusted-networks trusts loopback, where a proxy on thi
 declare the proxy by listing loopback in auth.proxy-networks (what it forwards then needs auth.api-key),
 or take loopback out of auth.trusted-networks
 ```
+
+What a declared proxy forwards needs `auth.api-key` unless the client address it reports is trusted
+(see *Behind a reverse proxy*).
 
 A network named in two lists (the same CIDR as trusted and refused, say) stops the start as well.
 
@@ -245,7 +323,8 @@ From an authenticated network, without the key, the server answers only:
 
 Everything else — the sources, the settings, the backups, the agents' state and transcripts — answers
 **401** until the request carries `Authorization: Bearer <key>`. A refused network gets **403** even for
-these, and so does a request a proxy forwarded from a peer in no proxy network.
+these, and so does a request a proxy forwarded from a peer in no proxy network. A request a declared
+proxy forwarded is answered as its reported client's network says.
 
 ## Sending the key
 

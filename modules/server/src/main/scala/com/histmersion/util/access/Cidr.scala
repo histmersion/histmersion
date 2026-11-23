@@ -62,10 +62,19 @@ object Cidr:
     case Colons() if !text.contains('%') => Try(InetAddress.getByName(text)).toOption
     case _                               => None
 
-  /** The family of `address` and its number. */
+  /** The family of `address` and its number. An IPv4-mapped IPv6 address (`::ffff:a.b.c.d`) is its IPv4 address,
+    * however the JDK holds it: `InetAddress.getByName` returns the IPv4 address already, `Inet6Address.getByAddress`
+    * keeps the mapped form. [[sameAddress]] compares two addresses by this number.
+    */
   def numbered(address: InetAddress): (Family, BigInt) =
-    val family = if address.isInstanceOf[Inet4Address] then Family.V4 else Family.V6
-    (family, BigInt(1, address.getAddress))
+    val bytes = address.getAddress
+    if address.isInstanceOf[Inet4Address] then (Family.V4, BigInt(1, bytes))
+    else if bytes.startsWith(MappedPrefix) then (Family.V4, BigInt(1, bytes.drop(MappedPrefix.length)))
+    else (Family.V6, BigInt(1, bytes))
+
+  private val MappedPrefix: Array[Byte] = Array.fill[Byte](10)(0) ++ Array[Byte](-1, -1)
+
+  def sameAddress(a: InetAddress, b: InetAddress): Boolean = numbered(a) == numbered(b)
 
   /** An address of `family` written as the JDK writes it. */
   private def render(family: Family, number: BigInt): String =

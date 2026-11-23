@@ -9,13 +9,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   * network in `refusedNetworks` is turned away, and so is one from a network no list names. The longest prefix that
   * holds the peer decides. `proxyNetworks` are the networks a reverse proxy connects from (loopback for one on this
   * machine, a load balancer's network for one elsewhere): a request that carries a proxy's header (`Forwarded`,
-  * `X-Forwarded-*`, `X-Real-IP`, `Via`) from one of them is held to the authenticated rules however its network is
-  * listed; from any other peer (every peer, with the list empty) such a request is refused. A proxy network admits
-  * nothing by itself: its peer must still be in a trusted or an authenticated network. `hosts` are the names, besides
-  * the loopback ones, the bind addresses and the public URL's host, a request may give in its `Host` header; `origins`
-  * the pages, besides this server's own, that may send changes. The server does not start when one of its bind
-  * addresses can be reached from a network these settings leave open, or when its public URL is HTTPS while loopback is
-  * trusted and no proxy network covers it.
+  * `X-Forwarded-*`, `X-Real-IP`, `Via`) from one of them is judged by the client address the proxy reports, as a direct
+  * connection from that address would be, and held to the authenticated rules when it reports none usable; from any
+  * other peer (every peer, with the list empty) such a request is refused. A proxy network admits nothing by itself:
+  * its peer must still be in a trusted or an authenticated network. `hosts` are the names, besides the loopback ones,
+  * the bind addresses and the public URL's host, a request may give in its `Host` header; `origins` the pages, besides
+  * this server's own, that may send changes. The server does not start when one of its bind addresses can be reached
+  * from a network these settings leave open, or when its public URL is HTTPS while loopback is trusted and no proxy
+  * network covers it.
   */
 final case class AuthConfig(
     apiKey: AuthConfig.ApiKey,
