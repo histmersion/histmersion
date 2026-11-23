@@ -4808,9 +4808,11 @@ test('a setting changed in Settings is written into the settings file, read back
     assert.equal(keep.source, 'file');
     // back to the default: the setting leaves the file
     await row.locator('.setting-reset').click();
+    const reset = page.waitForResponse(r => new URL(r.url()).pathname === '/api/settings' && r.request().method() === 'POST');
     await page.locator('.settings-save-btn').first().click();
-    await page.waitForFunction(async () =>
-      (await (await fetch('/api/settings?prefix=backups.keep')).json()).sections[0].fields[0].value == null);
+    assert.equal((await reset).status(), 200, 'the reset is saved');
+    assert.equal(await page.evaluate(async () =>
+      (await (await fetch('/api/settings?prefix=backups.keep')).json()).sections[0].fields[0].value), null);
   });
 });
 
