@@ -368,7 +368,27 @@
   ]
 }
 == put refused: an unknown key
-400 Invalid value for: body (unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges))
+400 {
+  "code" : null,
+  "problems" : [
+    {
+      "case" : "Unparsable",
+      "data" : {
+        "at" : [
+        ],
+        "damage" : {
+          "Unreadable" : {
+            "reported" : "unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges)"
+          }
+        },
+        "format" : "Json",
+        "where" : "body"
+      },
+      "group" : "Invalid",
+      "text" : "the json data at body cannot be read — unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges)"
+    }
+  ]
+}
 == put refused: an edge from another source
 400 {
   "code" : "invalid",

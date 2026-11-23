@@ -649,7 +649,27 @@
   ]
 }
 == put refused: an unknown key
-400 Invalid value for: body (unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons))
+400 {
+  "code" : null,
+  "problems" : [
+    {
+      "case" : "Unparsable",
+      "data" : {
+        "at" : [
+        ],
+        "damage" : {
+          "Unreadable" : {
+            "reported" : "unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons)"
+          }
+        },
+        "format" : "Json",
+        "where" : "body"
+      },
+      "group" : "Invalid",
+      "text" : "the json data at body cannot be read — unknown key 'nope' (one of: title, kind, body, summary, tags, regions, periodStart, periodEnd, filter, reasons)"
+    }
+  ]
+}
 == put refused: a reason for no citekey
 400 {
   "code" : "invalid",
@@ -4234,7 +4254,27 @@ _showing 2–3 of 6 — next: offset=3 — full set: limit=6_
   ]
 }
 == patch zr_harbour: refused: an unknown key
-400 Invalid value for: body (unknown key 'nope' (one of: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons))
+400 {
+  "code" : null,
+  "problems" : [
+    {
+      "case" : "Unparsable",
+      "data" : {
+        "at" : [
+        ],
+        "damage" : {
+          "Unreadable" : {
+            "reported" : "unknown key 'nope' (one of: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons)"
+          }
+        },
+        "format" : "Json",
+        "where" : "body"
+      },
+      "group" : "Invalid",
+      "text" : "the json data at body cannot be read — unknown key 'nope' (one of: title, summary, body, append, section, tags, regions, period, kind, ifUpdatedAt, filter, reasons, critiqueReasons)"
+    }
+  ]
+}
 == patch zr_harbour: refused: a bad kind
 400 {
   "code" : "invalid",
