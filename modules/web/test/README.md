@@ -84,7 +84,7 @@ fanned-out bubble. A spec picks markers by
 the helpers that wait for, hover and click them with the real pointer.
 `test:browser` runs the three files one at a time (`--test-concurrency=1`): side by side they wrote the same
 settings file at once and measured the budgets while two other browsers were busy; the budgets and the soak
-test take ~3 minutes of it (100 soak rounds). In CI (ubuntu-24.04, docs/adr/0028-ci-on-linux-bundles-on-demand.md)
+test take ~3 minutes of it (100 soak rounds). In CI (ubuntu-24.04, docs/adr/0031-ci-on-linux-bundles-on-demand.md)
 the `budgets: …` tests run in their own job (`budgets`, `--test-name-pattern='^budgets: '`), the rest in four
 parallel `browser` jobs (`--test-skip-pattern`, the same pattern). Each of those loads every file with
 `--import ./test/shard-preload.mjs`, which registers only its shard's tests (`HISTMERSION_TEST_SHARD=<i>/<n>`;
