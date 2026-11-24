@@ -231,6 +231,15 @@
     {
       "claim" : "the battle of Zzhill was fought around 1300 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1290,
@@ -246,6 +255,15 @@
     {
       "claim" : "Zzport sent ships to Zzhill",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1290,
@@ -261,6 +279,15 @@
     {
       "claim" : "the Zzwell is of the Zzmarch period",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.7,
       "lon" : 34.9,
       "periodEnd" : -1300,
@@ -282,6 +309,15 @@
       "Doe, Jane"
     ],
     "citekey" : "zzhill1990_battle",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Zzhill\n\n## The battle\n\nThe battle of Zzhill was fought below the walls of Zzhill around 1300 BC; Zzport sent ships.\nZzhill burned soon after, and the battle of Zzhill was remembered in the songs of Zzland.\n\n## The well\n\nThe Zzwell was dug in the time of the Zzmarch kings.\n",
@@ -313,6 +349,15 @@
     {
       "claim" : "ash from Mount Zzvolc fell east of Zzport",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.0,
       "lon" : 36.0,
       "periodEnd" : -1600,
@@ -334,6 +379,15 @@
       "Doe, Jane"
     ],
     "citekey" : "zzvolc2004_ash",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Eruptions\n\nThe eruption of Mount Zzvolc buried the fields east of Zzport in ash. Pumice from the eruption reached Zzhill.\n",
@@ -429,6 +483,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
     {
       "citekey" : "zzhill1990_battle",
@@ -537,6 +600,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -679,6 +751,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -792,6 +873,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -896,6 +986,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1004,6 +1103,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1232,6 +1340,20 @@
       "value" : "\"An eruption, named by a person\""
     }
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : {
+      "definition" : null,
+      "kind" : "code",
+      "model" : null,
+      "provider" : null
+    },
+    "job" : null,
+    "kind" : "automated",
+    "plugin" : "events-gvp",
+    "surface" : "internal",
+    "workflow" : "event-import"
+  },
   "datings" : [
   ],
   "edges" : [

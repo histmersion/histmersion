@@ -34,6 +34,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unknown",
+    "plugin" : null,
+    "surface" : null,
+    "workflow" : null
+  },
   "datings" : [
     {
       "citekey" : "zzhill1990_battle",
@@ -189,6 +198,15 @@
       "value" : "\"An eruption, as home names it\""
     }
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unknown",
+    "plugin" : null,
+    "surface" : null,
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -334,6 +352,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -447,6 +474,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -533,6 +569,15 @@
       "Roe, Rick"
     ],
     "citekey" : "zzpaira2001_home",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zz.pair.a",
     "notes" : null,
     "ocrMarkdown" : "# The Zzwall\n\nThe walls of the citadel stood until the fire.\n",
@@ -567,6 +612,15 @@
       "Roe, Rick"
     ],
     "citekey" : "zzpairb2001_home",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zz.pair.b",
     "notes" : null,
     "ocrMarkdown" : "# The Zzgate\n\nThe gate faced the sea. A tower guarded the road.\n",
@@ -660,6 +714,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
     {
       "citekey" : "zzhill1990_battle",
@@ -815,6 +878,20 @@
       "value" : "\"An eruption, as cat names it\""
     }
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : {
+      "definition" : null,
+      "kind" : "code",
+      "model" : null,
+      "provider" : null
+    },
+    "job" : null,
+    "kind" : "automated",
+    "plugin" : "events-gvp",
+    "surface" : "internal",
+    "workflow" : "event-import"
+  },
   "datings" : [
   ],
   "edges" : [
@@ -959,6 +1036,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1098,6 +1184,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1211,6 +1306,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1297,6 +1401,15 @@
       "Roe, Rick"
     ],
     "citekey" : "zzpaira2001_cat",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zz.pair.a",
     "notes" : null,
     "ocrMarkdown" : "# The Zzwall\n\nOf old, the walls of the citadel stood until the fire. Smoke rose.\n",
@@ -1331,6 +1444,15 @@
       "Roe, Rick"
     ],
     "citekey" : "zzpairb2001_cat",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zz.pair.b",
     "notes" : null,
     "ocrMarkdown" : "# The Zzgate\n\nWe read that the gate faced the sea.\n",

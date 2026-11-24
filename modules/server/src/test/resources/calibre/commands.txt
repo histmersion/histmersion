@@ -736,7 +736,16 @@ exit 0
     "updatedAt" : "<time>",
     "provenance" : "calibre",
     "uid" : "<uuid>",
-    "origin" : "<uuid>"
+    "origin" : "<uuid>",
+    "creator" : {
+      "kind" : "manual",
+      "surface" : "cli",
+      "plugin" : null,
+      "workflow" : null,
+      "agent" : null,
+      "job" : null
+    },
+    "createdAt" : "2026-11-24"
   },
   "findings" : [
   ],

@@ -21,6 +21,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
+import com.histmersion.api.automation.Creation
 
 object Agents:
   type Action = Action.T
@@ -489,7 +490,8 @@ object Agents:
       managerId: Option[Managers.ManagerInfo.Id] = None,
       managerItem: Option[Managers.ManagerItem.Id] = None,
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None,
-      pausedFor: Option[PauseReason] = None
+      pausedFor: Option[PauseReason] = None,
+      creator: Option[Creation] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema,
@@ -814,7 +816,8 @@ object Agents:
       article: Option[Goal.Plans.ArticleDraft] = None,
       filter: Option[Article.Plans.FilterProposal] = None,
       articles: Option[Article.Plans.ArticlePlan] = None,
-      hintEffect: Option[Managers.HintProposal] = None
+      hintEffect: Option[Managers.HintProposal] = None,
+      creator: Option[Creation] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema,

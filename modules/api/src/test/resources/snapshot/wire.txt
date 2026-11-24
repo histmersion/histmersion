@@ -313,7 +313,9 @@ _`zq_tell` · settlement · 2000 BCE–1200 BCE · 3 finding(s) · as of 1500 BC
   "leads" : [
   ],
   "corrections" : [
-  ]
+  ],
+  "creator" : null,
+  "createdAt" : null
 }
 
 ## place json
@@ -390,7 +392,9 @@ _`zq_tell` · settlement · 2000 BCE–1200 BCE · 3 finding(s) · as of 1500 BC
     ],
     "registers" : [
     ]
-  }
+  },
+  "creator" : null,
+  "createdAt" : null
 }
 
 ## resolved source json

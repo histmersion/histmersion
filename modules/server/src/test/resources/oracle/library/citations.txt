@@ -2,6 +2,15 @@
 200 [
   {
     "citekey" : "zqdelta2010_gone",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "cites",
     "status" : "current",
@@ -10,6 +19,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "refutes",
     "status" : "contested",
@@ -18,6 +36,15 @@
   },
   {
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "superseded_by",
     "status" : "superseded",
@@ -26,6 +53,15 @@
   },
   {
     "citekey" : "zqgamma1975",
+    "createdAt" : null,
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "challenges",
     "status" : null,
@@ -34,6 +70,15 @@
   },
   {
     "citekey" : "zq_article",
+    "createdAt" : null,
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : null,
@@ -42,6 +87,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : "contested",
@@ -53,6 +107,15 @@
 200 [
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "refutes",
     "status" : "contested",
@@ -64,6 +127,15 @@
 200 [
   {
     "citekey" : "zqgamma1975",
+    "createdAt" : null,
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "challenges",
     "status" : null,
@@ -72,6 +144,15 @@
   },
   {
     "citekey" : "zq_article",
+    "createdAt" : null,
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : null,
@@ -80,6 +161,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : "contested",
@@ -91,6 +181,15 @@
 200 [
   {
     "citekey" : "zqalpha1990_tell",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "superseded_by",
     "status" : "current",
@@ -404,6 +503,15 @@
 200 [
   {
     "citekey" : "zqdelta2010_gone",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "cites",
     "status" : "current",
@@ -412,6 +520,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "refutes",
     "status" : "contested",
@@ -420,6 +537,15 @@
   },
   {
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "superseded_by",
     "status" : "superseded",
@@ -428,6 +554,15 @@
   },
   {
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "challenges",
     "status" : "superseded",
@@ -436,6 +571,15 @@
   },
   {
     "citekey" : "zq_article",
+    "createdAt" : null,
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : null,
@@ -444,6 +588,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : "contested",
@@ -455,13 +608,13 @@
 ### Sources · zqalpha1990_tell
 
 **Outgoing (this → other)**
-- _challenges_ → [[zqgamma1975_kings]] — Kings of Zqland _(superseded)_
-- _references_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_
+- _challenges_ → [[zqgamma1975_kings]] — Kings of Zqland _(superseded)_ · _Created by an unnamed caller via the REST API at TS_
+- _references_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_ · _Created by an unnamed caller via the REST API at TS_
 
 **Incoming (other → this)**
-- _cites_ → [[zqdelta2010_gone]] — A Lost Report _(current)_
-- _refutes_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_
-- _superseded_by_ → [[zqgamma1975_kings]] — Kings of Zqland _(superseded)_
+- _cites_ → [[zqdelta2010_gone]] — A Lost Report _(current)_ · _Created by an unnamed caller via the REST API at TS_
+- _refutes_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_ · _Created by an unnamed caller via the REST API at TS_
+- _superseded_by_ → [[zqgamma1975_kings]] — Kings of Zqland _(superseded)_ · _Created by an unnamed caller via the REST API at TS_
 
 **Articles**
 - _references_ → [Zq walls](/article/zq_article)
@@ -469,7 +622,7 @@
 ### Sources · zqalpha1990_tell
 
 **Incoming (other → this)**
-- _refutes_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_
+- _refutes_ → [[zqbeta2001_cove]] — The Harbour at Zqcove _(contested)_ · _Created by an unnamed caller via the REST API at TS_
 == tool neighbors {"citekey":"zqnone2000_x"}
 _No references recorded for **zqnone2000_x**._ An empty result is not evidence of agreement — disagreement edges are sparse.
 == tool graph {"citekey":"zqbeta2001_cove","depth":2}

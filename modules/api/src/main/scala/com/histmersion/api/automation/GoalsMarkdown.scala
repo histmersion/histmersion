@@ -25,4 +25,5 @@ object GoalsMarkdown:
     val regions = if g.regions.isEmpty then "" else s"  \n**Regions:** ${g.regions.mkString(", ")}"
     val notes = g.notes.map(n => s"\n\n$n").getOrElse("")
     val upd = g.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
-    (header + period + parent + tags + regions + notes + upd)
+    val created = Creation.line(g.creator, g.createdAt).map(l => s"  \n_${l}_").getOrElse("")
+    (header + period + parent + tags + regions + notes + upd + created)

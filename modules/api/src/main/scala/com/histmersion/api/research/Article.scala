@@ -36,6 +36,7 @@ import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
+import com.histmersion.api.automation.Creation
 final case class Article(
     slug: Article.Slug,
     title: Article.Title,
@@ -1258,7 +1259,9 @@ object Article:
       periodStart: Option[Row.PeriodStart],
       periodEnd: Option[Row.PeriodEnd],
       updatedAt: Option[Row.UpdatedAt] = None,
-      uid: Option[java.util.UUID] = None
+      uid: Option[java.util.UUID] = None,
+      creator: Option[Creation] = None,
+      createdAt: Option[Creation.At] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema

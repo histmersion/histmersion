@@ -92,7 +92,7 @@ object LibraryRoutes:
       ),
       Api.patchSource.serverLogic[Identity]((ck, p, strict) =>
         CreatorControllers.rest(p) {
-          citekey(ck).flatMap(sources.patch(_, p, SourcesControllers.PatchStrict(strict.value)))
+          citekey(ck).flatMap(sources.patch(_, p.patch, SourcesControllers.PatchStrict(strict.value)))
         }
       ),
       Api.renameSource.serverLogic[Identity]((ck, req) =>

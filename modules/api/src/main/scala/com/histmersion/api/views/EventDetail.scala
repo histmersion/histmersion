@@ -26,6 +26,7 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.catalogue.EventsMarkdown
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 /** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
 final case class EventDetail(
@@ -46,7 +47,9 @@ final case class EventDetail(
     articles: List[EventArticleRef] = Nil,
     candidates: List[EventLinkCandidate] = Nil,
     leads: List[EventLead] = Nil,
-    corrections: List[Correction] = Nil
+    corrections: List[Correction] = Nil,
+    creator: Option[Creation] = None,
+    createdAt: Option[Creation.At] = None
 ) extends EventCard derives JsonCodec, KindlingsSchema, api.json.Schema:
   /** The page in Markdown, with its pictures. */
   def markdown: EventDetail.Markdown =

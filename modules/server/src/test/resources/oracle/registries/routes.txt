@@ -123,7 +123,7 @@ route	GET /api /agent-state -> status code - possible codes (Map()) {body as app
 route	GET /api /agent-state /[key] -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	PUT /api /agent-state /[key] {body as application/json (UTF-8)} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
 route	DELETE /api /agent-state /[key] -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}
-route	POST /api /ingest ?citekey ?filename ?quality ?force ?title ?author ?year ?doi ?provenance ?acquireItem {body as application/octet-stream} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/status code (202) {body as application/json (UTF-8)}
+route	POST /api /ingest ?citekey ?filename ?quality ?force ?title ?author ?year ?doi ?provenance ?acquireItem ?byPlugin ?byWorkflow ?byAgentDefinition ?byProvider ?byModel ?via {body as application/octet-stream} -> status code - possible codes (Map()) {body as application/json (UTF-8)}/status code (202) {body as application/json (UTF-8)}
 route	POST /api /sources /[citekey] /reocr ?quality -> status code - possible codes (Map()) {body as application/json (UTF-8)}/status code (202) {body as application/json (UTF-8)}
 route	GET /api /sources /[citekey] /original -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{header Content-Disposition} {body as application/octet-stream}
 route	GET /api /jobs /[id] -> status code - possible codes (Map()) {body as application/json (UTF-8)}/{body as application/json (UTF-8)}

@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.automation.Creation
 
 /** A place's page as the server answers it: the gazetteer's `PlaceCard` with the place's pictures. */
 final case class PlaceDetail(
@@ -29,5 +30,7 @@ final case class PlaceDetail(
     locationPrecision: Place.Precision = Place.Precision.Stated,
     media: List[MediaThumb] = Nil,
     siteType: Option[Place.Entry.SiteType] = None,
-    record: Place.Record = Place.Record()
+    record: Place.Record = Place.Record(),
+    creator: Option[Creation] = None,
+    createdAt: Option[Creation.At] = None
 ) extends Place.Card derives JsonCodec, KindlingsSchema, api.json.Schema

@@ -180,6 +180,15 @@
   ],
   "contested" : false,
   "counts" : null,
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 1,
@@ -268,6 +277,15 @@
     "findings" : 1,
     "sources" : 1
   },
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 1,
@@ -351,6 +369,15 @@
   ],
   "contested" : false,
   "counts" : null,
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 1,
@@ -434,6 +461,15 @@
   ],
   "contested" : false,
   "counts" : null,
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 0,
@@ -505,6 +541,15 @@
   ],
   "contested" : false,
   "counts" : null,
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 0,
@@ -1603,6 +1648,7 @@ _No matching places._
 
 _`zz_hill` · site · 1650 BCE–1180 BCE · 1 finding(s)_  
 **Also known as:** Zzhill, Zzhill Höyük, Zzhügel  
+_Created by an unnamed caller via the REST API at TS_  
 **Geometry:** {"type":"Point"… (GeoJSON)
 
 **Footprints (1)**
@@ -1626,6 +1672,7 @@ _`zz_hill` · site · 1650 BCE–1180 BCE · 1 finding(s)_
 _`zz_camp_north` · site · 1350 BCE–1250 BCE · 0 finding(s)_  
 **Source:** a survey map  
 **Also known as:** Zzcamp, Zzlager  
+_Created by an unnamed caller via the REST API at TS_  
 **Geometry:** {"type":"Point"… (GeoJSON)
 
 **Footprints (1)**

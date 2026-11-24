@@ -35,6 +35,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.api.automation.Creation
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -54,6 +55,7 @@ object AgentRepo:
     */
 
   private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = Jsonb.DropNulls(true))
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
   final private case class RunRow(
       id: RunInfo.Id,
@@ -83,7 +85,8 @@ object AgentRepo:
       dryRun: RunInfo.DryRun,
       managerId: Option[Managers.ManagerInfo.Id],
       managerItem: Option[Managers.ManagerItem.Id],
-      heartbeatAt: Option[RunInfo.HeartbeatAt]
+      heartbeatAt: Option[RunInfo.HeartbeatAt],
+      creator: Option[Creation]
   ) derives DbCodec
 
   final private case class StepRow(
@@ -121,7 +124,7 @@ object AgentRepo:
               coalesce(u.tin, 0), coalesce(u.tout, 0), coalesce(u.tcr, 0), coalesce(u.tcw, 0), coalesce(u.cost, 0),
               j.target_kind, j.params::text, j.acquire_item, j.goal_slug, j.parent_job, j.origin,
               to_char(j.resume_at AT TIME ZONE 'UTC', $ts), j.dry_run, j.manager_id, j.manager_item,
-              to_char(j.heartbeat_at AT TIME ZONE 'UTC', $ts)
+              to_char(j.heartbeat_at AT TIME ZONE 'UTC', $ts), j.creator::text
        FROM jobs j
        LEFT JOIN LATERAL (
          SELECT sum(tokens_in)::bigint AS tin, sum(tokens_out)::bigint AS tout,
@@ -158,7 +161,8 @@ object AgentRepo:
       r.managerId,
       r.managerItem,
       r.heartbeatAt,
-      pausedFor = Option.when(r.status == RunState.Paused.wire)(Stopped.pausedFor(r.error.map(Problems.asOne))).flatten
+      pausedFor = Option.when(r.status == RunState.Paused.wire)(Stopped.pausedFor(r.error.map(Problems.asOne))).flatten,
+      creator = r.creator
     )
 
   def get(id: RunInfo.Id)(using DbCon): Option[RunInfo] =
@@ -507,13 +511,14 @@ object AgentRepo:
       createdAt: ApprovalInfo.CreatedAt,
       decidedAt: Option[ApprovalInfo.DecidedAt],
       subject: Option[ApprovalInfo.Subject],
-      seq: Option[StepInfo.Seq]
+      seq: Option[StepInfo.Seq],
+      creator: Option[Creation] = None
   ) derives DbCodec
 
   private val approvalSelect =
     sql"""SELECT id, job_id, kind, citekey, status, current_status, edge_kind, target, proposal::text, state, note,
               result, to_char(created_at AT TIME ZONE 'UTC', $ts), to_char(decided_at AT TIME ZONE 'UTC', $ts),
-              subject, seq
+              subject, seq, creator::text
        FROM approvals"""
 
   /** The payload decides how a row reads: a source proposal, a goal's plan, or an article draft. */
@@ -534,7 +539,8 @@ object AgentRepo:
       r.result,
       r.createdAt,
       r.decidedAt,
-      r.subject
+      r.subject,
+      creator = r.creator
     )
     ApprovalKind.parse(r.kind) match
       case Some(ApprovalKind.GoalPlan) =>

@@ -1125,6 +1125,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
     {
       "citekey" : "zzhill1990_battle",
@@ -1240,6 +1249,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1382,6 +1400,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1510,6 +1537,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1635,6 +1671,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -2127,7 +2172,8 @@ _`zz_battle` · battle · attested · not before 1310 BCE, not after 1290 BCE_
 fought below the walls  
 **Primary source:** [[zzhill1990_battle]]  
 **Place:** `zz_hill`  
-**Scale:** local (derived)
+**Scale:** local (derived)  
+_Created by an unnamed caller via the REST API at TS_
 
 **Sub-events**
 - **Zzhill burns** `zz_fire` _(destruction · local · attested · not before 1290 BCE, not after 1270 BCE)_

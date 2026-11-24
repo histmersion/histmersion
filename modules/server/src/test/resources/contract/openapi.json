@@ -1207,7 +1207,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Patch"
+                "$ref" : "#/components/schemas/Request"
               }
             }
           },
@@ -2409,7 +2409,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/Request1"
               }
             }
           },
@@ -2915,7 +2915,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request1"
+                "$ref" : "#/components/schemas/Request2"
               }
             }
           },
@@ -3238,7 +3238,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request2"
+                "$ref" : "#/components/schemas/Request3"
               }
             }
           },
@@ -4826,7 +4826,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Patch1"
+                "$ref" : "#/components/schemas/Patch"
               }
             }
           },
@@ -6007,7 +6007,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Patch2"
+                "$ref" : "#/components/schemas/Patch1"
               }
             }
           },
@@ -6263,7 +6263,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Patch3"
+                "$ref" : "#/components/schemas/Patch2"
               }
             }
           },
@@ -14356,7 +14356,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request3"
+                "$ref" : "#/components/schemas/Request4"
               }
             }
           },
@@ -14781,7 +14781,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request4"
+                "$ref" : "#/components/schemas/Request5"
               }
             }
           },
@@ -15211,7 +15211,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request5"
+                "$ref" : "#/components/schemas/Request6"
               }
             }
           },
@@ -17316,7 +17316,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request6"
+                "$ref" : "#/components/schemas/Request7"
               }
             }
           },
@@ -17530,7 +17530,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request7"
+                "$ref" : "#/components/schemas/Request8"
               }
             }
           },
@@ -18617,6 +18617,16 @@
                 "type" : "null"
               }
             ]
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
           }
         }
       },
@@ -19321,6 +19331,22 @@
               "null"
             ],
             "format" : "int64"
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -22756,6 +22782,22 @@
               "null"
             ],
             "format" : "uuid"
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -23808,6 +23850,22 @@
             "items" : {
               "$ref" : "#/components/schemas/Correction"
             }
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -25987,6 +26045,22 @@
             ]
           },
           "updatedAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
             "type" : [
               "string",
               "null"
@@ -31677,6 +31751,22 @@
               "article",
               "unresolved"
             ]
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -32477,120 +32567,6 @@
         "title" : "Patch",
         "type" : "object",
         "properties" : {
-          "metadata" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/MetadataPatch"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "summary" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "body" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "notes" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "topics" : {
-            "type" : [
-              "array",
-              "null"
-            ],
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "regions" : {
-            "type" : [
-              "array",
-              "null"
-            ],
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "period" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/Input2"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "tags" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/ListPatch"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "findings" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/FindingsPatch"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "edges" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/EdgesPatch"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "ifUpdatedAt" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          },
-          "createdBy" : {
-            "anyOf" : [
-              {
-                "$ref" : "#/components/schemas/By"
-              },
-              {
-                "type" : "null"
-              }
-            ]
-          },
-          "via" : {
-            "type" : [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "Patch1" : {
-        "title" : "Patch",
-        "type" : "object",
-        "properties" : {
           "title" : {
             "type" : [
               "string",
@@ -32702,7 +32678,7 @@
           }
         }
       },
-      "Patch2" : {
+      "Patch1" : {
         "title" : "Patch",
         "type" : "object",
         "properties" : {
@@ -32777,7 +32753,7 @@
           }
         }
       },
-      "Patch3" : {
+      "Patch2" : {
         "title" : "Patch",
         "type" : "object",
         "properties" : {
@@ -33042,6 +33018,22 @@
           },
           "record" : {
             "$ref" : "#/components/schemas/Record"
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -35752,6 +35744,120 @@
       "Request" : {
         "title" : "Request",
         "type" : "object",
+        "properties" : {
+          "metadata" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/MetadataPatch"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "summary" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "body" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "notes" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "topics" : {
+            "type" : [
+              "array",
+              "null"
+            ],
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "regions" : {
+            "type" : [
+              "array",
+              "null"
+            ],
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "period" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Input2"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "tags" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/ListPatch"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "findings" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/FindingsPatch"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "edges" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/EdgesPatch"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "ifUpdatedAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Request1" : {
+        "title" : "Request",
+        "type" : "object",
         "required" : [
           "newCitekey"
         ],
@@ -35777,7 +35883,7 @@
           }
         }
       },
-      "Request1" : {
+      "Request2" : {
         "title" : "Request",
         "type" : "object",
         "properties" : {
@@ -35794,7 +35900,7 @@
           }
         }
       },
-      "Request2" : {
+      "Request3" : {
         "title" : "Request",
         "type" : "object",
         "required" : [
@@ -35809,7 +35915,7 @@
           }
         }
       },
-      "Request3" : {
+      "Request4" : {
         "title" : "Request",
         "type" : "object",
         "properties" : {
@@ -35844,7 +35950,7 @@
           }
         }
       },
-      "Request4" : {
+      "Request5" : {
         "title" : "Request",
         "type" : "object",
         "required" : [
@@ -35890,7 +35996,7 @@
           }
         }
       },
-      "Request5" : {
+      "Request6" : {
         "title" : "Request",
         "type" : "object",
         "required" : [
@@ -35921,7 +36027,7 @@
           }
         }
       },
-      "Request6" : {
+      "Request7" : {
         "title" : "Request",
         "type" : "object",
         "properties" : {
@@ -35930,7 +36036,7 @@
           }
         }
       },
-      "Request7" : {
+      "Request8" : {
         "title" : "Request",
         "type" : "object",
         "properties" : {
@@ -35946,7 +36052,7 @@
           }
         }
       },
-      "Request8" : {
+      "Request9" : {
         "title" : "Request",
         "type" : "object",
         "required" : [
@@ -36733,6 +36839,22 @@
               "null"
             ],
             "format" : "uuid"
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -36804,6 +36926,22 @@
               "null"
             ],
             "format" : "uuid"
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "createdAt" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -37029,6 +37167,16 @@
               "allowance",
               "plan-quota",
               "stalled"
+            ]
+          },
+          "creator" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/Creation"
+              },
+              {
+                "type" : "null"
+              }
             ]
           }
         }
@@ -38693,7 +38841,7 @@
             ],
             "properties" : {
               "Request" : {
-                "$ref" : "#/components/schemas/Request8"
+                "$ref" : "#/components/schemas/Request9"
               }
             }
           },

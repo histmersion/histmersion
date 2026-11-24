@@ -9,7 +9,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
-import com.histmersion.api.automation.{Agents, Managers, ManagersApi, Queue}
+import com.histmersion.api.automation.{Agents, Creation, Managers, ManagersApi, Queue}
 import com.histmersion.api.instance.UiConfig
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
@@ -268,6 +268,7 @@ object GoalPage:
           g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(Wording.Id(p.value)))))
         ),
         g.notes.filter(_.value.trim.nonEmpty).map(n => p(cls := "goal-question", n)),
+        Creation.line(g.creator, g.createdAt).map(c => p(cls := "item-provenance muted", c)),
         div(
           cls := "muted goal-state",
           GoalsView.badge(g.status),

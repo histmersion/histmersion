@@ -36,6 +36,8 @@ import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.util.database.Jsonb
+import com.histmersion.api.automation.Creation
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -64,6 +66,7 @@ private[sources] object SourceRepo:
 
   import com.histmersion.api.library.SourceColumns.given
 
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   private given DbCodec[TocEntry] = DbCodec.derived
   private given DbCodec[Source.Detail] = DbCodec.derived
   private given DbCodec[Finding.Row] = DbCodec.derived
@@ -660,12 +663,12 @@ private[sources] object SourceRepo:
                              ${RangeSql.cols(sql"period")},
                              summary, doi, ocr_markdown, notes,
                              to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
-                             source, uid, origin
+                             source, uid, origin, creator::text, to_char(added_date, 'YYYY-MM-DD')
                       FROM sources WHERE citekey = $citekey""".query[Source.Detail].run().headOption
     src.map { r =>
       val fs = sql"""SELECT claim, region_name, ST_X(geom), ST_Y(geom),
                               ${RangeSql.cols(sql"period")}, period_name,
-                              tags, confidence, significance, uid
+                              tags, confidence, significance, uid, creator::text, ${StoredCreator.at(sql"created_at")}
                        FROM findings WHERE citekey = $citekey ORDER BY id""".query[Finding.Row].run()
       (r, fs)
     }

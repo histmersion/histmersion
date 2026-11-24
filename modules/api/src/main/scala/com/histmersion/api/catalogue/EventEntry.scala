@@ -15,6 +15,7 @@ import com.histmersion.api.catalogue.{
   EventTier
 }
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 /** The catalogue's record of one event: the row with its geometry, the hierarchy, the evidence and the context its card
   * shows (the articles citing its sources, filled by whoever shows the card). Not on the wire: the server answers the
@@ -37,7 +38,9 @@ final case class EventEntry(
     articles: List[EventArticleRef] = Nil,
     candidates: List[EventLinkCandidate] = Nil,
     leads: List[EventLead] = Nil,
-    corrections: List[Correction] = Nil
+    corrections: List[Correction] = Nil,
+    creator: Option[Creation] = None,
+    createdAt: Option[Creation.At] = None
 ) extends EventCard
 
 object EventEntry:

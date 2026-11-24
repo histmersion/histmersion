@@ -4,6 +4,15 @@
     {
       "claim" : "the walls of Zqtell were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -19,6 +28,15 @@
     {
       "claim" : "Zqcove sent tin to Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -34,6 +52,15 @@
     {
       "claim" : "the sea peoples reached Zqtell",
       "confidence" : "contested",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1180,
@@ -56,6 +83,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1990_tell",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : "# Zqtell\n\n## The walls\n\nThe walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\n## The harbour\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\n## References\n\nZqauthor 1950; Zqtell excavations.\n",
@@ -89,6 +125,15 @@
     {
       "claim" : "the walls of Zqtell were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -104,6 +149,15 @@
     {
       "claim" : "Zqcove sent tin to Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -119,6 +173,15 @@
     {
       "claim" : "the sea peoples reached Zqtell",
       "confidence" : "contested",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1180,
@@ -141,6 +204,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1990_tell",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : null,
@@ -191,7 +263,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -201,11 +274,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ## Mentioned in articles (1)
 - [Zq walls](/article/zq_article)
@@ -217,7 +290,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -227,11 +301,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ---
 
@@ -297,7 +371,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -307,11 +382,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ## Mentioned in articles (1)
 - [Zq walls](/article/zq_article)
@@ -323,7 +398,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -333,11 +409,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ---
 
@@ -380,7 +456,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -390,11 +467,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ---
 
@@ -751,7 +828,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -761,11 +839,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ## Mentioned in articles (1)
 - [Zq walls](/article/zq_article)
@@ -785,7 +863,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Topics:** [bronze age](/#topic=bronze%20age), [fortification](/#topic=fortification)  
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqalpha1990_tell
+**Uid:** source:zqalpha1990_tell  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 A study of The Walls of Zqtell.
 
@@ -795,11 +874,11 @@ Notes on The Walls of Zqtell.
 
 ## Findings (3)
 - the walls of Zqtell were raised around 1500 BC  
-  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high)_
+  _@ Zqtell (40.0, 34.6) · 1520 BCE–1480 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - Zqcove sent tin to Zqtell  
-  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high)_
+  _@ Zqcove (39.2, 35.5) · 1400 BCE–1300 BCE · (high) · Created by an unnamed caller via the REST API at TS_
 - the sea peoples reached Zqtell  
-  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested)_
+  _@ Zqtell (40.01, 34.61) · 1200 BCE–1180 BCE · (contested) · Created by an unnamed caller via the REST API at TS_
 
 ---
 
@@ -910,6 +989,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -932,6 +1020,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Notes on Kings of Zqland.",
     "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
@@ -964,6 +1061,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -986,6 +1092,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Notes on Kings of Zqland.",
     "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
@@ -1040,6 +1155,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1062,6 +1186,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Notes on Kings of Zqland.",
     "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
@@ -1094,6 +1227,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1116,6 +1258,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Notes on Kings of Zqland.",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1148,6 +1299,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1170,6 +1330,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1202,6 +1371,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1224,6 +1402,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1257,6 +1444,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1279,6 +1475,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1313,6 +1518,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1335,6 +1549,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1369,6 +1592,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1391,6 +1623,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1426,6 +1667,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1448,6 +1698,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1482,6 +1741,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1504,6 +1772,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1539,6 +1816,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1554,6 +1840,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the court moved to Zqcove",
       "confidence" : "medium",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1350,
@@ -1576,6 +1871,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1611,6 +1915,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the court moved to Zqcove",
       "confidence" : "medium",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1350,
@@ -1633,6 +1946,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1668,6 +1990,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -1682,6 +2013,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "the court moved to Zqcove",
       "confidence" : "medium",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1350,
@@ -1704,6 +2044,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1739,6 +2088,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "one claim only",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : null,
@@ -1753,6 +2111,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "and another",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 38.0,
       "lon" : 36.0,
       "periodEnd" : null,
@@ -1774,6 +2141,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1809,6 +2185,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "one claim only",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : null,
@@ -1823,6 +2208,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "and another",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 38.0,
       "lon" : 36.0,
       "periodEnd" : null,
@@ -1844,6 +2238,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1879,6 +2282,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "one claim only",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : null,
@@ -1893,6 +2305,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "and another",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 38.0,
       "lon" : 36.0,
       "periodEnd" : null,
@@ -1914,6 +2335,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "Read with [[zqbeta2001_cove]] and [[zq_article]].",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -1954,14 +2384,14 @@ _No source 'zqnone2000_x'_
         ],
         "damage" : {
           "Unreadable" : {
-            "reported" : "unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt); 'status' belongs under 'metadata' (metadata.status)"
+            "reported" : "unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt, createdBy, via); 'status' belongs under 'metadata' (metadata.status)"
           }
         },
         "format" : "Json",
         "where" : "body"
       },
       "group" : "Invalid",
-      "text" : "the json data at body cannot be read — unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt); 'status' belongs under 'metadata' (metadata.status)"
+      "text" : "the json data at body cannot be read — unknown key 'status' (one of: metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt, createdBy, via); 'status' belongs under 'metadata' (metadata.status)"
     }
   ]
 }
@@ -2058,6 +2488,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "one claim only",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : null,
@@ -2072,6 +2511,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "and another",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 38.0,
       "lon" : 36.0,
       "periodEnd" : null,
@@ -2113,6 +2561,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "\\[\\[zqalpha1990_tell\\]\\] and a bare zqbeta2001_cove",
     "ocrMarkdown" : "# Kings of Zqland\n\n## Court\n\nThe court sat at Zqtell, then at Zqcove.\n",
@@ -2197,6 +2654,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "one claim only",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : null,
@@ -2211,6 +2677,15 @@ _No source 'zqnone2000_x'_
     {
       "claim" : "and another",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 38.0,
       "lon" : 36.0,
       "periodEnd" : null,
@@ -2232,6 +2707,15 @@ _No source 'zqnone2000_x'_
       "Zqhelper, Di"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zq.1976",
     "notes" : "[[zqalpha1990_tell]] and a bare zqbeta2001_cove",
     "ocrMarkdown" : null,
@@ -2271,7 +2755,8 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqhelper, Di](/#author=Zqhelper%2
 **Tags:** [zq-oracle](/#tag=zq-oracle), [zq-court](/#tag=zq-court), [zq-dynasty](/#tag=zq-dynasty), [zq-mcp](/#tag=zq-mcp)  
 **DOI:** 10.9999/zq.1976  
 **Provenance:** zq-press  
-**Uid:** source:zqgamma1975_kings
+**Uid:** source:zqgamma1975_kings  
+_Created by an unnamed caller via the REST API at 2026-11-24_
 
 Kings, again; see [[zqalpha1990_tell]].
 
@@ -2281,9 +2766,9 @@ Kings, again; see [[zqalpha1990_tell]].
 
 ## Findings (2)
 - one claim only  
-  _@ Zqland_
+  _@ Zqland · Created by an unnamed caller via the REST API at TS_
 - and another  
-  _@ (38.0, 36.0)_
+  _@ (38.0, 36.0) · Created by an unnamed caller via the REST API at TS_
 
 ## Formatting: 1 formatting problem
 
@@ -2302,11 +2787,12 @@ Kings, again; see [[zqalpha1990_tell]].
 
 _n.d. · unassessed_  
 **Tags:** [zq-oracle](/#tag=zq-oracle)  
-**Uid:** source:zqzeta2015_mcp
+**Uid:** source:zqzeta2015_mcp  
+_Created by an unnamed caller via the MCP at 2026-11-24_
 
 ## Findings (1)
 - an MCP claim  
-  _@ (39.0, 34.0)_
+  _@ (39.0, 34.0) · Created by an unnamed caller via the MCP at TS_
 == import a note
 200 {
   "edgesResolved" : 0,
@@ -2342,6 +2828,15 @@ _n.d. · unassessed_
     {
       "claim" : "a claim from a note",
       "confidence" : null,
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.9,
       "lon" : 34.5,
       "periodEnd" : -1250,
@@ -2363,6 +2858,15 @@ _n.d. · unassessed_
       "Ann"
     ],
     "citekey" : "zqeta2020_note",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "A note about [[zqalpha1990_tell]].",
     "ocrMarkdown" : "# Body\n\ntext",

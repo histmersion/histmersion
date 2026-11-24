@@ -97,6 +97,9 @@ class ArticleRepoSuite extends DbSuite:
     assertEquals(r.tags, List("collapse", "sea-peoples"))
     assertEquals(r.updatedAt, Some(token))
     assert(token.value.endsWith("Z"), token)
+    assertEquals(r.creator.map(_.who), Some("a person"))
+    assertEquals(r.creator.flatMap(_.surface).map(_.shown), Some("the server itself"))
+    assert(r.createdAt.exists(_.shown.endsWith("Z")), r.createdAt)
 
   test("text[] columns round-trip as real arrays: a comma inside one value stays one value"):
     // the read used to be `array_to_string(tags, ', ')` split on ',' — "trade, long-distance" came

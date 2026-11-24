@@ -365,7 +365,9 @@ object Source:
       updatedAt: Option[Detail.UpdatedAt] = None,
       provenance: Option[Provenance] = None,
       uid: Option[java.util.UUID] = None,
-      origin: Option[java.util.UUID] = None
+      origin: Option[java.util.UUID] = None,
+      creator: Option[Creation] = None,
+      createdAt: Option[Creation.At] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -507,10 +509,46 @@ object Source:
       tags: Option[ListPatch] = None,
       findings: Option[FindingsPatch] = None,
       edges: Option[EdgesPatch] = None,
-      ifUpdatedAt: Option[UpdatedAt] = None,
-      createdBy: Option[Creation.By] = None,
-      via: Option[Creation.Via] = None
-  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema, CanEqual
+      ifUpdatedAt: Option[UpdatedAt] = None
+  ) derives StrictJson,
+        KindlingsSchema,
+        api.json.Schema,
+        CanEqual
+
+  object Patch:
+    final case class Request(
+        metadata: Option[MetadataPatch] = None,
+        summary: Option[Summary] = None,
+        body: Option[OcrMarkdown] = None,
+        notes: Option[Notes] = None,
+        topics: Option[List[Topics]] = None,
+        regions: Option[List[Regions]] = None,
+        period: Option[Period.Input] = None,
+        tags: Option[ListPatch] = None,
+        findings: Option[FindingsPatch] = None,
+        edges: Option[EdgesPatch] = None,
+        ifUpdatedAt: Option[UpdatedAt] = None,
+        createdBy: Option[Creation.By] = None,
+        via: Option[Creation.Via] = None
+    ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema:
+      def patch: Patch =
+        Patch(metadata, summary, body, notes, topics, regions, period, tags, findings, edges, ifUpdatedAt)
+
+    object Request:
+      def of(p: Patch): Request =
+        Request(
+          p.metadata,
+          p.summary,
+          p.body,
+          p.notes,
+          p.topics,
+          p.regions,
+          p.period,
+          p.tags,
+          p.findings,
+          p.edges,
+          p.ifUpdatedAt
+        )
 
   final case class Put(
       title: Title,

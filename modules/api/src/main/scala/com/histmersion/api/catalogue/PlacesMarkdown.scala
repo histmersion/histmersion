@@ -3,6 +3,7 @@ package api.catalogue
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.YearFmt
+import com.histmersion.api.automation.Creation
 
 object PlacesMarkdown:
 
@@ -154,7 +155,8 @@ object PlacesMarkdown:
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
     val dating = if (d.datedByFindings) == (true) then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
-    val names = if p.names.value.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
+    val names = (if p.names.value.isEmpty then "" else s"  \n**Also known as:** ${p.names}") +
+      Creation.line(d.creator, d.createdAt).fold("")(l => s"  \n_${l}_")
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.value.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")

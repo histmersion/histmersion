@@ -151,6 +151,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1991_walls",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : null,
@@ -235,6 +244,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqx2000_x",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : null,
@@ -375,6 +393,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1991_walls",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : null,
@@ -524,6 +551,15 @@
     {
       "claim" : "the walls of Zqtell were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -539,6 +575,15 @@
     {
       "claim" : "Zqcove sent tin to Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -554,6 +599,15 @@
     {
       "claim" : "the sea peoples reached Zqtell",
       "confidence" : "contested",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1180,
@@ -576,6 +630,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1991_walls",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : null,
@@ -607,6 +670,15 @@
 200 [
   {
     "citekey" : "zqdelta2010_gone",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "cites",
     "status" : "current",
@@ -615,6 +687,15 @@
   },
   {
     "citekey" : "zqeta2020_note",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "references",
     "status" : "unassessed",
@@ -623,6 +704,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "in",
     "kind" : "refutes",
     "status" : "contested",
@@ -631,6 +721,15 @@
   },
   {
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "challenges",
     "status" : "contested",
@@ -639,6 +738,15 @@
   },
   {
     "citekey" : "zq_article",
+    "createdAt" : null,
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : null,
@@ -647,6 +755,15 @@
   },
   {
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : "contested",
@@ -756,6 +873,15 @@
     {
       "claim" : "the walls of Zqtell were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -771,6 +897,15 @@
     {
       "claim" : "Zqcove sent tin to Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -786,6 +921,15 @@
     {
       "claim" : "the sea peoples reached Zqtell",
       "confidence" : "contested",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1180,
@@ -808,6 +952,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1991_walls",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : "# Zqtell\n\n## The walls\n\nThe walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\n## The harbour\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\n## References\n\nZqauthor 1950; Zqtell excavations.\n",
@@ -912,6 +1065,15 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1990_tell",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : null,

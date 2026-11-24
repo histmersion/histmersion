@@ -79,6 +79,15 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_ro
       "Bo Zqwriter"
     ],
     "citekey" : "zqauthor2019_roads",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.open",
     "notes" : null,
     "ocrMarkdown" : "# Converted 2d5dd186d2a4a979083e9033c2f53d77bfca8a76b2589b60093ac88a898b6455.pdf\n\nA body of 12329 bytes (quality: false).\n\n![fig](assets/zq-fig.png)\n",
@@ -107,6 +116,15 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqauthor2019_ro
 200 [
   {
     "citekey" : "zqa_ref",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "direction" : "out",
     "kind" : "references",
     "status" : "current",
@@ -1314,6 +1332,15 @@ _only legal open-access copies may be fetched_
       "Bo Zqwriter"
     ],
     "citekey" : "zqa_cited",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.cited",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -1348,6 +1375,15 @@ _only legal open-access copies may be fetched_
       "Cy Zqmaker"
     ],
     "citekey" : "zqa_ref",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.ref1",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -1382,6 +1418,15 @@ _only legal open-access copies may be fetched_
       "Ed Zqfalse"
     ],
     "citekey" : "zqa_retracted",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.retracted",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -1416,6 +1461,15 @@ _only legal open-access copies may be fetched_
       "Gus Zqlater"
     ],
     "citekey" : "zqa_later",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.later",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -1450,6 +1504,15 @@ _only legal open-access copies may be fetched_
       "Jo Zqnotes"
     ],
     "citekey" : "zqa_nodoi",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : null,

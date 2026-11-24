@@ -17,6 +17,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Place
+import com.histmersion.api.automation.Creation
 
 final case class Finding(
     id: Finding.Id,
@@ -113,7 +114,9 @@ object Finding:
       tags: List[Tags],
       confidence: Option[Confidence],
       significance: Option[Significance] = None,
-      uid: Option[java.util.UUID] = None
+      uid: Option[java.util.UUID] = None,
+      creator: Option[Creation] = None,
+      createdAt: Option[Creation.At] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema

@@ -35,6 +35,8 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.util.database.Jsonb
+import com.histmersion.api.automation.Creation
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
@@ -54,6 +56,7 @@ private[events] object EventRepo:
 
   private given DbCodec[EventEdge] = DbCodec.derived
   private given DbCodec[EventParticipant] = DbCodec.derived
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
   /** The columns of an [[EventRow]]: the event's own, and what its scale is derived from — its place's kind and its own
     * geometry's type — over [[EventSql.fromEvents]].
@@ -182,6 +185,12 @@ private[events] object EventRepo:
         .headOption
         .flatten
         .map(EventEntry.Wikidata(_))
+      val (creator, createdAt) =
+        sql"SELECT creator::text, ${StoredCreator.at(sql"created_at")} FROM events WHERE id = $id"
+          .query[(Option[Creation], Option[Creation.At])]
+          .run()
+          .headOption
+          .getOrElse((None, None))
       EventEntry(
         r.toSummary,
         r.geometry.map(g => EventGeometry.Geojson(g.value)),
@@ -193,7 +202,9 @@ private[events] object EventRepo:
         wikidata,
         corrections = CorrectionRepo
           .of(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value))
-          .map(_.toDto())
+          .map(_.toDto()),
+        creator = creator,
+        createdAt = createdAt
       )
     }
 

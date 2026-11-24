@@ -11,6 +11,7 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.automation.Creation
 
 final case class AssetDetail(
     name: Bundle.Asset.FileName,
@@ -25,7 +26,9 @@ final case class AssetDetail(
     lat: Option[Latitude] = None,
     lon: Option[Longitude] = None,
     periodStart: Option[Year] = None,
-    periodEnd: Option[Year] = None
+    periodEnd: Option[Year] = None,
+    creator: Option[Creation] = None,
+    createdAt: Option[Creation.At] = None
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema

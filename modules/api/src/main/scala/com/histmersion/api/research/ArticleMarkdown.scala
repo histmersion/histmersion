@@ -6,6 +6,7 @@ import com.histmersion.api.checks.{FormatField, FormatMarkdown}
 import com.histmersion.api.library.Label
 import com.histmersion.api.given
 import com.histmersion.api.library.Source
+import com.histmersion.api.automation.Creation
 object ArticleMarkdown:
 
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
@@ -31,7 +32,8 @@ object ArticleMarkdown:
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
     val footer = sourcesCited(v.sourcesCited)
     val trimmed = if (footer).isEmpty then head else stripSourcesSection(Article.Body(head)).value
-    trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
+    val created = Creation.line(a.creator, a.createdAt).map(l => s"\n\n_${l}_").getOrElse("")
+    trimmed + created + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
   private def coverage(v: Article.View): String = (v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
