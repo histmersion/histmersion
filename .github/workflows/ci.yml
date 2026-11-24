@@ -479,8 +479,8 @@ jobs:
         run: just test-db-down
 
   browser-shards:
-    needs: browser
-    if: always() && needs.browser.result != 'skipped'
+    needs: [build, browser]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

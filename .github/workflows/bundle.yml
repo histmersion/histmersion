@@ -98,7 +98,7 @@ jobs:
           free -g
       - name: build the bundle
         env:
-          SBT_OPTS: -Xss16m -Xmx2g
+          SBT_OPTS: ${{ runner.os == 'Linux' && '-Xss16m -Xmx6g' || '-Xss16m -Xmx5g' }}
           HISTMERSION_NATIVE_XMX: ${{ runner.os == 'Linux' && '14g' || '' }}
         run: just bundle dist/histmersion
       - name: the native server's self-check (time zones, the linked resources)
