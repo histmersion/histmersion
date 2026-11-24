@@ -85,7 +85,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
     )
 
   test("an apply that failed with several problems keeps and shows every one"):
-    val backupRefused = Problem.Conflict.Busy(Problem.Conflict.Activity.Backup)
+    val backupRefused = Problem.Conflict.Busy(Problem.Conflict.Activity.Restore)
     val j = of(JobState.Failed, error = Some(MergeApplyJob.Failure.Other(NonEmptyVector.of(Crash, backupRefused))))
     assertEquals(j.problems, Some(NonEmptyVector.of(Crash, backupRefused)))
     assertEquals(

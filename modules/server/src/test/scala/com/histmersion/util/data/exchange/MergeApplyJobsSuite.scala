@@ -67,7 +67,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
 
   test("a run that fails with several problems ends failed with every one"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val two = Problems.of(Problem.Run.Interrupted, Problem.Conflict.Busy(Problem.Conflict.Activity.Backup))
+    val two = Problems.of(Problem.Run.Interrupted, Problem.Conflict.Busy(Problem.Conflict.Activity.Restore))
     val j =
       jobs.start(sha('b'), plan('a'))(() => Left(two)).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.state, MergeJobState.Failed)
