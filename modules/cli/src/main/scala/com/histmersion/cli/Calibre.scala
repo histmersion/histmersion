@@ -232,7 +232,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   private def addCmd(file: Path, meta: Calibre.Push): List[String] =
     List(cfg.calibredb.value, "add", file.toString) ++ libArgs ++
       List("--title", meta.title.value.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
-      meta.doi.toList.flatMap(d => List("--identifier", s"doi:$d")) ++
+      meta.doi.toList.flatMap(d => List("--identifier", shown"doi:$d")) ++
       meta.isbn.toList.flatMap(i => List("--isbn", i.value)) ++
       (if meta.tags.isEmpty then Nil else List("--tags", meta.tags.mkString(",")))
 
@@ -345,7 +345,7 @@ object Calibre:
           Problem.Unclassified(
             Legacy.Text(
               s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
-                s"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
+                shown"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
                 "to import into that record on purpose"
             )
           )

@@ -96,7 +96,7 @@ object NoteEditor:
           s"On ${s.target.kind.label.value.toLowerCase}: ",
           strong(s.title),
           Option.when(Target.where(s.target).value.nonEmpty)(
-            span(s" · ${Target.where(s.target).value}")
+            span(shown" · ${Target.where(s.target)}")
           )
         ),
         Option.when(restored.isDefined)(

@@ -75,7 +75,7 @@ object NotesCmd:
           text(inline, file).left
             .map(Cli.Error(_))
             .flatMap(x => c.call(PersonalApi.editNote)((Note.Id(id), Note.Edit(x))))
-            .map(n => Output.emit(json, n)(n => s"Changed the note on ${n.title}."))
+            .map(n => Output.emit(json, n)(n => shown"Changed the note on ${n.title}."))
         case Command.Rm(id, json) =>
           c.call(PersonalApi.removeNote)(Note.Id(id))
-            .map(n => Output.emit(json, n)(n => s"Removed the note on ${n.title}."))
+            .map(n => Output.emit(json, n)(n => shown"Removed the note on ${n.title}."))

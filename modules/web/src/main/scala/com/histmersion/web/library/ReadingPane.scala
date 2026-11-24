@@ -200,7 +200,7 @@ object ReadingPane:
       cls := "reading-item",
       dataAttr("key") := ck,
       ContextMenu
-        .on(ContextMenu.OnTitle(s"Actions: ${ref0.title}"), () => ItemMenu.entries(refNow(reading, ref0), byline)),
+        .on(ContextMenu.OnTitle(shown"Actions: ${ref0.title}"), () => ItemMenu.entries(refNow(reading, ref0), byline)),
       onMountCallback { _ =>
         readSource(ck).onComplete { r =>
           reading.set(Some(r.toEither.left.map(message)))
@@ -260,7 +260,7 @@ object ReadingPane:
             ),
             f.regionName
               .filter(_.value.trim.nonEmpty)
-              .map(r => span(cls := "muted", s" · ${Fmt.display(UiLabels.Text(r.value))}"))
+              .map(r => span(cls := "muted", shown" · ${Fmt.display(UiLabels.Text(r.value))}"))
           )
         }),
         Option.when(all.size > Layout.readingFindings.value)(
@@ -309,7 +309,7 @@ object ReadingPane:
       cls := "reading-item",
       dataAttr("key") := slug.value,
       ContextMenu
-        .on(ContextMenu.OnTitle(s"Actions: ${ref0.title}"), () => ItemMenu.entries(refOf(reading.now()), "")),
+        .on(ContextMenu.OnTitle(shown"Actions: ${ref0.title}"), () => ItemMenu.entries(refOf(reading.now()), "")),
       onMountCallback { _ =>
         readArticle(slug).onComplete { r =>
           reading.set(Some(r.toEither.left.map(message)))

@@ -46,7 +46,7 @@ object Chip:
         button(
           typ := "button",
           cls := "chip-x",
-          aria.label := s"remove $text",
+          aria.label := shown"remove $text",
           "✕",
           onClick.stopPropagation --> (_ => r())
         )

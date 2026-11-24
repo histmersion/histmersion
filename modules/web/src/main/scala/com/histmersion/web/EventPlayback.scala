@@ -77,7 +77,7 @@ object EventPlayback:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def note(e: EventGeo): Note =
-    Note(s"${Fmt.display(UiLabels.Text(e.kind.value))} · ${YearFmt.span(e.timeSpan)}")
+    Note(shown"${Fmt.display(UiLabels.Text(e.kind.value))} · ${YearFmt.span(e.timeSpan)}")
 
   /** Pure: the key events share when they are drawn at the same point (a site with several destructions): their labels
     * are stacked there rather than drawn over each other.

@@ -98,7 +98,7 @@ object AboutView:
           Row(
             "last backup",
             a.lastBackupAgeSeconds.fold("unknown age")(s => s"${AboutMarkdown.age(s.value.toLong)} ago"),
-            detail = Some(s"${bk.file} · ${Backup.humanBytes(bk.bytes)}")
+            detail = Some(shown"${bk.file} · ${Backup.humanBytes(bk.bytes)}")
           )
         )
       )

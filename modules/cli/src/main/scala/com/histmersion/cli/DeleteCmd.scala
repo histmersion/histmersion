@@ -81,7 +81,7 @@ object DeleteCmd:
             Cli.Error.answered(
               Problem.Unclassified(
                 Legacy.Text(
-                  s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
+                  shown"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
                 )
               )
             )

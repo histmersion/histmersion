@@ -80,7 +80,7 @@ object GraphPanel:
           .foreach(t =>
             WindowManager.retitle(
               WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)),
-              UiLabels.Text(s"Citation graph · ${t.value}")
+              UiLabels.Text(shown"Citation graph · $t")
             )
           )
       case scala.util.Failure(e) => state.set(Load.Failed(Problem.Unclassified(Legacy.Text(e.getMessage))))

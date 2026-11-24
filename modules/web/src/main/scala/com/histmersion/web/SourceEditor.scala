@@ -194,7 +194,7 @@ object SourceEditor:
             notice.set(then0)
             WindowManager.retitle(
               WindowKey.EditSource(WindowKey.EditSource.Citekey(ck.value)),
-              UiLabels.Text(s"Edit · ${sw.source.title}")
+              UiLabels.Text(shown"Edit · ${sw.source.title}")
             )
         )
       }

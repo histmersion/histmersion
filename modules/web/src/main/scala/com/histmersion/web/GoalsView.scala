@@ -183,10 +183,12 @@ object GoalsView:
       active: Set[Managers.ManagerInfo.Id] = Set.empty
   ): CreatedNote =
     def made(id: Managers.ManagerInfo.Id, resume: String) =
-      if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
+      if active(id) then shown"$id created active (the autopilot is on)"
+      else shown"$id created paused — resume it $resume"
     CreatedNote(
-      s"research area ${a.slug} created" + (if planned.value then "; the planner is running (its plan waits for you)"
-                                            else "") +
+      shown"research area ${a.slug} created" + (if planned.value then
+                                                  "; the planner is running (its plan waits for you)"
+                                                else "") +
         seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
         watched.fold("")(id =>
           s"; watcher ${made(id, "for its weekly sweeps")}" +

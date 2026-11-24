@@ -166,7 +166,7 @@ object MobileChrome:
       button(
         typ := "button",
         cls := "btn btn--bare btn--icon drawer-close",
-        aria.label := s"close $name",
+        aria.label := shown"close $name",
         "✕",
         onClick --> (_ => close())
       )

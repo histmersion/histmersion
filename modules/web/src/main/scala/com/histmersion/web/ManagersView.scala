@@ -583,7 +583,7 @@ object ManagersView:
         Wording.capitalize(verb),
         title := tip,
         onClick --> (_ =>
-          go(WriteLabel(s"$verb ${g.slug}"))(
+          go(WriteLabel(shown"$verb ${g.slug}"))(
             ApiClient.setFocus(Autopilot.FocusSet.Action(verb), Some(Goal.Slug(g.slug.value)))
           )
         )
@@ -959,9 +959,9 @@ object ManagersView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def schedulerHead(s: AgentScheduler.SchedulerStatus): SchedulerHead =
     SchedulerHead(
-      s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom.value == "person"
-                                                    then " (set by a person)"
-                                                    else "") +
+      shown"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom.value == "person"
+                                                        then " (set by a person)"
+                                                        else "") +
         s" · ${s.occupied} of ${s.maxRuns} runs at once" +
         (if s.pools.isEmpty then ""
          else " · " + s.pools.map(p => s"${Wording.pool(p.pool)} ${p.used}/${p.cap}").mkString(", ")) +
@@ -1178,7 +1178,7 @@ object ManagersView:
                       WinLink(WindowKey.Manager(WindowKey.Manager.Id(w.manager.value)), w.target.value),
                       span(
                         cls := "muted",
-                        s" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(Wording.Id(w.manager.value))}" + w.goal
+                        shown" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(Wording.Id(w.manager.value))}" + w.goal
                           .fold("")(g => s" · goal ${Wording.humanize(Wording.Id(g.value))}") +
                           (if w.position.value > 0 then s" · #${w.position} in line" else "")
                       )
@@ -1601,7 +1601,7 @@ object ManagersView:
                     disabled <-- busy,
                     title := "cancel its runs in flight and its open items",
                     onClick --> (_ =>
-                      if dom.window.confirm(s"Stop ${m.id}: cancel its runs in flight and its open items?") then
+                      if dom.window.confirm(shown"Stop ${m.id}: cancel its runs in flight and its open items?") then
                         write(WriteLabel("stop"))(ApiClient.managerAction(m.id, ManagersApi.Action("stop")))
                     )
                   )
@@ -1641,7 +1641,7 @@ object ManagersView:
           div(
             cls := "job-progress",
             WinLink(WindowKey.Run(WindowKey.Run.Id(r.id.value)), s"run ${r.id.value.take(8)} ${r.status}"),
-            r.progress.filter(_.value.nonEmpty).map(p => span(cls := "muted", s" · $p"))
+            r.progress.filter(_.value.nonEmpty).map(p => span(cls := "muted", shown" · $p"))
           )
         ),
         i.hold.map(h =>

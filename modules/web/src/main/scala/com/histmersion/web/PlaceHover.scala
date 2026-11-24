@@ -222,7 +222,7 @@ object PlaceHover:
         if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
           settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = Preview.KeyboardDriven(true))
-    button(m.el, s"${label.value} — show only this place and pin its card")
+    button(m.el, shown"$label — show only this place and pin its card")
 
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
     * it to the shape under it.
@@ -254,7 +254,7 @@ object PlaceHover:
             Some(el),
             keyboard = Preview.KeyboardDriven(true)
           )
-    button(el, s"${label.value} — show only this place and pin its card")
+    button(el, shown"$label — show only this place and pin its card")
 
   private def button(el: dom.Element, label: String): Unit =
     el.setAttribute("tabindex", "0")

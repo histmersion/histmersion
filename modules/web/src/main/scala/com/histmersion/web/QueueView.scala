@@ -955,7 +955,7 @@ object QueueView:
                   typ := "button",
                   cls := "link-hit",
                   disabled <-- Auth.writable.map(!_),
-                  title := s"tick the item off as ingested as ${h.citekey}",
+                  title := shown"tick the item off as ingested as ${h.citekey}",
                   span(cls := "hit-title", h.title),
                   h.year.map(y => span(cls := "muted", s" ($y)")),
                   span(cls := "muted hit-key", " · ", code(h.citekey)),
@@ -975,7 +975,7 @@ object QueueView:
     case Seg.Bold(t)   => b(t)
     case Seg.Italic(t) => em(t)
     case Seg.Doi(d)    =>
-      a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d)
+      a(cls := "doi-link", href := shown"https://doi.org/$d", target := "_blank", rel := "noopener", d)
     case Seg.Url(u)    => a(href := u, target := "_blank", rel := "noopener", u)
     case Seg.Cite(ck)  => SourceLink(ck)
     case Seg.Ident(id) => IdentLink(id)

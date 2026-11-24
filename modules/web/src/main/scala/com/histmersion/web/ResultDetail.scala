@@ -86,7 +86,7 @@ object ResultDetail:
             typ := "button",
             cls := "btn btn--sm detail-pin",
             "Pin as window",
-            title := s"Keep this ${kindOf(t)} open in a window over the map",
+            title := shown"Keep this ${kindOf(t)} open in a window over the map",
             onClick --> { ev => pin(t, ev.currentTarget.asInstanceOf[dom.Element]) }
           ),
           a(
@@ -106,7 +106,7 @@ object ResultDetail:
         div(
           cls := "detail-marks",
           ContextMenu.on(
-            ContextMenu.OnTitle(s"Actions: ${c.title}"),
+            ContextMenu.OnTitle(shown"Actions: ${c.title}"),
             () => ItemMenu.entries(ref, c.byline.value)
           ),
           ItemActions(ref, c.byline.value)

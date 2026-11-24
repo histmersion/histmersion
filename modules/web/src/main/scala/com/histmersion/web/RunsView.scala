@@ -550,14 +550,14 @@ object RunsView:
         Option.when(r.warnings.nonEmpty)(
           div(
             cls := "run-warn-count muted",
-            s"${Plural.count(Plural.CountN(r.warnings.size.toLong), Plural.CountSingular("warning"))}"
+            shown"${Plural.count(Plural.CountN(r.warnings.size.toLong), Plural.CountSingular("warning"))}"
           )
         ),
         div(
           cls := "job-meta muted",
-          span(title := s"run ${r.id}", s"run ${r.id.value.take(8)}"),
+          span(title := shown"run ${r.id}", s"run ${r.id.value.take(8)}"),
           span(
-            s" · ${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
+            shown" · ${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
           ),
           Option(r.createdAt).filter(_.value.nonEmpty).map(c => span(title := c.value, s" · started ${ago(c.value)}"))
         )
@@ -617,7 +617,7 @@ object RunsView:
       run.item.changes.collect { case Some(d) => d.run.pipeline } --> (pl =>
         WindowManager.retitle(
           WindowKey.Run(WindowKey.Run.Id(id.value)),
-          Text(s"Agent run · ${pipelineLabel(pl).value}")
+          Text(shown"Agent run · ${pipelineLabel(pl)}")
         )
       )
     )
@@ -633,7 +633,7 @@ object RunsView:
         cls := "run-head",
         stateBadge(r.status),
         dryBadge(r),
-        span(cls := "run-title", title := r.pipeline, s" ${pipelineLabel(r.pipeline).value} · "),
+        span(cls := "run-title", title := r.pipeline, shown" ${pipelineLabel(r.pipeline)} · "),
         target(r),
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))
       ),
@@ -667,7 +667,7 @@ object RunsView:
         cls := "run-facts",
         dt("spent"),
         dd(
-          s"${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
+          shown"${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
         ),
         dt("model"),
         dd(r.model.fold("the configured roles")(_.value)),
@@ -711,7 +711,7 @@ object RunsView:
             val name = d.steps.find(_.seq == seq).map(_.name.value).getOrElse(s"step $seq")
             htmlTag("details")(
               htmlTag("summary")(
-                s"$name — ${Plural.count(Plural.CountN(ms.size.toLong), Plural.CountSingular("message"))}"
+                shown"$name — ${Plural.count(Plural.CountN(ms.size.toLong), Plural.CountSingular("message"))}"
               ),
               ms.map { m =>
                 div(

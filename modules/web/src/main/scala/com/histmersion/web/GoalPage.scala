@@ -353,8 +353,8 @@ object GoalPage:
             if !ui.agentsEnabled.value then "Research agents are off on this server: no step runs."
             else
               v.plan.fold("No steps yet: the goal's agents have not planned its work.")(pl =>
-                s"Approved plan: ${Plural.count(Plural.CountN(pl.subGoals.size), Plural.CountSingular("sub-goal"))}, ${Plural.count(Plural.CountN(pl.queries.size), Plural.CountSingular("query"), Plural.CountPlural("queries"))}, " +
-                  s"${Plural.count(Plural.CountN(pl.works.size), Plural.CountSingular("work"))} to read."
+                shown"Approved plan: ${Plural.count(Plural.CountN(pl.subGoals.size), Plural.CountSingular("sub-goal"))}, ${Plural.count(Plural.CountN(pl.queries.size), Plural.CountSingular("query"), Plural.CountPlural("queries"))}, " +
+                  shown"${Plural.count(Plural.CountN(pl.works.size), Plural.CountSingular("work"))} to read."
               )
           )
         else

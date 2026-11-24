@@ -392,7 +392,7 @@ final class PluginOps(using console: Console)(
     if dependencies.isEmpty then Cli.out.println("dependencies: none of its own (no POM lists any)")
     else dependencies.foreach(value => Cli.out.println(value))
     Cli.out.println(signer.fold("signature: not checked")(f => s"signature: good, key $f"))
-    replaced.filterNot(_ == jar.file).foreach(f => Cli.out.println(s"replaces $f"))
+    replaced.filterNot(_ == jar.file).foreach(f => Cli.out.println(shown"replaces $f"))
 
   /** Re-sign the directory's manifest when GPG provenance is set up. */
   private def resign(): Unit =
@@ -448,7 +448,7 @@ final class PluginOps(using console: Console)(
       .filterNot(f => jars.exists(_.getFileName.toString == f.value))
       .toList
       .sorted
-      .map(f => s"- $f — removed from the directory, still in the binary")
+      .map(f => shown"- $f — removed from the directory, still in the binary")
     val deps =
       scala.util.Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.count(_.trim.nonEmpty)).getOrElse(0)
     val header = s"# Plugins of ${install.home}\n\n- directory: ${install.plugins}" +

@@ -104,7 +104,9 @@ final class ResearchState:
         ApprovalsView.evidenceLine(a).map(e => div(cls := "muted state-reason", s"Reason given: ${e.take(240)}")),
         div(
           cls := "btn-group state-actions",
-          ResearchOverview.evidence(a).map((label, to) => L.a(cls := "btn state-evidence", href := s"$to", s"$label"))
+          ResearchOverview
+            .evidence(a)
+            .map((label, to) => L.a(cls := "btn state-evidence", href := shown"$to", shown"$label"))
         )
       )
     case a: OpenItem.Acquisition =>
@@ -256,7 +258,7 @@ object ResearchState:
     case d: OpenItem.Decision    => s"decision-${d.approval.id}"
     case a: OpenItem.Acquisition => s"acquisition-${a.item}"
     case t: OpenItem.Task        => s"task-${t.item}"
-    case r: OpenItem.PausedRun   => s"run-${r.run}"
+    case r: OpenItem.PausedRun   => shown"run-${r.run}"
 
   def shown(s: OpenWork.State, words: String): OpenWork.State = s.modify(_.items).using(_.filter(_.mentions(words)))
 

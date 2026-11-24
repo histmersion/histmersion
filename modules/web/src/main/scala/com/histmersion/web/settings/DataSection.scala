@@ -118,7 +118,7 @@ object DataSection:
               "Pleiades, the historical boundaries and the named periods (PeriodO)" +
                 a.flatMap(_.counts)
                   .fold("")(c =>
-                    s" · ${Plural.count(Plural.CountN(c.places.value), Plural.CountSingular("place"))} · ${Plural.count(Plural.CountN(c.periods.value), Plural.CountSingular("period"))}"
+                    shown" · ${Plural.count(Plural.CountN(c.places.value), Plural.CountSingular("place"))} · ${Plural.count(Plural.CountN(c.periods.value), Plural.CountSingular("period"))}"
                   ),
               span(
                 cls := (if a.flatMap(_.counts).exists(_.places.value > 0) then "data-state"
@@ -230,10 +230,10 @@ object DataSection:
               if j.detail.flatMap(JobDetail.Purpose.of).exists(_.value.startsWith("dry run")) || what.value.endsWith(
                 "-check"
               ) =>
-            said.set(Some(Right(s"$text: checking…")))
+            said.set(Some(Right(shown"$text: checking…")))
             follow(text, j.id, 0)
           case Right(_) =>
-            said.set(Some(Right(s"$text: started. It is listed under “Downloading now”.")))
+            said.set(Some(Right(shown"$text: started. It is listed under “Downloading now”.")))
             DownloadJobs.refresh()
       }
 

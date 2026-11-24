@@ -423,7 +423,7 @@ object Preview:
       identifier = Card.Identifier(e.id.value),
       status = None,
       chips = Nil,
-      where = Card.Where(d.parent.fold("")(p => s"part of ${p.label}")),
+      where = Card.Where(d.parent.fold("")(p => shown"part of ${p.label}")),
       summary = e.description
         .map(_.value.trim)
         .filter(_.nonEmpty)
@@ -1304,7 +1304,7 @@ object Preview:
                   w.doi.map(d =>
                     a(
                       cls := "cite-tip-link",
-                      href := s"https://doi.org/$d",
+                      href := shown"https://doi.org/$d",
                       target := "_blank",
                       rel := "noopener",
                       " ↗"

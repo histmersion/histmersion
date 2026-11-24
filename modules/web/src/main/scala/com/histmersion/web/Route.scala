@@ -79,7 +79,7 @@ object Route:
   type RunId = RunId.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RunId extends Newtype[String, Pure]:
-    def of(run: api.automation.Agents.RunInfo.Id): RunId = RunId(s"$run")
+    def of(run: api.automation.Agents.RunInfo.Id): RunId = RunId(shown"$run")
 
   /** The front page of each place. */
   object Goal:

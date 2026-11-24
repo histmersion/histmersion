@@ -33,7 +33,7 @@ object BackupsSection:
             r.toEither.left
               .map(SettingsStore.message)
               .map(s =>
-                if s.state == Backup.State.Done.wire then s"Backed up: ${s.file}"
+                if s.state == Backup.State.Done.wire then shown"Backed up: ${s.file}"
                 else s"The backup goes on in the background (${s.state})."
               )
           )
