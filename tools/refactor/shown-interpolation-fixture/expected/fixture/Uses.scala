@@ -10,3 +10,5 @@ object Uses:
   def undisplayed(title: Title, name: Name): String = s"$title by $name"
   def listed(title: Title, years: List[Int]): String = s"$title in $years"
   def plain(copies: Int): String = s"$copies copies"
+  def counting(): Int = 3
+  def called(title: Title): String = shown"$title, ${counting()} times"
