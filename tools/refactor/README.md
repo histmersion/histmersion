@@ -626,8 +626,8 @@ The fixture:
 `DisplayAsIs` writes the per-type decision that a newtype's friendly form is its text as it is: for each listed
 companion (`types`, SemanticDB symbols) one line `given Display[T] = Display(_.value)` at the top of its body (a body
 is created for a one-line object), importing `com.histmersion.Display` where the file's package does not see it.
-Types whose friendly form differs (enum spellings, times, years, ids shown short) get a hand-written instance
-instead. Run as above with `display-as-is-<batch>.conf`; the fixture:
+Types whose friendly form differs (enum spellings, times, years, ids shown short) are listed under `forms`
+(`newtype`, the `instance` text, the `imports` it needs), each the decided form of that type. Run as above with `display-as-is-<batch>.conf`; the fixture:
 
 ```text
 .claude/skills/scalafix/scripts/run-rule.sh tools/refactor/DisplayAsIs.scala \
