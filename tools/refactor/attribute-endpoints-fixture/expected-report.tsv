@@ -1,0 +1,11 @@
+# fallback	2
+# stop	2
+# wrap	3
+kind	path	line	method	parameter	type
+wrap	Example.scala	34	serverLogic	in	fixture/Put#
+fallback	Example.scala	36	serverLogic	key	scala/Predef.String#
+stop	Example.scala	37	serverLogicSuccess	in	fixture/Put#: returns no Either
+fallback	Example.scala	38	serverLogic	in	fixture/Tool#
+wrap	ExampleTools.scala	5	handle	in	fixture/Tool#
+wrap	ExampleTools.scala	8	handle	in	fixture/Put#
+stop	ExampleTools.scala	9	handle		not a function literal
