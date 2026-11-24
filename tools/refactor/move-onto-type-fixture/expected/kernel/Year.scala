@@ -14,7 +14,6 @@ object Year:
   def show(year: Option[Year]): String = year.fold("?")(show)
 
   type SignedYear = SignedYear.T
-
   object SignedYear:
     opaque type T = Long
     def apply(raw: Long): T = raw
