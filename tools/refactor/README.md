@@ -605,7 +605,7 @@ parameter takes the newtype through a type class instance, e.g. Laminar's text c
 `com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`. With
 `sinkRequires` (a type class symbol) a sink is rewritten only for a newtype whose companion gives that instance: the
 type's own display form, never the raw value lifted for every newtype; the others go to the worklist. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
-extensions, limits itself to `paths`, and writes `report` (each rewrite) and `<report>-missing.tsv` (each
+extensions, limits itself to `paths` (prefixes) less `excludes` (regexes over the path), and writes `report` (each rewrite) and `<report>-missing.tsv` (each
 `x.value.op` whose newtype has no extension `op`: the worklist of operations to add to the types). After
 `sbt compile Test/compile`, from the worktree root:
 
