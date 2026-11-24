@@ -1,0 +1,12 @@
+title = "Histmersion"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "A source's citekey in a test oracle is a name, not a key"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^modules/[^/]+/src/test/resources/oracle/''']
+regexTarget = "match"
+regexes = ['''^citekey"\s*:\s*"[a-z][a-z0-9_-]*"$''']
