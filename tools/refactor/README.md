@@ -602,7 +602,9 @@ extension `op` (an operation added to the type by hand, then every call site fol
 becomes `x`; `x.value == y.value` (`!=`, `<`, `<=`, `>`, `>=`) of one newtype becomes `x == y` (Newtype's lifted
 CanEqual and Ordering); and a `.value` handed to a `sinks` method (regexes over SemanticDB symbols of methods whose
 parameter takes the newtype through a type class instance, e.g. Laminar's text child and `:=` through
-`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`. With
+`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`; for an
+operator sink (`attr := x`), `sinkReceivers` (regexes over the receiver's symbol) keeps it to the display attributes,
+so a protocol position (an option's `value`, a data attribute, `disabled`) never goes through Display. With
 `sinkRequires` (a type class symbol) a sink is rewritten only for a newtype whose companion gives that instance: the
 type's own display form, never the raw value lifted for every newtype; the others go to the worklist. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
 extensions, limits itself to `paths` (prefixes) less `excludes` (regexes over the path), and writes `report` (each rewrite) and `<report>-missing.tsv` (each

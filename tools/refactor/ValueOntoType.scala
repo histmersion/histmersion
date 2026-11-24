@@ -18,6 +18,7 @@ object ValueOntoType {
       roundTrips: Boolean = true,
       comparisons: Boolean = true,
       sinks: List[String] = Nil,
+      sinkReceivers: List[String] = Nil,
       sinkImport: String = "",
       sinkPackage: String = "",
       sinkRequires: String = "",
@@ -266,7 +267,13 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
             }
           case _ =>
         }
-        if (config.sinks.nonEmpty && sinkSymbol(i.op.symbol.value))
+        val receiver = i.lhs match {
+          case n: Term.Name => n.symbol.value
+          case Term.Select(_, n) => n.symbol.value
+          case _ => ""
+        }
+        val receives = config.sinkReceivers.isEmpty || config.sinkReceivers.exists(r => receiver.matches(r))
+        if (config.sinks.nonEmpty && sinkSymbol(i.op.symbol.value) && receives)
           i.argClause.values.flatMap(valueSelect).foreach { case (sel, nt) => toSink(sel, nt, s"sink:${i.op.value}") }
       case a: Term.Apply if config.sinks.nonEmpty && isSink(a.fun) =>
         a.argClause.values.flatMap(valueSelect).foreach { case (sel, nt) => toSink(sel, nt, "sink") }

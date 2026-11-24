@@ -17,5 +17,7 @@ object Uses:
   def shown(title: Title): String = Dom.span(title)
   def plain(text: String): String = Dom.span(text)
   def undisplayed(name: Name): String = Dom.span(name.value)
+  def tip(title: Title): String = Dom.title := title
+  def tagged(title: Title): String = Dom.data := title.value
   def earlier(a: Year, b: Year): Boolean = a < b
   def bracketed(a: Year, b: Year): Boolean = (a) < (b)
