@@ -429,7 +429,11 @@ object BundleImporter:
                 )
               )
             )
-            .getOrElse(throw ImportAbort(List(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply))))
+            .getOrElse(
+              throw ImportAbort(
+                List(Problem.Run.Stopped(Problem.Run.Stop.Unrecorded(Problem.Conflict.Activity.MergeApply)))
+              )
+            )
           MergeRepo.redirect(ap.folds, mergeId)
           MergeRepo.remember(ap.remember.map((id, d) => MergeRepo.DecisionKey(id.value) -> d), mergeId)
           val (reviews, logEntry) = followUps.recordIn(

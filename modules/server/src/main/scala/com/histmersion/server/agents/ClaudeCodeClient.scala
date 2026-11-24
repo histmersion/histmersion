@@ -139,7 +139,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
               .flatMap(_.blocked(PlanQuota.PoolId.ClaudePlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(i => java.time.Instant.ofEpochMilli(i.value))
-            throw new ModelLimitReached(model, until, Problem.Run.GuardStopped(Problem.Raw(why)))
+            throw new ModelLimitReached(model, until, Problem.Run.Stopped(Problem.Run.Stop.Guard(Problem.Raw(why))))
           case None =>
             ClaudeCode.result(o, call.user, call.schema) match
               case Right(r)  => r

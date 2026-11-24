@@ -265,7 +265,7 @@ object SentenceLedgerSuite:
       problem.productIterator.flatMap(walk).toSet.filter(_.contains('.'))
 
     lazy val sentences: Map[String, Vector[Rendered]] =
-      (Problem.examples ++ DocQuotedSentencesSuite.Quoted).toVector
+      (Problem.examples ++ Problem.variants ++ DocQuotedSentencesSuite.Quoted).toVector
         .groupBy(caseOf)
         .view
         .mapValues(_.map(p => Rendered(variantsOf(p), p.sentence)))

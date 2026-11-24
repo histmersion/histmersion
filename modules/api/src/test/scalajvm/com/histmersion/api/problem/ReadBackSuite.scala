@@ -36,6 +36,11 @@ class ReadBackSuite extends munit.FunSuite:
       )
   }
 
+  variants.zipWithIndex.foreach { (p, i) =>
+    test(s"variant $i, ${p.group.productPrefix}.${p.productPrefix}: its entry reads back as the value"):
+      assertEquals(RawJson.decode[Problem](p.entry.asJson.noSpaces), Right(p))
+  }
+
   /** The text the master writers wrote for a problem of a shape [[StoredShapes]] reads (master `Stopped.of`, lines
     * 77–82: `<reason>: <detail>`, `interrupted`, the drain's sentence; `CandidateSearch` line 125: `not asked this
     * sweep — <why>`), each detail as its writer wrote it: a literal of [[StoredShapes.Details]], or the text as it was.

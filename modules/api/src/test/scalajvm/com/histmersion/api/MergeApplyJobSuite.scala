@@ -81,7 +81,11 @@ class MergeApplyJobSuite extends munit.FunSuite:
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)
     assertEquals(
       of(JobState.Done).problems,
-      Some(NonEmptyVector.of[Problem](Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply)))
+      Some(
+        NonEmptyVector.of[Problem](
+          Problem.Run.Stopped(Problem.Run.Stop.Unrecorded(Problem.Conflict.Activity.MergeApply))
+        )
+      )
     )
 
   test("an apply that failed with several problems keeps and shows every one"):
