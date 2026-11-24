@@ -51,7 +51,7 @@ object Bundle:
       */
     case Place, Period
 
-    def wire: Kind.Wire = Kind.Wire((Kind.wireOf(this)).value)
+    def wire: Kind.Wire = Kind.wireOf(this)
 
     /** The NDJSON file holding this kind's lines. */
     def file: String = (s"entities/${Kind.fileStem(this)}.ndjson")
@@ -632,8 +632,8 @@ object Bundle:
   object EventSets:
 
     def candidateStatus(here: EventCandidate.Status, there: EventCandidate.Status): EventCandidate.Status =
-      if here == EventCandidate.Status("proposed") then EventCandidate.Status((there).value)
-      else EventCandidate.Status((here).value)
+      if here == EventCandidate.Status("proposed") then there
+      else here
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
     def newer(here: Option[UpdatedAt], there: Option[UpdatedAt]): Boolean = (here, there) match

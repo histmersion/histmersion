@@ -18,7 +18,7 @@ object SettingsViews:
       .distinct
       .map(id =>
         ConfigEdit.Section(
-          ConfigEdit.Section.Id(id.value),
+          id,
           doc = ConfigEdit.Section.Doc(sectionDoc(id.value)),
           fields.filter(_.section == id)
         )

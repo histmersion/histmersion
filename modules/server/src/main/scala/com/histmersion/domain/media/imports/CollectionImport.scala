@@ -117,7 +117,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         MediaMatch.PlaceInfo.Id(f.id.value),
         MediaMatch.PlaceInfo.Label(f.label.value),
         f.keys.map(k => MediaMatch.PlaceInfo.Keys(k.value)),
-        f.period.flatMap((a, b) => DeepTime.span(DeepTime.SignedYear(a.value), DeepTime.SignedYear(b.value)))
+        f.period.flatMap((a, b) => DeepTime.span(a, b))
       )
       val resolve = SearchedCollection.resolveFor(f, named, cfg.sameSiteKm)
       val resolveId = SearchedCollection.resolveIdFor(f, own.getOrElse(placeId(t), Set.empty), byId, cfg.sameSiteKm)

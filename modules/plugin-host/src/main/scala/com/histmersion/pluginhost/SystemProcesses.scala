@@ -94,7 +94,7 @@ final class SystemProcesses extends Processes:
     def awaitOut(timeout: FiniteDuration)(
         ready: Processes.Result.Out => Boolean
     ): Boolean =
-      await(timeout, () => ready(Processes.Result.Out(out.value)))
+      await(timeout, () => ready(out))
 
     /** Wait until stderr has grown past `length` characters, the tool has exited, or `timeout` passed. */
     def awaitErr(length: Processes.Session.AwaitErrLength, timeout: FiniteDuration): Unit = {

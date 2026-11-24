@@ -61,10 +61,10 @@ object AssetLink:
 
     def of(total: RowCount, rows: scala.List[AssetLink], offset: UnreadPage.Offset): List =
       List(
-        RowCount((total).value),
+        total,
         rows,
         Offset((offset).value),
-        OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+        OffsetPage(total, Offset((offset).value), RowCount(rows.size)).next
       )
 
   final case class Put(

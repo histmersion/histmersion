@@ -116,7 +116,7 @@ final class KeePassXcVault(
       .flatMap { s =>
         password.foreach(pw => s.send(Processes.Session.SendLine(pw.value)))
         val up = s
-          .awaitOut(wait)(o => KeePassXcSession.prompt(Processes.Result.Out(o.value)).isDefined)
+          .awaitOut(wait)(o => KeePassXcSession.prompt(o).isDefined)
         KeePassXcSession.prompt(s.out) match
           case Some(p) if up && s.alive => Right(Right(Opened(s, p)))
           case _ if !s.alive            =>
@@ -125,7 +125,7 @@ final class KeePassXcVault(
                 Subprocess.Result(
                   Processes.Result.Exit(s.exit(timeout).fold(-1)(_.value)),
                   Processes.Result.Out(""),
-                  Processes.Result.Err(s.err.value)
+                  s.err
                 )
               )
             )
@@ -189,9 +189,7 @@ final class KeePassXcVault(
           val cmd = KeePassXcSession.command(attr, entry)
           val errMark = s.err.value.length
           val answered = s.send(Processes.Session.SendLine(cmd.value)).flatMap { _ =>
-            val _ = s.awaitOut(timeout)(out =>
-              KeePassXcSession.segment(Processes.Result.Out(out.value), mark, o.prompt).isDefined
-            )
+            val _ = s.awaitOut(timeout)(out => KeePassXcSession.segment(out, mark, o.prompt).isDefined)
             val out = s.out
             KeePassXcSession
               .segment(out, mark, o.prompt)

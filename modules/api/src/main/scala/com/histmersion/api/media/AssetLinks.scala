@@ -49,7 +49,7 @@ object AssetLinks:
 
   private def retarget(md: Body, from: Url, to: Url): Body =
     Body(
-      (mapImages(Body((md).value))((alt, target, title) =>
+      (mapImages(md)((alt, target, title) =>
         if !(target).value.startsWith((from).value) then (s"![$alt]($target$title)")
         else (s"![$alt]($to${(target).value.drop((from).value.length)}$title)")
       )).value
@@ -62,7 +62,7 @@ object AssetLinks:
     * every spelling is accepted.
     */
   def fromFigures(md: Body): Body =
-    mapImages(Body((md).value))((alt, target, title) =>
+    mapImages(md)((alt, target, title) =>
       target.value match
         case FiguresTarget(name) => s"![$alt]($Prefix${safeName(java.net.URLDecoder.decode(name, "UTF-8"))}$title)"
         case _                   => (s"![$alt]($target$title)")
@@ -71,7 +71,7 @@ object AssetLinks:
   /** An OCR body writes `![](…)`; a figure with no alt text is invisible to a screen reader. */
   def numberFigures(md: Body): Body =
     var n = 0
-    Body((mapImages(Body((md).value))((alt, target, title) =>
+    Body((mapImages(md)((alt, target, title) =>
       n += 1
       val label = if (alt).trim.nonEmpty then alt else s"Figure $n"
       (s"![$label]($target$title)")
@@ -113,14 +113,12 @@ object AssetLinks:
     Body(kept.mkString("\n"))
 
   def normalizeBody(md: NormalizeBodyMd, title: NormalizeBodyTitle = NormalizeBodyTitle("")): Body =
-    Body((dropBoilerplateHeadings(Body((collapsePictureText(Body((fromFigures(md)).value))).value), title)).value)
+    dropBoilerplateHeadings(collapsePictureText(fromFigures(md)), title)
 
-  def toWeb(md: ToWebMd, citekey: AssetLinks.ToWebCitekey): Body = Body(
-    (retarget(md, Url(Prefix), Url((webBase(citekey)).value))).value
-  )
+  def toWeb(md: ToWebMd, citekey: AssetLinks.ToWebCitekey): Body = retarget(md, Url(Prefix), webBase(citekey))
 
   def toAbsolute(md: ToAbsoluteMd, citekey: AssetLinks.ToAbsoluteCitekey, publicUrl: Url): Body =
-    Body((retarget(md, Url(Prefix), Url((publicUrl).value.trim.stripSuffix("/") + webBase(citekey)))).value)
+    retarget(md, Url(Prefix), Url((publicUrl).value.trim.stripSuffix("/") + webBase(citekey)))
 
   def webBase(citekey: Citekey): Url = Url(s"/source/${enc(((citekey).value))}/assets/")
 

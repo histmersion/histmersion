@@ -684,7 +684,7 @@ object PluginHost:
       PluginStatus.Version(p.info.version.value),
       PluginStatus.SpiVersion(p.info.spiVersion.value),
       PluginStatus.Enabled(enabled),
-      PluginState.Wire(state.wire.value),
+      state.wire,
       provides,
       block.map(settings).getOrElse(Nil),
       warns.map(w => PluginStatus.Warnings(w.value)),
