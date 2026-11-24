@@ -698,7 +698,7 @@ object TimelineView:
           ).filter(_.nonEmpty).mkString("\n"),
           span(
             cls := "tl-preset-line",
-            span(cls := "tl-preset-label", p.label.value),
+            span(cls := "tl-preset-label", p.label),
             span(cls := "tl-preset-years", years)
           ),
           span(cls := "tl-preset-meta", s"$where · $who"),

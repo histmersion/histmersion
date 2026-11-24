@@ -3,6 +3,7 @@ package web.marks
 
 import com.histmersion.web.SourceLink
 import com.raquo.laminar.api.L.*
+import com.histmersion.web.{:=, given}
 
 /** A note's text as the page shows it ([[NoteMarkdown]], built as elements: nothing the person wrote is read as HTML).
   */
@@ -28,4 +29,4 @@ object NoteView:
     case NoteMarkdown.Inline.Link(t, to) =>
       if to.value.startsWith("/") then a(href := to.value, t)
       else a(href := to.value, target := "_blank", rel := "noopener", t)
-    case NoteMarkdown.Inline.Cite(ck) => a(href := SourceLink.href(ck), cls := "note-cite", ck.value)
+    case NoteMarkdown.Inline.Cite(ck) => a(href := SourceLink.href(ck), cls := "note-cite", ck)

@@ -41,6 +41,7 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
 
 object JobKinds:
   type Subject = Subject.T
-  object Subject extends Newtype[String, Pure]
+  object Subject extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]

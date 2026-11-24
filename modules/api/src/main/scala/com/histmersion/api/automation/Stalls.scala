@@ -33,7 +33,8 @@ object Stalls:
     type Code = Code.T
     object Code extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends Newtype[String, Pure]
+    object Why extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Action = Action.T
     object Action extends Newtype[String, Pure]
 

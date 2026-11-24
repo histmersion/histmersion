@@ -462,7 +462,8 @@ object ModelChains:
     object Usable extends Newtype[Boolean, Pure]
     export LimitStatus.FreesAt
     type Note = Note.T
-    object Note extends Newtype[String, Pure]
+    object Note extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   final case class ChainEntry(
       model: ChainEntry.Model,

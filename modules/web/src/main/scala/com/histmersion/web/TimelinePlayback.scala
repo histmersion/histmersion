@@ -123,7 +123,7 @@ object TimelinePlayback:
           value <-- speed.signal.map(sp => speedLabel(sp).value),
           onChange.mapToValue --> { v => parseSpeed(UiLabels.Text(v)).foreach(speed.set) }
         ),
-        Speeds.map(s => option(value := speedLabel(s).value, speedWords(s).value))
+        Speeds.map(s => option(value := speedLabel(s), speedWords(s)))
       ),
       htmlTag("span")(
         cls := "tl-play-year",

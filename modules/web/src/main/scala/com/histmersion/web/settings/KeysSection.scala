@@ -11,6 +11,7 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
+import com.histmersion.web.{:=, given}
 
 /** Settings › Keys and passwords: every key and password a setting refers to — only whether it is set and how it is
   * referred to, never its value. A plugin's is written as a REFERENCE (an environment variable, a password manager's
@@ -18,7 +19,8 @@ import com.histmersion.web.ErrorLine
   */
 object KeysSection:
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Reference = Reference.T
   object Reference extends Newtype[String, Pure]
   type State = State.T
@@ -52,7 +54,8 @@ object KeysSection:
     type Scheme = Scheme.T
     object Scheme extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    object Label extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Hint = Hint.T
     object Hint extends Newtype[String, Pure]
 
@@ -166,7 +169,7 @@ object KeysSection:
       dataAttr("key") := f.relative.value,
       div(
         cls := "setting-head",
-        span(cls := "setting-name", name(f.relative).value),
+        span(cls := "setting-name", name(f.relative)),
         span(cls := "setting-key muted", f.relative.value)
       ),
       p(cls := "key-state", f.credential.map(c => state(c).value).getOrElse("")),
@@ -195,7 +198,7 @@ object KeysSection:
       dataAttr("key") := f.relative.value,
       div(
         cls := "setting-head",
-        span(cls := "setting-name", name(f.relative).value),
+        span(cls := "setting-name", name(f.relative)),
         span(cls := "setting-key muted", f.relative.value)
       ),
       p(
@@ -210,7 +213,7 @@ object KeysSection:
         select(
           idAttr := s"$id-form",
           cls := "field key-form",
-          Form.values.toList.map(x => option(value := x.scheme.value, x.label.value)),
+          Form.values.toList.map(x => option(value := x.scheme.value, x.label)),
           controlled(
             value <-- form.signal.map(_.scheme.value),
             onChange.mapToValue --> (v => form.set(Form.of(Form.Scheme(v))))

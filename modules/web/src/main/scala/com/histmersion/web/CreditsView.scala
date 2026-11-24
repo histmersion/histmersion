@@ -35,14 +35,14 @@ object CreditsView:
         tbody(
           DataCredits.all.map(c =>
             tr(
-              td(a(href := c.url.value, target := "_blank", rel := "noopener", c.name.value)),
+              td(a(href := c.url.value, target := "_blank", rel := "noopener", c.name)),
               td(c.usedFor.value),
               td(
                 c.licenceUrl.fold(span(c.licence.value))(u =>
                   a(href := u.value, target := "_blank", rel := "noopener", c.licence.value)
                 )
               ),
-              td(c.credit.value)
+              td(c.credit)
             )
           )
         )

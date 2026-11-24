@@ -115,7 +115,7 @@ object FilterBar:
         ApiClient
           .facets(
             Api.Facets.Field(c.facet.value),
-            Some(Api.Facets.Prefix(prefix.value)),
+            Some(prefix),
             UiState.toFilter(except = Set(UiState.ToFilterExcept(c.state.key.value)))
           )
           .map(_.take(config.facetSuggestions.value)),

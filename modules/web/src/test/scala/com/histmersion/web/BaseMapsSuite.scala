@@ -154,7 +154,12 @@ class BaseMapsSuite extends munit.FunSuite:
       BaseMaps.lackingNotice(List("places", "roads")).contains("`histmersion basemap fetch --layer vector --keep-all`")
     )
     assert(BaseMaps.missingNotice(Some(status(false))).contains("`histmersion basemap fetch`"))
-    assertEquals(BaseMaps.docsLink("https://d/guide"), "https://d/guide/exploring/web-ui.md#the-base-map")
+    assertEquals(
+      UiConfig.DocsUrl("https://d/guide").page(BaseMaps.BaseMapPage),
+      "https://d/guide/exploring/web-ui.md#the-base-map"
+    )
+    assertEquals(UiConfig.DocsUrl("https://d/guide/").page("a.md"), "https://d/guide/a.md")
+    assertEquals(UiConfig.DocsUrl("").page("a.md"), "a.md")
 
   test("what is drawn: a vector style over the extract with the viewer's options, its notice and depth"):
     val (spec, notice, z) = BaseMaps.plan(

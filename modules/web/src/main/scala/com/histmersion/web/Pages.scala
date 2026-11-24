@@ -81,7 +81,7 @@ object Pages:
       mainTag(
         cls := "page-main wm-content",
         idAttr := "page-main",
-        heading.map(h => h1(cls := "page-title", h.value)),
+        heading.map(h => h1(cls := "page-title", h)),
         body
       )
     )
@@ -95,11 +95,11 @@ object Pages:
       cls := "side-link",
       cls("on") := on,
       currentAttr := (if on then "page" else "false"),
-      span(cls := "side-label", label.value),
+      span(cls := "side-label", label),
       mods
     )
 
-  private def group(name: UiLabels.Text): HtmlElement = div(cls := "side-group", name.value)
+  private def group(name: UiLabels.Text): HtmlElement = div(cls := "side-group", name)
 
   /** A watched list's link: bold while it has something new, with the count of what waits on someone. */
   private def notice(b: Board): Modifier[HtmlElement] =
@@ -185,10 +185,10 @@ object Pages:
     case _                 => notFound
 
   private def section(heading: UiLabels.Text, body: HtmlElement): HtmlElement =
-    div(h1(cls := "page-title", heading.value), body)
+    div(h1(cls := "page-title", heading), body)
 
   private def agentsOff(text: UiLabels.Text): HtmlElement =
-    p(cls := "muted", text.value, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
+    p(cls := "muted", text, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
 
   /** The merged list through one of its chips — or one of the detailed lists it sums up, under the chips and a way back
     * to the list.

@@ -24,7 +24,8 @@ object ReviewBadge:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type Detail = Detail.T
-  object Detail extends Newtype[String, Pure]
+  object Detail extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type OpenMajors = OpenMajors.T
   object OpenMajors extends Newtype[Int, Pure]
   type OpenMinors = OpenMinors.T

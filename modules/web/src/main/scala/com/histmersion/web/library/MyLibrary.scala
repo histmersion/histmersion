@@ -10,6 +10,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.web.marks.MyItems
 import com.histmersion.api.Paging
 import com.histmersion.api.Offset
+import com.histmersion.web.{:=, given}
 
 /** Library's part of the filter panel: "My library" above the filters, the shelves of the collection the lists read
   * from, and "Show these on the map" under them. Both show only beside Library's lists.
@@ -69,7 +70,7 @@ object MyLibrary:
               ev.preventDefault(); Router.go(Route.Library(section), search = LibraryAddress.search(None, s))
             }
           },
-          span(cls := "side-label", s.label.value),
+          span(cls := "side-label", s.label),
           child.maybe <-- count(s).map(_.map(n => span(cls := "side-count", ListPage.grouped(n.value))))
         )
       }

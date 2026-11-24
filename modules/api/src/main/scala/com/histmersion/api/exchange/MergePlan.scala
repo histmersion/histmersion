@@ -43,7 +43,8 @@ object MergePlan:
   type PlanHash = PlanHash.T
   object PlanHash extends Newtype[String, Pure]
   type Info = Info.T
-  object Info extends Newtype[String, Pure]
+  object Info extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Resolved = Resolved.T
   object Resolved extends Newtype[Int, Pure]
   type Changes = Changes.T

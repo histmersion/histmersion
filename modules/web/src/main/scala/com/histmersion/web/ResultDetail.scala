@@ -49,7 +49,7 @@ object ResultDetail:
     val record = Var(Option.empty[Place.Record])
     div(
       cls := "result-detail",
-      dataAttr("kind") := kindOf(t).value,
+      dataAttr("kind") := kindOf(t),
       onMountCallback { _ =>
         Preview
           .fetch(t)
@@ -81,7 +81,7 @@ object ResultDetail:
           ),
           a(
             cls := "btn btn--sm detail-tab",
-            href := pageOf(t).value,
+            href := pageOf(t),
             target := "_blank",
             rel := "noopener",
             Icon(Icon.NewTab),
@@ -116,7 +116,7 @@ object ResultDetail:
     div(
       cls := "place-record",
       r.dateSource.map(s =>
-        p(cls := "place-record-line", span(cls := "muted", "Dates from: "), Place.Record.dateSourceText(s).value)
+        p(cls := "place-record-line", span(cls := "muted", "Dates from: "), Place.Record.dateSourceText(s))
       ),
       Option.when(r.periods.nonEmpty)(
         p(cls := "place-record-line", span(cls := "muted", "Time periods: "), r.periods.mkString(", "))

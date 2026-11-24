@@ -129,7 +129,7 @@ object MapRegionsView:
             select(
               cls := "field map-region-pick",
               children <-- status.signal.map(
-                _.toList.flatMap(choices).map(c => option(value := c.id.value, c.label.value))
+                _.toList.flatMap(choices).map(c => option(value := c.id.value, c.label))
               ),
               // the options are made again when the status is read again: the choice is set again after them
               controlled(
@@ -162,7 +162,7 @@ object MapRegionsView:
             "download",
             select(
               cls := "field map-region-content",
-              Content.values.toList.map(c => option(value := c.toString, c.label.value)),
+              Content.values.toList.map(c => option(value := c.toString, c.label)),
               controlled(
                 value <-- content.signal.map(_.toString),
                 onChange.mapToValue --> { v => content.set(Content.parse(Content.Name(v))); checked.set(None) }
@@ -218,7 +218,7 @@ object MapRegionsView:
           cls := s"about-state state-${state.label}",
           if dry then s"size check: ${j.status}" else s"download: ${j.status}"
         ),
-        j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a.value))
+        j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a))
       ),
       j.problems.toList.flatMap(_.sentences).map(s => p(cls := "form-error", role := "alert", s)),
       j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t.value)),
@@ -274,7 +274,7 @@ object MapRegionsView:
             button(
               typ := "button",
               cls := "btn btn--sm map-region-remove",
-              dataAttr("region") := f.name.value,
+              dataAttr("region") := f.name,
               "remove",
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
               onClick --> (_ => remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(f.name))))

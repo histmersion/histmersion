@@ -42,7 +42,7 @@ object RunsView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A run still moving: worth polling for. (A `waiting` run waits for a person, not for the server.) */
-  private def stateWire(status: RunInfo.Status): RunState.Wire = RunState.Wire(status.value)
+  private def stateWire(status: RunInfo.Status): RunState.Wire = status
 
   def live(status: RunInfo.Status): Boolean =
     RunState.parse(stateWire(status)).exists(s => s == RunState.Queued || s == RunState.Running)
@@ -435,7 +435,7 @@ object RunsView:
         cls := "btn btn--toggle",
         title := value.fold("Every run, whatever its state.")(s => stateMeaning(s).value),
         aria.pressed <-- UiState.runStatus.signal.map(v => (v == value).toString),
-        span(label.value),
+        span(label),
         child.text <-- count.map(n => if n > 0 then s" ${Paging.grouped(Paging.GroupSize(n.toLong))}" else ""),
         onClick --> (_ => UiState.set(UiState.runStatus := value)())
       )
@@ -448,7 +448,7 @@ object RunsView:
     )
 
   private def stateBadge(status: RunInfo.Status): HtmlElement =
-    span(cls := s"job-state state-$status", title := statusLabel(status).value, statusLabel(status).value)
+    span(cls := s"job-state state-$status", title := statusLabel(status), statusLabel(status))
 
   /** A dry run (#992) is marked wherever the run is shown: it wrote nothing. */
   private def dryBadge(r: RunInfo): Option[HtmlElement] =
@@ -539,7 +539,7 @@ object RunsView:
         .agentControl(
           id,
           Api.JobControl.Action(a.wire.value),
-          usd.map(b => RunRequest.BudgetUsd(b.value))
+          usd.map(b => b)
         )
         .onComplete { r =>
           busy.set(false)
@@ -580,7 +580,7 @@ object RunsView:
       pausedFor(r).map(why =>
         p(
           cls := "run-paused",
-          pausedText(r, why).value,
+          pausedText(r, why),
           Option
             .when(why == Agents.PauseReason.Allowance)(span(" ", WinLink(WindowKey.Models, "models & allowances")))
         )
@@ -625,7 +625,7 @@ object RunsView:
       h4("Steps"),
       table(
         cls := "run-steps",
-        thead(tr(StepColumns.map(c => th(c.value)))),
+        thead(tr(StepColumns.map(c => th(c)))),
         tbody(d.steps.map { s =>
           // each cell names its column: the narrow layout drops the header and shows every step as
           // a card of "column value" lines (an empty cell is left out there)
@@ -633,10 +633,10 @@ object RunsView:
             cls := s"step-${s.status}",
             stepCells(s).map { (col, v) =>
               td(
-                dataAttr("label") := col.value,
+                dataAttr("label") := col,
                 cls("step-note") := col.value == "note",
                 cls("is-empty") := v.value.isEmpty,
-                v.value
+                v
               )
             }
           )
@@ -699,7 +699,7 @@ object RunsView:
                 typ := "button",
                 cls := (if a == Action.Cancel then "btn" else "btn btn--primary"),
                 disabled <-- busy,
-                a.label.value,
+                a.label,
                 onClick --> (_ => act(a))
               )
             )

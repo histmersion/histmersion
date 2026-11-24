@@ -21,6 +21,7 @@ import com.histmersion.api.media.{MediaItem, MediaProvider}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.web.ErrorLine
+import com.histmersion.web.{:=, given}
 
 /** Settings › Data and downloads: the reference data Histmersion keeps on this computer — the background map, places,
   * periods and events, pictures — each with what it is, whether it is there, and Update / Remove; the downloads under
@@ -29,9 +30,11 @@ import com.histmersion.web.ErrorLine
   */
 object DataSection:
   type ActionLabel = ActionLabel.T
-  object ActionLabel extends Newtype[String, Pure]
+  object ActionLabel extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type ActionWhat = ActionWhat.T
-  object ActionWhat extends Newtype[String, Pure]
+  object ActionWhat extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type SharePercent = SharePercent.T
   object SharePercent extends Newtype[Int, Pure]
 
@@ -171,7 +174,7 @@ object DataSection:
                   act(
                     ActionLabel("Fetch new pictures"),
                     ActionWhat(s"media-${m.name}"),
-                    ApiClient.importMedia(MediaItem.Provider(m.name.value))
+                    ApiClient.importMedia(m.name)
                   )
                 else span()
               )
@@ -204,8 +207,8 @@ object DataSection:
       button(
         typ := "button",
         cls := (if primary then "btn btn--primary data-action" else "btn data-action"),
-        text.value,
-        dataAttr("action") := what.value,
+        text,
+        dataAttr("action") := what,
         disabled <-- Auth.writable.map(!_),
         onClick --> (_ => start(text, what, job))
       )

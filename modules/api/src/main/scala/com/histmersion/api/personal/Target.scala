@@ -37,7 +37,8 @@ object Target:
   type Identity = Identity.T
   object Identity extends Newtype[String, Pure]
   type Where = Where.T
-  object Where extends Newtype[String, Pure]
+  object Where extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   export com.histmersion.api.personal.ItemKey
   type CheckWhat = String

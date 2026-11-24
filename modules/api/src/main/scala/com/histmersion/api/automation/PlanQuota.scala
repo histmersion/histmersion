@@ -50,7 +50,8 @@ object PlanQuota:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends Newtype[String, Pure]
+    object Title extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
     def parse(s: Wire): Option[PoolId] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -454,7 +455,8 @@ object PlanQuota:
     type PlanType = PlanType.T
     object PlanType extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends Newtype[String, Pure]
+    object Note extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Available = Available.T
     object Available extends Newtype[Boolean, Pure]
     type Login = Login.T

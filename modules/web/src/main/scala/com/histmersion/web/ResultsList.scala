@@ -166,7 +166,7 @@ object ResultsList:
             case _                       => content.set(Nil)
         }
       ),
-      div(cls := "pick-title", title.value),
+      div(cls := "pick-title", title),
       onZoom match
         case Some(fn) =>
           button(
@@ -188,7 +188,7 @@ object ResultsList:
         role := "button",
         tabIndex := 0,
         div(cls := "ck", pickIcon(Glyphs.Name(CardIcons.GenericSource), "finding"), SourceLink(ck, pts.head.doi)),
-        div(cls := "title", ttl.value),
+        div(cls := "title", ttl),
         div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.value.nonEmpty then s" · $per" else "")),
         div(cls := "claim", Fmt.clip(pts.head.claim.value, Markdown.CharLimit(140))),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
@@ -218,8 +218,8 @@ object ResultsList:
       role := "button",
       tabIndex := 0,
       dataAttr("dot-kind") := entry.kind.toString.toLowerCase,
-      div(cls := "title", pickIcon(Glyphs.Name(entry.icon.value), entry.kind.one.value), entry.label.value),
-      Option.when(entry.note.value.nonEmpty)(div(cls := "meta", entry.note.value)),
+      div(cls := "title", pickIcon(Glyphs.Name(entry.icon.value), entry.kind.one.value), entry.label),
+      Option.when(entry.note.value.nonEmpty)(div(cls := "meta", entry.note)),
       onClick --> { ev => open(ev.currentTarget.asInstanceOf[dom.Element]) },
       onKeyDown --> { ev =>
         if ev.key == "Enter" || ev.key == " " then
@@ -313,7 +313,7 @@ object ResultsList:
       a(
         cls := "title row-link",
         href := SourceLink.href(src.citekey),
-        src.title.value,
+        src.title,
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }
       ),
       div(cls := "meta", meta),
@@ -353,7 +353,7 @@ object ResultsList:
         )
       else emptyNode,
       RowActions(
-        ItemRef.source(src.citekey, Title(src.title.value)),
+        ItemRef.source(src.citekey, src.title),
         ItemRef.Href(SourceLink.href(src.citekey)),
         List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString))
           .filter(_.nonEmpty)
@@ -398,9 +398,7 @@ object ResultsList:
                       Chip.Text(t.value),
                       prefix = Some(Chip.Prefix(s"${c.label}: ")),
                       extraCls = Chip.ExtraClass("place"),
-                      remove = Some(() =>
-                        UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value))
-                      )
+                      remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value))
                     )
                   )
               )
@@ -409,9 +407,7 @@ object ResultsList:
                 Chip(
                   Chip.Text(c.shown.map(_.value).getOrElse(Fmt.displayTag(Fmt.DisplayTagS(c.value.value)).value)),
                   prefix = Some(Chip.Prefix(s"${c.label}: ")),
-                  remove = Some(() =>
-                    UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value))
-                  )
+                  remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value))
                 )
               )
           }

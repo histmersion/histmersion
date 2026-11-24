@@ -28,7 +28,8 @@ final case class Bookmark(
 
 object Bookmark:
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]

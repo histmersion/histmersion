@@ -17,6 +17,7 @@ object Shelf:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   def parse(s: Wire): Option[Shelf] = values.find(_.wire.value == s.value.trim.toLowerCase)

@@ -16,16 +16,19 @@ class MotionPrefSuite extends munit.FunSuite:
     MotionPref.choose(MapMotion.System)
 
   test("follow the system animates unless the system asks for reduced motion; always and never ignore it"):
-    for reduced <- List(false, true) do
-      assertEquals(MapMotion.animates(MapMotion.System, reduced), !reduced)
-      assertEquals(MapMotion.animates(MapMotion.Always, reduced), true)
-      assertEquals(MapMotion.animates(MapMotion.Never, reduced), false)
+    val reduced = MotionPref.SystemReduced(true)
+    val unreduced = MotionPref.SystemReduced(false)
+    assertEquals(MapMotion.animates(MapMotion.System, unreduced), true)
+    assertEquals(MapMotion.animates(MapMotion.System, reduced), false)
+    for systemReduced <- List(unreduced, reduced) do
+      assertEquals(MapMotion.animates(MapMotion.Always, systemReduced), true)
+      assertEquals(MapMotion.animates(MapMotion.Never, systemReduced), false)
 
   test("the note shows only while following the system and the system asks for reduced motion"):
-    assert(MapMotion.heldBySystem(MapMotion.System, systemReduced = true))
-    assert(!MapMotion.heldBySystem(MapMotion.System, systemReduced = false))
-    assert(!MapMotion.heldBySystem(MapMotion.Always, systemReduced = true))
-    assert(!MapMotion.heldBySystem(MapMotion.Never, systemReduced = true))
+    assert(MapMotion.heldBySystem(MapMotion.System, systemReduced = MotionPref.SystemReduced(true)))
+    assert(!MapMotion.heldBySystem(MapMotion.System, systemReduced = MotionPref.SystemReduced(false)))
+    assert(!MapMotion.heldBySystem(MapMotion.Always, systemReduced = MotionPref.SystemReduced(true)))
+    assert(!MapMotion.heldBySystem(MapMotion.Never, systemReduced = MotionPref.SystemReduced(true)))
 
   test("MapLibre's reduceMotion: unset to follow the system (it reads it itself), false to always animate, true never"):
     assertEquals(MapMotion.mapLibreReduce(MapMotion.System), None)

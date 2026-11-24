@@ -23,10 +23,12 @@ object DotEntry:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Icon = Icon.T
   object Icon extends Newtype[String, Pure]
   type Mid = Mid.T
   object Mid extends Newtype[Double, Pure]
   type Note = Note.T
-  object Note extends Newtype[String, Pure]
+  object Note extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

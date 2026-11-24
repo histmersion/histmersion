@@ -24,10 +24,10 @@ object PlaybackAreas:
     */
 
   def alpha(ph: FractionalYear, start: FractionalYear, end: FractionalYear, fade: FadeYears): Opacity =
-    if ph.value >= start.value && ph.value <= end.value then Opacity(1.0)
+    if ph >= start && ph <= end then Opacity(1.0)
     else if fade.value <= 0 then Opacity(0.0)
     else
-      val d = if ph.value < start.value then start.value - ph.value else ph.value - end.value
+      val d = if ph < start then start.value - ph.value else ph.value - end.value
       Opacity(math.max(0.0, 1.0 - d / fade.value))
 
   /** Pure: the alpha drawn — `a` in steps of 1/`steps`, so a frame restyles only the states whose look changed (the map

@@ -19,20 +19,21 @@ object MapMotion:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   def fromWire(s: Wire): Option[MapMotion] = values.find(_.wire.value == s.value.trim.toLowerCase)
 
   /** Pure: does the map animate under choice `m` when the system asks for reduced motion (`systemReduced`)? */
-  def animates(m: MapMotion, systemReduced: Boolean): Boolean = m match
-    case System => !systemReduced
+  def animates(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m match
+    case System => !systemReduced.value
     case Always => true
     case Never  => false
 
   /** Pure: is the map still only because the system asks for it (the setting follows the system)? The menu says so
     * under the setting.
     */
-  def heldBySystem(m: MapMotion, systemReduced: Boolean): Boolean = m == System && systemReduced
+  def heldBySystem(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m == System && systemReduced.value
 
   /** Pure: MapLibre's `reduceMotion` option for a map made under `m` — `None` leaves MapLibre to read the system's
     * setting itself (it reads it on every camera move, so it follows a change at once).

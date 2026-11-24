@@ -273,10 +273,10 @@ object MapLists:
         cls := "row-link",
         href := r.href.value,
         span(cls := "cite-tip-icon pick-icon", onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, r.icon))),
-        span(cls := "row-title", r.label.value),
+        span(cls := "row-title", r.label),
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); r.open() } }
       ),
-      Option.when(r.note.value.nonEmpty)(div(cls := "meta", r.note.value)),
+      Option.when(r.note.value.nonEmpty)(div(cls := "meta", r.note)),
       RowActions(
         ItemRef(
           Target.item(r.kind, ItemKey(r.key.value)),

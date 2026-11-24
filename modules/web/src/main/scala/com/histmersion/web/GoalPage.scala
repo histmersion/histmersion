@@ -43,7 +43,8 @@ object GoalPage:
   type ScheduleNowMs = Millis
   val ScheduleNowMs: Millis.type = Millis
   type HeaderNote = HeaderNote.T
-  object HeaderNote extends Newtype[String, Pure]
+  object HeaderNote extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   val StepLimit = 12
   val HistoryLimit = 8
@@ -266,7 +267,7 @@ object GoalPage:
           s" › ${g.title}",
           g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(Wording.Id(p.value)))))
         ),
-        g.notes.filter(_.value.trim.nonEmpty).map(n => p(cls := "goal-question", n.value)),
+        g.notes.filter(_.value.trim.nonEmpty).map(n => p(cls := "goal-question", n)),
         div(
           cls := "muted goal-state",
           GoalsView.badge(g.status),
@@ -287,7 +288,7 @@ object GoalPage:
             if parts.isEmpty then "" else parts.mkString(" · ", " · ", "")
           }
         ),
-        child.maybe <-- note.map(_.map(n => p(cls := "muted goal-note", role := "status", n.value)))
+        child.maybe <-- note.map(_.map(n => p(cls := "muted goal-note", role := "status", n)))
       ),
       div(
         cls := "btn-group goal-actions",
@@ -354,7 +355,7 @@ object GoalPage:
       ),
       div(
         cls := "step-main",
-        strong(stepName(i).value),
+        strong(stepName(i)),
         div(
           cls := "muted",
           mark match
@@ -441,7 +442,7 @@ object GoalPage:
         span(
           a(
             href := libraryOf(slug).value,
-            Plural.count(Plural.CountN(sources), Plural.CountSingular("source")).value,
+            Plural.count(Plural.CountN(sources), Plural.CountSingular("source")),
             onClick --> { ev =>
               if Router.plain(ev) then {
                 ev.preventDefault(); showFiltered(slug, Route.Library(LibrarySection.Sources))

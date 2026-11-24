@@ -63,13 +63,13 @@ object MotionPref:
   def systemReduced: Boolean = { install(); systemNow.value }
 
   /** Should the map animate now? */
-  def animate(): Boolean = MapMotion.animates(choice, systemReduced)
+  def animate(): Boolean = { install(); MapMotion.animates(choice, systemNow) }
 
   /** Whether the map animates, as it changes. */
-  val animates: Signal[Animates] = state.signal.map((m, r) => Animates(MapMotion.animates(m, r.value)))
+  val animates: Signal[Animates] = state.signal.map((m, r) => Animates(MapMotion.animates(m, r)))
 
   /** Whether the menu says the map is still because the system asks for it. */
-  val heldBySystem: Signal[HeldBySystem] = state.signal.map((m, r) => HeldBySystem(MapMotion.heldBySystem(m, r.value)))
+  val heldBySystem: Signal[HeldBySystem] = state.signal.map((m, r) => HeldBySystem(MapMotion.heldBySystem(m, r)))
 
   /** For a test: the system's setting as if the browser had reported it. */
   private[web] def systemChanged(reduced: SystemReduced): Unit =

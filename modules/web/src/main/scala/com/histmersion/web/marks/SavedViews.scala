@@ -12,6 +12,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.web.ui.Flash
+import com.histmersion.web.{:=, given}
 
 /** "Save this view": Explore as it is now — the filters, the span, the layers and where the map is — kept as a bookmark
   * to come back to, under a name. Listed here (Explore's filter panel) and in My library › Bookmarks.
@@ -111,7 +112,7 @@ object SavedViews:
               a(
                 cls := "saved-view-open",
                 href := ItemRef.back(b.target).value,
-                b.name.value,
+                b.name,
                 title := s"Open the view “${b.name}”: ${Target.where(b.target)}",
                 onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); OpenBack(b.target) } }
               ),

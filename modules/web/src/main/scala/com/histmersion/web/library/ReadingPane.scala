@@ -28,6 +28,7 @@ import com.histmersion.web.marks.MyItems
 import com.histmersion.web.marks.NoteList
 import com.histmersion.web.WindowKey
 import com.histmersion.api.UiLabels
+import com.histmersion.web.{:=, given}
 
 /** Library's reading pane: the item chosen in the table. Its actions (show it on the map, open its page in a new tab,
   * pin it as a window; in a narrow window, back to the list), then what it is, its title, its authors, its status,
@@ -178,7 +179,7 @@ object ReadingPane:
     )
     div(
       cls := "reading-item",
-      dataAttr("key") := ck.value,
+      dataAttr("key") := ck,
       ContextMenu
         .on(ContextMenu.OnTitle(s"Actions: ${ref0.title}"), () => ItemMenu.entries(refNow(reading, ref0), byline)),
       onMountCallback { _ =>
@@ -231,7 +232,7 @@ object ReadingPane:
         ul(all.take(Layout.readingFindings.value).map { f =>
           li(
             cls := "reading-finding",
-            f.claim.value,
+            f.claim,
             Option.when(YearFmt.period(f.periodStart, f.periodEnd).nonEmpty)(
               span(cls := "lib-period", s" ${YearFmt.period(f.periodStart, f.periodEnd)}")
             ),

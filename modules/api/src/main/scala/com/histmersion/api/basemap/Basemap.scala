@@ -321,7 +321,8 @@ object Basemap:
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    object Name extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export LayerInfo.File
     export BBox.Text as Bbox
     export LayerInfo.MinZoom

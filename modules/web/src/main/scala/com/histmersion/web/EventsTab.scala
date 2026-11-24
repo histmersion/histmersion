@@ -95,11 +95,11 @@ object EventsTab:
             HtmlSink.replace(ctx.thisNode.ref, Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(evt.kind).value)))
           )
         ),
-        evt.label.value
+        evt.label
       ),
       div(
         cls := "event-meta",
-        span(cls := "event-kind", Fmt.display(UiLabels.Text(evt.kind.value)).value),
+        span(cls := "event-kind", Fmt.display(UiLabels.Text(evt.kind.value))),
         span(cls := "event-period", when(evt).value),
         EventPrecision
           .label(evt.precision)
@@ -112,7 +112,7 @@ object EventsTab:
             )
           )
           .getOrElse(emptyNode),
-        span(cls := "event-historicity", Fmt.display(UiLabels.Text(evt.historicity.value)).value)
+        span(cls := "event-historicity", Fmt.display(UiLabels.Text(evt.historicity.value)))
       ),
       evt.description
         .filter(_.value.nonEmpty)

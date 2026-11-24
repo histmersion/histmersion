@@ -299,7 +299,7 @@ object UploadView:
       ),
       htmlTag("datalist")(
         idAttr := optionsId,
-        children <-- openItems.signal.map(_.map(i => option(value := itemLabel(i).value)))
+        children <-- openItems.signal.map(_.map(i => option(value := itemLabel(i))))
       )
     )
 
@@ -413,7 +413,7 @@ object UploadView:
           p(
             cls := "form-ok",
             s"Uploaded — OCR job ${ok.jobId.value.take(8)} is ${ok.status} for ",
-            code(ok.citekey.value),
+            code(ok.citekey),
             ". Follow it in ",
             a(href := "#", "background jobs", onClick.preventDefault --> (_ => WindowManager.open(WindowKey.Jobs))),
             ".",

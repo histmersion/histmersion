@@ -48,7 +48,7 @@ object PageTools:
             cls := "btn btn--toggle btn--sm page-width-btn",
             dataAttr("width") := w.wire.value,
             aria.pressed <-- width.signal.map(x => (x == w).toString),
-            w.label.value,
+            w.label,
             onClick --> (_ => choose(w))
           )
         )

@@ -81,7 +81,7 @@ object ApprovalsView:
 
   /** What an approval would change, in words. */
   def describe(a: ApprovalInfo): String =
-    ApprovalKind.parse(Approval.Kind.Wire(a.kind.value)) match
+    ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
         s"status of ${a.citekey}: ${a.current.getOrElse("?")} → ${a.status.getOrElse("?")}"
       case Some(ApprovalKind.Edge) =>
@@ -173,7 +173,7 @@ object ApprovalsView:
       .groupMapReduce(_.kind)(_ => 1)(_ + _)
       .toList
       .sortBy(-_._2)
-      .map((k, n) => s"$n ${kindLabel(Approval.Kind.Wire(k.value)).toLowerCase}")
+      .map((k, n) => s"$n ${kindLabel(k).toLowerCase}")
       .mkString(", ")
     s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(Plural.CountN(as.size), Plural.CountSingular("approval"))} ($kinds)? " +
       "Each is decided as if its own button were pressed, one after another, with the same checks."
@@ -211,7 +211,7 @@ object ApprovalsView:
             li(
               w.title.map(_.value).getOrElse(w.doi.value),
               s" (${w.year.fold("n.d.")(_.toString)}) ",
-              a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi.value),
+              a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
               if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
               else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
               Option(s"${w.why}").filter(_.nonEmpty).map(y => div(cls := "muted", y))
@@ -241,10 +241,10 @@ object ApprovalsView:
       Option.when(d.notUsed.nonEmpty)(
         htmlTag("details")(
           htmlTag("summary")(s"not used (${d.notUsed.size})"),
-          ul(d.notUsed.map(n => li(cls := "muted", n.value)))
+          ul(d.notUsed.map(n => li(cls := "muted", n)))
         )
       ),
-      htmlTag("details")(htmlTag("summary")("the text"), pre(cls := "trace-body draft-text", d.text.value))
+      htmlTag("details")(htmlTag("summary")("the text"), pre(cls := "trace-body draft-text", d.text))
     )
 
   // ── state and view ──────────────────────────────────────────────────────────────────────────────
@@ -397,7 +397,7 @@ object ApprovalsView:
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
   def digestLine(g: ApprovalDigest.KindGroup): String =
-    s"${kindLabel(Approval.Kind.Wire(g.kind.value))} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest
+    s"${kindLabel(g.kind)} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest
       .fold("")(o => s" (oldest $o)") +
       (g.decidedBy.value match
         case "checked"            => " · the autopilot's checks decide them within the day's cap"
@@ -432,7 +432,7 @@ object ApprovalsView:
                 typ := "button",
                 cls := "btn btn--sm",
                 digestLine(g),
-                title := (kindMeaning(Approval.Kind.Wire(g.kind.value)).toList :+ g.subjects
+                title := (kindMeaning(g.kind).toList :+ g.subjects
                   .map(s => s"${s.subject} (${s.count})")
                   .mkString(", ")).mkString("\n"),
                 onClick --> (_ =>
@@ -560,13 +560,13 @@ object ApprovalsView:
       span(
         cls := s"job-state state-${a.state}",
         title := a.state.value,
-        stateLabel(Approval.State.Wire(a.state.value))
+        stateLabel(a.state)
       ),
       div(
         cls := "job-main",
         div(
           cls := "job-subject approval-change",
-          ApprovalKind.parse(Approval.Kind.Wire(a.kind.value)) match
+          ApprovalKind.parse(a.kind) match
             case Some(ApprovalKind.Edge) =>
               span(
                 SourceLink(a.citekey),
@@ -579,7 +579,7 @@ object ApprovalsView:
                 a.subject.fold(span("?"))(g =>
                   WinLink(
                     WindowKey.Goal(WindowKey.Goal.Slug(g.value)),
-                    title := g.value,
+                    title := g,
                     Wording.humanize(Wording.Id(g.value))
                   )
                 )
@@ -589,7 +589,7 @@ object ApprovalsView:
                 if a.article.exists(_.mode == Goal.Plans.DraftMode.Create) then "publish the new article "
                 else "append a section to ",
                 a.subject.fold(span("?"))(s =>
-                  if a.article.exists(_.mode == Goal.Plans.DraftMode.Create) then strong(s.value)
+                  if a.article.exists(_.mode == Goal.Plans.DraftMode.Create) then strong(s)
                   else ArticleLink(Article.Slug(s.value), s.value)
                 )
               )
@@ -598,7 +598,7 @@ object ApprovalsView:
                 a.subject.fold(span("A manager"))(id =>
                   WinLink(
                     WindowKey.Manager(WindowKey.Manager.Id(id.value)),
-                    title := id.value,
+                    title := id,
                     Wording.manager(Wording.ManagerId(id.value))
                   )
                 ),
@@ -624,7 +624,7 @@ object ApprovalsView:
         evidenceLine(a).map(e => p(cls := "approval-evidence", e)),
         a.plan.map(planBlock),
         a.article.map(draftBlock),
-        a.quote.filter(_.value.nonEmpty).map(q => blockQuote(cls := "approval-quote", q.value)),
+        a.quote.filter(_.value.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),
         a.note.filter(_.value.nonEmpty).map(n => p(cls := "muted", s"note: $n")),
         a.result.filter(_.value.nonEmpty).map(r => p(cls := "muted", r.value)),
         div(
@@ -637,8 +637,8 @@ object ApprovalsView:
             " · ",
             span(
               cls := "approval-kind",
-              title := kindMeaning(Approval.Kind.Wire(a.kind.value)).fold[String](a.kind.value)(m => s"$m (${a.kind})"),
-              kindLabel(Approval.Kind.Wire(a.kind.value))
+              title := kindMeaning(a.kind).fold[String](a.kind.value)(m => s"$m (${a.kind})"),
+              kindLabel(a.kind)
             )
           ),
           span(s" · proposed ${a.createdAt}"),

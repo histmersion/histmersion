@@ -59,7 +59,7 @@ final class FilterTab[Q, Row](
       ),
       child.maybe <-- state.signal.map(s =>
         Option
-          .when(s.loaded.value && !s.loading.value && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty.value))
+          .when(s.loaded.value && !s.loading.value && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty))
       ),
       ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown.value).map(render))),
       ResultsPaging.moreButton(
@@ -103,4 +103,5 @@ object FilterTab:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
   type Empty = Empty.T
-  object Empty extends Newtype[String, Pure]
+  object Empty extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

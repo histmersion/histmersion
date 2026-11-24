@@ -80,7 +80,10 @@ object UiConfig:
   type TilesTone = TilesTone.T
   object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
-  object DocsUrl extends Newtype[String, Pure]
+  object DocsUrl extends Newtype[String, Pure]:
+    extension (url: T)
+      def page(path: String): String =
+        if url.value.isEmpty || url.value.endsWith("/") then s"${url.value}$path" else s"${url.value}/$path"
   export api.basemap.BaseMapSource.Wire as BaseMapSource
   type MapLanguage = MapLanguage.T
   object MapLanguage extends Newtype[String, Pure]

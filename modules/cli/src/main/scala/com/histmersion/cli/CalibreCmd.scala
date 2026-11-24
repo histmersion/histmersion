@@ -252,7 +252,7 @@ object CalibreCmd:
             dryRun = RepairAcquire.RepairRequest.DryRun(false),
             citekey = Some(ck),
             illustrations = MediaCoversRequest.Illustrations(false),
-            isbn = Some(MediaCoversRequest.Isbn(isbn.value))
+            isbn = Some(isbn)
           )
         ) match
           case Right(r) if r.covers.value > 0 => Cli.out.println(s"Cover: from Open Library (ISBN $isbn)")

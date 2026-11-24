@@ -191,7 +191,7 @@ object ModelsView:
             cls := s"allowance ${if pl.usable.value then "is-usable" else "is-paused"}",
             div(
               cls := "allowance-head",
-              strong(pl.title.value),
+              strong(pl.title),
               span(
                 cls := "muted",
                 title := pl.floors.value,
@@ -242,7 +242,7 @@ object ModelsView:
                   )
               )
             ),
-            pl.note.map(n => div(cls := "muted", n.value)),
+            pl.note.map(n => div(cls := "muted", n)),
             div(
               cls := "muted",
               pl.refresh.fold("No fresh reading is taken (refresh off)")(m => s"Fresh reading by $m") +
@@ -389,7 +389,7 @@ object ModelsView:
           else span()
         )
       ),
-      a.note.map(n => div(cls := "muted", n.value)),
+      a.note.map(n => div(cls := "muted", n)),
       a.limits.map { l =>
         div(
           cls := "allowance-limit",

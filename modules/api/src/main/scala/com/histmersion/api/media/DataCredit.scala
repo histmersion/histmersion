@@ -14,7 +14,8 @@ final case class DataCredit(
 
 object DataCredit:
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type UsedFor = UsedFor.T
   object UsedFor extends Newtype[String, Pure]
   type Licence = Licence.T

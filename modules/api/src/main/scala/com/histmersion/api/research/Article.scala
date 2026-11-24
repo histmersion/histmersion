@@ -72,7 +72,8 @@ object Article:
   type Slug = Slug.T
   object Slug extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  object Title extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   export Kind.Wire as KindValue
   type Body = Body.T
   object Body extends Newtype[String, Pure]

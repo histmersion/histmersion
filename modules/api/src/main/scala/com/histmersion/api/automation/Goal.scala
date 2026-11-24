@@ -61,7 +61,8 @@ object Goal:
   type StatusValue = StatusValue.T
   object StatusValue extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends Newtype[String, Pure]
+  object Notes extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
@@ -256,7 +257,8 @@ object Goal:
 
     object ArticleDraft:
       type Text = Text.T
-      object Text extends Newtype[String, Pure]
+      object Text extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type Section = Section.T
       object Section extends Newtype[String, Pure]
       type Problems = Problems.T

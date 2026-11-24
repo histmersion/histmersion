@@ -430,7 +430,7 @@ object GoalsView:
           div(
             cls := "goal-detail",
             div(cls := "run-head", badge(v.goal.status), span(cls := "run-title", s" ${v.goal.title}")),
-            v.goal.notes.filter(_.value.nonEmpty).map(n => p(n.value)),
+            v.goal.notes.filter(_.value.nonEmpty).map(n => p(n)),
             dl(
               cls := "run-facts",
               dt("Identifier"),

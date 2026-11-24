@@ -36,11 +36,13 @@ object IconSelect:
     type Value = Value.T
     object Value extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    object Label extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Group = Group.T
     object Group extends Newtype[String, Pure]
     type Hint = Hint.T
-    object Hint extends Newtype[String, Pure]
+    object Hint extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
   def typeAhead(opts: List[Opt], from: Int, prefix: String): Option[Int] =
@@ -226,9 +228,9 @@ object IconSelect:
               role := "option",
               aria.selected := (o.value.value == chosen),
               dataAttr("value") := o.value.value,
-              o.hint.map(h => title := h.value),
+              o.hint.map(h => title := h),
               span(cls := "icon-select-icon", onMountCallback(c => HtmlSink.replace(c.thisNode.ref, o.icon))),
-              span(o.label.value),
+              span(o.label),
               onMouseMove --> { _ => if active.now() != i then active.set(i) },
               onClick --> { _ => choose(i) }
             )

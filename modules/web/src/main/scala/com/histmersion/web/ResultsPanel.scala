@@ -174,7 +174,7 @@ object ResultsPanel:
               dataAttr("tab") := t.key.value,
               cls <-- activeTabSignal.map(a => if a == t then "tab active" else "tab"),
               aria.selected <-- activeTabSignal.map(_ == t),
-              span(cls := "tab-label", t.label.value),
+              span(cls := "tab-label", t.label),
               child.maybe <-- counts(t).map(_.map(n => span(cls := "tab-count", n.toString))),
               onClick --> { _ => setActiveTab(t) }
             )
