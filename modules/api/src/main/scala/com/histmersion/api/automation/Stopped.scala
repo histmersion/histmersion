@@ -88,8 +88,8 @@ object Stopped:
     exhaustedIn(why).flatMap(role => AgentRole.parse(AgentRole.Wire(s"$role")))
 
   private def exhaustedIn(why: Problem): Option[Problem.Run.Role] = why match
-    case Problem.Run.Exhausted(role, _, _, _) => Some(role)
-    case Problem.Run.AtStep(_, problems)      =>
+    case Problem.Run.Exhausted(role, _, _, _)                        => Some(role)
+    case Problem.Run.AtStep(_, Problem.Run.Failure.Failed(problems)) =>
       NonEmptyVector.toVector(problems).iterator.flatMap(exhaustedIn).nextOption()
     case Problem.Stored.Unrecognised(text) => StoredShapes.exhaustedRole(s"$text")
     case _                                 => None

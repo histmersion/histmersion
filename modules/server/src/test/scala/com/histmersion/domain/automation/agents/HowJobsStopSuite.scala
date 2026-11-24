@@ -83,7 +83,7 @@ class HowJobsStopSuite extends munit.FunSuite:
     others.foreach(t => assertEquals(Stopped.of(text(t)), Stopped.Failed(NonEmptyVector.of(unrecognised(t)))))
 
   test("every pause reason reads from what it writes, with the problem it stopped on"):
-    val why: Problem = Problem.Run.BudgetSpent(Problem.Run.Step("enrich"))
+    val why: Problem = Problem.Run.AtStep(Problem.Run.Step("enrich"), Problem.Run.Failure.BudgetSpent)
     PauseReason.values.foreach { r =>
       val c = Stopped.Paused(r, why)
       assertEquals(Stopped.of(c.problem), c)
@@ -151,7 +151,8 @@ class HowJobsStopSuite extends munit.FunSuite:
       "all models for role extractor are below their allowance; no window frees by itself — raise or reset the allowance (local:a: its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z)"
     assertEquals(exhausted.sentence, sentence)
     // what the engine stores for the pause RunCtx halts with: the step's AtStep, typed, whole
-    val atStep = Problem.Run.AtStep(Problem.Run.Step("enrich"), NonEmptyVector.of(exhausted))
+    val atStep =
+      Problem.Run.AtStep(Problem.Run.Step("enrich"), Problem.Run.Failure.Failed(NonEmptyVector.of(exhausted)))
     val stored = Stopped.Paused(PauseReason.Allowance, atStep).problem
     assertEquals(stored.sentence, s"allowance: enrich: $sentence", "the words the pause said before it was typed")
     assertEquals(ModelPicker.pausedRole(stored), Some(AgentRole.Extractor))

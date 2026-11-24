@@ -116,15 +116,9 @@ class RenderSuite extends munit.FunSuite:
     "NotNow" -> 409,
     "AtStep" -> 409,
     "AtModel" -> 409,
-    "Unsettled" -> 409,
-    "ProviderDown" -> 409,
-    "BudgetSpent" -> 409,
-    "NoValidAnswer" -> 409,
     "Failed" -> 409,
-    "Declined" -> 409,
     "LimitReached" -> 409,
     "AllowanceReached" -> 409,
-    "OutputCapped" -> 409,
     "Needs" -> 409,
     "ApiKeyLogin" -> 503,
     "Exposed" -> 503,
@@ -573,13 +567,17 @@ class RenderSuite extends munit.FunSuite:
       Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Resume) -> "run r1 is done; only a paused run can be resumed",
       Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Cancel) -> "run r1 is done; it has already finished",
       Run.Stopped(Run.Stop.Withdrawn) -> "rejected: the run was cancelled",
-      Run.AtStep(step, NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "enrich: a; b",
-      Run.Unsettled(step, Count(16L)) ->
+      Run.AtStep(step, Run.Failure.Failed(NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b"))))) ->
+        "enrich: a; b",
+      Run.AtStep(step, Run.Failure.Unsettled(Count(16L))) ->
         "enrich: 16 attempts without an answer; the chain keeps running out mid-step",
-      Run.ProviderDown(step, NonEmptyVector.of(Relayed(Sentence("HTTP 529")))) ->
+      Run.AtStep(step, Run.Failure.ProviderDown(NonEmptyVector.of(Relayed(Sentence("HTTP 529"))))) ->
         "enrich: HTTP 529 — fix the provider, then resume",
-      Run.BudgetSpent(step) -> "enrich: the run's budget is exhausted",
-      Run.NoValidAnswer(step, Count(3L), Vector(Relayed(Sentence("a")), Relayed(Sentence("b")))) ->
+      Run.AtStep(step, Run.Failure.BudgetSpent) -> "enrich: the run's budget is exhausted",
+      Run.AtStep(
+        step,
+        Run.Failure.NoValidAnswer(Count(3L), Vector(Relayed(Sentence("a")), Relayed(Sentence("b"))))
+      ) ->
         "enrich: no valid answer after 3 attempt(s): a; b"
     ).foreach((p, want) => assertEquals(p.sentence, want))
 
@@ -588,17 +586,17 @@ class RenderSuite extends munit.FunSuite:
     val haiku = Run.Model("claude-code:haiku")
     Vector[(Problem, String)](
       Run.Failed(NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "a; b",
-      Run.Declined(Vector(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "a; b",
-      Run.Declined(Vector.empty) -> "the answer was rejected",
+      Run.AtStep(step, Run.Failure.Declined(Vector(Relayed(Sentence("a")), Relayed(Sentence("b"))))) -> "a; b",
+      Run.AtStep(step, Run.Failure.Declined(Vector.empty)) -> "the answer was rejected",
       Run.LimitReached(Relayed(Sentence("claude-code:opus reached its usage limit")), EpochMs(1762732800000L)) ->
         "claude-code:opus reached its usage limit — skipped until 2025-11-10T00:00:00Z",
       Run.AllowanceReached(Run.Model("anthropic:claude-opus")) ->
         "anthropic:claude-opus reached its allowance during the step; the chain's next model takes it",
-      Run.OutputCapped(step, haiku, Count(4096L), Count(4096L), Run.Ceiling.StepMaxTokens) ->
+      Run.AtStep(step, Run.Failure.OutputCapped(haiku, Count(4096L), Count(4096L), Run.Ceiling.StepMaxTokens)) ->
         ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 4096) — raise " +
           "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS) (a thinking model's reasoning counts toward it), " +
           "restart the server, then resume the run"),
-      Run.OutputCapped(step, haiku, Count(4096L), Count(8192L), Run.Ceiling.StepOwn) ->
+      Run.AtStep(step, Run.Failure.OutputCapped(haiku, Count(4096L), Count(8192L), Run.Ceiling.StepOwn)) ->
         ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 8192) — raise " +
           "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens) (a thinking " +
           "model's reasoning counts toward it), restart the server, then resume the run"),
