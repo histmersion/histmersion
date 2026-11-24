@@ -21,7 +21,8 @@ import com.histmersion.config.{AppConfig, MediaConfig}
 import com.histmersion.domain.DeepTime.SignedYear
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}
-import com.histmersion.plugin.EventCatalogue
+import com.histmersion.plugin.{EventCatalogue, Plugin}
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import hearth.kindlings.optics.syntax.*
 
 import scala.collection.immutable.ListMap
@@ -42,9 +43,17 @@ final class EventImports(
     cfg: () => AppConfig,
     http: HttpTransport,
     presentYear: () => SignedYear,
-    held: () => Boolean
+    held: () => Boolean,
+    owners: () => Map[EventCatalogue, Plugin.Info.Id]
 ):
   private def ec = cfg().events
+
+  private def importer(provider: CatalogRecord.Provider): Creator.New =
+    InTreeWorkflow.imported(
+      registered().get(provider).flatMap(owners().get),
+      InTreeWorkflow.Catalogue,
+      InTreeWorkflow.EventImporting
+    )
 
   /** The configured Wikidata classes' kinds, the most specific first. */
   private def classOrder: List[EventSummary.Kind] = ec.wikidata.classList.map(_._2)
@@ -91,6 +100,7 @@ final class EventImports(
       area: Option[BBox],
       progress: JobInfo.Progress => Unit
   )(using WritePermit)(using Creator.New): EventImportReport =
+    given Creator.New = importer(provider)
     val info = infoOf(provider)
     val catalogue = registered().get(provider)
     val dryRun = req.dryRun.value

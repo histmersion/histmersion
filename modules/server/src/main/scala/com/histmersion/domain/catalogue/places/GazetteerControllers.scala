@@ -78,6 +78,7 @@ final class GazetteerControllers(
           .left
           .map(refused)
           .flatMap { src =>
+            given Creator.New = imports.importerOf(src)
             if dryRun.value then imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
             else
               job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
