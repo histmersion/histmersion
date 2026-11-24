@@ -54,12 +54,14 @@ class StepFailureSuite extends munit.FunSuite:
     assert(r.finalAnswer.isLeft)
     assertEquals(Engine.outputCapHit(r), Some(4096))
     val msg = Problem.Run
-      .OutputCapped(
+      .AtStep(
         Problem.Run.Step("cold-reader-1"),
-        Problem.Run.Model("claude-code:haiku"),
-        Problem.Count.of(Engine.OutputCapLimit(4096)),
-        Problem.Count(4096L),
-        Engine.ceiling(Engine.CapKeyOverridden(false))
+        Problem.Run.Failure.OutputCapped(
+          Problem.Run.Model("claude-code:haiku"),
+          Problem.Count.of(Engine.OutputCapLimit(4096)),
+          Problem.Count(4096L),
+          Engine.ceiling(Engine.CapKeyOverridden(false))
+        )
       )
       .sentence
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)

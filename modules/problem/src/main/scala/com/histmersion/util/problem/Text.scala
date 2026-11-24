@@ -244,27 +244,14 @@ object Text:
         s"run $run is $status; only a paused run can be resumed"
       case Problem.Run.NotNow(run, status, Problem.Run.Control.Cancel) =>
         s"run $run is $status; it has already finished"
-      case Problem.Run.Stopped(Problem.Run.Stop.Withdrawn) => "rejected: the run was cancelled"
-      case Problem.Run.AtStep(step, why)                   => s"$step: ${why.toVector.map(_.sentence).mkString("; ")}"
-      case Problem.Run.AtModel(model, why)                 => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
-      case Problem.Run.Unsettled(step, attempts)           =>
-        s"$step: $attempts attempts without an answer; the chain keeps running out mid-step"
-      case Problem.Run.ProviderDown(step, why) =>
-        s"$step: ${why.toVector.map(_.sentence).mkString("; ")} — fix the provider, then resume"
-      case Problem.Run.BudgetSpent(step)                 => s"$step: the run's budget is exhausted"
-      case Problem.Run.NoValidAnswer(step, attempts, ps) =>
-        s"$step: no valid answer after $attempts attempt(s)${
-            if ps.isEmpty then "" else ps.map(_.sentence).mkString(": ", "; ", "")
-          }"
-      case Problem.Run.Failed(why)        => why.toVector.map(_.sentence).mkString("; ")
-      case Problem.Run.Declined(problems) =>
-        if problems.isEmpty then "the answer was rejected" else problems.map(_.sentence).mkString("; ")
+      case Problem.Run.Stopped(Problem.Run.Stop.Withdrawn)               => "rejected: the run was cancelled"
+      case Problem.Run.AtStep(_, declined: Problem.Run.Failure.Declined) => declined.said
+      case Problem.Run.AtStep(step, failure)                             => s"$step: ${failure.said}"
+      case Problem.Run.AtModel(model, why)      => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.Failed(why)              => why.toVector.map(_.sentence).mkString("; ")
       case Problem.Run.LimitReached(why, until) => s"${why.sentence} — skipped until ${until.iso}"
       case Problem.Run.AllowanceReached(model)  =>
         s"$model reached its allowance during the step; the chain's next model takes it"
-      case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
-        s"$step: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise ${setting.said} " +
-          "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
       case Problem.Run.Needs(Problem.Run.Need.Text(source))      => s"$source has no text — ingest or OCR it first"
       case Problem.Run.Needs(Problem.Run.Need.Body(article))     => s"article '$article' has no body to review"
       case Problem.Run.Stopped(Problem.Run.Stop.Guard(why))      => s"claude -p stopped by the quota guard: $why"
@@ -327,6 +314,24 @@ object Text:
       case Problem.Run.PauseCause.Allowance   => "allowance"
       case Problem.Run.PauseCause.PlanQuota   => "plan-quota"
       case Problem.Run.PauseCause.Stalled     => "stalled"
+
+  extension (failure: Problem.Run.Failure)
+    def said: String = failure match
+      case Problem.Run.Failure.Failed(why)         => why.toVector.map(_.sentence).mkString("; ")
+      case Problem.Run.Failure.Unsettled(attempts) =>
+        s"$attempts attempts without an answer; the chain keeps running out mid-step"
+      case Problem.Run.Failure.ProviderDown(why) =>
+        s"${why.toVector.map(_.sentence).mkString("; ")} — fix the provider, then resume"
+      case Problem.Run.Failure.BudgetSpent                 => "the run's budget is exhausted"
+      case Problem.Run.Failure.NoValidAnswer(attempts, ps) =>
+        s"no valid answer after $attempts attempt(s)${
+            if ps.isEmpty then "" else ps.map(_.sentence).mkString(": ", "; ", "")
+          }"
+      case Problem.Run.Failure.OutputCapped(model, cap, sent, setting) =>
+        s"$model's answer exceeded the $cap output-token cap (the step sent $sent) — raise ${setting.said} " +
+          "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
+      case Problem.Run.Failure.Declined(problems) =>
+        if problems.isEmpty then "the answer was rejected" else problems.map(_.sentence).mkString("; ")
 
   extension (typeName: TypeName)
     /** A type's name without its package: `Citekey`, `Source.Status`. A `Wire` newtype is the wire spelling of the type

@@ -34,7 +34,7 @@ G22comment	plugins/gazetteers	main	18
 G22comment	plugins/gazetteers	test	11
 G22comment	plugins/media	main	151
 G22comment	plugins/media	test	35
-G22comment	problem	main	834
+G22comment	problem	main	829
 G22comment	problem	test	6
 G22comment	repo/.claude	main	18
 G22comment	repo/build.sbt	main	101
@@ -153,7 +153,7 @@ G45boundary	plugins/calibre	main	6
 G45boundary	plugins/events	main	110
 G45boundary	plugins/gazetteers	main	31
 G45boundary	plugins/media	main	205
-G45boundary	problem	main	639
+G45boundary	problem	main	634
 G45boundary	server	main	196
 G45boundary	upstreams	main	60
 G45boundary	web	main	79

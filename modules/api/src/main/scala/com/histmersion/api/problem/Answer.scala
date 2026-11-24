@@ -144,6 +144,17 @@ object Answer:
     val data = path.foldRight(entry.data)((step, inner) => Json.obj(step._1 -> Json.obj(step._2 -> inner)))
     Entry(group, name, data, entry.text)
 
+  private def atStep(failure: String): Entry => Entry = entry =>
+    val fields = entry.data.asObject.getOrElse(JsonObject.empty)
+    if fields("failure").isDefined then entry
+    else
+      val step = fields("step").toList.map("step" -> _)
+      val rest = Json.fromJsonObject(fields.remove("step"))
+      Entry(runs, Case("AtStep"), Json.obj(step :+ ("failure" -> Json.obj(failure -> rest))*), entry.text)
+
+  private def asStoredText: Entry => Entry = entry =>
+    Entry(Group("Stored"), Case("Unrecognised"), Json.obj("text" -> entry.text.asJson), entry.text)
+
   private val runs = Group("Run")
   private val stopped = Case("Stopped")
   private val needs = Case("Needs")
@@ -166,7 +177,14 @@ object Answer:
     Former(runs, Case("NoText")) -> into(runs, needs, "need" -> "Text"),
     Former(runs, Case("NoBody")) -> into(runs, needs, "need" -> "Body"),
     Former(runs, Case("NoLogin")) -> into(runs, needs, "need" -> "Login"),
-    Former(runs, Case("ProbeUnread")) -> into(runs, needs, "need" -> "Probe")
+    Former(runs, Case("ProbeUnread")) -> into(runs, needs, "need" -> "Probe"),
+    Former(runs, Case("AtStep")) -> atStep("Failed"),
+    Former(runs, Case("Unsettled")) -> atStep("Unsettled"),
+    Former(runs, Case("ProviderDown")) -> atStep("ProviderDown"),
+    Former(runs, Case("BudgetSpent")) -> atStep("BudgetSpent"),
+    Former(runs, Case("NoValidAnswer")) -> atStep("NoValidAnswer"),
+    Former(runs, Case("OutputCapped")) -> atStep("OutputCapped"),
+    Former(runs, Case("Declined")) -> asStoredText
   )
 
   extension (entry: Entry)

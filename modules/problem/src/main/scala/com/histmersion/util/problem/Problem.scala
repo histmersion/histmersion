@@ -1901,30 +1901,24 @@ object Problem:
     /** Run `run` is `status`, in which `control` does not apply. */
     final case class NotNow(run: Raw, status: Raw, control: Control) extends Run
 
-    /** Step `step` stopped: `why`, each problem. */
-    final case class AtStep(step: Step, why: NonEmptyVector[Problem]) extends Run
+    /** Step `step` stopped, or an attempt of it was turned down: `failure`, how. */
+    final case class AtStep(step: Step, failure: Failure) extends Run
+
+    /** How a step stopped, or how an attempt of it was turned down. */
+    enum Failure derives CanEqual:
+      case Failed(why: NonEmptyVector[Problem])
+      case Unsettled(attempts: Count)
+      case ProviderDown(why: NonEmptyVector[Problem])
+      case BudgetSpent
+      case NoValidAnswer(attempts: Count, problems: Vector[Problem])
+      case OutputCapped(model: Model, cap: Count, sent: Count, setting: Ceiling)
+      case Declined(problems: Vector[Problem])
 
     /** Model `model` cannot be used now: `why`, each problem (its client does not build, its plan said no). */
     final case class AtModel(model: Model, why: NonEmptyVector[Problem]) extends Run
 
-    /** Step `step` made `attempts` attempts without an answer: the chain keeps running out mid-step. */
-    final case class Unsettled(step: Step, attempts: Count) extends Run
-
-    /** Step `step`'s provider failed: `why`, each problem; the provider is fixed, then the run resumed. */
-    final case class ProviderDown(step: Step, why: NonEmptyVector[Problem]) extends Run
-
-    /** Step `step` stopped: the run's budget is exhausted. */
-    final case class BudgetSpent(step: Step) extends Run
-
-    /** Step `step` has no valid answer after `attempts` attempts: the last answer's problems. */
-    final case class NoValidAnswer(step: Step, attempts: Count, problems: Vector[Problem]) extends Run
-
     /** An attempt of a step, or a run, failed: `why`, each problem (as the attempt's record keeps them). */
     final case class Failed(why: NonEmptyVector[Problem]) extends Run
-
-    /** A model's answer to a step was declined: `problems`, each check it failed (it is amended, or the step gives up).
-      */
-    final case class Declined(problems: Vector[Problem]) extends Run
 
     /** The model's plan reported its usage limit (`why`, as its runtime said it): the model is skipped until `until`.
       */
@@ -1932,11 +1926,6 @@ object Problem:
 
     /** `model` reached its allowance during a step: the chain's next model takes the step. */
     final case class AllowanceReached(model: Model) extends Run
-
-    /** `model`'s answer to step `step` exceeded its output cap of `cap` tokens (the step sent `sent`): a configuration
-      * error, not a retry — `setting` is raised, the server restarted, then the run resumed.
-      */
-    final case class OutputCapped(step: Step, model: Model, cap: Count, sent: Count, setting: Ceiling) extends Run
 
     /** A restart cut it short. */
     case object Interrupted extends Run
@@ -3023,45 +3012,20 @@ object Problem:
       Run.PlanOnly(Run.Role("writer")),
       Run.Stopped(Run.Stop.Stalled(Count(4L), Count(31L), Count(3L))),
       Run.NotNow(Raw("0193f1c4"), Raw("done"), Run.Control.Resume),
-      Run.AtStep(Run.Step("enrich"), NonEmptyVector.of(Run.Unassigned(Run.Role("enricher"), Run.Asked.Call))),
+      Run.AtStep(
+        Run.Step("enrich"),
+        Run.Failure.Failed(NonEmptyVector.of(Run.Unassigned(Run.Role("enricher"), Run.Asked.Call)))
+      ),
       Run.AtModel(
         Run.Model("hello-ai:echo"),
         NonEmptyVector.of(Refused.Policy(Refused.Rule.PlanOutsideLocal))
       ),
-      Run.Unsettled(Run.Step("enrich"), Count(16L)),
-      Run.ProviderDown(
-        Run.Step("enrich"),
-        NonEmptyVector.of(
-          Upstream.Timeout(
-            Upstream.Name("anthropic"),
-            Upstream.Url("https://api.anthropic.com/v1/messages"),
-            Millis(600000L),
-            Vector.empty
-          )
-        )
-      ),
-      Run.BudgetSpent(Run.Step("enrich")),
-      Run.NoValidAnswer(
-        Run.Step("extract"),
-        Count(3L),
-        Vector(Content.Answer(Content.Requirement.StandIn))
-      ),
       Run.Failed(NonEmptyVector.of(NotFound.Entity(TypeName("com.histmersion.domain.library.Citekey"), Raw("x")))),
-      Run.Declined(
-        Vector(Content.Answer(Content.Requirement.StandIn), Content.Answer(Content.Requirement.SummaryGiven))
-      ),
       Run.LimitReached(
         Upstream.Limited(Upstream.Name("claude-code"), Some(EpochMs(1762732800000L))),
         EpochMs(1762732800000L)
       ),
       Run.AllowanceReached(Run.Model("anthropic:claude-opus")),
-      Run.OutputCapped(
-        Run.Step("cold-reader-1"),
-        Run.Model("claude-code:haiku"),
-        Count(4096L),
-        Count(4096L),
-        Run.Ceiling.StepMaxTokens
-      ),
       Run.Needs(Run.Need.Text(Raw("anthony2007"))),
       Run.Interrupted,
       Run.Restored,
@@ -3107,7 +3071,37 @@ object Problem:
     Run.Stopped(Run.Stop.Unrecorded(Conflict.Activity.MergeApply)),
     Run.Needs(Run.Need.Body(Raw("yamnaya"))),
     Run.Needs(Run.Need.Login(Raw("'claude auth status' says not logged in"))),
-    Run.Needs(Run.Need.Probe(Io.ExitCode(1), Some(External.Reported("Invalid API key"))))
+    Run.Needs(Run.Need.Probe(Io.ExitCode(1), Some(External.Reported("Invalid API key")))),
+    Run.AtStep(Run.Step("enrich"), Run.Failure.Unsettled(Count(16L))),
+    Run.AtStep(
+      Run.Step("enrich"),
+      Run.Failure.ProviderDown(
+        NonEmptyVector.of(
+          Upstream.Timeout(
+            Upstream.Name("anthropic"),
+            Upstream.Url("https://api.anthropic.com/v1/messages"),
+            Millis(600000L),
+            Vector.empty
+          )
+        )
+      )
+    ),
+    Run.AtStep(Run.Step("enrich"), Run.Failure.BudgetSpent),
+    Run.AtStep(
+      Run.Step("extract"),
+      Run.Failure.NoValidAnswer(Count(3L), Vector(Content.Answer(Content.Requirement.StandIn)))
+    ),
+    Run.AtStep(
+      Run.Step("extract"),
+      Run.Failure.Declined(
+        Vector(Content.Answer(Content.Requirement.StandIn), Content.Answer(Content.Requirement.SummaryGiven))
+      )
+    ),
+    Run.AtStep(
+      Run.Step("cold-reader-1"),
+      Run.Failure
+        .OutputCapped(Run.Model("claude-code:haiku"), Count(4096L), Count(4096L), Run.Ceiling.StepMaxTokens)
+    )
   )
 
   // ---- Problems: one or many ----------------------------------------------------------------------------------

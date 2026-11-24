@@ -209,7 +209,9 @@ final class RunCtx private[automation] (
                   ),
                   Nil
                 )
-                Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
+                Left(
+                  Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.Failed(m.toNonEmpty)))
+                )
       }
     }
 
@@ -288,7 +290,9 @@ final class RunCtx private[automation] (
                   ),
                   Nil
                 )
-                Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
+                Left(
+                  Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.Failed(m.toNonEmpty)))
+                )
               case Right(json) if dryRun =>
                 skipped.add(
                   WouldWrite(
@@ -384,7 +388,7 @@ final class RunCtx private[automation] (
           d <- defs.agent(agent)
           sys <- defs.system(d, ToolStyle.Bare)
         yield (d, Prompt(Prompt.System(sys), Prompt.User(user.value)))).left
-          .map(m => Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
+          .map(m => Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.Failed(m.toNonEmpty))))
           .flatMap { (d, prompt) =>
             attempts(
               seq,
@@ -419,9 +423,15 @@ final class RunCtx private[automation] (
       onRefresh = n => warn(s"${role.wire}: $n")
     ) match
       case Left(PickFailure.Unavailable(m)) =>
-        Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), m.toNonEmpty)))
+        Left(Halt.Fail(Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.Failed(m.toNonEmpty))))
       case Left(PickFailure.Exhausted(m, at, why)) =>
-        Left(Halt.Pause(why, Problem.Run.AtStep(Problem.Run.Step.of(name), NonEmptyVector.of(m)), at))
+        Left(
+          Halt.Pause(
+            why,
+            Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.Failed(NonEmptyVector.of(m))),
+            at
+          )
+        )
       case Right(p) =>
         p.skipped
           .filter(warnedSkips.add)
@@ -459,7 +469,12 @@ final class RunCtx private[automation] (
         case Left(h)                                                       => Left(h)
         case Right(_) if attempt - before > maxAttempts + MaxModelSwitches =>
           Left(
-            Halt.Fail(Problem.Run.Unsettled(Problem.Run.Step.of(name), Problem.Count((attempt - before - 1).toLong)))
+            Halt.Fail(
+              Problem.Run.AtStep(
+                Problem.Run.Step.of(name),
+                Problem.Run.Failure.Unsettled(Problem.Count((attempt - before - 1).toLong))
+              )
+            )
           )
         case Right(picked) =>
           val (client, billing) = (picked.client, picked.billing)
@@ -529,7 +544,8 @@ final class RunCtx private[automation] (
               Left(
                 Halt.Pause(
                   PauseReason.Provider,
-                  Problem.Run.ProviderDown(Problem.Run.Step.of(name), e.problems.toNonEmpty)
+                  Problem.Run
+                    .AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.ProviderDown(e.problems.toNonEmpty))
                 )
               )
             case Right(res) =>
@@ -550,12 +566,17 @@ final class RunCtx private[automation] (
                     use,
                     billing,
                     None,
-                    Some(Problem.Run.BudgetSpent(Problem.Run.Step.of(name))),
+                    Some(Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.BudgetSpent)),
                     started,
                     msgs,
                     served
                   )
-                  Left(Halt.Pause(PauseReason.Budget, Problem.Run.BudgetSpent(Problem.Run.Step.of(name))))
+                  Left(
+                    Halt.Pause(
+                      PauseReason.Budget,
+                      Problem.Run.AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.BudgetSpent)
+                    )
+                  )
                 case FinishReason.Custom(AllowanceGuard.Reason) =>
                   record(
                     seq,
@@ -574,12 +595,14 @@ final class RunCtx private[automation] (
                   go(attempt + 1, tries, problems, previous, calls)
                 case _ if res.finalAnswer.isLeft && Engine.outputCapHit(res).isDefined =>
                   // the same cap fails the same way again: a configuration error, not a retry (#1450)
-                  val capped = Problem.Run.OutputCapped(
+                  val capped = Problem.Run.AtStep(
                     Problem.Run.Step.of(name),
-                    Problem.Run.Model.of(client.model.wire),
-                    Problem.Count.of(Engine.outputCapHit(res).getOrElse(Engine.OutputCapLimit(maxTokens.value))),
-                    Problem.Count.of(maxTokens),
-                    ceiling
+                    Problem.Run.Failure.OutputCapped(
+                      Problem.Run.Model.of(client.model.wire),
+                      Problem.Count.of(Engine.outputCapHit(res).getOrElse(Engine.OutputCapLimit(maxTokens.value))),
+                      Problem.Count.of(maxTokens),
+                      ceiling
+                    )
                   )
                   record(
                     seq,
@@ -633,7 +656,10 @@ final class RunCtx private[automation] (
                         use,
                         billing,
                         rejected,
-                        Some(Problem.Run.Declined(ps.toVector)),
+                        Some(
+                          Problem.Run
+                            .AtStep(Problem.Run.Step.of(name), Problem.Run.Failure.Declined(ps.toVector))
+                        ),
                         started,
                         msgs,
                         served
@@ -641,8 +667,10 @@ final class RunCtx private[automation] (
                       if last then
                         Left(
                           Halt.Fail(
-                            Problem.Run
-                              .NoValidAnswer(Problem.Run.Step.of(name), Problem.Count(attempt.toLong), ps.toVector)
+                            Problem.Run.AtStep(
+                              Problem.Run.Step.of(name),
+                              Problem.Run.Failure.NoValidAnswer(Problem.Count(attempt.toLong), ps.toVector)
+                            )
                           )
                         )
                       // an answer that did not decode goes back too, so the model fixes the named field
