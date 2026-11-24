@@ -291,7 +291,7 @@ object MapRegionsView:
         )
       } ++ focus.flatMap { f =>
         List(
-          dt(s"relief: ${f.name}"),
+          dt(shown"relief: ${f.name}"),
           dd(
             span(s"${f.bbox}, zoom ${f.minZoom}–${f.maxZoom}"),
             span(cls := "about-detail muted", Backup.humanBytes(f.bytes)),

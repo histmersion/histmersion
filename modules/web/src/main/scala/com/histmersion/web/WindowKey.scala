@@ -75,10 +75,10 @@ enum WindowKey derives CanEqual:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire: WindowKey.Wire = this match
-    case Source(ck)     => WindowKey.Wire(s"source:${ck.value}")
+    case Source(ck)     => WindowKey.Wire(shown"source:$ck")
     case Article(slug)  => WindowKey.Wire(s"article:${slug.value}")
-    case Graph(ck)      => WindowKey.Wire(s"graph:${ck.value}")
-    case EditSource(ck) => WindowKey.Wire(s"edit:${ck.value}")
+    case Graph(ck)      => WindowKey.Wire(shown"graph:$ck")
+    case EditSource(ck) => WindowKey.Wire(shown"edit:$ck")
     case Jobs           => WindowKey.Wire("jobs")
     case Upload         => WindowKey.Wire("upload")
     case Acquire        => WindowKey.Wire("acquire")
@@ -87,14 +87,14 @@ enum WindowKey derives CanEqual:
     case ApiKey         => WindowKey.Wire("key")
     case About          => WindowKey.Wire("about")
     case Runs           => WindowKey.Wire("runs")
-    case Run(id)        => WindowKey.Wire(s"run:${id.value}")
+    case Run(id)        => WindowKey.Wire(shown"run:$id")
     case Models         => WindowKey.Wire("models")
     case Approvals      => WindowKey.Wire("approvals")
     case Goals          => WindowKey.Wire("goals")
-    case Goal(slug)     => WindowKey.Wire(s"goal:${slug.value}")
+    case Goal(slug)     => WindowKey.Wire(shown"goal:$slug")
     case Merge          => WindowKey.Wire("merge")
     case Managers       => WindowKey.Wire("managers")
-    case Manager(id)    => WindowKey.Wire(s"manager:${id.value}")
+    case Manager(id)    => WindowKey.Wire(shown"manager:$id")
 
   /** The citekey or slug a window is about, if any. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

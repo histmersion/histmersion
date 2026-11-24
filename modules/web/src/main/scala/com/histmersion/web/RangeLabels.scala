@@ -74,7 +74,7 @@ object RangeLabels:
           Label(toText, ScreenPixels(toX), ElementSize(wt))
         )
       else
-        val text = UiLabels.Text(s"$fromText – $toText")
+        val text = UiLabels.Text(shown"$fromText – $toText")
         val w: Double = width(text).value
         val x = ((a0 + a1) / 2 - w / 2).max(0.0).min(math.max(0.0, bw - w))
         Placement.Joined(Label(text, ScreenPixels(x), ElementSize(w)))

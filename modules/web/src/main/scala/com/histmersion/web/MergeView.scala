@@ -555,7 +555,7 @@ object MergeView:
           cls := "muted",
           s" · ${Plural.count(Plural.CountN(p.matches.sources.value.toLong), Plural.CountSingular("source"))}: ${p.matches.byUid} the same record · ${p.matches.byLedger} by ledger · " +
             s"${p.matches.byStrongKey} by DOI/file/ISBN · ${p.matches.byScore} by score · ${p.matches.unmatched} new" +
-            s" · ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))} to write"
+            shown" · ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))} to write"
         ),
         child.maybe <-- planning.signal.map(b => Option.when(b)(span(cls := "muted", " · planning…")))
       ),
@@ -697,7 +697,7 @@ object MergeView:
           button(
             typ := "button",
             cls := "link-btn",
-            s"go to ${c.issue}",
+            shown"go to ${c.issue}",
             onClick --> (_ => selected.set(Some(c.issue)))
           )
         )
@@ -763,7 +763,7 @@ object MergeView:
           htmlTag("details")(
             cls := "merge-agreed",
             htmlTag("summary")(
-              s"${Plural.count(Plural.CountN(h.left.size.toLong), Plural.CountSingular("line"))} the same on both sides"
+              shown"${Plural.count(Plural.CountN(h.left.size.toLong), Plural.CountSingular("line"))} the same on both sides"
             ),
             lines(h.left.map(_.value))
           )
@@ -902,7 +902,7 @@ object MergeView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decisions(i: MergeIssue): HtmlElement =
     val current = chosen(res.now(), i.id)
-    val name = s"merge-decision-${i.id}"
+    val name = shown"merge-decision-${i.id}"
     def radio(d: MergeDecision, labelText: Modifier[HtmlElement]*): HtmlElement =
       label(
         cls := "merge-option",
@@ -1035,7 +1035,7 @@ object MergeView:
           div(
             cls := "form-row merge-confirm",
             span(
-              s"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}, " +
+              shown"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}, " +
                 s"plan ${p.planHash}. A backup is taken first."
             ),
             button(
@@ -1051,7 +1051,7 @@ object MergeView:
           button(
             typ := "button",
             cls := "btn btn--primary merge-apply-btn",
-            s"apply the merge (${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))})",
+            shown"apply the merge (${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))})",
             disabled := running,
             onClick --> (_ => confirm.set(true))
           )
@@ -1092,7 +1092,7 @@ object MergeView:
             li(
               if n.value == 0 then "planned again: nothing left to do"
               else
-                s"planned again: ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("change"))} left — report it"
+                shown"planned again: ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("change"))} left — report it"
             )
           )
         )

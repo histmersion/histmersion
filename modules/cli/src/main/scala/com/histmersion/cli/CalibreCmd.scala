@@ -368,8 +368,8 @@ object CalibreCmd:
         .map(Calibre.Book.Id(_))
         .toRight(
           fail(
-            s"'$ck' is not linked to a Calibre entry — `histmersion calibre push $ck` adds one, " +
-              s"`histmersion calibre link $ck <id>` links an existing one"
+            shown"'$ck' is not linked to a Calibre entry — `histmersion calibre push $ck` adds one, " +
+              shown"`histmersion calibre link $ck <id>` links an existing one"
           )
         )
       fmt <- file match
@@ -401,7 +401,7 @@ object CalibreCmd:
           )
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(got._2.value))
-          .toRight(fail(s"the server did not say what format '$ck' is"))
+          .toRight(fail(shown"the server did not say what format '$ck' is"))
         named = java.nio.file.Files.move(raw, dir.resolve(s"$ck.$ext"))
         out <- f(named)
       yield out
@@ -684,7 +684,7 @@ object CalibreCmd:
       id <- s.calibreId
         .flatMap(_.value.toIntOption)
         .map(Calibre.Book.Id(_))
-        .toRight(fail(s"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
+        .toRight(fail(shown"'$ck' has no Calibre entry yet — use `histmersion calibre push $ck`"))
       changes <- Calibre(Settings.app.cli.calibre).update(id, pushMeta(s)).left.map(failProblem)
     yield Output.emit(
       json,

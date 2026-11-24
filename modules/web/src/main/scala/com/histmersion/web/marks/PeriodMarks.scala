@@ -53,7 +53,7 @@ object PeriodMarks:
           Flash.say(
             r.fold(
               e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e).sentence}"),
-              _ => Flash.Text(s"The timeline opens on ${Fmt.periodStr(from, to)} from the next visit on.")
+              _ => Flash.Text(shown"The timeline opens on ${Fmt.periodStr(from, to)} from the next visit on.")
             )
           )
         )
@@ -96,7 +96,11 @@ object PeriodMarks:
             add(Bookmark.Label(name.now()), a, b)
             naming.set(None)
           },
-          label(forId := "tl-period-name", cls := "muted", s"Keep ${Fmt.periodStr(current()._1, current()._2)} as: "),
+          label(
+            forId := "tl-period-name",
+            cls := "muted",
+            shown"Keep ${Fmt.periodStr(current()._1, current()._2)} as: "
+          ),
           input(
             typ := "text",
             idAttr := "tl-period-name",

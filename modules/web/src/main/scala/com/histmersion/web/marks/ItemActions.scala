@@ -34,10 +34,10 @@ object ItemActions:
       cls("is-on") <-- on,
       aria.pressed <-- on.map(_.toString),
       title <-- on.map(b =>
-        if b then s"Bookmarked — remove the bookmark of “${ref.title.value}”" else s"Bookmark “${ref.title.value}”"
+        if b then shown"Bookmarked — remove the bookmark of “${ref.title}”" else shown"Bookmark “${ref.title}”"
       ),
       aria.label <-- on.map(b =>
-        if b then s"Remove the bookmark of ${ref.title.value}" else s"Bookmark ${ref.title.value}"
+        if b then shown"Remove the bookmark of ${ref.title}" else shown"Bookmark ${ref.title}"
       ),
       Icon(Icon.Bookmark),
       Option.when(!compact.value)(span(child.text <-- on.map(b => if b then "Bookmarked" else "Bookmark"))),
@@ -58,7 +58,7 @@ object ItemActions:
         cls := "btn btn--sm item-note",
         Icon(Icon.Note),
         "Add note",
-        title := s"Write a note on “${ref.title.value}”",
+        title := shown"Write a note on “${ref.title}”",
         onClick --> (_ => NoteEditor.write(ref.target, ref.title))
       ),
       Option.when(ref.readable)(
@@ -74,7 +74,7 @@ object ItemActions:
         )
       ),
       ContextMenu.button(
-        ContextMenu.ButtonTitle(s"More: ${ref.title.value}"),
+        ContextMenu.ButtonTitle(shown"More: ${ref.title}"),
         () => ItemMenu.entries(ref, byline),
         ContextMenu.ButtonExtraCls("item-more")
       )

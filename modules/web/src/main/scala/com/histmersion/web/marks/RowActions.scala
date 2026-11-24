@@ -17,7 +17,7 @@ object RowActions:
   def apply(ref: ItemRef, href: ItemRef.Href, byline: String = ""): Modifier[HtmlElement] =
     List(
       cls("has-actions") := true,
-      ContextMenu.on(ContextMenu.OnTitle(s"Actions: ${ref.title}"), () => ItemMenu.entries(ref, byline)),
+      ContextMenu.on(ContextMenu.OnTitle(shown"Actions: ${ref.title}"), () => ItemMenu.entries(ref, byline)),
       div(
         cls := "row-actions",
         ItemActions.bookmarkButton(ref, compact = ItemActions.BookmarkButtonCompact(true)),

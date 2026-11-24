@@ -55,7 +55,7 @@ object MapLists:
     val where = if onMap.value then " on the map" else ""
     val count = Plural.count(Plural.CountN(total.value.toLong), one, many)
     CountLine(
-      if total.value <= listed.value then s"$count$where"
+      if total.value <= listed.value then shown"$count$where"
       else s"$count$where · $listed listed${if onMap.value then ", zoom in to list the rest" else ""}"
     )
 

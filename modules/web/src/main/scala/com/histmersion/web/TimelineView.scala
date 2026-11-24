@@ -375,7 +375,7 @@ object TimelineView:
   private[web] def hoverText(b: TimeBucket): UiLabels.Text =
     val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value
     else s"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
-    UiLabels.Text(s"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
+    UiLabels.Text(shown"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showHover(layer: dom.Element, at: Option[(Double, TimelineCurve.Pt)], w: Double): Unit =
@@ -728,7 +728,7 @@ object TimelineView:
           typ := "button",
           cls := "tl-preset-item",
           title := List(
-            s"${p.label}, $years",
+            shown"${p.label}, $years",
             s"applies to: $where",
             s"defined by: $who",
             PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")
@@ -761,7 +761,7 @@ object TimelineView:
         pressed = Some(ContextMenu.Entry.Pressed(locked.now()))
       ),
       ContextMenu.Entry(
-        ContextMenu.Entry.Label(s"Start the timeline at ${Fmt.periodStr(a, b)}"),
+        ContextMenu.Entry.Label(shown"Start the timeline at ${Fmt.periodStr(a, b)}"),
         () => PeriodMarks.startAt(a, b),
         hint = Some(
           ContextMenu.Entry.Hint("The years the timeline opens on, for everyone who opens Histmersion from this server")

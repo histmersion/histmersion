@@ -99,7 +99,7 @@ object StartPlace:
                 .setTo(MapStartConfig.Label(h.label.value))
             )
             problem.set(None); hits.set(Nil); query.set(h.label.value)
-          case None => problem.set(Some(s"${h.label} has no location on the map; choose another place."))
+          case None => problem.set(Some(shown"${h.label} has no location on the map; choose another place."))
       }
     fieldSet(
       cls := "start-place",

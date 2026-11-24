@@ -350,7 +350,7 @@ object ResearchOverview:
                   styleAttr := s"--done:${pr.pct}%",
                   i()
                 ),
-                blocker(g, s.focus, ms).map(b => div(cls := "muted goal-blocker", s"Blocked: $b"))
+                blocker(g, s.focus, ms).map(b => div(cls := "muted goal-blocker", shown"Blocked: $b"))
               )
             })
       }

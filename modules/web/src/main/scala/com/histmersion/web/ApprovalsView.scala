@@ -97,7 +97,7 @@ object ApprovalsView:
       case Some(ApprovalKind.GoalPlan) =>
         val p = a.plan
         s"plan for goal ${a.subject.getOrElse("?")}: ${Plural.count(Plural.CountN(p.fold(0)(_.subGoals.size)), Plural.CountSingular("sub-goal"))}, " +
-          s"${Plural.count(Plural.CountN(p.fold(0)(_.queries.size)), Plural.CountSingular("query"), Plural.CountPlural("queries"))}, ${Plural.count(Plural.CountN(p.fold(0)(_.works.size)), Plural.CountSingular("work"))}"
+          shown"${Plural.count(Plural.CountN(p.fold(0)(_.queries.size)), Plural.CountSingular("query"), Plural.CountPlural("queries"))}, ${Plural.count(Plural.CountN(p.fold(0)(_.works.size)), Plural.CountSingular("work"))}"
       case Some(ApprovalKind.ArticlePublish) =>
         a.article match
           case Some(d) if d.mode == Goal.Plans.DraftMode.Create =>
@@ -208,7 +208,7 @@ object ApprovalsView:
   def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
     else
-      s"The code self-check still found ${Plural.count(Plural.CountN(d.problems.size), Plural.CountSingular("problem"))} after the writer's last attempt:"
+      shown"The code self-check still found ${Plural.count(Plural.CountN(d.problems.size), Plural.CountSingular("problem"))} after the writer's last attempt:"
 
   /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -221,7 +221,9 @@ object ApprovalsView:
         div(
           h5("Sub-goals"),
           ul(
-            plan.subGoals.map(g => li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n"))))
+            plan.subGoals.map(g =>
+              li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", shown": $n")))
+            )
           )
         )
       ),
@@ -233,7 +235,7 @@ object ApprovalsView:
             li(
               w.title.map(_.value).getOrElse(w.doi.value),
               s" (${w.year.fold("n.d.")(_.toString)}) ",
-              a(href := s"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
+              a(href := shown"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
               if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
               else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
               Option(s"${w.why}").filter(_.nonEmpty).map(y => div(cls := "muted", y))
@@ -464,9 +466,9 @@ object ApprovalsView:
         div(
           p(
             cls := "muted",
-            s"Waiting for a person: ${Plural.count(Plural.CountN(x.total.value), Plural.CountSingular("approval"))}" +
+            shown"Waiting for a person: ${Plural.count(Plural.CountN(x.total.value), Plural.CountSingular("approval"))}" +
               (if x.heldForPerson.value > 0 then
-                 s", ${Plural.count(Plural.CountN(x.heldForPerson.value), Plural.CountSingular("manager item"))} held for a person"
+                 shown", ${Plural.count(Plural.CountN(x.heldForPerson.value), Plural.CountSingular("manager item"))} held for a person"
                else "") +
               " — pick a kind, then decide the shown ones at once."
           ),

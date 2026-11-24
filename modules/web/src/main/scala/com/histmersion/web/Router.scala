@@ -73,7 +73,7 @@ object Router:
   private def show(r: Route): Unit =
     missing.set(false)
     if current.now() != r then current.set(r)
-    dom.document.title = s"${title(r)} · Histmersion"
+    dom.document.title = shown"${title(r)} · Histmersion"
 
   /** Go to page `r`: a step in the history, unless `push` is false. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -103,7 +103,7 @@ object Router:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def retitle(r: Route, t: UiLabels.Text): Unit =
-    if current.now() == r then dom.document.title = s"$t · Histmersion"
+    if current.now() == r then dom.document.title = shown"$t · Histmersion"
     titleBus.emit(r -> t)
 
   /** A page's name, before its content has said a better one. */

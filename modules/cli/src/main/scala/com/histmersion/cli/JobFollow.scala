@@ -164,6 +164,6 @@ object JobFollow:
           case Left(e) => Left(e)
       case Some(Backup.State.Done) =>
         s.result.toRight(
-          Cli.Error.answered(Problem.Unclassified(Legacy.Text(s"backup ${s.file} finished without a checksum")))
+          Cli.Error.answered(Problem.Unclassified(Legacy.Text(shown"backup ${s.file} finished without a checksum")))
         )
-      case _ => Left(failed(s"backup ${s.file}", s.problems.map(_.sentences.mkString("; "))))
+      case _ => Left(failed(shown"backup ${s.file}", s.problems.map(_.sentences.mkString("; "))))

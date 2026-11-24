@@ -42,8 +42,11 @@ object RenameCmd:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pruneRenamed(sources: Path, aliases: List[Source.Alias]): List[Either[String, String]] =
     aliases.filter(a => plainName(a.alias.value)).flatMap { a =>
-      val f = sources.resolve(s"${a.alias}.md")
+      val f = sources.resolve(shown"${a.alias}.md")
       scala.util
         .Try(Files.deleteIfExists(f))
-        .fold(e => Some(Left(s"$f: ${e.getMessage}")), gone => Option.when(gone)(Right(s"${a.alias} → ${a.citekey}")))
+        .fold(
+          e => Some(Left(s"$f: ${e.getMessage}")),
+          gone => Option.when(gone)(Right(shown"${a.alias} → ${a.citekey}"))
+        )
     }

@@ -614,7 +614,7 @@ object PlacesInput:
       tabIndex := 0,
       role := "button",
       aria.hasPopup := true,
-      aria.label := s"${label.value} — show its card"
+      aria.label := shown"$label — show its card"
     )
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
@@ -635,7 +635,7 @@ object PlacesInput:
   def chipText(id: PlaceId, lookup: PlaceId => Option[(UiLabels.Text, KnownPlace.Kind)]): UiLabels.Text =
     lookup(id).fold(UiLabels.Text("…"))((label, kind) =>
       if kind.value.trim.isEmpty then label
-      else UiLabels.Text(s"${label.value} (${Label.display(Label.Text(kind.value)).value})")
+      else UiLabels.Text(shown"$label (${Label.display(Label.Text(kind.value))})")
     )
 
   /** Fetch the label of a chosen place the page has not seen (one from a link or a restored state). */

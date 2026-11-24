@@ -199,7 +199,7 @@ object ResultsList:
         tabIndex := 0,
         div(cls := "ck", pickIcon(Glyphs.Name(CardIcons.GenericSource), "finding"), SourceLink(ck, pts.head.doi)),
         div(cls := "title", ttl),
-        div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.value.nonEmpty then s" · $per" else "")),
+        div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.value.nonEmpty then shown" · $per" else "")),
         div(cls := "claim", Fmt.clip(pts.head.claim.value, Markdown.CharLimit(140))),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
         onKeyDown --> { ev =>
@@ -366,7 +366,7 @@ object ResultsList:
                   case p  => span(cls := "p", s" $p"),
                 m.regionName
                   .filter(_.value.nonEmpty)
-                  .map(r => span(cls := "rg", s" ${Fmt.display(UiLabels.Text(r.value))}"))
+                  .map(r => span(cls := "rg", shown" ${Fmt.display(UiLabels.Text(r.value))}"))
                   .getOrElse(emptyNode),
                 if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )

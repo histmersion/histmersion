@@ -776,7 +776,7 @@ object MapView:
     val title =
       Option(pt.title.value).map(_.trim).filter(_.nonEmpty).getOrElse(SourceLink.idLabel(pt.citekey, pt.doi).value)
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
-    Label(if period.value.isEmpty then title else s"$title ($period)")
+    Label(if period.value.isEmpty then title else shown"$title ($period)")
 
   /** The findings of `span` (the filter's, a playback frame's): their points, as every kind's. */
   def render(points: List[GeoHit], span: (Years.Astronomical, Years.Astronomical)): Unit =

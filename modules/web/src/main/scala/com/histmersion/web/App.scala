@@ -170,7 +170,7 @@ object App:
     ApiClient.sources(Filter(limit = Filter.Limit(1))).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
         el.textContent =
-          s"${Plural.count(Plural.CountN(r.total.value), Plural.CountSingular("source"))} · search, then read"
+          shown"${Plural.count(Plural.CountN(r.total.value), Plural.CountSingular("source"))} · search, then read"
       }
     }
 

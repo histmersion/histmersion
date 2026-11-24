@@ -30,4 +30,4 @@ object PointMarker:
   /** Pure: a point's accessible name: what it is, then what activating it does. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def ariaLabel[A](k: PointKind[A], a: A): UiLabels.Text = UiLabels.Text(s"${k.label(a).value} — ${k.action(a).value}")
+  def ariaLabel[A](k: PointKind[A], a: A): UiLabels.Text = UiLabels.Text(shown"${k.label(a)} — ${k.action(a)}")
