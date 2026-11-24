@@ -103,8 +103,8 @@ class GeocoderSuite extends DbSuite with Bounded:
       clean()
       connect(ds):
         places.foreach { (id, label, kind, wkt, period, names) =>
-          val _ = sql"""INSERT INTO places (id, label, kind, geom, period, dataset)
-                        VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), coalesce($period::int8range, '(,)'::int8range), 'seed')""".update
+          val _ = sql"""INSERT INTO places (id, label, kind, geom, period, dataset, creator)
+                        VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), coalesce($period::int8range, '(,)'::int8range), 'seed', jsonb_build_object('kind', 'unknown'))""".update
             .run()
           (label :: names).distinct.foreach { n =>
             val _ = sql"INSERT INTO place_names (place_id, name) VALUES ($id, $n) ON CONFLICT DO NOTHING".update.run()
@@ -323,8 +323,9 @@ class GeocoderSuite extends DbSuite with Bounded:
       val _ = sql"""UPDATE findings SET geom = (SELECT ST_PointOnSurface(geom) FROM places WHERE id = 'zzgeo_levant')
                     WHERE id = ${Ck + "#4"}""".update.run()
       // the enrich-source run that asked for "Zzalbania"
-      val _ = sql"""INSERT INTO jobs (id, kind, status, pipeline, target_kind, target_id)
-                    VALUES ('zzgeo_job', 'agent', 'done', 'enrich-source', 'source', $Ck)""".update.run()
+      val _ = sql"""INSERT INTO jobs (id, kind, status, pipeline, target_kind, target_id, creator)
+                    VALUES ('zzgeo_job', 'agent', 'done', 'enrich-source', 'source', $Ck, jsonb_build_object('kind', 'unknown'))""".update
+        .run()
       val out = """{"findings":[{"claim":"Albanians descend from early medieval Albania.","quote":"q","ratio":1.0,""" +
         """"place":"Zzalbania","start":null,"end":null,"periodName":null,"tags":[],"confidence":"high"}]}"""
       val _ = sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, output)

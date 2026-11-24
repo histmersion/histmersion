@@ -1162,7 +1162,10 @@ class MediaOracleSuite extends DbSuite:
         dryRun = MediaImportRequest.DryRun(false)
       )
     )
-    exec(ds, "INSERT INTO sources (citekey, title) VALUES ('zqol2000_a', 'A'), ('zqol2000_b', 'B')")
+    exec(
+      ds,
+      "INSERT INTO sources (citekey, title, creator) VALUES ('zqol2000_a', 'A', jsonb_build_object('kind', 'unknown')), ('zqol2000_b', 'B', jsonb_build_object('kind', 'unknown'))"
+    )
     exec(
       ds,
       """INSERT INTO source_identifiers (source_uid, scheme, value)
@@ -1214,10 +1217,22 @@ class MediaOracleSuite extends DbSuite:
   /** The Calibre covers as `media covers` reads them on the host, from a fixture library, through a server. */
   private def calibreCovers(url: String, ds: DataSource): String =
     val lib = CalibreFixture.create(tmp.resolve("calibre-library"))
-    exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal1998_hittite', 'Hittite Myths', '5')")
-    exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal1956_linear', 'Linear B', '2')")
-    exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal2019_tin', 'Tin', '1')")
-    exec(ds, "INSERT INTO sources (citekey, title, calibre_id) VALUES ('zqcal0000_gone', 'Gone', '99')")
+    exec(
+      ds,
+      "INSERT INTO sources (citekey, title, calibre_id, creator) VALUES ('zqcal1998_hittite', 'Hittite Myths', '5', jsonb_build_object('kind', 'unknown'))"
+    )
+    exec(
+      ds,
+      "INSERT INTO sources (citekey, title, calibre_id, creator) VALUES ('zqcal1956_linear', 'Linear B', '2', jsonb_build_object('kind', 'unknown'))"
+    )
+    exec(
+      ds,
+      "INSERT INTO sources (citekey, title, calibre_id, creator) VALUES ('zqcal2019_tin', 'Tin', '1', jsonb_build_object('kind', 'unknown'))"
+    )
+    exec(
+      ds,
+      "INSERT INTO sources (citekey, title, calibre_id, creator) VALUES ('zqcal0000_gone', 'Gone', '99', jsonb_build_object('kind', 'unknown'))"
+    )
     val cal = Calibre(
       CalibreCliConfig(
         CalibreCliConfig.LibraryDir(lib.dir.toString),

@@ -200,8 +200,9 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val _ =
       PlaceFixtures.upsertPlaces(work, List(site("zz_my_site", Place.Label("My site"), 34.6, 40.0)), Dataset.Local)
     val _ = connect(work)(
-      sql"""INSERT INTO periods (id, label, authority, period, dataset)
-            VALUES ('zz_my_period', 'My period', 'me', '[-1400,-1199)'::int8range, 'local')""".update.run()
+      sql"""INSERT INTO periods (id, label, authority, period, dataset, creator)
+            VALUES ('zz_my_period', 'My period', 'me', '[-1400,-1199)'::int8range, 'local', jsonb_build_object('kind', 'unknown'))""".update
+        .run()
     )
     EventFixtures.put(
       work,

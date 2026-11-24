@@ -156,9 +156,9 @@ class MediaSourcesSuite extends DbSuite:
     if testDb.isDefined then
       clean()
       connect(ds):
-        sql"""INSERT INTO sources (citekey, title, ocr_markdown) VALUES
-              ($Paper, 'Zqms paper', 'Title ![](assets/fig-0001-01.png) ![](assets/fig-0002-01.png) ![](assets/fig-0001-01.png) ![](assets/fig-0001-01.png)'),
-              ($Book, 'Zqms book', NULL)""".update.run()
+        sql"""INSERT INTO sources (citekey, title, ocr_markdown, creator) VALUES
+              ($Paper, 'Zqms paper', 'Title ![](assets/fig-0001-01.png) ![](assets/fig-0002-01.png) ![](assets/fig-0001-01.png) ![](assets/fig-0001-01.png)', jsonb_build_object('kind', 'unknown')),
+              ($Book, 'Zqms book', NULL, jsonb_build_object('kind', 'unknown'))""".update.run()
         sql"""INSERT INTO source_identifiers (source_uid, scheme, value)
               SELECT uid, 'isbn', '978-0-00-000000-2' FROM sources WHERE citekey = $Book""".update.run()
         ()

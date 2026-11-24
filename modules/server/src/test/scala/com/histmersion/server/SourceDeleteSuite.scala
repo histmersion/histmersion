@@ -203,24 +203,31 @@ class SourceDeleteSuite extends DbSuite:
     )
     connect(ds):
       sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Del".update.run()
-      sql"INSERT INTO places (id, label, kind) VALUES ($Place, 'Zz place', 'site')".update.run()
+      sql"INSERT INTO places (id, label, kind, creator) VALUES ($Place, 'Zz place', 'site', jsonb_build_object('kind', 'unknown'))".update
+        .run()
       sql"INSERT INTO finding_places (finding_id, place_id) VALUES (${Del + "#0"}, $Place)".update.run()
-      sql"INSERT INTO assessments (citekey, verdict) VALUES ($Del, 'current')".update.run()
-      sql"""INSERT INTO attestations (citekey, target_type, target_id) VALUES
-              ($Del, 'finding', ${Del + "#1"}),
-              ($Other, 'finding', ${Del + "#0"}),
-              ($Other, 'edge', ${s"$Other|$Del|references"}),
-              ($Other, 'edge', ${s"$Del|$Other|challenges"})""".update.run()
-      sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256) VALUES
-              ($Del, 'fig1.png', 'image/png', '\\x00'::bytea, 'x'),
-              ($Other, 'fig2.png', 'image/png', '\\x00'::bytea, 'y')""".update.run()
-      sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id) VALUES
-              ($Del, 'fig1.png', 'page_of', 'source', $Del),
-              ($Other, 'fig2.png', 'illustrates', 'finding', ${Del + "#0"})""".update.run()
-      sql"INSERT INTO events (id, label) VALUES ($Event, 'Zz event')".update.run()
+      sql"INSERT INTO assessments (citekey, verdict, creator) VALUES ($Del, 'current', jsonb_build_object('kind', 'unknown'))".update
+        .run()
+      sql"""INSERT INTO attestations (citekey, target_type, target_id, creator) VALUES
+              ($Del, 'finding', ${Del + "#1"}, jsonb_build_object('kind', 'unknown')),
+              ($Other, 'finding', ${Del + "#0"}, jsonb_build_object('kind', 'unknown')),
+              ($Other, 'edge', ${s"$Other|$Del|references"}, jsonb_build_object('kind', 'unknown')),
+              ($Other, 'edge', ${s"$Del|$Other|challenges"}, jsonb_build_object('kind', 'unknown'))""".update.run()
+      sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, creator) VALUES
+              ($Del, 'fig1.png', 'image/png', '\\x00'::bytea, 'x', jsonb_build_object('kind', 'unknown')),
+              ($Other, 'fig2.png', 'image/png', '\\x00'::bytea, 'y', jsonb_build_object('kind', 'unknown'))""".update
+        .run()
+      sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, creator) VALUES
+              ($Del, 'fig1.png', 'page_of', 'source', $Del, jsonb_build_object('kind', 'unknown')),
+              ($Other, 'fig2.png', 'illustrates', 'finding', ${Del + "#0"}, jsonb_build_object('kind', 'unknown'))""".update
+        .run()
+      sql"INSERT INTO events (id, label, creator) VALUES ($Event, 'Zz event', jsonb_build_object('kind', 'unknown'))".update
+        .run()
       sql"INSERT INTO event_datings (event_id, citekey) VALUES ($Event, $Del)".update.run()
-      sql"INSERT INTO goals (slug, title) VALUES ($Goal, 'Zz goal')".update.run()
-      sql"INSERT INTO goal_links (goal_slug, kind, ref) VALUES ($Goal, 'source', $Del)".update.run()
+      sql"INSERT INTO goals (slug, title, creator) VALUES ($Goal, 'Zz goal', jsonb_build_object('kind', 'unknown'))".update
+        .run()
+      sql"INSERT INTO goal_links (goal_slug, kind, ref, creator) VALUES ($Goal, 'source', $Del, jsonb_build_object('kind', 'unknown'))".update
+        .run()
       sql"""INSERT INTO queue_items (list, text, status, reason, creator, actor)
             VALUES ('acquire', 'zzdel the book', 'done', ${s"ingested as [[$Del]]"},
                     '{"kind":"manual","surface":"cli"}', 'person')""".update.run()
@@ -359,7 +366,8 @@ class SourceDeleteSuite extends DbSuite:
     seed()
     connect(ds):
       sql"UPDATE events SET citekey = $Del WHERE id = $Event".update.run()
-      sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzdel_job', 'ingest', $Old, 'running')".update.run()
+      sql"INSERT INTO jobs (id, kind, citekey, status, creator) VALUES ('zzdel_job', 'ingest', $Old, 'running', jsonb_build_object('kind', 'unknown'))".update
+        .run()
     val d = h.library.sources
       .delete(DelCk, Source.DeleteRequest())
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)

@@ -60,8 +60,9 @@ class PagingRepoSuite extends DbSuite:
     transact(ds):
       ids.zipWithIndex.foreach { (id, i) =>
         val at = f"2001-01-01T00:00:${i / 2}%02dZ"
-        sql"""INSERT INTO jobs (id, kind, status, created_at, goal_slug)
-              VALUES ($id, $kind, $status, $at::timestamptz, $goal)""".update.run()
+        sql"""INSERT INTO jobs (id, kind, status, created_at, goal_slug, creator)
+              VALUES ($id, $kind, $status, $at::timestamptz, $goal, jsonb_build_object('kind', 'unknown'))""".update
+          .run()
       }
     ids.reverse // newest first
 
@@ -108,8 +109,11 @@ class PagingRepoSuite extends DbSuite:
     assertEquals((cut.map(_.id).toList, cutMore), (all.take(2), true))
     // a cursor from another state still marks a place: the page is this state's rows older than it
     val other = s"$tag-o-1"
-    transact(ds)(sql"""INSERT INTO jobs (id, kind, status, created_at)
-                       VALUES ($other, 'ingest', ${s"${tag}o"}, '2001-01-01T00:00:01.5Z'::timestamptz)""".update.run())
+    transact(ds)(
+      sql"""INSERT INTO jobs (id, kind, status, created_at, creator)
+                       VALUES ($other, 'ingest', ${s"${tag}o"}, '2001-01-01T00:00:01.5Z'::timestamptz, jsonb_build_object('kind', 'unknown'))""".update
+        .run()
+    )
     assertEquals(
       Transactor(ds)
         .read(JobRepo.page(pageStatus(st), PageSize(10), before = jobCursor(other)))
@@ -160,15 +164,15 @@ class PagingRepoSuite extends DbSuite:
       (1 to 5).toList.map { i =>
         val at = f"1971-01-01T00:00:${i / 2}%02dZ"
         val state = if i == 2 then ApprovalState.Rejected.wire else ApprovalState.Open.wire
-        sql"""INSERT INTO approvals (kind, citekey, status, proposal, state, created_at)
-              VALUES ('status-change', ${s"$tag-a$i"}, 'contested', '{}'::jsonb, $state, $at::timestamptz)
+        sql"""INSERT INTO approvals (kind, citekey, status, proposal, state, created_at, creator)
+              VALUES ('status-change', ${s"$tag-a$i"}, 'contested', '{}'::jsonb, $state, $at::timestamptz, jsonb_build_object('kind', 'unknown'))
               RETURNING id""".query[Long].run().head
       }
     val newest = ids.reverse // ids grow with i, and so does created_at
     // above the newest fixture lies everything other suites wrote; page from just above it
     val probe = transact(ds):
-      sql"""INSERT INTO approvals (kind, citekey, proposal, state, created_at)
-            VALUES ('status-change', ${s"$tag-top"}, '{}'::jsonb, 'zz', '1971-01-02T00:00:00Z'::timestamptz)
+      sql"""INSERT INTO approvals (kind, citekey, proposal, state, created_at, creator)
+            VALUES ('status-change', ${s"$tag-top"}, '{}'::jsonb, 'zz', '1971-01-02T00:00:00Z'::timestamptz, jsonb_build_object('kind', 'unknown'))
             RETURNING id""".query[Long].run().head
     val (all, more) =
       connect(ds)(AgentRepo.approvalPage(None, PageSize(3), before = runCursor(probe.toString))).toOption.get

@@ -124,10 +124,11 @@ class MediaRepoSuite extends DbSuite with Bounded:
               ('zqmd_site', 'wikidata', 'Q90000001', 'exact_match', 'test', 'zqmd'),
               ('zqmd_site', 'wikidata', 'Q90000009', 'close_match', 'test', 'zqmd'),
               ('zqmd_busy', 'wikidata', 'Q90000002', 'exact_match', 'test', 'zqmd')""".update.run()
-        sql"""INSERT INTO sources (citekey, title, license) VALUES ('zqmd2020_figs', 'Zqmd figures', 'CC-BY-4.0'),
-              ('zqmd2021_nolic', 'Zqmd no licence', NULL)""".update.run()
-        sql"""INSERT INTO findings (id, citekey, claim) VALUES ('zqmd2020_figs#1', 'zqmd2020_figs', 'a'),
-              ('zqmd2020_figs#2', 'zqmd2020_figs', 'b'), ('zqmd2020_figs#3', 'zqmd2020_figs', 'c')""".update.run()
+        sql"""INSERT INTO sources (citekey, title, license, creator) VALUES ('zqmd2020_figs', 'Zqmd figures', 'CC-BY-4.0', jsonb_build_object('kind', 'unknown')),
+              ('zqmd2021_nolic', 'Zqmd no licence', NULL, jsonb_build_object('kind', 'unknown'))""".update.run()
+        sql"""INSERT INTO findings (id, citekey, claim, creator) VALUES ('zqmd2020_figs#1', 'zqmd2020_figs', 'a', jsonb_build_object('kind', 'unknown')),
+              ('zqmd2020_figs#2', 'zqmd2020_figs', 'b', jsonb_build_object('kind', 'unknown')), ('zqmd2020_figs#3', 'zqmd2020_figs', 'c', jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmd2020_figs#1', 'zqmd_busy'),
               ('zqmd2020_figs#2', 'zqmd_busy'), ('zqmd2020_figs#3', 'zqmd_site'),
               ('zqmd2020_figs#3', 'zqmd_nolink')""".update.run()
@@ -230,7 +231,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     assert(both.getMessage.contains("assets_one_owner"), both.getMessage)
     val neither = intercept[Exception](
       connect(ds)(
-        sql"""INSERT INTO assets (name, mime, bytes, sha256) VALUES ('x', 'image/png', decode('00', 'hex'), 'x')""".update
+        sql"""INSERT INTO assets (name, mime, bytes, sha256, creator) VALUES ('x', 'image/png', decode('00', 'hex'), 'x', jsonb_build_object('kind', 'unknown'))""".update
           .run()
       )
     )
@@ -935,8 +936,8 @@ class MediaRepoSuite extends DbSuite with Bounded:
 
   test("targets: one per Wikidata item, the place most sources cite; an item asked through any place is done"):
     connect(ds):
-      sql"""INSERT INTO findings (id, citekey, claim) VALUES ('zqmd2020_figs#11', 'zqmd2020_figs', 'x'),
-            ('zqmd2020_figs#12', 'zqmd2020_figs', 'y'), ('zqmd2021_nolic#1', 'zqmd2021_nolic', 'z')
+      sql"""INSERT INTO findings (id, citekey, claim, creator) VALUES ('zqmd2020_figs#11', 'zqmd2020_figs', 'x', jsonb_build_object('kind', 'unknown')),
+            ('zqmd2020_figs#12', 'zqmd2020_figs', 'y', jsonb_build_object('kind', 'unknown')), ('zqmd2021_nolic#1', 'zqmd2021_nolic', 'z', jsonb_build_object('kind', 'unknown'))
             ON CONFLICT DO NOTHING""".update.run()
       sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmd2020_figs#11', 'zqmd_eq_a'),
             ('zqmd2020_figs#12', 'zqmd_eq_wd'), ('zqmd2021_nolic#1', 'zqmd_eq_wd') ON CONFLICT DO NOTHING""".update
@@ -988,8 +989,8 @@ class MediaRepoSuite extends DbSuite with Bounded:
 
   test("a source's pictures: its figures, an illustration and a cover, the card's order, served without a thumbnail"):
     val png = Array[Byte](-119, 80, 78, 71, 13, 10, 26, 10)
-    connect(ds)(sql"""INSERT INTO sources (citekey, title, ocr_markdown) VALUES ('zqmd2022_paper', 'Zqmd paper',
-          'Intro ![](assets/fig-0002-01.png) text ![](assets/logo.png) ![](assets/logo.png)')
+    connect(ds)(sql"""INSERT INTO sources (citekey, title, ocr_markdown, creator) VALUES ('zqmd2022_paper', 'Zqmd paper',
+          'Intro ![](assets/fig-0002-01.png) text ![](assets/logo.png) ![](assets/logo.png)', jsonb_build_object('kind', 'unknown'))
           ON CONFLICT DO NOTHING""".update.run())
     val _ = AssetFixtures.add(
       ds,

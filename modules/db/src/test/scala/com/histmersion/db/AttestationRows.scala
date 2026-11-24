@@ -14,10 +14,10 @@ object AttestationRows:
     transact(ds):
       sql"""INSERT INTO attestations (citekey, target_type, target_id,
                 quote, prefix, suffix, char_start, char_end, chunk_ord,
-                page, canvas, xywh, cts_urn, note)
+                page, canvas, xywh, cts_urn, note, creator)
             VALUES (${in.citekey}, ${in.targetType}, ${in.targetId},
                     ${in.quote}, ${in.prefix}, ${in.suffix},
                     ${in.charStart}, ${in.charEnd}, ${in.chunkOrd},
                     ${in.page}, ${in.canvas}, ${in.xywh},
-                    ${in.ctsUrn}, ${in.note})
+                    ${in.ctsUrn}, ${in.note}, jsonb_build_object('kind', 'unknown'))
             RETURNING id""".query[Long].run().head

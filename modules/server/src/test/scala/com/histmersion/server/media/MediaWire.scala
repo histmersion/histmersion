@@ -283,7 +283,8 @@ object MediaWire:
         sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
               VALUES ($p, 'wikidata', $q, 'exact_match', 'zqmt', 'zqmt')""".update.run()
       )
-      sql"INSERT INTO sources (citekey, title) VALUES ('zqmt2020_x', 'Zqmt')".update.run()
+      sql"INSERT INTO sources (citekey, title, creator) VALUES ('zqmt2020_x', 'Zqmt', jsonb_build_object('kind', 'unknown'))".update
+        .run()
       val ids = List(
         "pleiades_570491",
         "geonames_390903",
@@ -297,12 +298,14 @@ object MediaWire:
       )
       ids.zipWithIndex.foreach { (p, i) =>
         val f = s"zqmt2020_x#${i + 1}"
-        sql"""INSERT INTO findings (id, citekey, claim, period)
-              VALUES ($f, 'zqmt2020_x', 'a', int8range(-1500, -1200, '[]'))""".update.run()
+        sql"""INSERT INTO findings (id, citekey, claim, period, creator)
+              VALUES ($f, 'zqmt2020_x', 'a', int8range(-1500, -1200, '[]'), jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         sql"INSERT INTO finding_places (finding_id, place_id) VALUES ($f, $p)".update.run()
       }
-      sql"INSERT INTO events (id, label, wikidata) VALUES ('fall_of_x', 'Fall of X', 'Q404')".update.run()
-      sql"INSERT INTO events (id, label, wikidata) VALUES ('battle_of_kadesh', 'Battle of Kadesh', 'Q203729')".update
+      sql"INSERT INTO events (id, label, wikidata, creator) VALUES ('fall_of_x', 'Fall of X', 'Q404', jsonb_build_object('kind', 'unknown'))".update
+        .run()
+      sql"INSERT INTO events (id, label, wikidata, creator) VALUES ('battle_of_kadesh', 'Battle of Kadesh', 'Q203729', jsonb_build_object('kind', 'unknown'))".update
         .run()
       ()
 

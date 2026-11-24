@@ -240,9 +240,11 @@ class MediaPortalsJobSuite extends DbSuite:
         sql"""INSERT INTO place_links (place_id, scheme, external_id, relation) VALUES
               ('zqmp_site', 'pleiades', '99900001', 'exact_match'), ('zqmp_site', 'geonames', '99900009', 'exact_match'),
               ('zqmp_region', 'pleiades', '99900003', 'close_match')""".update.run()
-        sql"INSERT INTO sources (citekey, title) VALUES ('zqmp2020_x', 'Zqmp')".update.run()
-        sql"""INSERT INTO findings (id, citekey, claim, period) VALUES
-              ('zqmp2020_x#1', 'zqmp2020_x', 'a', int8range(-300, 100, '[]'))""".update.run()
+        sql"INSERT INTO sources (citekey, title, creator) VALUES ('zqmp2020_x', 'Zqmp', jsonb_build_object('kind', 'unknown'))".update
+          .run()
+        sql"""INSERT INTO findings (id, citekey, claim, period, creator) VALUES
+              ('zqmp2020_x#1', 'zqmp2020_x', 'a', int8range(-300, 100, '[]'), jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmp2020_x#1', 'zqmp_site'),
               ('zqmp2020_x#1', 'zqmp_region'), ('zqmp2020_x#1', 'pleiades_99900002')""".update.run()
         ()

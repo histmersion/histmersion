@@ -83,10 +83,10 @@ class ListFiltersHttpSuite extends DbSuite:
     transact(ds):
       List(("goal-plan", "open"), ("goal-plan", "open"), ("article-publish", "open"), ("edge", "approved")).zipWithIndex
         .foreach { case ((kind, state), i) =>
-          sql"""INSERT INTO approvals (kind, citekey, subject, proposal, state)
+          sql"""INSERT INTO approvals (kind, citekey, subject, proposal, state, creator)
                 VALUES ($kind, ${Option.when(kind == "edge")(
               s"${tag}_ck"
-            )}, ${s"$tag-s$i"}, '{}'::jsonb, $state)""".update.run()
+            )}, ${s"$tag-s$i"}, '{}'::jsonb, $state, jsonb_build_object('kind', 'unknown'))""".update.run()
         }
       List(
         ("review-article", "done", "codex:gpt-x"),
@@ -94,13 +94,14 @@ class ListFiltersHttpSuite extends DbSuite:
         ("enrich-source", "done", "codex:gpt-x")
       ).zipWithIndex.foreach { case ((p, st, model), i) =>
         val id = s"$tag-run$i"
-        sql"""INSERT INTO jobs (id, kind, status, pipeline, target_id, origin)
-                VALUES ($id, ${Agents.JobKind: String}, $st, $p, ${s"$tag-target$i"}, 'person')""".update.run()
+        sql"""INSERT INTO jobs (id, kind, status, pipeline, target_id, origin, creator)
+                VALUES ($id, ${Agents.JobKind: String}, $st, $p, ${s"$tag-target$i"}, 'person', jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status, model)
                 VALUES ($id, 1, 1, 'x', 'llm', 'done', $model)""".update.run()
       }
       List("ingest", "ingest", "media-import").zipWithIndex.foreach { (k, i) =>
-        sql"""INSERT INTO jobs (id, kind, status, citekey) VALUES (${s"$tag-job$i"}, $k, 'done', ${s"${tag}_job$i"})""".update
+        sql"""INSERT INTO jobs (id, kind, status, citekey, creator) VALUES (${s"$tag-job$i"}, $k, 'done', ${s"${tag}_job$i"}, jsonb_build_object('kind', 'unknown'))""".update
           .run()
       }
 

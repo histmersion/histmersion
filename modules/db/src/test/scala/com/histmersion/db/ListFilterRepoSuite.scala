@@ -59,9 +59,11 @@ class ListFilterRepoSuite extends DbSuite:
       job: Option[String] = None
   ): Long =
     transact(ds):
-      sql"""INSERT INTO approvals (job_id, kind, citekey, subject, proposal, state, note, result, decided_at)
+      sql"""INSERT INTO approvals (job_id, kind, citekey, subject, proposal, state, note, result, decided_at, creator)
             VALUES ($job, $kind, $citekey, $subject, '{}'::jsonb, $state, $note, $result,
-                    ${Option.when(state != "open")("2026-10-01T00:00:00Z")}::timestamptz)
+                    ${Option.when(state != "open")(
+          "2026-10-01T00:00:00Z"
+        )}::timestamptz, jsonb_build_object('kind', 'unknown'))
             RETURNING id""".query[Long].run().head
 
   private def job(
@@ -77,8 +79,8 @@ class ListFilterRepoSuite extends DbSuite:
       origin: Option[String] = None
   ): String =
     transact(ds):
-      sql"""INSERT INTO jobs (id, kind, status, created_at, citekey, pipeline, target_id, goal_slug, manager_id, origin)
-            VALUES ($id, $kind, $status, $at::timestamptz, $citekey, $pipeline, $target, $goal, $manager, $origin)""".update
+      sql"""INSERT INTO jobs (id, kind, status, created_at, citekey, pipeline, target_id, goal_slug, manager_id, origin, creator)
+            VALUES ($id, $kind, $status, $at::timestamptz, $citekey, $pipeline, $target, $goal, $manager, $origin, jsonb_build_object('kind', 'unknown'))""".update
         .run()
     id
 

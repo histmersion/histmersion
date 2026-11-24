@@ -90,8 +90,9 @@ class UiRepoSuite extends DbSuite:
     // inside a transaction that is rolled back: no other suite's agent worker ever sees these runs
     try
       transact(ds) {
-        sql"""INSERT INTO jobs (id, kind, status) VALUES ('zz-ui-glance-r', 'agent', 'running'),
-              ('zz-ui-glance-q', 'agent', 'queued'), ('zz-ui-glance-i', 'ingest', 'running')""".update.run()
+        sql"""INSERT INTO jobs (id, kind, status, creator) VALUES ('zz-ui-glance-r', 'agent', 'running', jsonb_build_object('kind', 'unknown')),
+              ('zz-ui-glance-q', 'agent', 'queued', jsonb_build_object('kind', 'unknown')), ('zz-ui-glance-i', 'ingest', 'running', jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         val g = UiRepo.agentsGlance
         assert(g.running.value >= 1 && g.queued.value >= 1, g.toString)
         assertEquals((g.on, g.draining), autopilot)
@@ -109,7 +110,7 @@ class UiRepoSuite extends DbSuite:
     markSeen(Board.Approvals, t0)
     val before = board(Board.Approvals).count.get.value
     val id = connect(ds)(
-      sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', $ck, 'contested', '{}'::jsonb)
+      sql"""INSERT INTO approvals (kind, citekey, status, proposal, creator) VALUES ('status-change', $ck, 'contested', '{}'::jsonb, jsonb_build_object('kind', 'unknown'))
             RETURNING id""".query[Long].run().head
     )
     val proposed = board(Board.Approvals)
@@ -130,7 +131,10 @@ class UiRepoSuite extends DbSuite:
   test("a goal changed after the mark is news"):
     val t0 = now()
     markSeen(Board.Goals, t0)
-    connect(ds)(sql"INSERT INTO goals (slug, title) VALUES ($goal, 'zz notice')".update.run())
+    connect(ds)(
+      sql"INSERT INTO goals (slug, title, creator) VALUES ($goal, 'zz notice', jsonb_build_object('kind', 'unknown'))".update
+        .run()
+    )
     val g = board(Board.Goals)
     assert(g.fresh.value && g.latest.exists(_.value > t0.value), g.toString)
     assertEquals(g.count, None, "goals are not counted")

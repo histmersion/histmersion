@@ -185,12 +185,14 @@ class MediaCollectionsJobSuite extends DbSuite:
         )
       )
       connect(ds):
-        sql"INSERT INTO sources (citekey, title) VALUES ('zqmc2020_x', 'Zqmc')".update.run()
+        sql"INSERT INTO sources (citekey, title, creator) VALUES ('zqmc2020_x', 'Zqmc', jsonb_build_object('kind', 'unknown'))".update
+          .run()
         // the site has no dates of its own: its period is the span of its findings
-        sql"""INSERT INTO findings (id, citekey, claim, period) VALUES
-              ('zqmc2020_x#1', 'zqmc2020_x', 'a', int8range(-1600, -1500, '[]')),
-              ('zqmc2020_x#2', 'zqmc2020_x', 'b', int8range(-1200, -1100, '[]')),
-              ('zqmc2020_x#3', 'zqmc2020_x', 'c', int8range(-1400, -1300, '[]'))""".update.run()
+        sql"""INSERT INTO findings (id, citekey, claim, period, creator) VALUES
+              ('zqmc2020_x#1', 'zqmc2020_x', 'a', int8range(-1600, -1500, '[]'), jsonb_build_object('kind', 'unknown')),
+              ('zqmc2020_x#2', 'zqmc2020_x', 'b', int8range(-1200, -1100, '[]'), jsonb_build_object('kind', 'unknown')),
+              ('zqmc2020_x#3', 'zqmc2020_x', 'c', int8range(-1400, -1300, '[]'), jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         sql"""INSERT INTO finding_places (finding_id, place_id) VALUES ('zqmc2020_x#1', 'zqmc_site'),
               ('zqmc2020_x#2', 'zqmc_site'), ('zqmc2020_x#3', 'zqmc_thebai_a'), ('zqmc2020_x#3', 'zqmc_thebai_b')""".update
           .run()

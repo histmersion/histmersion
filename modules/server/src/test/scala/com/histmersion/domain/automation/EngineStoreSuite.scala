@@ -126,12 +126,13 @@ object EngineStoreSuite:
           val agentState = AgentStateService(db)
           def article(slug: Slug, title: Title): Unit =
             connect(ds)(
-              sql"INSERT INTO articles (slug, title, kind, body) VALUES ($slug, $title, 'concept', '')".update
+              sql"INSERT INTO articles (slug, title, kind, body, creator) VALUES ($slug, $title, 'concept', '', jsonb_build_object('kind', 'unknown'))".update
                 .run()
             ): Unit
           def source(citekey: Citekey, title: Title): Unit =
             connect(ds)(
-              sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $title)".update.run()
+              sql"INSERT INTO sources (citekey, title, creator) VALUES ($citekey, $title, jsonb_build_object('kind', 'unknown'))".update
+                .run()
             ): Unit
           def within[A](work: DbCon ?=> A): A = transact(ds)(work)
       }

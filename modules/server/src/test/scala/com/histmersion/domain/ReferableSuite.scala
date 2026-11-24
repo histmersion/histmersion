@@ -55,7 +55,11 @@ class ReferableSuite extends DbSuite:
     val db = Transactor(scratch(name))
     val world = World(
       SourceReferable(db),
-      ck => db.write(sql"INSERT INTO sources (citekey, title) VALUES ($ck, ${s"Title of $ck"})".update.run(): Unit),
+      ck =>
+        db.write(
+          sql"INSERT INTO sources (citekey, title, creator) VALUES ($ck, ${s"Title of $ck"}, jsonb_build_object('kind', 'unknown'))".update
+            .run(): Unit
+        ),
       (a, b) =>
         db.write {
           sql"UPDATE sources SET citekey = $b WHERE citekey = $a".update.run(): Unit

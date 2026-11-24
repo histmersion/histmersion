@@ -274,9 +274,9 @@ class EventImportSuite extends DbSuite:
   test("site types: the Wikidata sites on the map are typed from their P31, an unknown class walked up P279"):
     connect(ds):
       for (id, lon) <- List("wikidata_q9100001" -> 10.0, "wikidata_q9100002" -> 10.1) do
-        val _ = sql"""INSERT INTO places (id, label, kind, geom, import_source, properties)
+        val _ = sql"""INSERT INTO places (id, label, kind, geom, import_source, properties, creator)
                       VALUES ($id, $id, 'site', ST_SetSRID(ST_MakePoint($lon, 45.0), 4326), 'wikidata',
-                              '{"class":"Q839954"}'::jsonb)""".update.run()
+                              '{"class":"Q839954"}'::jsonb, jsonb_build_object('kind', 'unknown'))""".update.run()
     val chunk = AppConfig.load().limits.chunkChars
     SourceFixtures.upsert(
       ds,
@@ -301,8 +301,8 @@ class EventImportSuite extends DbSuite:
       chunk
     )
     connect(ds):
-      val _ = sql"""INSERT INTO findings (id, citekey, claim, geom) VALUES
-                      ('zqei_sites2020#0', 'zqei_sites2020', 'x', ST_SetSRID(ST_MakePoint(10.0, 45.0), 4326))""".update
+      val _ = sql"""INSERT INTO findings (id, citekey, claim, geom, creator) VALUES
+                      ('zqei_sites2020#0', 'zqei_sites2020', 'x', ST_SetSRID(ST_MakePoint(10.0, 45.0), 4326), jsonb_build_object('kind', 'unknown'))""".update
         .run()
       val _ = sql"""INSERT INTO finding_places (finding_id, place_id) VALUES
                       ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update

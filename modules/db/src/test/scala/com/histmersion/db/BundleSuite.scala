@@ -489,16 +489,16 @@ class BundleSuite extends DbSuite with Bounded:
     )
     exec(
       ds,
-      s"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons)
-                  VALUES ('zzb_e1', '$A1', 0.75, 'confirmed', '{$A1#0}', '[{"quote":"The body","charStart":9}]', '{near,named}'),
-                         ('zzb_e2', '$G1', 0.5, 'proposed', '{}', '[]', '{near}')"""
+      s"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons, creator)
+                  VALUES ('zzb_e1', '$A1', 0.75, 'confirmed', '{$A1#0}', '[{"quote":"The body","charStart":9}]', '{near,named}', jsonb_build_object('kind', 'unknown')),
+                         ('zzb_e2', '$G1', 0.5, 'proposed', '{}', '[]', '{near}', jsonb_build_object('kind', 'unknown'))"""
     )
     exec(ds, "INSERT INTO event_link_checks (event_id) VALUES ('zzb_e1')")
     exec(
       ds,
-      """INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now, status, checked_at)
-                 VALUES ('event', 'zzb_e1', 'label', '"Thera"', 'gvp', '"Santorini"', 'null', 'conflict', now()),
-                        ('place', 'zzb_place', 'label', 'null', 'pleiades', '"Hattusa"', NULL, 'active', NULL)"""
+      """INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now, status, checked_at, creator)
+                 VALUES ('event', 'zzb_e1', 'label', '"Thera"', 'gvp', '"Santorini"', 'null', 'conflict', now(), jsonb_build_object('kind', 'unknown')),
+                        ('place', 'zzb_place', 'label', 'null', 'pleiades', '"Hattusa"', NULL, 'active', NULL, jsonb_build_object('kind', 'unknown'))"""
     )
     exec(ds, "UPDATE places SET site_type = 'settlement', site_type_checked_at = now() WHERE id = 'zzb_place'")
 

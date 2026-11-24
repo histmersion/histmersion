@@ -205,22 +205,27 @@ class RenameRepoSuite extends DbSuite:
     )
     val versionsBefore = ArticleFixtures.listVersions(ds, Slug).size
     connect(ds):
-      sql"""INSERT INTO places (id, label, kind, source) VALUES ($Place, 'Zz place', 'site', $Old)""".update.run()
+      sql"""INSERT INTO places (id, label, kind, source, creator) VALUES ($Place, 'Zz place', 'site', $Old, jsonb_build_object('kind', 'unknown'))""".update
+        .run()
       sql"INSERT INTO finding_places (finding_id, place_id) VALUES (${Old.value + "#0"}, $Place)".update.run()
-      sql"INSERT INTO assessments (citekey, verdict) VALUES ($Old, 'current')".update.run()
-      sql"""INSERT INTO attestations (citekey, target_type, target_id) VALUES
-              ($Old, 'finding', ${Old.value + "#1"}),
-              ($Other, 'edge', ${s"$Other|$Old|references"})""".update.run()
-      sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256)
-            VALUES ($Old, 'fig1.png', 'image/png', '\\x00'::bytea, 'x')""".update.run()
-      sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id) VALUES
-              ($Old, 'fig1.png', 'illustrates', 'finding', ${Old.value + "#0"}),
-              ($Old, 'fig1.png', 'page_of', 'source', $Old)""".update.run()
-      sql"INSERT INTO events (id, label, citekey) VALUES ($Event, 'Zz event', $Old)".update.run()
+      sql"INSERT INTO assessments (citekey, verdict, creator) VALUES ($Old, 'current', jsonb_build_object('kind', 'unknown'))".update
+        .run()
+      sql"""INSERT INTO attestations (citekey, target_type, target_id, creator) VALUES
+              ($Old, 'finding', ${Old.value + "#1"}, jsonb_build_object('kind', 'unknown')),
+              ($Other, 'edge', ${s"$Other|$Old|references"}, jsonb_build_object('kind', 'unknown'))""".update.run()
+      sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, creator)
+            VALUES ($Old, 'fig1.png', 'image/png', '\\x00'::bytea, 'x', jsonb_build_object('kind', 'unknown'))""".update
+        .run()
+      sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, creator) VALUES
+              ($Old, 'fig1.png', 'illustrates', 'finding', ${Old.value + "#0"}, jsonb_build_object('kind', 'unknown')),
+              ($Old, 'fig1.png', 'page_of', 'source', $Old, jsonb_build_object('kind', 'unknown'))""".update.run()
+      sql"INSERT INTO events (id, label, citekey, creator) VALUES ($Event, 'Zz event', $Old, jsonb_build_object('kind', 'unknown'))".update
+        .run()
       sql"INSERT INTO event_datings (event_id, citekey) VALUES ($Event, $Old)".update.run()
       sql"INSERT INTO event_edges (src_id, dst_id, kind, citekey) VALUES ($Event, $Event, 'during', $Old)".update.run()
       sql"INSERT INTO event_participants (event_id, actor, citekey) VALUES ($Event, 'Hattusili', $Old)".update.run()
-      sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzrn_job', 'ingest', $Old, 'done')".update.run()
+      sql"INSERT INTO jobs (id, kind, citekey, status, creator) VALUES ('zzrn_job', 'ingest', $Old, 'done', jsonb_build_object('kind', 'unknown'))".update
+        .run()
       sql"INSERT INTO place_types (place_id, type_label, citekey) VALUES ($Place, 'capital', $Old)".update.run()
       // role `core`: the `extent` footprint is the place's own, rebuilt by a trigger (V024)
       sql"""INSERT INTO place_footprints (place_id, role, geom, citekey)
@@ -463,7 +468,7 @@ class RenameRepoSuite extends DbSuite:
     )
     // a finding id under the new name already taken (by a source that broke the convention)
     connect(ds)(
-      sql"""INSERT INTO findings (id, citekey, claim) VALUES (${New.value + "#9"}, 'zzrnb2019_other', 'x')""".update
+      sql"""INSERT INTO findings (id, citekey, claim, creator) VALUES (${New.value + "#9"}, 'zzrnb2019_other', 'x', jsonb_build_object('kind', 'unknown'))""".update
         .run()
     )
     refused(

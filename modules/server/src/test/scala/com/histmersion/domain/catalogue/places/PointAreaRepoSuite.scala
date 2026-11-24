@@ -93,9 +93,9 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
     connect(ds):
       def imported(id: String, label: String, kind: String, wkt: String, src: String, period: String = "(,)"): Unit =
         val _ =
-          sql"""INSERT INTO places (id, label, kind, geom, period, dataset, import_source, import_ref, import_version)
+          sql"""INSERT INTO places (id, label, kind, geom, period, dataset, import_source, import_ref, import_version, creator)
                       VALUES ($id, $label, $kind, ST_GeomFromText($wkt, 4326), $period::int8range, 'seed', $src,
-                              $src || ':' || $id, 'v1')""".update.run()
+                              $src || ':' || $id, 'v1', jsonb_build_object('kind', 'unknown'))""".update.run()
       imported(Region, "Zzpa Region", domain.catalogue.Place.Kind.Region, "POINT(150 -60)", "wikidata")
       imported(
         Polity,
@@ -142,8 +142,9 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
         "POINT(152.5 -60)",
         "wikidata"
       )
-      val _ = sql"""INSERT INTO place_overrides (place_id, kind, reason, source_kind, source_period)
-                    VALUES ($Curated, 'region', 'a person decided', 'region', '(,)'::int8range)""".update.run()
+      val _ = sql"""INSERT INTO place_overrides (place_id, kind, reason, source_kind, source_period, creator)
+                    VALUES ($Curated, 'region', 'a person decided', 'region', '(,)'::int8range, jsonb_build_object('kind', 'unknown'))""".update
+        .run()
       val _ = sql"""INSERT INTO place_names (place_id, name, lang, import_source, import_ref, import_version)
                     VALUES ($GnArea, 'Zzpa Gn Area', '', 'geonames', 'geonames:999200005', 'v1')""".update.run()
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
@@ -196,8 +197,8 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
       cfg.places.pointToleranceKm
     )
     connect(ds):
-      val _ = sql"""INSERT INTO attestations (citekey, target_type, target_id, quote)
-                    VALUES ('zzpa_src', 'place', $Pinned, 'here')""".update.run()
+      val _ = sql"""INSERT INTO attestations (citekey, target_type, target_id, quote, creator)
+                    VALUES ('zzpa_src', 'place', $Pinned, 'here', jsonb_build_object('kind', 'unknown'))""".update.run()
 
   private def at(n: Int): Set[String] =
     PlaceFixtures

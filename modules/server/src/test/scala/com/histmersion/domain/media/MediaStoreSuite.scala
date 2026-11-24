@@ -72,5 +72,7 @@ object MediaStoreSuite:
           val figures = FigureService(db)
           def source(citekey: String): Unit =
             connect(ds):
-              val _ = sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()
+              val _ =
+                sql"INSERT INTO sources (citekey, title, creator) VALUES ($citekey, $citekey, jsonb_build_object('kind', 'unknown'))".update
+                  .run()
       }
