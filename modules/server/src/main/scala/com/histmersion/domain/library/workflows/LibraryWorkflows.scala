@@ -43,7 +43,6 @@ final class LibraryWorkflows(
         .option(ck.value)
         .flatMap(c => site.sources.get(c, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
     p =>
-      given Creator.New = InTreeWorkflow.ApprovalEffects.creator
       site.sources
         .patch(p.citekey, p.patch)
         .left

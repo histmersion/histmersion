@@ -181,7 +181,7 @@ final class Approvals(
             case Left(m)  =>
               store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentences.mkString("; ").take(1000)))
         case (Decision.Approve, k) if effects.subjectKinds(k.transformInto[Approval.Kind]) =>
-          effects.applySubject(a) match
+          effects.applySubject(a)(using proposer(id)) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentence.take(1000)))
         case (Decision.Approve, _) =>
@@ -239,11 +239,14 @@ final class Approvals(
         )
     yield out
 
+  private def proposer(id: Approval.Id)(using decider: Creator.New): Creator.New =
+    store.creatorOf(id).getOrElse(decider)
+
   private def decideSource(
       id: Approval.Id,
       d: Decision,
       clean: Option[Approval.Note]
-  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, ApprovalInfo] =
     for
       apply <- store
         .payload(id)
@@ -268,7 +271,7 @@ final class Approvals(
       _ = d match
         case Decision.Reject  => store.settle(id, ApprovalState.Rejected, DomainApproval.Outcome("rejected"))
         case Decision.Approve =>
-          apply() match
+          apply(using proposer(id)) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
             case Left(m)  =>
               store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.sentences.mkString("; ").take(1000)))

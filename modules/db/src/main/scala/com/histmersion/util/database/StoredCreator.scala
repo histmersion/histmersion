@@ -4,6 +4,7 @@ package util.database
 import com.histmersion.domain.{Actor, Creator}
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import StoredCreator.Agent
 
 final private[histmersion] case class StoredCreator(
@@ -60,6 +61,36 @@ object StoredCreator:
   def write(creator: Creator): Jsonb.JsonText = Jsonb.write(of(creator), Jsonb.DropNulls(true))
 
   def column(creator: Creator.New): Jsonb.JsonText = write(creator.stored)
+
+  final case class Recorded(
+      kind: String,
+      surface: Option[String] = None,
+      plugin: Option[Creator.Plugin.Name] = None,
+      workflow: Option[Creator.Workflow.Name] = None,
+      agent: Option[Recorded.Agent] = None
+  ) derives JsonCodec:
+    def written: Option[Creator.New] =
+      val via = surface.flatMap(s => Creator.Surface.values.find(surfaceText(_) == s))
+      (kind, plugin, workflow, agent.flatMap(_.written), via) match
+        case ("manual", _, _, _, Some(s))                      => Some(Creator.New.Manual(s))
+        case ("unattributed", _, _, _, Some(s))                => Some(Creator.New.Unattributed(s))
+        case ("automated", Some(p), Some(w), Some(a), Some(s)) => Some(Creator.New.Automated(p, w, a, s))
+        case _                                                 => None
+
+  object Recorded:
+    final case class Agent(
+        kind: String,
+        definition: Option[Creator.Definition.Name] = None,
+        provider: Option[Creator.Provider.Name] = None,
+        model: Option[Creator.LanguageModel.Name] = None
+    ) derives JsonCodec:
+      def written: Option[Creator.Agent] = (kind, definition, provider, model) match
+        case ("code", _, _, _)                    => Some(Creator.Agent.Code)
+        case ("model", Some(d), Some(p), Some(m)) => Some(Creator.Agent.Model(d, p, m))
+        case ("model", d, None, None)             => Some(Creator.Agent.RunModels(d))
+        case _                                    => None
+
+  def recorded(text: Jsonb.JsonText): Option[Creator.New] = Jsonb.read[Recorded](text).flatMap(_.written)
 
   def actor(creator: Creator.New): String = creator.actor match
     case Actor.Person => "person"

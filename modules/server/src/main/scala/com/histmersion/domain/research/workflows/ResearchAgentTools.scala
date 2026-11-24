@@ -11,6 +11,7 @@ import com.histmersion.util.mcp.McpOut
 import com.histmersion.api.research.{Article, ArticleMarkdown}
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
+import com.histmersion.domain.Creator
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleTools}
 import com.histmersion.domain.research.articles.ArticleTools.{ArticleCoverageInput, CheckEditsInput, GetArticleInput}
 import com.histmersion.api.VocabularyCodecs.given
@@ -28,9 +29,10 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
 
   private def max = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
-  private def contribution(n: ToolName)(t: => AgentTool[Identity, ?]): ToolContribution = new ToolContribution:
-    val name: ToolName = n
-    val agentTool: AgentTool[Identity, ?] = t
+  private def contribution(n: ToolName)(t: Creator.New ?=> AgentTool[Identity, ?]): ToolContribution =
+    new ToolContribution:
+      val name: ToolName = n
+      def agentTool(using Creator.New): AgentTool[Identity, ?] = t
 
   /** Every tool of research, by name. */
   def contributions: List[ToolContribution] = List(

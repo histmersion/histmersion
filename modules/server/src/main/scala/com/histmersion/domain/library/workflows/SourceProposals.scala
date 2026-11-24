@@ -35,7 +35,7 @@ final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
     status: Citekey => Option[Source.Status],
-    apply: Proposal => Either[Problems, SourceProposals.Outcome.Applied.What]
+    apply: Proposal => Creator.New ?=> Either[Problems, SourceProposals.Outcome.Applied.What]
 ):
   def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(
     p.kind,

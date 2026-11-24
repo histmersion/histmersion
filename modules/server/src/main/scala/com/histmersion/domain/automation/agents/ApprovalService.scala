@@ -12,7 +12,7 @@ import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, Approv
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.AutomationState
-import com.histmersion.util.database.{Jsonb, Transactor, WritePermit}
+import com.histmersion.util.database.{Jsonb, StoredCreator, Transactor, WritePermit}
 import com.histmersion.util.jobs.JobRuns
 import hearth.kindlings.optics.syntax.*
 
@@ -34,6 +34,8 @@ trait ApprovalService:
   def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo]
 
   def payload(id: Approval.Id): Option[ApprovalService.Payload]
+
+  def creatorOf(id: Approval.Id): Option[Creator.New]
 
   def approval(id: Approval.Id): Option[ApprovalInfo]
 
@@ -132,8 +134,12 @@ object ApprovalService:
       AgentRepo.approval(ApprovalInfo.Id(id.value))
     private def now: Instant = Instant.now(clock)
 
-    def payload(id: Approval.Id): Option[Payload] =
-      db.read(AgentRepo.payload(ApprovalInfo.Id(id.value))).map(p => Payload(p.value))
+    private def proposed(id: Approval.Id): Option[(Jsonb.JsonText, Jsonb.JsonText)] =
+      db.read(AgentRepo.payload(ApprovalInfo.Id(id.value)))
+
+    def payload(id: Approval.Id): Option[Payload] = proposed(id).map((p, _) => Payload(p.value))
+
+    def creatorOf(id: Approval.Id): Option[Creator.New] = proposed(id).flatMap((_, c) => StoredCreator.recorded(c))
 
     def approval(id: Approval.Id): Option[ApprovalInfo] = db.read(AgentRepo.approval(ApprovalInfo.Id(id.value)))
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
@@ -276,8 +282,11 @@ object ApprovalService:
 
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
 
-    def payload(id: Approval.Id): Option[Payload] =
-      rows.find(_.id.value == id.value).map(r => Payload(r.proposal.value))
+    private def row(id: Approval.Id): Option[ApprovalRecord] = rows.find(_.id.value == id.value)
+
+    def payload(id: Approval.Id): Option[Payload] = row(id).map(r => Payload(r.proposal.value))
+
+    def creatorOf(id: Approval.Id): Option[Creator.New] = row(id).flatMap(_.creator)
 
     def approval(id: Approval.Id): Option[ApprovalInfo] = rows.find(_.id.value == id.value).map(info)
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
@@ -390,7 +399,8 @@ object ApprovalService:
               None,
               result.map(r => ApprovalRecord.Result(r.value)),
               at,
-              decidedAt(state)
+              decidedAt(state),
+              Some(summon[Creator.New])
             )
         )
       forStep(jobId, seq).get
@@ -421,7 +431,8 @@ object ApprovalService:
             None,
             result.map(r => ApprovalRecord.Result(r.value)),
             at,
-            decidedAt(state)
+            decidedAt(state),
+            Some(summon[Creator.New])
           )
         )
         .flatMap(approval)

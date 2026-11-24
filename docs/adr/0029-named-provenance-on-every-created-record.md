@@ -200,6 +200,19 @@ drafter's writes to the reviewer.
   run's, and so is a write whose model's names do not pass their rules. Stored, `RunModels` is
   `agent: {kind: model, definition?}` with no provider or model.
 
+### Approval effects and agent tools act as their caller
+
+- An approval stores the creator that proposed it (the proposing step's model, or the run's), and approving it
+  applies its effect under that creator (`ApprovalService.creatorOf`, read back through `StoredCreator.recorded`): the
+  status, the edge, the article filter or the plan the run proposed is the run's, the person only decided it. An
+  approval whose creator does not read back (one recorded before V115, a partial one) is applied under the decider's.
+  A proposal the run applies at once (an `auto` mode) is the run's directly. The `approval-effects` in-tree workflow
+  is no longer used for either.
+- An agent tool is made for its caller (`ToolContribution.agentTool(using Creator.New)`): the in-process agent loop
+  hands each step's tools that step's creator (its definition, the provider and model of the attempt). The agent MCP
+  endpoint the command-line runtimes call (`/mcp/agent/<agent>`) is built once per definition and cannot see the
+  calling run's token, so its tools still act as `agent-tools`; they only read.
+
 ## Consequences
 
 - No create path compiles without a creator in scope, and after V116 none runs without one.

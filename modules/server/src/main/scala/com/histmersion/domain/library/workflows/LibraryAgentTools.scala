@@ -46,8 +46,6 @@ import com.histmersion.api.library.Citekey
 final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstream, caps: => AgentToolsConfig):
   import ToolResultCap.cap
 
-  private given Creator.New = InTreeWorkflow.AgentTools.creator
-
   private def max: ToolResultCap.CapMax = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
   /** The body slice an agent reads: what it asked for, or `body-chars`, and never past the result cap. */
@@ -57,9 +55,10 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
     val chars = if limit <= 0 then want else Some(math.min(want.getOrElse(limit), math.max(500, limit - 300)))
     chars.map(SourcesControllers.Chars(_))
 
-  private def contribution(n: ToolName)(t: => AgentTool[Identity, ?]): ToolContribution = new ToolContribution:
-    val name: ToolName = n
-    val agentTool: AgentTool[Identity, ?] = t
+  private def contribution(n: ToolName)(t: Creator.New ?=> AgentTool[Identity, ?]): ToolContribution =
+    new ToolContribution:
+      val name: ToolName = n
+      def agentTool(using Creator.New): AgentTool[Identity, ?] = t
 
   /** Every tool of the library, by name. */
   def contributions: List[ToolContribution] = List(
