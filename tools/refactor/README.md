@@ -634,6 +634,18 @@ Types whose friendly form differs (enum spellings, times, years, ids shown short
   tools/refactor/display-as-is-fixture/input tools/refactor/display-as-is-fixture/expected
 ```
 
+`ShownInterpolation` turns an `s"…"` that splices newtypes into `shown"…"` (`com.histmersion` in the newtype
+module), the interpolator whose every splice needs a `Display` instance or is a String, Int, Long, Double, Boolean
+or Char. It rewrites an interpolation only when every splice qualifies and each spliced newtype is in `asIs` (or the
+`types` of the DisplayAsIs configs listed in `asIsFrom`), so the text is the same as before: a newtype whose display
+is a label stays in `s"…"`, where it is usually a protocol value (a CSS class, a URL path), not text for a reader.
+`${x.value}` of an as-is newtype loses its `.value`. Config: `paths`, `excludes`, `report`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/ShownInterpolation.scala \
+  tools/refactor/shown-interpolation-fixture/input tools/refactor/shown-interpolation-fixture/expected
+```
+
 `RetypeToNewtype` retypes a parameter from a primitive to a newtype (G1; the G44plaindef findings are its worklist).
 Each `retypes` entry names `param` (the parameter's SemanticDB symbol), `newtype` (its companion's symbol), `tpe` and
 `wrap` (the text of the type and of the constructor). The declared primitive becomes `tpe` (inside an `Option` or a
