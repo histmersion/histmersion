@@ -7,7 +7,7 @@ object Citekey:
     if raw.matches("[a-z][a-z0-9_]*") then Right(Citekey(raw)) else Left(s"not a citekey: $raw")
 
   extension (oldCk: Citekey) def renameTo(newRaw: String): Either[String, Citekey] =
-    Citekey.parse(newRaw.trim).flatMap { ck =>
+    parse(newRaw.trim).flatMap { ck =>
       if ck == oldCk then Left("unchanged") else Right(ck)
     }
 

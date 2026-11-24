@@ -673,7 +673,9 @@ companion member; `companion`, `extension`, `toplevel`, `stay`) and `name` (a re
 The rule reads the moved objects' sources and current SemanticDB before it rewrites anything (`semanticdb` lists the
 directories, default `target/out`; a document whose md5 differs from its file is refused), so one pass moves the
 definitions with the imports they need, rewrites every reference (`Obj.f(x, a)` → `x.f(a)`, `Obj.f(…)` → `T.f(…)`,
-`Obj.X` → `T.X`, the bare names an import brought in), removes or redirects the importers, deletes emptied objects and
+`Obj.X` → `T.X`, the bare names an import brought in; a moved member's own `T.x` becomes `x` inside `T`; when `T`'s
+name means another type in a file, the member is imported instead), redirects `export` aliases, removes the importers
+of what moved, drops the moved members' comments (`keepComments = true` keeps them), deletes emptied objects and
 writes `report` (the emptied files, deleted afterwards with `git rm`, and the references it could not rewrite). A name
 clash at the target, a target module that cannot see the member's dependencies or a receiver whose static type is not
 the target's are compile errors fixed by hand. Each batch has its own `move-onto-type-<batch>.conf`; after

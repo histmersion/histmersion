@@ -21,7 +21,8 @@ object MoveOntoType {
       moves: List[Move] = Nil,
       semanticdb: List[String] = List("target/out", ".semanticdb"),
       sourceroot: String = ".",
-      report: String = ""
+      report: String = "",
+      keepComments: Boolean = false
   )
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
@@ -224,7 +225,16 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private lazy val deletedObjects: Set[String] = sourceObjects.filter(_.emptied).map(_.symbol).toSet
 
   private final class Rewriter(text: String, symbolOf: Tree => String, insideTarget: (Tree, String) => Boolean,
-      clashes: String => Boolean = _ => false, taken: String => Boolean = _ => false) {
+      clashes: String => Boolean = _ => false, taken: String => Boolean = _ => false, selfTarget: Option[String] = None) {
+    def selfSelect(t: Tree): Boolean = selfTarget.exists { to =>
+      val qual = t match {
+        case s: Term.Select => Some(s.qual)
+        case s: Type.Select => Some(s.qual)
+        case _ => None
+      }
+      qual.exists(q => q.is[Term.Ref] && Set(termOf(to), termOf(to).dropRight(1) + "#")(symbolOf(nameOf(q))))
+    }
+
     val imports = mutable.LinkedHashSet.empty[String]
     val lints = mutable.ListBuffer.empty[(Tree, String)]
 
@@ -274,6 +284,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           case _ => Some(ref)
         }
         else Some(ref)
+      case s @ (_: Term.Select | _: Type.Select) if selfSelect(s) && moved(nameOf(s)).isEmpty => Some(s)
       case _ => None
     }
 
@@ -294,7 +305,10 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       case _ => false
     }
 
-    def rewrite(site: Tree, inner: List[Tree]): String = {
+    def rewrite(site: Tree, inner: List[Tree]): String =
+      if (moved(nameOf(site)).isEmpty && selfSelect(site)) nameOf(site).value else rewriteMoved(site, inner)
+
+    def rewriteMoved(site: Tree, inner: List[Tree]): String = {
       val p = moved(nameOf(site)).get
       if (p.extension) site match {
         case a: Term.Apply if a.argClause.values.nonEmpty && !a.argClause.values.head.is[Term.Assign] =>
@@ -391,10 +405,11 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val tokens = sd.tree.tokens
       so.stats.collect { case (stat, Some(p)) =>
         val definedHere = stat.collect { case n: Name => sd.definitions(n) }.flatten.toSet
-        val rw = new Rewriter(sd.text, sd.symbol, (_, to) => to == p.to && !p.toplevel)
+        val rw = new Rewriter(sd.text, sd.symbol, (_, to) => to == p.to && !p.toplevel,
+          selfTarget = Option(p.to).filterNot(_ => p.toplevel))
         val sites = rw.sitesIn(stat).filter(s => s.pos.start >= stat.pos.start && s.pos.end <= stat.pos.end)
         val start = leadingStart(tokens, stat)
-        val comments = sd.text.substring(start, stat.pos.start)
+        val comments = if (config.keepComments) sd.text.substring(start, stat.pos.start) else ""
         val body = stat match {
           case d: Defn.Def if p.extension => extensionText(sd.text, d, p, rw, sites)
           case _ =>
@@ -534,7 +549,8 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val rival = newTargets.exists { case (t, n) =>
         t != top && lastName(t) == lastName(top) && (n > newTargets.getOrElse(top, 0) || (n == newTargets.getOrElse(top, 0) && t < top))
       }
-      boundElsewhere || rival
+      val boundHere = bound.getOrElse(headOf(to), Set.empty).exists(s => s == top || s == top.dropRight(1) + "#")
+      boundElsewhere || (rival && !boundHere)
     }
     val names: Set[String] = doc.tree.collect {
       case n: Name if sym(n).nonEmpty && plannedFor(sym(n)).isEmpty && !finder.inImport(n) => n.value
