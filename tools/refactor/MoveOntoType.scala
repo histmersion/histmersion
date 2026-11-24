@@ -224,7 +224,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private lazy val deletedObjects: Set[String] = sourceObjects.filter(_.emptied).map(_.symbol).toSet
 
   private final class Rewriter(text: String, symbolOf: Tree => String, insideTarget: (Tree, String) => Boolean,
-      clashes: String => Boolean = _ => false) {
+      clashes: String => Boolean = _ => false, taken: String => Boolean = _ => false) {
     val imports = mutable.LinkedHashSet.empty[String]
     val lints = mutable.ListBuffer.empty[(Tree, String)]
 
@@ -312,6 +312,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         imports += path(p.to) + "." + p.newName
         p.newName
       } else if (insideTarget(site, p.to)) p.newName
+      else if (clashes(p.to) && taken(p.newName)) s"${path(termOf(p.to))}.${p.newName}"
       else if (clashes(p.to)) {
         imports += path(termOf(p.to)) + "." + p.newName
         p.newName
@@ -513,15 +514,32 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       case o: Defn.Object if sym(o.name) == termOf(to) => true
       case p => insideTarget(p, to)
     }
-    val bound: Map[String, Set[String]] = doc.tree.collect {
-      case n: Name if n.value.headOption.exists(_.isUpper) => n.value -> sym(n)
-    }.filter { case (_, s) => s.nonEmpty && !s.startsWith("local") }.groupBy(_._1).map { case (k, v) => k -> v.map(_._2).toSet }
-    def clashes(to: String): Boolean = {
-      val head = targetRef(to)._1.split('.').head
-      val top = topLevelOf(termOf(to))
-      bound.getOrElse(head, Set.empty).exists(s => s != top && s != top.dropRight(1) + "#" && !planned.contains(s))
+    def selected(n: Name): Boolean = n.parent.exists {
+      case s: Term.Select => s.name eq n
+      case s: Type.Select => s.name eq n
+      case _ => false
     }
-    val rw = new Rewriter(text, sym(_), insideTarget, clashes)
+    val bound: Map[String, Set[String]] = doc.tree.collect {
+      case n: Name if n.value.headOption.exists(_.isUpper) && !selected(n) => n.value -> sym(n)
+    }.filter { case (_, s) => s.nonEmpty && !s.startsWith("local") }.groupBy(_._1).map { case (k, v) => k -> v.map(_._2).toSet }
+    def headOf(to: String): String = targetRef(to)._1.split('.').head
+    def topOf(to: String): String = topLevelOf(termOf(to))
+    val finder = new Rewriter(text, sym(_), insideTarget)
+    val newTargets: Map[String, Int] = finder.sitesIn(doc.tree).flatMap(s => finder.moved(finder.nameOf(s)))
+      .filterNot(p => p.toplevel || p.extension).groupBy(p => topOf(p.to)).map { case (k, v) => k -> v.size }
+    def clashes(to: String): Boolean = {
+      val top = topOf(to)
+      val boundElsewhere =
+        bound.getOrElse(headOf(to), Set.empty).exists(s => s != top && s != top.dropRight(1) + "#" && !planned.contains(s))
+      val rival = newTargets.exists { case (t, n) =>
+        t != top && lastName(t) == lastName(top) && (n > newTargets.getOrElse(top, 0) || (n == newTargets.getOrElse(top, 0) && t < top))
+      }
+      boundElsewhere || rival
+    }
+    val names: Set[String] = doc.tree.collect {
+      case n: Name if sym(n).nonEmpty && plannedFor(sym(n)).isEmpty && !finder.inImport(n) => n.value
+    }.toSet
+    val rw = new Rewriter(text, sym(_), insideTarget, clashes, names)
     val tokens = doc.tree.tokens
 
     val removedRanges = mutable.ListBuffer.empty[(Int, Int)]
