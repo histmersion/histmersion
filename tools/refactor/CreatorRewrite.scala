@@ -15,6 +15,9 @@ object CreatorRewrite {
       unrecordedFiles: String = ".*BundleRepo\\.scala",
       copySources: List[String] = List("unresolved_edges"),
       endpointGivens: Map[String, String] = Map.empty,
+      testFixtures: Boolean = false,
+      skipTests: List[String] = Nil,
+      testLiteral: String = "jsonb_build_object('kind', 'unknown')",
       boundaryFiles: String = ".*(Controllers|Routes|Tools)\\.scala",
       projectPrefix: String = "com/histmersion/",
       writingModules: List[String] = List("modules/db/", "modules/server/"),
@@ -73,39 +76,66 @@ object CreatorRewrite {
 
   final case class Ref(unit: Src, name: Term.Name, symbol: String, owner: Option[String])
 
-  def sqlEdits(text: String, start: Int): Either[String, (Int, Int)] = {
-    def closing(open: Int): Option[Int] = {
-      var depth = 0
-      var i = open
-      while (i < text.length) {
-        val c = text.charAt(i)
-        if (c == '$' && i + 1 < text.length && text.charAt(i + 1) == '{') i = skipSplice(i + 1)
-        else {
-          if (c == '(') depth += 1
-          else if (c == ')') { depth -= 1; if (depth == 0) return Some(i) }
-          else if (text.startsWith("\"\"\"", i)) return None
-          i += 1
-        }
-      }
-      None
+  private def skipQuoted(text: String, quote: Int): Int = {
+    val end = text.indexOf('\'', quote + 1)
+    if (end < 0) text.length else end + 1
+  }
+
+  private def skipSplice(text: String, brace: Int): Int = {
+    var depth = 0
+    var i = brace
+    while (i < text.length) {
+      val c = text.charAt(i)
+      if (c == '{') depth += 1
+      else if (c == '}') { depth -= 1; if (depth == 0) return i + 1 }
+      i += 1
     }
-    def skipSplice(brace: Int): Int = {
-      var depth = 0
-      var i = brace
-      while (i < text.length) {
-        val c = text.charAt(i)
-        if (c == '{') depth += 1
-        else if (c == '}') { depth -= 1; if (depth == 0) return i + 1 }
+    i
+  }
+
+  private def closingIn(text: String, open: Int): Option[Int] = {
+    var depth = 0
+    var i = open
+    while (i < text.length) {
+      val c = text.charAt(i)
+      if (c == '$' && i + 1 < text.length && text.charAt(i + 1) == '{') i = skipSplice(text, i + 1)
+      else if (c == '\'') i = skipQuoted(text, i)
+      else {
+        if (c == '(') depth += 1
+        else if (c == ')') { depth -= 1; if (depth == 0) return Some(i) }
+        else if (text.startsWith("\"\"\"", i)) return None
         i += 1
       }
-      i
     }
+    None
+  }
+
+  def valueRowEnds(text: String, firstEnd: Int): List[Int] = {
+    var ends = List(firstEnd)
+    var i = firstEnd + 1
+    var more = true
+    while (more) {
+      while (i < text.length && Character.isWhitespace(text.charAt(i))) i += 1
+      if (i < text.length && text.charAt(i) == ',') {
+        val open = text.indexOf('(', i)
+        closingIn(text, open) match {
+          case Some(e) => ends = e :: ends; i = e + 1
+          case None    => more = false
+        }
+      } else more = false
+    }
+    ends.reverse
+  }
+
+  def sqlEdits(text: String, start: Int, severalRows: Boolean = false): Either[String, (Int, Int)] = {
+    def closing(open: Int): Option[Int] = closingIn(text, open)
     def keywordAtDepth0(from: Int, word: String): Option[Int] = {
       var depth = 0
       var i = from
       while (i < text.length && !text.startsWith("\"\"\"", i)) {
         val c = text.charAt(i)
-        if (c == '$' && i + 1 < text.length && text.charAt(i + 1) == '{') i = skipSplice(i + 1)
+        if (c == '$' && i + 1 < text.length && text.charAt(i + 1) == '{') i = skipSplice(text, i + 1)
+        else if (c == '\'') i = skipQuoted(text, i)
         else {
           if (c == '(') depth += 1
           else if (c == ')') depth -= 1
@@ -131,7 +161,7 @@ object CreatorRewrite {
             case None => Left("unbalanced VALUES row")
             case Some(vEnd) =>
               val tail = text.substring(vEnd + 1, math.min(text.length, vEnd + 20)).trim
-              if (tail.startsWith(",")) Left("several VALUES rows") else Right((columnsEnd, vEnd))
+              if (tail.startsWith(",") && !severalRows) Left("several VALUES rows") else Right((columnsEnd, vEnd))
           }
         } else if (after.toUpperCase.startsWith("SELECT")) {
           val select = text.indexOf("SELECT", rest)
@@ -206,7 +236,23 @@ object CreatorRewrite {
 
     val insert = ("INSERT INTO\\s+(?:public\\.)?(" + config.tables.mkString("|") + ")\\b").r
     val seeds = mutable.LinkedHashMap.empty[String, String]
-    units.filterNot(_.test).foreach { u =>
+    if (config.testFixtures) units.filter(u => u.test && !config.skipTests.exists(u.path.endsWith)).foreach { u =>
+      insert.findAllMatchIn(u.text).foreach { m =>
+        val sqlText = u.text.substring(m.start, math.min(u.text.length, m.start + 2000))
+        val written = sqlText.takeWhile(_ != '"').replaceAll("\\s+", " ")
+        if (!written.matches("(?i).*\\(([^)]*,)?\\s*creator\\s*[,)].*"))
+          sqlEdits(u.text, m.start, severalRows = true) match {
+            case Left(why) =>
+              stops += List("stop", u.path, line(u, m.start).toString, s"fixture INSERT INTO ${m.group(1)}: $why", "")
+                .mkString("\t")
+            case Right((columnsEnd, firstEnd)) =>
+              add(u.path, InsertAt(columnsEnd, ", creator"))
+              valueRowEnds(u.text, firstEnd).foreach(e => add(u.path, InsertAt(e, ", " + config.testLiteral)))
+              rows += List("fixture", u.path, line(u, m.start).toString, m.group(1), "").mkString("\t")
+          }
+      }
+    }
+    if (!config.testFixtures) units.filterNot(_.test).foreach { u =>
       insert.findAllMatchIn(u.text).foreach { m =>
         val owner = defs.values.filter(d => d.unit eq u).filter(d => d.tree.pos.start <= m.start && m.start < d.tree.pos.end)
           .toList.sortBy(d => d.tree.pos.end - d.tree.pos.start).headOption
@@ -335,11 +381,12 @@ class CreatorRewrite(config: CreatorRewrite.Config) extends SyntacticRule("Creat
     else {
       val tokens = doc.tokens
       val inserts = mine.collect { case InsertAt(at, text) => (at, text) }
+      def literal(t: Token): Boolean = t.is[Token.Interpolation.Part] || t.is[Token.Constant.String]
       val (inParts, elsewhere) = inserts.partition { case (at, _) =>
-        tokens.exists(t => t.is[Token.Interpolation.Part] && t.pos.start <= at && at < t.pos.end)
+        tokens.exists(t => literal(t) && t.pos.start <= at && at < t.pos.end)
       }
       val partPatches = inParts.groupBy { case (at, _) =>
-        tokens.find(t => t.is[Token.Interpolation.Part] && t.pos.start <= at && at < t.pos.end).get
+        tokens.find(t => literal(t) && t.pos.start <= at && at < t.pos.end).get
       }.map { case (t, edits) =>
         val text = edits.sortBy(-_._1).foldLeft(t.text) { case (acc, (at, ins)) =>
           acc.substring(0, at - t.pos.start) + ins + acc.substring(at - t.pos.start)
