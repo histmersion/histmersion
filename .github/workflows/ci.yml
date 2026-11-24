@@ -24,7 +24,7 @@ name: ci
 #              and its merge base on this runner, interleaved: red on a regression past the runs' noise (budgets-ab.mjs)
 #
 # Every job runs on Linux: no application code is platform-specific, and the hosted macOS runner was no user's
-# device (docs/adr/0028-ci-on-linux-bundles-on-demand.md). The ratchet suites compare against the merge base with
+# device (docs/adr/0031-ci-on-linux-bundles-on-demand.md). The ratchet suites compare against the merge base with
 # contracts3-pilot: the test jobs check out the full history, so origin/contracts3-pilot is there (RatchetBase's
 # fallback; HISTMERSION_RATCHET_BASE overrides it). Building and smoke-testing the per-platform bundles is
 # bundle.yml, on demand and weekly.

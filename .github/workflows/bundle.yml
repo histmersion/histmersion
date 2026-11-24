@@ -4,7 +4,7 @@ name: bundle
 # isolation (first-run initdb, children, health, CLI, offline OCR, clean stop).
 #
 # Runs on demand (workflow_dispatch) and for releases, never on a push or a pull request: no PR check
-# waits for it, and it becomes a required check at the first release (docs/adr/0028-ci-on-linux-bundles-on-demand.md).
+# waits for it, and it becomes a required check at the first release (docs/adr/0031-ci-on-linux-bundles-on-demand.md).
 # The application code is the same on every platform and is tested on Linux by ci.yml; what differs per
 # platform is the packaging, which this workflow builds, self-checks and smoke-starts. A `v*` tag attaches
 # the archives to a GitHub release; other runs upload no bundle (a bundle is ~1 GB compressed).
