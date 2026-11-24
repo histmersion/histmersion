@@ -160,7 +160,8 @@ the MCP write tools take `createdBy`.
 2. **Every INSERT into a record table writes `creator`**, naming `path:line` when one does not.
 3. **Each binds a creator the compiler demanded**: the def around it takes a `Creator.New` (a parameter or a `using`
    clause, which every caller must then supply up to a binding or an in-process writer), or the INSERT copies a
-   waiting edge's own creator, or it is a bundle's import binding `Creator.unrecorded`.
+   waiting edge's own creator, or it is a bundle's import binding the record's carried creator
+   (`StoredCreator.carried(x.creator)`, as built) or `Creator.unrecorded`.
 4. The suite's own fixture holds the scan to its reading (a table, its columns, the def's signature).
 
 And the schema agrees: `MigrateSquashSuite` (db tests, on a `*_test` database) checks after V116 that every `creator`
@@ -175,10 +176,64 @@ table's create paths were done in this lane, so no table waits on a pending list
 | 1b. wire move | `RelocateWireCreator` (Scalafix): `Queue.Creator/Agent/CreatedBy/Creation` → `api.Provenance…` at every use; then `RenameSymbols` (`rename-wire-creation.conf`): `api.Provenance` → `api.automation.Creation` | the definitions' move, twice (`api/Provenance.scala`, then `api/automation/Creation.scala`) |
 | 2. migrations | — | V115 (columns, backfill), its rehearsal |
 | 3. create paths | `CreatorRewrite` (Scalafix, after `WritePermitRewrite`): adds `creator` to each record INSERT's column list, `(using Creator.New)` to the def around it, and follows it up the call graph and across overrides (trait, `Implementation`, `InMemory`), test files getting `TestCreators.given` | each `stop` row: the controller's or worker's provider, the `InMemory` states recording it, the bundle imports' rule |
-| 4. surfaces | — | `createdBy` on the write inputs, the views, Markdown, the CLI flags, the web card |
+| 4. surfaces | `AddRecordFields` (the inputs, the views, `Source.Patch.Request`, the bundles and their rows) and `AttributeEndpoints` (the endpoints) | the parse boundary, the multipart inputs, the repositories' reads, Markdown, the CLI flags and stamp, the web card, the model steps, the imports' owners, the approvals, the bundles' export and import |
 | 5. check | `CreatorRewrite` with `testFixtures` (`creator-fixtures.conf`): the tests' own fixture INSERTs name an unknown creator | `ProvenanceSuite`, V116 and its schema test |
 
 ## As built: slice 4 and its refinements (2026-11-24)
+
+### Write inputs name their creator
+
+- Every REST write body whose endpoint creates a record carries `createdBy` (`Creation.By`: plugin and workflow, and
+  the agent's definition, provider and model, all three or none) and `via` (`rest` | `cli` | `web`); it extends
+  `Creation.Requested`. Every MCP tool's own input carries `createdBy` and extends `Creation.Named` (the MCP is its
+  surface). An upload, whose body is the document, carries them as query parameters (`via`, `byPlugin`, `byWorkflow`,
+  `byAgentDefinition`, `byProvider`, `byModel`).
+- `domain.CreatorControllers` is the one parse boundary: `rest(in) { … }` and `mcp(in) { … }` give the body the
+  creator as a context function, nested inside the binding's `Unattributed` given, so it wins. Over REST a request
+  that names nothing is `Unattributed(rest)`, one with `via` and no agent `Manual(via)`, one with `createdBy`
+  `Automated(…, via)`. Over the MCP: `Unattributed(mcp)`, or `Automated(…, mcp)`. The work lists keep their own rule
+  (`WorkListControllers.creatorOf`: the MCP's `queue add` refuses an item without `createdBy`), built on the same
+  parse.
+- An endpoint with no body (`refs/{id}?apply`, a vacuum, a restore, a merge) keeps its binding's `Unattributed`
+  given; the personal inputs (a bookmark, a note) do not depend on automation (§5).
+- The CLI names its caller once, before the command (`histmersion --by-plugin … --by-model … <command>`, else
+  `histmersion.cli.agent.*`). Its client stamps every write input that extends `Creation.Requested` with
+  `via = cli` and that identity, unless the input names its own. The web client stamps `via = web`.
+- Mechanical: `AddRecordFields` (`record-fields-inputs.conf`) gave 67 classes their fields and parent (42 REST
+  bodies, 25 MCP inputs). `AttributeEndpoints` (`attribute-endpoints.conf`, `-apply.conf`) wrapped 69 endpoints and
+  listed 29 that keep the binding's given. The multipart inputs, the parse boundary and the clients were done by hand.
+
+### Views show who, how and when
+
+A source, a finding, an edge in `neighbors`, an article, an asset, a goal, a run, an approval, an event and a place
+carry `creator: Option[Creation]` and `createdAt` (`record-fields-views.conf`; a run and an approval had their times
+already). A source's `createdAt` is its `added_date`, a day. Each repository reads `creator::text` through its own
+`Jsonb.codec` given (no shared codec: `util.database` does not name the automation domain), and a domain row such as
+the asset's names no api type, so its repository reads the two columns beside the row. `Creation.line` renders
+"Created by … via … at …" for the Markdown (CLI and MCP) and the web page: the reading pane's head, the place and event
+cards, the approvals, the run detail, the goal page. A note and a bookmark store their creator and show none.
+
+### Imports name their plugin
+
+An event catalogue's, a gazetteer source's and a media collection's rows are `Automated(plugin, workflow, Code,
+internal)`: the plugin is the owner of the catalogue, source or collection (found by instance among the plugins'
+contributions, the in-tree ones as `catalogue` or `media`), and the workflow is `event-import`, `gazetteer-import` or
+`media-import`.
+
+### Bundles carry creators
+
+The twelve stamped records of a bundle (source, finding, article, article version, asset, asset link, attestation,
+event, goal, queue item, place, period) carry `creator: Option[Json]`, the stored document as it is (as a goal's
+plan travels). The bundle format is a supporting area and names no domain's type, so it does not use `Creation`. The
+export reads it from the row (`record-fields-bundles.conf`, `record-fields-bundle-rows.conf`). An import writes
+`StoredCreator.carried(record.creator)` on the rows it inserts. That is the document when it reads as a stored creator,
+else `Unknown(Unrecorded)`, as for a record without one. A row already here keeps its own creator, because the
+creator records who made the record and not who merged it. `ProvenanceSuite` accepts that binding beside
+`Creator.unrecorded`. The rows an import makes of its own (a version archiving a text the merge replaced, a parked
+edge, an assessment, a candidate, a correction, a goal's links and schedules) stay `Unknown(Unrecorded)`. The creator
+is provenance, not content, so `BundleFormat.Unrevved` leaves it out of the `rev`: the merge ledgers' revs and an
+unchanged record's match stay as they were. The format moved to 2, so a build that reads only format 1 refuses a
+bundle whose creators it would drop. A format 1 bundle still imports.
 
 ### Request metadata never lives in a stored or checkpointed content type
 
@@ -228,8 +283,8 @@ drafter's writes to the reviewer.
 ## Consequences
 
 - No create path compiles without a creator in scope, and after V116 none runs without one.
-- A bundle carries no creator yet: a bundle's new row is stored as `Unknown(Unrecorded)`, as V113 did for queue
-  items; carrying it in the `.hmx` format is its own change (the bundle's version moves).
+- A bundle carries its records' creators (format 2). A record from a bundle that carries none is stored as
+  `Unknown(Unrecorded)`, as V113 did for queue items.
 - The in-tree contributors' names (`engine`, `library`, `research`, `catalogue`, `media`) stand until the workflows
   move into plugins of their own; then the plugin's id replaces them on new rows, and old rows keep theirs.
 - Row 18 (problem cases) takes V114 for the jobs table; this record's migrations are V115 and V116.

@@ -222,7 +222,9 @@ decision, an import — takes `createdBy?{plugin, workflow, agentDefinition?, pr
 400) the records it creates are that workflow's, through `via`; with `via` alone they are the person's, through it;
 with neither they are recorded as made by an unnamed caller of the REST API. An upload (`POST /api/ingest`) takes them
 as query parameters: `via`, `byPlugin`, `byWorkflow`, `byAgentDefinition`, `byProvider`, `byModel`. The CLI sends
-`via=cli` and its caller's identity, the web page `via=web`. An endpoint with no body names no creator.
+`via=cli` and its caller's identity, the web page `via=web`. An endpoint with no body names no creator. A record's
+view answers `creator{kind, surface?, plugin?, workflow?, agent?, job?}` and `createdAt` ([Who created a
+record](../exploring/who-created-what.md)).
 
 **Filter params** (shared by `/api/sources`, `/api/facets`, `/api/findings`, `/api/aggregate`, `/api/articles`, `/api/events`, and mirrored one-to-one by the CLI flags and the web UI URL hash): `q`, `tag`*, `author`*, `place`*, `topic`*, `status`*, `yearFrom`, `yearTo`, `from`, `to`, `minLon`, `minLat`, `maxLon`, `maxLat`, `sort` (`relevance|cited|period|year|oldest|title`; `year` is the newest first), `limit`, `offset`, `title` (`*` = repeatable). `title` is a case-insensitive substring of the LISTED item's own title — a source's, an article's, an event's label. On `/api/articles` and `/api/events` the other params select SOURCES, and the list is what relates to them (one rule, the `/api/sources` predicate as a sub-select), so the web UI's Articles and Events tabs follow the same filter as its Sources tab.
 

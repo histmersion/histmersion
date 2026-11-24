@@ -12,6 +12,7 @@ An AI assistant reaches Histmersion through MCP at `<public-url>/mcp` (default `
 - [Do I need AI?](getting-started/ai-optional/): what works without a model, what the built-in agents add, providers and cost controls
 - [Using your AI assistant](ai-assistant/): connecting MCP clients, what the tools cover, good practice, the Claude Code plugin and skills, the CLI
 - [Searching and filtering](exploring/searching/): websearch syntax, filters, facets, histograms, read-only SQL
+- [Who created a record](exploring/who-created-what/): the creator every record names (a person, a workflow, an agent and its model, an import's plugin), how to read it, and how an automated caller names itself with `createdBy`
 - [Articles](articles/): reading coverage (Not used, the Method note), writing by hand, compiling and reviewing with agents
 - [How-to guides](how-to/credentials/): secrets and vaults, open-access papers, Calibre, open data, AI providers, backups and bundles
 
