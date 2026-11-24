@@ -15,6 +15,102 @@ The *kind* column is the scan's first classification (name patterns, `val X = "�
 | becomes a Controllers class | 10 |
 | becomes @main def | 6 |
 
+## Carrying it out (G34/G3, G35, G36; started 2026-11-24 on contracts3-pilot c39770b12)
+
+Measured on c39770b12: of the 325 non-"stays" rows, 58 objects are gone and 5 are companions now; **262 are still
+standalone** and hold 1,134 of the 3,227 `G3misplaced` defs (the other ~2,100 are in objects this table keeps:
+repositories, views, endpoint groups, `ApiClient`). The work goes subdomain by subdomain in the fixed order below
+(a G1/G2 lane takes the subdomains from the end). Each batch is one run of `tools/refactor/MoveOntoType.scala`
+(config `tools/refactor/move-onto-type-<batch>.conf`) plus hand commits for what needs judgement; a row below is
+marked **done** with its commit when its object is gone.
+
+What the rule does: it moves an object's members (a def with its overloads, a val, a nested type or object) into a
+target object (an existing companion, a companion it creates for a type, or a new top-level file), as an extension when
+a def's first explicit parameter has the target's type and as a companion member otherwise; it carries the imports a
+member needs, rewrites every reference (`Obj.f(x, a)` → `x.f(a)`, `Obj.f(…)` → `T.f(…)`, `Obj.X` → `T.X`), rewrites or
+removes the importers, and reports the files it emptied. What needs judgement: choosing the receiver and the target
+module (a companion in `values` cannot see `api`/`core`), splitting the large objects, vocabularies into enums (the
+types change), renderers into `Markdown[A]` instances, plugin moves. Held back while the row-18 and row-32 lanes are
+active: `problem/`, the Run/jobs code and the `*Routes`/`*Tools`/Controllers inputs.
+
+**1. Shared kernel and util (values, api/core roots, util.*): 17 objects, 67 G3misplaced defs**
+
+- onto an existing type (companion/extension) — rule: `Ascii`, `ConfidenceStyle`, `DeepTime`, `HintProposals`, `HttpPolicy`, `Version`, `YearFmt`, `Years`
+- split across types — judgement + rule: `Chunker`, `Wording`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `FormatMarkdown`, `Markdown`, `MergeMarkdown`
+- onto a new type (O6) — hand type + rule: `LatinFold`, `SafePath`, `Url`
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `Paging`
+
+**2. library: 40 objects, 182 G3misplaced defs**
+
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `Acquire`, `AcquireRecheck`, `Aggregate`, `CoreQuota`, `EnrichSource`, `Query`, `RepairAcquire`, `Tree`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `AcquireChecksMarkdown`, `AcquireMarkdown`, `CandidatesMarkdown`, `IngestMarkdown`, `PassagesMarkdown`, `UpstreamQuotaMarkdown`
+- onto an existing type (companion/extension) — rule: `AcquireMatch`, `AgentProposals`, `Aliases`, `AutoEnrich`, `Candidates`, `Citekeys`, `CorrespondingSource`, `Indexes`, `IngestBacklog`, `Label`, `LabelRenames`, `MergeText`, `NoAlerts`, `OaFetch`, `PassageFinder`, `Rename`, `SourceMatcher`, `WorkLookup`
+- to its plugin/module (O7) — hand: `AcquireParse`, `FetcherGeneration`, `Jats`, `RepositoryLanding`
+- onto a new type (O6) — hand type + rule: `Highlight`
+- enum with wire strings (G35) — hand: `Ingest`, `Provenance`, `Write`
+
+**3. research: 16 objects, 140 G3misplaced defs**
+
+- onto an existing type (companion/extension) — rule: `AgentVerify`, `Article`, `ArticleNote`, `ArticleReviewStatus`, `Articles`, `Critiques`, `FilterInference`, `PlanArticles`, `TextAnchor`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `ArticleMarkdown`
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `CompileArticle`, `CritiquePairing`, `Lint`, `MarkdownLint`, `ReviewArticle`, `ReviewLedger`
+
+**4. automation (without Run/jobs and the Routes/Tools): 54 objects, 239 G3misplaced defs**
+
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `Activity`, `AgentScheduler`, `Agents`, `ApprovalDigest`, `Autopilot`, `AutopilotPolicy`, `GoalFocus`, `ListFilters`, `ManagerPolicy`, `Managers`, `ModelChains`, `PlanQuota`, `Queue`, `SchedulerPolicy`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `ActivityMarkdown`, `AgentSchedulerMarkdown`, `AgentsMarkdown`, `ApprovalDigestMarkdown`, `AutopilotMarkdown`, `ManagersMarkdown`, `StallsMarkdown`
+- onto an existing type (companion/extension) — rule: `ActivityRules`, `AgentGenerator`, `AnswerSchemas`, `ApprovalModes`, `CliOutcomes`, `GoalsExport`, `Pipelines`, `PlanGoal`, `PlanReadSchedule`, `PluginModel`, `QuotaGuard`, `Scheduling`, `Stalls`, `Trace`, `WatchSchedules`
+- held back (row 18 / row 32 lanes) — later: `AgentsRoutes`, `AgentsTools`, `BackgroundJob`, `CompareRuns`, `CompareRunsViews`, `JobActions`, `JobControlRules`, `ListQueries`, `ManagersRoutes`, `RunCompare`
+- to its plugin/module (O7) — hand: `BuiltinAi`, `ClaudeCode`, `CliProcess`, `Codex`, `CodexRetention`, `Opencode`
+- Chimney transformer givens — hand: `ManagerDefaultsViews`
+- onto a new type (O6) — hand type + rule: `ToolResultCap`
+
+**5. catalogue (events, places, periods, map tiles): 39 objects, 132 G3misplaced defs**
+
+- enum with wire strings (G35) — hand: `AttestationTarget`, `CatalogProvider`, `DatingMethod`, `EventKind`, `EventPrecision`, `EventScale`, `EventTier`, `Historicity`, `TileProps`
+- to its plugin/module (O7) — hand: `BuiltinCatalogues`, `CatalogDating`, `EventProviders`, `Wikidata`
+- onto an existing type (companion/extension) — rule: `CatalogMerge`, `Corrections`, `EventFields`, `EventLeads`, `EventMatcher`, `ExternalIds`, `ImportRunner`, `MapTiles`, `NaturalEarthLand`, `PeriodOFetch`, `PlaceSeed`, `PointAreas`, `PresetMenu`, `SiteTypes`, `TileFeatures`, `UndatedCells`
+- onto a new type (O6) — hand type + rule: `EventGeometry`, `GazetteerLoad`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `EventLinksMarkdown`, `PeriodsMarkdown`
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `EventTaxonomy`, `Gazetteer`, `Geocode`, `Lpf`, `PeriodO`, `PlaceReview`
+
+**6. media: 22 objects, 79 G3misplaced defs**
+
+- enum with wire strings (G35) — hand: `AssetKind`, `AssetRelation`, `MediaProvider`, `MediaRole`
+- onto an existing type (companion/extension) — rule: `AssetLinks`, `CoverChoice`, `DataCredits`, `FigurePick`, `FreeTextDates`, `MediaImporters`, `MediaStep`, `MediaText`, `OpenLibrary`
+- to its plugin/module (O7) — hand: `BuiltinMedia`, `Commons`, `Europeana`, `OpenContext`, `PleiadesLinks`, `Smithsonian`
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `Iiif`
+- onto a new type (O6) — hand type + rule: `ImageSize`, `MediaMatch`
+
+**7. personal: 3 objects, 7 G3misplaced defs**
+
+- onto an existing type (companion/extension) — rule: `PersonalIds`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `PersonalMarkdown`
+- held back (row 18 / row 32 lanes) — later: `PersonalTools`
+
+**8. operations and config (backup, basemap, storage, settings, config, plugin host/resolver/vaults, data exchange): 53 objects, 187 G3misplaced defs**
+
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `AboutMarkdown`, `BasemapMarkdown`, `BundleMarkdown`, `ConfigEditMarkdown`, `PluginsMarkdown`, `ReloadMarkdown`, `StorageMarkdown`
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `Backup`, `Basemap`, `BasemapFetch`, `ConfigEdit`, `PluginKit`
+- enum with wire strings (G35) — hand: `BaseMapSource`, `Bundle`
+- onto an existing type (companion/extension) — rule: `BaseStyles`, `BasemapLabels`, `BundleFormat`, `BundlePlan`, `BundleReader`, `Challenge`, `ConfigReload`, `ConfigTextEdit`, `EnvOverrides`, `HotPlan`, `KeePassXcSession`, `LibDirectory`, `MergeResolutionsFile`, `OutboundTls`, `PgRelocation`, `PluginSetResource`, `Politeness`, `ReservedNames`, `Resolution`, `SettingPolicy`, `SettingsReader`, `SettingsViews`, `Storage`, `TerrainResample`, `TimeZoneCheck`, `Vacuum`, `YubiKey`
+- Chimney transformer givens — hand: `ConfigViews`, `MergeSettingsViews`
+- split across types — judgement + rule: `MergeFold`, `MergePlanner`
+- held back (row 18 / row 32 lanes) — later: `OpsRoutes`, `OpsTools`
+- to its plugin/module (O7) — hand: `PluginAi`, `PluginEvents`, `PluginMedia`
+- onto a new type (O6) — hand type + rule: `Pom`, `ServerArgs`, `Supervisor`
+
+**9. clients (cli, web): 18 objects, 101 G3misplaced defs**
+
+- onto an existing type (companion/extension) — rule: `ArticlePatches`, `DirSize`, `JobFollow`, `KindSources`, `LocalStorage`, `MapStack`, `MediaCovers`, `Notes`, `Pages`, `Patches`, `PluginArtifacts`, `PluginAuthoring`, `PluginTemplate`
+- enum with wire strings (G35) — hand: `FileFormat`
+- Markdown[A] instances on the rendered types (G36) — judgement + rule: `NoteMarkdown`
+- held back (row 18 / row 32 lanes) — later: `PageTools`
+- dissolve: types top-level, functions to companions — rule (toplevel + companion): `UiNotices`
+
+## The table
+
 | module | package | object | lines | kind | destination | reason |
 |---|---|---|---:|---|---|---|
 | api | `api` | `AboutMarkdown` | 50 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |

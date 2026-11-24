@@ -660,6 +660,37 @@ extension) and gets `.value` everywhere else. `report` lists each change. Run as
   tools/refactor/retype-to-newtype-fixture/input tools/refactor/retype-to-newtype-fixture/expected
 ```
 
+## Operations onto types (G34/G3)
+
+`MoveOntoType` carries out `docs/research-domain-model/objects.md`: it moves the members of a standalone object onto
+the type they are about. Each `moves` entry names `source` (the object's SemanticDB symbol, `com/x/Years.`), optionally
+`member` (one member by name, with its overloads; a newtype's `type X` and `object X` move together; empty means every
+member no other entry names), `to` (an object symbol: the companion it joins; a type symbol `com/x/Mode#`: its
+companion, created when the file has none; a package symbol `com/x/` with `form = toplevel` and `file`: a new
+top-level file), `form` (`auto`: an extension when a def's first explicit parameter has the target's type, else a
+companion member; `companion`, `extension`, `toplevel`, `stay`) and `name` (a rename at the new place).
+
+The rule reads the moved objects' sources and current SemanticDB before it rewrites anything (`semanticdb` lists the
+directories, default `target/out`; a document whose md5 differs from its file is refused), so one pass moves the
+definitions with the imports they need, rewrites every reference (`Obj.f(x, a)` → `x.f(a)`, `Obj.f(…)` → `T.f(…)`,
+`Obj.X` → `T.X`, the bare names an import brought in), removes or redirects the importers, deletes emptied objects and
+writes `report` (the emptied files, deleted afterwards with `git rm`, and the references it could not rewrite). A name
+clash at the target, a target module that cannot see the member's dependencies or a receiver whose static type is not
+the target's are compile errors fixed by hand. Each batch has its own `move-onto-type-<batch>.conf`; after
+`sbt compile Test/compile`, from the worktree root:
+
+```text
+SCALAFIX_JAVA_OPTS=-Xmx6g bash tools/refactor/scalafix.sh --config tools/refactor/move-onto-type-<batch>.conf \
+  --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules
+```
+
+The fixture (input, expected, and the files the rule creates):
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/MoveOntoType.scala \
+  tools/refactor/move-onto-type-fixture/input tools/refactor/move-onto-type-fixture/expected
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.
