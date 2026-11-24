@@ -18,11 +18,14 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The rows of the jobs that run as one piece (an OCR, a re-OCR): created `queued`, moved from state to state by
   * compare-and-set, annotated with their progress. The jobs area owns the `jobs` table; a domain that runs such jobs
   * records them here.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 trait JobRecords:
   /** A new `queued` job; `acquireItem` is the acquisition item it ticks off when it succeeds. */
   def create(
@@ -75,6 +78,8 @@ object JobRecords:
 
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[Map[JobInfo.Id, JobInfo]], clock: Clock) extends JobRecords:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def create(
         kind: Job.Kind,
         citekey: Option[Citekey],
@@ -96,7 +101,9 @@ object JobRecords:
       )
       val _ = state.updateAndGet(_.updated(job.id, job))
       job
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Job.Id): Option[JobInfo] = state.get.get(JobInfo.Id(id.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def transition(
         id: Job.Id,
         from: JobState,
@@ -125,6 +132,7 @@ object JobRecords:
         )
         Option.when(before.get(key).exists(_.status == from.wire))(target)
       }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def progress(id: Job.Id, text: JobRow.Progress)(using WritePermit): Unit =
       val now = clock.instant().toString
       val key = JobInfo.Id(id.value)

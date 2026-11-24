@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class FormatReport(
     subject: FormatReport.Subject,
@@ -15,7 +16,9 @@ final case class FormatReport(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def errors: FormatReport.ErrorCount = FormatReport.ErrorCount(issues.count(_.severity == FormatSeverity.Error))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def warnings: FormatReport.WarningCount =
     FormatReport.WarningCount(issues.count(_.severity == FormatSeverity.Warning))
 

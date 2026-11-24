@@ -14,8 +14,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[PeriodsCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion periods`: declares its options, parses them into typed commands")
 object PeriodsArgs:
   object PeriodsEntry extends CommandLine.Entry:
     val name = "periods"
@@ -64,6 +67,7 @@ object PeriodsArgs:
       "Also delete the seed periods the bundled seed no longer has (fetched ones too; your own are kept)"
     )
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PeriodsCmd.Command.Seed(file_.toOption, replace_.getOrElse(false))
     )

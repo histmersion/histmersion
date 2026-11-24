@@ -73,6 +73,7 @@ import com.histmersion.cli.Client
 import com.histmersion.cli.MediaCovers
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *
@@ -101,6 +102,7 @@ class MediaOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-media-oracle")
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -117,6 +119,7 @@ class MediaOracleSuite extends DbSuite:
 
   // ── licences ───────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Statements = List(
     "",
     "   ",
@@ -160,6 +163,7 @@ class MediaOracleSuite extends DbSuite:
     "https://creativecommons.org/licenses/by/4.0/"
   ).map(Licence.Statement(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Urls = List(
     "",
     "https://creativecommons.org/licenses/by-sa/4.0",
@@ -176,6 +180,7 @@ class MediaOracleSuite extends DbSuite:
     "not a url"
   ).map(Licence.Url(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val AllowLists = List(
     "cc0,public-domain,cc-by,cc-by-sa",
     " CC-BY , gfdl ,all-rights-reserved,unknown,bogus",
@@ -185,8 +190,10 @@ class MediaOracleSuite extends DbSuite:
     "public-domain"
   ).map(Licence.AllowList(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def lic(l: Licence): String = s"${l.id.value}|${l.family.wire}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def licences: String =
     val out = StringBuilder()
     val default = Licence.allowList(Licence.AllowList("cc0,public-domain,cc-by,cc-by-sa"))
@@ -312,6 +319,7 @@ class MediaOracleSuite extends DbSuite:
 
   // ── the servers ────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfgFor(name: String): AppConfig =
     base
       .modify(_.db)
@@ -388,6 +396,7 @@ class MediaOracleSuite extends DbSuite:
     s"${r.statusCode} ${String(r.body, UTF_8)}"
 
   /** Status, type, length and digest of an answer whose body is bytes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def binary(url: String): String =
     val r = raw(HttpRequest.newBuilder(URI.create(url)))
     val kind = r.headers().firstValue("content-type").orElse("-")
@@ -442,6 +451,7 @@ class MediaOracleSuite extends DbSuite:
     if ended || left == 0 then s"${r.statusCode} $body"
     else { Thread.sleep(100); awaitJob(url, id, left - 1) }
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def exec(ds: DataSource, statement: String): Unit =
     connect(ds)(sql"${SqlLiteral(statement)}".update.run(): Unit)
 
@@ -685,6 +695,7 @@ class MediaOracleSuite extends DbSuite:
     (z, x, y)
 
   /** A tile's status, length and digest, the pictures' uids it carries written as the records they name first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tileLine(url: String, path: String, names: Map[String, String]): String =
     val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/tiles/$path")))
     val named = UuidRe.replaceAllIn(
@@ -819,6 +830,7 @@ class MediaOracleSuite extends DbSuite:
   private val ShortRe = "(?<![-\\w])[0-9a-f]{8}(?![-\\w])".r
 
   /** uid → the record it names. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def names(dss: List[(String, DataSource)]): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -877,6 +889,7 @@ class MediaOracleSuite extends DbSuite:
   /** Media's tables, every row normalised; bytes as their length and digest. */
   private val MediaTables = List("assets", "asset_links", "media_links", "media_checks")
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def rows(ds: DataSource, names: Map[String, String]): String =
     MediaTables
       .map { t =>
@@ -948,7 +961,10 @@ class MediaOracleSuite extends DbSuite:
     override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     override val matchRule = MediaMatchRule.Own
     override val asks = Set(MediaTarget.Places, MediaTarget.Events)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def item(
         key: MediaItem.Key,
         licence: spi.Licence,
@@ -963,6 +979,7 @@ class MediaOracleSuite extends DbSuite:
         Right(MediaRights(licence, author = author, credit = MediaRights.Credit(s"Zq picture $key, $licence"))),
         role = role
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def searchTargets(
         places: List[MediaPlace],
         events: List[MediaEvent],
@@ -1025,6 +1042,9 @@ class MediaOracleSuite extends DbSuite:
     val title = MediaCollection.Title("Zq searched objects")
     val role = MediaCollection.Object
     override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def search(place: MediaPlace, http: Plugin.Http) =
       http
         .get(Plugin.Http.Url(s"https://zq-search.example/q?label=${place.label}"), Map.empty)
@@ -1055,6 +1075,7 @@ class MediaOracleSuite extends DbSuite:
           )
         }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ownRoute(url: String): Either[String, HttpAnswer] =
     if url.startsWith("https://zq-own.example/batch") || url.startsWith("https://zq-search.example/q") then
       FakeMediaHttp.json("""{"ok":true}""")
@@ -1064,6 +1085,7 @@ class MediaOracleSuite extends DbSuite:
       else FakeMediaHttp.bytes(MediaWire.jpeg(s"cover $url"), "image/jpeg")
     else MediaWire.route(url)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def imports(ds: DataSource): String =
     val sb = StringBuilder()
     val loaded = MediaWire
@@ -1225,6 +1247,7 @@ class MediaOracleSuite extends DbSuite:
     sb.result()
 
   /** The Calibre covers as `media covers` reads them on the host, from a fixture library, through a server. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def calibreCovers(url: String, ds: DataSource): String =
     val lib = CalibreFixture.create(tmp.resolve("calibre-library"))
     exec(
@@ -1301,6 +1324,7 @@ class MediaOracleSuite extends DbSuite:
 
   private val MediaEntries = Set("entities/assets.ndjson", "entities/asset-links.ndjson", "entities/tombstones.ndjson")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bundleText(bundle: Array[Byte], names: Map[String, String]): String =
     val in = java.util.zip.GZIPInputStream(ByteArrayInputStream(bundle))
     val out = StringBuilder()

@@ -22,6 +22,7 @@ object Ingest:
   type JobStatus = JobStatus.T
   object JobStatus extends Newtype[String, Pure]
   type StepName = StepName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object StepName extends Newtype[String, Pure]
   type StoredName = StoredName.T
   object StoredName extends Newtype[String, Pure]
@@ -32,13 +33,19 @@ object Ingest:
 
   val MediaCacheControl = "public, max-age=86400"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val KindIngest = IngestJobKinds.Ingest.kind.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val KindReocr = IngestJobKinds.Reocr.kind.value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def originalDisposition(citekey: Citekey, storedName: StoredName): Disposition =
     val ext = (storedName).value.reverse.takeWhile(_ != '.').reverse
     Disposition(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dispositionExtension(disposition: Disposition): Option[Extension] =
     ("""filename="?([^";]+)"?""".r
       .findFirstMatchIn((disposition).value)

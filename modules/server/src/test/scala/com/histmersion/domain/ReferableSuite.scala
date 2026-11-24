@@ -19,13 +19,16 @@ import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A reference resolves and describes the same way in memory and in the database (a scratch database of its own, gated
   * on HISTMERSION_TEST_DB_URL): the source a reference names now, after a rename, a merge and a deletion.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReferableSuite extends DbSuite:
 
   private val source = SourceReferable.Kind
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(k: String) = ItemKey(k)
 
   /** Sources, and how the collection changes under them, over one store. */
@@ -37,6 +40,7 @@ class ReferableSuite extends DbSuite:
       delete: String => Unit
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inMemory: World =
     val r = Referable.InMemory(source)
     World(
@@ -48,6 +52,7 @@ class ReferableSuite extends DbSuite:
     )
 
   private val testDb = TestDb.url
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("referable", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 

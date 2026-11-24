@@ -14,6 +14,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** LLM-proposed hint effects (docs/research-process-managers.md §3.6, phase 3): a person writes a hint in words; a
   * model reads it and proposes the structured action it asks for — hold, prioritise or skip some of the manager's
@@ -21,6 +23,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * knows, targets that exist, a date that parses, settings that parse). A proposal is never applied by itself: it
   * becomes a `hint-effect` approval, applied when a person approves it. Pure.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationManagers)
 object HintProposals:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
@@ -51,10 +55,13 @@ object HintProposals:
     type Until = Until.T
     object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object UntilSource extends Newtype[String, Pure]
     type Settings = Settings.T
     object Settings extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[HintAnswer] = KindlingsSchema
       .derived[HintAnswer]
       .schema
@@ -81,6 +88,8 @@ object HintProposals:
     * could drive); `item` = the target the hint is scoped to, if any. On the LAST attempt an unknown target is dropped
     * (warned) rather than failing the proposal, and an answer that stays wrong proposes nothing.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(
       a: HintAnswer,
       known: Item => Boolean,

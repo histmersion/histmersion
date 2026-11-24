@@ -8,12 +8,14 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Goal, GoalsExport, ItemStatus}
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `meta/GOALS.md` (task #906): the pure renderer. The fixture mirrors the live goals' shape — a few top-level goals
   * with nested sub-goals, article and queue-item links (done and open), one goal with a period — plus the parts the
   * live data does not have yet (a source, a search, a schedule, an approved plan, a dangling link). No database, no
   * server.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GoalsExportSuite extends munit.FunSuite:
 
   private def goal(
@@ -41,6 +43,7 @@ class GoalsExportSuite extends munit.FunSuite:
 
   private def article(slug: GoalLink.Ref, title: GoalLink.Title) =
     GoalLink(LinkKind.Article, slug, None, Some(title), Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(id: GoalLink.QueueNumber, text: GoalLink.Title) =
     GoalLink(
       LinkKind.QueueItem,

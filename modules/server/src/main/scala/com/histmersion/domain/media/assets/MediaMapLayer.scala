@@ -9,11 +9,14 @@ import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.maptiles.MapTiles
 import com.augustnagro.magnum.Frag
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pictures as a layer of the map: those placed in a tile's box, of the kind, provider and licence asked for, dated
   * in the span when one is asked for.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class MediaMapLayer(assets: AssetService) extends MapLayer:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def candidates(q: TilesApi.TileQuery, window: Option[(BPeriodRow.PLo, BPeriodRow.PHi)], envelope: Frag): Frag =
     MediaRepo.tileCandidates(
       q.kind.map(k => MediaItemRow.Kind(k.value)),
@@ -23,11 +26,14 @@ final class MediaMapLayer(assets: AssetService) extends MapLayer:
       envelope
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def features(keys: List[MapTiles.TileKey]): Map[MapTiles.TileKey, TileCell => TilePoint] =
     assets
       .geoOf(keys.map(k => AssetService.AssetUid(k.value)))
       .map((uid, h) => MapTiles.TileKey(uid.value) -> feature(h))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[assets] def feature(h: MediaGeoHit)(c: TileCell): TilePoint =
     TilePoint(
       c.x,

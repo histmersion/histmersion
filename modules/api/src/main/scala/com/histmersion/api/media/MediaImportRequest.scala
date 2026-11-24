@@ -11,6 +11,7 @@ import com.histmersion.api.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaImportRequest(
     provider: MediaItem.Provider = MediaItem.Provider("wikidata"),
     dryRun: MediaImportRequest.DryRun = RepairAcquire.RepairRequest.DryRun(true),

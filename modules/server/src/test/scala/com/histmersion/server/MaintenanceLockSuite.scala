@@ -41,6 +41,7 @@ import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.server.views.WorkListView
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *
@@ -48,10 +49,12 @@ import com.histmersion.util.database.TestCreators.given
   * replaced, and the writer is told it succeeded. This drives the handlers directly rather than over HTTP: the point is
   * that no write path forgets the guard, and the route layer only translates the answer into a 503.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MaintenanceLockSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg = {
     val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   }
@@ -66,6 +69,8 @@ class MaintenanceLockSuite extends DbSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -75,6 +80,7 @@ class MaintenanceLockSuite extends DbSuite:
     )
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def underLock[A](f: => Either[Api.Error, A]): Either[Api.Error, A] =
     var out: Either[Api.Error, A] = Left(Api.Error(Problem.Unclassified(Legacy.Text("never ran"))))
     val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) { out = f; Right(()) }
@@ -85,6 +91,7 @@ class MaintenanceLockSuite extends DbSuite:
     val e = r.swap.toOption.getOrElse(fail(s"$name was NOT refused while a restore held the lock"))
     assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.problems.sentences.mkString("; ")}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val png =
     AssetInput(
       Bundle.Asset.FileName("f.png"),

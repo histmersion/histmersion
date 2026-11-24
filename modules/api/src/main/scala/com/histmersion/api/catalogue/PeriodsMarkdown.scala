@@ -3,10 +3,13 @@ package api.catalogue
 
 import com.histmersion.api.{Plural, YearFmt}
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 object PeriodsMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def years(p: Period): String = YearFmt.period(Some(p.start), Some(p.end))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(ps: Vector[HistoricalPeriod]): String =
     if ps.isEmpty then ("_No periods._")
     else
@@ -21,6 +24,8 @@ object PeriodsMarkdown:
         "|---|---|---|---|---|---|"
       ) ++ rows).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def detail(d: Period.Detail): String =
     val p = d.period
     val head = List(
@@ -39,6 +44,8 @@ object PeriodsMarkdown:
           d.children.map(c => s"- ${c.label} `${c.id}` — ${years(c.period)}${c.region.fold("")(r => s" · $r")}")
     ((head ++ kids).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def imported(r: Period.ImportResult): String =
     val head = s"imported ${Plural.count(Plural.CountN(r.periods.value.toLong), Plural.CountSingular("period"))}" +
       (if r.roots.value > 0 then
@@ -54,5 +61,6 @@ object PeriodsMarkdown:
       s"$head\n\nskipped ${Plural.count(Plural.CountN(r.skippedCount.value.toLong), Plural.CountSingular("definition"))} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def skippedList(ss: List[SkippedPeriod]): String =
     (ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n"))

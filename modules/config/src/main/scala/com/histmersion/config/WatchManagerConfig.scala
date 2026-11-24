@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** A research area's watcher (`agents.managers.watch`, docs/research-process-managers.md §4 (c)): its runs at once, the
   * cron a new one gets (UTC), and the default daily cap of its OPT-IN auto-ingest of legal open-access works (a
@@ -10,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * of the watchers' ingest backlog one managers' tick ingests at most (`drainPerTick`: each fetches a file, so a tick
   * takes only a few; the daily caps bound the day).
   */
+@movesTo(FeaturePlace.LibraryWorkflows)
 final case class WatchManagerConfig(
     maxRuns: WatchManagerConfig.MaxRuns,
     cron: WatchManagerConfig.Cron,

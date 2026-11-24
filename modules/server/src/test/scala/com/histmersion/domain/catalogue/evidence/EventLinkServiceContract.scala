@@ -13,11 +13,14 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the events' proposed links keep: the confirmed first then by score, a source that is gone left out, the
   * rejected only when asked; saving again replaces the proposals and keeps a decided status; the check recorded; the
   * events still to check, the catalogue's first.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class EventLinkServiceContract extends CatalogueStoreSuite:
   private def cand(ck: Citekey, score: EventLinkCandidate.Score) =
     EventLinkCandidate(

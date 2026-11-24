@@ -10,6 +10,7 @@ import com.histmersion.server.Deps
 import com.histmersion.domain.library.LibraryData
 import com.histmersion.util.data.DataOwner
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The mirror over the registered notes: a kind's note from its owner's renderer, an unregistered kind refused; today's
   * registration — the library's source notes in `sources/`, research's article notes by kind.
@@ -18,12 +19,15 @@ class MirrorSuite extends munit.FunSuite:
 
   private val sources = new Mirror.Note:
     val records: Mirror.Records = LibraryData.SourceNotes
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def note(citekey: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] = Right(
       Frontmatter.NoteBody(s"source $citekey")
     )
 
   private val articles = new Mirror.Note:
     val records: Mirror.Records = ResearchData.ArticleNotes
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def note(slug: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] =
       if slug == MirrorPlacement.RecordId("gone") then
         Left(Api.Error(Problem.Unclassified(Legacy.Text("no such article"))))

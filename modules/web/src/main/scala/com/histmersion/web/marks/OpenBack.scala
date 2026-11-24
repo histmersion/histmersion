@@ -7,6 +7,7 @@ import com.histmersion.web.*
 import com.histmersion.web.library.LibraryAddress
 import com.histmersion.web.map.{LatLon, MapSurface, TheMap}
 import org.scalajs.dom
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Opening a bookmark or a note back where it was left: a source or an article in Library's reading pane, a goal on its
   * page, a place or an event in Explore's detail, a picture full size, a place on the map at its point (and its years),
@@ -17,6 +18,8 @@ object OpenBack:
   /** The zoom a point on the map opens at when it was kept without one. */
   val PointZoom = 8.0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(t: Target): Unit =
     val key = t.itemKey
     t.kind match
@@ -52,11 +55,15 @@ object OpenBack:
         span(t)
         UiState.set()(push = UiState.SetPush(true))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def span(t: Target): Unit =
     for a <- t.from; b <- t.to do
       UiState.from.set(Some(a.value.toLong))
       UiState.to.set(Some(b.value.toLong))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(t: Target): Unit =
     if TheMap.isUp then
       for la <- t.lat; lo <- t.lon do

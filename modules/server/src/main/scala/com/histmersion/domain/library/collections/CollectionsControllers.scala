@@ -33,12 +33,16 @@ import com.histmersion.api.library.{
 import com.histmersion.api.Api
 import com.histmersion.util.problem.Problems
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The collections' endpoints and tools over [[CollectionsService]]: the citekey checked where one is named, every
   * write behind the maintenance lock.
   */
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     Citekey.parse(raw.value).left.map(p => Write.invalid(p))
 
@@ -86,6 +90,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
       citekey(req.citekey).flatMap(service.updateOne(caller, name, _))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(
       caller: Caller,
       name: CollectionsService.CollectionName,
@@ -114,6 +119,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   ): Either[Api.Error, CollectionGaps] =
     service.gaps(name, limit)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sync(
       caller: Caller,
       name: CollectionsService.CollectionName,

@@ -27,10 +27,12 @@ import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe, worst verdict,
   * escalation), the gate, the rounds, the fixer's validation, the bookkeeping lines.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReviewArticleSuite extends munit.FunSuite:
 
   private val Good =
@@ -50,7 +52,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       |""".stripMargin
 
   private val known = Set("knapp2016_tin", "sea_peoples", "atlantis")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val isTarget = (t: Slug) => known(t.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val isCk = (t: Citekey) => t.value == "knapp2016_tin"
   private val record = Map(
     Citekey("knapp2016_tin") -> AgentVerify.SourceBody(
@@ -599,6 +603,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     EditAnswer.Anchor("Tin reached the Aegean"),
     EditAnswer.Text("Tin, the scarce half of bronze, reached the Aegean")
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val corpus =
     BodyCorpus(
       isCk,
@@ -613,6 +618,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           )
         else Nil
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fix(a: FixerAnswer, last: LastRound, before: Article.Body = Article.Body(Good)) =
     checkFix(
       a,
@@ -873,6 +879,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Nil,
     Nil
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ckCov = (t: Citekey) => Set("knapp2016_tin", "egypt2001_old", "iso2024_new")(t.value)
 
   test(
@@ -943,6 +950,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Nil,
     Nil
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixCov(a: FixerAnswer, last: LastRound = LastRound(false), c: Option[Coverage] = Some(cov)) =
     checkFix(
       a,
@@ -1187,6 +1195,7 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   // ── the review ledger: checks, the verification pass, declining a minor ──────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val revised = Article.Body(Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
   private val askedTin = Finding(
     Finding.Id("R1"),
@@ -1684,8 +1693,10 @@ class ReviewArticleSuite extends munit.FunSuite:
       "We show that the tin of the Uluburun cargo came from Central Asia."
     ))
   private val spotEv = evidenceCheck(records2.contains, records2.get, minRatio)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val spotBody = Article.Body(Good + "\nThe tin came from Central Asia [[tin2024_iso]].\n")
   private val cited2 = Set(Citekey("knapp2016_tin"), Citekey("tin2024_iso"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def read(ck: String, tool: ToolUse.Tool = ToolUse.Tool("get_source")) =
     AgentVerify.ToolUse(tool, ToolUse.Input(s"""{"citekey":"$ck","section":"findings"}"""))
   private val spotTin = SpotCheckAnswer(
@@ -1851,6 +1862,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   /** The sentences the code of every version wrote (the mechanical lint, the coverage drift, the cold reader's count,
     * the model's free text), as stored: the first come from `mechanical` itself.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val storedSentences: List[Finding.Problem] =
     mechanical(
       Slug("a"),

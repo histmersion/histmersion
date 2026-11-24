@@ -27,15 +27,20 @@ import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The base map wired into the server: its store, the configuration read at each use, its fetch run as a background
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
   */
+@movesTo(FeaturePlace.Server)
 object BasemapWiring:
   /** The base map of `deps`, reading its providers over the network. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def service(deps: Deps): BasemapService = service(deps, () => http(deps.cfg.basemap)(using deps.clock))
 
   /** The base map of `deps`; `http` and `freeSpace` are the seams a test substitutes for the network and the disk. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def service(deps: Deps, http: () => RangeHttp, freeSpace: Store => ByteCount = _.usableSpace): BasemapService =
     BasemapService(
       () => deps.cfg.basemap,
@@ -49,6 +54,8 @@ object BasemapWiring:
   /** The client of the base map's providers: HTTP/1.1 (one stream per request; the providers are CDNs), following
     * redirects.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def http(cfg: BasemapConfig)(using clock: java.time.Clock): RangeHttp =
     JavaRangeHttp(
       HttpClient
@@ -66,14 +73,17 @@ object BasemapWiring:
     )(using clock)
 
   /** The grid of `basemap.bathymetry.source`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def seaFloor(source: SeaFloorSource): SeaFloorGrid = source match
     case SeaFloorSource.Etopo1 => SeaFloorGrid.Etopo1
     case SeaFloorSource.Gebco  => SeaFloorGrid.Gebco
 
   /** [[HttpPolicy]]: 1, 2, 4 … s after a dropped connection; a slow-down answer after its `Retry-After`. */
   val Retries: RetryPolicy = new RetryPolicy:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def backoffMs(attempt: Int): RetryWait.Ms = RetryWait.Ms(HttpPolicy.backoffMs(HttpPolicy.Attempt(attempt)).value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def slowDown(
         code: RangeHttp.StatusCode,
         retryAfter: Option[RetryPolicy.RetryAfterHeader],
@@ -96,17 +106,22 @@ object BasemapWiring:
   /** The fetch as one of the server's background jobs: behind its write guard, pinned to the caller's generation, and
     * stoppable by a person.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def jobs(deps: Deps): BasemapJobs = new BasemapJobs:
     private val slot = BackgroundJob.Slot()
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def running: Option[BasemapJobs.Description] = slot.current.map(w => BasemapJobs.Description(w.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def guarded[A](op: BasemapJobs.Operation)(body: WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
       deps.maintenance.guard(WriteGate.OperationName(op.value))(body)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def busy(what: BasemapJobs.Target, busyCode: Option[Api.Error.Code]): Api.Error =
       BackgroundJob.busy(BackgroundJob.Work(what.value), slot.current, busyCode)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def start(
         kind: Job.Kind,
         about: BasemapJobs.Description,

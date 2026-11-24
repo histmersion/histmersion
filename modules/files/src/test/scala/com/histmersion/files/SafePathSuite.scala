@@ -6,10 +6,12 @@ import com.histmersion.api.given
 
 import java.nio.file.Paths
 import com.histmersion.util.storage.SafePath
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Three surfaces take a SERVER-side path from the caller (`seed {dir}`, MCP `ingest {path}`, a note's `md_path`).
   * Confinement to `corpus.dir` is what stops them being a file-read primitive.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SafePathSuite extends munit.FunSuite:
 
   private val base = Some(SafePath.Base("/srv/corpus"))

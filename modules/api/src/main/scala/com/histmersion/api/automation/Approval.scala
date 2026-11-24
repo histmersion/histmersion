@@ -3,8 +3,10 @@ package api.automation
 
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An approval's vocabularies as the wire spells them (the api's own copies of the model's). */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Approval:
   type Note = Note.T
   object Note extends Newtype[String, Pure]:
@@ -60,11 +62,14 @@ object Approval:
     type Blocking = Blocking.T
     object Blocking extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = parse(Wire((s).value))
 
   /** How a kind of proposal is handled: `Manual` waits for a person, `Auto` is applied at once (and still recorded,
@@ -78,6 +83,7 @@ object Approval:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Mode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** `Failed` = a person approved it but applying it failed (the source changed or went away); the reason is kept in
@@ -93,6 +99,7 @@ object Approval:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** Who decided an approval. `Autopilot` = the checked auto approvals (their note starts [[AutopilotNote]]); `Auto` =
@@ -118,6 +125,7 @@ object Approval:
     /** The result of a proposal applied at once (`Approvals.propose`, an `auto` mode). */
     val AutoResult = "applied automatically"
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[DecidedBy] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     /** Who decided an approval in `state` with this `note` and `result`; `None` while it is open. The SQL that filters

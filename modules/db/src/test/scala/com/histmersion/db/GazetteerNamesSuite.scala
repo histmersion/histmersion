@@ -34,6 +34,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #987 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise), on the REAL bundled seed: the places a
   * finding names in plain English are read out of `db/places` itself (Natural Earth physical + cities, Pleiades with
@@ -43,15 +44,18 @@ import com.histmersion.api.library.Citekey
   * Only the places listed in [[Wanted]] are imported, under their real ids; this suite deletes exactly those (and its
   * `zzgn_` fixtures) before and after.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GazetteerNamesSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val settings =
     GeocodeSettings(
       GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
@@ -61,6 +65,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
   private val DeadSea = Set("ne_lake_1159126747", "ne_lake_1159126865")
   private val Galilee = "ne_lake_1159114879"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val GalileeId = Place.Id.applyUnsafe(Galilee)
   private val Krakow = "ne_city_1159149709"
   private val Balkans = "ne_physical_1159104241"
@@ -103,6 +108,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       .getOrElse(fail("no db/places above the working directory"))
 
   /** The wanted features of the real seed files, as the first-run import parses them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val seed: List[api.catalogue.Place.Input] =
     def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
       val st = Files.list(dir)
@@ -138,9 +144,11 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(name: String, at: Option[Period] = None) =
     connect(ds)(PlaceFixtures.resolve(Geocode.Attempt.Name(name), KindHint.Unknown, at, settings.placeholderMin))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolvesTo(name: String, ids: Set[String]): Geocode.Resolution =
     val r = resolve(name).getOrElse(fail(s"'$name' resolves to nothing"))
     assert(ids.contains(r.placeId.value), s"'$name' → ${r.describe}, expected one of $ids")
@@ -282,6 +290,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
   // ── the fill ───────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(n: Int, region: String, at: Option[GeoPoint], period: Option[Period] = None) =
     Finding(
       Finding.Id(s"$Ck#$n"),

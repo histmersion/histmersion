@@ -10,11 +10,13 @@ import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's one row, as the engine's other features reach it: the switch and the managers it paused, when it
   * last ensured the goals' managers and kept house, a person's scheduler strategy, the approval digest's day and the
   * drain. Times are ISO instants (UTC, to the second).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AutopilotRowService:
   def row(): AutopilotRepo.Row
 
@@ -78,6 +80,8 @@ object AutopilotRowService:
     def digested(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.digested(now))
     def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =
       db.read(AutopilotRepo.drain())
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy)(using WritePermit): Boolean =
       db.write(AutopilotRepo.setDrain(on, by))
     def drained(at: Option[Instant])(using WritePermit): Unit = db.write(AutopilotRepo.drained(at))
@@ -98,8 +102,10 @@ object AutopilotRowService:
         .autopilot
         .exists(when)
     private def always(f: AutopilotRowState => AutopilotRowState): Unit = change(_ => true)(f): Unit
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def text(at: Instant): String = AutomationState.text(at).value
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def row(): AutopilotRepo.Row =
       val r = current()
       AutopilotRepo.Row(
@@ -111,6 +117,7 @@ object AutopilotRowService:
         r.lastBackupAt.map(at => AutopilotRepo.Row.LastBackupAt(text(at))),
         r.lastLintAt.map(at => AutopilotRepo.Row.LastLintAt(text(at)))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def set(
         enabled: AutopilotRepo.Row.Enabled,
         by: AutopilotRepo.Row.ChangedBy,
@@ -132,9 +139,11 @@ object AutopilotRowService:
     def ensureSoon()(using WritePermit): Unit = always(_.modify(_.lastEnsureAt).setTo(None))
     def backedUp(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
     def linted(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit = always(
       _.modify(_.paused).using(_.filterNot(_.value == managerId.value))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
       val r = current()
       r.strategy.map(n =>
@@ -144,6 +153,7 @@ object AutopilotRowService:
           AutopilotRepo.Row.ChangedAt(r.strategyAt.fold("")(text))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy)(using
         WritePermit
     ): Unit =
@@ -155,9 +165,11 @@ object AutopilotRowService:
           .modify(_.strategyAt)
           .setTo(Some(now))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def lastDigest(): Option[AutopilotRepo.Digest] =
       current().lastDigestAt.map(at => AutopilotRepo.Digest(text(at)))
     def digested(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastDigestAt).setTo(Some(now)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =
       val r = current()
       r.drainSince.map(s =>
@@ -167,6 +179,8 @@ object AutopilotRowService:
           r.drainedAt.map(at => AutopilotRepo.DrainedAt(text(at)))
         )
       )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy)(using WritePermit): Boolean =
       if on then
         change(_.drainSince.isEmpty)(

@@ -14,10 +14,12 @@ import com.histmersion.api.Html
 import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a caller- or
   * agent-supplied string into it were unescaped. These are the regression tests.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class HtmlEscapeSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

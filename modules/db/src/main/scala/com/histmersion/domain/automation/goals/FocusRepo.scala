@@ -9,12 +9,16 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a
   * person's override of the cap, and the few aggregate reads the focus needs for every goal at once. The items' holds
   * themselves are in [[ManagerRepo]] (they are items).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the focus tables and their row codecs")
 object FocusRepo:
 
   /** A goal with what the focus recorded about it. */
@@ -105,16 +109,19 @@ object FocusRepo:
     type FocusHeld = FocusHeld.T
     object FocusHeld extends Newtype[Boolean, Pure]
     type PersonHeld = PersonHeld.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object PersonHeld extends Newtype[Boolean, Pure]
     type Approval = Approval.T
     object Approval extends Newtype[Long, Pure]
     type ApprovalKind = ApprovalKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ApprovalKind extends Newtype[String, Pure]
     type AutoApprove = AutoApprove.T
     object AutoApprove extends Newtype[String, Pure]
     type Goals = Goals.T
     object Goals extends Newtype[String, Pure]
 
+  @tolerated(LintRule.TotalOrder, "goal_links of one kind and one ref (l.ref = i.target): goal_slug completes the key")
   def work(using DbCon): List[WorkRow] =
     sql"""SELECT i.id, i.manager_id, m.kind, i.kind, i.target, i.status, i.origin = 'person',
                  i.status = 'held' AND i.hold->>'focus' IS NOT NULL,
@@ -180,6 +187,9 @@ object FocusRepo:
       .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def goalsOf(kind: Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref])(using
       DbCon
   ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[Goal.Slug]] =
@@ -195,6 +205,8 @@ object FocusRepo:
         )
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def recentTargets(managerId: WorkRow.ManagerId, n: PageSize)(using DbCon): List[WorkRow.Target] =
     sql"""SELECT target_id FROM jobs WHERE kind = 'agent' AND manager_id = $managerId AND target_id IS NOT NULL
           ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n.value)}"""
@@ -206,6 +218,7 @@ object FocusRepo:
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The goal became active now, `why`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def joined(slug: Goal.Slug, why: GoalFocus.Rationale, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
@@ -214,6 +227,7 @@ object FocusRepo:
         .run()
 
   /** The goal left the active set now, `why`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def left(slug: Goal.Slug, why: GoalFocus.Rationale, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     Unused(
@@ -223,16 +237,19 @@ object FocusRepo:
     )
 
   /** A person's pin. False = no such goal. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pin(slug: Goal.Slug, pinned: GoalRow.Pinned)(using DbCon): Boolean =
     sql"""INSERT INTO goal_focus (slug, pinned) SELECT slug, $pinned FROM goals WHERE slug = $slug
           ON CONFLICT (slug) DO UPDATE SET pinned = $pinned, updated_at = now()""".update.run() > 0
 
   /** A person's priority (higher first). False = no such goal. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def priority(slug: Goal.Slug, n: GoalRow.Priority)(using DbCon): Boolean =
     sql"""INSERT INTO goal_focus (slug, priority) SELECT slug, $n FROM goals WHERE slug = $slug
           ON CONFLICT (slug) DO UPDATE SET priority = $n, updated_at = now()""".update.run() > 0
 
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def clearActive(why: GoalFocus.Rationale, now: java.time.Instant)(using DbCon): RowCount =
     val t = now.toString
     RowCount(

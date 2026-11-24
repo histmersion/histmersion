@@ -26,6 +26,8 @@ import scala.concurrent.duration.*
 import scala.util.control.NonFatal
 import com.histmersion.domain.library.acquisition.CoreBudget
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server's hot components (docs/research-plugins.md §3.6) and the config reload over them (§3.5):
   *
@@ -46,6 +48,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * other thread have a connection); [[deps]] reads the config and the plugins from the graph at each call. Nothing here
   * is static: a second server in the same JVM (a test) has its own graph, pools and all, closed with its Ox scope.
   */
+@movesTo(FeaturePlace.Server)
 final class ServerGraph private (
     val graph: Hot.Graph[HotConfig],
     source: Option[ConfigSource],
@@ -93,6 +96,8 @@ final class ServerGraph private (
     * settings at their running value; rebuild what the rest concerns (and everything that depends on it) beside the
     * running components; switch when all of it built. Nothing is changed on any error.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def reload(): ReloadReport = reloadLock.synchronized {
     val running = graph.latest
     val gen = graph.latestGeneration
@@ -177,6 +182,7 @@ final class ServerGraph private (
     * so turning `watch` on or off is itself a reload, and the watcher stops with its scope. Off without a file to
     * watch.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def addWatch(): Either[Problem, Hot[Boolean]] =
     graph
       .node[Boolean](Hot.Graph.Def.Name(ServerGraph.Watch), keys = List(Hot.Graph.Def.Keys("histmersion.config"))) {
@@ -224,6 +230,9 @@ object ServerGraph:
     * migration failed). `holds` are this server's instance locks; `maintenance` its gate, which the data sources are
     * behind.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def start(
       initial: HotConfig,
       source: Option[ConfigSource],
@@ -327,6 +336,7 @@ object ServerGraph:
     * hold, but a superuser-only function is no longer out of reach — so it is an error-level log, not a debug line.
     * Failing to boot instead would take the whole server down over one optional endpoint.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readOnly(cfg: AppConfig, app: DataSource)(using ox.OxUnsupervised): ReadOnlyPool =
     QueryAccess
       .provision(app, cfg.query)
@@ -357,6 +367,7 @@ object ServerGraph:
   /** A JDBC URL for the log: no query string (where a password could be). */
   def redact(url: String): String = url.takeWhile(_ != '?')
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(r: ReloadReport): Unit =
     if r.errors.nonEmpty then
       scribe.warn(s"config reload failed, generation ${r.generation} stays: ${r.errors.mkString("; ")}")

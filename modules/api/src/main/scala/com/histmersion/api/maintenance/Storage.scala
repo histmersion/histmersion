@@ -14,20 +14,26 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 object Storage:
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]
   type Hint = Hint.T
   object Hint extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val DefaultLowFreeBytes: ByteCount = ByteCount(10L * 1000 * 1000 * 1000)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def under(child: Entry.Path, parent: Entry.Path): Boolean =
     def norm(p: Entry.Path) = (p).value.replace('\\', '/').stripSuffix("/")
     val c = norm(child)
     val p = norm(parent)
     c == p || c.startsWith(p + "/")
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nest(entries: List[Entry]): List[Entry] =
     val withPath = entries.zipWithIndex.collect { case (e, i) if e.path.isDefined => (e, i) }
     entries.zipWithIndex.map { case (e, i) =>
@@ -43,14 +49,19 @@ object Storage:
         }
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def total(entries: List[Entry]): ByteCount =
     ByteCount(entries.filter(_.within.isEmpty).flatMap(_.bytes.map(_.value.toLong)).sum)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def onVolume(entries: List[Entry], volume: Volume.Id): List[Entry] =
     entries
       .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.map(_.value.toLong).exists(_ > 0))
       .sortBy(e => -e.bytes.map(_.value.toLong).getOrElse(0L))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hints(report: Report): List[Hint] =
     report.volumes
       .filter(_.freeBytes.value.toLong < report.lowFreeBytes.value.toLong)
@@ -70,6 +81,7 @@ object Storage:
           )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def addLocal(r: Report, local: List[Entry], volumes: List[Volume]): Report =
     val known = r.entries.flatMap(_.path).toSet
     val add = local.filterNot(e => e.path.exists(known.contains)).map(_.modify(_.host).setTo(Entry.Host("cli")))
@@ -82,8 +94,11 @@ object Storage:
           .setTo((r.volumes ++ volumes.filterNot(v => r.volumes.exists(_.id == v.id))))
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def withHints(r: Report): Report = r.modify(_.hints).setTo(hints(r))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def details(r: Report, e: Entry): List[Entry.Detail] =
     val files = e.files
       .map(_.value.toLong)
@@ -112,6 +127,7 @@ object Storage:
       case _ => Nil
     files ++ extra ++ e.detail.toList
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shown(entries: List[Entry]): List[(Entry, Depth)] =
     val present = entries.filter((refactorCallback => ((refactorCallback.exists) == Entry.Exists(true))))
     val keys = present.map(_.key).toSet
@@ -121,6 +137,8 @@ object Storage:
         .flatMap(c => walk(c, Depth((depth).value + 1), seen + e.key))
     present.filter(e => e.within.forall(w => !keys.contains(w))).flatMap(walk(_, Depth(0), Set.empty))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size(e: Entry): String =
     e.bytes.map(_.value.toLong) match
       case None => if (e.exists) == Entry.Exists(true) then ("—") else ("not there")
@@ -131,6 +149,8 @@ object Storage:
     type Keep = Keep.T
     object Keep extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shrink(key: Entry.Key, keep: Keep): Option[Hint] = key.value match
       case "backups" =>
         Some(

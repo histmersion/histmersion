@@ -1,6 +1,7 @@
 package com.histmersion
 package server
 
+import com.histmersion.lint.{LintRule, tolerated}
 /** The one Markdown renderer of the pages, over random hostile Markdown (a seeded generator: a failure names its seed
   * and input): raw HTML blocks, inline HTML, Markdown links and images with script addresses, half-open tags. The
   * output is read back by this suite's own reader: no `<script>` element, no event-handler attribute, no `href`/`src`
@@ -8,6 +9,7 @@ package server
   */
 class MarkdownHtmlSafetySuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def render(md: String): String = MarkdownHtml.render(FullText.Shown.Markdown(md)).markup
 
   private val Tag = """(?i)<([a-z][a-z0-9:-]*)([^<>]*)>""".r

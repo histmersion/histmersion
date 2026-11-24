@@ -19,11 +19,14 @@ import com.histmersion.api.catalogue.{
   SkippedPeriod,
   Year
 }
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The PeriodO reader (#719): pure, so every rule is pinned here — ISO years, outer bounds, English labels, regions,
   * unreadable spans, the parent rules and the parents-first order — plus the committed seed itself, which is what a
   * fresh install's timeline presets are made of.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class PeriodsSuite extends munit.FunSuite:
 
   /** A two-authority dump in PeriodO's own shape (abridged from the real one). */
@@ -445,6 +448,7 @@ class PeriodsSuite extends munit.FunSuite:
 
   // ── the timeline menu ────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def preset(
       id: HistoricalPeriod.Id,
       label: HistoricalPeriod.Label,

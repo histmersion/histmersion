@@ -14,10 +14,13 @@ import com.histmersion.api.catalogue.{Event, Place}
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.exchange.MergeMarkdown
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion article|events|goals rename <old> <new>` — a new slug or id; the old one keeps resolving (an alias).
   * The label is checked here with the server's own rule ([[LabelRenames]]).
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion label-rename` arguments")
 object LabelRenameCmd:
 
   /** `<kind> rename <old> <new>`, the new label already checked; `from` trimmed. */
@@ -32,6 +35,8 @@ object LabelRenameCmd:
       r.map(x => Output.emit(json, x)(MergeMarkdown.renamed))
 
   /** The rename `kind` asks for, or why the new label is refused. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def rename(kind: Bundle.Kind, from: String, to: String, json: Cli.JsonOutput): Either[Problems, Rename] =
     LabelRenames
       .validate(kind, LabelRenames.Label(from), LabelRenames.Label(to))
@@ -40,6 +45,7 @@ object LabelRenameCmd:
       .map(t => Rename(kind, from.trim, LabelRename.To(t.value), json))
 
   /** The help line of the `rename` subcommand of `kind`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def help(kind: Bundle.Kind): String =
     val (what, effect) = kind match
       case Bundle.Kind.Article =>

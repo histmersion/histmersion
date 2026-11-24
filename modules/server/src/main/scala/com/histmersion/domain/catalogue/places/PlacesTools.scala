@@ -55,6 +55,8 @@ object PlacesTools:
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PlacesInput] = KindlingsSchema
       .derived[PlacesInput]
       .schema
@@ -64,6 +66,7 @@ object PlacesTools:
       .modify(_.asOf)(_.description("Signed year the gazetteer is read at (omit for all rows)"))
 
   /** Input of the `place_override` tool (V080). */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class PlaceOverrideInput(
       placeId: Option[PlaceOverrideInput.PlaceId] = None,
       kind: Option[PlaceOverrideInput.Kind] = None,
@@ -93,6 +96,8 @@ object PlacesTools:
     type PointLon = PointLon.T
     object PointLon extends Newtype[Double, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PlaceOverrideInput] = KindlingsSchema
       .derived[PlaceOverrideInput]
       .schema
@@ -128,6 +133,8 @@ object PlacesTools:
     type Remove = Remove.T
     object Remove extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PlaceNamesInput] = KindlingsSchema
       .derived[PlaceNamesInput]
       .schema
@@ -136,6 +143,7 @@ object PlacesTools:
       .modify(_.lang)(_.description("Language tag of the name: en, grc, la, pl …; omit when unknown"))
       .modify(_.remove)(_.description("true: remove this name (only a name added by hand)"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeId(raw: String): Either[Api.Error, Place.Id] =
     Place.Id
       .either(raw)
@@ -147,8 +155,14 @@ object PlacesTools:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def year(y: com.histmersion.Year): Year = Year(y.value.toLong)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def apply(places: PlacesControllers) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val me = Caller.Local

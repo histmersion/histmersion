@@ -18,6 +18,7 @@ import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckService):
 
@@ -43,6 +44,7 @@ final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckServi
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def concerns(item: OpenItem, goal: Goal.Slug): Boolean = item match
     case OpenItem.Decision(a, _) => a.subject.exists(s => s"$s" == s"$goal")
     case a: OpenItem.Acquisition => a.goal.contains(goal)

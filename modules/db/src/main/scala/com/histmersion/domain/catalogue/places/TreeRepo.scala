@@ -16,16 +16,19 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
   * [[com.histmersion.api.library.Tree]] (pure) buckets and nests.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[places] object TreeRepo:
 
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both are present — an
     * int8range with an open end is "always", which is what `None` means here.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodOf(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): Option[Period] =
     (start, end) match
       case (Some(a), Some(b)) =>
@@ -42,6 +45,7 @@ private[places] object TreeRepo:
       contested: RegionNodeRow.Contested,
       withdrawn: RegionNodeRow.Withdrawn
   ) derives DbCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toNode: RegionNode =
       RegionNode(
         RegionNode.Id(id.value),
@@ -71,6 +75,7 @@ private[places] object TreeRepo:
       periodStart: Option[DeepTime.SignedYear],
       periodEnd: Option[DeepTime.SignedYear]
   ) derives DbCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toRelation: Place.Relation =
       Place.Relation(
         Place.Relation.ChildId(childId.value),

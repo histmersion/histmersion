@@ -14,11 +14,15 @@ import com.histmersion.domain.given
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The time rule of the place views (2026-10-09): on what ground a view at a time shows a place. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class PlaceTimeBasisSuite extends munit.FunSuite:
   import com.histmersion.api.catalogue.Place.TimeBasis.*
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def of(
       kind: OfKind,
       modern: Boolean = false,

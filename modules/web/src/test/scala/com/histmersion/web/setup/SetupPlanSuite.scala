@@ -13,7 +13,9 @@ import com.histmersion.api.instance.DebounceConfig
 import com.histmersion.api.instance.TimeConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.instance.EventsUiConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SetupPlanSuite extends munit.FunSuite:
 
   private val before =

@@ -1038,6 +1038,16 @@ final class GuidelineLint(scalaVersion: String) extends SemanticRule("GuidelineL
     Tolerance.patch(Tolerance.diagnostics(Guidelines.findings(doc, scalaVersion), doc.tree, Guidelines.Owned))
 }
 
+final class GuidelinePrune(scalaVersion: String) extends SemanticRule("GuidelinePrune") {
+  def this() = this("")
+
+  override def withConfiguration(config: Configuration): Configured[Rule] =
+    Configured.ok(new GuidelinePrune(config.scalaVersion))
+
+  override def fix(using doc: SemanticDocument): Patch =
+    Baseline.prune(Guidelines.findings(doc, scalaVersion), doc.tree, Guidelines.Owned)
+}
+
 final class GuidelineBaseline(scalaVersion: String) extends SemanticRule("GuidelineBaseline") {
   def this() = this("")
 

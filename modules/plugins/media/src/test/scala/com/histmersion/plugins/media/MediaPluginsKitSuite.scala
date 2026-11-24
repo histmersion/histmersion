@@ -14,19 +14,23 @@ import org.ekrich.config.ConfigFactory
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HttpTransport
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own media collections run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does (the host's own `histmersion.media` settings supplied to a first-party
   * plugin), judges each record as the server's import does, and answers its requests from canned answers — never the
   * network. The two key-gated ones are off by default and are loaded with a fixture key.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaPluginsKitSuite extends munit.FunSuite:
 
   private def fixture(name: String): String =
     scala.io.Source.fromResource(s"media/$name")(using scala.io.Codec.UTF8).mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def json(s: String) = StubAnswer.text(HttpAnswer.Text(s), CoreQuota.HeaderValue("application/json"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(url: Plugin.Http.Url) = HttpTransport.Url(url.value)
 
   private def load(

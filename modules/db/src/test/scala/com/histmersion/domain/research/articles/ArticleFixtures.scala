@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.sources.CitekeyMillis
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The db suites' reads and writes of research's articles on a database of their own, each write in a transaction of
   * its own and each read on a connection of its own, as the service runs them.
@@ -65,6 +66,7 @@ object ArticleFixtures:
   def critiques(ds: DataSource, slug: Slug): List[CritiqueReason] = connect(ds)(CritiqueRepo.list(slug))
 
   /** The WHERE of the list, as the list builds it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def where(
       filter: Filter,
       scope: PlaceScope,

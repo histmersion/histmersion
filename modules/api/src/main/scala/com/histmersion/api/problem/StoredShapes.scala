@@ -5,6 +5,8 @@ package problem
 import util.problem.Problem
 import util.problem.Problem.{Stored, Upstream}
 import util.problem.Text.word
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The texts the master versions stored where a problem is kept now (a job's `error`, a step's `error`, a watch's
   * `last_error`, a plan pool's `refusal`, a problem written bare inside a stored record), read back. Problems are
@@ -16,6 +18,7 @@ import util.problem.Text.word
   *
   * The migration that turned the text columns into entries (`V110__problems_as_entries.sql`) reads the same shapes.
   */
+@atBoundary(BoundaryKind.Json, "reads the text a master version stored where a problem is kept back as its case, or keeps it whole")
 object StoredShapes:
 
   /** A run or job a restart cut short: `interrupted` (master `JobRepo.failInterrupted`, `JobState.InterruptedSentence`;
@@ -67,4 +70,5 @@ object StoredShapes:
   private def detail(text: String): Problem =
     Details.collectFirst { case (`text`, problem) => problem }.getOrElse(unrecognised(text))
 
+  @tolerated(LintRule.G60Unrecognised, "pending G60 (only the stored column's reader builds Unrecognised)")
   private def unrecognised(text: String): Problem = Stored.Unrecognised(Stored.Text(s"$text"))

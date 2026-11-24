@@ -20,16 +20,22 @@ import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, Pl
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.automation.ProviderKind
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of user-added plugins and the relink kit (docs/research-plugins.md §7, §8): the plugin-set digest and
   * what `histmersion plugin status` concludes from it, the plugins directory's index, Maven coordinates, and the kit's
   * checksum manifest. No file is read here: the callers (the CLI's `plugin` commands, the server's `pluginTool`) hash
   * and list, and hand the results in.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 object PluginKit:
 
   extension (id: PluginDescription.Id)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def isEmpty: Boolean = id.value.isEmpty
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def nonEmpty: Boolean = id.value.nonEmpty
 
   /** JSON as these files are written: two-space indented, absent options left out. */
@@ -39,15 +45,20 @@ object PluginKit:
   private def hex(bytes: Array[Byte]): String =
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha256Hex(bytes: Array[Byte]): Sha256 = Sha256.applyUnsafe(hex(bytes))
 
   /** One digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent: SHA-256 over the sorted
     * `<name> <sha256>\n` lines. The empty set's is [[PluginSet.EmptyDigest]].
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def digest(entries: List[(PluginJar.File, com.histmersion.api.Sha256)]): PluginSet.Digest =
     PluginSet.Digest(hex(entries.sortBy(_._1.value).map((n, h) => s"$n $h\n").mkString.getBytes(UTF_8)))
 
   /** The set for these jars, linked with these POMs and `lib/` jars (`(file, sha256)`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def pluginSet(
       jars: List[PluginJar],
       spiVersion: PluginSet.SpiVersion,
@@ -69,6 +80,7 @@ object PluginKit:
   def parseSet(text: String): Either[Problem, PluginSet] =
     RawJson.decode[PluginSet](text).left.map(e => unreadable("plugin-set.json", s"$e"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def renderSet(s: PluginSet): String = s.asJson.withoutNulls.spaces2
 
   def parseJars(text: String): Either[Problem, List[PluginJar]] =
@@ -77,6 +89,7 @@ object PluginKit:
       .left
       .map(e => unreadable("the plugin description", s"$e"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unreadable(where: String, reported: String): Problem =
     Problem.Io.Corrupt(
       Problem.Io.Format.Json,
@@ -97,6 +110,7 @@ object PluginKit:
     }
 
   /** `json` with every plugin's bare `error` (an object in a `plugins` list) in a list. */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def withListedErrors(json: Json, underPlugins: Boolean): Json =
     json.arrayOrObject(
       json,
@@ -151,6 +165,9 @@ object PluginKit:
     * `lib/` jars now (`(file, sha256)`, a `lib/` jar as `lib/<name>`): a binary whose record lists the ones it was
     * linked with is out of date when they differ, though its jars are the same.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def status(
       dir: List[(PluginJar.File, com.histmersion.api.Sha256)],
       installed: Option[PluginSet],
@@ -177,6 +194,9 @@ object PluginKit:
     SetStatus(dirDigest, installed, running, added, removed, changed, verdict)
 
   /** The status as Markdown lines (the CLI prints them). */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusLines(s: SetStatus, serverAnswered: Boolean): List[String] =
     def short(d: PluginSet.Digest) = d.value.take(12) + "…"
     val verdict = s.verdict match
@@ -200,9 +220,11 @@ object PluginKit:
 
   /** Maven coordinates. `g::a:v` is the Scala 3 artifact `a_3`. */
   final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def path: String = s"${group.value.replace('.', '/')}/$artifact/$version/$artifact-$version"
     def jarUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.jar"
     def pomUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.pom"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def toString: String = s"$group:$artifact:$version"
 
   object Coordinates:
@@ -219,6 +241,7 @@ object PluginKit:
 
   private val Part = "[A-Za-z0-9_.\\-+]+"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseCoordinates(s: String): Either[Problem, Coordinates] =
     val scala3 = s"($Part)::($Part):($Part)".r
     val plain = s"($Part):($Part):($Part)".r
@@ -244,6 +267,7 @@ object PluginKit:
   /** Pure: what `plugin add <arg>` names. An `http(s)://` URL is downloaded; anything that exists as a file, ends with
     * `.jar` or holds a `/` is a path; else Maven coordinates.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def origin(arg: String, exists: String => Boolean): Either[Problem, Origin] =
     val a = arg.trim
     if a.startsWith("https://") || a.startsWith("http://") then Right(Origin.Url(Origin.Url.Value(a)))
@@ -253,6 +277,7 @@ object PluginKit:
   /** The file name a plugin jar is kept under: `<id>-<version>.jar` for a jar of one plugin (the convention of §7.1),
     * else the name it came with. Only `[A-Za-z0-9._+-]` survive.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jarName(plugins: List[PluginDescription], fallback: String): PluginJar.File =
     def clean(s: String) = PluginJar.File(s.replaceAll("[^A-Za-z0-9._+\\-]", "_"))
     plugins match
@@ -286,9 +311,13 @@ object PluginKit:
   ) derives JsonCodec
 
   object Installed:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type File = PluginJar.File
     val File: ProviderKind.Plugin.FilePath.type = PluginJar.File
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Sha256 = com.histmersion.Sha256
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Sha256: com.histmersion.Sha256.type = com.histmersion.Sha256
     type Source = Source.T
     object Source extends Newtype[String, Pure]
@@ -298,6 +327,7 @@ object PluginKit:
     object Signer extends Newtype[String, Pure]
 
   final case class Index(jars: List[Installed] = Nil) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def put(i: Installed): Index = Index((jars.filterNot(_.file == i.file) :+ i).sortBy(_.file.value))
     def drop(file: Installed.File): Index = Index(jars.filterNot(_.file == file))
 
@@ -308,9 +338,12 @@ object PluginKit:
   def parseIndex(text: String): Either[Problem, Index] =
     RawJson.decode[Index](text).left.map(e => unreadable("the plugins index", s"$e"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def renderIndex(i: Index): String = i.asJson.withoutNulls.spaces2
 
   /** The plugin id a jar file belongs to: the index's, else `<id>` of the `<id>-<version>.jar` name. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def idsOf(file: Installed.File, index: Index): List[PluginDescription.Id] =
     index.jars
       .find(_.file == file)
@@ -321,6 +354,7 @@ object PluginKit:
   /** Pure: may a jar signed by `seen` be installed for these ids? The first signed install pins its key; a later
     * version signed by another key is refused (trust on first use, §9.3).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkSigner(ids: List[PluginDescription.Id], seen: Installed.Signer, index: Index): Either[Problem, Unit] =
     ids.flatMap(id => index.pinnedSigner(id).filter(_ != seen).map(id -> _)) match
       case Nil               => Right(())
@@ -335,6 +369,8 @@ object PluginKit:
   /** Pure: what refuses a described jar before it is installed: no plugin in it, a foreign SPI, a provider that could
     * not be instantiated, an id another installed jar (or the binary itself) already has.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refusals(
       jar: PluginJar,
       spiVersion: PluginSet.SpiVersion,
@@ -368,7 +404,10 @@ object PluginKit:
   object KitFile:
     type File = File.T
     object File extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Sha256 = com.histmersion.Sha256
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Sha256: com.histmersion.Sha256.type = com.histmersion.Sha256
 
   /** `kit/kit.json`: what the kit is (version, commit, the GraalVM it must be linked with, the SPI it speaks, the main
@@ -383,6 +422,7 @@ object PluginKit:
       mainClass: KitManifest.MainClass,
       files: List[KitFile]
   ) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def label: String = s"$version${commit.fold("")(c => s" ($c)")}"
 
   object KitManifest:
@@ -399,6 +439,7 @@ object PluginKit:
 
   val KitFormat: KitManifest.Format = KitManifest.Format(1)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseKit(text: String): Either[Problem, KitManifest] =
     RawJson
       .decode[KitManifest](text)
@@ -416,12 +457,15 @@ object PluginKit:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def renderKit(k: KitManifest): String = k.asJson.withoutNulls.spaces2
 
   /** `SHA256SUMS`, the format `shasum -a 256 -c` / `sha256sum -c` read: `<sha256>  <path>`, sorted. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha256sums(files: List[KitFile]): String =
     files.sortBy(_.file.value).map(f => s"${f.sha256}  ${f.file}\n").mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseSha256sums(text: String): Either[Problem, List[KitFile]] =
     val line = "([0-9a-f]{64}) [ *](.+)".r
     text.linesIterator.zipWithIndex
@@ -443,6 +487,7 @@ object PluginKit:
   /** Pure: every difference between the manifest and the kit on disk (`actual`: path → SHA-256 of every file found
     * under `kit/`, the manifests themselves excluded). Empty = intact.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verifyKit(expected: List[KitFile], actual: Map[KitFile.File, KitFile.Sha256]): List[Problem] =
     val want = expected.map(f => f.file -> f.sha256).toMap
     val missing =

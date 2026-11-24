@@ -10,6 +10,7 @@ import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaCoversRequest(
     dryRun: RepairAcquire.RepairRequest.DryRun = RepairAcquire.RepairRequest.DryRun(true),
     limit: Option[MediaCoversRequest.Limit] = None,

@@ -13,10 +13,12 @@ import com.histmersion.util.text.MinHash
 
 import java.util.UUID
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One plan's run of a kind's rules ([[PlanRules]]): what the planner asks of the kind at each stage, in the planner's
   * order. A run may keep what it learns between the stages; every member defaults to "nothing of that kind".
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 trait PlanRun:
 
   /** The bundle's lines in this collection's terms, with what points at this kind's records by id pointed at the ones
@@ -123,6 +125,7 @@ trait PlanRun:
   /** What a pair that folds does with the kind's lines before every kind's [[foldPair]]: `keepsBundleBody` is whether
     * the folded source takes the bundle's body.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def foldPairFirst(
       right: Bundle.Source,
       left: Bundle.Source,

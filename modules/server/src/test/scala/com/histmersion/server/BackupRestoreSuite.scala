@@ -30,6 +30,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to
@@ -40,6 +41,7 @@ import com.histmersion.util.database.TestCreators.given
   * from homebrew's keg-only libpq: `brew install libpq` puts them in `/opt/homebrew/opt/libpq/bin` (checked below), and
   * the server finds them via `HISTMERSION_PG_BIN_DIR=/opt/homebrew/opt/libpq/bin`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BackupRestoreSuite extends DbSuite:
 
   private val testDb = TestDb.url
@@ -83,6 +85,7 @@ class BackupRestoreSuite extends DbSuite:
     val name = url.drop(url.lastIndexOf('/') + 1) + "_backup_test"
     (prefix + "postgres", name, prefix + name)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def admin(sql: String): Unit =
     val c = testPool(base.db.modify(_.url).setTo(DbConfig.Url(adminUrl))).getConnection
     try {
@@ -91,6 +94,7 @@ class BackupRestoreSuite extends DbSuite:
       finally s.close()
     } finally c.close()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg: AppConfig =
     base
       .modify(_.db)
@@ -157,6 +161,7 @@ class BackupRestoreSuite extends DbSuite:
   private def sha256(bytes: Array[Byte]): String =
     java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixture(ck: Citekey, title: Title) =
     Source.Put(
       title = title,

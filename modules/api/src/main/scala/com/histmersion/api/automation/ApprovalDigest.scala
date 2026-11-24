@@ -13,6 +13,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object ApprovalDigest:
   type Line = Line.T
   object Line extends Newtype[String, Pure]
@@ -68,6 +70,7 @@ object ApprovalDigest:
     type LastWritten = LastWritten.T
     object LastWritten extends Newtype[String, Pure]
     type GoalPlansWait = GoalPlansWait.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object GoalPlansWait extends Newtype[String, Pure]
 
   final case class BulkDecide(
@@ -144,6 +147,7 @@ object ApprovalDigest:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def group(
       open: List[Open],
       checked: Approval.Kind.Wire => Boolean,
@@ -174,6 +178,7 @@ object ApprovalDigest:
       }
       .sortBy(g => (-(g.count).value, g.kind.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matching(open: List[Open], b: BulkDecide): List[Open] =
     open
       .filter(o =>
@@ -185,6 +190,8 @@ object ApprovalDigest:
       .sortBy(_.id)
       .take(math.max(1, b.limit.map(_.value).getOrElse(Int.MaxValue)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line(d: Digest): Line =
     if d.total == Digest.Total(0) && d.heldForPerson == Digest.HeldForPerson(0) then
       Line("approval digest: nothing waits for a person")

@@ -41,6 +41,7 @@ import com.histmersion.config.AgentEnrichConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title empty and the year
   * null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue", "title":"","year":null}`) is not an answer —
@@ -48,6 +49,7 @@ import com.histmersion.util.database.TestCreators.given
   * claude-code:haiku) is asked again the same way — through the real `claude-code` client on a fake `claude`. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ProbeRetrySuite extends DbSuite with RunTranscripts:
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
@@ -60,9 +62,11 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   private val Ck = Citekey("zzprobe1956_catalogue")
   private val ApiCk = api.library.Citekey("zzprobe1956_catalogue")
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzProbe"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ProbeModel = ProbeRequest.Model(Model.wire.value)
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -95,9 +99,13 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def text(json: String) = AgentResponse(json, Nil, StopReason.EndTurn, Usage1, Some("scripted"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Empty = s"""{"citekey":"$Ck","title":"","year":null}"""
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Right_ = s"""{"citekey":"$Ck","title":"A Catalogue of Fishes","year":1956}"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def handlers(c: ScriptedClient): AgentsControllers =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
@@ -166,6 +174,8 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   /** The real `claude-code` client on the generated tree, running `fake` (the picker sees the scripted local model, so
     * no plan pool is read).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def claudeHandlers(fake: FakeCli.Fake): AgentsControllers =
     val rt = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)

@@ -3,8 +3,10 @@ package domain.library.sources.referrers
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a referrer asks of a source a delete or a rename touches. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourceKeysSuite extends munit.FunSuite:
 
   private val Ck = Citekey("beckman2011_ahhiyawa")

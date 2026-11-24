@@ -60,6 +60,7 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -95,6 +96,9 @@ import com.histmersion.domain.Creator
   * and the run is submitted only after the commit (a crash in between leaves a queued run, which the engine's restart
   * re-enqueues).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class ManagerSupervisor(
     ds: DataSource,
     config: => AgentsConfig,
@@ -118,6 +122,7 @@ final class ManagerSupervisor(
   def nudge(): Unit = { val _ = nudges.offer("settled") }
 
   /** An event of a manager's feed, its text as assembled. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def recordEvent(
       id: ManagerInfo.Id,
       item: Option[ManagerItem.Id],
@@ -128,8 +133,10 @@ final class ManagerSupervisor(
     agents.managerStore.event(id, item, run, ManagerEvent.Kind(feed), ManagerEvent.Text(text))
 
   /** A run id read back from the database. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemKindOf(i: ManagerItem): ManagerContext.ItemKind = ManagerContext.ItemKind(i.kind.value)
   private def itemTargetOf(i: ManagerItem): ManagerContext.ItemTarget =
     i.target.transformInto[ManagerContext.ItemTarget]
@@ -137,6 +144,7 @@ final class ManagerSupervisor(
   /** The library-wide managers exist — `review` and `enrich` — created PAUSED, so deploying never starts spending until
     * a person resumes them. Idempotent.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ensureDefaults()(using WritePermit)(using Creator.New): Unit =
     Unused(ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
     Unused(ensure(Kind.Enrich, ManagerLight.Id(EnrichId), None), Unused.Why.Idempotent)
@@ -161,6 +169,7 @@ final class ManagerSupervisor(
       )
     made
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start()(using Creator.New): Unit =
     if cfg.enabled.value && mcfg.enabled.value && thread.isEmpty then
       stopping = false
@@ -176,6 +185,7 @@ final class ManagerSupervisor(
     thread.foreach(_.interrupt())
     thread = None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loop()(using Creator.New): Unit =
     try
       while !stopping do
@@ -226,6 +236,8 @@ final class ManagerSupervisor(
     * manager's sake.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def tick(now: Instant)(using WritePermit)(using Creator.New): List[TickLine] = synchronized {
     if !cfg.enabled.value || !mcfg.enabled.value then Nil
     else
@@ -275,6 +287,7 @@ final class ManagerSupervisor(
       out.result()
   }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def guarded[A](id: ManagerLight.Id, out: Builder[TickLine, List[TickLine]])(f: => A)(using
       z: Zero[A]
   ): A =
@@ -299,6 +312,7 @@ final class ManagerSupervisor(
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def evaluate(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]])(using
       WritePermit
   )(using Creator.New): Unit =
@@ -325,6 +339,7 @@ final class ManagerSupervisor(
           case None    => evaluateStep(m, s, item, st, problem, now, out, Unknown)
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def retry(
       m: ManagerInfo,
       item: ManagerItem,
@@ -356,6 +371,7 @@ final class ManagerSupervisor(
       out += TickLine(s"${item.target}: retry")
 
   /** A one-run item (infer-filter, extend, enrich, propose, compile) after its run settled. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evaluateStep(
       m: ManagerInfo,
       s: ReviewSettings,
@@ -476,6 +492,7 @@ final class ManagerSupervisor(
         then recordEvent(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
 
   /** How a decided approval ended, as the outcome text (None: still open). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decidedAs(a: ApprovalInfo): Option[String] =
     ManagerPolicy
       .decided(a.state.transformInto[DomainApproval.State.Wire], a.result.map(r => DomainApproval.Outcome(r.value)))
@@ -484,6 +501,7 @@ final class ManagerSupervisor(
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approvalFacts(run: DomainRun.Id, kind: DomainApproval.Kind, none: Item.Outcome): StepFacts =
     agents.approvalStore
       .approvalsOf(run.transformInto[Job.Id], Some(kind.transformInto[Approval.Kind]))
@@ -499,6 +517,7 @@ final class ManagerSupervisor(
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chainReview(
       id: ManagerLight.Id,
       slug: Slug,
@@ -528,6 +547,7 @@ final class ManagerSupervisor(
     * not exist), in the plan's order. Idempotent: an article planned before keeps its item. Returns how many were
     * added.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applyPlan(a: ApprovalInfo, out: Builder[TickLine, List[TickLine]] = List.newBuilder[TickLine])(using
       WritePermit
   )(using Creator.New): RowCount =
@@ -568,6 +588,7 @@ final class ManagerSupervisor(
 
   // ── 2. holds ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def releaseHolds(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]])(using
       WritePermit
   )(using Creator.New): Unit =
@@ -598,6 +619,7 @@ final class ManagerSupervisor(
   /** An item held for approval `aid`: once a person decided it, the item is settled with the decision (approved: done —
     * an approved plan becomes compile items; rejected or failed: stopped).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settleOnApproval(
       m: ManagerInfo,
       i: ManagerItem,
@@ -646,6 +668,7 @@ final class ManagerSupervisor(
     * every start and every tick (a bundle import still writes rows), it finds nothing once they are moved. Returns one
     * line per goal migrated.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def migrateSchedules(now: Instant)(using WritePermit)(using Creator.New): List[TickLine] =
     agents.goals.scheduleGoals().flatMap { g =>
       val id = watchId(Goal.Ref(g.value))
@@ -705,6 +728,7 @@ final class ManagerSupervisor(
     * manager's next proposal — and move on to its next firing; never scheduled yet → record its first firing. A firing
     * missed while paused fires once. True = it fired.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fireCron(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]])(using
       WritePermit
   ): Boolean =
@@ -744,6 +768,7 @@ final class ManagerSupervisor(
     * run writes its target) gives way to the next. Then each manager's status line, with the scheduler's reason when
     * its items wait, and a `starved`/budget event once per change.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dispatchAll(
       ms: List[ManagerInfo],
       now: Instant,
@@ -816,6 +841,7 @@ final class ManagerSupervisor(
         )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def guardedOpt[A](id: ManagerLight.Id, out: Builder[TickLine, List[TickLine]])(
       f: => Option[A]
   ): Option[A] =
@@ -830,6 +856,7 @@ final class ManagerSupervisor(
   final private class Lost extends RuntimeException("the item moved on")
 
   /** Settle a pending item without a run (its target is gone, or its work is done already). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settleNow(
       m: ManagerInfo,
       item: ManagerItem,
@@ -850,6 +877,7 @@ final class ManagerSupervisor(
     None
 
   /** Start the next run of one item; Some(manager id) when it started. Its kind decides how. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dispatch(
       m: ManagerInfo,
       s: ReviewSettings,
@@ -873,6 +901,8 @@ final class ManagerSupervisor(
     * the event), the submit after the commit. The manager's model overrides go to the roles the pipeline uses; `tweak`
     * sets the options the request does not carry.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(
       m: ManagerInfo,
       item: ManagerItem,
@@ -955,6 +985,7 @@ final class ManagerSupervisor(
       .pipelineOf(itemKind)
 
   /** [[ManagerPolicy.blocks]] over the unsettled runs on an item's target. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blocks(kind: ManagerContext.ItemKind, unsettled: Seq[Agents.RunInfo]): Boolean =
     ManagerPolicy.blocks(
       kind,
@@ -963,6 +994,7 @@ final class ManagerSupervisor(
     )
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roles(k: Kind): List[Role] =
     itemKinds(k)
       .filterNot(_.value == OaIngest)
@@ -1004,6 +1036,7 @@ final class ManagerSupervisor(
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def event(
       id: ManagerLight.Id,
       item: Option[ManagerContext.ItemId],
@@ -1012,10 +1045,15 @@ final class ManagerSupervisor(
       text: ManagerContext.EventText
   )(using WritePermit): Unit =
     recordEvent(id.transformInto[ManagerInfo.Id], item.map(i => ManagerItem.Id(i.value)), run, feed.value, text.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lastEventOf(id: ManagerLight.Id, feed: ManagerContext.EventFeed): Option[ManagerEvent] =
     agents.managerStore.lastEventOf(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): RowCount =
     Transactor(ds).read(ManagerRepo.countEvents(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value), since))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def upsert(
       id: ManagerLight.Id,
       kind: ManagerContext.ItemKind,
@@ -1035,7 +1073,9 @@ final class ManagerSupervisor(
       state
     )
     (ManagerContext.ItemId(itemId.value), isNew)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(itemId: ManagerContext.ItemId): Option[ManagerItem] = agents.managerStore.item(ManagerItem.Id(itemId.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemFor(
       id: ManagerLight.Id,
       kind: ManagerContext.ItemKind,
@@ -1046,6 +1086,7 @@ final class ManagerSupervisor(
       ManagerItem.Kind(kind.value),
       target.transformInto[ManagerItem.Target]
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean =
     Transactor(ds).read(
       ManagerRepo.hasItem(
@@ -1054,6 +1095,7 @@ final class ManagerSupervisor(
         target.transformInto[ManagerItem.Target]
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restale(
       itemId: ManagerContext.ItemId,
       priority: ManagerContext.Priority,
@@ -1066,12 +1108,15 @@ final class ManagerSupervisor(
         why
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pending(id: ManagerLight.Id): RowCount =
     RowCount(connect(ds)(ManagerRepo.counts(id.transformInto[ManagerInfo.Id])).pending.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)] =
     agents.managerStore
       .openKeys(id.transformInto[ManagerInfo.Id])
       .map((k, t) => (ManagerContext.ItemKind(k.value), t.transformInto[ManagerContext.ItemTarget]))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evaluated(
       itemId: ManagerContext.ItemId,
       run: Option[DomainRun.Id],
@@ -1094,8 +1139,10 @@ final class ManagerSupervisor(
     )
   def hints(id: ManagerLight.Id): List[ManagerHint] =
     Transactor(ds).read(ManagerRepo.hints(id.transformInto[ManagerInfo.Id], live = true))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def state(id: ManagerLight.Id): Option[ManagerLight.State] =
     agents.managerStore.get(id.transformInto[ManagerInfo.Id]).map(m => ManagerLight.State(m.state.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def openMajorArticles(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1111,6 +1158,7 @@ final class ManagerSupervisor(
         PageSize.assume(limit.value)
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unreviewedArticles(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1126,6 +1174,7 @@ final class ManagerSupervisor(
         PageSize.assume(limit.value)
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def staleCandidates(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1143,6 +1192,7 @@ final class ManagerSupervisor(
         )
       )
       .map((slug, progress, hits, itemId) => (slug, progress, hits, itemId.map(i => ManagerContext.ItemId(i.value))))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extendCandidates(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1160,8 +1210,10 @@ final class ManagerSupervisor(
   def articleFacets(slug: Slug): (List[EnrichSource.Tag], List[DomainGoal.Slug]) =
     Transactor(ds).read(ManagerRepo.articleFacets(slug))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def progress(run: DomainRun.Id): JobRow.Progress =
     JobRow.Progress(agents.runs.get(run).flatMap(_.progress).map(_.value).filter(_.nonEmpty).getOrElse(""))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stepOutput(run: DomainRun.Id, step: AgentRepo.StepRecord.Name): Option[AgentRepo.StepRecord.Output] =
     agents.runs
       .steps(run.transformInto[Job.Id], AgentRepo.OutputChars(100000))
@@ -1176,6 +1228,7 @@ final class ManagerSupervisor(
   def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo] =
     agents.runs.forTarget(p, target.transformInto[AgentsControllers.Target])
   def slugExists(slug: Slug): Boolean = agents.host.articleExists(slug)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parentOf(slug: DomainGoal.Slug): Option[DomainGoal.Slug] =
     agents.goals.get(slug).flatMap(_.parentSlug.map(g => DomainGoal.Slug.assume(g.value)))
   def linkGoal(
@@ -1192,6 +1245,7 @@ final class ManagerSupervisor(
     )
   def goalLinks(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind): List[BGoalLinkRow.Ref] =
     agents.goals.links(goal).filter(_.kind == kind).map(_.ref.transformInto[BGoalLinkRow.Ref])
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sharedIngestLeft(now: Instant): Option[RowCount] =
     agents.autopilot.sharedIngestLeft(now).map(l => RowCount(l.value))
   def autopilotSoon()(using WritePermit): Unit = agents.autopilot.soon()
@@ -1199,6 +1253,7 @@ final class ManagerSupervisor(
   // ── a run settled ──────────────────────────────────────────────────────────────────────────────
 
   /** [[Engine.onSettled]]: a manager's run settled — an event (a stall named as one), and a tick soon. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settled(r: RunInfo)(using WritePermit): Unit =
     r.managerId.foreach { mid =>
       val stalled = r.error.exists(e => Stopped.of(e).pausedOn(PauseReason.Stalled))

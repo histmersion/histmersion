@@ -18,6 +18,7 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.config.UserPaths.pathEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the automation engine is fed and what it generates, recorded on the code before the engine took contributions:
   * the agent definitions generator's trees for every runtime, written into a scratch directory (every file's path, size
@@ -25,6 +26,7 @@ import com.histmersion.config.UserPaths.pathEquality
   * runs (each one's identifier, version, target, roles and description). `HISTMERSION_UPDATE_ORACLE=1` rewrites
   * `oracle/automation/`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AutomationOracleSuite extends munit.FunSuite:
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)

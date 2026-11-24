@@ -16,6 +16,7 @@ import com.histmersion.api.personal.PersonalApi
 import com.histmersion.api.Paging
 import com.histmersion.api.personal.Note
 import com.histmersion.api.personal.ItemKey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The person's bookmarks and notes for agents to READ: there is no tool that makes, changes or removes one — those are
   * the person's own, written in the web UI and with `histmersion bookmarks|notes`. An agent reads them for the local
@@ -24,6 +25,7 @@ import com.histmersion.api.personal.ItemKey
 object PersonalTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class BookmarksInput(
       kind: Option[BookmarksInput.Kind] = None,
       query: Option[BookmarksInput.Query] = None,
@@ -40,6 +42,7 @@ object PersonalTools:
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class NotesInput(
       id: Option[NotesInput.Id] = None,
       kind: Option[NotesInput.Kind] = None,
@@ -62,6 +65,8 @@ object PersonalTools:
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(personal: PersonalControllers) =
     val bookmarks =
       tool("bookmarks")

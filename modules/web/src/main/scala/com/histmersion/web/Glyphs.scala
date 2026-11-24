@@ -4,6 +4,7 @@ package web
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker keeps the colour
   * its dot has (the period ramp, the confidence desaturation) and only its SHAPE says what it is — an event's kind
@@ -21,6 +22,7 @@ object Glyphs:
   object Name extends Newtype[String, Pure]
 
   /** Name → the SVG elements of a 24×24 Lucide icon. */
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BadgeName = Name
   val BadgeName: Name.type = Name
 
@@ -84,6 +86,8 @@ object Glyphs:
   /** Pure: an icon as an inline `<svg>` (`.glyph`: size and stroke in the stylesheet; colour `currentColor`), or empty
     * for an unknown name.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def svg(name: Name, extraClass: ExtraClass = ExtraClass("")): Html =
     inner.get(name.value).fold(Html.empty) { body =>
       val cls = if extraClass.value.isEmpty then "glyph" else s"glyph $extraClass"
@@ -94,11 +98,15 @@ object Glyphs:
     * light ink — so a white line stays readable on a pale period colour. Two strokes, no CSS filter: thousands of
     * markers draw it. Empty for an unknown name.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def badge(name: BadgeName): Html = badges.getOrElseUpdate(name.value, badgeOf(name))
 
   // one string per icon, built once: thousands of markers share it
   private val badges = scala.collection.mutable.HashMap.empty[String, Html]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def badgeOf(name: Name): Html =
     inner.get(name.value).fold(Html.empty) { body =>
       html"""<svg class="glyph glyph--badge" viewBox="0 0 24 24" aria-hidden="true" focusable="false">""" ++

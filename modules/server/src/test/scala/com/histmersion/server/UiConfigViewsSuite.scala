@@ -12,7 +12,9 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.config.UiSettings
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class UiConfigViewsSuite extends munit.FunSuite:
 
   private val muted = "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"

@@ -12,7 +12,9 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.research.ReviewGoal
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Filter(
     q: Option[Filter.Q] = None,
     tags: List[Filter.Tags] = Nil,
@@ -32,6 +34,7 @@ final case class Filter(
       KindlingsSchema,
       api.json.Schema:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isEmpty: Boolean =
     (q.forall((_).value.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
       status.isEmpty && years.isEmpty && period.isEmpty && bbox.isEmpty && title.forall((_).value.trim.isEmpty) &&
@@ -45,8 +48,10 @@ object Filter:
   type Last = Last.T
   object Last extends Newtype[String, Pure]
   type YearFrom = YearFrom.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object YearFrom extends Newtype[Long, Pure]
   type YearTo = YearTo.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object YearTo extends Newtype[Long, Pure]
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
@@ -77,6 +82,7 @@ object Filter:
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def clamp(v: Year): Year = Year(math.max(Earliest.value, math.min(Latest.value, v.value)))
 
   def periodOf(from: Option[Year], to: Option[Year]): Option[Period] =
@@ -100,6 +106,7 @@ object Filter:
       case (Some(a), Some(b), Some(c), Some(d)) => Some(BBox(a, b, c, d))
       case _                                    => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       q: Option[Q] = None,
       tags: List[Tags] = Nil,
@@ -187,6 +194,7 @@ object Filter:
         Param.Doc("ALL required — every topic must be present on the source"),
         Param.Brief("Every one required")
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val status = Param(
       Param.Rest("status"),
       Param.Mcp("status"),
@@ -243,6 +251,7 @@ object Filter:
       Param.Doc("Bounding box: north latitude"),
       Param.Brief("Box: north latitude")
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val sort = Param(
       Param.Rest("sort"),
       Param.Mcp("sort"),
@@ -299,10 +308,13 @@ object Filter:
         goal
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.doc.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describeBrief[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.brief.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def describeWith[T](schema: Schema[T])(text: Param => String): Schema[T] =
       all.foldLeft(schema)((s, p) => s.modifyUnsafe[Any](p.mcp.value)(_.description(text(p))))
 
@@ -354,6 +366,7 @@ object Filter:
       )
 
   object Query:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def from(f: Filter): Query =
       def lo(p: Option[Period]) = lowerGiven(p)
       def hi(p: Option[Period]) = upperGiven(p)

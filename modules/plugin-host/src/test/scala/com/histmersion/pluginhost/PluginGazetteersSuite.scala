@@ -16,13 +16,16 @@ import com.histmersion.plugin.GazetteerSource
 import com.histmersion.plugin.GazetteerRights
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host's reading of a plugin's gazetteer places: each converted to the store's shape unchanged (its source its
   * own, else the dataset's credit), what the store could not keep refused with the reason, a source's failure or
   * exception its import's failure; and the client a download is lent.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginGazetteersSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(a: Int, b: Int): Period = Period.from(Year(a), Year(b)).toOption.get
 
   private val slice = GazetteerPlace(
@@ -223,6 +226,7 @@ class PluginGazetteersSuite extends munit.FunSuite:
   test("the download client: the gazetteer import's User-Agent, asked once, the answer as it came"):
     val sent = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
     val wire = new HttpTransport:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         sent += url.value -> headers.map((name, value) => name.value -> value.value)
         Right(

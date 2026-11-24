@@ -16,7 +16,10 @@ import com.histmersion.util.plugins.PluginKit
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.noSpaces
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class PluginKitSuite extends munit.FunSuite:
 
   private val a = List(PluginJar.File("a.jar") -> Sha256("11"), PluginJar.File("b.jar") -> Sha256("22"))

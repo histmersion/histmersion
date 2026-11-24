@@ -11,16 +11,20 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.plugin.Plugin
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Imports a gazetteer source a plugin registered (Cliopatria, AWMC and ChronOntology are Histmersion's own): the
   * source downloads and reads its dataset through the client the host lends it, the host checks and converts each place
   * ([[PluginGazetteers]]), then counts them (a dry run) or upserts them in batches and matches the findings to the
   * places again.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object ImportRunner:
   private val BatchSize = 1000
 
   /** The places a run of `source` stores, in order, and the ones refused with the reason. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def places(
       source: GazetteerSource,
       http: Plugin.Http
@@ -30,6 +34,9 @@ object ImportRunner:
       (items, refused.map(why => Place.ImportResult.Failed(why.value)))
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def fetchAndImport(
       source: GazetteerSource,
       http: Plugin.Http,
@@ -55,6 +62,7 @@ object ImportRunner:
             .map(r => r.modify(_.failed).setTo((refused ++ r.failed).take(20)))
     yield result
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def batchUpsert(
       items: List[Place.Input],
       places: PlaceService,

@@ -4,9 +4,12 @@ package api.library
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key: ExternalId.Key = ExternalId.Key(s"${scheme.wire}:$id")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeId: ExternalId.PlaceId =
     ExternalId.PlaceId(s"${scheme.wire}_${(id).value.toLowerCase(java.util.Locale.ROOT)}")
 
@@ -14,6 +17,7 @@ object ExternalId:
   type Key = Key.T
   object Key extends Newtype[String, Pure]
   type PlaceId = PlaceId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PlaceId extends Newtype[String, Pure]
   type Reference = Reference.T
   object Reference extends Newtype[String, Pure]
@@ -28,6 +32,7 @@ object ExternalId:
   private val TgnUri = """^https?://vocab\.getty\.edu/(?:page/)?tgn/(\d+)(?:[-/].*)?$""".r
   private val WhgUri = """^https?://(?:www\.)?whgazetteer\.org/(?:api/)?(?:places?|db)/(?:\?id=)?(\d+)/?.*$""".r
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: Reference): Option[ExternalId] =
     val s = (raw).value.trim
     def make(scheme: LinkScheme, id: Id): Option[ExternalId] =

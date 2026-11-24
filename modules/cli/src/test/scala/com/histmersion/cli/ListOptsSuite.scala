@@ -10,10 +10,12 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The filter options of `agent approvals`, `agent runs` and `jobs`: repeatable or comma-separated, parsed into the
   * core filters the request carries, and repeated by the next-page line.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ListOptsSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

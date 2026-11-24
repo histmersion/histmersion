@@ -5,6 +5,7 @@ import io.github.iltotore.iron.*
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What `histmersion plugin new` writes: a scala-cli project whose build is `project.scala`, whose two Scala files are
   * the plugin and its tests, and the resources a plugin jar carries beside its classes. Pure: the caller writes the
@@ -45,22 +46,32 @@ object PluginTemplate:
 
   val ServicesPath = "resources/META-INF/services/com.histmersion.plugin.Plugin"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultsPath(id: PluginId): TemplateFile.Path =
     TemplateFile.Path(s"resources/META-INF/histmersion/plugins/${id.value}.conf")
 
   /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and name, so no two
     * jars' metadata files share a path.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): TemplateFile.Path =
     TemplateFile.Path(s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pluginClass(id: PluginId): ClassName =
     val typeName = id.typeName.value
     ClassName(if typeName.endsWith("Plugin") then typeName else s"${typeName}Plugin")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contributionClass(id: PluginId, kind: PluginKind): ClassName =
     ClassName(s"${id.typeName}${kind.classSuffix}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def files(r: Request): List[TemplateFile] =
     val name = r.id.typeName
     val core = List(
@@ -96,6 +107,8 @@ object PluginTemplate:
     * and runs it as the server does, and brings the plugin API with it. A library of the plugin's own is a plain
     * `//> using dep`: its POM lists it, and `histmersion plugin add` installs it beside the plugin.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def directives(r: Request): String =
     s"""// The build of the @Name@ plugin: every //> using directive of the project, for the plugin and its
        |// tests. Keep them all in this file when you add sources (scala-cli reads directives from any
@@ -124,6 +137,7 @@ object PluginTemplate:
        |//> using test.javaProp $ProjectProperty=$${.}
        |""".stripMargin
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def repositoryNote(repository: TemplateRepository): String = repository match
     case TemplateRepository.MavenLocal =>
       "The plugin API, the platform and the testkit come from the local Maven repository (m2Local), where\n" +
@@ -134,8 +148,12 @@ object PluginTemplate:
   /** The GraalVM CE release of sdkman's name for a build: `25.5` for `25.5.5.0+3-graalce`. Pure. */
   private[cli] def graalvmRelease(sdkman: String): String = sdkman.split('.').take(2).mkString(".")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def header(r: Request): String = s"package ${r.pkg.value}\n\n"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fill(r: Request, text: String): String =
     List(
       "@id@" -> r.id.value,
@@ -163,6 +181,8 @@ object PluginTemplate:
     * derived reader in every config companion. The compiler numbers the fields of one name through the source file, in
     * the order they are written.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def nativeMetadata(r: Request): String =
     val p = r.pkg.value
     val fields = (s"$p.${pluginClass(r.id)}" -> "configReader$lzy1") ::
@@ -379,6 +399,7 @@ object PluginTemplate:
       |Histmersion and its plugin API are licensed under the AGPL-3.0, and so is a plugin built on the API.
       |""".stripMargin
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def agentNotes(r: Request): String =
     """# @Name@: a Histmersion plugin
       |

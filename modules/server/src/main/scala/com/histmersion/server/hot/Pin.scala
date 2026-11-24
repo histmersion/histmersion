@@ -18,8 +18,10 @@ import sttp.shared.Identity
 import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.interceptor.{EndpointInterceptor, RequestHandler, RequestInterceptor, RequestResult, Responder}
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** A pin on one generation: while it is held, none of that generation's components is closed. */
+@movesTo(FeaturePlace.Server)
 final class Pin private[hot] (private[hot] val snap: Hot.Graph.Snap[?]):
   private val released = AtomicBoolean(false)
   def generation: Hot.Graph.Generation = snap.generation

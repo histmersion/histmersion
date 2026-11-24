@@ -58,6 +58,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.api.catalogue.EvidenceJobKinds
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The links of events to the corpus as REST, MCP and the CLI reach them: the sources proposed as discussing an event
   * (computed on the first ask, stored after) and their confirmation — an attestation from a passage of the source's
@@ -65,6 +66,7 @@ import com.histmersion.domain.Creator
   * events raise; the context of an event's card; an article's catalogue leads. `info` gives a catalogue's terms,
   * `resolve` a list's filter its page size, `scope` the gazetteer's reading of its places.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class EventLinksControllers(
     links: EventLinkService,
     leadFacts: LeadService,
@@ -80,17 +82,22 @@ final class EventLinksControllers(
 ):
   private def ec = settings().events
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def notFound(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeNotFound)))
 
   /** The id of an event read from the store. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def idOf(d: EventEntry): Event.Id = Event.Id.assume(d.event.id.value)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def eventOrFail(id: Event.Id): Either[Api.Error, EventEntry] =
     events
       .get(events.renamedTo(id).getOrElse(id))
       .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id"))))
 
   /** The names of an event worth searching for. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def namesOf(d: EventEntry): List[String] =
     val stored = events.tierAndNames(idOf(d)).map(_._2).getOrElse(Nil)
     EventMatcher.searchNames(
@@ -101,6 +108,8 @@ final class EventLinksControllers(
   /** The passages of `citekey`'s body that name the event — a whole-word, case- and accent-insensitive match of each
     * name.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def passagesIn(citekey: Citekey, names: List[String]): List[EventPassage] =
     val text = sources.reader(citekey)
     names
@@ -135,10 +144,12 @@ final class EventLinksControllers(
       .distinctBy(_.start.value)
       .sortBy(_.start.value: Int)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def listOf(d: EventEntry): EventLinkList =
     EventLinkList(d.event.id, EventLinkList.Label(d.event.label.value), links.candidates(idOf(d)))
 
   /** Compute and store an event's candidates. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def compute(d: EventEntry)(using WritePermit)(using Creator.New): EventLinkList =
     val w = ec.links.weights
     val names = namesOf(d)
@@ -183,6 +194,9 @@ final class EventLinksControllers(
     * (not the stored evidence): the attestation carries that passage's quote and offsets. A source with none is
     * refused, with why.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def applyLinks(caller: Caller, id: Event.Id, req: EventLinksRequest)(using
       Creator.New
   ): Either[Api.Error, EventLinksResult] =
@@ -266,6 +280,8 @@ final class EventLinksControllers(
     }
 
   /** The candidates of many events, as a job: those never computed (or all), `links.batch` at a time. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def candidatesJob(caller: Caller, req: EventCandidatesRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     req.event.map(_.value.trim).filter(_.nonEmpty) match
       case Some(one) =>
@@ -309,6 +325,9 @@ final class EventLinksControllers(
           Right(BackgroundJob.Outcome.Summary(s"$n event(s) checked · $found candidate(s)"))
         }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def leadOf(r: LeadRow): Option[EventLead] =
     EventLeads.of(
       LeadFacts(
@@ -333,6 +352,8 @@ final class EventLinksControllers(
     )
 
   /** The leads of the events `q` selects — catalogue ones by default, with the catalogue's context. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def leads(q: Api.EventQuery): EventLead.List =
     val f = resolve(q.filter)
     def selection(place: Option[Place.Id]) = EventSelection(
@@ -369,6 +390,8 @@ final class EventLinksControllers(
   /** The context an event's card shows: its tier and names, the catalogues that list it, the sources attesting it, the
     * findings near it, the proposed sources (stored — a card never computes them) and its lead.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def context(d: EventEntry): EventEntry =
     val id = idOf(d)
     val (tier, names, _) = events.tierAndNames(id).getOrElse((d.event.tier, Nil, None))
@@ -418,6 +441,9 @@ final class EventLinksControllers(
       .setTo(lead)
 
   /** The catalogue events an article's period and region hold that its body never names. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def articleLeads(
       body: ArticleEventLead.Body,
       citekeys: List[Citekey],
@@ -454,5 +480,6 @@ final class EventLinksControllers(
       )
 
 object EventLinksControllers:
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   val CandidatesJobKind: Job.Kind =
     Job.Kind.applyUnsafe(EvidenceJobKinds.EventsCandidates.kind.value)

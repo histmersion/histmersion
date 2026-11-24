@@ -46,6 +46,8 @@ import com.histmersion.domain.{CreatedAt, Creator}
   * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown
   * on; the media list, its facets, a picture, its file and thumbnail, the map feed and the cards' pictures.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AssetService:
 
   // ── a source's figures ──
@@ -181,6 +183,7 @@ object AssetService:
 
   final private class Implementation(db: Transactor, clock: Clock) extends AssetService:
     def figures(citekey: Citekey): List[AssetInfo] = db.read(AssetRepo.list(citekey)).toList
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def figure(citekey: Citekey, name: AssetName): Option[(Mime, Bytes)] =
       db.read(AssetRepo.read(citekey, name)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def figureCount(citekey: Citekey): FigureCount = db.read(AssetRepo.count(citekey))
@@ -195,6 +198,8 @@ object AssetService:
         given CreatedAt = CreatedAt.now(clock)
         AssetRepo.replace(citekey, figures)
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def patch(citekey: Citekey, name: AssetName, p: AssetPatch)(using WritePermit): Either[Api.Error, AssetDetail] =
       db.write(AssetRepo.patch(citekey, name, p))
         .flatMap(_ =>
@@ -215,6 +220,7 @@ object AssetService:
         given CreatedAt = CreatedAt.now(clock)
         MediaRepo.save(a, firstTarget)
     def refreshRights(uid: AssetUid, r: Rights)(using WritePermit): Unit = db.write(MediaRepo.refreshRights(uid, r))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setThumb(
         uid: AssetUid,
         bytes: ProviderAsset.Thumb,
@@ -231,6 +237,7 @@ object AssetService:
           height.map(h => MediaThumbRow.Height(h.value))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def link(
         uid: AssetUid,
         targetType: TargetType,
@@ -252,28 +259,36 @@ object AssetService:
         basis
       )
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty])(using
         WritePermit
     ): Unit =
       db.write(
         MediaRepo.setSourcePicture(citekey, uid, role, property.map(p => MediaRepo.SetSourcePictureProperty(p.value)))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sourcePicture(citekey: Citekey, role: MediaRole.Wire): Option[(AssetUid, PictureKey)] =
       db.read(MediaRepo.sourcePicture(citekey, role)).map((uid, key) => (uid, PictureKey(key.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(q: Api.MediaQuery, limit: Limit): MediaList = db.read(MediaRepo.list(q, MediaRepo.Limit(limit.value)))
     def show(uid: AssetUid): Option[MediaItem] = db.read(MediaRepo.show(uid))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def thumb(uid: AssetUid): Option[(Mime, Bytes)] =
       db.read(MediaRepo.thumb(uid)).map((m, b) => (Mime(m.value), Bytes(b.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def file(uid: AssetUid): Option[(Mime, Bytes)] =
       db.read(MediaRepo.file(uid)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def facets: MediaFacets = db.read(MediaRepo.facets)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def geo(q: Api.MediaGeoQuery, limit: Limit): List[MediaGeoHit] =
       db.read(MediaRepo.geo(q, MediaRepo.Limit(limit.value)))
     // no connection for a tile with no pictures
     def geoOf(uids: List[AssetUid]): Map[AssetUid, MediaGeoHit] =
       if uids.isEmpty then Map.empty else db.read(MediaRepo.geoOf(uids))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def thumbs(targetType: TargetType, targetId: TargetId, limit: Limit): List[MediaThumb] =
       db.read(MediaRepo.thumbsIn(targetType, targetId, MediaRepo.Limit(limit.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def placeThumbs(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit): List[MediaThumb] =
       db.read(MediaRepo.placeThumbsIn(placeId, sameSiteKm, MediaRepo.Limit(limit.value)))
 
@@ -297,6 +312,7 @@ object AssetService:
     private def change(uid: AssetUid)(f: HeldAsset => HeldAsset): Unit =
       val _ = state.updateAndGet(_.modify(_.assets).using(_.map(a => if a.uid == uid then f(a) else a)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def figures(citekey: Citekey): List[AssetInfo] =
       ofSource(citekey)
         .sortBy(_.name.value)
@@ -315,8 +331,10 @@ object AssetService:
     def figure(citekey: Citekey, name: AssetName): Option[(Mime, Bytes)] =
       named(citekey, name).map(a => (a.mime, a.bytes))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def figureCount(citekey: Citekey): FigureCount = RowCount(ofSource(citekey).size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def newFigure(citekey: Citekey, f: NewFigure): HeldAsset =
       HeldAsset(
         AssetUid(newId().toString),
@@ -329,6 +347,7 @@ object AssetService:
         f.height.map(h => HeldAsset.Height(h.value))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit)(using Creator.New): AddedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
@@ -338,6 +357,7 @@ object AssetService:
       }
       RowCount(incoming.size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using
         WritePermit
     )(using Creator.New): ReplacedFigureCount =
@@ -401,6 +421,7 @@ object AssetService:
       }
       RowCount(incoming.size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] =
       named(citekey, name).map { a =>
         AssetDetail(
@@ -420,6 +441,8 @@ object AssetService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def patch(citekey: Citekey, name: AssetName, p: AssetPatch)(using WritePermit): Either[Api.Error, AssetDetail] =
       def missing = Api.Error(
         Problem.Unclassified(Legacy.Text(s"No asset '$citekey/$name'")),
@@ -456,6 +479,7 @@ object AssetService:
             }
             .flatMap(_ => detail(citekey, name).toRight(missing))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sourceFigures(citekey: Citekey): List[SourceFigure] =
       ofSource(citekey)
         .filter(_.mime.value.startsWith("image/"))
@@ -471,12 +495,14 @@ object AssetService:
           )
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def known(provider: Provider, keys: List[ProviderKey]): Map[ProviderKey, Known] =
       held
         .filter(a => a.provider.contains(provider) && a.providerKey.exists(keys.contains))
         .flatMap(a => a.providerKey.map(_ -> Known(Known.Uid(a.uid.value), a.license.map(l => Known.License(l.value)))))
         .toMap
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using
         WritePermit
     )(using Creator.New): (AssetUid, Boolean) =
@@ -555,6 +581,7 @@ object AssetService:
           val _ = state.updateAndGet(_.modify(_.assets).using(_ :+ row))
           (uid, true)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refreshRights(uid: AssetUid, r: Rights)(using WritePermit): Unit =
       val t = now
       change(uid)(
@@ -588,6 +615,7 @@ object AssetService:
           .setTo(height)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def link(
         uid: AssetUid,
         targetType: TargetType,
@@ -618,6 +646,7 @@ object AssetService:
 
     private def onSource(m: HeldMediaLink, target: PictureTarget): Boolean = m.targetType == target.wire
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty])(using
         WritePermit
     ): Unit =
@@ -643,6 +672,7 @@ object AssetService:
         s.modify(_.mediaLinks).setTo(updated)
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sourcePicture(citekey: Citekey, role: MediaRole.Wire): Option[(AssetUid, PictureKey)] =
       state.get.mediaLinks
         .find(m => onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role)
@@ -651,6 +681,7 @@ object AssetService:
 
     private val stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def targetsOf(uid: AssetUid): List[MediaTarget] =
       state.get.mediaLinks
         .filter(_.assetUid == uid)
@@ -667,6 +698,8 @@ object AssetService:
           )
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def item(a: HeldAsset): MediaItem =
       MediaItem(
         MediaItem.Uid(a.uid.value),
@@ -692,17 +725,22 @@ object AssetService:
         targetsOf(a.uid)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ofProvider(a: HeldAsset, provider: Option[String]): Boolean =
       provider.forall(p => (p == MediaProvider.Source && a.provider.isEmpty) || a.provider.exists(_.value == p))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def underLicence(a: HeldAsset, license: Option[String]): Boolean =
       license.forall(l => (l == "none" && a.license.forall(_.value.trim.isEmpty)) || a.license.exists(_.value == l))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def shownOn(a: HeldAsset, target: PictureTarget, id: Option[String]): Boolean =
       id.forall(i =>
         state.get.mediaLinks.exists(m => m.assetUid == a.uid && onSource(m, target) && m.targetId.value == i)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def list(q: Api.MediaQuery, limit: Limit): MediaList =
       val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
       val text = clean(q.q.map(_.value)).map(_.toLowerCase)
@@ -738,6 +776,7 @@ object AssetService:
 
     def show(uid: AssetUid): Option[MediaItem] = byUid(uid).map(item)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def thumb(uid: AssetUid): Option[(Mime, Bytes)] =
       byUid(uid).flatMap { a =>
         a.thumb match
@@ -751,6 +790,7 @@ object AssetService:
 
     def file(uid: AssetUid): Option[(Mime, Bytes)] = byUid(uid).map(a => (a.mime, a.bytes))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def facets: MediaFacets =
       def counted(keys: Vector[String]): List[MediaCount] = MediaCount.of(keys.toList.map(MediaCount.Key(_)))
       MediaFacets(
@@ -758,6 +798,8 @@ object AssetService:
         counted(held.map(_.license.map(_.value.trim).filter(_.nonEmpty).getOrElse("none")))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def hit(a: HeldAsset, p: (HeldAsset.Latitude, HeldAsset.Longitude)): MediaGeoHit =
       MediaGeoHit(
         a.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
@@ -779,6 +821,7 @@ object AssetService:
         author = a.author.map(x => MediaItem.Author(x.value))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def geo(q: Api.MediaGeoQuery, limit: Limit): List[MediaGeoHit] =
       val k = q.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
       val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
@@ -803,6 +846,7 @@ object AssetService:
         case -1 => Int.MaxValue
         case i  => i
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def thumbs(targetType: TargetType, targetId: TargetId, limit: Limit): List[MediaThumb] =
       val links = state.get.mediaLinks.filter(m => m.targetType == targetType && m.targetId == targetId)
       val best = links

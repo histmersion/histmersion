@@ -1,6 +1,7 @@
 package com.histmersion
 package util.problem
 import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.lint.{LintRule, tolerated}
 
 class AccumulationSuite extends munit.FunSuite:
   import Problem.*
@@ -10,6 +11,7 @@ class AccumulationSuite extends munit.FunSuite:
   private val b: Problem = Invalid.Missing.here(Field("b"))
   private val c: Problem = NotFound.Entity(TypeName("x.Y"), Raw("c"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def check(n: Int): Either[Problems, Int] =
     if n > 0 then Right(n) else Left(Invalid.Missing.here(Field(s"n$n")))
 

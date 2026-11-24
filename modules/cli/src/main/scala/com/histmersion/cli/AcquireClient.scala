@@ -28,11 +28,15 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.ArchiveId
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The typed client for the acquisition endpoints — the same `AcquireApi` values the server interprets, so the CLI
   * cannot drift from the REST/MCP surface. It reuses [[Client]]'s transport rather than opening a second one.
   */
+@atBoundary(BoundaryKind.Http, "calls the server's acquisition endpoints (discover, refs, assess, wikirefs) over HTTP")
 final class AcquireClient(c: Client):
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def discover(
       q: AcquireApi.Query,
       since: Option[Year],

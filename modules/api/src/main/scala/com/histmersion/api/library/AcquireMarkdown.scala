@@ -4,12 +4,15 @@ package api.library
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AcquireMarkdown:
 
   private def esc(s: String): String = ((s).replace("|", "\\|").replace("\n", " ").trim)
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
   private def num(n: Option[Int]): String = (n.map(_.toString).getOrElse("—"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doiLink(doi: Option[Doi]): String =
     (doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—"))
 
@@ -17,6 +20,8 @@ object AcquireMarkdown:
     val sep = header.map(_ => "---")
     ((List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def discover(r: DiscoverResult): String =
     if r.works.isEmpty then s"_No works found for **${esc(r.query.value)}**._"
     else
@@ -41,6 +46,8 @@ object AcquireMarkdown:
         table(List("citekey", "title", "year", "authors", "cited", "doi", "notes"), rows) +
         "\n\n_Ingest one with `histmersion ingest <doi>`; `in db` means the corpus already has it._"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def work(w: WorkRef): String =
     val meta = List(
       w.authors.map(_.value).mkString(", "),
@@ -70,6 +77,8 @@ object AcquireMarkdown:
     )
     lines.filter(_.nonEmpty).mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wikirefs(r: WikirefsResult): String =
     if r.dois.isEmpty && r.arxiv.isEmpty then s"_No DOIs cited by **${esc(r.article.value)}**._"
     else
@@ -80,6 +89,8 @@ object AcquireMarkdown:
         (if r.arxiv.isEmpty then "" else s"\n\n**arXiv:** ${r.arxiv.mkString(", ")}") +
         "\n\n_A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refs(r: RefsResult): String =
     if r.references.isEmpty then
       s"_No reference list deposited for **${esc(r.target.value)}** (backend: ${r.backend})._"
@@ -96,10 +107,14 @@ object AcquireMarkdown:
         table(List("reference", "year", "doi", "in corpus"), rows) +
         s"\n\n_${r.resolved} of ${r.count} resolve to stored sources; ${edgeNote(r)}._"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def edgeNote(r: RefsResult): String =
     if r.edgesAdded.value > 0 then s"${r.edgesAdded} `references` edge(s) written"
     else ("re-run with `--apply` to write the `references` edges")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assessment(a: Assessment): String =
     val icon = a.verdict match
       case Acquire.Verdicts.Retracted => "⛔"
@@ -148,6 +163,8 @@ object AcquireMarkdown:
       else "")
     head + rw + cr + applied
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
       case Some(e) => (s"Retraction Watch refresh FAILED: ${e.sentence} (the mirror still holds ${r.rows} row(s)).")
@@ -156,6 +173,8 @@ object AcquireMarkdown:
           "so far. Ask again to see whether it has finished.")
       case None => (s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def followups(r: FollowupsResult): String =
     if r.followups.isEmpty then s"_Nothing cites **${esc(r.target.value)}** in that window._"
     else
@@ -186,6 +205,8 @@ object AcquireMarkdown:
         (if ctx.isEmpty then "" else "\n\n**Citation contexts**\n" + ctx.mkString("\n")) +
         applied + caveat
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def archiveSearch(r: ArchiveSearchResult): String =
     if r.items.isEmpty then s"_Nothing on archive.org for **${esc(r.query.value)}**._"
     else
@@ -201,6 +222,8 @@ object AcquireMarkdown:
         table(List("identifier", "title", "year", "creator"), rows) +
         "\n\n_Check one with `histmersion archive info <id>` before importing._"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def archiveItem(i: ArchiveItem): String =
     val files =
       if i.files.isEmpty then "_no epub/pdf files_"
@@ -228,6 +251,8 @@ object AcquireMarkdown:
     ) ++ restriction ++ List("", files) ++ i.description.toList.flatMap(d => List("", d)))
       .mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingest(r: Ingest.Report): String =
     val steps =
       r.steps.map(s => s"- ${if (s.ok) == Ingest.Step.Ok(true) then "✓" else "✗"} **${s.step}** — ${s.detail}")
@@ -249,6 +274,8 @@ object AcquireMarkdown:
     ) ++ steps ++ r.dropIn.toList.flatMap(d => List("", s"> $d"))
       ++ r.assessment.toList.flatMap(a => List("", assessment(a)))).mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def calibreGaps(g: CalibreGaps): String =
     if g.gaps.isEmpty then ("_Every stored source is in Calibre._")
     else

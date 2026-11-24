@@ -15,6 +15,7 @@ import scala.util.control.NonFatal
 
 import LogWriter.{subjectsOf, writesCounted, written, StagedEveryMillis}
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class LogWriter(
     settings: () => LogConfig,
@@ -52,6 +53,7 @@ final class LogWriter(
 
   def recordServer(what: What): Unit = offer(server(what))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def count(operation: LogEvent.Operation, failed: Boolean): Unit =
     val _ = perMinute.merge(
       operation,
@@ -73,6 +75,7 @@ final class LogWriter(
 
   def flush(): Unit = round(Vector.empty, stagedDue = true)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def round(first: Vector[LogEvent], stagedDue: Boolean): Unit = synchronized {
     val batch = Vector.newBuilder[LogEvent] ++= first
     @annotation.tailrec
@@ -86,6 +89,7 @@ final class LogWriter(
     write(batch.result() ++ housekeeping(), stagedDue)
   }
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loop(): Unit =
     var stagedAt = 0L
     while running.get() do

@@ -6,6 +6,7 @@ import com.histmersion.web.{ResearchSection, Route, RouteLink}
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.SettingsSection
 import com.histmersion.api.Wording
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › AI agents: whether this server runs research agents, how many at once, and the AI providers' addresses
   * and time limits. Which model does which task is Research › AI models and limits; the providers' keys are Keys and
@@ -15,6 +16,8 @@ object AgentsSection:
 
   private val Providers = List("anthropic", "openai", "local")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig): HtmlElement =
     div(
       cls := "settings-section",

@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An OpenAI-compatible chat-completions API (`openai:<model>`, `local:<model>`) over the host's [[AiHttp]]: one call
   * per turn, keyed by `Authorization: Bearer`. Its failures read as they always have (`RuntimeException: OpenAI API
@@ -30,9 +31,11 @@ final class ChatCompletionsProvider(
       verbatimFailures = AiCapabilities.VerbatimFailures(true)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def base: Either[Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
     base
       .flatMap(_ =>
@@ -47,9 +50,11 @@ final class ChatCompletionsProvider(
           case _ => Right(())
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key: ProviderSettings.ApiKey =
     if settings.apiKey.value.isEmpty then ProviderSettings.ApiKey("none") else settings.apiKey
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     for
       url <- base.map(_.endpoint("chat", "completions"))
@@ -75,6 +80,7 @@ object ChatCompletionsProvider:
   type KeyVariable = KeyVariable.T
   object KeyVariable extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def headers(key: ProviderSettings.ApiKey): Map[Header.Name, Header.Value] =
     Map(
       Header.Name("Authorization") -> Header.Value(s"Bearer ${key.value}"),

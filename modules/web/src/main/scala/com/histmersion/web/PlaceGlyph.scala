@@ -9,6 +9,7 @@ import com.histmersion.api.UiLabels
 import com.histmersion.api.Geo
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a gazetteer place is drawn on the map, from its kind and its geometry:
   *   - [[Area]]: a polygon — its outline, as before;
@@ -32,6 +33,7 @@ object PlaceGlyph:
   object ZoomLevel extends Newtype[Int, Pure]
 
   /** Pure: the glyph for a place of `kind` whose GeoJSON geometry type is `geometryType`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(kind: Place.Summary.Kind, geometryType: GeometryType): PlaceGlyph =
     val point = geometryType.value == "Point" || geometryType.value == "MultiPoint"
     if !point then Area
@@ -47,6 +49,7 @@ object PlaceGlyph:
   /** Pure: the label's markup (escaped) for a place of `kind`; `hidden` starts it culled, for a label the map's name
     * pass ([[MapLabels]]) shows — it then fades and grows in.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelHtml(
       label: UiLabels.Text,
       kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
@@ -60,11 +63,13 @@ object PlaceGlyph:
       markup"""<span class="hd-area-point-note">$note</span></span>"""
 
   /** Pure: is the map zoomed out too far for point-only region labels? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def far(zoom: ZoomLevel): Boolean = zoom.value < Layout.areaLabelMinZoom.value
 
   /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`; it is drawn in the
     * area-points pane (a region's name: above the shapes, below every dot).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelMarker(
       lat: Geo.Latitude,
       lon: Geo.Longitude,
@@ -78,6 +83,7 @@ object PlaceGlyph:
   /** Keep the map container's `map-far` class equal to [[far]] of its zoom (the stylesheet hides point-only region
     * labels under it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def followZoom(map: MapSurface): Unit =
     def sync(): Unit = map.container.classList.toggle("map-far", far(ZoomLevel(math.round(map.zoom.value).toInt)))
     sync()

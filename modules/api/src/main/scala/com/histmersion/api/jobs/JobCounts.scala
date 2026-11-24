@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class JobCounts(
     queued: JobCounts.Queued = JobCounts.Queued(0),
@@ -18,6 +19,7 @@ final case class JobCounts(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(s: JobState): JobCounts.Count = s match
     case JobState.Queued    => JobCounts.Count((queued).value)
     case JobState.Running   => JobCounts.Count((running).value)
@@ -42,6 +44,7 @@ object JobCounts:
   type Cancelled = Cancelled.T
   object Cancelled extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(rows: List[(JobState.Wire, Count)]): JobCounts =
     @tailrec def loop(
         rest: List[(JobState.Wire, Count)],

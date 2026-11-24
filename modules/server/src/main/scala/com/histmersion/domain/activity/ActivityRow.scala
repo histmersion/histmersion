@@ -14,8 +14,13 @@ import com.augustnagro.magnum.*
 import java.time.Instant
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One row of the merged list, in the order of [[ActivityRepo.Merged]]'s columns. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationActivity)
 final private[activity] case class ActivityRow(
     key: Entry.Key,
     kind: Entry.Kind,

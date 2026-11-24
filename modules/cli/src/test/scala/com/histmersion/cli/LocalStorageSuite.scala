@@ -11,8 +11,10 @@ import com.histmersion.api.jobs.JobCounts
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
 import com.histmersion.config.UserPaths
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion about`'s own locations: added only when the server is on this machine, never twice. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LocalStorageSuite extends munit.FunSuite:
 
   private val about = About(
@@ -36,6 +38,7 @@ class LocalStorageSuite extends munit.FunSuite:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def config(originals: Path, install: Path): AppConfig =
     val base = AppConfig.load()
     base

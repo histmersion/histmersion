@@ -3,9 +3,11 @@ package api.jobs
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 enum JobState derives CanEqual:
   case Queued, Running, Done, Failed, Paused, Cancelled
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire: JobState.Wire = JobState.Wire(toString.toLowerCase)
   def isTerminal: Boolean = (this == Done || this == Failed || this == Cancelled)
 
@@ -17,6 +19,7 @@ object JobState:
 
   /** The sentence a restart leaves in a job it cut short. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[JobState] =
     values.find(_.wire == Wire((s).value.trim.toLowerCase))
 

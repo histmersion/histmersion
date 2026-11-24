@@ -13,6 +13,7 @@ import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A fake CLI (`claude`, `codex`, `opencode`): a shell script that records what it was given — its arguments one per
   * line, its stdin, the `--output-schema` file, the environment values a test asserts on, whether its working directory
@@ -110,10 +111,12 @@ object FakeCli:
     Fake(script, dir)
 
   /** How often a [[sequence]] fake was invoked, and what its n-th invocation (from 1) read on stdin. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def invocations(f: Fake): Int =
     Option
       .when(Files.isRegularFile(f.dir.resolve("count")))(Files.readString(f.dir.resolve("count")).trim.toInt)
       .getOrElse(0)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def stdinOf(f: Fake, n: Int): String = Files.readString(f.dir.resolve(s"stdin-$n"))
 
   /** A server configuration with the runtimes under `dir` (and the given overrides). */

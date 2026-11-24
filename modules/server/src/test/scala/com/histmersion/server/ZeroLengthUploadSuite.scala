@@ -20,6 +20,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.storage.Blob
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Uploads over a REUSED connection (plan §1.8) — the SAFETY property, pinned after a real bug.
   *
@@ -82,6 +83,7 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
       assertEquals(status, 400, s"$what: $body")
       assert(body.contains("empty"), s"$what: a lost body must read as a clean refusal: $body")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(f: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base
@@ -141,6 +143,8 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
   /** No sidecar is needed: the jobs never get to run in this suite. */
   private object NoConverter extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) = Left(
       Problem.Unclassified(Legacy.Text("not used"))
     )

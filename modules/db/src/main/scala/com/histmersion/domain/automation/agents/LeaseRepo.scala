@@ -5,10 +5,13 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agent lease (V087): one agent server per database, the one that holds the named lease. Every statement runs on
   * the connection it is given (`AgentLease` opens it).
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the lease tables and their row codecs")
 object LeaseRepo:
   type LeaseExpiry = LeaseExpiry.T
   object LeaseExpiry extends Newtype[String, Pure]
@@ -24,6 +27,7 @@ object LeaseRepo:
   /** Claim (or renew) lease `name` for `owner` for `ttlSeconds`: it is taken when free, expired, or already ours.
     * `true` = we hold it now.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def claim(name: LeaseName, owner: LeaseOwner, ttlSeconds: TtlSeconds)(using DbCon): Boolean =
     sql"""INSERT INTO agent_leases (name, owner, until) VALUES ($name, $owner, now() + make_interval(secs => $ttlSeconds))
           ON CONFLICT (name) DO UPDATE SET owner = EXCLUDED.owner, until = EXCLUDED.until
@@ -33,16 +37,19 @@ object LeaseRepo:
   /** Take lease `name` for `owner` whoever holds it: after a restore, whose rows may name a holder of the database the
     * dump was taken from. Only the server that holds the database's instance lock calls it, so no other one runs.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def takeOver(name: LeaseName, owner: LeaseOwner, ttlSeconds: TtlSeconds)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO agent_leases (name, owner, until) VALUES ($name, $owner, now() + make_interval(secs => $ttlSeconds))
             ON CONFLICT (name) DO UPDATE SET owner = EXCLUDED.owner, until = EXCLUDED.until""".update.run()
 
   /** Give it up (a clean stop), so the next server need not wait for it to expire. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def release(name: LeaseName, owner: LeaseOwner)(using DbCon): Unit =
     Unused(sql"DELETE FROM agent_leases WHERE name = $name AND owner = $owner".update.run(), Unused.Why.Idempotent)
 
   /** Who holds it, until when, and whether that is in the past. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def holder(name: LeaseName)(using DbCon): Option[(LeaseOwner, LeaseExpiry, Boolean)] =
     sql"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = $name"
       .query[(String, String, Boolean)]

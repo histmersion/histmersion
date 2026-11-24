@@ -17,11 +17,13 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.places.BPlaceRow
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map layer draws each state ONCE (`PlaceFixtures.geoJson`): pure checks of the query, and — against a disposable
   * Postgres (`TestDb`) — the de-duplication on real shapes. Fixtures sit around 150–171°E, 36–41°S, where no other
   * fixture lives.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceGeoSuite extends DbSuite:
 
   test("an as-of query ranks sources and drops shadowed shapes; the limit comes last"):
@@ -259,12 +261,14 @@ class PlaceGeoSuite extends DbSuite:
   // ── against Postgres ──────────────────────────────────────────────────────────────────────────
 
   private val testDb = TestDb.url
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def box(a: Double, b: Double, c: Double, d: Double) =
     s"""{"type":"Polygon","coordinates":[[[$a,$b],[$c,$b],[$c,$d],[$a,$d],[$a,$b]]]}"""
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def polity(
       id: Place.Id,
       label: Place.Label,
@@ -286,6 +290,7 @@ class PlaceGeoSuite extends DbSuite:
       Nil
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val fixtures = List(
     polity(
       Place.Id("zzq_clio_mk"),
@@ -345,6 +350,7 @@ class PlaceGeoSuite extends DbSuite:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shownAt(year: Long): Set[String] =
     val json = PlaceFixtures.geoJson(
       ds,
@@ -371,6 +377,7 @@ class PlaceGeoSuite extends DbSuite:
   // the "States shown" menu over a range (GeoPick): successive versions of one state (same label) are
   // one shape, the earliest or the latest; a different state on the same land (Phrygia after Hatti) is
   // its own; an agent sketch is shadowed only by a shape it coexists with. Fixtures at 172–179°E.
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ranged = List(
     polity(
       Place.Id("zzr_hatti_a"),
@@ -430,6 +437,7 @@ class PlaceGeoSuite extends DbSuite:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shownOver(lo: Long, hi: Long, latest: Boolean): Set[String] =
     val json = PlaceFixtures.geoJsonAt(
       ds,

@@ -10,11 +10,13 @@ import org.ekrich.config.ConfigFactory
 
 import com.histmersion.config.{AppConfig, AuthConfig}
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How the access gate decides, as a pure function of the peer, the port, the method, the path, the `Host`, `Origin`
   * and `Referer` headers, whether a proxy forwarded it, what credential it presented, and the policy — tried over every
   * combination that matters, so no peer address has to be faked.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AdmissionSuite extends munit.FunSuite:
   import Admission.*
 
@@ -32,6 +34,7 @@ class AdmissionSuite extends munit.FunSuite:
   /** [[policy]] with a proxy network that holds none of this suite's peers (a documentation range). */
   private val proxiedElsewhere: AccessPolicy = policyWith(List("198.51.100.0/24"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def policyWith(proxyNetworks: List[String]): AccessPolicy =
     val auth = defaults.auth
       .modify(_.proxyNetworks)
@@ -57,6 +60,7 @@ class AdmissionSuite extends munit.FunSuite:
   private val guest = InetAddress.getByName("192.168.50.7")
   private val stranger = InetAddress.getByName("203.0.113.9")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def request(
       peer: InetAddress = loopback,
       method: Method = Method.Read,

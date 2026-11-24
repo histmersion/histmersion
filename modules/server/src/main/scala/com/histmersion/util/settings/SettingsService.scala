@@ -9,6 +9,7 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSynta
 
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings file — read and changed. Settings live there and nowhere else (never in the database), so a person can
   * repair them with a text editor while the server, the database or this page is broken.
@@ -60,6 +61,7 @@ object SettingsService:
   /** The snapshot of a file read as `state`, its settings loaded into `loaded` (or why they would not load); `memory`
     * is the machine's, which an `auto` size of the bundled Postgres comes from.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
@@ -95,6 +97,7 @@ object SettingsService:
       val l = loaded()
       file().map(ConfigFileWriter(_, l.env, schema))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       val l = loaded()
       writer
@@ -123,6 +126,7 @@ object SettingsService:
     ): Either[SettingError, WriteOutcome] =
       writer.toRight(noFile).flatMap(_.write(edits, expected, literalConsent))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setupDue: Boolean =
       !loaded().config.setup.completed.value && writer
         .flatMap(_.read().toOption)
@@ -138,6 +142,7 @@ object SettingsService:
       val schema: ConfigSchema = ConfigSchema.reference,
       memory: Option[ByteCount] = None
   ) extends SettingsService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val path: SettingsSnapshot.File = SettingsSnapshot.File(InMemory.FileName)
 
     def current: Option[ConfigFileState.Text] = text.get
@@ -151,14 +156,17 @@ object SettingsService:
             case e: org.ekrich.config.ConfigException =>
               Left(SettingError.Unreadable(unparsable(path, e)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def parse(t: ConfigFileState.Text): Config =
       ConfigFactory.parseString(
         t.value,
         ConfigParseOptions.defaults.setOriginDescription(path.value).setSyntax(ConfigSyntax.CONF)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       state.map { s =>
         val loaded = AppConfig.loadWithUserText(env, s.text.fold("")(_.value))
@@ -175,6 +183,7 @@ object SettingsService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def write(
         edits: List[SettingEdit],
         expected: Option[FileVersion],
@@ -218,6 +227,7 @@ object SettingsService:
             )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setupDue: Boolean = read(None).fold(_ => false, _.setupDue.value)
 
   object InMemory:

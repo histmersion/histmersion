@@ -49,6 +49,7 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent
@@ -63,6 +64,7 @@ import com.histmersion.domain.Creator
   * `afterStore` is asked last (`agents.auto-enrich`: queue an `enrich-source` run for the source, unless it is already
   * enriched); what it answers joins the job's progress line. It never fails the job and never holds it.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class IngestQueue(
     sources: SourceService,
     figures: AssetService,
@@ -84,6 +86,7 @@ final class IngestQueue(
     */
   private val pending = ConcurrentHashMap[Job.Id, IngestPending]()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val pool =
     JobPool(ds(), JobPool.Parallelism(cfg().converter.parallelism.value), id => runJob(id), maintenance.workers, pins)
 
@@ -92,17 +95,20 @@ final class IngestQueue(
   /** A restore holds the pool: no queued job starts; the running ones are waited for (bounded). */
   def quiesce(): Unit = pool.pause()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def busy: Vector[Quiescent.Busy] = pool.running.map(id => Quiescent.Busy(s"OCR job $id"))
 
   /** After a restore: the uploads held for queued jobs are dropped with them, and every unfinished job of the restored
     * database is failed as cut short by the restore.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restored()(using WritePermit)(using Creator.New): Unit =
     pending.clear()
     val n = pool.restored(Problem.Run.Restored)
     if n != RowCount(0) then scribe.info(s"restore: $n unfinished job(s) of the restored database marked failed")
 
   /** Started by the composition root, after construction. The jobs a restart had to fail are counted in the log. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(): Unit =
     // an operation under the gate (not a unit: the pool's threads it starts must not inherit a unit's epoch)
     val n = maintenance.writing(pool.start())
@@ -116,6 +122,8 @@ final class IngestQueue(
   def paused: Boolean = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def enqueue(kind: Job.Kind, citekey: Citekey, sha: Sha256, file: Store.Key, params: Ingest.Params)(using
       WritePermit
   )(using creator: Creator.New): Ingest.Accepted =
@@ -148,9 +156,11 @@ final class IngestQueue(
   /** The sidecar's health, BOUNDED and CACHED: the probe runs on its own thread with `converter.health-timeout-ms` to
     * answer in; past that the caller is told "degraded" at once and the probe is left to refresh the cache.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def converterHealth: ConverterState =
     ConverterState.of(ConverterState.Probe(probeConverter), inConverter.stream().sorted().findFirst().toScala)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def probeConverter: String =
     val (at, last) = convHealth.get()
     val c = cfg().converter
@@ -175,6 +185,7 @@ final class IngestQueue(
   // ── the job body ───────────────────────────────────────────────────────────────────────────
 
   /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
     ByteCount
       .checked(cfg().limits.assetBytes.value)
@@ -186,6 +197,8 @@ final class IngestQueue(
         }
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def runJob(id: Job.Id)(using WritePermit): Unit =
     Option(pending.remove(id)) match
       case None =>
@@ -252,6 +265,7 @@ final class IngestQueue(
   /** How a job ended, written by compare-and-set: a row that had moved on meanwhile (a person cancelled it, a restore
     * replaced it) keeps what it says, and the log says what could not be recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ended(id: Job.Id, as: JobState)(moved: Option[JobState]): Unit =
     if moved.isEmpty then
       val now = jobs.get(id).map(_.status)
@@ -260,6 +274,7 @@ final class IngestQueue(
       )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def afterStoreSafely(citekey: Citekey)(using WritePermit, Creator.New): List[String] =
     try afterStore(citekey).toList.map(_.value)
     catch
@@ -287,6 +302,7 @@ final class IngestQueue(
         identity
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def storeNow(
       jobId: Job.Id,
       job: IngestPending,
@@ -325,6 +341,8 @@ final class IngestQueue(
   /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It never fails the
     * job: the source is stored either way. An item deleted or ticked off by hand while the OCR ran is left as it is.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def tickOff(id: Ingest.Params.AcquireItem, citekey: Citekey, jobId: Job.Id)(using WritePermit): String =
     def warning(message: String): String =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
@@ -352,6 +370,8 @@ final class IngestQueue(
     * that only resemble it ([[AcquireMatch.decide]]). One line per item, for the job's progress. Like [[tickOff]] it
     * never fails the job: the source is stored either way.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def matchAcquisitions(citekey: Citekey, jobId: Job.Id)(using WritePermit): List[String] =
     try
       sources.load(citekey).toList.flatMap { s =>
@@ -413,6 +433,8 @@ final class IngestQueue(
   /** The minimal source an ingest creates when nothing is there yet: enough to find it, no invented enrichment.
     * Everything else is the agent's job, through `patch_source`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def skeleton(p: Ingest.Params, body: Source.OcrMarkdown): Source.Put =
     Source.Put(
       title =

@@ -14,14 +14,18 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's bookmarks. A target reaches here checked; an item is bookmarked once, so bookmarking it again answers its
   * bookmark (renamed when a label is given). A removed bookmark is kept as its tombstone. An item's key and title are
   * its owner's as they are when the bookmarks are read.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 trait BookmarkService:
   /** Newest first, `size` of them, those whose name, title or key hold every word. */
   def list(user: UserId, kind: Option[MarkKind], words: SearchWords, size: PageSize): List[Bookmark]
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def add(
       user: UserId,
       target: MarkTarget,
@@ -29,6 +33,7 @@ trait BookmarkService:
       title: Option[TargetLabel],
       at: MarkTime
   )(using WritePermit)(using Creator.New): Bookmark
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def rename(
       user: UserId,
       id: com.histmersion.api.personal.Bookmark.Id,
@@ -37,6 +42,7 @@ trait BookmarkService:
   )(using WritePermit): Option[Bookmark]
 
   /** The bookmark as it was before it was removed. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using
       WritePermit
   ): Option[Bookmark]
@@ -49,6 +55,7 @@ object BookmarkService:
     val described = items.describe(stored.flatMap(_.target.itemRef).toSet)
     stored.map(Bookmark.of(_, described))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def page(all: List[Bookmark], words: SearchWords, size: PageSize): List[Bookmark] =
     (if words.isEmpty then all else all.filter(_.matches(words))).take(size.value)
 
@@ -62,6 +69,8 @@ object BookmarkService:
       val rows = db.read(BookmarkRepo.list(user, kind, Option.when(words.isEmpty)(size)))
       page(shown(rows.flatMap(_.stored(user)), items), words, size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def add(
         user: UserId,
         target: MarkTarget,
@@ -82,6 +91,8 @@ object BookmarkService:
           .getOrElse(throw IllegalStateException(s"bookmark ${id.value} not read back"))
       shown(List(stored), items).head
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def rename(
         user: UserId,
         id: com.histmersion.api.personal.Bookmark.Id,
@@ -93,6 +104,7 @@ object BookmarkService:
         else BookmarkRepo.live(user, id).flatMap(_.stored(user))
       ).map(s => shown(List(s), items).head)
 
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using
         WritePermit
     ): Option[Bookmark] =
@@ -113,6 +125,7 @@ object BookmarkService:
     private def live(s: PersonalState, user: UserId): Vector[StoredBookmark] =
       s.bookmarks.filter(b => b.user == user && b.deletedAt.isEmpty)
 
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def changed(id: com.histmersion.api.personal.Bookmark.Id, user: UserId)(
         change: StoredBookmark => StoredBookmark
     ): PersonalState =
@@ -121,10 +134,13 @@ object BookmarkService:
           .using(_.map(b => if b.id == id && b.user == user && b.deletedAt.isEmpty then change(b) else b))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(user: UserId, kind: Option[MarkKind], words: SearchWords, size: PageSize): List[Bookmark] =
       val mine = live(state.get, user).filter(b => kind.forall(_ == b.target.kind))
       page(shown(PersonalState.newestFirst(mine)(_.createdAt, _.id.value), items), words, size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def add(
         user: UserId,
         target: MarkTarget,
@@ -153,6 +169,7 @@ object BookmarkService:
         .getOrElse(throw IllegalStateException("bookmark not kept"))
       shown(List(kept), items).head
 
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def rename(
         user: UserId,
         id: com.histmersion.api.personal.Bookmark.Id,
@@ -162,6 +179,7 @@ object BookmarkService:
       val after = changed(id, user)(_.modify(_.label).setTo(label).modify(_.updatedAt).setTo(at))
       live(after, user).find(_.id == id).map(s => shown(List(s), items).head)
 
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def remove(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using
         WritePermit
     ): Option[Bookmark] =

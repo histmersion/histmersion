@@ -4,11 +4,13 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** A JSON Schema as a provider must be sent it: a tool's input or the step's answer, with the repairs each API needs —
   * an object type and properties for Anthropic's tools, `additionalProperties: false` on Anthropic's answer, and
   * OpenAI's strict form (every property required, the optional ones nullable, no extra properties).
   */
+@atBoundary(BoundaryKind.Json, "repairs a JSON Schema into the form each AI provider accepts")
 final case class SchemaJson(json: Json):
 
   /** A tool's input as the Anthropic API takes it: an object (`true`/`false` become one), with `properties` when it is

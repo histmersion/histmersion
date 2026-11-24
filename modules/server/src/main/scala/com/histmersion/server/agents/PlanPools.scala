@@ -33,6 +33,8 @@ import com.histmersion.util.system.JvmHome
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every
@@ -43,6 +45,9 @@ import com.histmersion.util.database.Unused
   * per pool ([[RefreshGate]]), at most once per `stale-minutes`. A pool whose runtime has no login is unavailable,
   * never offered. `seams` are how a test stands in for the CLIs.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Process, "pending G39 (processes only through util.process)")
+@movesTo(FeaturePlace.AutomationAgents)
 final class PlanPools(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -56,14 +61,18 @@ final class PlanPools(
   private val gate = RefreshGate()
   private val logins = ConcurrentHashMap[PoolId, (Long, Login)]()
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def now0: PlanQuota.Now = PlanQuota.Now(System.currentTimeMillis())
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def poolCfg(p: PoolId): (Floors.Wire, Int) = p match
     case PoolId.ClaudePlan =>
       (Floors.Wire(cfg.quota.claudePlan.floors.value), cfg.quota.claudePlan.maxCallsInFlight.value)
     case PoolId.ChatgptPlan =>
       (Floors.Wire(cfg.quota.chatgptPlan.floors.value), cfg.quota.chatgptPlan.maxCallsInFlight.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def staleMs: Long = math.max(1, cfg.quota.staleMinutes.value).toLong * 60000L
 
   /** At most `max-calls-in-flight` LLM calls draw on a plan at once (default 1: the three-way review panel would
@@ -77,6 +86,7 @@ final class PlanPools(
   /** The floors of a pool and where they come from: saved, else config (a config string that does not parse floors
     * nothing it could not read, and says so).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def floors(p: PoolId): (Floors, PoolStatus.FloorsSource, Option[Problem]) =
     val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
     saved.map(f => Floors.parse(Floors.Wire(f.value))) match
@@ -102,6 +112,7 @@ final class PlanPools(
               )
             )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rules(p: PoolId): Rules =
     Rules(
       floors(p)._1,
@@ -114,6 +125,7 @@ final class PlanPools(
     * provider's refusal as last recorded. It reads nothing else and writes nothing — what every view asks (`agent
     * quota`, `agent models`, the scheduler's dry pass). A call that runs work asks [[current]].
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verdict(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now = now0): (Verdict, List[WindowState]) =
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.verdict(
@@ -139,6 +151,7 @@ final class PlanPools(
     verdict(p, model, now)
 
   /** Why `p`'s verdict would wait for a fresh reading now (None = it decides by itself). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def need(p: PoolId, model: Option[ChainEntry.Model], now: PlanQuota.Now): Option[RefreshNeed] =
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.refreshNeed(
@@ -180,6 +193,7 @@ final class PlanPools(
   def lastObserved(p: PoolId): Option[Reading.ObservedAt] =
     Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOption
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blocked(
       p: PoolId,
       model: Option[AgentsControllers.ModelName]
@@ -189,6 +203,7 @@ final class PlanPools(
         Some((why, until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
       case _ => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refresh(now: PlanQuotaRepo.EpochMillis)(using WritePermit): Unit =
     Unused(poll(PlanQuota.Now(now.value)), Unused.Why.Reported)
 
@@ -196,6 +211,7 @@ final class PlanPools(
     Transactor(ds).write(PlanQuotaRepo.setHold(p, on))
 
   /** Whether a person holds `p` (no run draws on it until it is released). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held.value
   def setFloors(p: PoolId, f: Option[PlanQuotaRepo.Pool.Floors])(using WritePermit): Unit =
     Transactor(ds).write(PlanQuotaRepo.setFloors(p, f))
@@ -206,6 +222,7 @@ final class PlanPools(
     * in the runs' CODEX_HOME for the ChatGPT plan (the file is never read) — checked at most once per `poll-seconds`
     * (`force`: now).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def login(p: PoolId, now: PlanQuota.Now = now0, force: PlanPools.Force = PlanPools.Force(false)): Login =
     val every = math.max(1, cfg.quota.pollSeconds.value).toLong * 1000L
     Option(logins.get(p)).filter((at, _) => !force.value && now.value - at < every).map(_._2).getOrElse {
@@ -216,6 +233,7 @@ final class PlanPools(
       l
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claudeLogin(): Login =
     val cc = cfg.providers.claudeCode
     seams.runCommand(
@@ -239,6 +257,7 @@ final class PlanPools(
 
   // ── fresh readings ─────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claudeMode: Either[Problem, RefreshMode] =
     RefreshMode
       .parse(RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
@@ -252,6 +271,7 @@ final class PlanPools(
       )
 
   /** How `p` takes a fresh reading, for `agent quota`; None = it takes none. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refreshMode(p: PoolId): Option[Refreshed.Mode] = p match
     case PoolId.ClaudePlan =>
       claudeMode.toOption
@@ -276,6 +296,8 @@ final class PlanPools(
   /** Take a fresh reading of `p` on its schedule ([[PlanReadSchedule.scheduledRead]]), inside the pool's gate: a pick
     * that took one meanwhile makes this one not due. Never without a login or a way to read. Left = not taken, and why.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def refreshOnSchedule(
       p: PoolId,
       autopilotOn: PlanReadSchedule.AutopilotOn,
@@ -319,6 +341,9 @@ final class PlanPools(
     * throttled per `stale-minutes`, never without a login. `force` (a person asked) skips the need and the throttle.
     * Left = not taken, and why. Every attempt is logged (server log and the pool's refresh log).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def refreshPool(
       p: PoolId,
       trigger: RefreshTrigger,
@@ -350,6 +375,8 @@ final class PlanPools(
     }
 
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: PlanQuota.Rationale, now: PlanQuota.Now)(using
       WritePermit
   ): Refreshed =
@@ -368,6 +395,7 @@ final class PlanPools(
     r
 
   /** One reading of `p`, recorded: the Claude probe or the ChatGPT app-server read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def take(p: PoolId, now: PlanQuota.Now)(using WritePermit): Refreshed = p match
     case PoolId.ChatgptPlan =>
       poll(now, force = PlanPools.Force(true)) match
@@ -400,6 +428,7 @@ final class PlanPools(
   /** Read the ChatGPT plan through `codex app-server` (it generates nothing), at most once per `poll-seconds`, and only
     * with `app-server` on and a CODEX_HOME to read.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def poll(now: PlanQuota.Now, force: PlanPools.Force = PlanPools.Force(false))(using
       WritePermit
   ): Option[Refreshed.Detail] =
@@ -436,6 +465,7 @@ final class PlanPools(
               None
 
   /** A mod's report: recorded, and answered with whether the run may go on. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def guard(report: ModReport, now: PlanQuota.Now = now0)(using WritePermit): GuardAnswer =
     val src = Source
       .parse(Source.Wire(report.source.value))
@@ -455,6 +485,7 @@ final class PlanPools(
     * ChatGPT pool's app-server read — and writes nothing (looking is free). A run, the scheduler's pass and its
     * schedule, and `agent quota refresh` take the readings it shows.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statuses(covers: PoolId => List[PoolStatus.Covers], now: PlanQuota.Now = now0): List[PoolStatus] =
     val today = java.time.Instant
       .ofEpochMilli(now.value)
@@ -534,6 +565,7 @@ object PlanPools:
   object ScheduleText extends Newtype[String, Pure]
 
   /** The schedule as `agent quota` names it after a pool's refresh mode. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scheduleText(schedule: ScheduledRefresh): ScheduleText = schedule match
     case ScheduledRefresh.Off             => ScheduleText("")
     case ScheduledRefresh.Every(interval) =>
@@ -609,6 +641,7 @@ object PlanPools:
     case _                                            => false
 
   /** The `claude` CLI's environment for `auth status`: no API key unless asked, its own config dir. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeEnv(cc: ClaudeCodeConfig)(using
       JvmHome
   ): Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
@@ -632,6 +665,7 @@ object PlanPools:
   /** `claude auth status` (JSON) → the login (the doctor's reading of it, [[AgentDoctor.login]]): logged out, or on an
     * API key where the plan is wanted, is Missing; an answer that is not JSON is Unknown.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): Login =
     if RawJson.parse(out.value.trim).isLeft then
       Login.Unknown(
@@ -646,6 +680,7 @@ object PlanPools:
         )
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
     case None =>
       Login.Missing(
@@ -660,6 +695,7 @@ object PlanPools:
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about
     * the plan.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def probeReadings(
       run: CliProcess.Run,
       now: PlanQuota.Now,
@@ -705,6 +741,7 @@ object PlanPools:
           )
 
   /** "five_hour 12% used, seven_day 42% used" — what a refresh read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(rs: List[Reading], now: PlanQuota.Now): Refreshed.Detail =
     val cur = PlanQuota.current(rs, now)
     if cur.isEmpty then Refreshed.Detail("no window reported")
@@ -733,6 +770,7 @@ object PlanPools:
     * `seven_day`, …; `utilization` 0–1, `resetsAt` epoch s), else the representative window; `status: rejected` marks
     * the window it names refused.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeReadings(info: Json, source: Source, now: PlanQuota.Now): List[Reading] =
     val c = info.cursor
     val status = c.downField("status").as[String].toOption
@@ -786,6 +824,7 @@ object PlanPools:
       }
 
   /** A mod's `rateLimits` (`percentUsed`, `resetsAt` ISO) → readings. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def modReadings(ws: List[ModWindow], source: Source, now: PlanQuota.Now): List[Reading] =
     ws.map { w =>
       val reset = w.resetsAt
@@ -806,6 +845,7 @@ object PlanPools:
     * 5-hour one), the refusal (`ordinaryUsageAllowed: false`; a reached limit marks its windows refused) and the plan
     * type. Reset credits and upsells are ignored — never acted on.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def codexReadings(result: Json, now: PlanQuota.Now): (
       List[Reading],
       Option[(Problem, Option[PlanQuotaRepo.Pool.RefusalUntil])],
@@ -862,6 +902,7 @@ object PlanPools:
     * read), with `CODEX_HOME` = the runs' home. Nothing else is ever sent — in particular never
     * `account/rateLimitResetCredit/consume`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def readCodex(
       command: CodexConfig.Command,
       home: java.nio.file.Path,

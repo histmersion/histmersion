@@ -10,16 +10,19 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The focus's reads of every goal at once, as the engine's other features reach them — each goal with what the focus
   * recorded about it, the goals linked to sources and articles, each goal's last stop and its sources — and what the
   * focus records: a goal joining and leaving the active set, a person's pin and priority.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait FocusService:
   /** Every goal with what the focus recorded about it, by slug. */
   def goals(): List[FocusRepo.GoalRow]
 
   /** The goals linked to each of `refs` by a link of `kind`. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def goalsOf(
       kind: domain.automation.Goal.LinkKind.Wire,
       refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
@@ -50,6 +53,7 @@ object FocusService:
 
   final private class Implementation(db: Transactor) extends FocusService:
     def goals(): List[FocusRepo.GoalRow] = db.read(FocusRepo.goals())
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def goalsOf(
         kind: domain.automation.Goal.LinkKind.Wire,
         refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
@@ -69,7 +73,9 @@ object FocusService:
 
   /** The focus in memory, over the shared state's goals, links and managers' items. */
   final class InMemory(state: AtomicReference[AutomationState], clock: Clock) extends FocusService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def t(at: Option[Instant]): Option[String] = at.map(i => AutomationState.text(i).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def goals(): List[FocusRepo.GoalRow] =
       val s = state.get
       s.goals.values.toList.sortBy(_.goal.slug.value).map { g =>
@@ -89,6 +95,8 @@ object FocusService:
           f.leftWhy
         )
       }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def goalsOf(
         kind: domain.automation.Goal.LinkKind.Wire,
         refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
@@ -105,6 +113,7 @@ object FocusService:
               ls.map(_.goal.value).sorted.toList.map(domain.automation.Goal.Slug.assume(_))
           )
           .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def lastStops(): Map[domain.automation.Goal.Slug, GoalFocus.Rationale] =
       val s = state.get
       val goalOf = s.managers.flatMap(m => m.goal.map(g => m.id.value -> g.value)).toMap
@@ -122,6 +131,7 @@ object FocusService:
               GoalFocus.Rationale(i.outcome.fold(i.status.value)(_.value))
         }
         .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sourceCounts(): Map[domain.automation.Goal.Slug, RowCount] =
       state.get.links
         .filter(_.kind == domain.automation.Goal.LinkKind.Source)
@@ -129,6 +139,7 @@ object FocusService:
         .view
         .map((g, ls) => domain.automation.Goal.Slug.assume(g) -> RowCount(ls.size))
         .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def changeFocus(slug: domain.automation.Goal.Slug, mustExist: Boolean)(
         f: FocusRecord => FocusRecord
     ): Boolean =
@@ -150,6 +161,7 @@ object FocusService:
           .modify(_.why)
           .setTo(Some(why))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def left(slug: domain.automation.Goal.Slug, why: GoalFocus.Rationale, now: Instant)(using WritePermit): Unit =
       val focusKey = AutomationState.FocusKey(slug.value)
       val _ = state.updateAndGet(
@@ -168,7 +180,9 @@ object FocusService:
             )
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned)(using WritePermit): Boolean =
       changeFocus(slug, mustExist = true)(_.modify(_.pinned).setTo(FocusRecord.Pinned(pinned.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority)(using WritePermit): Boolean =
       changeFocus(slug, mustExist = true)(_.modify(_.priority).setTo(FocusRecord.Priority(n.value)))

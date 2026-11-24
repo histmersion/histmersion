@@ -13,10 +13,12 @@ import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The physical names: Natural Earth's classes and names, where a polygon's name goes, the zooms, the region,
   * simplifying and clipping rivers, and the tiles they are written as. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BasemapLabelsSuite extends munit.FunSuite:
 
   private val Lon = BasemapLabels.Label.Lon

@@ -12,14 +12,19 @@ import sttp.tapir.{Schema, SchemaType}
 import io.github.iltotore.iron.constraint.any.Pure
 
 import util.json.{JsonCodec, RawJson}
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A write input's JSON codec (`derives StrictJson`): a derived decoder ignores keys it does not know, so a misplaced
   * or misspelt key decodes to "change nothing"; a write input refuses unknown keys instead, naming the keys it takes.
   */
+@atBoundary(BoundaryKind.Json, "decodes write inputs and refuses unknown JSON keys")
+@movesTo(FeaturePlace.UtilJson)
 trait StrictJson[A] extends JsonCodec[A]
 
 object StrictJson:
   /** The record's own derived codec, refusing unknown keys; its schema names the keys it takes. */
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   inline def derived[A](using Schema[A]): StrictJson[A] = codec(JsonCodec.derived[A])
 
   type FieldName = FieldName.T
@@ -60,6 +65,7 @@ object StrictJson:
     case SchemaType.SOption(e)     => fieldNames(e)
     case _                         => Nil
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def nestedFields(s: Schema[?]): List[(FieldPath, FieldName)] =
     def children(path: FieldPath, sc: Schema[?]): List[(FieldPath, Schema[?])] = sc.schemaType match
       case p: SchemaType.SProduct[?] =>

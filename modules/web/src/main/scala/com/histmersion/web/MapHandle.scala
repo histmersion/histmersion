@@ -9,6 +9,7 @@ import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
 import com.histmersion.api.MapStack
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `window.histmersionMap`: the map from the browser's console and the browser regressions (modules/web/test), in the
   * app's own terms — whatever library draws it. Read-mostly: the view can be set; nothing here writes data. Zooms are
@@ -176,6 +177,7 @@ object MapHandle:
     List("id", "ck", "pane", "ghost", "offscreen").forall(same) &&
     wantData.forall((k, v) => if v == null then !data.contains(k) else data.get(k).exists(x => (x: js.Any).equals(v)))
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def markers(spec: js.UndefOr[js.Dynamic]): js.Array[js.Dynamic] =
     if !TheMap.isUp then js.Array()
     else
@@ -187,6 +189,7 @@ object MapHandle:
       }
       spec.fold(all)(sp => all.filter(matches(_, sp))).toJSArray
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def markerAt(at: js.Array[Double]): js.Dynamic =
     if !TheMap.isUp then null
     else
@@ -204,6 +207,8 @@ object MapHandle:
       yield describe(origin, p, m._1, m._2, false)
       found.orNull
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(s: MapSurface): Unit =
     s.on(MapEventKind.BaseMapReady)(_ => drawn += 1)
     val h = js.Dynamic.literal(

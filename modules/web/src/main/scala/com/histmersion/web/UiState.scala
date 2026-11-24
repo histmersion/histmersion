@@ -22,6 +22,7 @@ import com.histmersion.api.library.{Filter, Sort}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.instance.DebounceConfig
 import com.histmersion.web.ui.Layout
+import com.histmersion.lint.{LintRule, tolerated}
 
 object UiState:
   type ChangeSeq = ChangeSeq.T
@@ -34,9 +35,11 @@ object UiState:
   object UrlHash extends Newtype[String, Pure]
 
   type ReloadDelayNormalMs = ReloadDelayNormalMs.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ReloadDelayNormalMs extends Newtype[Int, Pure]
   type ToggledPlaceId = ToggledPlaceId.T
   object ToggledPlaceId extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TogglePlaceId = ToggledPlaceId
   val TogglePlaceId: ToggledPlaceId.type = ToggledPlaceId
   type ToFilterExcept = ToFilterExcept.T
@@ -47,6 +50,7 @@ object UiState:
   object NavigatePathAndSearch extends Newtype[String, Pure]
   type NavigatePush = NavigatePush.T
   object NavigatePush extends Newtype[Boolean, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SetPush = NavigatePush
   val SetPush: NavigatePush.type = NavigatePush
 
@@ -357,8 +361,11 @@ object UiState:
   private def localFields = fields.filter(_.persist == Persist.Local)
 
   /** One overlay's state, as its toggle shows it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def layerOn(l: MapLayer): Signal[Boolean] = layers.signal.map(_.contains(l))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setLayer(l: MapLayer, on: Boolean): Unit =
     set(layers := (if on then layers.now() + l else layers.now() - l))()
 
@@ -386,9 +393,12 @@ object UiState:
   /** How long a reload scheduled NOW waits: `normalMs`, or less after a preview — the pointer resting on a suggestion
     * should see its lists at once, not after the typing debounce.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reloadDelay(normalMs: ReloadDelayNormalMs): ReloadDelay =
     if previewChange then ReloadDelay(math.min(normalMs.value, previewMs.value)) else ReloadDelay(normalMs.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withPreview(key: String, vs: List[String]): List[String] =
     preview.now() match
       case Some(p) if p.key.value == key && !vs.contains(p.value.value) => vs :+ p.value.value
@@ -439,12 +449,15 @@ object UiState:
     * so adding it beside another would widen the lists, not narrow them); when it is already chosen, it is removed and
     * the other chosen places stay.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toggledPlace(ids: List[String], id: ToggledPlaceId): List[String] =
     if ids.contains(id.value) then ids.filterNot(_ == id.value) else List(id.value)
 
   /** Choose or unchoose place `id` (see [[toggledPlace]]); a step in the history, so Back undoes a click on the map.
     * Returns whether it is chosen now.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def togglePlace(id: TogglePlaceId): Boolean =
     val next = toggledPlace(placeIds.now(), id)
     set(placeIds := next)(push = NavigatePush(true))
@@ -453,8 +466,11 @@ object UiState:
   /** Both search boxes share the raw draft, including a space just typed between words. Filter.of normalizes it at the
     * request boundary, not while the controlled input is editing.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setSearch(text: Api.Search.Text): Unit = set(q := Option.when(text.value.nonEmpty)(text.value))()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toFilter(except: Set[ToFilterExcept] = Set.empty): Filter =
     def keep(keys: String*) = !keys.exists(k => except.contains(ToFilterExcept(k)))
     val box = if keep("bbox") && inView.now() then bbox.now().flatMap(parseBbox) else None
@@ -492,12 +508,14 @@ object UiState:
   /** What the Articles tab asks for: the global filter, title included — the server lists the articles citing the
     * sources it selects.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleQuery(): Api.ArticleQuery =
     Api.ArticleQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
 
   /** What the Events tab asks for: the global filter, title included — the server lists the events whose source it
     * selects, in its period.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventQuery(): Api.EventQuery =
     Api.EventQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
 
@@ -525,6 +543,7 @@ object UiState:
     type Shown = Shown.T
     object Shown extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def activeChips(): List[ActiveChip] =
     fields
       .filter(f => f.role == Role.Filter && f.chip.value)
@@ -538,6 +557,8 @@ object UiState:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def removeChip(key: RemoveChipKey, value: FilterTerm): Unit =
     fields.find(_.key.value == key.value).foreach(_.remove(Field.Token(value.value)))
     writeHash(push = NavigatePush(false))
@@ -545,6 +566,8 @@ object UiState:
 
   // ── the URL hash ──────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pairsOf(hash: UrlHash): Map[String, List[String]] =
     val params = new dom.URLSearchParams(hash.value.stripPrefix("#"))
     val out = List.newBuilder[(String, String)]
@@ -552,17 +575,22 @@ object UiState:
     out.result().groupMap(_._1)(_._2)
 
   /** The hash for the current state. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hashString: UrlHash =
     val params = new dom.URLSearchParams("")
     hashFields.foreach(f => f.encoded.foreach(t => params.append(f.hashKey.value, t.value)))
     UrlHash(params.toString)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def writeHash(push: NavigatePush): Unit =
     if mirrorHash then navigate(NavigatePathAndSearch(window.location.pathname + window.location.search), push)
 
   /** Go to another page of the web UI (`pathAndSearch`, e.g. `/research/backlog?item=3`): the address changes, the hash
     * state goes along (the filters, the open windows), and with `push` it is a step in the history that Back undoes.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def navigate(pathAndSearch: NavigatePathAndSearch, push: NavigatePush): Unit =
     if mirrorHash then
       val qs = hashString.value
@@ -573,6 +601,8 @@ object UiState:
       else window.history.replaceState(js.Dynamic.literal(histmersionSeq = seq.value), "", url)
 
   /** Load every HASH field from `hash`: a field the hash does not mention goes back to its default. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def loadHash(hash: UrlHash): Unit =
     val m = pairsOf(hash)
     hashFields.foreach(f => f.load(m.getOrElse(f.hashKey.value, Nil).map(Field.Token(_))))
@@ -580,6 +610,8 @@ object UiState:
   /** Merge a hash fragment INTO the state — a `/#tag=x` link inside a window adds the tag and keeps every other filter
     * (following it as a navigation replaced them all).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def addHash(hash: UrlHash): Unit =
     val m = pairsOf(hash)
     val touched = hashFields.filter(f => m.contains(f.hashKey.value))
@@ -635,6 +667,8 @@ object UiState:
 
   // ── start-up ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def init(config: UiConfig): Unit =
     previewMs = config.debounce.previewMs
     ListFilterBar.typingMs = config.debounce.searchMs.value

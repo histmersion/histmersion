@@ -25,17 +25,21 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events' controllers over the in-memory service: an old id resolved before a read or a write, the scale, the
   * geometry and the Wikidata item checked before a write, the card added to what is read, the rename's rule and a held
   * lock.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class EventsControllersSuite extends munit.FunSuite:
   private val renamed =
     Map[(AliasKind, Event.Id), Event.Id]((AliasKinds.EventRecords, Event.Id("zz_old")) -> Event.Id("zz_ev"))
   private def current(k: AliasKind, id: Event.Id) = renamed.getOrElse((k, id), id)
   private val span = TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def controllers(gate: WriteGate = WriteGate()) =
     EventsControllers(
       EventService.InMemory(AtomicReference(CatalogueState.empty)),

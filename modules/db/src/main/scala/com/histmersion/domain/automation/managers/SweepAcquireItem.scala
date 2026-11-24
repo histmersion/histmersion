@@ -7,11 +7,13 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An open acquisition item a watcher's sweep created, found by structure: the sweep run that picked the DOI, the
   * watcher, the goal it linked the item to, and the pick as the ranking saw it (`isOa` = it marked the work open
   * access).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class SweepAcquireItem(
     item: SweepAcquireItem.Item,
     text: SweepAcquireItem.Text,

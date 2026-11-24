@@ -7,6 +7,8 @@ import com.histmersion.server.agents.{CliOutcomes, Codex}
 
 import com.histmersion.api.VocabularyCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's `--output-schema`
   * is accepted in. Codex sends the file as `text.format` with `strict: true`, and the Responses API refuses anything
@@ -30,6 +32,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   *
   * The Claude paths keep the derived schema unchanged: they accept it as it is.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Json, "rewrites an answer JSON Schema into OpenAI's strict form")
 object StrictJsonSchema:
 
   /** The keywords strict mode supports (OpenAI "Structured Outputs — supported schemas"). */

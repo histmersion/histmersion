@@ -27,8 +27,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[AcquireCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion acquire`: declares its options, parses them into typed commands")
 object AcquireArgs:
   object DiscoverEntry extends CommandLine.Entry:
     val name = "discover"
@@ -73,6 +76,7 @@ object AcquireArgs:
     private val notInDb_ = flag("not-in-db", "Only works the corpus does NOT have yet")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       AcquireCmd.Command
         .DiscoverSearch(q_(), since_.toOption, sort_.toOption, limit_.toOption, notInDb_.getOrElse(false), json_())
@@ -199,6 +203,7 @@ object AcquireArgs:
     )
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] =
       AcquireCmd
         .legalOnly(legalOnly_.getOrElse(false), allowUnauthorised_.getOrElse(false))

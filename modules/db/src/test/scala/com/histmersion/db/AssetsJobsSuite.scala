@@ -35,12 +35,17 @@ import com.histmersion.api.media.MediaTarget
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** V006 round-trips against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class AssetsJobsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -48,11 +53,15 @@ class AssetsJobsSuite extends DbSuite:
 
   private val ck = Citekey("zz_assets_source")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def png(colour: Byte): NewFigure.Bytes = NewFigure.Bytes(Array[Byte](0x89.toByte, 'P', 'N', 'G', colour))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ingestKind = Job.Kind.applyUnsafe(Ingest.KindIngest)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val reocrKind = Job.Kind.applyUnsafe(Ingest.KindReocr)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(body: Option[Source.OcrMarkdown] = None) = Source(
     citekey = api.library.Citekey(ck.value),
     title = api.library.Title("Assets"),

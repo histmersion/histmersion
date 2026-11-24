@@ -14,6 +14,14 @@ final class TextBaseline extends SyntacticRule("TextBaseline"):
       Project.relativeOf(doc.input)
     )
 
+final class TextPrune extends SyntacticRule("TextPrune"):
+  override def fix(using doc: SyntacticDocument): Patch =
+    Baseline.prune(
+      Contracts.findings(doc) ++ Architecture.findings(doc),
+      doc.tree,
+      Contracts.Owned ++ Architecture.Owned
+    )
+
 object Architecture:
 
   val Owned: Set[String] = Set("Placement", "Direction", "FileSystem", "Process", "Repository", "TotalOrder")

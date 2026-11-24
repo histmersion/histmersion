@@ -17,11 +17,17 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every file of another module that derives a codec or schema imports `com.histmersion.api.VocabularyCodecs.given`:
   * without it Kindlings derives its own instance for a vocabulary field, spelled differently (an enum with parameters
   * as an object), and nothing fails to compile.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@atBoundary(BoundaryKind.Json, "gives each vocabulary its JSON encoder, decoder and schema")
+@movesTo(FeaturePlace.UtilCommon)
 object VocabularyCodecs:
   given given_JsonValueCodec_SourceStatus: JsonValueCodec[Source.Status] = WireEnum.codec
   given given_Schema_SourceStatus: Schema[Source.Status] = WireEnum.schema

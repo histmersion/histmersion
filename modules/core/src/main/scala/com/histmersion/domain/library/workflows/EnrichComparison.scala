@@ -10,6 +10,7 @@ import com.histmersion.domain.EnrichSource.{Classified, Findings, Geocoded, Veri
 import com.histmersion.domain.automation.agents.OutputComparison
 
 import scala.annotation.tailrec
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** enrich-source's runs compared by their outputs (`agent compare`, #992): the findings each kept, the verifier's quote
   * check, the places asked and resolved, the dated findings, the period, the lengths of the summary and the notes, and
@@ -20,12 +21,16 @@ object EnrichComparison extends OutputComparison:
   /** A rejected findings answer's quote failures are counted from the verifier's own words. */
   private val QuoteFailure = "the quote is not in the text"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def isFindings(name: Step.Name) = name.value.startsWith("findings-")
 
   /** The quote check over every attempt of every findings step: (checked, passed). A finished attempt says it itself; a
     * rejected one holds the rejected answer, and the verifier's reasons say which quotes failed. An attempt with no
     * readable answer checked nothing.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G5ProblemText, "pending G60 (a caller branches on the case, never the sentence)")
   def quoteCheck(steps: List[Step]): (EnrichSide.QuotesChecked, EnrichSide.QuotesPassed) =
     @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
       rest match
@@ -51,6 +56,8 @@ object EnrichComparison extends OutputComparison:
     (EnrichSide.QuotesChecked(checked), EnrichSide.QuotesPassed(passed))
 
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claims(d: Run): List[String] =
     CompareRuns
       .output[Geocoded](d, CompareRuns.OutputName("geocode"))
@@ -63,6 +70,7 @@ object EnrichComparison extends OutputComparison:
           .flatMap(n => CompareRuns.output[VerifiedFindings](d, n).toList.flatMap(_.findings.map(_.claim.value)))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def enrich(runs: List[Run]): List[EnrichSide] =
     val all = runs.map(d => claims(d).map(c => AgentVerify.normalise(AgentVerify.Text(c)) -> c))
     runs.zip(all).zipWithIndex.map { case ((d, mine), i) =>

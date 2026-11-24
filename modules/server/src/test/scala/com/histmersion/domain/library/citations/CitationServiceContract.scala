@@ -12,12 +12,15 @@ import com.histmersion.api.library.Title
 import com.histmersion.domain.library.LibraryStores
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the citation graph answers, the same on the database and in memory: a source's edges both ways by kind, the
   * graph around it to a depth, the disagreements by edge and by status.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class CitationServiceContract extends LibraryStoreSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: Citekey,
       year: Year,
@@ -46,6 +49,7 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       edges
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dom(c: Citekey) = domain.library.Citekey.applyUnsafe(c.value)
   private val A = Citekey("zqa1990_a")
   private val B = Citekey("zqb2001_b")

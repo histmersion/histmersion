@@ -8,10 +8,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.automation.ApprovalDigest.*
 import com.histmersion.api.automation.ApprovalDigestMarkdown
 import com.histmersion.api.automation.Approval
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The approval digest, pure (#3762 proposal 3): the grouping by kind, what a bulk decision matches, the worklog line
   * and the Markdown.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ApprovalDigestSuite extends munit.FunSuite:
 
   private val open = List(

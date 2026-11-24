@@ -15,14 +15,20 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the period rows for bundle export and import")
 private[periods] object PeriodBundleRepo:
 
   /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def periods(scope: BundleScope, alsoIds: List[BPeriodRow.Id] = Nil)(using DbCon): Vector[Bundle.Period] =
     val own = sql"p.dataset = 'local' AND ${where(scope, sql"p.uid", sql"p.updated_at")}"
     val sel = if alsoIds.isEmpty then own
@@ -75,6 +81,7 @@ private[periods] object PeriodBundleRepo:
     }.toMap
 
   /** Named periods of the other collection's own (V052), then their parents. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def periodsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val periods = w.es.periods.filter(p => w.writes(p.uid))

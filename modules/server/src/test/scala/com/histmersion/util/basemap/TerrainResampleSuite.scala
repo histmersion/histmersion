@@ -6,12 +6,15 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The lossless-WebP decoder against `libwebp`'s own (`dwebp`: the digests below are of its output for the same files),
   * the terrarium resampling, and the PNG round trip.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TerrainResampleSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resource(name: String): PmTiles.TileBytes =
     val in = getClass.getResourceAsStream(s"/basemap/webp/$name")
     assert(in != null, name)
@@ -19,6 +22,7 @@ class TerrainResampleSuite extends munit.FunSuite:
     finally in.close()
 
   /** The SHA-256 of an image's RGB bytes (what `dwebp -ppm` writes). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rgbDigest(img: Vp8l.Image): String =
     val px = img.pixels.value
     val b = new Array[Byte](px.length * 3)

@@ -37,6 +37,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The interactive-latency rewrites (docs/research-interactive-performance.md) return EXACTLY what the shapes they
   * replaced returned, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Each test runs the new
@@ -44,6 +45,7 @@ import com.histmersion.domain.research.Slug
   * and compares the whole answers, so the other suites' fixtures in a shared test database only make the comparison
   * stronger.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class InteractiveQueriesSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -52,16 +54,19 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
   private given DbCodec[Place.Hit] = DbCodec.derived
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
     Place.Geometry(
       s"""{"type":"Polygon","coordinates":[[[$minLon,$minLat],[$maxLon,$minLat],[$maxLon,$maxLat],[$minLon,$maxLat],[$minLon,$minLat]]]}"""
     )
 
   // a region > polity > site chain far from every other fixture, plus look-alike labels for search
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val places = List(
     Place.Input(
       Place(
@@ -143,6 +148,7 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: Citekey,
       tags: List[Source.Tags],
@@ -170,6 +176,7 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
       }
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       val _ = PlaceFixtures.upsertPlaces(ds, places)
@@ -269,6 +276,7 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
           )
         )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def afterSuite(): Unit =
     if testDb.isDefined then
       List("zzi_art_a", "zzi_art_b").foreach(s => ArticleFixtures.delete(ds, Slug.applyUnsafe(s)))
@@ -402,6 +410,7 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
   // CTE `tw` in front and `PlaceFixtures.inTimeSql` where `p.period @> asOf` was — so the rank-first
   // rewrite is held to the rule, not to the plain period containment it replaced.
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def referenceSearch(
       q: Option[PlaceFixtures.SearchText],
       asOf: Option[DeepTime.SignedYear],
@@ -535,6 +544,7 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
   // stored shape columns and draws an area's stored web outline; the fixtures are boxes and points,
   // which that simplification (and its 4 decimals) leaves as they are, so the reference stays verbatim.
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def referenceGeoQuery(
       kind: Option[KindWire],
       asOf: Option[DeepTime.SignedYear],

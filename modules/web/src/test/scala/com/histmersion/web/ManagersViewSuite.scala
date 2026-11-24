@@ -20,10 +20,12 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.WireEnumValues
 import com.histmersion.web.ui.Choices
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The managers window's pure parts: the badge, the item actions per status, the settings form, the hint box, the pager
   * and the window keys.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ManagersViewSuite extends munit.FunSuite:
 
   test("badge: the person's state, else what the supervisor derived"):
@@ -672,12 +674,14 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.stages(gs), "1 planned · 2 seeding")
 
 /** The scheduler panel's pure parts: the queue's filters and facets, and its heading. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SchedulerPanelSuite extends munit.FunSuite:
   import com.histmersion.api.automation.AgentScheduler.*
   import com.histmersion.api.automation.Goal
   import com.histmersion.api.jobs.JobKinds
   import com.histmersion.api.library.Facet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def w(
       id: Waiting.Item,
       t: Waiting.JobType,
@@ -754,6 +758,7 @@ class ApprovalDigestLineSuite extends munit.FunSuite:
     )
 
 /** The autopilot section's drain line. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DrainLineSuite extends munit.FunSuite:
   import com.histmersion.api.automation.Autopilot.DrainInfo
   test("draining with runs in flight, then drained"):

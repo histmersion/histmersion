@@ -24,10 +24,12 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].
   */
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class RangeSqlSuite extends DbSuite:
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
@@ -111,6 +113,7 @@ class RangeSqlSuite extends DbSuite:
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d

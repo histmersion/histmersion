@@ -3,6 +3,7 @@ package domain.catalogue.maptiles
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A crowded sites tile with the sites of no known date in it: the dated sites the span shows and the undated ones,
   * each counted by the squares of the tile's grid ([[GridCell]]), as ONE count a square. An undated site the span shows
@@ -18,6 +19,8 @@ object UndatedCells:
 
   export TileCoord.Z as MergeZ
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def merge(z: UndatedCells.MergeZ, dated: List[GridCell], undated: List[GridCell]): List[TileCell] =
     val byUndated = undated.iterator.map(u => (u.gx, u.gy) -> u).toMap
     val datedSquares = dated.iterator.map(d => (d.gx, d.gy)).toSet
@@ -29,6 +32,7 @@ object UndatedCells:
     (withDated.reverse ++ undatedOnly)
 
   /** The total a tile would hold: every dated site and every undated one not counted among them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def total(dated: List[GridCell], undated: List[GridCell]): Total =
     @tailrec def loop(rest: List[GridCell], sum: Total): Total = rest match
       case c :: tail => loop(tail, Total(sum.value + c.n.value - c.dup.value))
@@ -36,6 +40,8 @@ object UndatedCells:
     Total(loop(dated, Total(0L)).value + undated.iterator.map(_.n.value.toLong).sum)
 
   /** One square's cell: `dated` and `undated` of the same square, either missing. None when it holds nothing. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[maptiles] def cellOf(z: TileCoord.Z, dated: Option[GridCell], undated: Option[GridCell]): Option[TileCell] =
     val d = dated.fold(0)(_.n.value)
     val dup = dated.fold(0)(_.dup.value)

@@ -13,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read from the server's
   * tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the kind and tier menus); the points
@@ -36,6 +37,8 @@ object EventMarkers:
   /** Pure: the tiles' query for the events of `tiles` (a span) under `filter`, by kind and tier — the filter's paging
     * and its sort left out, which every tile of a span shares.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def query(
       filter: Filter,
       tiles: (Year, Year),
@@ -64,6 +67,7 @@ object EventMarkers:
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def load(tiles: (Year, Year), span: (Years.Astronomical, Years.Astronomical)): Unit =
     layer.load(
       ApiClient.tileTemplate(

@@ -11,8 +11,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[ActivityCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion activity`: declares its options, parses them into typed commands")
 object ActivityArgs:
   object ActivityEntry extends CommandLine.Entry:
     val name = "activity"
@@ -40,6 +43,7 @@ object ActivityArgs:
     private val before_ = value[String]("before", "The next older page: the cursor the last page printed")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       ActivityCmd.Command.Activity(
         kind_.toOption,

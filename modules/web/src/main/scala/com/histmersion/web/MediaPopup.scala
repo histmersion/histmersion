@@ -14,6 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.{Href, Html}
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows its local thumbnail
   * with the credit line and licence its licence requires — the licence's name, linked to its text. A click on the
@@ -26,6 +27,8 @@ object MediaPopup:
 
   /** Pure: what the picture's full-size view shows. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def full(h: MediaGeoHit): Option[Lightbox.Item] =
     h.fileUrl.map(u =>
       Lightbox.Item(
@@ -42,6 +45,9 @@ object MediaPopup:
     )
 
   /** `caption` is markup: the picture's caption line as [[PointKinds]] builds it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def html(h: MediaGeoHit, period: PeriodText, caption: Html): Html =
     val kind = Fmt.display(UiLabels.Text(h.kind.map(_.value).getOrElse("media")))
     def title(inner: Html) =

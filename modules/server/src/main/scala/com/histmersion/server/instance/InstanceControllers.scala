@@ -30,6 +30,7 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** This server as REST, MCP and the CLI ask about it, over the diagnostics: its version and health, About (the build,
   * the job queue, the newest backup, the store's counts, the storage, the plugins, the agent lease, the metered
@@ -56,6 +57,8 @@ final class InstanceControllers(
   /** The Storage part of About: measured in the background, at most once per `storage.ttl-seconds` ([[StorageCache]]),
     * so `about` itself never walks a disk.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private val storage = StorageCache(
     prepare = () => {
       val c = cfg
@@ -86,6 +89,7 @@ final class InstanceControllers(
     */
   def configReload(): ReloadReport = deps.reloader()
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def health: Health =
     val conv = converter()
     Try(Migrate.current(deps.ds)) match
@@ -108,6 +112,8 @@ final class InstanceControllers(
     * part that cannot be read becomes a `problems` line, never a failed request: this is the page someone opens BECAUSE
     * something looks wrong.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def about(now: Instant = Instant.now(deps.clock)): About =
     def attempt[A](what: String)(a: => A): Either[String, A] =
       Try(a).toEither.left.map(e => s"$what: ${e.getMessage}")
@@ -159,6 +165,8 @@ final class InstanceControllers(
     )
 
   /** The corpus About counts: what the owners count of their records. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def corpusCounts: CorpusCounts =
     val figures = Deps.data.owners.filterNot(_ == JobsData.owner).map(diagnostics.figures)
     def count(noun: String): Int =
@@ -174,6 +182,8 @@ final class InstanceControllers(
     )
 
   /** The last storage measurement, with its age as of `now`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def storageNow(now: Instant): Storage.Report =
     val r = storage.get(StorageCache.WaitMillis(cfg.storage.waitMillis.value.toLong))
     r.modify(_.ageSeconds)
@@ -186,6 +196,8 @@ final class InstanceControllers(
   /** `GET /api/ui/counters` — the lists' counts and "something new" marks ([[UiNotices]]), and, where the server runs
     * agents, what they are doing (the top bar's status).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def uiCounters: UiNotices.Counters =
     val marks =
       seen.marks(UserId.Local).map((b, at) => UiNotices.Board.Wire(b.value) -> UiNotices.Counter.Seen(at.iso.value))
@@ -196,6 +208,9 @@ final class InstanceControllers(
   /** `POST /api/ui/seen/{board}` — the reader opened that window, which showed items up to `mark.at`. Answers the
     * counters after the mark moved.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def markSeen(board: UiNotices.Board.Wire, mark: UiNotices.SeenMark): Either[Api.Error, UiNotices.Counters] =
     deps.maintenance.guard(WriteGate.OperationName("mark_seen")):
       for
@@ -220,6 +235,7 @@ final class InstanceControllers(
   /** The `ui` config block, plus whether the page must send the key (`keyRequired`: it was not let in as a trusted
     * network's) — never the key itself — and the plugins (their settings with secrets as references, never values).
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def uiConfig(keyRequired: UiConfig.KeyRequired): UiConfig = UiConfigViews.page(
     cfg.ui,
     keyRequired = keyRequired,
@@ -234,6 +250,8 @@ final class InstanceControllers(
   /** `ui.base-map-source` resolved ([[BaseMapSource]]): `auto` becomes `local` once the stored extract can draw one of
     * the vector styles whole — a `stat` and a cached header read.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def baseMapSource: BaseMapSource.Wire =
     val setting = BaseMapSource.Wire(cfg.ui.baseMapSource.value)
     setting.value.trim.toLowerCase(java.util.Locale.ROOT) match

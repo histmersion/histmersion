@@ -27,12 +27,15 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Event as ApiEvent
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the events keep: every field read back, with its datings, edges (both ends) and participants in their
   * order; the list narrowed by text, kind, historicity, period and tier, in time order and paged; the map drawing the
   * placed, well-dated ones and counting the rest; a patch changing only what it names; a rename leaving an alias, and
   * refused onto a taken or an aliased id; a delete once.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class EventServiceContract extends CatalogueStoreSuite:
   private def span(a: Year, b: Year) = TimeSpan(Some(a), None, None, Some(b))
   private val point = EventPatch.Geometry("""{"type":"Point","coordinates":[23.5,37.7]}""")

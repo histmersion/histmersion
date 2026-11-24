@@ -4,6 +4,7 @@ package plugins.events
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion.events.noaa`: NCEI's hazard service, its page size, the pace and the datasets read (comma-separated:
   * `earthquakes`, `volcanoes`, `tsunamis`).
@@ -15,6 +16,7 @@ final case class NoaaSettings(
     datasets: NoaaSettings.Datasets
 ) derives ConfigReader:
   /** The datasets named, in order; a name NCEI has no dataset of is left out. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def datasetList: List[NoaaCatalogue.Dataset] =
     datasets.value.split(",").map(_.trim).flatMap(d => NoaaCatalogue.Datasets.find(_.value == d)).toList
 

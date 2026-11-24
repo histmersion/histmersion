@@ -8,8 +8,11 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final private[places] case class PlaceDetailRow(
     id: Place.Id,
     label: com.histmersion.api.catalogue.Place.Summary.Label,
@@ -27,6 +30,8 @@ final private[places] case class PlaceDetailRow(
     timeBasis: com.histmersion.api.catalogue.Place.TimeBasis,
     precision: Place.Precision
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toSummary: com.histmersion.api.catalogue.Place.Summary =
     com.histmersion.api.catalogue.Place.Summary(
       com.histmersion.api.catalogue.Place.Id(id.value),

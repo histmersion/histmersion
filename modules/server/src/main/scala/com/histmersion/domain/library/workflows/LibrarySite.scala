@@ -16,11 +16,13 @@ import com.histmersion.api.Api
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the library's workflows are given by the composition: the work lists, the write gate, the library's own
   * controllers, the jobs, and what they ask of the other domains — a place name's point, the stored sources an article
   * cites, whether an article exists — and of the acquisition's upstreams, their quotas.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait LibrarySite:
   def workLists: WorkListControllers
   def queues: QueueService

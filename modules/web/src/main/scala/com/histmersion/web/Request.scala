@@ -14,8 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
   *     is [[Loaded.Unreachable]], keeping what the view showed. Nothing is left on "Loading…", nothing is a bare
   *     message.
   *
-  * A raw `ApiClient` call consumed by a view is counted by `ContractsSuite`'s `raw-request` ratchet until every view
-  * asks through this type.
+  * A raw `ApiClient` call consumed by a view is a `ContractLint` `RawRequest` finding, tolerated until every view asks
+  * through this type.
   */
 final class Request[A]:
   private val guard = Latest()

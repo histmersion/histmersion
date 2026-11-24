@@ -7,16 +7,19 @@ import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The schema version without a Flyway instance (#880), against a real Postgres (HISTMERSION_TEST_DB_URL); skipped
   * otherwise.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MigrateCurrentSuite extends DbSuite with Bounded:
   private given CanEqual[Thread, Thread] = CanEqual.derived
 
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d

@@ -6,11 +6,13 @@ import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The person's requests to stop running background jobs, and how each paused job goes on. Held in memory by the server
   * for its lifetime: a stop is asked of a job running in this process, and a restart loses every paused job's way to go
   * on (the startup reconciliation fails those as interrupted).
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 final class JobStops:
   private val requested = ConcurrentHashMap[Job.Id, JobStop]()
   private val resumers = ConcurrentHashMap[Job.Id, () => Either[Problems, Unit]]()
@@ -31,6 +33,8 @@ final class JobStops:
   def canResume(id: Job.Id): Boolean = resumers.containsKey(id)
 
   /** Resume paused job `id` (its way to go on is used once). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def resume(id: Job.Id): Either[Problems, Unit] =
     Option(resumers.remove(id))
       .toRight(Problem.Unclassified(Legacy.Text(s"job $id cannot be resumed by this server")))

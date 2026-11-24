@@ -3,6 +3,7 @@ package domain.personal.reading
 import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
 enum ReadingShow(val wire: ReadingShow.Wire):
@@ -14,6 +15,7 @@ object ReadingShow:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Option[Wire]): Either[Problem, ReadingShow] =
     s.map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)

@@ -16,6 +16,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `POST /api/sources/{ck}/rename` over real HTTP, with a write key configured: the write gate, the answer, and the old
   * citekey still answering every read — the JSON routes, the resolver, the export, the article page's links, the MCP
@@ -47,6 +48,7 @@ class RenameHttpSuite extends DbSuite:
         .build()
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base

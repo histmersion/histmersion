@@ -14,8 +14,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[SettingsCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion settings`: declares its options, parses them into typed commands")
 object ConfigSettingArgs:
   /** `config get|set|unset|restart`, held by `config`. */
   def leaves(): List[Subcommand] = List(LeafGet(), LeafSetCmd(), LeafUnset(), LeafRestart())
@@ -33,6 +36,7 @@ object ConfigSettingArgs:
     private val onlyLocal_ = localFlag()
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       SettingsCmd.Command.Get(key_.toOption, prefix_.toOption, onlyLocal_(), json_())
     )
@@ -52,6 +56,7 @@ object ConfigSettingArgs:
     private val consent_ = literalSecretFlag()
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       SettingsCmd.Command.SetCmd(key_(), value_(), onlyLocal_(), nr_(), consent_(), json_())
     )
@@ -68,6 +73,7 @@ object ConfigSettingArgs:
     private val nr_ = noReloadFlag()
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(SettingsCmd.Command.Unset(key_(), onlyLocal_(), nr_(), json_()))
 
   final private class LeafRestart()

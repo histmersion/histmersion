@@ -17,6 +17,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The synchronous, metadata-only half of an acquisition.
   *
@@ -27,11 +28,15 @@ import com.histmersion.domain.Creator
   * Crucially it does NOT replace a source that already exists: a re-ingest of an enriched paper must not wipe its
   * findings, notes and tags, so an existing citekey gets a metadata-only PATCH.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SkeletonIngest(sources: SourceService) extends IngestJobs:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiKey(citekey: Citekey): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(citekey.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enqueue(
       copy: Option[FetchedCopy],
       citekey: Citekey,
@@ -55,6 +60,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def create(citekey: Citekey, meta: IngestMeta)(using WritePermit)(using Creator.New): Either[Problems, Unit] =
     Source.Write
       .applyPut(
@@ -76,6 +82,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
         val _ = sources.put(s, Caller.Local)
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def patchExisting(citekey: Citekey, meta: IngestMeta)(using
       WritePermit
   )(using Creator.New): Either[Problems, Unit] =

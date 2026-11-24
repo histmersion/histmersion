@@ -2,6 +2,7 @@ package com.histmersion
 package domain.media.figures
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which of a paper's own figures illustrates it on a hover card (#1446). Pure: the figures come from the OCR
   * conversion (the converter names them after their page, `fig-0004-03.png` = page 4, picture 3; docling's scans
@@ -80,6 +81,8 @@ object FigurePick:
   /** Pure: the page a figure's name says it is on (pymupdf4llm's `fig-<page>-<n>`, pages counted from 1 as the
     * converter writes them), `None` for any other name.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(name: Figure.Name): Option[Page] = name.value match
     case PageName(p) => p.toIntOption.map(Page(_))
     case _           => None
@@ -87,6 +90,8 @@ object FigurePick:
   /** Pure: a figure's order in its document by its name alone — the page for `fig-…`, the sequence number for docling's
     * `image_…`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def order(name: Figure.Name): Option[Order] = page(name)
     .map(p => Order(p.value))
     .orElse(name.value match
@@ -96,6 +101,7 @@ object FigurePick:
   /** Pure: the sizes that are page scans — `pageScanMin` or more portrait figures (height/width between 1.2 and 1.6)
     * whose sides agree within 2 %.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pageScanSizes(figs: List[Figure], rules: Rules): Set[(Figure.Width, Figure.Height)] =
     val portrait = figs.flatMap(f =>
       for
@@ -108,6 +114,8 @@ object FigurePick:
     portrait.distinct.filter(s => portrait.count(near(s, _)) >= rules.pageScanMin.value.max(2)).toSet
 
   /** Pure: why a figure cannot illustrate its source, or `None` when it can. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reject(f: Figure, rules: Rules, scans: Set[(Figure.Width, Figure.Height)] = Set.empty): Option[Rejection] =
     (f.width, f.height) match
       case (Some(w), Some(h)) if w.value > 0 && h.value > 0 =>
@@ -123,6 +131,8 @@ object FigurePick:
   /** Pure: the figure's weight — its area, halved past the early pages (or, without a page in its name, past the first
     * third of the text).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def score(f: Figure, rules: Rules): Score =
     val area = f.width.fold(0)(_.value).toDouble * f.height.fold(0)(_.value)
     val early = page(f.name) match
@@ -131,6 +141,7 @@ object FigurePick:
     Score(if early then area else area / 2)
 
   /** Pure: the illustration — the best-scoring acceptable figure; ties go to the earlier one. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def choose(figs: List[Figure], rules: Rules): Option[Figure] =
     val scans = pageScanSizes(figs, rules)
     figs
@@ -145,6 +156,8 @@ object FigurePick:
   /** Pure: every figure a converted text links (`assets/<name>`, the form the converter writes), with how many times
     * and where first (a share of the text) — one pass, whatever the number of figures.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refs(body: ConvertedText): Map[Figure.Name, (Figure.Refs, Figure.FirstAt)] =
     if body.value.isEmpty then Map.empty
     else
@@ -158,6 +171,7 @@ object FigurePick:
         .toMap
 
   /** Pure: the figures with their links counted in `body`. */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   def withRefs(figs: List[Figure], body: ConvertedText): List[Figure] =
     val r = refs(body)
     figs.map(f =>

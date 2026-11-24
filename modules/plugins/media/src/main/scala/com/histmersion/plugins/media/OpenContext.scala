@@ -11,6 +11,8 @@ import com.histmersion.plugin.*
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Open Context (https://opencontext.org/about/services), no key: its search API's JSON answer
   * (`/query/.json?type=media&cat=oc-gen-image&q=`) with the `attributes` it is asked for — each record's licence
@@ -20,6 +22,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `early bce/ce`/`late bce/ce` are signed years already. A record Open Context flags as related to human remains, or
   * whose subject is human remains, is not shown whatever its licence. Pure.
   */
+@atBoundary(BoundaryKind.Json, "reads the open context collection's JSON answers into media records")
 object OpenContext:
 
   /** The plugin's id: what its problems name. */
@@ -49,6 +52,8 @@ object OpenContext:
   val Region: MediaItem.Geography.Field = MediaItem.Geography.Field("region")
   val Spatial: MediaItem.Geography.Field = MediaItem.Geography.Field("dc-terms:spatial")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       api: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
@@ -59,12 +64,16 @@ object OpenContext:
         s"&attributes=${Attributes.value.enc}&add-attribute-uris=1&response=${"metadata,uri-meta".enc}"
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def itemUrl(api: CollectionSettings.ApiUrl, uuid: Uuid): Plugin.Http.Url =
     Plugin.Http.Url(s"${api.value.stripSuffix("/")}/media/${uuid.value.enc}.json")
 
   private val UuidPattern = """.*/media/([0-9a-fA-F-]{36})/?$""".r
 
   /** Pure: the uuid of a media URI (`http://opencontext.org/media/084e8977-…`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def uuidOf(uri: Plugin.Http.Url): Option[Uuid] = uri.value.trim match
     case UuidPattern(u) => Some(Uuid(u.toLowerCase(Locale.ROOT)))
     case _              => None
@@ -73,6 +82,8 @@ object OpenContext:
   private val Withheld = "human remains (Open Context flags them; not shown)"
 
   /** Pure: the short name of a licence label (`Attribution 4.0 International (CC BY 4.0)` → `CC BY 4.0`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def shortLicence(label: Licence, id: Licence.Read.Id): Licence =
     """\(([^()]+)\)\s*$""".r
       .findFirstMatchIn(label.value)
@@ -94,6 +105,7 @@ object OpenContext:
         )
 
   /** Pure: one search record. Its rights are its own licence (or why it has none). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(json: Json, licences: LicenceReader): Either[Problem, MediaItem] =
     val c = json.cursor
     c.str("uri")
@@ -215,6 +227,8 @@ object OpenContext:
     * (`2631.1`, `Trench 42`, `A`, `I`: the live map has a place called "I"), or one named by a unit word (`Locus none
     * provided`, `Area`, `Survey`, `Stray Finds`)?
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def unitSegment(seg: Segment): Boolean =
     val s = seg.value.trim
     val first = s.split("\\s+").headOption.getOrElse("").toLowerCase(Locale.ROOT).stripSuffix(".")
@@ -225,6 +239,8 @@ object OpenContext:
   /** Pure: Open Context's own citation form — creators (year) "label from context". In project. Open Context. ARK. —
     * and the licence's short name.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def credit(
       title: MediaItem.Title,
       context: ContextLabel,
@@ -246,6 +262,8 @@ object OpenContext:
   /** Pure: a record completed from its media item — the preview to store, the thumbnail, the original — with the
     * licence read AGAIN from the item: a missing or different licence refuses it.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[Problem, MediaItem] =
     val c = json.cursor
     val files = c.downField("oc-gen:has-files").focus.flatMap(_.asArray).toList.flatten.flatMap { f =>

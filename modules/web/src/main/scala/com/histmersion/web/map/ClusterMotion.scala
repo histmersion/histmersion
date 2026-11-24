@@ -5,6 +5,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How the cluster layer moves on a zoom that regroups it (#3764: the raster map's cluster plugin animated it, the
   * MapLibre release drew the new groups in one step). A split slides each new marker out from where its bubble stood; a
@@ -49,6 +50,7 @@ object ClusterMotion:
     * each marker's start laid out before its move, and reading that layout between one marker's writes and the next's
     * lays the whole page out once per marker.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def slideAll(slides: List[Slide]): Unit =
     slides.foreach { sl =>
       val ghost = sl.marker.el.classList.contains("hd-cluster-ghost")
@@ -63,6 +65,7 @@ object ClusterMotion:
       dom.window.setTimeout(() => slides.foreach(_.marker.el.classList.remove("hd-cluster-move")), Ms + 70)
 
   /** `m` appears as what merges into it arrives. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def arrive(m: DomMarker): Unit =
     m.el.classList.add("hd-cluster-arrive")
     dom.window.setTimeout(() => m.el.classList.remove("hd-cluster-arrive"), Ms + 70)

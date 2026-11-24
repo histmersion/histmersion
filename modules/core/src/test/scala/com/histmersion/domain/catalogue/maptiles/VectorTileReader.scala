@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import java.nio.charset.StandardCharsets
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Reads back the point layers [[VectorTileWriter]] writes — the tests' view of a tile, as MapLibre decodes it: each
   * layer's name, extent and point features (place and properties).
@@ -9,8 +10,11 @@ import java.nio.charset.StandardCharsets
 object VectorTileReader:
 
   final case class Feature(x: Int, y: Int, props: Map[String, TileValue]):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text(k: String): Option[String] = props.get(k).collect { case TileValue.Text(s) => s.value }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def whole(k: String): Option[Long] = props.get(k).collect { case TileValue.Whole(n) => n.value }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def real(k: String): Option[Double] =
       props.get(k).collect { case TileValue.Real(d) => d.value; case TileValue.Whole(n) => n.value.toDouble }
 
@@ -34,6 +38,7 @@ object VectorTileReader:
     }
     Layer(name, extent, features)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def value(b: Array[Byte], from: Int, until: Int): TileValue =
     fields(b, from, until).headOption match
       case Some((1, _, s, e))    => TileValue.Text(TileValue.Text.Value(String(b, s, e - s, StandardCharsets.UTF_8)))

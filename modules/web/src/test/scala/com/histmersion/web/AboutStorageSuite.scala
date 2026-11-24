@@ -10,8 +10,10 @@ import com.histmersion.api.instance.{About, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The About window's Storage and Disk space sections, in their pure part. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AboutStorageSuite extends munit.FunSuite:
 
   private val GB = 1000L * 1000 * 1000
@@ -28,6 +30,7 @@ class AboutStorageSuite extends munit.FunSuite:
       None
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val report = Storage.Report(
     ageSeconds = (Some(30)).map(Storage.Report.AgeSeconds.apply),
     entries = Storage.nest(

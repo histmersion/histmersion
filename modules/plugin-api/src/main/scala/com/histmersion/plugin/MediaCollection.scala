@@ -4,6 +4,7 @@ package plugin
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One collection. Called by the host from one import at a time; keep no per-place state of your own. Failures are
   * values (`Left`); an exception is caught by the host and reported for that place.
@@ -78,6 +79,7 @@ trait MediaCollection:
   /** A collection of its targets' own pictures ([[MediaMatchRule.Own]]) is asked about a batch at once: what it found
     * for each. By default, [[search]] for each place and [[searchEvent]] for each event, in order.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     val asked =
       places.map(p => MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value((p.id).value)) -> search(p, http)) ++
@@ -102,6 +104,7 @@ trait MediaCollection:
   /** The items about to be stored of a collection of its targets' own pictures, completed in one batch: by default
     * [[complete]] for each.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
     val done = items.map(it => it.key -> complete(it, http))
     MediaCompleted(

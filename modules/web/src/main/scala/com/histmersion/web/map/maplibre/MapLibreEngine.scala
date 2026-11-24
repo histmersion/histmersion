@@ -11,10 +11,12 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.Capabilities
 import com.histmersion.web.map.MapEngine
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map engine: MapLibre GL JS (docs/research-map-styles.md, option C). The ONLY code that knows the library; the
   * app speaks [[MapSurface]].
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object MapLibreEngine extends MapEngine:
 
   /** MapLibre's zoom is the raster grid's minus one for the same scale (its tiles are 512 pixels). */
@@ -24,6 +26,7 @@ object MapLibreEngine extends MapEngine:
   /** Read once per page: a probe makes a WebGL context of its own (the page's map makes another). */
   def probe(): Capabilities = probed
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val probed: Capabilities =
     scala.util
       .Try {

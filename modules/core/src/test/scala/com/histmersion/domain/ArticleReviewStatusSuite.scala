@@ -12,9 +12,12 @@ import com.histmersion.domain.ReviewLedger.{Closure, Entry, Ledger, Status}
 import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.api.research.ReviewRound
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleReviewStatusSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(id: Finding.Id, r: Reviewer, s: Severity): Finding =
     Finding(
       id,

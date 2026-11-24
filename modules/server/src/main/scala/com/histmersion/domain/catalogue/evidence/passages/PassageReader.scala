@@ -2,10 +2,12 @@ package com.histmersion
 package domain.catalogue.evidence.passages
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One source's text, searched for passages: a phrase or a regular expression, each hit with its context; `limit`
   * passages at most.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 trait PassageReader:
   def find(
       query: PassageReader.Query,

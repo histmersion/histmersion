@@ -11,13 +11,17 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.PluginHarness
 import com.histmersion.plugin.testkit.HttpMode
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CliopatriaSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val fixture = DownloadedGazetteer.Text(
     scala.io.Source.fromResource("gazetteers/cliopatria.geojson")(using scala.io.Codec.UTF8).mkString
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(a: Int, b: Int): Option[Period] = Period.from(Year(a), Year(b)).toOption
 
   test("transform produces one PlaceInput per feature"):
@@ -150,6 +154,7 @@ class CliopatriaSuite extends munit.FunSuite:
     val http = new Plugin.Http:
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
         Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def fetch(
           url: Plugin.Http.Url,
           headers: Map[Header.Name, Header.Value]

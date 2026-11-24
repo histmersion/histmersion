@@ -15,6 +15,7 @@ import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The goals' operations as REST, MCP and the CLI reach them: list, read, put, patch, delete and rename a goal, and the
   * `meta/GOALS.md` export. An old slug (V053) answers as the goal it was renamed to, and a write to one goes there
@@ -27,12 +28,15 @@ final class GoalsControllers(
     pageSize: Option[PageSize] => PageSize,
     maintenance: WriteGate
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def notFound(slug: domain.automation.Goal.Slug) =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"${slug.value}")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def list(q: Api.GoalQuery): Goal.List = goals.page(
     q.status.map(s => domain.automation.Goal.Status.Wire(s.value)),
     pageSize(q.limit.flatMap(l => PageSize.option(l.value))),
@@ -53,6 +57,7 @@ final class GoalsControllers(
       val now = current(slug)
       goals.patch(now, p).flatMap(_ => get(now))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def delete(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_goal")):
       val now = current(slug)
@@ -60,6 +65,9 @@ final class GoalsControllers(
       else Left(notFound(slug))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def rename(slug: domain.automation.Goal.Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
     maintenance.guard(WriteGate.OperationName("rename_goal")):
       val from = current(slug)
@@ -89,6 +97,8 @@ final class GoalsControllers(
     * `GET /api/goals/{slug}/view` returns), plus the state of each linked work-list item so the file can show it done
     * or open. Read-only; the rendering is [[GoalsExport.render]].
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def exportText(): String =
     val schedules = goals.schedules(None).groupBy(_.goal)
     val views = goals.all().map { g =>

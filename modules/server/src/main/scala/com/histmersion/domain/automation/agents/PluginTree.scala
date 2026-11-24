@@ -6,12 +6,15 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object PluginTree:
   type Owned = OwnedValue
   type OwnedValue = OwnedValue.T
   object OwnedValue extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tree(roster: AgentRoster)(using Stores, Resources): Either[Problems, Map[SafePath.Candidate, String]] =
     val defs = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), roster)
     val files =
@@ -24,9 +27,12 @@ object PluginTree:
 
   val Owned: List[Owned] = List(OwnedValue("plugin/agents"), OwnedValue("plugin/skills"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[Problems, Unit] =
     tree(roster).flatMap(t => writeTree(store, t))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[agents] def writeTree(store: Store, tree: Map[SafePath.Candidate, String]): Either[Problem, Unit] =
     try
       val entries = tree.toList.map { (name, text) =>

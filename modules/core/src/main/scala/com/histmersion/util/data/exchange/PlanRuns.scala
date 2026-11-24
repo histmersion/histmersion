@@ -14,8 +14,10 @@ import com.histmersion.util.text.MinHash
 import scala.annotation.tailrec
 import java.util.UUID
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Several runs as one, each stage in the order the runs are given: what one kind's run answers first is the answer. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   @tailrec private def through(rest: List[PlanRun], es: BundleEntities)(
@@ -109,6 +111,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def pairIssue(kind: MergeIssue.Kind): Boolean = runs.exists(_.pairIssue(kind))
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   override def foldPairFirst(
       right: Bundle.Source,
       left: Bundle.Source,

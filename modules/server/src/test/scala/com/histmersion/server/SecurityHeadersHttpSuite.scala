@@ -15,12 +15,14 @@ import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.settings.ConfigSource
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every page this server serves, over real HTTP: the Content-Security-Policy (no script but the server's own files, no
   * framing, connections only to this server and the configured tile servers, rebuilt by a config reload), `nosniff` and
   * `X-Frame-Options` on each, the scripts the shells load served as JavaScript (nosniff refuses any other type), and a
   * stored text's hostile markup never reaching a page as markup. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SecurityHeadersHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

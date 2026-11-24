@@ -8,15 +8,18 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host's match rules for collection records (#1446) — a record tied to a place by its most specific place field,
   * by any location of a map, and by the dates — and the deep-time spans they read. The records are built here as the
   * host reads a plugin's item ([[MediaRecord]]); the parsers that produce them are the media plugins' own suites.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaCollectionsSuite extends munit.FunSuite:
 
   // ── matching ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       geo: List[(String, String)],
       period: Option[Period] = DeepTime.span(DeepTime.SignedYear(-1400L), DeepTime.SignedYear(-1200L))

@@ -6,11 +6,14 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Wording
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The page being shown, from the address bar: [[Route.parse]] of the path, kept in step with back/forward. Moving
   * between the web UI's pages changes the address without reloading (the map, the filters and the open windows stay);
   * the server's own pages (a source, an article) load.
   */
+@atBoundary(BoundaryKind.Dom, "reads the address bar and history and keeps the page in step with them")
 object Router:
   export UiState.NavigatePush as Push
 
@@ -30,9 +33,11 @@ object Router:
   /** A click a link should handle itself: the primary button with no modifier. ⌘/Ctrl/Shift/Alt and the middle button
     * are the browser's (a new tab or window), so the handler leaves them alone. Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def plainClick(button: Int, meta: Boolean, ctrl: Boolean, shift: Boolean, alt: Boolean): Boolean =
     button == 0 && !meta && !ctrl && !shift && !alt
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def plain(ev: dom.MouseEvent): Boolean = plainClick(ev.button, ev.metaKey, ev.ctrlKey, ev.shiftKey, ev.altKey)
 
   /** Once, after [[UiState.init]] read the hash: an old address goes to its new page, the address becomes the page's,
@@ -63,12 +68,16 @@ object Router:
             missing.set(true)
             current.set(Route.Explore)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def show(r: Route): Unit =
     missing.set(false)
     if current.now() != r then current.set(r)
     dom.document.title = s"${title(r)} · Histmersion"
 
   /** Go to page `r`: a step in the history, unless `push` is false. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def go(r: Route, push: Push = Push(true), search: Pages.UrlQuery = Pages.UrlQuery("")): Unit =
     if r.serverPage then window.location.assign(r.path)
     else
@@ -91,11 +100,15 @@ object Router:
   def titles: EventStream[(Route, UiLabels.Text)] = titleBus.events
 
   /** The page's title in the browser's tab: the page's name; an item's own title once it is known. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def retitle(r: Route, t: UiLabels.Text): Unit =
     if current.now() == r then dom.document.title = s"$t · Histmersion"
     titleBus.emit(r -> t)
 
   /** A page's name, before its content has said a better one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def title(r: Route): UiLabels.Text = r match
     case Route.Explore    => UiLabels.Text("Explore")
     case Route.Library(s) =>

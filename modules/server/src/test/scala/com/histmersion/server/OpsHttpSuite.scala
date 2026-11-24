@@ -31,10 +31,12 @@ import com.histmersion.server.agents.EngineContributions
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The stream-2.8 surface over real HTTP: status codes and JSON shapes are part of the contract, so they are asserted
   * through the wire rather than through the handlers. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class OpsHttpSuite extends DbSuite:
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
@@ -64,6 +66,7 @@ class OpsHttpSuite extends DbSuite:
   private var lock: java.sql.Connection = null
   private val LockKey = 2808 // stream 2.8
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       lock = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))).getConnection

@@ -17,11 +17,14 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.MergeSettings
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Finding
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The findings of a pair that is one matched, folded and numbered (docs/research-merge-import.md §5.4). */
 class FindingPlanSuite extends munit.FunSuite:
 
   private val At = "2026-10-01T09:00:00.000000Z"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def finding(
       id: Bundle.Finding.Id,
       ck: String,

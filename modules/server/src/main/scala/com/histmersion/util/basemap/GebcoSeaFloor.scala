@@ -14,6 +14,7 @@ import java.io.IOException
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sea floor from the GEBCO grid (15 arc-seconds, ~460 m; public domain), made into Terrarium tiles here: GEBCO
   * publishes the grid as eight 90° GeoTIFFs of uncompressed rows, so the rows a region needs are read by range, kept
@@ -32,12 +33,15 @@ final class GebcoSeaFloor(
   private val TileSize = 256
   private val PngGuess = 80L * 1024 // a tile, about (the ETOPO1 extract's, 2026-10-20)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def human(n: Long): String = Backup.humanBytes(com.histmersion.api.ByteCount(n))
 
   private def count(n: Long, singular: String, plural: String): Plural.Phrase =
     Plural.count(Plural.CountN(n), Plural.CountSingular(singular), Plural.CountPlural(plural))
 
   /** The GeoTIFFs of the grid's tiling that meet `bbox`, their headers read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plan(bbox: BBox, maxZoom: PmTiles.Zoom): Either[Problem, GebcoPlan] =
     val deg = cfg.tileDegrees.value
     val cells = for
@@ -70,6 +74,7 @@ final class GebcoSeaFloor(
       }
 
   /** What a fetch would do, zoom by zoom — the dry run's answer. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(p: GebcoPlan): GebcoSeaFloor.Description =
     val byZoom =
       p.tiles
@@ -86,9 +91,11 @@ final class GebcoSeaFloor(
     )
 
   /** The bytes a fetch needs on disk at most: the rows read and the tiles written. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def needs(p: GebcoPlan): ByteCount = ByteCount.applyUnsafe(p.readBytes.value + p.tiles.size * PngGuess)
 
   /** Read the rows still missing from `work`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def download(
       p: GebcoPlan,
       work: Store,
@@ -132,6 +139,7 @@ final class GebcoSeaFloor(
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
       p: GebcoPlan,
       work: Store,
@@ -211,6 +219,7 @@ object GebcoSeaFloor:
   export PmTiles.Zoom
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def urlOf(
       template: BasemapGebcoConfig.Url,
       west: WholeDegrees,
@@ -227,6 +236,7 @@ object GebcoSeaFloor:
     )
 
   /** The tiles of zooms 0…`maxZoom` over `b`, in tile-id order (the archive's). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tiles(b: BBox, maxZoom: PmTiles.Zoom): Vector[(TileKey, (Zoom, TileX, TileY))] =
     (0 to maxZoom.value).toVector
       .flatMap { z =>
@@ -239,6 +249,7 @@ object GebcoSeaFloor:
       .sortBy[Long](_._1.value)
 
   /** The west, south, east and north of a tile, in degrees (Web Mercator). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bounds(z: Zoom, x: TileX, y: TileY): (Degrees, Degrees, Degrees, Degrees) =
     val n = math.pow(2, z.value)
     def lat(t: Double) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
@@ -250,12 +261,14 @@ object GebcoSeaFloor:
     )
 
   /** A tile wholly inside `b`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inside(b: BBox, t: (Zoom, TileX, TileY)): Boolean =
     val (w, s, e, n) = bounds(t._1, t._2, t._3)
     w.value >= b.minLon.value && e.value <= b.maxLon.value && s.value >= b.minLat.value && n.value <= b.maxLat.value
 
   /** The rows of one part that were read, each run mapped from its file. */
   final case class Rows(part: GebcoPart, runs: List[(RowRun, ByteBuffer)]):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val byRow: Array[Int] =
       val a = Array.fill(part.grid.height.value)(-1)
       runs.zipWithIndex.foreach { case ((r, _), i) =>
@@ -264,6 +277,7 @@ object GebcoSeaFloor:
       a
 
     /** The sample at a column and row, when it was read and is not "no data". */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def at(col: Column, row: Row): Option[Elevation] =
       val w = part.window
       if row.value < w.first.value || row.value > w.last.value || col.value < w.firstCol.value || col.value > w.lastCol.value
@@ -276,6 +290,7 @@ object GebcoSeaFloor:
   /** The elevation under pixel (`px`, `py`) of tile (`z`, `x`, `y`): the mean of the grid's samples under four points
     * spread over the pixel (a pixel of a low zoom covers many samples). None when the rows read hold none of them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sample(
       rows: List[Rows],
       z: Zoom,

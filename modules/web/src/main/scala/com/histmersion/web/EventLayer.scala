@@ -13,6 +13,7 @@ import com.histmersion.api.instance.EventsUiConfig
 import com.histmersion.web.ui.ThemeTokens
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events on the map while the timeline plays (#1440). Fetched ONCE when playback starts (the filter's events over
   * the span played — `/api/events/geo`); every frame after that is local: each event's visibility is computed from the
@@ -26,6 +27,7 @@ object EventLayer:
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class Shown(marker: DomMarker, outline: Boolean, var alpha: Alpha, var slot: Slot)
 
   /** The pane the labels go in: above the finding markers, so a bubble never hides an event. */
@@ -33,6 +35,7 @@ object EventLayer:
 
   /** The regional events' outlines, drawn by the map (`ShapeSet` "event-outlines"). */
   val OutlineSet = "event-outlines"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def outlines: Option[ShapeSet] = Option.when(TheMap.isUp)(
     TheMap.surface.shapes(
       MapSurface.ShapesId(OutlineSet),
@@ -61,6 +64,9 @@ object EventLayer:
   private var lastFrame: Option[(Year, YearsPerSecond)] = None
 
   /** Start: fetch the events of `query` and draw them at the next frame. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(cfg: EventsUiConfig, query: Api.EventQuery): Unit =
     stop()
     running = true
@@ -73,6 +79,8 @@ object EventLayer:
     })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** One frame: the playhead at `playhead`, playing `yearsPerSecond`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def frame(playhead: Year, yearsPerSecond: YearsPerSecond): Unit =
     lastFrame = Some((playhead, yearsPerSecond))
     if running && config != null && TheMap.isUp then
@@ -126,6 +134,7 @@ object EventLayer:
     outlines.foreach(_.clear())
     lastFrame = None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def drawOutlines(): Unit =
     outlines.foreach(
       _.set(
@@ -140,6 +149,9 @@ object EventLayer:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def add(e: EventGeo, start: Year, a: Alpha): Shown =
     val outline = e.outline
       .filter(_ => e.scale.value == EventScale.Regional)
@@ -161,25 +173,31 @@ object EventLayer:
     MapLabels.trackEvent(e.id, marker, MapLabels.Entry.Rank(EventPlayback.rank(e, start).value), () => nameOf(s))
     s
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def remove(id: Event.Id, s: Shown): Unit =
     MapLabels.untrackEvent(id)
     pane.remove(s.marker)
     outlined.remove(id)
 
   /** The label's element (`.hd-event`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def labelOf(s: Shown): Option[dom.html.Element] =
     Option(s.marker.el.querySelector(".hd-event")).map(_.asInstanceOf[dom.html.Element])
 
   /** The label's name (`.hd-area-point`): what the collision pass hides, leaving the dot. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def nameOf(s: Shown): Option[dom.HTMLElement] =
     labelOf(s).flatMap(l => Option(l.querySelector(".hd-area-point"))).map(_.asInstanceOf[dom.HTMLElement])
 
   /** The visibility, as `--a` on the label and the outline's own. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def setAlpha(id: Event.Id, s: Shown, a: Alpha): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
     if s.outline then
       outlines.foreach(_.restyle(ShapeFeature.Id(id.value), ShapeFeature.Colour(""), ShapeFeature.Alpha(a.value)))
 
   /** The stacking slot, as `--i`, on the label. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def setSlot(s: Shown, slot: Slot): Unit =
     labelOf(s).foreach(_.style.setProperty("--i", slot.toString))

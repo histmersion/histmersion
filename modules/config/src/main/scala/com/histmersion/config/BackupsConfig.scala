@@ -6,6 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries are looked up on
   * PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are installed off PATH (homebrew's libpq
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
   *   how long a restore first waits for the writes, connections and workers in flight; with a write or a connection
   *   still out then, it changes nothing.
   */
+@movesTo(FeaturePlace.UtilDataBackup)
 final case class BackupsConfig(
     dir: BackupsConfig.Dir,
     pgBinDir: BackupsConfig.PgBinDir,

@@ -10,7 +10,11 @@ import com.histmersion.api.library.Query
 import com.histmersion.api.views.QueueListing
 import scala.`package`.List
 import com.histmersion.api.automation.Goal
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the ops routes with their request and response bodies")
+@movesTo(FeaturePlace.Api)
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
@@ -21,6 +25,7 @@ object OpsApi:
 
   private lazy val base = endpoint.in("api").errorOut(Api.problemOut)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val lint: PublicEndpoint[List[Lint.Wire], Api.Error, LintReport, Any] =
     (endpoint.get
       .in("api" / "lint")
@@ -31,6 +36,7 @@ object OpsApi:
         (refactorDecoded10).map(refactorElement9 => Lint.Wire(refactorElement9))
       )((refactorEncoded10: List[Lint.Wire]) => (refactorEncoded10).map(refactorElement10 => (refactorElement10).value))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val lintFix: PublicEndpoint[List[Lint.Wire], Api.Error, LintFixResult, Any] =
     (base.post
       .in("lint" / "fix")
@@ -44,6 +50,7 @@ object OpsApi:
     base.post.in("lint" / "markdown").in(jsonBody[FormatCheck]).out(jsonBody[FormatReport])
 
   /** Declared before the `{list}` routes so `items` is never read as a list name. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val queuePatch: PublicEndpoint[(Queue.Id, QueuePatch), Api.Error, QueueItem, Any] =
     (endpoint.patch
       .in("api" / "queue" / "items" / path[Int]("id"))
@@ -54,6 +61,7 @@ object OpsApi:
         (Queue.Id((refactorDecoded12)._1), (refactorDecoded12)._2)
       )((refactorEncoded12: (Queue.Id, QueuePatch)) => (((refactorEncoded12)._1).value, (refactorEncoded12)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val queueDelete: PublicEndpoint[Queue.Id, Api.Error, QueueItem, Any] =
     (endpoint.delete
       .in("api" / "queue" / "items" / path[Int]("id"))
@@ -63,6 +71,7 @@ object OpsApi:
         (refactorEncoded4).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val queueList
       : PublicEndpoint[(Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire]), Api.Error, QueueListing, Any] =
     (endpoint.get
@@ -93,6 +102,7 @@ object OpsApi:
         )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val queueAdd: PublicEndpoint[(Queue.Wire, QueueAdd), Api.Error, QueueItem, Any] =
     (endpoint.post
       .in("api" / "queue" / path[String]("list"))
@@ -103,6 +113,7 @@ object OpsApi:
         (Queue.Wire((refactorDecoded15)._1), (refactorDecoded15)._2)
       )((refactorEncoded15: (Queue.Wire, QueueAdd)) => (((refactorEncoded15)._1).value, (refactorEncoded15)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val queueExport: PublicEndpoint[Queue.Wire, Api.Error, Queue.Export, Any] =
     (endpoint.get
       .in("api" / "queue" / path[String]("list") / "export")
@@ -115,6 +126,7 @@ object OpsApi:
         (refactorEncoded8: Queue.Export) => (refactorEncoded8).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val queueImport: PublicEndpoint[(Queue.Wire, QueueImport), Api.Error, QueueImported, Any] =
     (endpoint.post
       .in("api" / "queue" / path[String]("list") / "import")
@@ -126,6 +138,7 @@ object OpsApi:
       )((refactorEncoded18: (Queue.Wire, QueueImport)) => (((refactorEncoded18)._1).value, (refactorEncoded18)._2))
 
   /** Under `export/` rather than `goals/` so it is never read as a goal slug. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val goalsExport: PublicEndpoint[Unit, Api.Error, Goal.Export, Any] =
     (base.get
       .in("export" / "goals")

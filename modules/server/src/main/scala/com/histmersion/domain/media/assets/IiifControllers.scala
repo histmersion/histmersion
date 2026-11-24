@@ -15,6 +15,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.ArchiveFile
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Server-side implementation of the IIIF Image API Level 1 (plan §4.3).
   *
@@ -24,10 +25,14 @@ import com.histmersion.util.problem.Problems
   *
   * `baseUrl` is this server's public URL, read at each request.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers.BaseUrl):
   import IiifControllers.Filename
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def info(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, Json] =
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     assets.figure(citekey, safeName) match
@@ -45,6 +50,8 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   /** Serve a IIIF image request. Parses all IIIF parameters, applies region/size, encodes to the requested format, and
     * returns `(bytes, contentType)`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def image(
       citekey: Citekey,
       name: AssetService.AssetName,
@@ -66,6 +73,8 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   // ── internals ──────────────────────────────────────────────────────────────────────────────
 
   /** Parse `default.jpg` or `default.png`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def parseFilename(filename: Filename): Either[Problems, Iiif.Format] =
     filename.value match
       case s"default.$ext" =>
@@ -80,6 +89,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         )
 
   /** Level 1 supports rotation `0` only. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validateRotation(s: Iiif.Rotation): Either[Problems, Unit] =
     s.value.trim match
       case "0" => Right(())
@@ -90,6 +100,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         )
 
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def render(
       citekey: Citekey,
       name: AssetService.AssetName,
@@ -112,17 +123,22 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
               .flatMap(applySize(_, size).left.map(Api.Error(_)))
               .flatMap(encode(_, format).left.map(Api.Error(_)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def noAsset(citekey: Citekey, name: AssetService.AssetName): Problem =
     Problem.NotFound.Entity(Problem.TypeName.of(AssetService.AssetName), Problem.Raw(s"$citekey/$name"))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def undecodable(name: AssetService.AssetName): Problem =
     Problem.Io.Corrupt(Problem.Io.Format.Image, Problem.Where(s"asset '$name'"), Problem.Io.Damage.Undecodable)
 
   /** Decode raw bytes into a BufferedImage. Returns None when ImageIO cannot read them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decodeImage(bytes: AssetService.Bytes): Option[BufferedImage] =
     Option(ImageIO.read(new ByteArrayInputStream(bytes.value)))
 
   /** Crop the image to the requested region. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[Problems, BufferedImage] =
     region match
       case Iiif.Region.Full                   => Right(img)
@@ -151,6 +167,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         else Right(img.getSubimage(cx, cy, cw, ch))
 
   /** Scale the image to the requested size. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applySize(img: BufferedImage, size: Iiif.Size): Either[Problems, BufferedImage] =
     val srcW = img.getWidth
     val srcH = img.getHeight
@@ -203,6 +220,8 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     else BufferedImage.TYPE_INT_RGB
 
   /** Encode a BufferedImage to the requested format. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def encode(
       img: BufferedImage,
       format: Iiif.Format

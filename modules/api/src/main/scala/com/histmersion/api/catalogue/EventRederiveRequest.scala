@@ -8,6 +8,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventRederiveRequest(
     provider: Option[EventRederiveRequest.Provider] = None,
     dryRun: EventRederiveRequest.DryRun = EventRederiveRequest.DryRun(false),

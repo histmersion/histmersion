@@ -18,6 +18,7 @@ import com.histmersion.plugin.Year
 import com.histmersion.upstreams.PageSize
 import com.histmersion.plugin.Doi
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** OpenAlex and Crossref: search, a work's metadata, its deposited reference list, its amendment notices, and
   * OpenAlex's own record of it — over the host's HTTP, for the host's discovery and for the fetchers that read an
@@ -25,11 +26,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mailto = "mailto" -> cfg.mailto.value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def getJson(url: RepositoryLanding.Candidate.Url): Either[Problem, Json] =
     http.json(url.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(
       query: OpenAlexCrossref.SearchQuery,
       since: Option[Year],
@@ -64,6 +68,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   /** Crossref `works?query=`: the same kinds of work (articles, books, chapters) from `from` on, by relevance or by
     * citation count. Poorer metadata than OpenAlex (no OA location), but it answers.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def crossrefSearch(
       query: OpenAlexCrossref.SearchQuery,
       from: Year,
@@ -102,6 +107,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       case _ => openalexReferences(doi).map((OpenAlexCrossref.ReferenceSource("openalex"), _))
 
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openalexReferences(doi: Doi): Either[Problem, List[RefRow]] =
     getJson(Url(WorkLookup.workUrl(cfg, doi), Url.UrlPath(""), "select" -> "referenced_works", mailto))
       .map(j => AcquireParse.openalexWork(j).referencedWorks.take(100))
@@ -128,6 +134,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
     crossrefWork(doi).map(AcquireParse.crossrefUpdates).orElse(Right(Nil))
 
   /** The raw OpenAlex record, for the citation counts an assessment reports and the open locations a fetcher reads. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def raw(doi: Doi): Either[Problem, Json] =
     getJson(Url(WorkLookup.workUrl(cfg, doi), Url.UrlPath(""), "select" -> WorkLookup.WorkFields.value, mailto))
 

@@ -27,6 +27,7 @@ import com.histmersion.config.PlaceSourcesConfig
 import com.histmersion.config.StorageConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it back through every
   * route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.
@@ -35,6 +36,7 @@ import com.histmersion.util.database.TestCreators.given
   * and the db-module suites (which may run in another JVM against the same test database) assert on it.
   * `PlaceRepoSuite` covers the rebuild.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlacesHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -61,6 +63,7 @@ class PlacesHttpSuite extends DbSuite:
     * undated region with a shape and no finding is in no view at a time (the time rule, `PlaceTimeSuite`), and the tree
     * must walk through it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val doc = Lpf.render(
     List(
       Place.Input(
@@ -179,6 +182,7 @@ class PlacesHttpSuite extends DbSuite:
   /** Its own places and source (`zzc_*`), far from `zzh_*`: the test above asserts `zzh_land` selects nothing, and a
     * shared test database keeps what earlier runs wrote.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val countsDoc = Lpf.render(
     List(
       Place.Input(

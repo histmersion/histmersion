@@ -11,10 +11,13 @@ import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Doi
 import com.histmersion.api.automation.Managers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion agent manager new review|enrich|seed …`, `agent enqueue <kind> <target>` and the --json flags parse
   * (phase 2 of docs/research-process-managers.md); a bad setting is refused before any request is sent.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class ManagerCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

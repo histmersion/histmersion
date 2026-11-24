@@ -8,12 +8,14 @@ import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.web.HtmlSink
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to start.
   * Instead of a blank or a crashing page, the map's place says why and what to do ([[NoMap.message]]), and the app
   * works on: every call is answered and draws nothing, markers are kept off screen, so the list, the timeline and the
   * windows behave as with a map.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, maxZoom0: MapSurface.MaxZoom)
     extends MapSurface:
 
@@ -44,6 +46,7 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
     .toMap
   private val sets = mutable.LinkedHashMap.empty[String, ShapeSet]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoom: MapSurface.Zoom = MapSurface.Zoom(z)
   def maxZoom: MapSurface.MaxZoom = maxZ
   def setMaxZoom(v: MapSurface.MaxZoom): Unit = maxZ = v
@@ -51,11 +54,13 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
   def bounds: GeoBounds =
     GeoBounds(GeoBounds.South(-85), GeoBounds.West(-180), GeoBounds.North(85), GeoBounds.East(180))
   def size: (MapSurface.Dimension, MapSurface.Dimension) = (MapSurface.Dimension(0.0), MapSurface.Dimension(0.0))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setView(
       p: LatLon,
       zoom: MapSurface.Zoom,
       animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
   ): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fitBounds(
       b: GeoBounds,
       padding: MapSurface.FitBoundsPadding,
@@ -79,8 +84,10 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
   def overlayRoot: dom.HTMLElement = overlay
   def corner(c: Corner): dom.HTMLElement = corners(c)
   def setBaseMap(b: BaseMapSpec): Unit = ()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
     sets.getOrElseUpdate(id.value, NoMap.Shapes(NoMap.Shapes.Id(id.value)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
   def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =

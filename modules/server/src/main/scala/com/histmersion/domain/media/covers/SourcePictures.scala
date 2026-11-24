@@ -38,6 +38,7 @@ import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a
@@ -47,6 +48,8 @@ import com.histmersion.domain.Creator
   * Thumbnails come from the OCR sidecar ([[ConverterClient.thumbnail]]): the native server has no image codec that
   * works (ImageIO hangs under native-image on macOS). Without one, the card shows the picture's own bytes.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SourcePictures(
     assets: AssetService,
     covers: CoverService,
@@ -62,6 +65,7 @@ final class SourcePictures(
   private def rules = cfg.illustrations.figureRules
 
   /** The thumbnail of `bytes`, or `None` (logged) when the sidecar makes none. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def thumbnail(bytes: AssetService.Bytes, name: String): Option[ConverterClient.Thumb] =
     converter.thumbnail(
       ConverterClient.DocumentBytes(bytes.value),
@@ -79,6 +83,8 @@ final class SourcePictures(
   /** Choose (and unless `dryRun`, link) a source's illustration. `Right(line)` when it has one now, `Left(reason)` when
     * none of its figures fits. A source that already has this very figure keeps it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def illustrate(
       citekey: Citekey,
       dryRun: SourcePictures.DryRun
@@ -128,6 +134,8 @@ final class SourcePictures(
   )(using WritePermit)(using Creator.New): Either[CoverRefusal, MediaSourceLine] =
     fetch.synchronized(openLibraryNow(keys, dryRun, fetch))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def openLibraryNow(
       keys: CoverKeys,
       dryRun: SourcePictures.DryRun,
@@ -224,10 +232,13 @@ final class SourcePictures(
   /** The polite client every Open Library call goes through — ONE per server, so its own, slower pace holds across runs
     * and the OCR jobs' covers alike (calls are serialised on it).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val openLibraryClient: Polite =
     Polite(http, cfg.copy(requestIntervalMs = MediaConfig.RequestIntervalMs(cfg.covers.requestIntervalMs.value)))
 
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[covers] def sniff(b: AssetService.Bytes): Option[AssetService.Mime] =
     def at(i: Int) = if b.value.length > i then b.value(i) & 0xff else -1
     if at(0) == 0xff && at(1) == 0xd8 then Some(AssetService.Mime("image/jpeg"))
@@ -238,6 +249,8 @@ final class SourcePictures(
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def storeCover(p: SourceCoverParams, bytes: AssetService.Bytes)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, MediaItem] =
@@ -305,6 +318,7 @@ final class SourcePictures(
   /** Covers (Open Library) and illustrations for the sources a request names; `progress` hears how far it got. A dry
     * run reads the database only.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(req: MediaCoversRequest, progress: JobInfo.Progress => Unit = _ => ())(using
       WritePermit
   )(using Creator.New): MediaCoversReport =
@@ -373,6 +387,7 @@ final class SourcePictures(
   /** After a conversion stored a source's figures: its illustration, and — when its record holds an ISBN or OCLC number
     * and it has no cover yet — Open Library's cover. Best-effort: a note for the job's progress line, never a failure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def afterIngest(citekey: Citekey)(using WritePermit)(using Creator.New): Option[SourcePictures.AfterIngestText] =
     try
       val ill =

@@ -4,6 +4,7 @@ package web
 import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.Plural
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The rows a newest-first list window (jobs, agent runs, approvals) shows, page by page ([[Paging]]: keyset cursors,
   * the total and the per-state counts from the server).
@@ -22,6 +23,7 @@ import com.histmersion.api.Plural
   */
 object ListPaging:
   /** What is shown: the rows, newest first, and the last page's word on the rest of the list. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Listing[A](rows: List[A], page: Paging.Page, extended: Boolean = false) derives CanEqual:
     def hasOlder: Boolean = page.hasMore
 
@@ -34,11 +36,14 @@ object ListPaging:
   /** The answer to "Show older": appended below, any row already shown left out (it can only be there twice if the list
     * changed between the two requests).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def appended[A](cur: Listing[A], rows: List[A], page: Paging.Page, id: A => String): Listing[A] =
     val shown = cur.rows.iterator.map(id).toSet
     Listing(cur.rows ++ rows.filterNot(r => shown(id(r))), page, extended = true)
 
   /** The answer to a poll ([[pollUpTo]]): it replaces the rows; still extended if it was. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def polled[A](cur: Listing[A], rows: List[A], page: Paging.Page): Listing[A] =
     Listing(rows, page, cur.extended)
 
@@ -51,6 +56,7 @@ object ListPaging:
 
   /** What a poll asks for: `upTo` the last row shown when older pages are loaded, else nothing (the newest page).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pollUpTo[A](cur: Listing[A], id: A => String): Option[String] =
     if cur.extended then cur.rows.lastOption.map(id) else None
 
@@ -59,6 +65,8 @@ object ListPaging:
     * page arrives, the heading is already right. `filters` are what the list is narrowed to, as a person reads them
     * (the label dictionary's words, never the identifiers the command line's heading uses).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def heading[A](
       l: Listing[A],
       singular: Plural.Noun.Singular,
@@ -72,6 +80,8 @@ object ListPaging:
   /** A filter button's count: the server's count of that state over the whole list (`None` = every state); the loaded
     * rows' when the server sent none.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def count[A](l: Listing[A], state: Option[String], stateOf: A => String): Int =
     if l.page.counts.nonEmpty then state.fold(l.page.all.value)(s => l.page.count(Paging.Page.CountState(s)).value)
     else state.fold(l.rows.size)(s => l.rows.count(stateOf(_) == s))

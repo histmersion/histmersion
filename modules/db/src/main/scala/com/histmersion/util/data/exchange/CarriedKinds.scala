@@ -13,20 +13,24 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
   * (the manifest lists them so, and a bundle is byte for byte the same whoever registered first); the steps of an
   * import in their stage and rank.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
 
   /** The table of a kind of record. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tableOf(kind: Bundle.Kind): TableName =
     inBundleOrder
       .collectFirst { case k if k.record.contains(kind) && k.table.isDefined => k.table.get }
       .getOrElse(throw IllegalStateException(s"no carried kind keeps ${kind.wire} records"))
 
   /** The steps of `stage`, in rank order (registration order among equal ranks). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def steps(stage: ImportStage): List[RowsIn] =
     inBundleOrder.flatMap(_.rowsIn).filter(_.stage == stage).sortBy(s => (s.rank.value: Int))
 
@@ -48,6 +52,7 @@ object CarriedKinds:
     * format does not have.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(kinds: List[CarriedKind]): Either[List[Problem], CarriedKinds] =
     val entries = kinds.map(_.entry.value)
     def entry(e: String, fault: Problem.Io.Fault): Problem =

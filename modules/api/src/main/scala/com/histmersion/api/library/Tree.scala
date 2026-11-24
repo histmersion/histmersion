@@ -6,6 +6,7 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Tree:
   type Depth = Depth.T
@@ -16,46 +17,63 @@ object Tree:
   object SplitRatioAmount extends Newtype[Double, Pure]
 
   type MaxDepth = MaxDepthValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MaxDepthValue = Depth
   val MaxDepthValue: Depth.type = Depth
   type MaxSamples = MaxSamplesValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MaxSamplesValue = MaxSamplesCount
   val MaxSamplesValue: MaxSamplesCount.type = MaxSamplesCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeTimeDepth = Depth
   val TimeTimeDepth: Depth.type = Depth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeTimeSamples = MaxSamplesCount
   val TimeTimeSamples: MaxSamplesCount.type = MaxSamplesCount
   export com.histmersion.api.catalogue.{Year as TimeTreeFrom, Year as TimeTreeTo}
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeTreeDepth = Depth
   val TimeTreeDepth: Depth.type = Depth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeTreeSamples = MaxSamplesCount
   val TimeTreeSamples: MaxSamplesCount.type = MaxSamplesCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeLevelSamples = MaxSamplesCount
   val TimeLevelSamples: MaxSamplesCount.type = MaxSamplesCount
   type SplitRatio = SplitRatioValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SplitRatioValue = SplitRatioAmount
   val SplitRatioValue: SplitRatioAmount.type = SplitRatioAmount
   export com.histmersion.api.catalogue.Year as RegionTreeAsOf
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RegionTreeDepth = Depth
   val RegionTreeDepth: Depth.type = Depth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RegionTreeSamples = MaxSamplesCount
   val RegionTreeSamples: MaxSamplesCount.type = MaxSamplesCount
   export RegionNode.Id as RegionTreeRoot
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeRegionTreeDepth = Depth
   val TimeRegionTreeDepth: Depth.type = Depth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TimeRegionTreeSamples = MaxSamplesCount
   val TimeRegionTreeSamples: MaxSamplesCount.type = MaxSamplesCount
   export com.histmersion.api.catalogue.Year as RegionTimeTreeAsOf
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RegionTimeTreeDepth = Depth
   val RegionTimeTreeDepth: Depth.type = Depth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RegionTimeTreeSamples = MaxSamplesCount
   val RegionTimeTreeSamples: MaxSamplesCount.type = MaxSamplesCount
   export RegionNode.Id as RegionTimeTreeRoot
   export com.histmersion.api.catalogue.Year as RegionsAsOf
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RegionsDepth = Depth
   val RegionsDepth: Depth.type = Depth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RegionsSamples = MaxSamplesCount
   val RegionsSamples: MaxSamplesCount.type = MaxSamplesCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SampleOfN = MaxSamplesCount
   val SampleOfN: MaxSamplesCount.type = MaxSamplesCount
 
@@ -67,6 +85,7 @@ object Tree:
   val KindRegion = "region"
   val KeyUnlocated = "unlocated"
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class TreeRow(
       key: TreeRow.Key,
       citekey: Citekey,
@@ -86,11 +105,15 @@ object Tree:
     case (_, None)                     => (true)
     case (Some(Period(a, b)), Some(y)) => y >= a && y <= b
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def overlaps(row: TreeRow, from: Year, to: Year): Boolean =
     Aggregate.span(row.toPeriodRow).exists((a, b) => a <= to && b >= from)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def midpoint(start: Year, end: Year): Year = Year((start).value + Math.floorDiv((end).value - (start).value, 2L))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def timeTime(
       rows: List[TreeRow],
       from: Year,
@@ -109,6 +132,7 @@ object Tree:
       (_, _, _) => (Nil, Bucket.Overlap(0))
     )
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def timeTree(
       rows: List[TreeRow],
       from: Tree.TimeTreeFrom,
@@ -118,6 +142,7 @@ object Tree:
   ): List[Bucket] =
     timeTime(rows, from, to, depth, samples)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def timeLevel(
       rows: List[TreeRow],
       from: Year,
@@ -161,9 +186,12 @@ object Tree:
 
   val SplitRatio: SplitRatio = SplitRatioAmount(0.8)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def splitWorthShowing(parent: Bucket.Count, kids: List[Bucket]): List[Bucket] =
     if kids.sizeIs > 1 && kids.exists(_.count.value < parent.value * SplitRatio.value) then kids else Nil
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def regionTree(
       rows: List[TreeRow],
       nodes: List[RegionNode],
@@ -175,6 +203,7 @@ object Tree:
   ): List[Bucket] =
     regions(rows, nodes, relations, asOf, clamp(depth), samples, (_, _) => Nil, root)._1
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def timeRegionTree(
       rows: List[TreeRow],
       from: Year,
@@ -196,6 +225,8 @@ object Tree:
         regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def regionTimeTree(
       rows: List[TreeRow],
       from: Year,
@@ -219,6 +250,8 @@ object Tree:
       root
     )._1
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def regions(
       rows: List[TreeRow],
       nodes: List[RegionNode],
@@ -313,10 +346,15 @@ object Tree:
         )
     (roots, overlapOf(rows, rootIds.map(at)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rendered(buckets: List[Bucket]): Set[RegionNode.Id] =
     buckets.iterator.flatMap(b => b.placeId.map(p => RegionNode.Id(p.value)).toSet ++ rendered(b.children)).toSet
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def childNode(id: Place.Relation.ChildId): RegionNode.Id = RegionNode.Id(id.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def parentNode(id: Place.Relation.ParentId): RegionNode.Id = RegionNode.Id(id.value)
 
   private def ancestors(
@@ -329,18 +367,24 @@ object Tree:
       if next.isEmpty then seen else go(next, seen ++ next)
     go(start, start)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def distinct(rows: List[TreeRow]): Bucket.Count = Bucket.Count(rows.iterator.map(_.key).toSet.size)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def overlapOf(rows: List[TreeRow], groups: List[List[TreeRow]]): Bucket.Overlap =
     val sets = groups.map(_.iterator.map(_.key).toSet).filter(_.nonEmpty)
     if sets.sizeIs < 2 then Bucket.Overlap(0)
     else Bucket.Overlap(rows.iterator.map(_.key).toSet.count(k => sets.count(_.contains(k)) > 1))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sampleOf(rows: List[TreeRow], n: MaxSamplesCount): List[Bucket.Sample] =
     if n.value <= 0 then Nil
     else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take((n).value).toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def clamp(depth: Depth): Depth = Depth((depth).value.max(1).min((MaxDepth).value))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def order(a: Year, b: Year): (Year, Year) = if a <= b then (a, b) else (b, a)
 
   def parseBy(s: String): Option[List[String]] =

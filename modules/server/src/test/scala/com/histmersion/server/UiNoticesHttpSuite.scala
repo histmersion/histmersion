@@ -20,11 +20,13 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
   * `POST /api/ui/seen/{board}` marks a window read, and the mark only moves forward. From a network the server does not
   * trust both need the API key, as every other request does. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class UiNoticesHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -50,6 +52,7 @@ class UiNoticesHttpSuite extends DbSuite:
   private var lock: java.sql.Connection = null
   private val LockKey = 2808
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       lock = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get))).getConnection

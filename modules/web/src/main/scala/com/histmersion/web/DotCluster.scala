@@ -11,8 +11,10 @@ import com.histmersion.web.map.GeoBounds
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object DotCluster:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
@@ -42,13 +44,16 @@ object DotCluster:
   /** A bubble's content: what its markers hold. */
 
   final case class Contents(members: List[Member]):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def total: Total = Total(members.map(_.n.value).sum)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def counts: Map[DotKind, KindCount] =
       members.groupMapReduce[DotKind, Int](_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
     def findings: List[GeoHit] = members.flatMap(_.findings)
     def entries: List[DotEntry] = members.flatMap(_.entry)
 
     /** The middle of every dated member's span: the bubble's colour is their range. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def mids: List[Mid] = members.flatMap(_.mids).map(m => Mid(m.value))
 
     /** The least certain member's certainty (only findings carry one other than [[Certainty.NoSay]]). */
@@ -61,11 +66,13 @@ object DotCluster:
     def cells: List[GeoBounds] = members.flatMap(_.cell)
 
     /** How many of what it holds have no known date. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def undated: Undated = Undated(members.map(_.undated.value).sum)
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed order, those it has
     * none of left out.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(counts: Map[DotKind, KindCount]): Summary =
     Summary(
       DotKind.values.toList
@@ -81,13 +88,17 @@ object DotCluster:
     )
 
   /** Pure: the same, then how many of them have no known date — "12 sites, 5 with no known date". */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(counts: Map[DotKind, KindCount], undated: Undated): Summary =
     val all = summary(counts)
     if undated.value <= 0 then all else Summary(s"$all, $undated with no known date")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def summary(c: Contents): Summary = summary(c.counts, c.undated)
 
   /** Is it a bubble of more than one kind? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mixed(c: Contents): Boolean = c.counts.count(_._2.value > 0) > 1
 
   /** How far a bubble's rings reach outside its disc, px: a dark line, the white coin ring, a dark line. */
@@ -96,6 +107,8 @@ object DotCluster:
   /** Pure: a bubble's outline (#1647) — square when it holds events only, tabbed when events are among other kinds,
     * round otherwise.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def form(c: Contents): BubbleForm =
     val events = c.counts.get(DotKind.Event).fold(0)(_.value)
     if events == 0 then BubbleForm.Round
@@ -118,6 +131,8 @@ object DotCluster:
     * ([[BubbleForm]]): an events bubble's disc and rings are rounded squares about the same centre, and one with events
     * among other kinds carries a small square tab.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bubbleHtml(
       n: Count,
       d: Size,
@@ -156,6 +171,7 @@ object DotCluster:
       markup"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
 
   /** Pure: the middle of a dated span, for the ramp. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mid(start: Option[Period.Start], end: Option[Period.End]): Option[Mid] =
     for a <- start; b <- end yield Mid((a.value + b.value).toDouble / 2)
 
@@ -169,12 +185,14 @@ object DotCluster:
     dots.toList.flatMap(d => d.member.entry.map(e => e -> ((row: dom.Element) => d.layer.open(d, row))))
 
   /** Pure: the order of a bubble's list — by kind, then by name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ordered(others: List[(DotEntry, dom.Element => Unit)]): List[(DotEntry, dom.Element => Unit)] =
     others.sortBy((e, _) => (e.kind.ordinal, e.label.value.toLowerCase, e.id.value))
 
   /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not count as a
     * click outside it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pinUnder(
       t: Preview.Target,
       row: dom.Element,

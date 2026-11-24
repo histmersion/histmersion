@@ -5,8 +5,13 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object BasemapMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def status(s: Basemap.Status): String =
     val head =
       if (s.available) == Basemap.Status.Available(true) then "The local base map is downloaded."
@@ -67,6 +72,8 @@ object BasemapMarkdown:
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onDemand(o: Basemap.OnDemand): String =
     if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then
       ("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
@@ -75,6 +82,7 @@ object BasemapMarkdown:
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(ByteCount(o.maxBytes.value))} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def outside(what: String, key: Basemap.Layer.Wire, o: Basemap.OnDemand): String =
     if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then
       (s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
@@ -85,6 +93,8 @@ object BasemapMarkdown:
 
   def plain(html: String): String = ((html).replaceAll("<[^>]+>", ""))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def removed(r: Basemap.Removed): String =
     if r.removed.isEmpty then ("Nothing to remove: no base-map file is downloaded.")
     else s"Removed ${Backup.humanBytes(r.bytes)}:\n" + r.removed.map(f => s"- `$f`").mkString("\n")

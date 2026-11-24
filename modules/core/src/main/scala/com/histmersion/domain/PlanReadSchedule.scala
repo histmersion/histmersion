@@ -3,7 +3,10 @@ package domain
 
 import java.time.{Duration, Instant}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.AutomationScheduler)
 object PlanReadSchedule:
 
   /** Why a pool's plan is not read now. */
@@ -19,6 +22,8 @@ object PlanReadSchedule:
     * the interval.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scheduledRead(
       schedule: ReadSchedule,
       autopilotOn: AutopilotOn,

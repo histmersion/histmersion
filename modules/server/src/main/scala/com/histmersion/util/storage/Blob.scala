@@ -8,10 +8,12 @@ import java.nio.ByteBuffer
 import java.time.Instant
 import com.histmersion.util.basemap.PmTiles
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** A file in a store, as it is when it is read. Big files stream ([[open]]) or are read by position ([[readAt]],
   * [[reader]]); a grid read many times over is mapped ([[mapped]]).
   */
+@atBoundary(BoundaryKind.Process, "reads a stored file by stream, position or mapping")
 trait Blob:
   def key: Store.Key
 

@@ -47,6 +47,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -61,6 +62,8 @@ import com.histmersion.domain.Creator
   * read only; a plan with nothing left after the checks goes back with why) · record (the approval) · close (the
   * worklog line). A DRY run records the approval it would open on its step.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class ProposeArticlesPipeline(
     site: ResearchSite,
     goals: GoalService,
@@ -70,9 +73,12 @@ final class ProposeArticlesPipeline(
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     Goal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def runFor(ctx: RunCtx, goal: Goal.Slug)(using WritePermit, Creator.New): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
     for
@@ -91,9 +97,11 @@ final class ProposeArticlesPipeline(
       )
     yield PipelineDef.Summary(closed)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[Problems, String] =
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).map(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def limits(ctx: RunCtx): PlanArticles.Limits =
     val p = ctx.run.params
     PlanArticles.Limits(
@@ -107,6 +115,7 @@ final class ProposeArticlesPipeline(
   /** The goals above `slug` and below it: an area's articles overlap its parent's and its sub-areas' as much as its own
     * (the autopilot seeds them all).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def family(slug: Goal.Slug): List[Goal.Slug] =
     val up = Iterator
       .iterate(goals.get(slug).flatMap(_.parentSlug))(
@@ -126,6 +135,9 @@ final class ProposeArticlesPipeline(
         }
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def load(slug: Goal.Slug): Either[Problems, Loaded] =
     site.goal(slug).left.map(_.problems).map { g =>
       val goal = Goal.Slug.assume(g.slug.value)
@@ -181,6 +193,7 @@ final class ProposeArticlesPipeline(
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def input(ctx: RunCtx, l: Loaded): String =
     val lim = limits(ctx)
     val period = (l.periodStart, l.periodEnd) match
@@ -202,11 +215,14 @@ final class ProposeArticlesPipeline(
       f"${lim.maxOverlap.value * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sourcesOf(e: Existing): Set[Citekey] =
     e.filter.fold(Set.empty[Citekey])(f =>
       site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => Citekey.assume(r.value)).toSet
     ) ++ e.cited
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def check(
       ctx: RunCtx,
       l: Loaded,
@@ -248,6 +264,7 @@ final class ProposeArticlesPipeline(
   /** The plan as an `article-plan` approval (a person's, or the supervisor's checks — [[AutoApprovals]]), through the
     * write gate.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(ctx: RunCtx, goal: Goal.Slug, plan: ArticlePlan)(using Creator.New): Either[Problems, Recorded] =
     if plan.isEmpty then Right(Recorded(None, Recorded.Line("nothing survived the checks; no approval was opened")))
     else

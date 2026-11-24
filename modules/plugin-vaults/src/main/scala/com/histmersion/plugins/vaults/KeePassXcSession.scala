@@ -9,6 +9,7 @@ import scala.concurrent.duration.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One `keepassxc-cli open` session answering several references (KeePassXC's interactive mode, in keepassxc-cli since
   * 2.6): the database is unlocked once — one password, one YubiKey touch — and each reference is one
@@ -29,12 +30,16 @@ object KeePassXcSession:
   /** Pure: the prompt the session prints once the database is open and after each answer (`<name>> `, the database's
     * name or file name) — the text after the last line break, once stdout ends in `> `.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def prompt(out: Processes.Result.Out): Option[Prompt] =
     Option.when(out.value.endsWith("> "))(Prompt(out.value.substring(out.value.lastIndexOf('\n') + 1)))
 
   /** Pure: can the entry and the attribute be sent as arguments of an interactive line? A line break would end the
     * line.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sendable(entry: Entry, attribute: Vaults.Field): Boolean =
     !entry.value.exists(_.isControl) && !attribute.value.exists(_.isControl)
 
@@ -45,12 +50,17 @@ object KeePassXcSession:
     s.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString)
 
   /** Pure: the line that asks for one attribute of one entry. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def command(attribute: Vaults.Field, entry: Entry): Command =
     Command(s"show -q -a ${escape(attribute.value)} ${escape(entry.value)}")
 
   /** Pure: what the session printed for the request sent when its output was `from` characters long, once it has
     * printed its prompt again: the text in between (`None` while it has not).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def segment(out: Processes.Result.Out, from: Segment.From, prompt: Prompt): Option[Segment] =
     Option
       .when(out.value.length >= from.value + prompt.value.length && out.value.endsWith(prompt.value))(
@@ -60,6 +70,8 @@ object KeePassXcSession:
   /** Pure: the value in a segment — without the echo of the request line (a session reading through readline prints it
     * back) and without the line break the value ends with.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def answer(segment: Segment, command: Command): Secret.Resolved =
     val body =
       List(command.value + "\r\n", command.value + "\n")

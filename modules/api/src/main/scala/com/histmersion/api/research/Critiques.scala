@@ -9,6 +9,7 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 object Critiques:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
@@ -28,11 +29,13 @@ object Critiques:
   val Kinds: List[Edge.Kind.Wire] =
     List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy).map(Edge.Kind.wireOf)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def olderFirst(kinds: List[CritiquePair.Kinds]): Boolean =
     (kinds.nonEmpty && kinds.forall(k => (k).value == "superseded_by"))
 
   private val ListItem = "^([-*+]|\\d+[.)])\\s+.*".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def paragraphs(body: Article.Body): List[Block.Text] = units(body).map(_.text)
 
   final case class Block(from: Block.From, to: Block.To, text: Block.Text)
@@ -44,6 +47,8 @@ object Critiques:
     object To extends Newtype[Int, Pure]
     export api.text.WikiLinks.Body as Text
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def units(body: Article.Body): List[Block] =
     val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
     val skip = notUsedLines(lines)
@@ -85,6 +90,8 @@ object Critiques:
         val end = lines.indexWhere(l => heading(l) && level(l) <= lv, i + 1)
         ((i until (if end < 0 then lines.size else end)).toSet).map(refactorValue => (refactorValue))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
       body: Article.Body,
       resolve: Article.Link.Target => Option[Citekey],
@@ -130,14 +137,17 @@ object Critiques:
   def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] =
     pairs.find((refactorCallback => ((refactorCallback.ref.same(r)) == (true))))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def count(pairs: List[CritiquePair], s: CritiqueState): Count = Count(pairs.count(_.state == s))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def together(body: Article.Body, r: CritiqueRef, resolve: Article.Link.Target => Option[Citekey]): Boolean =
     units(body).exists { u =>
       val cks = Article.Links.targets(u.text).flatMap(resolve).toSet
       cks(r.src) && cks(r.dst)
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ranked(pairs: List[CritiquePair]): List[CritiquePair] =
     def tier(p: CritiquePair) =
       if !(p.critic.cited).value && (p.criticised.cited).value then 0
@@ -164,15 +174,19 @@ object Critiques:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(pairs: List[CritiquePair]): Summary =
     Summary(
       s"${Plural.count(Plural.CountN((pairs.size).toLong), Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
         s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open"
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def methodPart(pairs: List[CritiquePair]): Option[Method] =
     Option.when(pairs.nonEmpty)(Method(s"disagreements checked: ${summary(pairs)}"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sideText(s: CritiqueSide): String =
     val meta = (s.year.map(_.toString).toList ++ s.title
       .map(_.value)
@@ -181,9 +195,12 @@ object Critiques:
     val cited = if (s.cited).value then "cited" else "not cited"
     (s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pairText(p: CritiquePair): String =
     (s"${p.ref.wire}: ${sideText(p.src)} ${p.kinds.mkString("/")} ${sideText(p.dst)}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(pairs: List[CritiquePair]): Markdown =
     if pairs.isEmpty then Markdown("")
     else
@@ -212,6 +229,7 @@ object Critiques:
       )
       .toList
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def promptText(
       pairs: List[CritiquePair],
       maxOpen: OpenLimit,

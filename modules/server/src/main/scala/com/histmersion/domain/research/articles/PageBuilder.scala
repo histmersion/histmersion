@@ -17,10 +17,13 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class PageBuilder(
     sources: SourcesControllers,
     sourceStore: SourceService,
@@ -29,6 +32,8 @@ final class PageBuilder(
 ):
 
   /** `(title, inner HTML)` of `/source/{citekey}`, `?q=` terms highlighted. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def source(ck: Citekey, full: PageBuilder.SourceFull, q: Option[Search.Query]): Option[(Title, Html)] =
     sources.get(ck).left.map(Api.Error(_)).toOption.map { sw =>
       val s = sw.source
@@ -108,6 +113,7 @@ final class PageBuilder(
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def article(slug: Slug, q: Option[Search.Query]): Option[(Title, Html)] =
     articles.get(slug).toOption.map { v =>
       val generated = v.coverage.fold(List.empty[WikiLinks.Occurrence.Target])(c =>
@@ -132,6 +138,7 @@ final class PageBuilder(
       (Title(v.article.title.value), highlighted(html, q.map(_.value.trim).filter(_.nonEmpty)))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def highlighted(html: Html, term: Option[String]): Html = term match
     case Some(t) =>
       val (out, n) = Highlight.pattern(Highlight.Term(t)).fold((html, 0))(Html.marked(html, _))

@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `claude-code` provider: the person's own `claude` CLI, run headlessly (`claude -p`) on their own Claude login
   * (docs/research-model-providers.md §1 — their own machine, their own use).
@@ -24,6 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   - `env`: variables set in the CLI's environment on every call; a variable whose value is empty (`""` or `null`) is
   *     removed, also one the server inherited ([[ClaudeCodeConfig.envChanges]]).
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class ClaudeCodeConfig(
     command: ClaudeCodeConfig.Command,
     configDir: ClaudeCodeConfig.ConfigDir,
@@ -37,6 +40,7 @@ final case class ClaudeCodeConfig(
     env: Map[ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue]]
 ) derives ConfigReader:
   /** [[env]] as changes to an environment, sorted by name: `Some(value)` sets, `None` removes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def envChanges: List[(ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue])] =
     env.toList
       .map((k, v) => ClaudeCodeConfig.EnvKey(k.value.trim) -> v.filter(_.value.trim.nonEmpty))
@@ -64,6 +68,8 @@ object ClaudeCodeConfig:
   object DisableSlashCommands extends Newtype[Boolean, Pure]
   type EnvKey = EnvKey.T
   object EnvKey extends Newtype[String, Pure]:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.SilentPure, "pending G44 (a Pure newtype's option/either never fails)")
     given ConfigReader[Map[EnvKey, Option[EnvValue]]] =
       ConfigReader.derived[Map[String, Option[EnvValue]]].emap { byName =>
         byName.foldLeft[Either[String, Map[EnvKey, Option[EnvValue]]]](Right(Map.empty)) { case (acc, (name, v)) =>

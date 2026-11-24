@@ -11,13 +11,18 @@ import org.ekrich.config.{Config, ConfigFactory}
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.util.Using
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings file `key` of `store` (the settings file's directory), named `shown` in messages: the file the server
   * read its settings from. Its text and its includes are read as a load reads them, which needs the file on disk; a
   * store in memory has none to give, and every read and change of it is refused.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Config, "reads and replaces the server's settings file in its store")
 final class StoredSettingsFile(store: Store, key: Store.Key, val shown: SettingsFile.Shown) extends SettingsFile:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(): Either[SettingError, ConfigFileState] =
     if !store.exists(key) then
       Right(
@@ -40,6 +45,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
             yield ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(file))
           catch case e: IOException => Left(SettingError.Io(failed(Problem.Io.Access.Read, e)))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
   ): Either[SettingError, Option[WriteOutcome.Backup]] =
@@ -67,6 +73,8 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
       }
     catch case e: IOException => Left(SettingError.Io(failed(Problem.Io.Access.Write, e)))
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def backup(existed: SettingsFile.Existed): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed.value then Right(None)
     else

@@ -4,13 +4,16 @@ package plugin
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** SPI-11, the source collections: a context written before them refuses a collection, and a collection that declares
   * nothing but reading refuses every write by default, naming why.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourceCollectionSpiSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
@@ -22,7 +25,9 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
     def log = new Plugin.Log {
       def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
     }
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
       Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
     )
@@ -37,18 +42,22 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
       Some(CollectionItem.Title("A book")),
       List(CollectionItem.Authors("An Author"))
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] = Right(
       List(one)
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def item(id: CollectionId): Either[Problem, Option[CollectionItem]] = Right(
       Option.when(id == one.id)(one)
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def file(
         item: CollectionItem,
         format: Option[SourceCollection.FileFormat]
     ): Either[Problem, CollectionFile] = Left(
       Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("no files"))
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def original(
         item: CollectionItem,
         file: CollectionFile

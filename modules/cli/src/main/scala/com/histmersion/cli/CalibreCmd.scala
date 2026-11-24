@@ -41,6 +41,8 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.CollectionEntry
 import com.histmersion.api.library.CollectionAudit
 import com.histmersion.api.library.AcquireApi
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion calibre search|import|link|push|update|set|audit|sync|gaps`.
   *
@@ -55,16 +57,22 @@ import com.histmersion.api.library.AcquireApi
   * `--replace`)/`update`/`set`/`sync --apply` are the only writes, and they refuse to run while the Calibre GUI holds
   * the database.
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion calibre` arguments")
 object CalibreCmd:
 
   type Unlinked = Unlinked.T
   object Unlinked extends Newtype[Boolean, Pure]
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def fail(msg: String): Cli.Error = Cli.Error(Problem.Unclassified(Legacy.Text(msg)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def failProblem(p: Problem): Cli.Error = Cli.Error(p)
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def truncated: Cli.Error =
     Cli.Error.answered(
       Problem.Unclassified(Legacy.Text("too many linked sources for one query — raise query.max-rows"))
@@ -73,11 +81,14 @@ object CalibreCmd:
   private val CalibreBook = Problem.TypeName("Calibre book")
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def server(c: Client): Option[CollectionsClient] =
     Some(CollectionsClient(c, CollectionsClient.Name("calibre"))).filter(_.onServer)
 
   // ── search ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostSearch(
       c: Client,
       q: Option[Api.Search.Text],
@@ -107,6 +118,8 @@ object CalibreCmd:
         )
 
   /** The Calibre ids the corpus links, read through the server's read-only query. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def linkedIds(c: Client): Either[Cli.Error, Set[Calibre.Book.Id]] =
     c.query(Query.Statement("SELECT DISTINCT calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$'")).flatMap { q =>
       Either.cond(
@@ -121,6 +134,8 @@ object CalibreCmd:
   /** `calibre import` on the server: the record, the cover and the conversion are made there; the lines are printed
     * here, and the conversion followed as `ingest` follows one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def serverImport(
       c: Client,
       s: CollectionsClient,
@@ -165,6 +180,8 @@ object CalibreCmd:
             }
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostImport(
       c: Client,
       id: Calibre.Book.Id,
@@ -243,6 +260,8 @@ object CalibreCmd:
     yield ()
 
   /** The imported book's cover, best-effort: a line saying what happened, never a failure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def importCover(c: Client, ck: Citekey, book: Calibre.Book)(using console: Console): Unit =
     MediaCovers.one(c, ck, book, dryRun = RepairAcquire.RepairRequest.DryRun(false)) match
       case MediaCovers.Outcome.Uploaded(_)             => Cli.out.println(s"Cover: from the Calibre library")
@@ -264,6 +283,8 @@ object CalibreCmd:
     * an agent compiled. Either way the record ends up linked to THIS entry (#721: an import into an existing record
     * used to keep its old Calibre id).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def upsert(
       c: Client,
       ck: Citekey,
@@ -315,6 +336,8 @@ object CalibreCmd:
 
   // ── push / sync (corpus → Calibre) ──────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostPush(c: Client, ck: Citekey, file: Option[String], replace: Boolean, json: Cli.JsonOutput)(using
       console: Console
   ) =
@@ -333,6 +356,8 @@ object CalibreCmd:
     * no duplicate entry appears. The file is `--file`, else the original the server stored at ingest, downloaded to a
     * temporary directory and removed afterwards.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def replaceOne(c: Client, ck: Citekey, file: Option[Path])(using
       console: Console
   ): Either[Cli.Error, (Calibre.Book.Id, Calibre.Book.Format)] =
@@ -356,6 +381,9 @@ object CalibreCmd:
   /** Download the server's stored original of `ck` as `<tmp>/<ck>.<ext>` (the extension is what tells Calibre the
     * format), run `f` on it, and delete it whatever happens.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def withOriginal[A](c: Client, ck: Citekey, hint: String = "")(
       f: Path => Either[Cli.Error, A]
   ): Either[Cli.Error, A] =
@@ -387,6 +415,8 @@ object CalibreCmd:
     * `<originals-dir>/<citekey>/paper.*` on this host, else the original the server stored, downloaded to a temporary
     * directory), `calibredb add`, then record the new id back in the corpus so it stops counting as a gap.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def pushOne(using
       console: Console
   )(
@@ -417,6 +447,8 @@ object CalibreCmd:
   /** Every source linked to a Calibre entry, with what it would send there. One query for the list, then the push
     * metadata per source (the authors must come back as a LIST — see [[pushOne]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def linkedRecords(c: Client): Either[Cli.Error, List[LinkedRecord]] =
     for
       q <- c.query(
@@ -432,6 +464,8 @@ object CalibreCmd:
     yield recs
 
   /** What the corpus record sends into Calibre, for `push` and `update` alike. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def pushMeta(s: CalibreGap): Calibre.Push =
     Calibre.Push(
       title = s.title,
@@ -444,6 +478,8 @@ object CalibreCmd:
       tags = s.topics.map(t => CollectionEntry.Tags(t.value))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostAudit(c: Client, json: Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] =
     for
       q <- c.query(
@@ -476,6 +512,8 @@ object CalibreCmd:
   /** The server's gap listing, each with where its original is and whether it counts ([[Calibre.classify]]): a record
     * with no fetched file anywhere is not a Calibre gap.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def classifiedGaps(
       c: Client,
       limit: Option[Paging.Limit],
@@ -488,6 +526,8 @@ object CalibreCmd:
   /** `calibre sync`: push the COUNTED gaps (an original on this host or on the server); the records with no fetched
     * file are not gaps, so they are neither pushed nor reported as skipped — one summary line says how many there are.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def syncGaps(using
       console: Console
   )(
@@ -527,10 +567,13 @@ object CalibreCmd:
   /** The server's collection for `gaps` and `sync`, unless this machine keeps originals of its own
     * (`cli.calibre.originals-dir`), which only the CLI can see and classify by.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def onServerUnlessLocalOriginals(c: Client)(using console: Console): Option[CollectionsClient] =
     if Settings.app.cli.calibre.originals.isDefined then None else server(c)
 
   /** `calibre sync` on the server: the same lines as [[syncGaps]], the pushes made there. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def serverSync(
       s: CollectionsClient,
       apply: Api.Apply,
@@ -571,6 +614,9 @@ object CalibreCmd:
     }
 
   /** `calibre gaps` on the server: the same table, `--quiet` line and exit codes as [[listGaps]]. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def serverGaps(
       s: CollectionsClient,
       quiet: Cli.QuietOutput,
@@ -599,6 +645,9 @@ object CalibreCmd:
     * record with no fetched file is one informational line in the full report and a `counted: false` row in `--json`,
     * never a gap.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[cli] def listGaps(using
       console: Console
   )(
@@ -627,6 +676,8 @@ object CalibreCmd:
         )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostUpdate(c: Client, ck: Citekey, json: Cli.JsonOutput)(using console: Console) =
     for
       s <- AcquireClient(c).calibreMeta(ck)
@@ -642,6 +693,8 @@ object CalibreCmd:
       if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
       else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
     )
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostUpdateAll(c: Client, apply: Api.Apply, json: Cli.JsonOutput)(using console: Console) =
     for
       linked <- linkedRecords(c)
@@ -655,7 +708,9 @@ object CalibreCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Search(q: Option[String], unlinked: Boolean, limit: Option[Int], json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Import(
         id: Int,
         citekey: Option[String],
@@ -668,16 +723,20 @@ object CalibreCmd:
     case UpdateOne(citekey: String, json: Cli.JsonOutput)
     case UpdateAll(apply: Api.Apply, json: Cli.JsonOutput)
     case Link(ckText: String, idValue: Int, json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Push(ckText: String, file: Option[String], replaceFlag: Boolean, json: Cli.JsonOutput)
     case SetCmd(idValue: Int, raw: List[String])
     case Audit(json: Cli.JsonOutput)
     case Sync(writes: Cli.Writes, limit: Option[Int], json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Gaps(quiet: Boolean, limit: Option[Int], json: Cli.JsonOutput)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Link(ckText, idValue, json) =>

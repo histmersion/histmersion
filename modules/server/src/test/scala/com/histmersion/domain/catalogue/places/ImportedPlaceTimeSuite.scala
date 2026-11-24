@@ -54,11 +54,13 @@ import com.histmersion.util.database.TestCreators
   * Fixtures sit at 150°W 60°S, where no other suite has any; ids carry `99950` or `zzpt`. The real
   * `wikidata`/`geonames` source keys are written WITHOUT the sweep, so no other suite's rows go.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -78,12 +80,14 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
 
   private val Lon = -150.0
   private val Lat = -60.0
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(dx: Double = 0) = Some(
     GazGeometry.GeoJson(GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[${Lon + dx},$Lat]}"""))
   )
   private def wd(q: ExternalId.Id) = ExternalId(LinkScheme.Wikidata, q)
   private def gn(n: ExternalId.Id) = ExternalId(LinkScheme.Geonames, n)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       own: ExternalId,
       label: GazRecord.Label,
@@ -129,6 +133,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
         .batch(rs)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Patones = rec(
     wd(ExternalId.Id("Q999500001")),
     GazRecord.Label("Zzpt Kingdom of Patones"),
@@ -146,6 +151,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
   private val LpfQuery = PlaceRepo.SearchText("Zzpt Lpf State")
 
   /** A source whose findings sit ON the fixtures' point, one per period (materialised on write). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def findingsAt(ck: Citekey, periods: Period*): Unit =
     SourceFixtures.upsert(
       ds,
@@ -184,6 +190,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
       cfg.places.pointToleranceKm
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def onMap(
       kind: domain.catalogue.Place.Kind.Wire,
       asOf: Option[DeepTime.SignedYear]

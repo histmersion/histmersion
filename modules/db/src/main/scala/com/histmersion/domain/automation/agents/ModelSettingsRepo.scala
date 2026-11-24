@@ -13,10 +13,14 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The model chains and allowances saved over config (migration V060), and the spends an allowance counts — summed from
   * `agent_steps`, the one place tokens and cost are written. Stateless.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the model settings tables and their row codecs")
 private[agents] object ModelSettingsRepo:
   type ChainRole = ChainRole.T
   object ChainRole extends Newtype[String, Pure]
@@ -32,11 +36,13 @@ private[agents] object ModelSettingsRepo:
       .map((r, ms) => ChainRole(r) -> ms.map(m => Agents.ModelRef.Wire(m)))
       .toMap
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setChain(role: ChainRole, models: List[Agents.ModelRef.Wire])(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO agent_role_chains (role, models) VALUES ($role, $models::text[])
             ON CONFLICT (role) DO UPDATE SET models = EXCLUDED.models, updated_at = now()""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def removeChain(role: ChainRole)(using DbCon): Boolean =
     (sql"DELETE FROM agent_role_chains WHERE role = $role".update.run() > 0)
 
@@ -75,6 +81,7 @@ private[agents] object ModelSettingsRepo:
         )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setAllowance(target: Saved.Target, limits: List[LimitSpec], reservePct: Saved.ReservePct)(using DbCon): Unit =
     val json = Jsonb.write(limits)
     val _ =
@@ -82,6 +89,7 @@ private[agents] object ModelSettingsRepo:
             ON CONFLICT (target) DO UPDATE SET limits = EXCLUDED.limits, reserve_pct = EXCLUDED.reserve_pct,
               updated_at = now()""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def removeAllowance(target: Saved.Target)(using DbCon): Boolean =
     (sql"DELETE FROM agent_allowances WHERE target = $target".update.run() > 0)
 
@@ -89,6 +97,7 @@ private[agents] object ModelSettingsRepo:
     * that finished in the last `seconds`: when (epoch ms), tokens (input + output), USD. A failed attempt counts — it
     * was paid for.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def spends(models: List[Agents.ModelRef.Wire], prefixes: List[String], seconds: WindowSeconds)(using
       DbCon
   ): Vector[Spend] =

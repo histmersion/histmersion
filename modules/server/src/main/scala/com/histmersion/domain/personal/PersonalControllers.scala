@@ -36,11 +36,13 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
   * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
   * maintenance lock.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class PersonalControllers(
     bookmarks: BookmarkService,
     notes: NoteService,
@@ -50,6 +52,7 @@ final class PersonalControllers(
 ):
 
   private def bad(why: Problem): Api.Error = Api.Error(why)
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def missing(typeName: Problem.TypeName, key: Problem.Raw): Api.Error =
     Api.Error(Problem.NotFound.Entity(typeName, key), Some(Api.Error.Code(Write.CodeNotFound)))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
@@ -59,6 +62,8 @@ final class PersonalControllers(
       bad(Problem.Refused.Policy(Problem.Refused.Rule.PersonOnly))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def kindOf(raw: Option[MarkKind.Wire], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
@@ -77,11 +82,14 @@ final class PersonalControllers(
             )
           )
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def size(raw: Option[Paging.Limit]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw).value)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def search(q: Option[PersonalApi.Search]): SearchWords =
     SearchWords.of(q.map(w => SearchWords.Query(w.value)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def label(title: Option[Title]): Option[TargetLabel] =
     TargetLabel.tidy(title.map(t => TargetLabel.Label(t.value)))
 
@@ -118,6 +126,7 @@ final class PersonalControllers(
         label <- Bookmark.Label.tidy(in.label).left.map(p => bad(p))
       yield bookmarks.add(user, t, label, this.label(in.title), now()).wire
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def editBookmark(
       caller: Caller,
       id: WireBookmark.Id,
@@ -133,6 +142,7 @@ final class PersonalControllers(
           .toRight(missing(Problem.TypeName.of(WireBookmark.Id), Problem.Raw.of(id)))
       yield b.wire
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def removeBookmark(caller: Caller, id: WireBookmark.Id): Either[Api.Error, WireBookmark] =
     maintenance.guard(WriteGate.OperationName("remove_bookmark")):
       for
@@ -145,6 +155,8 @@ final class PersonalControllers(
 
   // ── notes ───────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def listNotes(
       caller: Caller,
       kind: Option[MarkKind.Wire],
@@ -166,6 +178,7 @@ final class PersonalControllers(
       n <- notes.get(user, nid).toRight(missing(Problem.TypeName.of(WireNote.Id), Problem.Raw.of(id)))
     yield n.wire
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New)(using
       Creator.New
   ): Either[Api.Error, WireNote] =
@@ -176,6 +189,9 @@ final class PersonalControllers(
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p))
       yield notes.add(user, t, text, label(in.title), now()).wire
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def editNote(
       caller: Caller,
       id: WireNote.Id,
@@ -203,6 +219,7 @@ final class PersonalControllers(
       yield n.wire
 
   /** A time last seen that is no time at all never matches the note's: the edit is refused as a stale one. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def edited(
       user: UserId,
       id: com.histmersion.api.personal.Note.Id,
@@ -227,6 +244,7 @@ final class PersonalControllers(
 
   // ── read marks ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def readMarks(
       caller: Caller,
       kind: Option[MarkKind.Wire],
@@ -239,6 +257,8 @@ final class PersonalControllers(
       s <- ReadingShow.parse(show.map(w => ReadingShow.Wire(w.value))).left.map(p => bad(p))
     yield reading.list(user, k.map(MarkTarget.itemKind), s, size(max)).map(_.wire)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def readable(kind: MarkKind, key: WireKey): Either[Api.Error, ItemKey] =
     if !MarkKind.Readable.contains(kind) then
       Left(
@@ -256,6 +276,7 @@ final class PersonalControllers(
         .map(ItemKey(_))
         .toRight(bad(Problem.Invalid.Missing.here(Problem.Field("id"))))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def setRead(caller: Caller, in: ReadMark.Set): Either[Api.Error, WireReadMark] =
     maintenance.guard(WriteGate.OperationName("set_read")):
       for
@@ -272,6 +293,8 @@ final class PersonalControllers(
         key <- readable(in.kind, in.id)
       yield reading.opened(user, MarkTarget.itemKind(in.kind), key, label(in.title), now()).wire
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def unread(
       caller: Caller,
       kind: Option[MarkKind.Wire],

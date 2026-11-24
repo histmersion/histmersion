@@ -7,6 +7,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The page's one map: its surface, and the DOM panes over it ([[MapStack]]'s order). */
 object TheMap:
@@ -30,9 +31,11 @@ object TheMap:
     waiting.clear()
     due.foreach(_(s))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pane(p: MapStack.Pane): MarkerPane = panes(p.name)
 
   /** Take `surface` as the page's map: its panes over it, every marker following each frame of a move. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def install(surface: MapSurface): Unit =
     s = surface
     val els = MapStack.domPanes.map { p =>
@@ -81,4 +84,5 @@ object TheMap:
     canvas.flatMap(_.hit(clientX, clientY)).map(_.el)
 
   /** Every marker on the map now, by pane (for [[com.histmersion.web.Diagnostics]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markerCount: MarkerPane.MarkerCount = MarkerPane.MarkerCount(panes.values.map(_.size.value).sum)

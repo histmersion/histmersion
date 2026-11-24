@@ -12,8 +12,10 @@ import sttp.tapir.{Schema, Validator}
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire: MergeDecision.Wire =
     MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
 
@@ -86,11 +88,14 @@ object MergeDecision:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(k => wireOf(k) == Wire((s).value.trim))
   def of(kind: Kind): MergeDecision = MergeDecision(kind, None)
   def withArg(kind: Kind, arg: Argument): MergeDecision = MergeDecision(kind, Some(arg))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: Wire): Either[Problem, MergeDecision] =
     val s = (raw).value.trim
     val (k, arg) = s.indexOf(':') match
@@ -116,10 +121,14 @@ object MergeDecision:
         )
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => Argument(refactorValue))))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given JsonValueCodec[MergeDecision] = JsonCodec.mapped[MergeDecision, String](
     (refactorCallback => (refactorCallback.wire).value),
     s => parse(Wire(s)).left.map(_.sentence)
   )
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given Schema[MergeDecision] = Schema
     .string[MergeDecision]
     .validate(

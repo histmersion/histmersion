@@ -8,8 +8,10 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.Files
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The PMTiles codec, reader and writer (pure, no network, no database). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PmTilesSuite extends munit.FunSuite:
 
   test("tile ids follow the spec's Hilbert numbering (its own examples)"):

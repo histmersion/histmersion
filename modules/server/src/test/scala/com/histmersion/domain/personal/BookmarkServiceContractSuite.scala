@@ -9,8 +9,10 @@ import com.histmersion.{Latitude, Longitude, PageSize}
 import com.histmersion.api.personal.Bookmark
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's bookmarks, in memory and in the database. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
 
   both("an item is bookmarked once; a retitled source keeps its bookmark and shows its new title") { w =>

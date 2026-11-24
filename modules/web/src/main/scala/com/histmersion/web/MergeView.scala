@@ -42,6 +42,7 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.library.Citekey
 import com.histmersion.web.ui.ThemeTokens
 import com.histmersion.web.map.MapStart
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
   * bundle, read its plan — the matched sources, every issue grouped (open first, then decided, conditional, defaults,
@@ -59,6 +60,7 @@ object MergeView:
   object Description extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type FieldName = FieldName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FieldName extends Newtype[String, Pure]
   type KindLabel = KindLabel.T
   object KindLabel extends Newtype[String, Pure]:
@@ -84,6 +86,7 @@ object MergeView:
     type Title = Title.T
     object Title extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def groupOf(i: MergeIssue): Group =
     if i.condition.isDefined then Group.Conditional
     else
@@ -98,13 +101,16 @@ object MergeView:
 
   /** The counter: the blocking questions still open, of all the blocking ones that apply ("3 of 9"). */
   /** How each of the bundle's sources was matched. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def matched(p: MergePlan): List[Source.Match] = RegisteredPlanMatches.kind.all(p.sources)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def counter(p: MergePlan): (Int, Int) =
     val blocking = p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty)
     (blocking.count(_.decision.isEmpty), blocking.size)
 
   /** The issues a filter text keeps: it matches the id, the kind, the title or either side's label. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def filtered(issues: List[MergeIssue], text: String): List[MergeIssue] =
     val t = text.trim.toLowerCase
     if t.isEmpty then issues
@@ -117,6 +123,8 @@ object MergeView:
   /** The resolutions with `issue` decided `decision` (and its merged text, for `file:`), replacing an earlier decision
     * of it; `None` takes the decision back.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decide(
       r: MergeResolutions,
       issue: MergeIssue.Id,
@@ -137,12 +145,15 @@ object MergeView:
       )
 
   /** The decision a person made for an issue (not a default, a policy or a remembered one). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chosen(r: MergeResolutions, issue: MergeIssue.Id): Option[MergeDecision] =
     r.resolve
       .find(_.issue.value == issue.value)
       .flatMap(x => MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption)
 
   /** What a decision kind means, in words. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def describe(k: MergeDecision.Kind): Description = k match
     case MergeDecision.Kind.KeepLeft       => Description("keep this collection's")
     case MergeDecision.Kind.KeepRight      => Description("take the bundle's")
@@ -158,11 +169,14 @@ object MergeView:
     case MergeDecision.Kind.KeepUnanchored => Description("keep it without a place in the text")
 
   /** An issue kind in words (`changed-both-sides` → `changed both sides`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindText(k: MergeIssue.Kind): KindLabel = KindLabel(MergeIssue.Kind.wireOf(k).value.replace('-', ' '))
 
   /** The row of a field table an issue is about (`status` for a status question, `citekey` for the same-work and
     * collision questions), if it is about one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def fieldOf(k: MergeIssue.Kind): Option[FieldName] = k match
     case MergeIssue.Kind.StatusDiffers                               => Some(FieldName("status"))
     case MergeIssue.Kind.TitleDiffers                                => Some(FieldName("title"))
@@ -182,6 +196,8 @@ object MergeView:
     * still to decide); for the other rows nothing — the merge's own rules fold them (the richer title, tags unioned…),
     * the server's business.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[ResultText, ResultText]] =
     if !fieldOf(i.kind).map(_.value).contains(f.field.value) then None
     else
@@ -210,6 +226,7 @@ object MergeView:
         case None        => Left(ResultText("to decide")))
 
   /** The rows of a field table worth a person's eye: the ones that differ come first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rows(fs: List[IssueField]): List[(IssueField, Boolean)] =
     val (diff, same) =
       fs.filter(f => f.left.isDefined || f.right.isDefined).partition(f => f.left.map(_.value) != f.right.map(_.value))
@@ -218,6 +235,8 @@ object MergeView:
   /** The text the article editor starts from: the agreed regions as they are, each conflict with git-style markers
     * around this collection's and the bundle's lines (and the common version's).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markedText(t: IssueText): MarkedText =
     MarkedText(
       t.hunks
@@ -240,14 +259,20 @@ object MergeView:
   /** The argument a `file:` decision made on this screen names (no file exists: the text travels in the decision, and
     * in the resolution file's `texts:`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fileName(i: MergeIssue): MergeDecision.Argument =
     MergeDecision.Argument(s"merged/${i.left.orElse(i.right).map(_.label.value).getOrElse(i.id.value)}.md")
 
   /** May the plan be applied now? Nothing open, nothing wrong, something to do. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applicable(p: MergePlan): Boolean =
     p.open.isEmpty && p.problems.isEmpty && p.resolutionErrors.isEmpty && p.changes.value > 0
 
   /** A span as a bar on a common axis: left offset and width in per cent of `[lo, hi]`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bar(s: IssueSpan, lo: Year, hi: Year): (Double, Double) =
     val w = math.max(1L, hi.value - lo.value).toDouble
     val a = s.start.getOrElse(lo).value
@@ -255,6 +280,7 @@ object MergeView:
     (100.0 * (a - lo.value) / w, math.max(1.0, 100.0 * (b - a) / w))
 
   /** The axis of two spans: their hull, open ends given a margin of a tenth. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def axis(spans: List[IssueSpan]): Option[(Year, Year)] =
     val ends = spans.flatMap(s => s.start.toList ++ s.end.toList)
     Option.when(ends.nonEmpty) {
@@ -284,6 +310,7 @@ object MergeView:
   /** The latest plan request: an answer to an older one is dropped (a `var`: it counts requests). */
   private var planReq = 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def configure(ui: UiConfig): Unit =
     tiles = Some(ui.tiles -> ui.tilesMaxZoom)
     startView = ui.mapStart
@@ -291,16 +318,21 @@ object MergeView:
   /** Where a map with nothing to show opens (`ui.map-start`); set from `/api/config` like `tiles`. */
   private var startView = MapStartConfig()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bundle: Option[Sha256] = UiState.mergeBundle.now().map(Sha256(_))
 
   private def fail(what: String)(e: Throwable): Unit = failure.set(Some(s"$what: ${e.getMessage}"))
 
   /** Open a bundle that is on the server: its draft, then its plan. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def load(sha: Sha256): Unit =
     failure.set(None)
     ApiClient.mergeSession(sha).onComplete(_.fold(fail("the review draft"), s => { res.set(s.resolutions); replan() }))
 
   /** Plan again with the decisions made so far. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def replan(): Unit =
     bundle.foreach { sha =>
       planReq += 1
@@ -322,6 +354,8 @@ object MergeView:
     }
 
   /** Keep a decision (on the server), then plan again. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def set(issue: MergeIssue.Id, d: Option[MergeDecision], text: Option[MergeResolution.Text] = None): Unit =
     val next = decide(res.now(), issue, d, text)
     res.set(next)
@@ -330,6 +364,8 @@ object MergeView:
       ApiClient.putMergeSession(sha, next).onComplete(_.fold(fail("keeping the decision"), _ => replan()))
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chooseBundle(f: dom.File): Unit =
     failure.set(None); message.set(None); job.set(None); confirm.set(false)
     progress.set(Some(0))
@@ -349,6 +385,7 @@ object MergeView:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def download(): Unit =
     plan.now().foreach { p =>
       val text = MergeResolutions.Text.template(p, res.now())
@@ -366,6 +403,8 @@ object MergeView:
   /** A resolution file written by the CLI (or downloaded here): read on the server, its decisions over the ones made so
     * far.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def uploadResolutions(f: dom.File): Unit =
     f.asInstanceOf[js.Dynamic]
       .text()
@@ -390,6 +429,8 @@ object MergeView:
         )
       )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apply(): Unit =
     for sha <- bundle; p <- plan.now() do
       confirm.set(false)
@@ -399,6 +440,9 @@ object MergeView:
         .onComplete(_.fold(fail("the merge"), follow))
 
   /** Follow an apply job (its backup comes first) until it is done. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def follow(j: MergeApplyJob): Unit =
     job.set(Some(j))
     if j.state == MergeJobState.Running then
@@ -431,6 +475,7 @@ object MergeView:
       }
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def header: HtmlElement =
     div(
       cls := "merge-head",
@@ -497,6 +542,8 @@ object MergeView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def body(p: MergePlan): HtmlElement =
     val (open, total) = counter(p)
     div(
@@ -545,6 +592,8 @@ object MergeView:
 
   private def p_(mods: Modifier[HtmlElement]*): HtmlElement = com.raquo.laminar.api.L.p(mods*)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def issueList(p: MergePlan): HtmlElement =
     div(
       input(
@@ -628,6 +677,8 @@ object MergeView:
 
   // ── one issue ──
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def review(i: MergeIssue): HtmlElement =
     val mine = res.now().resolve.find(_.issue.value == i.id.value)
     div(
@@ -661,6 +712,7 @@ object MergeView:
       decisions(i)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def side(who: String, s: Option[IssueSide], entity: Bundle.Kind): HtmlElement =
     div(
       cls := s"merge-side merge-$who",
@@ -674,6 +726,8 @@ object MergeView:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fieldTable(i: MergeIssue, fs: List[IssueField]): HtmlElement =
     table(
       cls := "merge-fields",
@@ -695,6 +749,8 @@ object MergeView:
   /** The diff3 view: the agreed regions folded, each conflict as here | common | bundle; and the editor the merged text
     * is written in (`file:`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def articleView(i: MergeIssue, t: IssueText, edited: Option[MergeResolution.Text]): HtmlElement =
     val draft = Var[String](edited.map(_.value).getOrElse(markedText(t).value))
     def lines(ls: List[String]) = pre(cls := "merge-lines", ls.mkString("\n"))
@@ -756,6 +812,8 @@ object MergeView:
     )
 
   /** Both geometries on a small map (here and bundle in their own colours) and both spans on one axis. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeView(x: IssuePlace): HtmlElement =
     val spans = x.leftSpan.toList ++ x.rightSpan.toList
     div(
@@ -792,6 +850,7 @@ object MergeView:
       }
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def miniMap(left: Option[String], right: Option[String]): HtmlElement =
     // a `var`: the map lives as long as the element; created on mount, removed on unmount
     var map: Option[MapSurface] = None
@@ -839,6 +898,8 @@ object MergeView:
   /** The decisions an issue allows, as radio buttons; an argument (a citekey, an id) where the decision takes one;
     * "take back" to make it open (or its default) again.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decisions(i: MergeIssue): HtmlElement =
     val current = chosen(res.now(), i.id)
     val name = s"merge-decision-${i.id}"
@@ -941,6 +1002,8 @@ object MergeView:
 
   // ── apply ──
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applySection(p: MergePlan): HtmlElement =
     div(
       cls := "merge-apply",
@@ -995,6 +1058,8 @@ object MergeView:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def appliedReport(r: MergeApplyResult): HtmlElement =
     val t = r.tally
     if !r.applied.value then

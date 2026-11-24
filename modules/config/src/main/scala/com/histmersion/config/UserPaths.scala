@@ -7,11 +7,14 @@ import org.ekrich.config.Config
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where Histmersion keeps its per-user files: the data directory (the bundle's cluster, logs and backups; the agent
   * trees) and the user config file. ONE resolver, so the server, the bundle supervisor, the agent trees and the CLI
   * cannot disagree about a path. Built once by the entry point from the environment and the `os.name` property.
   */
+@movesTo(FeaturePlace.Config)
 final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
   def isMac: Boolean = UserPaths.isMac(osName)
   def defaultDataDir: Option[Path] = UserPaths.defaultDataDir(environment.lookup, osName)
@@ -20,6 +23,7 @@ final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
   def cacheDir: Option[Path] = UserPaths.cacheDir(environment.lookup)
   def configFile: Option[Path] = UserPaths.configFile(environment.lookup)
 
+@tolerated(LintRule.CanEqualHome, "pending G67 (a foreign type's CanEqual in one file; its users share no module yet)")
 object UserPaths:
 
   /** Two paths compare with `==` and `!=`, also under `-language:strictEquality` (as `Path.equals` compares them: the
@@ -41,14 +45,17 @@ object UserPaths:
 
   val ConfigFileName = "histmersion.conf"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isMac(osName: OsName): Boolean = osName.value.toLowerCase.contains("mac")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def home(env: Lookup): Option[HomeDir] =
     env(Environment.VariablesKey("HOME")).map(_.value.trim).filter(_.nonEmpty).map(HomeDir(_))
 
   /** The platform's per-user data directory: `~/Library/Application Support/Histmersion` on macOS,
     * `$XDG_DATA_HOME/histmersion` (default `~/.local/share/histmersion`) elsewhere.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultDataDir(env: Lookup, osName: OsName): Option[Path] =
     if isMac(osName) then home(env).map(h => Path.of(h.value, "Library", "Application Support", "Histmersion"))
     else
@@ -59,6 +66,7 @@ object UserPaths:
         .orElse(home(env).map(h => Path.of(h.value, ".local", "share", "histmersion")))
 
   /** `configured` (`runtime.data-dir`) when it is set, else [[defaultDataDir]]. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dataDir(configured: RuntimeConfig.DataDir, env: Lookup, osName: OsName): Option[Path] =
     Option(configured).map(_.value.trim).filter(_.nonEmpty).map(Path.of(_)).orElse(defaultDataDir(env, osName))
 
@@ -67,6 +75,7 @@ object UserPaths:
     * #1403): never settings (those are [[configFile]]'s), never the corpus (that is the data directory's). `None` when
     * no location can be worked out (HOME unset).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cacheDir(env: Lookup): Option[Path] =
     env(Environment.VariablesKey("XDG_CACHE_HOME"))
       .map(_.value.trim)
@@ -79,6 +88,8 @@ object UserPaths:
     * directory), else `<cache dir>/basemap` ([[cacheDir]]), else `basemap` under `initDataDir` (`init.data-dir`) —
     * absolute and normalised.
     */
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def basemapDir(configured: BasemapDir, initDataDir: RuntimeConfig.DataDir, env: Lookup): Path =
     Option(configured)
       .map(_.value.trim)
@@ -94,6 +105,7 @@ object UserPaths:
     * edits, so it lives with their other dotfiles, never in the server-owned data directory, and nothing in the file
     * (`runtime.data-dir`) can move it. `None` when no location can be worked out (HOME unset).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configFile(env: Lookup): Option[Path] =
     val explicit = env(ConfigEnv)
       .map(_.value.trim)

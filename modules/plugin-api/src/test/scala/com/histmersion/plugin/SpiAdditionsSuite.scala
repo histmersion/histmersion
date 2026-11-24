@@ -4,14 +4,18 @@ package plugin
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SPI members added within SPI 2 for the first-party plugins — an answer's status and headers, an upstream's
   * budget, the peers of a fetch, a catalogue's re-reading and its changing parts, an AI provider's request options —
   * and their defaults, which keep a plugin or a host written before them compiling and linking.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SpiAdditionsSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
@@ -88,7 +92,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def log = new Plugin.Log {
       def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
     }
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def env(name: EnvVar.Name): Option[EnvVar.Value] = None
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def secret(s: Secret): Either[Problem, Secret.Resolved] = Left(
       Problem.Plugin.Said(Problem.Plugin.Id("test"), Problem.Plugin.Claim.Failed, External.PluginSaid.of("none"))
     )
@@ -116,7 +122,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def licence = Licence("CC0-1.0")
     def citation: EventCatalogue.Citation = EventCatalogue.Citation("Floods")
     def home: EventCatalogue.Home = EventCatalogue.Home("https://floods.example")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] = List(EventCatalogue.ReadPart("all"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def read(
         part: EventCatalogue.ReadPart,
         query: CatalogueQuery,
@@ -222,6 +230,8 @@ class SpiAdditionsSuite extends munit.FunSuite:
   private object Portal extends MediaCollection:
     val title = MediaCollection.Title("Portal objects")
     val role = MediaCollection.Object
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def search(place: MediaPlace, http: Plugin.Http) =
       if place.label == MediaPlace.Label("Nowhere") then
         Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))

@@ -5,6 +5,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The "open in a new tab" action of a list row or a detail. */
 object NewTabLink:
@@ -13,6 +14,8 @@ object NewTabLink:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(href0: Href, what: Label): HtmlElement =
     a(
       cls := "btn btn--bare btn--icon btn--sm new-tab",

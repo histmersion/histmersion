@@ -19,6 +19,9 @@ import com.histmersion.domain.CreatorControllers
   * resolved to a source or an article, the seed, a source's note, the chunks' rebuild.
   */
 object LibraryRoutes:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def apply(
       search: SearchControllers,
       labels: LabelsControllers,

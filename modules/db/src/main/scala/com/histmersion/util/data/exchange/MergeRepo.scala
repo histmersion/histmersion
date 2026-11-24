@@ -34,11 +34,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
   * screen's draft is `merge_sessions` (V051). Stateless, like every repo.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the merge job rows")
 object MergeRepo:
   type ListLimit = ListLimit.T
   object ListLimit extends Newtype[Int, Pure]
@@ -60,6 +63,8 @@ object MergeRepo:
         (SELECT count(*)::int FROM merge_ledger l WHERE l.merge_id = m.id),
         (SELECT count(*)::int FROM uid_aliases u WHERE u.merge_id = m.id)"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def info(r: MergeRow): MergeInfo =
     MergeInfo(
       r.id,
@@ -74,6 +79,8 @@ object MergeRepo:
     )
 
   /** The merges, newest first. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(limit: PageSize)(using DbCon): List[MergeInfo] =
     sql"SELECT $mergeCols FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ${math.max(1, limit.value)}"
       .query[MergeRow]
@@ -82,6 +89,9 @@ object MergeRepo:
       .map(info)
 
   /** One merge by its id or an unambiguous prefix of it: `Left` when none, or several, match. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def find(idOrPrefix: MergeIdOrPrefix)(using DbCon): Either[Api.Error, MergeRow] =
     val p = idOrPrefix.value.trim.toLowerCase(java.util.Locale.ROOT)
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
@@ -119,6 +129,7 @@ object MergeRepo:
   /** One merge with its report (an apply's or an import's, as written), its resolutions and the decisions it left to
     * remember.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def detail(idOrPrefix: MergeIdOrPrefix)(using DbCon): Either[Api.Error, MergeDetail] =
     find(idOrPrefix).map { r =>
       val (report, resolutions) = sql"SELECT report::text, resolutions::text FROM merges WHERE id = ${r.id}"
@@ -147,6 +158,8 @@ object MergeRepo:
   /** The ledger rows of one record (a uid — the bundle's or the one here — or a citekey), of one merge, or the latest
     * `limit`; and the redirects that name the record.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def ledger(uid: Option[UidText], merge: Option[MergeIdOrPrefix], limit: PageSize, rules: MergeRuleSet)(using
       DbCon
   ): Either[Api.Error, MergeLedger] =
@@ -218,6 +231,8 @@ object MergeRepo:
 
   // ── the review screen's draft (V051) ──────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def session(bundle: BundleName)(using DbCon): MergeSession =
     sql"SELECT resolutions::text, ${Timestamps.iso(sql"updated_at")} FROM merge_sessions WHERE bundle = $bundle"
       .query[(String, String)]
@@ -230,12 +245,14 @@ object MergeRepo:
       )
       .getOrElse(MergeSession(MergeSession.Bundle(bundle.value)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def putSession(bundle: BundleName, r: MergeResolutions)(using DbCon): MergeSession =
     val json = Jsonb.write(r)
     sql"""INSERT INTO merge_sessions (bundle, resolutions, updated_at) VALUES ($bundle, $json::jsonb, now())
           ON CONFLICT (bundle) DO UPDATE SET resolutions = EXCLUDED.resolutions, updated_at = now()""".update.run()
     session(bundle)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def dropSession(bundle: BundleName)(using DbCon): Unit =
     Unused(sql"DELETE FROM merge_sessions WHERE bundle = $bundle".update.run(), Unused.Why.Idempotent)
 
@@ -246,6 +263,8 @@ object MergeRepo:
     val _ = sql"SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtext('histmersion.bundle-import'))) l".query[Int].run()
 
   /** While on, rows keep the clocks the bundle gives them: the change-clock triggers stand aside. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def importing(on: Importing)(using DbCon): Unit =
     val setting: String = if on.value then "on" else "off"
     val _ = sql"SELECT set_config('histmersion.importing', $setting, true)".query[String].run()
@@ -254,6 +273,8 @@ object MergeRepo:
     * at all, so importing the same bundle twice writes nothing. The ledger is keyed by the BUNDLE's uid and names the
     * local one it maps to.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(
       m: Bundle.Manifest,
       bundleSha: Sha256,
@@ -313,6 +334,9 @@ object MergeRepo:
     }
 
   /** A merge's own change of rows it folded into: their clocks move. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   def touch(table: TableName, uids: List[UUID])(using DbCon): Unit =
     Unused(
       sql"UPDATE ${SqlLiteral(table.value)} SET updated_at = now() WHERE uid = ANY(${uids.map(u => u.toString)}::uuid[])".update

@@ -2,11 +2,14 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Events follow CIDOC-CRM's four-point time-span: `notBefore`/`beginBy`/`endFrom`/`notAfter`, the outer span covering
   * every possible moment and the inner span only the certain core.
   */
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventScale:
   type GeometryType = GeometryType.T
   object GeometryType extends Newtype[String, Pure]
@@ -20,6 +23,7 @@ object EventScale:
   val Regional = "regional"
 
   val Auto = "auto"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[EventSummary.Scale] = List(EventSummary.Scale(Local), EventSummary.Scale(Regional))
 
   val localKinds: Set[LocalKinds] = Set(
@@ -52,6 +56,8 @@ object EventScale:
     RegionalKinds("famine")
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: EventSummary.Scale): Option[Option[EventSummary.Scale]] =
     (s).value.trim.toLowerCase match
       case Local    => Some(Some(EventSummary.Scale(Local)))
@@ -59,9 +65,14 @@ object EventScale:
       case Auto     => Some(None)
       case _        => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normKind(kind: EventSummary.Kind): EventSummary.Kind =
     EventSummary.Kind((kind).value.trim.toLowerCase.replaceAll("[\\s-]+", "_"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def ofKind(kind: EventScale.OfKindKind): Option[EventSummary.Scale] =
     val k = normKind(kind)
     if localKinds(LocalKinds((k).value)) then Some(EventSummary.Scale(Local))
@@ -69,6 +80,8 @@ object EventScale:
       Some(EventSummary.Scale(Regional))
     else None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofPlaceKind(placeKind: Place.Kind.Wire): Option[EventSummary.Scale] =
     (placeKind).value.trim.toLowerCase match
       case Place.Kind.Site | Place.Kind.Feature =>
@@ -77,12 +90,17 @@ object EventScale:
         Some(EventSummary.Scale(Regional))
       case _ => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofGeometry(geometryType: GeometryType): Option[EventSummary.Scale] =
     (geometryType).value.trim.toLowerCase.replace("st_", "") match
       case "point"                    => Some(EventSummary.Scale(Local))
       case "polygon" | "multipolygon" => Some(EventSummary.Scale(Regional))
       case _                          => None
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def effective(
       stated: Option[EventSummary.Scale],
       kind: EventScale.EffectiveKind,

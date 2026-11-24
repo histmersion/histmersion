@@ -23,12 +23,14 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Wikidata → Commons provider (#1446) end to end against a FAKE provider (captured answers, trimmed) and an
   * in-memory store — the `media-wikidata` plugin's collection, as the host builds it, run by the host's import of a
   * collection of its targets' own pictures: what it counts, what it refuses and why, what it stores and links, and that
   * a dry run sends two requests and writes nothing.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WikidataCommonsSuite extends munit.FunSuite:
 
   /** The store as a few maps. */
@@ -53,6 +55,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
     val checks = scala.collection.mutable.LinkedHashMap
       .empty[(ImportService.TargetType, ImportService.TargetId), ImportService.FoundCount]
     val refreshed = scala.collection.mutable.ListBuffer.empty[(AssetService.AssetUid, Rights)]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
       val wanted = keys.map(_.value).toSet
       saved.collect {

@@ -13,12 +13,14 @@ import com.histmersion.plugin.LocalFiles
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.plugin.Processes
 import com.histmersion.pluginhost.SystemProcesses
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A Calibre library for the suites, built in a scratch directory: its books (`books.json`, which the fake `calibredb`
   * answers from and writes to), the books' files and covers, the `metadata.db` the `sqlite3` fallback reads (the same
   * books, in Calibre's schema), and the two stand-in programs with their argument logs. Nothing here ever touches the
   * user's own library: [[CalibreFixture.refuseRealLibrary]] fails every suite that would be pointed at it.
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 final case class CalibreFixture(dir: Path):
   private given LocalFiles = new DiskLocalFiles
   private given Processes = new SystemProcesses
@@ -49,6 +51,7 @@ final case class CalibreFixture(dir: Path):
     }
 
   /** The fake `calibredb list` fails while this exists, as the real one does while the GUI holds the database. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def lock(locked: Boolean): Unit =
     val f = dir.resolve("gui.lock")
     if locked then Files.writeString(f, "locked") else Files.deleteIfExists(f): Unit
@@ -59,6 +62,7 @@ object CalibreFixture:
   /** One book of the fixture, in `calibredb list --for-machine`'s terms (`authors` joined by ` & `). */
   private given LocalFiles = new DiskLocalFiles
   private given Processes = new SystemProcesses
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Book(
       id: Int,
       title: String,

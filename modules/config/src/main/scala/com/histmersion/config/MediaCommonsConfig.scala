@@ -3,7 +3,9 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
+@movesTo(FeaturePlace.Media)
 final case class MediaCommonsConfig(
     apiUrl: MediaCommonsConfig.ApiUrl,
     batch: MediaCommonsConfig.Batch,

@@ -26,8 +26,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[AgentCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion agent`: declares its options, parses them into typed commands")
 object AgentArgs:
   object AgentEntry extends CommandLine.Entry:
     val name = "agent"
@@ -81,6 +84,7 @@ object AgentArgs:
     private val remove_ =
       flag("remove", "Drop the saved allowance: the server's config (agents.allowances) applies again")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       AgentCmd.Command.Allowance(target_(), limits_.getOrElse(Nil), reserve_.getOrElse(0), remove_.getOrElse(false))
     )
@@ -148,6 +152,7 @@ object AgentArgs:
     )
     private val role_ = arg[String]("role")
     private val on_ = arg[Boolean]("on|off")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.QuotaFallthrough(role_(), on_()))
 
   final private class LeafQuotaRefresh()
@@ -181,6 +186,7 @@ object AgentArgs:
       with SharedFlags:
     private val offline_ = flag("offline", "Skip the providers' model listings (no network)")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Doctor(offline_.getOrElse(false)))
 
   final private class LeafProbe()
@@ -195,6 +201,7 @@ object AgentArgs:
 
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Probe(ck_(), model_()))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   final private class LeafRun()
       extends Leaf(
         "histmersion agent",
@@ -233,6 +240,7 @@ object AgentArgs:
     )
     private val follow_ = followFlag()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] =
       Right(
         AgentCmd.Command.Run(
@@ -277,6 +285,7 @@ object AgentArgs:
     private val msgs_ = flag("messages", "Include the traced messages and tool calls")
     private val fol_ = followFlag()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Show(id_(), msgs_.getOrElse(false), fol_()))
 
   final private class LeafCompare()
@@ -292,9 +301,11 @@ object AgentArgs:
     def command: Either[Problem, Cli.Command] = Right(AgentCmd.Command.Compare(ids_(), json_()))
 
   /** `agent pause|resume|cancel <id>`; resume can raise the caps first. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   final private class LeafControl(action: Agents.Action, help: String)
       extends Leaf("histmersion agent", action.value, help):
     private val id_ = arg[String]("id")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private val caps = Option.when(action.value == "resume")(
       (
         value[Double]("budget-usd", "Raise the run's cost cap before resuming"),
@@ -323,6 +334,7 @@ object AgentArgs:
     )
 
   /** `agent approve|reject <id>…`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   final private class LeafDecide(d: Decision, help: String) extends Leaf("histmersion agent", d.wire.value, help):
     private val ids_ = args[Long]("id", required = true)
     private val note_ = value[String]("note", "Why — kept with the decision (with every id)")

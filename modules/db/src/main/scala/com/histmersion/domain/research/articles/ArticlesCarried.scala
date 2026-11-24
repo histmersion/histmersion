@@ -25,6 +25,7 @@ import com.histmersion.util.storage.ContentStore
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
   * and their old slugs.
@@ -32,14 +33,17 @@ import io.github.iltotore.iron.constraint.any.Pure
   * The ranks are the import's order among every owner's steps: the renames the other side made before the rows that
   * carry the new slug; the articles before their old slugs and versions; their links in the derived step.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object ArticlesCarried:
   type Stem = Stem.T
   object Stem extends Newtype[String, Pure]
 
   private val Research = DataOwner("research")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val articles: CarriedKind = CarriedKind.records[Bundle.Article](
     Research,
     Bundle.Kind.Article,
@@ -58,10 +62,12 @@ object ArticlesCarried:
     */
   val versions: CarriedKind = new CarriedKind:
     val owner: DataOwner = Research
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val entry: BundleEntry = BundleEntry(Bundle.Kind.ArticleVersion.file)
     override val record: Option[Bundle.Kind] = Some(Bundle.Kind.ArticleVersion)
     override val table: Option[TableName] = Some(TableName("article_versions"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
       val rs = ArticleBundleRepo.versions(scope).toList
       val bodies = rs.map(r => BlobOut(r.bodySha, r.bodyBytes, ArticleBundleRepo.versionBody(r.uid)))
@@ -86,8 +92,11 @@ object ArticlesCarried:
     override val rowsIn: List[RowsIn] = List(rows(ImportRank(45))(ArticleBundleRepo.mergedVersionsIn))
 
   /** The entry of a set records own, by its file's stem. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def set(stem: Stem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val aliases: CarriedKind =
     CarriedKind.owned[Bundle.ArticleAlias](
       Research,

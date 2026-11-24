@@ -21,7 +21,12 @@ import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the goal tables and their row codecs")
 object GoalRepo:
 
   private val cols =
@@ -29,6 +34,7 @@ object GoalRepo:
           g.updated_at::text, g.creator::text, ${StoredCreator.at(sql"g.created_at")}"""
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def listIn(status: Option[GoalRow.Status], limit: PageSize, offset: Offset)(using DbCon): Goal.List =
     val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     locally:
@@ -45,6 +51,7 @@ object GoalRepo:
         UnreadPage.Offset(offset.value.max(0))
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(slug: domain.automation.Goal.Slug)(using DbCon): Option[Goal] =
     sql"""SELECT $cols FROM goals g WHERE g.slug = $slug"""
       .query[GoalRow]
@@ -57,6 +64,7 @@ object GoalRepo:
     sql"""SELECT $cols FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
 
   /** A goal's direct sub-goals, by slug. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def children(slug: domain.automation.Goal.Slug)(using DbCon): List[Goal] =
     sql"""SELECT $cols FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
       .query[GoalRow]
@@ -64,6 +72,7 @@ object GoalRepo:
       .toList
       .map(_.toDto)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def exists(slug: domain.automation.Goal.Slug)(using DbCon): Boolean =
     (sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
 
@@ -81,6 +90,7 @@ object GoalRepo:
   /** Create a goal, never replace one, in the caller's transaction: a slug in use, or an old slug of another goal
     * (V053), is a conflict, and so is a period that starts after it ends refused. Nothing is written then.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): Either[Api.Error, Unit] =
@@ -108,6 +118,8 @@ object GoalRepo:
   /** The goal's period as a range literal: either bound may be given alone (an open period); one that starts after it
     * ends is refused.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def periodOf(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Option[String]] =
     RangeSql
       .merge(
@@ -119,6 +131,7 @@ object GoalRepo:
       .getOrElse(Right((None, None)))
       .map((s, e) => RangeSql.literal(s, e))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def putIn(slug: domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): Unit =
@@ -134,6 +147,8 @@ object GoalRepo:
             parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
 
   /** A goal's fields changed as given, in the caller's transaction. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchIn(slug: domain.automation.Goal.Slug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
@@ -205,6 +220,8 @@ object GoalRepo:
   /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its sub-goals' parent
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def renameIn(
       oldSlug: domain.automation.Goal.Slug,
       newSlug: domain.automation.Goal.Slug
@@ -249,6 +266,8 @@ object GoalRepo:
       Right(())
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def renamedTo(
       slug: domain.automation.Goal.Slug
   )(using DbCon): Option[domain.automation.Goal.Slug] =
@@ -257,5 +276,6 @@ object GoalRepo:
       .map(id => domain.automation.Goal.Slug.assume(id.value))
 
   /** A goal removed in the caller's transaction; false when there was none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def deleteIn(slug: domain.automation.Goal.Slug)(using DbCon): Boolean =
     sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0

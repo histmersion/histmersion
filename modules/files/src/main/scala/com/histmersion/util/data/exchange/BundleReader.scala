@@ -10,6 +10,8 @@ import com.histmersion.util.data.exchange.BundleEntities
 import java.io.InputStream
 import java.security.{DigestInputStream, MessageDigest}
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Reading a `.hmx` bundle off a stream: the manifest, every entity file, and the blobs' names — checking each against
   * the manifest, and collecting EVERY problem rather than stopping at the first (the user fixes them all in one go,
@@ -19,6 +21,8 @@ import com.histmersion.api.exchange.Bundle
   * `bundle verify` does); without, they are skipped, and whoever applies them hashes them as they are consumed (the
   * import's second pass).
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@atBoundary(BoundaryKind.Json, "reads a `.hmx` bundle stream, checking each entry against its manifest")
 object BundleReader:
 
   final case class Loaded(
@@ -38,6 +42,8 @@ object BundleReader:
   private def entry(path: String, fault: Problem.Io.Fault): Problem =
     Problem.Io.Entry(Problem.Io.Format.Bundle, Problem.Io.Path(s"$path"), fault)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(in: InputStream, hashBlobs: Boolean): Loaded =
     val tar = BundleTar.Reader(in)
     val problems = List.newBuilder[Problem]

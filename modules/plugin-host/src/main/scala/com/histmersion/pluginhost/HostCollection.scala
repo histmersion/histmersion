@@ -7,13 +7,16 @@ import com.histmersion.plugin.*
 import scala.util.control.NonFatal
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plugin's [[SourceCollection]] as the host calls it: every call guarded (an exception or a linkage error becomes
   * the operation's `Left`, naming the collection), and every write refused unless the collection declares the
   * capability it needs — whatever the plugin's own member would do.
   */
 final class HostCollection(val name: HostCollection.Name, collection: SourceCollection):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def title: Title = Title(guardedValue(collection.title.value, name.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def description: HostCollection.Description =
     HostCollection.Description(guardedValue(collection.description.value, ""))
   def capabilities: Set[CollectionCapability] = guardedValue(collection.capabilities, Set(CollectionCapability.Read))
@@ -42,6 +45,7 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
 
   def add(metadata: CollectionMetadata, file: FetchedFile): Either[Problems, CollectionId] =
     writing(CollectionCapability.Add)(collection.add(metadata, file))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def replace(
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
@@ -50,6 +54,7 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
     writing(CollectionCapability.Add)(collection.replace(id, key, file)).map(r => HostCollection.Id(r.value))
   def update(id: CollectionId, metadata: CollectionMetadata): Either[Problems, List[CollectionChange]] =
     writing(CollectionCapability.Update)(collection.update(id, metadata))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
@@ -79,6 +84,7 @@ final class HostCollection(val name: HostCollection.Name, collection: SourceColl
       case NonFatal(e)     => Left(collectionThrew(e))
 
   /** The collection's call threw `e`: logged under its problem's id. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def collectionThrew(e: Throwable): Problem =
     Problem.from(e, Problem.Where(s"source collection $name"), Problem.Internal.Id.mint())
 

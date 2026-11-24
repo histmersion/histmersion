@@ -3,7 +3,9 @@ package util.problem
 
 import scala.compiletime.constValueTuple
 import scala.deriving.Mirror
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CasesSuite extends munit.FunSuite:
   import Problem.*
   import Text.sentence

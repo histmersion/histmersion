@@ -15,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Seed the library from a folder of `wiki/sources/` notes. Idempotent (a put by citekey).
   *
@@ -24,11 +25,14 @@ import com.histmersion.domain.Creator
   * source by `addFigures` (media's), and the body's `…/figures/<name>` links normalised to `assets/<name>` in the same
   * write.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SeedImport(
     sources: SourceService,
     addFigures: (Citekey, List[NewFigure]) => (WritePermit, Creator.New) ?=> AssetService.AddedFigureCount
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run(folder: SeedFolder, force: SeedImport.RunForce, assetBytes: SeedFolder.MaxBytes)(using
       WritePermit
   )(using Creator.New): SeedResult =
@@ -80,6 +84,7 @@ object SeedImport:
   object RunForce extends Newtype[Boolean, Pure]
 
   /** True when the stored source is strictly newer than the file — writing the file would lose work. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isStale(
       stored: Map[Citekey, CitekeyMillis.Millis],
       citekey: Citekey,

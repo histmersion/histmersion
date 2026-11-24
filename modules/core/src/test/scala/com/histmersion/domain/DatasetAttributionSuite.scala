@@ -5,10 +5,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.media.{DataCredit, DataCredits}
 import com.histmersion.api.media.MediaItem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The datasets' credits read as the reuse they allow: the stated licence classified, its URL read when the statement
   * names none, the credit line kept, and what the credits page shows unchanged.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DatasetAttributionSuite extends munit.FunSuite:
 
   private def credit(licence: DataCredit.Licence, url: Option[DataCredit.LicenceUrl]) = DataCredit(

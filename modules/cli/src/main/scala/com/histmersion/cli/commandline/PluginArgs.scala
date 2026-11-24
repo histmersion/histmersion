@@ -13,8 +13,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[PluginCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion plugin`: declares its options, parses them into typed commands")
 object PluginArgs:
   object PluginEntry extends CommandLine.Entry:
     val name = "plugin"
@@ -41,6 +44,7 @@ object PluginArgs:
       "A Maven repository (a directory or a URL) to look in first, for the plugin and its dependencies; repeatable"
     )
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PluginCmd.Command.Add(
         arg_(),
@@ -63,6 +67,7 @@ object PluginArgs:
     private val what_ = arg[String]("id|file")
     private val rebuild_ = flag("rebuild", "Relink right after removing")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(PluginCmd.Command.Rm(what_(), rebuild_.getOrElse(false)))
 
   final private class LeafListing()
@@ -96,6 +101,7 @@ object PluginArgs:
     private val jvm_ = flag("jvm", "Switch to JVM mode instead of building (plugins found at each start)")
     private val check_ = flag("check", "Run the pre-flight only")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PluginCmd.Command.Rebuild(
         noRestart_.getOrElse(false),
@@ -115,6 +121,7 @@ object PluginArgs:
       with SharedFlags:
     private val noRestart_ = flag("no-restart", "Do not restart the service")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(PluginCmd.Command.Rollback(noRestart_.getOrElse(false)))
 
   final private class LeafNew()
@@ -125,6 +132,7 @@ object PluginArgs:
       )
       with SharedFlags:
     private val rawId_ = arg[String]("id")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private val rawKind_ =
       value[String]("kind", s"What it adds: ${PluginKind.names} (default ${PluginKind.SourceFetcher.name})")
     private val dir_ = value[String]("dir", "Where to write it (default ./<id>; must not exist or be empty)")
@@ -136,6 +144,8 @@ object PluginArgs:
     private val agentNotes_ =
       flag("with-agent-notes", "Also write AGENTS.md (and CLAUDE.md pointing at it) for coding agents")
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PluginCmd.Command.New(
         rawId_(),
@@ -160,6 +170,7 @@ object PluginArgs:
       "Copy the install's artifacts into ~/.m2/repository (the files missing or changed there) and print its path"
     )
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PluginCmd.Command.Repo(asUrl_.getOrElse(false), m2_.getOrElse(false))
     )
@@ -173,6 +184,7 @@ object PluginArgs:
       with SharedFlags:
     private val sources_ = flag("sources", "The sources jar instead of the jar")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(PluginCmd.Command.ApiJar(sources_.getOrElse(false)))
 
   final private class GroupPlugin()

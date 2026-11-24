@@ -24,6 +24,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,
@@ -31,6 +32,7 @@ import com.histmersion.util.database.TestCreators.given
   * rendered page — and `POST /api/places/{id}/rename` (#890), whose old id keeps resolving. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FormatHttpSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -76,6 +78,7 @@ class FormatHttpSuite extends DbSuite with db.Bounded:
       |The ** reliefs** and [the letters] (https://example.org/x) and \[\[zz_fmt2020_source\]\].
       |""".stripMargin
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))

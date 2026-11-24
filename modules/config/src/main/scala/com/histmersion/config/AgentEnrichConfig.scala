@@ -3,12 +3,14 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by heading where the
   * source has a table of contents); the classify step sees the first `headChars`. `upstream` = check the record against
   * OpenAlex/Crossref and run `refs`/`assess` (network calls; off, those steps record that they were skipped). `guards`
   * are the findings step's extra checks ([[AgentEnrichGuardsConfig]]).
   */
+@movesTo(FeaturePlace.LibraryWorkflows)
 final case class AgentEnrichConfig(
     windowChars: AgentEnrichConfig.WindowChars,
     maxWindows: AgentEnrichConfig.MaxWindows,

@@ -4,6 +4,7 @@ package domain.library.ingest
 import com.histmersion.domain.library.sources.{SourceDeletePlan, SourceOriginals}
 import com.histmersion.util.storage.Store
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The files the server keeps of a source's original (#969), which a delete removes after its commit:
   *
@@ -15,9 +16,12 @@ import com.histmersion.domain.library.Citekey
   * Calibre's copy is never among them: Calibre is the user's library, and `histmersion calibre` the only thing that
   * writes it.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class StoredOriginals(originals: () => Store, spool: () => Store) extends SourceOriginals:
 
   /** The files that exist now, each named where it is. A key that is not a valid citekey names nothing. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile] =
     val o = originals()
     val s = spool()
@@ -44,6 +48,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Remove `files` (files first, then the directories they were in, when empty). Best effort: every failure is logged
     * and returned as `path: reason`, and never undoes the delete it follows.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile] =
     val o = originals()
     val s = spool()
@@ -62,6 +67,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
     }
 
   /** The key of `where` in `store`, when it is one of its files. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def keyIn(store: Store, where: String): Option[Store.Key] =
     val root = store.where(Store.Key.Root).value.stripSuffix("/") + "/"
     Option
@@ -72,6 +78,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Every content hash the originals' store holds a file for (`<sha>.<ext>`, one listing) — what the Calibre gaps
     * listing marks as downloadable. Empty when the store cannot be read.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hashes: Set[Sha256] =
     originals()
       .names()

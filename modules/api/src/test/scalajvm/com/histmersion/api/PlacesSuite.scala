@@ -15,10 +15,14 @@ import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pure tests for the gazetteer's Linked-Places / GeoJSON reader-writer (plan §1.6a). No database. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class PlacesSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def one(json: String, kind: Place.KindValue = Place.KindValue(Place.Kind.Region)): Place.Input =
     Lpf.parse(json, kind) match
       case Right(x :: Nil) => x
@@ -203,6 +207,7 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(Place.Kind.parse(Place.Kind.ParseS("")), None)
 
   // ── rendering ───────────────────────────────────────────────────────────────────────────────
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val turkey =
     Place.Summary(
       Place.Id("ne_country_tur"),
@@ -213,6 +218,7 @@ class PlacesSuite extends munit.FunSuite:
       Some(Place.Source("Natural Earth")),
       Place.Summary.Names("Turkey, Türkiye")
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val disputed = Place.Summary(
     Place.Id("israel_united_monarchy_ia1"),
     Place.Summary.Label("Israel (united monarchy, as narrated) (contested)"),
@@ -223,6 +229,7 @@ class PlacesSuite extends munit.FunSuite:
     Place.Summary.Names("Israel, Yisrael"),
     contested = Place.Summary.Contested(true)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hatti =
     Place.Summary(
       Place.Id("hatti_lba"),

@@ -17,6 +17,7 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the media imports ask about and what they recorded asking (#1446): the places on the map and the events a
   * provider has not been asked about, the facts a collection's match reads of a place, and the checks — that a provider
@@ -79,8 +80,10 @@ trait ImportService:
 
 object ImportService:
   export ExternalIds.ExternalId
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type FoundCount = RowCount
   val FoundCount: RowCount.type = RowCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PendingCount = RowCount
   val PendingCount: RowCount.type = RowCount
   export MediaItemRow.Provider
@@ -108,6 +111,7 @@ object ImportService:
   def apply(db: Transactor): ImportService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends ImportService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def targets(
         provider: Provider,
         place: Option[Place.Id],
@@ -126,8 +130,10 @@ object ImportService:
           since.map(s => ImportRepo.Since(s.value))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pending(provider: Provider, since: Option[Since]): PendingCount =
       db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def collectionTargets(
         check: CheckName,
         places: Places,
@@ -150,6 +156,7 @@ object ImportService:
           ImportRepo.PleiadesOnly(pleiadesOnly.value)
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def collectionPending(
         check: CheckName,
         places: Places,
@@ -165,6 +172,7 @@ object ImportService:
         )
       )
     def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = db.read(ImportRepo.placeFacts(ids))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def mapPlacesNamed(keys: List[PlaceKey]): Map[PlaceKey, List[PlaceFacts]] = db
       .read(ImportRepo.mapPlacesNamed(keys.map(k => ImportRepo.NameKey(k.value))))
       .map((k, v) => PlaceKey(k.value) -> v)
@@ -175,8 +183,10 @@ object ImportService:
         ids: List[(ExternalIds.Scheme, ExternalId)]
     ): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] =
       db.read(ImportRepo.mapPlacesWithIds(ids))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id)(using WritePermit): Boolean =
       db.write(ImportRepo.commonsCategory(placeId, ImportRepo.Category(category.value), Target.Qid(qid.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checked(
         provider: Provider,
         targetType: TargetType,
@@ -191,6 +201,7 @@ object ImportService:
     * place to be recorded on. `clock` stamps a check as the database's `clock_timestamp()` does.
     */
   final class InMemory(state: AtomicReference[MediaState], clock: Clock) extends ImportService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def one(place: Option[Place.Id], event: Option[Event.Id]): Option[Problem] =
       place
         .map(_.value.trim)
@@ -212,6 +223,8 @@ object ImportService:
         since: Option[Since]
     ): Either[Problem, List[Target]] = one(place, event).toLeft(Nil)
     def pending(provider: Provider, since: Option[Since]): PendingCount = PendingCount(0)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def collectionTargets(
         check: CheckName,
         places: Places,
@@ -244,6 +257,7 @@ object ImportService:
     def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id)(using WritePermit): Boolean =
       false
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checked(
         provider: Provider,
         targetType: TargetType,

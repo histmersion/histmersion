@@ -7,12 +7,14 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every active filter as a chip with its remove button, the period among them once it is not the default span — the
   * one list the filter panel, its folded rail's count and an empty result list show.
   */
 object FilterChips:
   type ChipCount = ChipCount.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ChipCount extends Newtype[Int, Pure]
 
   /** Pure: is the span `from`–`to` other than the default one? */
@@ -21,11 +23,17 @@ object FilterChips:
     from.getOrElse(defaultFrom) != defaultFrom || to.getOrElse(defaultTo) != defaultTo
 
   /** Pure: how many filters are active — the chips and, when set, the period. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def count(chips: List[UiState.ActiveChip], period: Boolean): ChipCount = ChipCount(
     chips.size + (if period then 1 else 0)
   )
 
   /** How many filters are active now. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def countNow(config: UiConfig): ChipCount =
     count(
       UiState.activeChips(),
@@ -33,11 +41,16 @@ object FilterChips:
     )
 
   /** The label a chip's field reads as. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def labelOf(c: UiState.ActiveChip): String = c.key match
     case k if k == UiState.q.key => "Words"
     case _                       => Wording.capitalize(c.label.value)
 
   /** One active filter's chip; a chosen place is named by its label, never by its id. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chip(c: UiState.ActiveChip): HtmlElement =
     val remove = Some { () => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value); PlacesInput.sync() }
     if c.key == UiState.placeIds.key then
@@ -66,6 +79,8 @@ object FilterChips:
         remove = remove
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodChip(config: UiConfig): HtmlElement =
     Chip(
       Chip.Text(
@@ -87,6 +102,9 @@ object FilterChips:
     )
 
   /** The chips of every active filter, following the state. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def list(config: UiConfig): HtmlElement =
     ul(
       cls := "filter-chips",

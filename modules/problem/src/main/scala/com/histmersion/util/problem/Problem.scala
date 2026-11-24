@@ -8,6 +8,7 @@ import hearth.typename.TypeName as Named
 
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Why an operation did not succeed: one closed list of cases, in eleven groups, each case holding typed data and no
   * sentence. The sentence, the HTTP status, the CLI exit code, the log line and the stored wording are the edges' (one
@@ -60,6 +61,7 @@ object Problem:
     object Description extends Newtype[String, Pure]
 
     /** The constraint the newtype module captured. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(constraint: Newtype.Constraint): Constraint =
       Constraint(Name(s"${constraint.name}"), Description(s"${constraint.description}"))
 
@@ -145,7 +147,8 @@ object Problem:
   /** A problem's English sentence, as its renderer wrote it: what a [[Relayed]] problem holds. */
   type Sentence = Sentence.T
   object Sentence extends Newtype[String, Pure]:
-    extension (sentence: Sentence) def kept: Problem = Stored.Unrecognised(Stored.Text(sentence.value))
+    extension (sentence: Sentence) @tolerated(LintRule.G60Unrecognised, "pending G60 (only the stored column's reader builds Unrecognised)")
+                                   def kept: Problem = Stored.Unrecognised(Stored.Text(sentence.value))
 
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T
@@ -585,6 +588,7 @@ object Problem:
       case VaultName(name: Raw)
 
     /** The input a newtype refused: its type, its constraint and the input, as the newtype module recorded them. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def malformed(refusal: Newtype.Refusal): Invalid =
       Malformed.here(TypeName.of(refusal.typeName), Constraint.of(refusal.constraint), Raw(s"${refusal.raw}"))
 
@@ -2581,12 +2585,14 @@ object Problem:
   /** A failure not classified yet: the text the code before the closed `Problem` wrote. Only the change that brings
     * every construction site over writes it; each later change replaces some with their cases, until none is left.
     */
+  @tolerated(LintRule.ProblemField, "pending G60 (a problem's fields are newtypes or enums)")
   final case class Unclassified(text: Legacy.Text) extends Problem
 
   object Unclassified:
     /** TEMPORARY (G60 step 1, counted by `G60fromString`): an exception's message as an unclassified problem, as the
       * values module's String `Problem.of` read it; its slice turns the site into [[Problem.from]].
       */
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def of(thrown: Throwable): Unclassified = Unclassified(Legacy.Text.of(thrown))
 
   /** What a stored column held. */
@@ -2636,6 +2642,7 @@ object Problem:
       * them, and the [[Text.sentence]] of any other case, for the code that still builds one problem's text into
       * another's until its slice. Goes with `Unclassified`.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def legacyText: String = problem match
       case Unclassified(text) => s"$text"
       case other              => Text.sentence(other)
@@ -2693,6 +2700,7 @@ object Problem:
     /** The same problem, found inside `where` (a finding, a claim of an answer, a file): a proposal's place and an
       * input's path get it in front, so that the sentence starts `where: `; damaged data is placed inside it.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def inside(where: Where): Problem = problem match
       case Content.Proposal(rule, at) => Content.Proposal(rule, Where(s"$where: $at"))
       case Content.Answer(rule)       => Content.Proposal(rule, where)
@@ -2702,6 +2710,7 @@ object Problem:
   // ---- one of each ------------------------------------------------------------------------------------------
 
   /** One value of every case, with every field set: what the renderers' tables are checked over. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   val examples: Vector[Problem] =
     val citekey = TypeName("Citekey")
     val core = Upstream.Name("core")

@@ -7,10 +7,12 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Acquire
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A work list as `GET /api/queue/{list}` shows it: its items as the automation keeps them, the library's last legal
   * check of each ACQUIRE item, and the goals each item belongs to or is linked from.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class QueueListing(
     list: Queue.Kind.Label,
     items: List[Queue.QueueItem],

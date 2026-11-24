@@ -3,7 +3,9 @@ package config
 
 import com.histmersion.Year
 import hearth.kindlings.sconfigderivation.ConfigReader
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
+@movesTo(FeaturePlace.LibraryAcquisition)
 final case class AcquireDefaults(
     searchLimit: ItemCount, // discover search page size
     minYear: Year, // discover: oldest publication year considered

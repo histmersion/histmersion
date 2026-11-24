@@ -14,8 +14,13 @@ import scala.util.chaining.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `bookmarks` table. Takes the connection it runs on; a removed bookmark stays as its tombstone. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the bookmark tables and their row codecs")
 private[bookmarks] object BookmarkRepo:
   type RowsChanged = RowsChanged.T
   object RowsChanged extends Newtype[Int, Pure]
@@ -28,6 +33,7 @@ private[bookmarks] object BookmarkRepo:
           FROM bookmarks b"""
 
   /** Newest first; every one when no `size` is given. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def list(user: UserId, kind: Option[MarkKind], size: Option[PageSize])(using DbCon): List[Bookmark.Row] =
     val ofKind = kind.fold(sql"")(k => sql" AND b.target_kind = ${k.wire}")
     val ordered =
@@ -37,6 +43,8 @@ private[bookmarks] object BookmarkRepo:
       .run()
       .toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =
     sql"$Projection WHERE b.user_id = $user AND b.deleted_at IS NULL AND b.id = $id::uuid"
       .query[Bookmark.Row]
@@ -44,6 +52,9 @@ private[bookmarks] object BookmarkRepo:
       .headOption
 
   /** The live bookmark of an item, by the key it was bookmarked under. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def ofItem(user: UserId, ref: ItemRef)(using DbCon): Option[com.histmersion.api.personal.Bookmark.Id] =
     sql"""SELECT id::text FROM bookmarks WHERE user_id = $user AND target_kind = ${ref.kind.value: String}
             AND target_id = ${ref.key} AND deleted_at IS NULL"""
@@ -51,6 +62,8 @@ private[bookmarks] object BookmarkRepo:
       .run()
       .headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def insert(
       user: UserId,
       c: TargetColumns,
@@ -66,6 +79,8 @@ private[bookmarks] object BookmarkRepo:
         .column(creator)}::jsonb)
           RETURNING id::text""".query[com.histmersion.api.personal.Bookmark.Id].run().head
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def relabel(
       user: UserId,
       id: com.histmersion.api.personal.Bookmark.Id,
@@ -78,6 +93,8 @@ private[bookmarks] object BookmarkRepo:
       .run()
       .pipe(RowsChanged(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz

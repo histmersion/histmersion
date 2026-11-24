@@ -3,11 +3,14 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `passages` (#954): the defaults and caps of a caller's `limit` (passages shown) and `context` (characters around a
   * match), how many matches one call counts before it stops, and how long a caller's regex may run over one body before
   * it is refused.
   */
+@movesTo(FeaturePlace.LibrarySources)
 final case class PassageLimits(
     limit: PassageLimits.Limit,
     maxLimit: PassageLimits.MaxLimit,
@@ -17,12 +20,14 @@ final case class PassageLimits(
     regexTimeoutMs: PassageLimits.RegexTimeoutMs
 ) derives ConfigReader:
   /** `limit` into `[1, maxLimit]`; absent or `<= 0` is the default. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limitOf(requested: Option[PassageLimits.Limit]): PassageLimits.Limit =
     PassageLimits.Limit(
       requested.map(_.value).filter(_ > 0).getOrElse(limit.value).max(1).min(math.max(1, maxLimit.value))
     )
 
   /** `context` into `[0, maxContext]`; absent or negative is the default. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contextOf(requested: Option[PassageLimits.Context]): PassageLimits.Context =
     PassageLimits.Context(
       requested.map(_.value).filter(_ >= 0).getOrElse(context.value).max(0).min(math.max(0, maxContext.value))

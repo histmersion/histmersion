@@ -8,11 +8,13 @@ import com.histmersion.config.testsupport.ComparedByValue.given
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The bundled Postgres' settings (`runtime.postgres`): sizes ([[PgSize]], [[PgBytes]]), what `auto` comes to
   * ([[PgParameter]]), the defaults, the refusal of what is no size, and the pool against the connections
   * ([[PgTuning.admits]]).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundledPostgresSuite extends munit.FunSuite:
 
   /** A size as the settings write it, read and written back as Postgres reads it. */

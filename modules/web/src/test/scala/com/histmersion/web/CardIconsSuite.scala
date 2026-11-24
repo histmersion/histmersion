@@ -23,11 +23,13 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Period
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site
   * type, regions and polities a map, events their kind, articles and pictures theirs. And the map's clusters: what a
   * bubble holds and says. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CardIconsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
@@ -211,6 +213,7 @@ class CardIconsSuite extends munit.FunSuite:
       Some(e),
       Some(c)
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dot(k: DotKind, mid: Option[DotEntry.Mid] = None) =
     Member(
       k,
@@ -219,6 +222,7 @@ class CardIconsSuite extends munit.FunSuite:
       Certainty.NoSay,
       entry = Some(DotEntry(k, DotEntry.Id(k.toString), DotEntry.Label(k.toString), DotEntry.Icon("x"), mid))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finds(hs: GeoHit*) =
     Member(
       DotKind.Finding,

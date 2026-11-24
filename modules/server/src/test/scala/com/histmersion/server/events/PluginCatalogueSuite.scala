@@ -47,6 +47,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A THIRD-PARTY plugin's event catalogue (docs/research-plugins.md §6) read by `events import` through the registries,
   * against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): its parts in order, a paged part followed, a
@@ -55,6 +56,8 @@ import com.histmersion.util.database.TestCreators.given
   * terms and named on the event's card. No socket: the plugin's requests are answered by a fake. Fixtures: catalogue
   * `zq-quakes`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class PluginCatalogueSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -80,7 +83,10 @@ class PluginCatalogueSuite extends DbSuite:
     val citation = EventCatalogue.Citation("Zq et al. (2026)");
     val home = EventCatalogue.Home("https://zq.example")
     override val requestIntervalMs = EventCatalogue.RequestIntervalMs(0)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("p1"), EventCatalogue.ReadPart("p2"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ev(id: CatalogueEvent.Id, label: CatalogueEvent.Label, year: Year) =
       CatalogueEvent(
         id,
@@ -93,6 +99,9 @@ class PluginCatalogueSuite extends DbSuite:
         lon = Some(Longitude(23.7)),
         names = List(CatalogueEvent.Names(s"$label (alt)"))
       )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       http
         .get(Plugin.Http.Url(s"https://zq.example/api/$part"), Map.empty)
@@ -134,6 +143,7 @@ class PluginCatalogueSuite extends DbSuite:
     )
 
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -235,7 +245,10 @@ class PluginCatalogueSuite extends DbSuite:
     val home = EventCatalogue.Home("https://zq.example")
     override val requestIntervalMs = EventCatalogue.RequestIntervalMs(0)
     override val floorYear = Some(Year(-3000))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("all"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ev(id: CatalogueEvent.Id, nb: Option[Year], na: Option[Year]) =
       CatalogueEvent(
         id,
@@ -247,6 +260,7 @@ class PluginCatalogueSuite extends DbSuite:
         lat = Some(Latitude(30.0)),
         lon = Some(Longitude(31.0))
       )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       http
         .get(Plugin.Http.Url("https://zq.example/api/floods"), Map.empty)
@@ -283,6 +297,7 @@ class PluginCatalogueSuite extends DbSuite:
       Plugins.services(
         () =>
           new Plugin.Http {
+            @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
               Left(Problem.Unclassified(Legacy.Text("no")))
           },
@@ -290,6 +305,7 @@ class PluginCatalogueSuite extends DbSuite:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def storedFloods: Map[
     CatalogRecord.ProviderId,
     (TimeSpan, TimeSpan, Option[CatalogRecord.Central], Option[CatalogRecord.PlusMinus])

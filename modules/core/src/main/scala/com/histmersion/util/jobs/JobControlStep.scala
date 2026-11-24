@@ -1,7 +1,10 @@
 package com.histmersion
 package util.jobs
 
+import com.histmersion.lint.{LintRule, tolerated}
 /** What answering a [[JobAction]] on one job takes. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 enum JobControlStep:
   /** An agent run: its own pause, resume or cancel. */
   case Run(action: JobAction)

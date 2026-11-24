@@ -7,6 +7,7 @@ import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.archiveorg.{ArchiveFile, ArchiveItem, ArchiveOrg}
 import com.histmersion.upstreams.PageSize
 import com.histmersion.upstreams.ArchiveId
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** archive.org's texts as a read-only source collection: its search, an item's metadata and files, and a public item's
   * file. A lending-only item is described (`restricted`), never downloaded: it is borrowed on archive.org.
@@ -16,6 +17,7 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
   override val description: SourceCollection.Description =
     SourceCollection.Description("archive.org's public texts (lending-only items are refused)")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(query: CollectionQuery): Either[Problem, List[CollectionItem]] =
     client()
       .search(
@@ -24,11 +26,13 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
       )
       .map(_.map(ArchiveOrgCollection.item))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
     client()
       .info(ArchiveId(id.value))
       .map(i => Some(ArchiveOrgCollection.item(i)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
@@ -43,6 +47,7 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
         Problem.NotFound.Entity(Problem.TypeName("Copy"), Problem.Raw(s"${item.id.value}"))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def original(item: CollectionItem, file: CollectionFile): Either[Problem, FetchedFile] =
     if item.restricted.value then
       Left(
@@ -56,6 +61,7 @@ object ArchiveOrgCollection:
   /** The hits a search answers when the host does not say. */
   val Rows: CollectionQuery.Limit = CollectionQuery.Limit(8)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def archiveFile(f: CollectionFile): ArchiveFile =
     ArchiveFile(
       ArchiveFile.Name(f.name.value),
@@ -63,6 +69,7 @@ object ArchiveOrgCollection:
       ArchiveFile.Megabytes(f.megabytes.fold(0.0)(_.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def collectionFile(f: ArchiveFile): CollectionFile =
     CollectionFile(
       CollectionFile.Name(f.name.value),
@@ -70,6 +77,7 @@ object ArchiveOrgCollection:
       Some(CollectionFile.Megabytes(f.megabytes.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(i: ArchiveItem): CollectionItem =
     CollectionItem(
       id = CollectionId(i.identifier.value),

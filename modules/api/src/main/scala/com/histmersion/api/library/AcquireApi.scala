@@ -7,8 +7,12 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Goal
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A DOI contains a `/`, so identifiers travel as `id=` query parameters rather than in the path. */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the acquire routes with their request and response bodies")
 object AcquireApi:
   type Filter = Filter.T
   object Filter extends Newtype[String, Pure]
@@ -21,6 +25,7 @@ object AcquireApi:
 
   private lazy val base = endpoint.in("api" / "acquire").errorOut(Api.problemOut)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val discover
       : PublicEndpoint[(Query, Option[Year], Option[Filter], Option[Limit], Boolean), Api.Error, DiscoverResult, Any] =
     (base.get
@@ -50,6 +55,7 @@ object AcquireApi:
         )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val meta: PublicEndpoint[Identifier, Api.Error, WorkRef, Any] =
     (base.get
       .in("meta")
@@ -59,6 +65,7 @@ object AcquireApi:
         (refactorEncoded10: Identifier) => (refactorEncoded10).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val wikirefs: PublicEndpoint[Title, Api.Error, WikirefsResult, Any] =
     (base.get
       .in("wikirefs")
@@ -86,6 +93,8 @@ object AcquireApi:
   lazy val ingest: PublicEndpoint[Ingest.Request, Api.Error, Ingest.Report, Any] =
     base.post.in("ingest").in(jsonBody[Ingest.Request]).out(jsonBody[Ingest.Report])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
   lazy val archiveSearch: PublicEndpoint[(Query, Option[Limit]), Api.Error, ArchiveSearchResult, Any] =
     (base.get
       .in("archive" / "search")
@@ -98,6 +107,8 @@ object AcquireApi:
         (((refactorEncoded12)._1).value, ((refactorEncoded12)._2).map(refactorElement26 => (refactorElement26).value))
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
   lazy val archiveInfo: PublicEndpoint[ArchiveId, Api.Error, ArchiveItem, Any] =
     (base.get
       .in("archive" / "info")
@@ -113,6 +124,7 @@ object AcquireApi:
   /** The library's Calibre gaps and push metadata, kept for a CLI that runs the push on its own machine; the server's
     * own push is the collections' (`CollectionsApi`).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val calibreGaps: PublicEndpoint[Option[Limit], Api.Error, CalibreGaps, Any] =
     (base.get
       .in("calibre" / "gaps")
@@ -122,6 +134,7 @@ object AcquireApi:
         (refactorDecoded6).map(refactorElement9 => Limit(refactorElement9))
       )((refactorEncoded6: Option[Limit]) => (refactorEncoded6).map(refactorElement10 => (refactorElement10).value))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val calibreMeta: PublicEndpoint[Citekey, Api.Error, CalibreGap, Any] =
     (base.get
       .in("calibre" / "meta")
@@ -134,6 +147,7 @@ object AcquireApi:
   lazy val calibrePushed: PublicEndpoint[CalibrePushRequest, Api.Error, CalibrePushResult, Any] =
     base.post.in("calibre" / "pushed").in(jsonBody[CalibrePushRequest]).out(jsonBody[CalibrePushResult])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val candidates: PublicEndpoint[
     (Option[Goal.Slug], Option[Candidates.State.Wire], Option[Limit], Option[CandidateList.Offset]),
     Api.Error,

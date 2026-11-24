@@ -59,6 +59,8 @@ import com.histmersion.domain.catalogue.events.EventAliasTable
 import com.histmersion.domain.automation.goals.GoalAliasTable
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
 import com.histmersion.server.instance.WebBundle
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no object-initialisation
   * side effects anywhere below this.
@@ -74,6 +76,8 @@ import com.histmersion.server.instance.WebBundle
   * So read `deps.cfg` where it is used (a `def`, never a `val` captured at construction), and once into a local where
   * one unit of work needs one consistent config. Work handed to another thread carries its generation with [[pins]].
   */
+@tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+@movesTo(FeaturePlace.Server)
 final class Deps(
     cfgNow: () => AppConfig,
     val ds: DataSource,
@@ -158,6 +162,7 @@ final class Deps(
   def plugins: Generation = pluginsNow()
 
   /** The load the calling thread's config came from: its settings file and environment. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def loaded: LoadedConfig = loadedNow.fold(
     LoadedConfig(
       cfg,
@@ -173,6 +178,7 @@ object Deps:
   /** A fixed `Deps` — one config, one pair of DataSources, nothing hot (tests, tools); its plugins are the built-in
     * media collections and event catalogues and no fetcher ([[ServerPlugins.offline]]).
     */
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
   def apply(
       cfg: AppConfig,
       ds: DataSource,

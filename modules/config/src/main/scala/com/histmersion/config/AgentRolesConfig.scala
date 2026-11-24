@@ -3,11 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
   * [[ModelChains.parseChain]]). Empty = no model configured for that role; a step that needs it is refused with a
   * message naming the key. A chain saved in the database (`agent models set`) wins.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentRolesConfig(
     probe: AgentRolesConfig.Probe,
     extractor: AgentRolesConfig.Extractor,

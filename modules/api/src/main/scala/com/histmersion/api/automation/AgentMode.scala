@@ -29,10 +29,12 @@ object AgentMode:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[AgentMode] =
     val t = (s).value.trim.toLowerCase
     values.find(m => m.wire == Wire(t) || m.toString.toLowerCase == t)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On): AgentMode =
     if !(autopilotOn).value then Paused else if (draining).value then Finishing else Working
 
@@ -48,6 +50,7 @@ object AgentMode:
       type On = On.T
       object On extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def steps(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On, to: AgentMode): List[Step] = to match
     case Working =>
       Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(

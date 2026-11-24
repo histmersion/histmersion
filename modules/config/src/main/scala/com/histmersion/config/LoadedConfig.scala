@@ -5,6 +5,7 @@ import scala.annotation.tailrec
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** @param user
   *   the user config file as parsed (empty when there is none): the plugin host cuts each plugin's block,
@@ -15,6 +16,7 @@ import scala.jdk.CollectionConverters.*
   *   the resolved settings `config` was decoded from (`histmersion { … }` only): what a config reload compares key by
   *   key ([[ConfigReload.changed]])
   */
+@movesTo(FeaturePlace.Config)
 final case class LoadedConfig(
     config: AppConfig,
     file: UserConfigFile,

@@ -17,11 +17,13 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1491: `histmersion media import wikidata` starts the server's import JOB — the request answers at once — and
   * follows it with the `n/total` progress line the job reports, to its summary; `--no-wait` prints the id and returns;
   * a job that fails exits 2. A stand-in server, no database.
   */
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class MediaCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard
@@ -44,6 +46,7 @@ class MediaCmdSuite extends munit.FunSuite:
       .setTo(Some(JobInfo.Progress("300 place(s)/event(s) asked in 6 batch(es) · 284 stored")))
 
   /** Answers the job start with `queued`, then each poll of the job with the next of `polls`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer[A](polls: List[JobInfo])(body: (Client.ServerUrl, ConcurrentLinkedQueue[String]) => A): A =
     val seen = ConcurrentLinkedQueue[String]()
     val next = polls.iterator

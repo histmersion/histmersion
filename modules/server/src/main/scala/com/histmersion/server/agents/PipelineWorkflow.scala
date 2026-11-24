@@ -13,32 +13,40 @@ import com.histmersion.domain.automation.AgentRole
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.automation.TargetKind
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One of research's and the engine's pipelines registered as a workflow, through this transition adapter until
   * research defines its own (the library registers its own, `LibraryWorkflow`): its identifier, version, target, roles
   * and description are the pipeline's; a role's agents may use the tools the definitions of the pipeline's step agents
   * in that role list.
   */
+@movesTo(FeaturePlace.Server)
 final class PipelineWorkflow(
     val pipeline: Pipeline,
     agents: List[StepAgent],
     definitions: AgentDefinitions,
     impl: PipelineDef
 ) extends WorkflowDefinition:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire.value)
   def contributor: Creator.Plugin.Name = InTreeWorkflow.Engine
   def stepDefinitions: List[Creator.Definition.Name] =
     agents.flatMap(a => Creator.Definition.Name.from(a.wire).toOption)
   def version: domain.automation.Pipeline.Version =
     domain.automation.Pipeline.Version(pipeline.version.value)
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def target: TargetKind = io.scalaland.chimney.Transformer
     .derive[com.histmersion.api.automation.TargetKind, TargetKind]
     .transform(pipeline.targetKind)
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def roles: List[AgentRole] = io.scalaland.chimney.Transformer
     .derive[List[com.histmersion.api.automation.AgentRole], List[AgentRole]]
     .transform(pipeline.roles)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe: WorkflowDefinition.Description = WorkflowDefinition.Description(pipeline.describe.value)
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def allowedTools(role: AgentRole): Set[ToolName] =
     agents
       .flatMap(a => definitions.agent(a).toOption)
@@ -50,6 +58,7 @@ final class PipelineWorkflow(
       .flatMap(_.tools)
       .toSet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(run: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, WorkflowDefinition.Summary] =
     impl.run(run).map(summary => WorkflowDefinition.Summary(summary.value))
 

@@ -6,8 +6,10 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A base map, as the app describes it; the adapter makes its library's style of it. */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 enum BaseMapSpec:
   /** Nothing yet: the page's own background. */
   case Blank

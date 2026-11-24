@@ -8,13 +8,18 @@ import com.histmersion.api.YearFmt
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MediaMarkdown:
 
   export RepairAcquire.RepairRequest.DryRun as MediaSamplesDryRun
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def providerTitle(p: MediaItem.Provider): MediaProvider.Info.Title =
     MediaProvider.title(MediaProvider.Id(p.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assetDetail(ck: Citekey, a: AssetDetail): String =
     val loc = (a.lat, a.lon) match
       case (Some(lat), Some(lon)) => s"  \n**Location:** $lat, $lon"
@@ -35,6 +40,7 @@ object MediaMarkdown:
     val created = Creation.line(a.creator, a.createdAt).map(l => s"  \n_${l}_").getOrElse("")
     (s"# `$ck` / `${a.name}`\n\n$meta$loc$per$created$cap")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def countsLine(cs: List[MediaCount]): String =
     if cs.isEmpty then ("none")
     else
@@ -43,6 +49,7 @@ object MediaMarkdown:
         .mkString(" · ")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaProviders(ps: List[MediaProvider.Info]): String =
     if ps.isEmpty then ("No media provider is registered (every media plugin is switched off).")
     else
@@ -54,6 +61,9 @@ object MediaMarkdown:
           (if p.description.value.trim.isEmpty then "" else s"\n  ${p.description.value.trim}")
       }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def mediaImportReport(r: MediaImportReport): String =
     val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
@@ -94,6 +104,8 @@ object MediaMarkdown:
       licences + rejected + mediaSamples(r.samples, r.dryRun) + done + revoked + failed + pending
     ).mkString("\n")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[api] def mediaSamples(xs: List[MediaSample], dryRun: MediaMarkdown.MediaSamplesDryRun): String =
     if xs.isEmpty then ("")
     else
@@ -103,6 +115,8 @@ object MediaMarkdown:
         ).mkString("\n")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaCoversReport(r: MediaCoversReport): String =
     val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "dry run — nothing stored" else "stored"
     val verb = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "would link" else "linked"
@@ -118,6 +132,8 @@ object MediaMarkdown:
       s"${Plural.count(Plural.Count(r.covers.value.toLong), Plural.CountSingular("cover"))} and ${Plural.count(Plural.Count(r.illustrations.value.toLong), Plural.CountSingular("illustration"))}" +
       lines + skipped + failed
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaItemLine(m: MediaItem): String =
     val origin = m.citekey
       .map(c => s"[[$c]] / `${m.name}`")
@@ -129,6 +145,9 @@ object MediaMarkdown:
     else " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
     (s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def mediaList(l: MediaList): String =
     OffsetPage
       .markdown(
@@ -139,6 +158,8 @@ object MediaMarkdown:
       )(mediaItemLine)
       .value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaItem(m: MediaItem): String =
     val origin = m.citekey
       .map(c => s"**Source:** [[$c]] / `${m.name}`")
@@ -175,10 +196,14 @@ object MediaMarkdown:
     val cap = m.caption.map(c => s"\n\n> $c").getOrElse("")
     (s"# `${m.uid}`\n\n$rows$targets$cap")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaFacets(f: MediaFacets): String =
     s"**Providers:** ${countsLine(f.providers.map(c => c.modify(_.key).setTo(MediaCount.Key(providerTitle(MediaItem.Provider(c.key.value)).value))))}  \n" +
       s"**Licences:** ${countsLine(f.licences)}"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def figureLicenceFill(f: FigureLicenceFill): String =
     val what = if (f.applied) == FigureLicenceFill.Applied(true) then
       s"${Plural.count(Plural.Count(f.updated.value.toLong), Plural.CountSingular("figure"))} given their source's licence"
@@ -187,13 +212,19 @@ object MediaMarkdown:
     val by = if f.bySource.isEmpty then "" else "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
     (s"# Figure licences\n\n$what$by")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assetLinkLine(l: AssetLink): String =
     val xywh = l.xywh.map(x => s" xywh=$x").getOrElse("")
     (s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assetLinkList(ll: AssetLink.List): String =
     OffsetPage.markdown(ll.page, ("link(s)"), ("_No asset links._"), ll.links)(assetLinkLine).value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assetLink(l: AssetLink): String =
     val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")
     val notes = l.notes.map(n => s"  \n$n").getOrElse("")

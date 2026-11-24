@@ -7,6 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Postgres full-text search, as composable SQL fragments (plan §1.4).
   *
@@ -40,24 +41,32 @@ object Search:
   object SnippetWords extends Newtype[Int, Pure]
 
   /** The parsed query, as a fragment. Spliced once per use site so parameters stay in textual order. */
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type FtsPredicateQ = Query
   val FtsPredicateQ: Query.type = Query
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RankExprQ = Query
   val RankExprQ: Query.type = Query
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BestChunkJoinQ = Query
   val BestChunkJoinQ: Query.type = Query
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BestChunkCteQ = Query
   val BestChunkCteQ: Query.type = Query
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RankExprCteQ = Query
   val RankExprCteQ: Query.type = Query
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SnippetsQueryQ = Query
   val SnippetsQueryQ: Query.type = Query
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def tsQuery(q: Query): Frag = sql"websearch_to_tsquery('english', $q)"
 
   /** True when the source matches: its weighted title(A)/summary(B) vector, or ANY of its body chunks. Use in a
     * `WHERE`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def ftsPredicate(q: FtsPredicateQ, alias: Frag = sql"s"): Frag =
     sql"($alias.tsv @@ ${tsQuery(q)} OR EXISTS (SELECT 1 FROM source_chunks fts_p WHERE fts_p.citekey = $alias.citekey AND fts_p.tsv @@ ${tsQuery(q)}))"
 
@@ -65,6 +74,7 @@ object Search:
     * do the work — chunk lexemes are unweighted, i.e. D — so a title match outranks a body match without any hand-tuned
     * multiplier. Use in an `ORDER BY … DESC`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def rankExpr(q: RankExprQ, alias: Frag = sql"s"): Frag =
     sql"(ts_rank_cd($alias.tsv, ${tsQuery(q)}) + coalesce((SELECT max(ts_rank_cd(fts_r.tsv, ${tsQuery(q)})) FROM source_chunks fts_r WHERE fts_r.citekey = $alias.citekey AND fts_r.tsv @@ ${tsQuery(q)}), 0))"
 
@@ -88,6 +98,8 @@ object Search:
     * **Deprecated in favour of the two-phase approach**: [[bestChunkCte]] + [[snippetsQuery]]. Kept for reference; new
     * callers should use the CTE path.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bestChunkJoin(q: BestChunkJoinQ, maxWords: SnippetWords, alias: Frag = sql"s"): Frag =
     val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
@@ -104,6 +116,7 @@ object Search:
     * Boilerplate headings (references, bibliography, etc.) are penalised at 0.001x, matching the behaviour of
     * [[bestChunkJoin]].
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bestChunkCte(q: BestChunkCteQ): Frag =
     // `fts_m` ranks each matching chunk ONCE (MATERIALIZED stops Postgres inlining it back into the
     // sort key): `ts_rank_cd` de-TOASTs the chunk's tsvector, and evaluating it three times per
@@ -114,6 +127,7 @@ object Search:
     * `ORDER BY … DESC` when [[bestChunkCte]] is the query's CTE. Falls back gracefully: `coalesce(bc.rank, 0)` when the
     * source matched only on title/summary.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def rankExprCte(q: RankExprCteQ, alias: Frag = sql"s"): Frag =
     sql"(ts_rank_cd($alias.tsv, ${tsQuery(q)}) + coalesce(bc.rank, 0))"
 
@@ -133,6 +147,8 @@ object Search:
     * Returns `(citekey, heading, snippet)` rows. An empty `citekeys` list returns an empty fragment that matches
     * nothing (the caller should skip the query).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def snippetsQuery(q: SnippetsQueryQ, maxWords: SnippetWords, citekeys: List[Citekey]): Frag =
     if citekeys.isEmpty then return sql"SELECT NULL::text, NULL::text, NULL::text WHERE FALSE"
     val maxW = math.max(2, maxWords.value)

@@ -19,8 +19,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[GoalsCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion goals`: declares its options, parses them into typed commands")
 object GoalsArgs:
   object GoalsEntry extends CommandLine.Entry:
     val name = "goals"
@@ -85,6 +88,7 @@ object GoalsArgs:
       value[Double]("budget-usd", "This run's cost cap in USD (default: the goal's, then agents.budgets.run-usd)")
     private val fol_ = followFlag()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       GoalsCmd.Command.Plan(slug_(), model_(), budget_.toOption, fol_())
     )
@@ -163,6 +167,7 @@ object GoalsArgs:
     private val off_ = flag("off", "Take the sweep out of the watcher (its cron stays)")
     private val budget_ = value[Double]("budget-usd", "Cost cap of each run it starts")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] =
       val remove = remove_.getOrElse(false)
       val off = off_.getOrElse(false)

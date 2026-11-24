@@ -7,6 +7,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Ingest
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** "Add by DOI": a DOI or an arXiv id, looked up and brought in through the legal open-access chain only
   * ([[DoiIngest]]); the answer says what was found and links to the new source.
@@ -18,6 +19,9 @@ object DoiForm:
     case Failed(message: Problem)
     case Added(report: Ingest.Report)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def pane: HtmlElement =
     val typed = Var("")
     val state = Var(State.Idle)
@@ -83,6 +87,8 @@ object DoiForm:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def result(r: Ingest.Report): HtmlElement =
     div(
       cls := "doi-result",

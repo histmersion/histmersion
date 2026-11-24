@@ -7,12 +7,15 @@ import com.histmersion.domain.*
 
 import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a Pleiades "region" really is (2026-10-09) — the survey's own examples. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceReviewSuite extends munit.FunSuite:
 
   // ── what a point-only region is ──────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ev(
       id: Evidence.Id,
       label: Evidence.Label,

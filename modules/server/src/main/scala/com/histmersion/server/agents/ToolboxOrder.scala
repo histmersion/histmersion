@@ -4,11 +4,15 @@ package server.agents
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.domain.library.workflows.LibraryAgentTools
 import com.histmersion.domain.research.workflows.ResearchAgentTools
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The order the engine's toolbox lists the domains' agent tools in — the library's and research's interleaved, as the
   * toolbox has always listed them (the definitions, their generator and the toolbox snapshot name them so); the tools
   * themselves are each domain's contribution.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Server)
 object ToolboxOrder:
 
   /** The names, in order: what the definitions may list before a server runs. */

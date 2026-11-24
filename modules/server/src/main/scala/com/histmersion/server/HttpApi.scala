@@ -88,6 +88,9 @@ import com.histmersion.domain.CreatorControllers
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same netty-sync server as
   * MCP.
   */
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Server)
 final class HttpApi(
     deps: Deps,
     h: ServerWiring,
@@ -98,6 +101,9 @@ final class HttpApi(
 
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.instance.version),
     Api.health.serverLogicSuccess[Identity](_ => h.instance.health),
@@ -316,6 +322,8 @@ final class HttpApi(
     * An OLD citekey (V027) answers **301** to the source's page under its current citekey, the query string kept — so
     * bookmarks and links elsewhere land on the canonical URL.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val sourcePage: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in("source" / path[String]("citekey"))
@@ -368,6 +376,7 @@ final class HttpApi(
     * real route and before [[index]], which would otherwise answer it: a client parsing JSON must not be handed
     * `<!doctype html>` with a 200.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val apiNotFound: ServerEndpoint[Any, Identity] =
     endpoint
       .in("api" / paths)
@@ -377,6 +386,7 @@ final class HttpApi(
         Left(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Endpoint), Problem.Raw(s"/api/${p.mkString("/")}"))))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val index: ServerEndpoint[Any, Identity] =
     endpoint.get
       .in(paths)
@@ -432,12 +442,17 @@ object HttpApi:
   object Endpoint extends Newtype[String, Pure]
 
   /** A request value the domain refuses is the caller's mistake: a 400 that says which value and why. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refused[A](parsed: Either[Problems, A]): Either[Api.Error, A] =
     parsed.left.map(problems => Api.Error(problems, Some(Api.Error.Code(Write.CodeInvalid))))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def citekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     refused(Citekey.parse(ck.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(id: String): Either[Api.Error, Job.Id] =
     Job.Id
       .either(id)

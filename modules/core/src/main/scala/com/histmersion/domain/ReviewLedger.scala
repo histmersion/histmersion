@@ -20,6 +20,8 @@ import com.histmersion.domain.research.workflows.ReviewComparison
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
@@ -30,16 +32,20 @@ import com.histmersion.domain.automation.Run
   * Everything here is pure: the pipeline loads the ledger, threads it through its passes as a value (each pass's new
   * ledger is a checkpointed step output) and writes it back through the run's gate.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.ResearchWorkflows)
 object ReviewLedger:
   type ClosedLimit = ClosedLimit.T
   object ClosedLimit extends Newtype[Int, Pure]
   type PassageMargin = PassageMargin.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PassageMargin extends Newtype[Int, Pure]
   type StubbornLimit = StubbornLimit.T
   object StubbornLimit extends Newtype[Int, Pure]
   type TaskText = TaskText.T
   object TaskText extends Newtype[String, Pure]
   type TaskTextLimit = TaskTextLimit.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TaskTextLimit extends Newtype[Int, Pure]
 
   export automation.Run.Id as ApplyChecksRun
@@ -54,6 +60,7 @@ object ReviewLedger:
   export ReviewArticle.Merged.Round as LearnRound
   export automation.Run.Id as ApplyRecheckRun
   export ReviewArticle.Merged.Round as ApplyRecheckRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ArticleTaskSlug = research.Slug
   val ArticleTaskSlug: research.Slug.type = research.Slug
 
@@ -68,7 +75,9 @@ object ReviewLedger:
       */
     case SetAside extends Status(WireEnumValues.Wire("set-aside"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Status:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: WireEnumValues.Wire): Option[Status] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Status]:
       def all: Array[Status] = values
@@ -77,11 +86,14 @@ object ReviewLedger:
     given JsonValueCodec[Status] = WireEnum.codec
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   enum LessonSource(val wire: WireEnumValues.Wire):
     case Rejection extends LessonSource(WireEnumValues.Wire("rejection"))
     case Recheck extends LessonSource(WireEnumValues.Wire("recheck"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object LessonSource:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: WireEnumValues.Wire): Option[LessonSource] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[LessonSource]:
       def all: Array[LessonSource] = values
@@ -148,6 +160,7 @@ object ReviewLedger:
     type Reopened = Reopened.T
     object Reopened extends Newtype[Int, Pure]
     type NotFixedCount = NotFixedCount.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object NotFixedCount extends Newtype[Int, Pure]
     export automation.Run.Id as Deferred
 
@@ -171,11 +184,13 @@ object ReviewLedger:
     def entry(id: Finding.Id): Option[Entry] = entries.find(_.id == id)
 
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed.value && e.reviewer == r)
     def verdict: Verdict = Verdict.of(open.map(_.finding))
 
   object Ledger:
 
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Slug = research.Slug
     val Slug: research.Slug.type = research.Slug
     type Task = Task.T
@@ -190,6 +205,8 @@ object ReviewLedger:
     * its problem up to the first colon (a coverage count changes as reasons are given; the passage does not) and its
     * quote.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mechanicalKey(f: Finding): (String, String, String, String) =
     (
       f.kind.value,
@@ -198,6 +215,7 @@ object ReviewLedger:
       normalised(f.quote.value).value
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def normalised(s: String): AgentVerify.NormalisedText = AgentVerify.normalise(AgentVerify.Text(s))
 
   /** Is `b` the finding `a` again? The same reviewer, and the same passage (quotes equal, or one inside the other when
@@ -205,6 +223,8 @@ object ReviewLedger:
     * ([[CompareRuns.similarity]]). Mechanical findings compare by [[mechanicalKey]]; the cold reader's term-count
     * findings ([[TermCount]]) are one finding whatever the count or wording.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def same(a: Finding, b: Finding): Boolean =
     a.reviewer == b.reviewer && {
       if a.reviewer == Reviewer.Mechanical then mechanicalKey(a) == mechanicalKey(b)
@@ -220,6 +240,8 @@ object ReviewLedger:
     }
 
   /** The next ledger id of a reviewer: its letter and one more than the highest number it used. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nextId(l: Ledger, r: Reviewer): Finding.Id =
     val used =
       l.entries.map(_.id.value).filter(_.startsWith(r.prefix.value)).flatMap(_.drop(r.prefix.value.length).toIntOption)
@@ -227,6 +249,7 @@ object ReviewLedger:
 
   // ── transitions ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def update(l: Ledger, id: Finding.Id)(f: Entry => Entry): Ledger =
     l.modify(_.entries).setTo(l.entries.map(e => if e.id == id then f(e) else e))
 
@@ -236,6 +259,9 @@ object ReviewLedger:
     * back MAJOR. Anything else is a new entry with the next id. Returns the ledger and the findings under their ledger
     * ids, in the order given.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def absorb(
       l: Ledger,
       fs: List[Finding],
@@ -304,6 +330,10 @@ object ReviewLedger:
     * text); not fixed → open, unclaimed, with the reviewer's note. A check of another reviewer's finding, or of a
     * closed one, changes nothing.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def applyChecks(
       l: Ledger,
       r: Reviewer,
@@ -334,6 +364,9 @@ object ReviewLedger:
   /** The mechanical re-check, by code: an open mechanical finding that no longer recurs is fixed; one that recurs stays
     * open (unclaimed); a new one is opened.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def recheckMechanical(
       l: Ledger,
       now: List[Finding],
@@ -357,6 +390,9 @@ object ReviewLedger:
     * entry the pass did not raise again (8 terms or fewer now) is fixed. One it did raise again is matched by
     * [[absorb]], which replaces it — a MAJOR stored by an earlier run becomes the pass's minor one under the same id.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def recheckTermCount(
       l: Ledger,
       cold: List[Finding],
@@ -388,6 +424,10 @@ object ReviewLedger:
   /** The fixer's verified revision: what it applied is claimed (its reviewer re-checks it), a rejection code verified
     * closes the finding with the record's sentence (and teaches a lesson), a declined minor is closed as won't fix.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def applyFix(l: Ledger, f: Fix, run: ReviewLedger.ApplyFixRun, round: ReviewLedger.ApplyFixRound): Ledger =
     // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
     val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) =>
@@ -472,6 +512,9 @@ object ReviewLedger:
   /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice, the newest
     * [[MaxLessons]] kept.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def learn(
       l: Ledger,
       texts: List[Lesson.Text],
@@ -487,6 +530,8 @@ object ReviewLedger:
     l.modify(_.lessons).setTo(all.takeRight(MaxLessons).toList)
 
   /** A verification pass, for one reviewer: its checks, then its new findings and its lessons. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def applyRecheck(
       l: Ledger,
       rc: Recheck,
@@ -502,6 +547,8 @@ object ReviewLedger:
     * first, then rules, cold reader, skeptic, each by id. `explainBack`, `emptySlots` and `proposals` are the pass's
     * own.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def merged(
       l: Ledger,
       round: Closure.Round,
@@ -521,6 +568,8 @@ object ReviewLedger:
   /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found wanting, a
     * regression, a rejection it was raised again after.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def notes(l: Ledger): Map[Finding.Id, String] =
     l.open
       .flatMap(e =>
@@ -532,6 +581,8 @@ object ReviewLedger:
       .toMap
 
   /** One line of a closed finding. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def closedLine(e: Entry): String =
     val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
     val how = (e.status, e.closed) match
@@ -551,6 +602,8 @@ object ReviewLedger:
     * reviewer's), the newest `closedMax` closed ones as one line each, and the lessons. Empty when there is nothing to
     * show.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def promptText(l: Ledger, style: OpenStyle, closedMax: ClosedLimit, only: Option[Reviewer] = None): String =
     val mine = (e: Entry) => only.forall(_ == e.reviewer)
     val open = l.open.filter(mine)
@@ -592,9 +645,11 @@ object ReviewLedger:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
     /** The text a finding's quote is looked up in (to scope it). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text: ReviewArticle.Fix.Body = ReviewArticle.Fix.Body(passages.map(_.text.value).mkString("\n\n"))
 
     /** As a prompt shows it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def render: String =
       val ps = passages.map(p => p.heading.fold("")(h => s"[under: $h]\n") + p.text).mkString("\n\n---\n\n")
       val rs =
@@ -607,6 +662,8 @@ object ReviewLedger:
     type Removed = Removed.T
     object Removed extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def paragraphs(body: ReviewArticle.Fix.Body): Vector[String] =
     body.value.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
 
@@ -616,6 +673,8 @@ object ReviewLedger:
     * whitespace-normalised paragraphs), each changed paragraph of `after` widened by `margin` paragraphs on each side,
     * adjacent ones joined; plus the paragraphs of `before` that are gone.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def editedPassages(
       before: ReviewArticle.Fix.Body,
       after: ReviewArticle.Fix.Body,
@@ -666,6 +725,7 @@ object ReviewLedger:
     * MAJOR — logged, in the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
     * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def deferFinal(
       before: Ledger,
       after: Ledger,
@@ -687,6 +747,7 @@ object ReviewLedger:
 
   /** One closed finding a revision would reopen, and why. */
   final case class Regression(id: Regression.Id, why: Rationale) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String = s"$id (closed): $why"
 
   object Regression:
@@ -706,6 +767,9 @@ object ReviewLedger:
     *     nowhere in `after`.
     * `cites(body, ck)`: does the body cite the source `ck` (aliases resolved).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def guard(
       l: Ledger,
       before: ReviewArticle.Fix.Body,
@@ -754,12 +818,16 @@ object ReviewLedger:
   /** Open missing-critique findings found not fixed at least `times` times whose pair is still open: the ones that get
     * code's pairing repair, else a precise instruction (§6.9).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stubborn(l: Ledger, times: StubbornLimit = StubbornLimit(2)): List[Entry] =
     l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount.value >= times.value)
 
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def taskText(
       l: Ledger,
       runId: Run.Id,
@@ -785,6 +853,8 @@ object ReviewLedger:
     * (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id rewrites the open one
     * instead of adding a second. Not a [[legacyTask]] (those are closed).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleTask(slug: ArticleTaskSlug, text: TaskText): Boolean =
     val t = text.value.trim
     !legacyTask(slug, TaskText(t)) &&
@@ -792,5 +862,7 @@ object ReviewLedger:
     "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
 
   /** The text of the per-finding items earlier runs left for the article (before #934). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def legacyTask(slug: research.Slug, text: TaskText): Boolean =
     text.value.startsWith(s"review-article [[$slug]]: MAJOR ")

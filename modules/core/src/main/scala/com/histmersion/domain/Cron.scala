@@ -6,6 +6,8 @@ import com.histmersion.util.problem.Problem.{Count, Invalid, Raw}
 import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A five-field cron expression, in UTC — the schedule of a goal's currency check or acquisition sweep
   * (docs/research-embedded-agents.md §14). `minute hour day-of-month month day-of-week`, each `*`, a number, a range
@@ -13,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * star-slash-15); day of week 0–7 (0 and 7 are Sunday). When both day fields are restricted, a day matching EITHER
   * runs (the classic cron rule). Shortcuts: `@hourly`, `@daily`, `@weekly`, `@monthly`. Pure.
   */
+@movesTo(FeaturePlace.AutomationScheduler)
 final case class Cron(
     text: Cron.Text,
     minutes: List[Cron.Minutes],
@@ -24,6 +27,7 @@ final case class Cron(
     anyWeekday: Cron.AnyWeekday
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dayMatches(d: LocalDate): Boolean =
     val dom = days.contains(Cron.Days(d.getDayOfMonth))
     val dow = weekdays.contains(Cron.Weekdays(d.getDayOfWeek.getValue % 7)) // java: Monday = 1 … Sunday = 7 → 0
@@ -37,6 +41,7 @@ final case class Cron(
   /** The first minute strictly AFTER `after` that matches, looking at most [[Cron.HorizonDays]] ahead (`None` for an
     * expression that never fires, e.g. 30 February).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def next(after: Instant): Option[Instant] =
     import com.histmersion.util.time.TimeEquality.dayEquality
     val start = after.truncatedTo(ChronoUnit.MINUTES).plus(1, ChronoUnit.MINUTES).atOffset(ZoneOffset.UTC)
@@ -59,6 +64,7 @@ final case class Cron(
   /** The shortest gap between the next `n` firings after `from`, in minutes (`None` if it fires less than twice) — how
     * a schedule that would run too often is refused.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shortestGapMinutes(from: Instant, n: Cron.SampleCount = Cron.SampleCount(48)): Option[Cron.GapMinutes] =
     val times = Iterator.iterate(next(from))(_.flatMap(next)).takeWhile(_.isDefined).map(_.get).take(n.value).toList
     times.zip(times.drop(1)).map((a, b) => ChronoUnit.MINUTES.between(a, b)).minOption.map(Cron.GapMinutes(_))
@@ -106,6 +112,7 @@ object Cron:
   )
 
   /** One field → its values, or why not. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def field(raw: String, f: Field): Either[Invalid.CronFlaw, Set[Int]] =
     def num(s: String): Either[Invalid.CronFlaw, Int] =
       s.toIntOption
@@ -136,6 +143,7 @@ object Cron:
       case None    => Right(each.collect { case Right(v) => v }.flatten.toSet)
 
   /** Parse an expression (or a shortcut). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: Text): Either[Problem, Cron] =
     val t = Option(raw).map(_.value.trim).getOrElse("")
     val text = Text(t)

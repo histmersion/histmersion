@@ -5,6 +5,7 @@ import org.scalajs.dom
 import org.scalajs.dom.document
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The entry point of the standalone `/source/…` and `/article/…` pages: the same bundle as the web UI, wiring only
   * what a rendered page needs — link previews and in-page navigation.
@@ -31,6 +32,7 @@ object StandalonePage:
   /** The web UI's top bar in place of the page's "← Histmersion" line: the four places stay one click away from a
     * source or an article opened in a tab of its own. Its links load the web UI.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   private def topBar(): Unit =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     Option(document.querySelector("body > .nav")).foreach { nav =>

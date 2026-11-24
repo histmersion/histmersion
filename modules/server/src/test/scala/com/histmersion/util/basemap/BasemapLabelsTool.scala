@@ -10,12 +10,15 @@ import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.util.storage.Store
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Builds a physical-names archive from Natural Earth GeoJSON files already on disk, with the fetch's own code — how
   * the browser fixture (modules/web/test/fixtures/basemap/labels.pmtiles) was made and how the sizes in
   * docs/research-terrain-basemap.md were measured:
   * `sbt "server/Test/runMain com.histmersion.util.basemap.basemapLabels <dir> <bbox> <maxZoom> <out>"`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 @main def basemapLabels(args: String*): Unit =
   val Seq(dir, bbox, maxZoom, out) = args: @unchecked
   val cfg = AppConfig.load().basemap.labels

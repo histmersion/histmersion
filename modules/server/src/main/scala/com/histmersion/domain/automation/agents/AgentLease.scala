@@ -7,6 +7,7 @@ import com.histmersion.util.jobs.{Quiescent, Workers}
 
 import javax.sql.DataSource
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One agent server per database (docs/research-process-managers.md §2): the server that holds the lease `agents` runs
   * the engine, the scheduler and the managers; another one pointed at the same database runs none of them, and takes
@@ -74,6 +75,7 @@ final class AgentLease(
     held = ok
     ok
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def holderText: String =
     try connect(ds)(LeaseRepo.holder(AgentLease.Name)).fold("nobody")((o, until, _) => s"$o until $until")
     catch case _: Exception => "unknown"
@@ -81,6 +83,7 @@ final class AgentLease(
   /** Keep the lease: claim now and every ttl/3. `onAcquired` runs (once) on the renewing thread the first time the
     * lease is held — at once when the first claim wins.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(onAcquired: () => Unit): Boolean =
     val first = claim()
     if first then onAcquired()

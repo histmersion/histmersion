@@ -25,16 +25,19 @@ import com.histmersion.config.DbConfig
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Keyset paging of the jobs, agent-runs and approvals lists (core `Paging`, V086) against a real Postgres
   * (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write jobs and approvals at the same time, so each
   * fixture is kept apart: its jobs carry a status of their own, its runs a goal of their own, its approvals sit in
   * 1971, older than anything another suite writes.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PagingRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -42,9 +45,13 @@ class PagingRepoSuite extends DbSuite:
 
   private val tag = s"zzpg${System.nanoTime().toHexString.takeRight(8)}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pageStatus(st: String) = Some(JobState.Wire(st))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobCursor(id: String) = Some(JobRepo.PageCursor(id))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runCursor(id: String) = Some(AgentRepo.PageCursor(id))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runWire(w: Run.State.Wire) =
     domain.automation.Run.State.Wire(w.value)
 

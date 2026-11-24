@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.ZipInputStream
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A gazetteer that is one file at a fixed address: downloaded whole through the host's client, unpacked when it is a
   * zip (its first file that is neither a directory nor macOS's `__MACOSX` metadata), read as UTF-8 and parsed.
@@ -27,6 +28,7 @@ trait DownloadedGazetteer extends GazetteerSource:
   def fetch(http: Plugin.Http): Either[Problem, List[GazetteerPlace]] = download(http).flatMap(read)
 
   /** The dataset's text: one request, answered 200, unpacked when the address names a zip. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def download(http: Plugin.Http): Either[Problem, DownloadedGazetteer.Text] =
     http.fetch(url) match
       case Left(e)                           => Left(e)
@@ -46,6 +48,7 @@ trait DownloadedGazetteer extends GazetteerSource:
         else Right(DownloadedGazetteer.Text(String(r.body.value, UTF_8)))
 
   /** A property's text: the first of `keys` that holds a non-empty string. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def str(o: JsonObject, keys: String*): Option[DownloadedGazetteer.Text] =
     keys.iterator
       .flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty))
@@ -53,10 +56,12 @@ trait DownloadedGazetteer extends GazetteerSource:
       .map(DownloadedGazetteer.Text(_))
 
   /** A name as an id part: lower case, every run of other characters than `a-z0-9` one `_`, none at the ends. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def slugify(name: GazetteerName.Name): DownloadedGazetteer.Slug =
     DownloadedGazetteer.Slug(name.value.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", ""))
 
   /** The period of two years in either order; `None` when one is beyond what a [[Year]] holds. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def span(a: DownloadedGazetteer.Year, b: DownloadedGazetteer.Year): Option[Period] =
     Option
       .when(a.value.isValidInt && b.value.isValidInt)(())
@@ -72,6 +77,7 @@ object DownloadedGazetteer:
 
   /** The first usable file of a zip archive, as UTF-8 text. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unzip(data: Plugin.HttpResponse.Body): Either[Problem, Text] =
     try
       val zis = ZipInputStream(ByteArrayInputStream(data.value))

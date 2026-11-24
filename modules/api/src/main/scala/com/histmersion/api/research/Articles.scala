@@ -11,8 +11,12 @@ import com.histmersion.api.given
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object Articles:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def heading(body: Article.Body): Option[Article.Heading] =
     ((body).value.linesIterator
       .map(_.trim)
@@ -22,6 +26,8 @@ object Articles:
       .filter(_.nonEmpty))
       .map(refactorValue3 => Article.Heading(refactorValue3))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lede(body: Article.Body): Option[Article.SummaryText] =
     val lines = (body).value.linesIterator.toList.dropWhile(_.trim.isEmpty)
     val rest0 = lines.headOption.filter(_.trim.startsWith("# ")).fold(lines)(_ => lines.tail)
@@ -46,6 +52,7 @@ object Articles:
   private val StandIns =
     Set("placeholder", "todo", "tbd", "tba", "fixme", "xxx", "summary", "tk", "na", "n a", "none", "wip")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summaryOf(raw: Option[Article.SummaryText]): Either[Problem, Option[Article.SummaryText]] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
@@ -59,12 +66,16 @@ object Articles:
 
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def notFound(slug: Article.Slug): Api.Error =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Article.Slug), Problem.Raw(s"$slug")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
     if Kind.matches(k) then Right(Article.Kind.Wire(k))
@@ -78,15 +89,20 @@ object Articles:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindOfDir(dirName: String): Article.Kind.Wire =
     val d = (dirName).trim.toLowerCase
     if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then Article.Kind.Wire(d.dropRight(1))
     else Article.Kind.Wire(d)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dirOfKind(kind: Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)
 
   private val SlugPattern = """^[a-z0-9][a-z0-9_.-]{0,120}$""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def slugOf(raw: Article.Slug): Either[Problem, Article.Slug] =
     val s = (raw).value.trim.toLowerCase
     if SlugPattern.matches(s) then Right(Article.Slug(s))
@@ -101,6 +117,8 @@ object Articles:
       )
 
   /** The article a put makes, or why it is refused. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applyPut(slug: Article.Slug, p: Article.Put): Either[Problem, Article] =
     for
       s <- slugOf(slug)
@@ -125,6 +143,8 @@ object Articles:
       reasons = reasons
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def precondition(existing: Article, patch: Article.Patch): Either[Problem, Unit] =
     patch.ifUpdatedAt match
       case None       => Right(())
@@ -141,6 +161,8 @@ object Articles:
             )
           )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applyPatch(existing: Article, patch: Article.Patch): Either[Problem, Article] =
     for
       _ <- precondition(existing, patch)
@@ -185,6 +207,8 @@ object Articles:
       .modify(_.reasons)
       .setTo(reasons)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bodyOf(current: Article.Body, patch: Article.Patch): Either[Problem, Article.Body] =
     val base = patch.body.map(Article.Coverage.stripGenerated).getOrElse(current)
     patch.append.map(a => Article.Coverage.stripGenerated(Article.Body(a.value)).value.trim).filter(_.nonEmpty) match
@@ -194,6 +218,8 @@ object Articles:
           case None => Right(Article.Body(if base.value.trim.isEmpty then a else s"${base.value.stripTrailing}\n\n$a"))
           case Some(s) => appendUnderSection(base, Article.Section(s), Article.Prose(a))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def appendUnderSection(
       body: Article.Body,
       section: Article.Section,

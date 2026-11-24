@@ -3,6 +3,7 @@ package plugins.media
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Free-text object dates as museums write them (`1550-1196 BCE`, `100 BCE-100 CE`, `ca. 3300-ca. 2250 BCE`,
   * `12th-13th century`, `5th century BCE`, `2nd millennium BCE`, `1883 or 1884`) read as a signed span, BCE negative.
@@ -21,8 +22,10 @@ object FreeTextDates:
   private enum Unit:
     case Year, Century, Millennium
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class Bound(n: Long, unit: Option[Unit], ordinal: Boolean, bce: Option[Boolean])
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def bound(raw: String): Option[Bound] =
     raw.trim match
       case Part(n, unit, era) =>
@@ -32,6 +35,7 @@ object FreeTextDates:
       case _ => None
 
   /** Pure: the signed span of one bound, given the unit and era it carries or inherits. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def span(b: Bound): Option[(Long, Long)] =
     val bce = b.bce.contains(true)
     b.unit.getOrElse(Unit.Year) match
@@ -43,9 +47,12 @@ object FreeTextDates:
         Option.when(b.n > 0)(if bce then (-b.n * 1000, -((b.n - 1) * 1000 + 1)) else ((b.n - 1) * 1000 + 1, b.n * 1000))
 
   /** Pure: the span a date text states, or `None`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(text: Text): Option[(Year, Year)] =
     spanOf(Option(text).fold("")(_.value)).map((from, to) => (Year(from), Year(to)))
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def spanOf(text: String): Option[(Long, Long)] =
     val s0 = text.toLowerCase(Locale.ROOT).trim
     if s0.isEmpty || s0.contains("?") then None

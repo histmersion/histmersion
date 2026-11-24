@@ -6,6 +6,7 @@ import com.histmersion.util.data.{DataContributions, DataOwner, TableName}
 import com.histmersion.util.database.Transactor
 import com.histmersion.ByteCount
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The figures of the 360° view, read from the registry: each owner's counts, the database's size, its largest
   * registered tables and how much each owner's tables hold.
@@ -40,6 +41,7 @@ object DiagnosticsService:
     val names: Set[TableName] = registry.tables.map(t => t._2.name).toSet
     sized.filter((name, _) => names.contains(name))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def perOwner(registry: DataContributions, sized: List[(TableName, ByteCount)]): List[(DataOwner, ByteCount)] =
     val bytes = sized.toMap
     registry.owners.map(o =>
@@ -52,10 +54,13 @@ object DiagnosticsService:
     def figures(owner: DataOwner): DataFigures =
       registry.all.find(_.owner == owner).fold(DataFigures.empty)(c => transactor.read(c.figures))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def databaseSize: (DatabaseName, ByteCount) =
       val (name, bytes) = transactor.read(StatsRepo.databaseSize)
       (DatabaseName(name.value), bytes)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def largestTables(n: TableLimit): List[TableSize] =
       if n.value <= 0 then Nil
       else
@@ -75,6 +80,8 @@ object DiagnosticsService:
     private def sized = tables
     def figures(owner: DataOwner): DataFigures = counts.getOrElse(owner, DataFigures.empty)
     def databaseSize: (DatabaseName, ByteCount) = database
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def largestTables(n: TableLimit): List[TableSize] =
       if n.value <= 0 then Nil
       else

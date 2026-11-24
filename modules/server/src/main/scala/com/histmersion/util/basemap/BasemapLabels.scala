@@ -15,6 +15,7 @@ import scala.collection.mutable
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Label
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The base maps' physical names (docs/research-terrain-basemap.md, "Labels"): Natural Earth's label layers — public
   * domain — read from their GeoJSON, cut to the region, and written as a small vector archive the page labels from
@@ -77,6 +78,8 @@ object BasemapLabels:
     object Elevation extends Newtype[Long, Pure]
 
   /** Natural Earth's feature classes, lower-cased → the `kind` a style selects; `None` = not kept. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindOf(featureClass: FeatureClass): Option[Label.Kind] =
     kindName(featureClass.value.trim.toLowerCase(java.util.Locale.ROOT)).map(Label.Kind(_))
 
@@ -125,6 +128,7 @@ object BasemapLabels:
   /** The names a feature carries: `name` (Natural Earth's own, mostly English or local), `name:en`, and `name:<code>`
     * for each `name_<code>`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def names(p: JsonObject): List[(Language, Name)] =
     val own = text(p, "name").toList.map(n => Language("name") -> Name(n))
     val langs = p.keys.toList
@@ -140,6 +144,7 @@ object BasemapLabels:
   /** The map zoom a feature is labelled from: Natural Earth's `min_label`, else `min_zoom`, else its `scalerank`; a
     * fraction rounds to the nearer zoom. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def minZoomOf(p: JsonObject): Label.MinZoom =
     Label.MinZoom(
       number(p, "min_label")
@@ -151,6 +156,7 @@ object BasemapLabels:
 
   // ── geometry ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def coords(j: Json): Option[(Label.Lon, Label.Lat)] =
     j.asArray.flatMap(a =>
       for x <- a.lift(0).flatMap(_.asNumber).flatMap(_.toDouble); y <- a.lift(1).flatMap(_.asNumber).flatMap(_.toDouble)
@@ -159,9 +165,11 @@ object BasemapLabels:
 
   private def ring(j: Json): Vector[(Label.Lon, Label.Lat)] = j.asArray.map(_.flatMap(coords)).getOrElse(Vector.empty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plain(r: Vector[(Label.Lon, Label.Lat)]): Vector[(Double, Double)] = r.map((x, y) => (x.value, y.value))
 
   /** The signed area of a ring (shoelace), in square degrees. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def area(r: Vector[(Label.Lon, Label.Lat)]): Area = Area(areaOf(plain(r)))
 
   private def areaOf(r: Vector[(Double, Double)]): Double =
@@ -172,6 +180,7 @@ object BasemapLabels:
       }.sum / 2
 
   /** Is `p` inside ring `r` (even-odd)? Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inside(r: Vector[(Label.Lon, Label.Lat)], p: (Label.Lon, Label.Lat)): Boolean =
     insideOf(plain(r), (p._1.value, p._2.value))
 
@@ -186,6 +195,7 @@ object BasemapLabels:
     * through that part's centre of area (a centroid falls outside a crescent-shaped range; this does not). Holes are
     * ignored — a name may sit on a lake in a range. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelPoint(polygons: Vector[Vector[(Label.Lon, Label.Lat)]]): Option[(Label.Lon, Label.Lat)] =
     labelPointOf(polygons.map(plain)).map((x, y) => (Label.Lon(x), Label.Lat(y)))
 
@@ -216,6 +226,7 @@ object BasemapLabels:
     }
 
   /** One GeoJSON feature as a label, when its class is kept and it has a name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def label(f: Json): Option[Label] =
     for
       p <- f.cursor.downField("properties").focus.flatMap(_.asObject)
@@ -251,6 +262,7 @@ object BasemapLabels:
       )
 
   /** Every kept label of one GeoJSON FeatureCollection. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def parse(file: FileName, doc: Json): Either[Problem, List[Label]] =
     doc.cursor
       .downField("features")
@@ -262,6 +274,8 @@ object BasemapLabels:
       .map(_.toList.flatMap(label))
 
   /** Does the label touch `b` (grown by `margin` degrees)? Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def within(l: Label, b: BBox, margin: Margin = Margin(1.0)): Boolean =
     def in(lon: Double, lat: Double) =
       lon >= b.minLon.value - margin.value && lon <= b.maxLon.value + margin.value &&
@@ -274,6 +288,8 @@ object BasemapLabels:
   private val Extent = 4096
 
   /** World position of lon/lat in units of 1/4096 of a zoom-`z` tile. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def world(lon: Label.Lon, lat: Label.Lat, z: PmTiles.Zoom): (WorldX, WorldY) =
     val n = (1L << z.value).toDouble * Extent
     val r = math.toRadians(lat.value.max(-Basemap.MaxLat).min(Basemap.MaxLat))
@@ -283,6 +299,7 @@ object BasemapLabels:
     )
 
   /** Douglas–Peucker: the points of `l` that keep it within `tolerance` of the original. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def simplify(l: Vector[(WorldX, WorldY)], tolerance: Tolerance): Vector[(WorldX, WorldY)] =
     if l.size <= 2 then l
     else
@@ -312,6 +329,7 @@ object BasemapLabels:
   /** The runs of `l` (world units) whose segments touch tile `(x, y)` grown by `buffer`, relative to the tile's corner
     * and rounded. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def clip(
       l: Vector[(WorldX, WorldY)],
       x: PmTiles.TileColumn,
@@ -347,9 +365,13 @@ object BasemapLabels:
   /** Is the label drawn by the page from data tile `z` (which serves map zoom z + 1; the deepest, every zoom past it)?
     * Its own `min_zoom` filters it further in the page. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inTile(l: Label, z: PmTiles.Zoom, maxZoom: PmTiles.Zoom): Boolean =
     (z == maxZoom || l.minZoom.value <= z.value + 1) && l.maxZoom.forall(_.value >= z.value + 1)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def props(l: Label): List[(Mvt.PropKey, String | Long)] =
     (Mvt.PropKey("kind"), l.kind.value: String | Long) ::
       (Mvt.PropKey("min_zoom"), l.minZoom.value.toLong: String | Long) ::
@@ -359,6 +381,7 @@ object BasemapLabels:
   /** The archive's tiles, by tile id: points in the tile they fall in, rivers clipped to each tile they cross
     * (simplified to about a pixel of the zoom), zooms 0…`maxZoom`, gzip-compressed MVT. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tiles(labels: List[Label], maxZoom: PmTiles.Zoom): Vector[(PmTiles.Entry.TileId, PmTiles.TileBytes)] =
     type Features = mutable.ListBuffer[(Mvt.GeomType, Vector[Mvt.GeometryCommand], List[(Mvt.PropKey, String | Long)])]
     // per tile id, its points and its lines, filled zoom by zoom
@@ -411,6 +434,8 @@ object BasemapLabels:
     }
 
   /** Write `labels` as the archive `key` of `store` (zooms 0…`maxZoom`, bounds `b`); answers its tiles and bytes. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def write(
       store: Store,
       key: Store.Key,

@@ -9,11 +9,14 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import java.util.UUID
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
   * construction: the large things (OCR bodies, version bodies, asset bytes, originals) are blobs, referenced by sha256
   * and streamed separately.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 final case class BundleEntities(
     sources: List[Bundle.Source] = Nil,
     findings: List[Bundle.Finding] = Nil,
@@ -81,6 +84,7 @@ final case class BundleEntities(
     )
 
   /** uid → (kind, rev, label) of every stamped entity. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def revs: Map[UUID, Rev] =
     def of[A: JsonValueCodec](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => String) =
       as.map(a => uid(a) -> Rev(k, BundleFormat.stamp(a).rev, label(a)))
@@ -101,6 +105,7 @@ final case class BundleEntities(
   def uids: Set[UUID] = revs.keySet
 
   /** sha256 → what it is, for every blob these lines reference. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blobRefs: Map[Sha256, List[BlobUse]] =
     (sources.flatMap(s =>
       s.bodySha256.map(sha => Sha256(sha.value) -> BlobUse.Body(s.uid)).toList ++
@@ -113,6 +118,7 @@ final case class BundleEntities(
   /** The newest change these lines carry — the manifest's `asOf`. Timestamps share one fixed-width UTC format, so text
     * order is time order.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def asOf: Option[Bundle.Manifest.AsOf] =
     (sources.map(_.updatedAt.value) ++ findings.map(_.updatedAt.value) ++ assessments.map(_.checkedAt.value) ++
       aliases.map(_.createdAt.value) ++ articles.map(_.updatedAt.value) ++ versions.map(_.updatedAt.value) ++
@@ -132,6 +138,7 @@ final case class BundleEntities(
     * OPTIONAL reference (the target of an edge, an event's parent, a goal's parent) is dropped when its target is gone
     * here; a required one makes the line impossible to write.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def references: List[Reference] =
     def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
       Reference(kind, uid, owner, from, required = true)
@@ -173,8 +180,10 @@ object BundleEntities:
 
   /** One uid a line refers to, the uid the referring line is written under, and which line (for the message).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean):
     /** The problem of this reference when its record is not `within` where it is looked for. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def missing(within: Problem.NotFound.Scope): Problem =
       Problem.NotFound.Dangling(kind.typeName, Problem.Raw(s"$uid"), Problem.Where(s"$from"), within)
 
@@ -195,6 +204,8 @@ object BundleEntities:
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[Problem]) =
     val problems = List.newBuilder[Problem]
     def read[A: JsonValueCodec](path: String, stamped: Boolean): List[A] =

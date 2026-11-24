@@ -9,12 +9,17 @@ import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventGeometry:
   type Geojson = Geojson.T
   object Geojson extends Newtype[String, Pure]
   type Type = Type.T
   object Type extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def point(lat: Latitude, lon: Longitude): Either[Problem, Geojson] =
     if (lat).value.isNaN || (lat).value < -90 || (lat).value > 90 then
       Left(
@@ -36,6 +41,7 @@ object EventGeometry:
       )
     else Right(Geojson(s"""{"type":"Point","coordinates":[${fmt(((lon).value))},${fmt(((lat).value))}]}"""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(geometry: Option[Geojson], lat: Option[Latitude], lon: Option[Longitude]): Either[Problem, Option[Geojson]] =
     (geometry.map((_).value.trim).filter(_.nonEmpty), lat, lon) match
       case (Some(_), Some(_), _) | (Some(_), _, Some(_)) =>
@@ -65,6 +71,8 @@ object EventGeometry:
 
   private val Example = """{"type":"Point","coordinates":[<lon>,<lat>]}"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(g: Geojson): Either[Problem, Geojson] =
     val t = (g).value.trim
     if WktShape.matches(t) then

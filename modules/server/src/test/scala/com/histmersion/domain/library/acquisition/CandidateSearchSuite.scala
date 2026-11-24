@@ -48,10 +48,13 @@ import com.histmersion.util.database.TestCreators
   * deduplication across indexes and against the corpus and the acquisition list, a failed index, a dry run, marking —
   * and the supervisor's rule that nothing new starts no agent run. No network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class CandidateSearchSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg = {
     val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   }
@@ -66,12 +69,14 @@ class CandidateSearchSuite extends DbSuite:
 
   final private class FakeAlerts extends CitationAlerts:
     val asked = ConcurrentLinkedQueue[String]()
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def citing(doi: domain.library.Doi, since: LocalDate, limit: CitationAlerts.CitingLimit) = {
       asked.add(s"citing $doi"); Right(List(work(Doi("10.5555/zzcand.citing"))))
     }
     def authors(doi: domain.library.Doi) = Right(
       List(AuthorName("A1"), AuthorName("A2"), AuthorName("A3"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) = {
       asked.add(s"author $authorId"); Right(Nil)
     }
@@ -343,10 +348,13 @@ class CandidateSearchSuite extends DbSuite:
     final class Throttled extends ScholarlyIndex:
       val name = ScholarlyIndex.Name("core")
       val asked = ConcurrentLinkedQueue[String]()
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       override def unavailable =
         Option.when(!asked.isEmpty)(
           Problem.Unclassified(Legacy.Text("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
         )
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = {
         asked.add(query.value); Left(Problem.Unclassified(Legacy.Text("CORE not asked: CORE answered HTTP 429")))
       }
@@ -369,6 +377,7 @@ class CandidateSearchSuite extends DbSuite:
     // a budget spent before the sweep: CORE is not asked at all
     val spent = new ScholarlyIndex:
       val name = ScholarlyIndex.Name("core")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       override def unavailable = Some(Problem.Unclassified(Legacy.Text("CORE's daily budget for searches is spent")))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = fail("asked")
     val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24))

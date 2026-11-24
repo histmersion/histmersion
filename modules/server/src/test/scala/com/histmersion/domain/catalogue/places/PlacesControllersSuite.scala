@@ -24,6 +24,7 @@ import com.histmersion.api.GeoPick
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer's controllers over the in-memory records, no server and no database: an LPF document imported (a bad
   * kind or document refused whole), an old id answering as its place, the tree's configured depth, a person's names and
@@ -31,9 +32,12 @@ import com.histmersion.util.database.TestCreators.given
   * held. The map's shapes, the geometry and the geocoder are mechanisms over PostGIS: here they answer what they were
   * asked.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlacesControllersSuite extends munit.FunSuite:
   private val cfg = AppConfig.load()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
   private val shapes: PlaceMap = (kind, time, limit, _) => PlaceDetailRow.Geometry(s"$kind $time $limit")
   private val geometry: PlaceGeometry = new PlaceGeometry:
     def rebuildFindingPlaces(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit) =
@@ -50,6 +54,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       SpatialHierarchyResult.PolygonPlaces(0),
       SpatialHierarchyResult.PointPlaces(0)
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def replaceLand(geometries: List[PlaceDetailRow.Geometry])(using WritePermit) = RowCount(geometries.size)
     def reclip()(using WritePermit) = RowCount(0)
     def reclassify(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit) = (RowCount(0), RowCount(0))
@@ -60,6 +65,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       PointAreaRepo.Removal.Findings(0),
       PointAreaRepo.Removal.Sources(0)
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val geocoder: Geocoding = (name, _, _, _) =>
     Option.when(name == Geocode.Attempt.Name("Zzcl"))(
       Geocode.Resolution(
@@ -71,6 +77,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def controllers(gate: WriteGate = WriteGate()): (PlacesControllers, PlaceService) =
     val state = AtomicReference(CatalogueState.empty)
     val places = PlaceService.InMemory(state, Clock.fixed(Instant.EPOCH, ZoneOffset.UTC))
@@ -80,6 +87,7 @@ class PlacesControllersSuite extends munit.FunSuite:
         .fold(Place.Id.assume(id.value))(a => Place.Id.assume(a.value))
     (PlacesControllers(places, shapes, geometry, geocoder, current, () => cfg, (l, d) => l.getOrElse(d), gate), places)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val doc = PlacesControllers.DatasetBody("""{"type":"FeatureCollection","features":[
       |{"@id":"zzcl_land","type":"Feature","properties":{"title":"Zzclland"},
       | "geometry":{"type":"Polygon","coordinates":[[[30,36],[40,36],[40,42],[30,42],[30,36]]]}},

@@ -32,12 +32,17 @@ import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no
   * job is left claiming to be in progress by a process that no longer exists. Re-running is idempotent — the same file
   * has the same sha256.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the jobs table")
 object JobRepo:
   type DueAt = DueAt.T
   object DueAt extends Newtype[String, Pure]
@@ -62,6 +67,8 @@ object JobRepo:
        FROM jobs"""
 
   /** A stored detail this build cannot read (written by a newer one) is left out, not fatal. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def toInfo(r: JobRow): JobInfo =
     JobInfo(
       SpatialHierarchyResult.Job.Id(r.id.value),
@@ -80,6 +87,9 @@ object JobRepo:
   /** Create a `queued` job. The id is opaque to clients; a UUID keeps it unguessable and unique. `acquireItem` is the
     * acquisition item the job ticks off when it succeeds; `detail` what the job is about beyond its citekey.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def create(
       kind: Job.Kind,
       citekey: Option[domain.library.Citekey],
@@ -107,14 +117,17 @@ object JobRepo:
     )
 
   /** Replace a job's [[JobDetail]] — e.g. an init job adding the periods it skipped. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setDetail(id: Job.Id, detail: JobDetail)(using DbCon): Unit =
     val js = Jsonb.write[JobDetail](detail)
     Unused(sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run(), Unused.Why.Held)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(id: Job.Id)(using DbCon): Option[JobInfo] =
     sql"$select WHERE id = $id".query[JobRow].run().headOption.map(toInfo)
 
   /** Newest first; `status` (when given) narrows to one state. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(status: Option[JobState.Wire], limit: PageSize)(using DbCon): Vector[JobInfo] =
     val where = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) => sql" WHERE status = $s"
@@ -126,6 +139,7 @@ object JobRepo:
     * `upTo` = only jobs down to and including it. Left: a cursor that names no job. Returns the page and whether older
     * jobs exist.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def page(
       status: Option[JobState.Wire],
       limit: PageSize,
@@ -151,6 +165,8 @@ object JobRepo:
   def stateCounts(using DbCon): List[(Keyset.State, RowCount)] =
     Keyset.countsOn(sql" FROM jobs", sql"status")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def conds(q: JobQuery): ListSql.Conds =
     val text = q.q.fold(sql"") { t =>
       val p = ListSql.contains(t.value)
@@ -166,6 +182,7 @@ object JobRepo:
     )
 
   /** One page of the jobs that match `q`, newest first. Left: a cursor that names no job. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def page(
       q: JobQuery,
       limit: PageSize,
@@ -189,6 +206,7 @@ object JobRepo:
   /** The counts that go with a filtered page: per state, and the `kind` facet (at most `facetMax` kinds) — each under
     * every filter but its own.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def facets(q: JobQuery, facetMax: PageSize)(using
       DbCon
   ): (List[(Keyset.State, RowCount)], List[(String, List[(String, RowCount)])]) =
@@ -197,6 +215,7 @@ object JobRepo:
     (Keyset.countsOn(from("status"), sql"status"), List("kind" -> ListSql.facetOn(from("kind"), sql"kind", facetMax)))
 
   /** Free-text progress on a `running` job — what the CLI's progress line prints. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def progress(id: Job.Id, text: JobRow.Progress)(using DbCon): Unit =
     Unused(
       sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND status = ${JobState.Running.wire}".update
@@ -208,6 +227,7 @@ object JobRepo:
     * predicate makes the update a compare-and-set, so two workers cannot both claim the same job. Returns the new
     * state, or `None` when the transition was refused.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def transition(
       id: Job.Id,
       from: JobState,
@@ -242,6 +262,7 @@ object JobRepo:
   // ── runs: jobs that run as checkpointed steps (agent runs) ───────────────────────────────────
 
   /** A new run's row; its id. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def insertRun(r: RunRow)(using DbCon)(using creator: Creator.New): Run.Id =
     val id = java.util.UUID.randomUUID().toString
     sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
@@ -255,6 +276,7 @@ object JobRepo:
     Run.Id.applyUnsafe(id)
 
   /** The pipeline version a run was started with. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runPipelineVersion(id: Run.Id)(using DbCon): Option[Pipeline.Version] =
     sql"SELECT pipeline_version FROM jobs WHERE id = $id"
       .query[Option[Int]]
@@ -263,9 +285,11 @@ object JobRepo:
       .flatten
       .map(Pipeline.Version(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def traceOf[K](id: K)(using DbCodec[K])(using DbCon): Option[LogEvent.Trace] =
     sql"SELECT trace_id::text FROM jobs WHERE id = $id AND trace_id IS NOT NULL".query[LogEvent.Trace].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runHeartbeat(kind: Job.Kind, id: Run.Id)(using DbCon): Unit =
     Unused(
       sql"""WITH counted AS (SELECT set_config('histmersion.log_count', 'on', true))
@@ -274,6 +298,7 @@ object JobRepo:
     )
 
   /** How many runs of `kind` are in one of `statuses`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runsIn(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status))(using DbCon): RowCount =
     RowCount(
       sql"""SELECT count(*)::int FROM jobs WHERE kind = $kind
@@ -281,6 +306,7 @@ object JobRepo:
     )
 
   /** Compare-and-set: `from` → `to`, setting the error, progress and resume time (None clears them). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def moveRun(
       kind: Job.Kind,
       id: Run.Id,
@@ -296,6 +322,7 @@ object JobRepo:
           WHERE id = $id AND kind = $kind AND status = $from""".update.run() > 0
 
   /** The `paused` runs whose resume time has come, oldest resume first. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runsDue(kind: Job.Kind, paused: RunRow.Status, at: DueAt)(using DbCon): Vector[Run.Id] =
     sql"""SELECT id FROM jobs WHERE kind = $kind AND status = $paused
                                 AND resume_at IS NOT NULL AND resume_at <= $at::timestamptz
@@ -304,6 +331,7 @@ object JobRepo:
   /** The `paused` runs that do not resume by themselves before `at`: (id, pipeline, model, the problem its row keeps,
     * the time it resumes by itself, if any).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runsPausedUntil(
       kind: Job.Kind,
       paused: RunRow.Status,
@@ -318,12 +346,14 @@ object JobRepo:
       .run()
       .map((id, pipeline, model, error, resumes) => (id, pipeline, model, error.map(Problems.asOne), resumes))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runProgress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using DbCon): Unit =
     Unused(
       sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run(),
       Unused.Why.Held
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runWarning(kind: Job.Kind, id: Run.Id, w: WarningText)(using DbCon): Unit =
     Unused(
       sql"""UPDATE jobs SET warnings = array_append(warnings, $w), updated_at = now()
@@ -331,6 +361,7 @@ object JobRepo:
       Unused.Why.Held
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runBudget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[TokenBudget])(using DbCon): Unit =
     Unused(
       sql"""UPDATE jobs SET budget_usd = coalesce($usd, budget_usd), budget_tokens = coalesce($tokens, budget_tokens),
@@ -341,6 +372,7 @@ object JobRepo:
   /** The `running` runs (but `except`) moved to `paused` with `error`, returned with their origin; then the `queued`
     * ones (but `except`), oldest first.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runsReconciled(
       kind: Job.Kind,
       running: RunRow.Status,
@@ -359,6 +391,7 @@ object JobRepo:
     (moved, waiting)
 
   /** A `paused` run's resume time (unless it moved on meanwhile). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runResumesAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: ResumeAt)(using DbCon): Boolean =
     sql"""UPDATE jobs SET resume_at = $at::timestamptz, updated_at = now()
           WHERE id = $id AND kind = $kind AND status = $paused""".update.run() > 0
@@ -369,6 +402,8 @@ object JobRepo:
     * its plan in `detail`. A restart fails it as `interrupted` like every other unfinished job ([[failInterrupted]]),
     * so a poll never sees it running forever.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def startMergeApply(bundle: MergeRepo.BundleName, planHash: MergeRow.PlanHash)(using
       DbCon
   )(using creator: Creator.New): Job.Id =
@@ -383,6 +418,7 @@ object JobRepo:
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why. A row a restart
     * already failed is left as it is: false then.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def finishMergeApply(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using DbCon): Boolean =
     val (status, error, result) = outcome match
       case Right(r) => (JobState.Done, None, Some(Jsonb.write(r)))
@@ -394,6 +430,7 @@ object JobRepo:
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). The time so far of a
     * running one is measured against the database's clock.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def mergeApply(id: Job.Id)(using DbCon): Option[MergeApplyJob] =
     sql"""SELECT id, status, coalesce(sha256, ''), coalesce(detail->>'planHash', ''),
                  (extract(epoch FROM (CASE WHEN status = ${JobState.Running.wire} THEN clock_timestamp()

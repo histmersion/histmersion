@@ -23,6 +23,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pictures' repositories as the db suites reach them from outside the feature: each call on a connection or in a
   * transaction of its own, as the service runs it.
@@ -44,6 +45,8 @@ object AssetFixtures:
   def count(ds: DataSource, citekey: Citekey): RowCount = connect(ds)(AssetRepo.count(citekey))
   def detail(ds: DataSource, citekey: Citekey, name: AssetInfoRow.Name): Option[AssetDetail] =
     connect(ds)(AssetRepo.detail(citekey, name))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def patch(
       ds: DataSource,
       citekey: Citekey,
@@ -124,6 +127,7 @@ object AssetFixtures:
       limit: MediaRepo.Limit = MediaRepo.Limit(4)
   ): List[MediaThumb] =
     connect(ds)(MediaRepo.placeThumbsIn(placeId, sameSiteKm, limit))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourceThumb(ds: DataSource, citekey: Citekey): Option[MediaThumb] =
     thumbs(
       ds,

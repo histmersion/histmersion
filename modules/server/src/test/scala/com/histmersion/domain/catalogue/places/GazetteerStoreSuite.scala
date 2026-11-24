@@ -44,6 +44,7 @@ class GazetteerStoreSuite extends DbSuite:
 
   private val loop = GazetteerLoopback()
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("gazetteers", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private lazy val ds = scratch("store")
 
@@ -65,9 +66,12 @@ class GazetteerStoreSuite extends DbSuite:
   private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def importOnce(name: Registries.GazetteerSourcesKey): Either[Problem, Place.ImportResult] =
     val db = Transactor(ds)
     ImportRunner.fetchAndImport(
@@ -102,6 +106,7 @@ class GazetteerStoreSuite extends DbSuite:
       "places:\n" + steady(places.toList) + "place_names:\n" + steady(names.toList) + "place_relations:\n" +
         steady(relations.toList)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def transcript: String =
     val sb = StringBuilder()
     def run(name: Registries.GazetteerSourcesKey, served: String, body: Array[Byte]): Unit =

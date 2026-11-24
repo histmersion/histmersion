@@ -8,7 +8,11 @@ import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.ItemKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Activity
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the personal routes with their request and response bodies")
 object PersonalApi:
   type Search = Search.T
   object Search extends Newtype[String, Pure]
@@ -19,6 +23,7 @@ object PersonalApi:
   private def limitQuery = query[Option[Int]]("limit")
     .description(s"how many (default ${PersonalIds.DefaultLimit}, at most ${PersonalIds.MaxLimit})")
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val bookmarks
       : PublicEndpoint[(Option[ItemKind.Wire], Option[Search], Option[Int]), Api.Error, List[Bookmark], Any] =
     (endpoint.get
@@ -46,6 +51,7 @@ object PersonalApi:
   lazy val addBookmark: PublicEndpoint[Bookmark.New, Api.Error, Bookmark, Any] =
     endpoint.post.in("api" / "bookmarks").in(jsonBody[Bookmark.New]).errorOut(Api.problemOut).out(jsonBody[Bookmark])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val editBookmark: PublicEndpoint[(Bookmark.Id, Bookmark.Edit), Api.Error, Bookmark, Any] =
     (endpoint.patch
       .in("api" / "bookmarks" / path[String]("id"))
@@ -56,6 +62,7 @@ object PersonalApi:
         (Bookmark.Id((refactorDecoded11)._1), (refactorDecoded11)._2)
       )((refactorEncoded11: (Bookmark.Id, Bookmark.Edit)) => (((refactorEncoded11)._1).value, (refactorEncoded11)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeBookmark: PublicEndpoint[Bookmark.Id, Api.Error, Bookmark, Any] =
     (endpoint.delete
       .in("api" / "bookmarks" / path[String]("id"))
@@ -65,6 +72,7 @@ object PersonalApi:
         (refactorEncoded12: Bookmark.Id) => (refactorEncoded12).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val notes: PublicEndpoint[(Option[ItemKind.Wire], Option[ItemKey], Option[Search], Option[Int]), Api.Error, List[
     Note
   ], Any] =
@@ -93,6 +101,7 @@ object PersonalApi:
         )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val note: PublicEndpoint[Note.Id, Api.Error, Note, Any] =
     (endpoint.get
       .in("api" / "notes" / path[String]("id"))
@@ -105,6 +114,7 @@ object PersonalApi:
   lazy val addNote: PublicEndpoint[Note.New, Api.Error, Note, Any] =
     endpoint.post.in("api" / "notes").in(jsonBody[Note.New]).errorOut(Api.problemOut).out(jsonBody[Note])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val editNote: PublicEndpoint[(Note.Id, Note.Edit), Api.Error, Note, Any] =
     (endpoint.patch
       .in("api" / "notes" / path[String]("id"))
@@ -115,6 +125,7 @@ object PersonalApi:
         (Note.Id((refactorDecoded6)._1), (refactorDecoded6)._2)
       )((refactorEncoded6: (Note.Id, Note.Edit)) => (((refactorEncoded6)._1).value, (refactorEncoded6)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeNote: PublicEndpoint[Note.Id, Api.Error, Note, Any] =
     (endpoint.delete
       .in("api" / "notes" / path[String]("id"))
@@ -124,6 +135,7 @@ object PersonalApi:
         (refactorEncoded7).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val reading: PublicEndpoint[(Option[ItemKind.Wire], Option[Activity.Show.Wire], Option[Int]), Api.Error, List[
     ReadMark
   ], Any] =
@@ -159,6 +171,7 @@ object PersonalApi:
       .errorOut(Api.problemOut)
       .out(jsonBody[ReadMark])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val unread
       : PublicEndpoint[(Option[ItemKind.Wire], Option[Int], Option[UnreadPage.Offset]), Api.Error, UnreadPage, Any] =
     (endpoint.get

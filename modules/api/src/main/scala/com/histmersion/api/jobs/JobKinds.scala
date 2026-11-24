@@ -2,6 +2,7 @@ package com.histmersion
 package api.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every kind of background job the server runs, as their owners registered them, in the order the jobs window lists
   * them, and the fields their jobs' detail may hold, in the order the detail shows them. A kind nobody registered is
@@ -15,14 +16,17 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def get(kind: JobInfo.Kind): Option[JobKindEntry] = byWire.get(kind)
 
   /** The kind a stored or typed identifier names (case and surrounding space ignored). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(wire: JobKinds.Wire): Option[JobKindEntry] = byWire.get(JobKinds.Wire((wire).value.trim.toLowerCase))
 
   /** May a person pause and cancel a job of the kind `wire` names? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stoppable(wire: JobKinds.Wire): Boolean = (byWire
     .get(JobKinds.Wire((wire).value))
     .exists((refactorCallback2 => ((refactorCallback2.stoppable) == JobKindEntry.Stoppable(true)))))
 
   /** Do the pause, resume and cancel of a job of the kind `wire` names go to the kind's own runner? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ownControl(wire: JobKinds.Wire): Boolean = (byWire
     .get(JobKinds.Wire((wire).value))
     .exists((refactorCallback2 => ((refactorCallback2.ownControl) == JobKindEntry.OwnControl(true)))))
@@ -34,6 +38,7 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
     .toSet
 
   /** What a job is about: its source, else what its detail says. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def subject(job: JobInfo): Option[JobKinds.Subject] =
     job.citekey
       .map(c => JobKinds.Subject(c.value.toString))

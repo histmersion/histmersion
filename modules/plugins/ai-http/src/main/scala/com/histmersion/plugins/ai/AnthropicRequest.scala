@@ -12,12 +12,15 @@ import com.histmersion.plugin.AiTurn
 import com.histmersion.plugin.AiHttp
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiTool
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One call to the Anthropic Messages API (`POST v1/messages`), its body as the API takes it: the model, the
   * conversation as user and assistant messages of content blocks (tool calls as `tool_use`, their results as
   * `tool_result`), the system prompt, the output cap, the tools offered (each input an object schema) and the answer's
   * schema as `output_config`. Unset fields are left out; the tools' schemas are sent exactly as given.
   */
+@atBoundary(BoundaryKind.Json, "builds the Anthropic API's request JSON")
 final case class AnthropicRequest(json: Json):
   def body: AiHttp.PostBody = AiHttp.PostBody(json.noSpaces)
 
@@ -32,6 +35,7 @@ object AnthropicRequest:
   /** The request for `r`, or why it cannot be built (a tool call whose input is not a JSON object), described as the
     * exception that says so.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def of(r: AiTurn.Request): Either[Problem, AnthropicRequest] =
     messages(r.messages).map { msgs =>
       val tools = Option.when(r.tools.nonEmpty)(
@@ -64,9 +68,11 @@ object AnthropicRequest:
 
   private def text(t: String): Json = Json.obj("text" -> Json.fromString(t), "type" -> Json.fromString("text"))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def message(role: Role, content: List[Json]): Json =
     Json.obj("role" -> Json.fromString((role).value), "content" -> Json.fromValues(content))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def messages(ms: List[AiMessage]): Either[Problem, List[Json]] =
     @annotation.tailrec
     def go(rest: List[AiMessage], acc: List[Json]): Either[Problem, List[Json]] = rest match
@@ -86,6 +92,7 @@ object AnthropicRequest:
             go(tail, message(Role("assistant"), (if t.value.nonEmpty then List(text(t.value)) else Nil) ++ uses) :: acc)
     go(ms, Nil).map(dropNulls)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @annotation.tailrec
   private def toolUses(
       calls: List[(AiTool.Call.Id, AiTool.Call.Tool, AiTool.Call.Input)],

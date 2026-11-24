@@ -13,12 +13,14 @@ import com.histmersion.util.jobs.{JobListing, JobQuery}
 import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `GET /api/jobs` (and `job_status` without an id) filtered ([[ListFilters.JobFilter]]): the background jobs and the
   * agent runs, which are jobs too, in one page, newest first, with the per-state and the kind counts under the same
   * filter.
   */
 final class JobListView(jobs: JobListing):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(
       f: JobFilter,
       now: Instant,
@@ -34,12 +36,14 @@ final class JobListView(jobs: JobListing):
 
 object JobListView:
   /** The states a job can be in: a background job's, and — the agent runs being jobs too — a run's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobStatuses: Seq[ListFilters.Term] =
     (JobState.values.map(_.wire.value) ++ RunState.values.map(_.wire.value)).distinct.toSeq.map(ListFilters.Term(_))
 
   /** A client's job filter checked and turned into the query: a state outside [[JobStatuses]] is a 400 naming the
     * allowed ones, a time bound is read once, against `now`; any kind passes (plugins add their own). Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def query(f: JobFilter, now: Instant): Either[Problems, JobQuery] =
     val n = f.normalized
     for

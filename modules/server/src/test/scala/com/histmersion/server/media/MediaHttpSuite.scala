@@ -47,16 +47,19 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media from outside providers (#1446) through the server: an import against a FAKE provider into the test database
   * (HISTMERSION_TEST_DB_URL; skipped otherwise), then what the web UI and the CLI read — the place card's thumbnail,
   * the thumbnail bytes served locally, the list, facets and one picture, an event's Wikidata item, the import's
   * refusals, the figure-licence count. No live network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base
@@ -100,6 +103,7 @@ class MediaHttpSuite extends DbSuite:
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqmh%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqmh%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()

@@ -19,10 +19,13 @@ import com.histmersion.api.Write
 import com.histmersion.api.Api
 import com.histmersion.api.library.Doi
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,
   * and where a server refusal is shown.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class SourceEditorSuite extends munit.FunSuite:
 
   private val orig = Source.Detail(

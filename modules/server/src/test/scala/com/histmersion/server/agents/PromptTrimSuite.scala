@@ -17,11 +17,13 @@ import com.histmersion.domain.automation.agents.{
 import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a headless step is sent every turn, and that trimming it lost no rule (2026-10-09): the audience markers, the
   * reviewers' edition of the writing guide, and a ceiling per review role so the prompt does not grow back unnoticed.
   * Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PromptTrimSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk
@@ -29,8 +31,10 @@ class PromptTrimSuite extends munit.FunSuite:
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val d = Generated.defs()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
   private def headless(s: StepAgent) = d.system(agent(s), ToolStyle.Claude)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def interactive(s: StepAgent) =
     AgentGenerator.interactiveAgent(agent(s)).getOrElse(fail(s"${s.wire}: not interactive"))
   private val Reviewers = List(StepAgent.RulesReviewer, StepAgent.Skeptic, StepAgent.Fixer)

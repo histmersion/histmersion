@@ -7,11 +7,15 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigObject, ConfigResolveOpti
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import com.histmersion.config.HotPlan
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every setting of the config file, from reference.conf: its kind, default, documentation, environment variable,
   * whether it waits for a restart and whether it is a credential — what Settings' "Advanced" form is generated from and
   * what a write is checked against. Pure: built from reference.conf's text.
   */
+@atBoundary(BoundaryKind.Config, "reads reference.conf into the list of settings the config file may hold")
+@movesTo(FeaturePlace.UtilSettings)
 final class ConfigSchema private (val fields: List[SettingField], blocks: Map[SettingKey, SettingField.Doc]):
 
   private val byKey: Map[SettingKey, SettingField] = fields.map(f => f.key -> f).toMap
@@ -42,6 +46,7 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
       )
 
   /** The known settings named most like `key`, for "did you mean". */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def closest(key: SettingKey, n: Int = 3): List[SettingKey] =
     val k = key.relative
     fields
@@ -67,6 +72,7 @@ object ConfigSchema:
     finally is.close()
 
   /** The schema of a reference.conf's text. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def of(text: ReferenceDocs.Text): ConfigSchema =
     val raw = ConfigFactory.parseString(text.value)
     val resolved = raw.resolve(ConfigResolveOptions.noSystem)
@@ -128,6 +134,7 @@ object ConfigSchema:
     val p = key.segments
     ConfigLayers.OpenBlocks.exists(b => p.length > b.length && p.startsWith(b))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def restartOf(key: SettingKey): Option[SettingField.Restart] =
     ConfigReload.RestartOnly.collectFirst {
       case (k, why) if HotPlan.keyMatches(ConfigReload.Key(key.value), k) => SettingField.Restart(why.said)

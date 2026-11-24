@@ -4,8 +4,10 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Anthropic Messages API's request and answer, as pure functions: what is sent for a turn, what an answer says. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AnthropicWireSuite extends munit.FunSuite:
 
   private val tool =
@@ -128,6 +130,7 @@ class AnthropicWireSuite extends munit.FunSuite:
   )
 
   /** What the answer said: an error and its words, or why a success answer cannot be read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def said(p: Problem): String = p match
     case Problem.Upstream.Http(_, _, status, body, _)    => s"$status $body"
     case Problem.Upstream.BadReply(_, _, _, reported, _) => s"$reported"

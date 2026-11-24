@@ -2,6 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed on both sides
   * since a common base (docs/research-merge-import.md §5.4). Pure.
@@ -40,13 +41,17 @@ object Diff3:
       object Right extends Newtype[String, Pure]
 
   final case class Result(hunks: List[Hunk]):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def conflicts: Result.ConflictCount = Result.ConflictCount(hunks.count(_.isInstanceOf[Hunk.Conflict]))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def clean: Boolean = conflicts.value == 0
 
     /** The merged text — only meaningful when [[clean]]. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text: Result.MergedText = Result.MergedText(render(_ => Vector.empty))
 
     /** The merged text with git-style conflict markers around every conflict. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def marked(leftName: Result.MarkedLeftName, rightName: Result.MarkedRightName): Result.MarkedText =
       Result.MarkedText(render { case Hunk.Conflict(b, l, r) =>
         (s"<<<<<<< $leftName" +: l.map(_.value)) ++ ("||||||| base" +: b.map(_.value)) ++ ("=======" +: r.map(
@@ -54,6 +59,7 @@ object Diff3:
         )) :+ s">>>>>>> $rightName"
       })
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def render(conflict: Hunk.Conflict => Vector[String]): String =
       hunks
         .flatMap {
@@ -77,14 +83,18 @@ object Diff3:
   /** Lines of a text; a final newline is not an extra empty line. */
   private def lines(s: String): Vector[String] = s.split("\n", -1).toVector
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def agreedOf(ls: Vector[String]): Hunk = Hunk.Agreed(ls.map(Hunk.Agreed.Lines(_)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def merge(base: Text, left: Text, right: Text): Result =
     if left == right then Result(List(agreedOf(lines(left.value))))
     else if left == base then Result(List(agreedOf(lines(right.value))))
     else if right == base then Result(List(agreedOf(lines(left.value))))
     else mergeLines(lines(base.value), lines(left.value), lines(right.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mergeLines(o: Vector[String], a: Vector[String], b: Vector[String]): Result =
     val ma = matching(o, a)
     val mb = matching(o, b)

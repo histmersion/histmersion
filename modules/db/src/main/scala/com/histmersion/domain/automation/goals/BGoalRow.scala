@@ -57,4 +57,5 @@ object BGoalRow:
   type Plan = Plan.T
   object Plan extends Newtype[String, Pure]
   type PlanApprovedAt = PlanApprovedAt.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PlanApprovedAt extends Newtype[String, Pure]

@@ -19,10 +19,12 @@ import com.histmersion.util.plugins.Plugin
 import com.histmersion.plugin.AiProvider
 import com.histmersion.plugin.AiHttp
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A configured model, ready to run [[LlmCall]]s. The engine never sees a provider type: the loop (sttp-ai's) and its
   * builders are hidden behind [[run]], so a pinned-but-pre-1.0 library touches few files.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait LlmClient:
   def model: ModelRef
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]]
@@ -33,6 +35,7 @@ object LlmClient:
     * scripted model go through the same configuration.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configure[M <: AIModel & Capability.All, Out](
       b: AgentBuilder[Identity, M, String, String],
       c: LlmCall[Out]
@@ -54,6 +57,7 @@ object LlmClient:
     * other registered provider — the HTTP APIs' first-party plugins among them — runs through the host's tool loop
     * ([[PluginAiClient]]); a switched-off or unregistered one is refused, saying which.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def factory(
       rt: CliRuntime,
       providers: () => scala.collection.immutable.ListMap[Plugin.Id, AiProvider],
@@ -98,6 +102,7 @@ object LlmClient:
           )
 
   /** sttp-ai's usage → ours. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def usage(u: TokenUsage): Agents.Usage =
     Agents.Usage(
       Agents.Usage.Input(u.inputTokens.value),
@@ -110,6 +115,7 @@ object LlmClient:
     * `model`, claude -p's `modelUsage` keys), the busiest (most output tokens) first, joined by ` + ` when several
     * served it (Claude Code may hand side work to a smaller model). None when no call named one.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def servedBy(calls: Seq[LlmCallUsage]): Option[AgentRepo.StepRecord.ActualModel] =
     val out = calls
       .flatMap(c => c.model.map(_.trim).filter(_.nonEmpty).map(_ -> c.usage.outputTokens.value))

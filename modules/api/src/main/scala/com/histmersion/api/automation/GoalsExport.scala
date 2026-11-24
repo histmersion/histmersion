@@ -3,6 +3,7 @@ package api.automation
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule, GoalView}
 import com.histmersion.api.YearFmt
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 object GoalsExport:
 
@@ -24,6 +25,7 @@ object GoalsExport:
       else tree(views).map((v, depth) => block(v, ((depth)), known, itemStatus))
     ((head ++ body).mkString("\n\n") + "\n")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def summary(goals: List[Goal]): String =
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
@@ -49,6 +51,9 @@ object GoalsExport:
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
     placed ++ strays
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def block(
       v: GoalView,
       depth: Int,
@@ -75,6 +80,7 @@ object GoalsExport:
       .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def linkSections(
       links: List[GoalLink],
       itemStatus: Map[Goal.Plans.GoalLink.QueueNumber, ItemStatus.Wire]
@@ -117,9 +123,15 @@ object GoalsExport:
       )
     ).flatten
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t.value)}")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def noted(l: GoalLink): String = l.note.map(n => oneLine(n.value)).filter(_.nonEmpty).fold("")(n => s" · $n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def queueLine(l: GoalLink, itemStatus: Map[GoalLink.QueueNumber, ItemStatus.Wire]): String =
     l.ref.value.toIntOption.flatMap(i => itemStatus.get(GoalLink.QueueNumber(i))) match
       case Some(st) =>
@@ -127,6 +139,9 @@ object GoalsExport:
         s"$box `#${l.ref}` ${l.title.map(t => oneLine(t.value)).getOrElse("")}${noted(l)}"
       case None => (s"`#${l.ref}` (not found)${noted(l)}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def scheduleLine(s: GoalSchedule): String =
     val state = if (s.enabled) == GoalSchedule.Enabled(true) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b.value)} USD")

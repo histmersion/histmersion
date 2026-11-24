@@ -19,11 +19,13 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** compile-article's pure logic: the claim table (quotes found in the record), the evidence model, and the code
   * self-check of a draft — fatal problems always sent back, the rest sent back until the last attempt, then listed for
   * the person who approves.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CompileArticleSuite extends munit.FunSuite:
 
   private val record = AgentVerify.SourceBody(
@@ -119,6 +121,7 @@ class CompileArticleSuite extends munit.FunSuite:
     SourceFact(Citekey("b2024_iso"), Title("Isotopes"), Some(Year(2024)), Source.Status.Contested),
     SourceFact(Citekey("c2001_old"), Title("Old"), Some(Year(2001)), Source.Status.Current)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claim(ck: Citekey) = Claim(
     ck,
     ClaimAnswer.Claim(s"claim of $ck"),
@@ -162,6 +165,7 @@ class CompileArticleSuite extends munit.FunSuite:
 
   private val known = Set("a2019_tin", "b2024_iso", "c2001_old")
   private val statuses = facts.map(f => f.citekey -> f.status).toMap
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val corpus = Corpus(ck => known(ck.value), t => known(t.value) || t.value == "tin_article", statuses.get)
 
   private val goodBody =

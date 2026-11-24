@@ -9,7 +9,9 @@ import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object MapTiles:
   type Etag = Etag.T
   object Etag extends Newtype[String, Pure]
@@ -29,6 +31,8 @@ object MapTiles:
     * (the rest — a filter's paging, another layer's options — left out, so they never split one tile into many) and the
     * versions of the groups it reads.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(
       layer: TileLayer,
       c: TileCoord,
@@ -63,10 +67,13 @@ object MapTiles:
     TileKey((List(layer.wire.value, s"${c.z}/${c.x}/${c.y}") ++ params ++ v).mkString("|"))
 
   /** Pure: a key's ETag (a strong one: the tile's bytes follow from the key). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def etag(key: TileKey): Etag =
     val d = MessageDigest.getInstance("SHA-256").digest(key.value.getBytes(StandardCharsets.UTF_8))
     Etag("\"" + d.take(12).map(b => f"${b & 0xff}%02x").mkString + "\"")
 
   /** Pure: does the browser's `If-None-Match` name `tag` (one of a list, or `*`)? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(ifNoneMatch: Option[Etag], tag: Etag): Boolean =
     ifNoneMatch.exists(h => h.value.split(",").map(_.trim.stripPrefix("W/")).exists(t => t == tag.value || t == "*"))

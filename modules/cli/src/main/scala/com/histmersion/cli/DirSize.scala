@@ -12,6 +12,8 @@ import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.StorageConfig
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How much a directory holds, measured by a BOUNDED walk — the Storage part of About ([[StorageReport]]) on the
   * server, and the CLI's own locations. Reads the file system and nothing else; writes nothing.
@@ -23,6 +25,7 @@ import com.histmersion.config.StorageConfig
   *     comes back `partial` with what it counted so far (a lower bound).
   *   - An unreadable directory is skipped and counted in `unreadable`, never an error.
   */
+@atBoundary(BoundaryKind.Process, "walks a directory on disk to measure how much it holds")
 object DirSize:
 
   /** @param exists
@@ -41,6 +44,7 @@ object DirSize:
   )
 
   object Result:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Bytes = ByteCount
     val Bytes: ByteCount.type = ByteCount
     export Storage.FileCount as Files
@@ -59,8 +63,10 @@ object DirSize:
     private val used = AtomicLong(0L)
 
     /** Count one entry; false once either cap is reached. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def take(): Boolean = used.incrementAndGet() <= maxEntries.value && clock() < deadlineNanos.value
     def spent: Long = used.get
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def exhausted: Boolean = used.get >= maxEntries.value || clock() >= deadlineNanos.value
 
   object Budget:
@@ -69,6 +75,7 @@ object DirSize:
     type DeadlineNanos = DeadlineNanos.T
     object DeadlineNanos extends Newtype[Long, Pure]
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def of(maxEntries: StorageConfig.MaxEntries, maxMillis: StorageConfig.MaxMillis): Budget =
       Budget(
         MaxEntries(maxEntries.value.toLong),

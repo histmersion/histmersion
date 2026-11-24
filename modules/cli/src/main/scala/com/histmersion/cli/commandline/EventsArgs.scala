@@ -39,8 +39,11 @@ import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
 import com.histmersion.cli.ExitCode
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[EventsCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion events`: declares its options, parses them into typed commands")
 object EventsArgs:
   object EventsEntry extends CommandLine.Entry:
     val name = "events"
@@ -67,6 +70,7 @@ object EventsArgs:
     private val f_ = filterFlags()
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       EventsCmd.Command.Search(
         q_.toOption,
@@ -234,6 +238,7 @@ object EventsArgs:
     private val confirm_ = values[String]("apply", "A citekey to confirm (repeatable)")
     private val reject_ = values[String]("reject", "A citekey to stop proposing (repeatable)")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       EventsCmd.Command.Links(id_(), re_.getOrElse(false), confirm_.getOrElse(Nil), reject_.getOrElse(Nil))
     )

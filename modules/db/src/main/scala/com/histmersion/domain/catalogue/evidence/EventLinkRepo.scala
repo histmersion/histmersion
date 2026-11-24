@@ -16,14 +16,21 @@ import com.histmersion.api.library.Finding
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed
   * (`event_link_checks`). Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the event link tables and their row codecs")
 private[evidence] object EventLinkRepo:
 
   /** The stored candidates of one event, best first; the rejected ones only when `rejected` lists them. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def candidates(id: BEventRow.Id, rejected: RejectedLinks = RejectedLinks.Hidden)(using
       DbCon
   ): List[EventLinkCandidate] =
@@ -52,6 +59,7 @@ private[evidence] object EventLinkRepo:
   /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps its status
     * (its evidence is refreshed). Records the check.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def saveCandidates(id: BEventRow.Id, cs: List[EventLinkCandidate])(using DbCon)(using creator: Creator.New): Unit =
     Unused(
       sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run(),
@@ -68,16 +76,19 @@ private[evidence] object EventLinkRepo:
     sql"""INSERT INTO event_link_checks (event_id) VALUES ($id)
           ON CONFLICT (event_id) DO UPDATE SET checked_at = now()""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setStatus(id: BEventRow.Id, citekey: domain.library.Citekey, status: BCandidateRow.Status)(using
       DbCon
   ): Boolean =
     sql"UPDATE event_link_candidates SET status = $status WHERE event_id = $id AND citekey = $citekey".update
       .run() > 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def isChecked(id: BEventRow.Id)(using DbCon): Boolean =
     sql"SELECT 1 FROM event_link_checks WHERE event_id = $id".query[Int].run().nonEmpty
 
   /** Events whose candidates were never computed (or every one, with `all`), catalogue ones first. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def eventsToCheck(all: Boolean, limit: PageSize)(using DbCon): List[BEventRow.Id] =
     sql"""SELECT e.id FROM events e
           WHERE ($all OR NOT EXISTS (SELECT 1 FROM event_link_checks k WHERE k.event_id = e.id))

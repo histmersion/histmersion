@@ -9,15 +9,20 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the places: this collection's own places (renamed first, as the other side renamed them),
   * their old ids, and the site types refined from outside.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object PlacesCarried:
   private val Catalogue = DataOwner("catalogue")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val places: CarriedKind = CarriedKind.records[Bundle.Place](
     Catalogue,
     Bundle.Kind.Place,
@@ -28,6 +33,7 @@ object PlacesCarried:
     (es, ls) => es.modify(_.places).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val placeAliases: CarriedKind = CarriedKind.owned[Bundle.PlaceAlias](
     Catalogue,
     BundleEntry(Bundle.Files.PlaceAliases),
@@ -37,6 +43,7 @@ object PlacesCarried:
     (es, ls) => es.modify(_.placeAliases).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val siteTypes: CarriedKind = CarriedKind.owned[Bundle.SiteType](
     Catalogue,
     BundleEntry(Bundle.Files.PlaceSiteTypes),
@@ -52,4 +59,5 @@ object PlacesCarried:
   /** Where the bundle's place ids point here, for the lines of other kinds that name a place: a place the other side
     * renamed whose line is not written keeps its id here.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def placeHere(w: BundleImport.Writer): BPlaceRow.Id => BPlaceRow.Id = PlaceBundleRepo.placeHere(w)

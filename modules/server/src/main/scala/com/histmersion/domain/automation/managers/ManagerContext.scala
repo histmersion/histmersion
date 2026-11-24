@@ -24,11 +24,15 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
   * supervisor itself makes, with the same events.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 trait ManagerContext:
   def cfg: AgentsConfig
   def settings(m: ManagerInfo): ReviewSettings

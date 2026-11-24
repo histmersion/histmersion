@@ -31,10 +31,12 @@ import com.histmersion.api.jobs.JobState
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pause, resume and cancel: the in-memory service, then a long background job on a test database (gated on
   * HISTMERSION_TEST_DB_URL) that stops at a part boundary and, resumed, does only the parts it had not done.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class JobControlServiceSuite extends DbSuite:
 
   private val M1 = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a1")
@@ -44,6 +46,7 @@ class JobControlServiceSuite extends DbSuite:
   private val X = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a5")
   private val Nope = Job.Id.applyUnsafe("00000000-0000-0000-0000-0000000000a6")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(id: Job.Id, kind: JobInfo.Kind, status: JobInfo.Status) =
     JobInfo(
       SpatialHierarchyResult.Job.Id(id.value),
@@ -53,6 +56,7 @@ class JobControlServiceSuite extends DbSuite:
       progress = Some(JobInfo.Progress("2/6"))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(info: JobInfo): Job.Id = Job.Id.applyUnsafe(info.id.value)
 
   test("in memory: a pause is asked of a running job, which stops at its next part and resumes later"):
@@ -113,6 +117,7 @@ class JobControlServiceSuite extends DbSuite:
 
   // ── a real job on a test database ────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
@@ -120,6 +125,7 @@ class JobControlServiceSuite extends DbSuite:
   private def dbTest(name: String)(body: => Unit): Unit =
     test(name)(if testDb.isEmpty then assume(false, "HISTMERSION_TEST_DB_URL is unset") else body)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def until(id: Job.Id, status: JobInfo.Status, left: Int = 400): JobInfo =
     val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
     if j.status == status then j
@@ -134,6 +140,7 @@ class JobControlServiceSuite extends DbSuite:
     val ran = AtomicReference(Vector.empty[Int])
     val holding = CountDownLatch(1)
     val release = CountDownLatch(1)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def body(progress: JobInfo.Progress => Unit): BackgroundJob.Outcome =
       (1 to 6).foreach { n =>
         if !done.get.contains(n) then
@@ -144,6 +151,7 @@ class JobControlServiceSuite extends DbSuite:
       }
       BackgroundJob.Outcome.done(BackgroundJob.Outcome.Summary("6/6 parts"))
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def service(stops: JobStops) =
     JobControlService(ds, stops, (_, _) => Left(Api.Error(Problem.Unclassified(Legacy.Text("no agent runs here")))))
 

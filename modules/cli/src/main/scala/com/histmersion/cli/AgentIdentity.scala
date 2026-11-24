@@ -3,6 +3,7 @@ package cli
 
 import com.histmersion.config.CliConfig
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class AgentIdentity(
     plugin: Option[Creation.Plugin] = None,
@@ -28,6 +29,7 @@ final case class AgentIdentity(
 object AgentIdentity:
   val Nobody: AgentIdentity = AgentIdentity()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configured(agent: CliConfig.Agent): AgentIdentity =
     def named(name: CliConfig.Agent.Name): Option[CliConfig.Agent.Name] = Option.when(s"$name".trim.nonEmpty)(name)
     AgentIdentity(

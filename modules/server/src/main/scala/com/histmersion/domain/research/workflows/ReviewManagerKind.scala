@@ -43,12 +43,15 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
   * never-reviewed, then stale articles, an infer-filter item before the review of an article that records no filter,
   * the prioritise hints), the articles new sources reach, and the runs its items start.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerService, cfg: => ResearchAgentsConfig)
     extends ManagerKindDefinition:
   val kind: Kind = Kind.Review
@@ -64,6 +67,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   override def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
     ReviewManagerPolicy.settings(c, reviewDefaults, m)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = itemKind.value match
     case InferFilter   => Pipeline.InferFilter
     case ArticleExtend => Pipeline.CompileArticle
@@ -82,6 +86,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
 
   // ── evaluate ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def evaluate(
       c: ManagerContext,
       m: ManagerInfo,
@@ -95,6 +100,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     if item.kind.value == ArticleReview then evaluateReview(c, m, s, item, st, error, now, out)
     else c.evaluateStep(m, s, item, st, error, now, out, this)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def evaluateReview(
       c: ManagerContext,
       m: ManagerInfo,
@@ -199,6 +205,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** The stop's backlog item: the article's own review task (the ledger's, while it is open) is rewritten with the
     * reason, else a new one is added. Returns its id.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fileTask(
       slug: Slug,
       ledger: Option[ReviewLedger.Ledger],
@@ -232,6 +239,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .toOption
           .map(_.id)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     lazy val progress = c.progress(run)
     item.kind.value match
@@ -250,6 +258,8 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case _ => StepFacts.Finished(Item.Outcome("enriched"))
 
   /** An extended article is reviewed again. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
@@ -271,6 +281,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** The saved include-tags and include-goal of a manager as the selection queries take them; None when the goal it
     * names is no goal slug (nothing can match it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scopeOf(m: ManagerInfo): Option[(List[GoalRow.Tags], Option[Goal.Slug])] =
     val tags = m.config.includeTags.getOrElse(Nil).map(t => GoalRow.Tags(t.value))
     m.config.includeGoal.map(_.value.trim).filter(_.nonEmpty) match
@@ -281,6 +292,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     * — with an infer-filter item before the review of an article that records no filter, and the standing prioritise
     * hints applied. Then the articles new sources reach.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def refill(
       c: ManagerContext,
       m: ManagerInfo,
@@ -351,6 +363,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     * extended in `extend-cooldown-days` — gets an `article-extend` item; the extension's review follows as a chained
     * item. `extendMinNew` 0 = never.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def extensions(
       c: ManagerContext,
       m: ManagerInfo,
@@ -415,6 +428,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** Converged articles that are due again (at most every `stale-scan-minutes` per manager): (slug, why, its done
     * item). Their filter is counted only for the ones whose count was recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def staleArticles(
       c: ManagerContext,
       m: ManagerInfo,
@@ -451,6 +465,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       }.take(room)
 
   /** A target's priority under the standing prioritise hints that match it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def boosted(
       c: ManagerContext,
       slug: Slug,
@@ -478,6 +493,8 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
 
   // ── what a person adds ─────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def target(
       m: ManagerInfo,
       itemKind: ManagerContext.ItemKind,
@@ -496,6 +513,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** An article that records no filter and never had an infer-filter item gets one, at its review's priority, so its
     * review waits for it (when the manager's `inferFilter` is on).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def added(
       c: ManagerContext,
       m: ManagerInfo,
@@ -528,6 +546,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
 
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dispatch(
       c: ManagerContext,
       m: ManagerInfo,

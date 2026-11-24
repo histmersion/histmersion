@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class Correction(
     id: Correction.Id,
@@ -28,20 +29,25 @@ object Correction:
   type Id = Id.T
   object Id extends Newtype[Long, Pure]
   type TargetKind = TargetKind.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetKind extends Newtype[String, Pure]
   type TargetId = TargetId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetId extends Newtype[String, Pure]
   type Field = Field.T
   object Field extends Newtype[String, Pure]
   type Value = Value.T
   object Value extends Newtype[String, Pure]
   type UpstreamValue = UpstreamValue.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object UpstreamValue extends Newtype[String, Pure]
   type StatusValue = StatusValue.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object StatusValue extends Newtype[String, Pure]
   type Upstream = Upstream.T
   object Upstream extends Newtype[String, Pure]
   type UpstreamNow = UpstreamNow.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object UpstreamNow extends Newtype[String, Pure]
   export CatalogRecord.Label
   type CreatedAt = CreatedAt.T
@@ -56,6 +62,7 @@ object Correction:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def +(o: Counts): Counts =
       Counts(
         Counts.Kept((kept).value + (o.kept).value),
@@ -64,6 +71,7 @@ object Correction:
       )
     def isEmpty: Boolean = (kept == Counts.Kept(0) && retired == Counts.Retired(0) && conflicts == Counts.Conflicts(0))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def summary: Option[String] =
       Option.when(!(isEmpty))(
         (s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict")
@@ -96,12 +104,15 @@ object Correction:
     val Active = "active"
     val Agreed = "agreed"
     val Conflict = "conflict"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: scala.List[All] = scala.List(All(Active), All(Agreed), All(Conflict))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val applied: Set[Applied] = Set(Applied(Active), Applied(Conflict))
 
   object Target:
 
     val Event = "event"
     val Place = "place"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: scala.List[TargetKind] = scala.List(TargetKind(Event), TargetKind(Place))

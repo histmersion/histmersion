@@ -3,10 +3,14 @@ package api.settings
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ConfigEditMarkdown:
 
   import ConfigEdit.*
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shown(f: Field): String =
     f.credential match
       case Some(c) if !((c.isSet) == (true)) => ("not set")
@@ -16,6 +20,8 @@ object ConfigEditMarkdown:
           s" (comes to `$r` on the server's machine)"
         )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def field(f: Field): String =
     val from = Source.parse(f.source).fold(f.source)(_.label)
     val lines = List(
@@ -31,6 +37,8 @@ object ConfigEditMarkdown:
     )
     lines.flatten.mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(p: Page): String =
     val head = List(
       s"# Settings",
@@ -46,6 +54,8 @@ object ConfigEditMarkdown:
     }
     ((head ++ problems ++ body).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def written(w: Written): String =
     def list(title: String, xs: List[String]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =
@@ -62,6 +72,8 @@ object ConfigEditMarkdown:
       list(("Warnings"), w.warnings.map(_.value)) ++
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restart(r: Restart): String =
     if (r.accepted) == Restart.Accepted(true) then (s"# Restarting\n\n${r.notice}")
     else (s"# Not restarted\n\n${r.notice}")

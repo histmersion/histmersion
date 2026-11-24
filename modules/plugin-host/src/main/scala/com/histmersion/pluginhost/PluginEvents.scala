@@ -22,14 +22,18 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.domain.CoreQuota
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.EventEntry
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plugin's catalogue as the host reads it: the query it is asked, its polite HTTP, and its records checked and
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].
   */
+@atBoundary(BoundaryKind.Spi, "turns a plugin's catalogue records into the host's event records")
 object PluginEvents:
   export MediaConfig.RequestIntervalMs as IntervalMs
   type PartName = PartName.T
   object PartName extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Provider = CatalogRecord.Provider
   val Provider: CatalogRecord.Provider.type = CatalogRecord.Provider
   export Polite.IntervalMs as SleepMs
@@ -38,9 +42,11 @@ object PluginEvents:
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a dating stored under
     * a floor is already held at it, so a looser limit changes nothing).
     */
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RereadProvider = Provider
   val RereadProvider: Provider.type = Provider
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def limits(catalogue: Option[EventCatalogue], present: DeepTime.SignedYear): CatalogDating.Limits =
     CatalogDating.Limits(
       CatalogDating.HistoricalYear(present.value),
@@ -55,6 +61,9 @@ object PluginEvents:
     * re-reads the stored record — the central year and ± are kept as stated — so a record derived at the import derives
     * to itself again).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def derive(r: CatalogRecord, limits: CatalogDating.Limits): CatalogRecord =
     val ts = r.timeSpan
     val undated = List(ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter).forall(_.isEmpty)
@@ -76,6 +85,9 @@ object PluginEvents:
     stated.modify(_.timeSpan).setTo(timeSpan(CatalogDating.clamp(span(stated.timeSpan), limits)))
 
   /** Pure: a span as the dating rules read it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def span(ts: TimeSpan): CatalogDating.Span =
     def historical(y: Option[com.histmersion.api.catalogue.Year]) = y.map(v => CatalogDating.HistoricalYear(v.value))
     CatalogDating.Span(
@@ -86,6 +98,9 @@ object PluginEvents:
     )
 
   /** Pure: a span as the host stores it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def timeSpan(s: CatalogDating.Span): TimeSpan =
     def year(y: Option[CatalogDating.HistoricalYear]) = y.map(v => com.histmersion.api.catalogue.Year(v.value))
     TimeSpan(year(s.notBefore), year(s.beginBy), year(s.endFrom), year(s.notAfter))
@@ -93,6 +108,8 @@ object PluginEvents:
   /** Pure: a stored record as its catalogue's event, for the catalogue to read again ([[EventCatalogue.reread]]);
     * `None` when a stored value is one the SPI's types do not hold (a year beyond an `Int`, a position off the globe).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def event(r: CatalogRecord): Option[CatalogueEvent] =
     def opt[A, B](a: Option[A])(f: A => Option[B]): Option[Option[B]] = a.fold(Some(None))(v => f(v).map(Some(_)))
     def year(y: Long) = SpiValues.year(DeepTime.SignedYear(y))
@@ -133,6 +150,7 @@ object PluginEvents:
   /** A stored record read again by its catalogue, without the network: the catalogue's own reading of it as the host
     * stores a record ([[record]]), or `None` when the catalogue does not re-read (or not this record).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def reread(catalogue: EventCatalogue, provider: RereadProvider, r: CatalogRecord): Option[CatalogRecord] =
     event(r)
       .flatMap(e => guard(Right(catalogue.reread(e))).toOption.flatten)
@@ -141,6 +159,7 @@ object PluginEvents:
   /** The query a plugin catalogue is asked: the import's years (held at what a `Year` holds) and its area (left out
     * when a corner is off the globe: the host applies the area itself anyway).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def query(from: Option[DeepTime.SignedYear], to: DeepTime.SignedYear, area: Option[BBox]): CatalogueQuery =
     CatalogueQuery(
       from.map(SpiValues.yearBound),
@@ -159,6 +178,9 @@ object PluginEvents:
   /** A catalogue run's polite client at `intervalMs` between requests to one host; the media politeness otherwise
     * (User-Agent, retries) — and up to two minutes' Retry-After, which a query service asks for.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def polite(
       http: HttpTransport,
       media: MediaConfig,
@@ -180,6 +202,9 @@ object PluginEvents:
   /** One part as the host reads it: the part, then each `next` page it names, until a page names none, names itself or
     * a part `done`, or `full` says the run has what it asked for. `each` gets every page read (or why it could not be).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def readPart(
       cat: EventCatalogue,
       first: PartName,
@@ -197,7 +222,9 @@ object PluginEvents:
       case _ => ()
     from(Option(first).filter(p => !done(p)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def http(polite: Polite): Plugin.Http = new Plugin.Http:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       polite
         .get(
@@ -223,6 +250,8 @@ object PluginEvents:
     * off the globe (or half a position) and a Wikidata id that is no item are left out of the record, each with a
     * warning. Its kind is the host's spelling of it ([[EventTaxonomy.refine]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[Problem, Kept[CatalogRecord]] =
     try checked(provider, e)
     catch
@@ -230,6 +259,9 @@ object PluginEvents:
         val record = safe(e.id.value).fold("a record")(id => s"record $id")
         Left(Problem.from(x, Problem.Where(s"reading $record of catalogue $provider"), Problem.Internal.Id.mint()))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def checked(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[Problem, Kept[CatalogRecord]] =
     val id = Option(e.id).map(_.value).getOrElse("").trim
     val label = Option(e.label).map(_.value).getOrElse("").trim

@@ -12,6 +12,7 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
   * they use and where their bytes are read from), the blobs it takes in, and its rows in.
@@ -51,6 +52,7 @@ object CarriedKind:
 
   /** A kind of record whose lines use no blob: its lines stamped with their revs, `clock` the change each carries. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def records[A: JsonValueCodec](owner: DataOwner, kind: Bundle.Kind, table: TableName, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => RecordsClock, set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
@@ -67,6 +69,7 @@ object CarriedKind:
     )
 
   /** A set its records own: its lines as they are, with no rev; `clock` the change a line carries, when it has one. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def owned[A: JsonValueCodec](owner: DataOwner, entry: BundleEntry, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => Option[OwnedClock], set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
@@ -93,6 +96,7 @@ object CarriedKind:
       clock: A => Option[CarriedOut.AsOf],
       set: (BundleEntities, List[A]) => BundleEntities
   ) extends CarriedKind:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
       val as = lines(scope)
       CarriedOut(CarriedOut.Payload(BundleFormat.ndjson(as.map(line))), as.flatMap(clock).maxByOption(_.value))

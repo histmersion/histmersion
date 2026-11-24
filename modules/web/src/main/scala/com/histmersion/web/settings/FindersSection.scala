@@ -5,6 +5,7 @@ import com.histmersion.api.Wording
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.plugins.PluginStatus
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › Where to look for sources: the open-access finders the acquisition asks, in order, for a paper's free
   * copy — each on or off — and the contact e-mail the scholarly indexes ask for.
@@ -12,6 +13,8 @@ import com.histmersion.api.plugins.PluginStatus
 object FindersSection:
 
   /** The finders among the plugins: those that register a source fetcher. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finders(ui: UiConfig): List[PluginStatus] =
     ui.plugins.plugins.filter(p => p.provides.exists(_.value.startsWith("source-fetcher:")) || FinderIds(p.id.value))
 
@@ -19,6 +22,8 @@ object FindersSection:
   val FinderIds: Set[String] =
     Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig): HtmlElement =
     div(
       cls := "settings-section",

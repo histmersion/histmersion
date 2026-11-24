@@ -5,8 +5,10 @@ import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionGapRow
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 enum GapOriginal(val label: GapOriginal.Label) derives CanEqual:
   /** A host-side copy (`cli.calibre.originals-dir`): the CLI's own classification, never the server's. */
   case Local extends GapOriginal(GapOriginal.Label("local"))
@@ -27,6 +29,7 @@ object GapOriginal:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def row(g: CalibreGap): CollectionGapRow =
     val original = g.storedOriginal match
       case Some(stored) if stored.value => Stored

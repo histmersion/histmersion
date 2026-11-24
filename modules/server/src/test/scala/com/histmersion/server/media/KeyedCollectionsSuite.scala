@@ -29,6 +29,7 @@ import com.histmersion.util.storage.Blob
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The two key-gated collections end to end against FAKE providers and an in-memory store: what is matched, what is
   * refused and why, that the key travels only as a header to the API's own host — never in a URL, never to an image
@@ -36,12 +37,14 @@ import com.histmersion.util.database.TestCreators.given
   * the host with a fixture key from a secret reference. The Smithsonian rows are real records of its open-data dump;
   * the Europeana answers are constructed in its documented shape (see the plugin's parser suite).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class KeyedCollectionsSuite extends munit.FunSuite:
 
   private val jpeg = Array[Byte](-1, -40, -1)
   private val key = "test-key-0123456789"
 
   final private class NoConverter extends ConverterClient:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -95,6 +98,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       Some(Latitude(39.0)),
       Some(Longitude(22.0))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val facts = List(egypt, syria, mycenae, greece).map(f => Place.Id.assume(f.id.value) -> f).toMap
   private val named =
     Map(
@@ -103,6 +107,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       ImportService.PlaceKey("mycenae") -> List(mycenae),
       ImportService.PlaceKey("greece") -> List(greece)
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def target(f: PlaceFacts) =
     Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
@@ -306,6 +311,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     Some(Latitude(59.0)),
     Some(Longitude(-3.0))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val orkneyStore =
     CollStore(Map(Place.Id.assume(orkney.id.value) -> orkney), Map(ImportService.PlaceKey("orkney") -> List(orkney)))
 

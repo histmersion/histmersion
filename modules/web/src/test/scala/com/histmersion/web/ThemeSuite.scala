@@ -2,7 +2,10 @@ package com.histmersion
 package web
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 class ThemeSuite extends munit.FunSuite:
 
   test("the button cycles system → light → dark → system"):

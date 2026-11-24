@@ -5,11 +5,13 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeoutException
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1650: a CLI step must never outlive its timeout, whatever the CLI does — not read its stdin, sleep, or leave a
   * grandchild holding its stdout — and a kill takes the whole process tree. Fake CLIs are shell scripts; nothing is
   * spent.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CliProcessSuite extends munit.FunSuite:
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
@@ -20,6 +22,7 @@ class CliProcessSuite extends munit.FunSuite:
     f.toFile.setExecutable(true)
     (f, dir)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cli(f: Path): List[ClaudeCode.Argument] = List(ClaudeCode.Argument(f.toString))
 
   private def alive(pid: Long): Boolean = ProcessHandle.of(pid).map(_.isAlive).orElse(false)

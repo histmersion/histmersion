@@ -28,12 +28,14 @@ import com.histmersion.domain.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
   * after [[com.histmersion.server.ServerWiring]], so it is attached to the agents once it exists), and so a test can
   * answer from fixtures instead of the network.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AgentUpstream:
   /** Upstream metadata of a DOI. */
   def meta(doi: Doi): Either[Problems, WorkRef]
@@ -68,6 +70,7 @@ trait AgentUpstream:
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def ingestLegal(doi: Doi, by: domain.Creator.New): Either[Problems, Ingest.Report] = Left(
     Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected"))
   )
@@ -88,6 +91,7 @@ trait AgentUpstream:
     * stored (a dry run stores nothing). Not connected by default: a fixture that does not answer it keeps the sweep's
     * live search.
     */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def sweepCandidates(
       goal: Goal.Slug,
       dryRun: AgentUpstream.SweepCandidatesDryRun
@@ -96,6 +100,7 @@ trait AgentUpstream:
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def candidates(
       goal: Goal.Slug,
       state: Candidates.State.Wire,
@@ -105,6 +110,7 @@ trait AgentUpstream:
   )
 
   /** Record a decision on candidates by id. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def markCandidates(
       ids: List[Source.Candidate.Id],
       state: Candidates.State.Wire
@@ -131,22 +137,32 @@ object AgentUpstream:
     * need it record that they were skipped.
     */
   object Offline extends AgentUpstream:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private val off = Left(Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected")))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def meta(doi: Doi) = off
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def refs(citekey: Citekey, apply: RefsApply)(using Creator.New) = off
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def assess(citekey: Citekey, apply: AssessApply)(using Creator.New) = off
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using Creator.New) = off
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def discover(query: Search.Query, limit: Limit) = off
     override def connected = false
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquisitionControllers): AgentUpstream = new AgentUpstream:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def meta(doi: Doi) = a.meta(AcquireApi.Identifier(doi.value)).left.map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(citekey: Citekey, apply: RefsApply)(using Creator.New) =
       a.refs(RefsRequest(RefsRequest.Id(citekey.value), apply = RefsRequest.Apply(apply.value))).left.map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def assess(citekey: Citekey, apply: AssessApply)(using Creator.New) =
       (if apply.value then a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply(true)))
        else a.assessReadOnly(AssessRequest.Id(citekey.value))).left.map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using Creator.New) =
       a.followups(
         FollowupsRequest(
@@ -157,12 +173,16 @@ object AgentUpstream:
         )
       ).left
         .map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def discover(query: Search.Query, limit: Limit) =
       a.discover(AcquireApi.Query(query.value), None, None, Some(AcquireApi.Limit(limit.value)), notInDb = false)
         .left
         .map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def ingestLegal(doi: Doi, by: domain.Creator.New) =
       a.ingestLegal(Ingest.Request(Ingest.Request.Id(doi.value)), by).left.map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     override def ingestLegalInto(doi: Doi, into: Option[Citekey], by: domain.Creator.New) =
       a.ingestLegal(
         Ingest
@@ -171,11 +191,14 @@ object AgentUpstream:
       ).left
         .map(problem)
     override def fetcherGeneration = a.fetcherGeneration
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def sweepCandidates(goal: Goal.Slug, dryRun: SweepCandidatesDryRun)(using Creator.New) =
       a.sweepCandidates(
         CandidateSweep.Request(CandidateSweep.Request.Goal(goal.value), CandidateSweep.Request.DryRun(dryRun.value))
       ).left
         .map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     override def candidates(goal: Goal.Slug, state: Candidates.State.Wire, limit: Limit) =
       a.candidates(
         Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
@@ -185,6 +208,7 @@ object AgentUpstream:
       ).map(_.candidates)
         .left
         .map(problem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
       a.markCandidates(CandidateMark(ids, Source.Candidate.State(state.value)))
         .map(m => RowCount(m.updated.value))

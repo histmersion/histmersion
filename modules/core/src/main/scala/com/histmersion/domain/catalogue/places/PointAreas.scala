@@ -10,6 +10,7 @@ import com.histmersion.api.given
 import com.histmersion.api.checks.Lint.{LintItem, LintRuleReport, Rule}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind (region,
   * polity, people — `places.sources.point-area-kinds`) that an import stored with only a point, before the importer
@@ -17,6 +18,8 @@ import com.histmersion.api.library.Citekey
   * source, kind and dating, then EVERY such place that holds a finding (and how many of those findings it would leave
   * with no place at all), then a sample of the rest. Pure: the rows come from `db.PointAreaRepo`.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object PointAreas:
 
   /** How a place's period reads: `dated` (a known start), `end-only` (an end, the start unknown —
@@ -47,6 +50,7 @@ object PointAreas:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def of(startUnknown: Boolean, lowerInf: Boolean, upperInf: Boolean): Dating =
       if startUnknown then EndOnly
       else if lowerInf && upperInf then Undated
@@ -78,6 +82,7 @@ object PointAreas:
       alone: Listed.Alone = Listed.Alone(0),
       pinned: Listed.Pinned = Listed.Pinned(0)
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def detail: Listed.Detail =
       val what = s"$label ($source $kind, ${dating.wire})"
       val held =
@@ -117,6 +122,8 @@ object PointAreas:
     * holding a finding or pinned by evidence (always — they are what a person must see before a removal), then `sample`
     * up to `maxItems` items in all.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(
       rule: Rule,
       groups: List[Group],
@@ -146,10 +153,14 @@ object PointAreas:
         groupItems ++ must.map(listedItem) ++ rest.map(listedItem)
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def listedItem(l: Listed): LintItem =
     LintItem(Citekey(l.id.value), LintItem.Detail(l.detail.value))
 
   /** One line for `lint --fix`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fixed(
       removed: FixedRemoved,
       remaining: FixedRemaining,

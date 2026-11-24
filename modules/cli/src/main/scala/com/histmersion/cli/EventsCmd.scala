@@ -37,7 +37,10 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion events` arguments")
 object EventsCmd:
 
   /** The filter flags are the shared ones: they select SOURCES, and an event is listed when its source is one of them;
@@ -47,6 +50,8 @@ object EventsCmd:
 
   /** The arguments of `events patch <id>`: the id and the patch they make (or why they make none). */
   /** The patch `events patch` flags spell, or why they spell none. Pure. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def patch(
       scale: Option[String],
       place: Option[String],
@@ -97,6 +102,8 @@ object EventsCmd:
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def follow(c: Client, j: JobInfo, following: Cli.Following)(using
       console: Console
   ): Either[Cli.Error, Unit] =
@@ -112,6 +119,7 @@ object EventsCmd:
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
     case Patch(id: String, patch: EventPatch)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Search(
         q: Option[String],
         kind: Option[String],
@@ -123,6 +131,7 @@ object EventsCmd:
         json: Cli.JsonOutput
     )
     case Show(id: String, json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Import(
         p: String,
         writes: Cli.Writes,
@@ -138,7 +147,9 @@ object EventsCmd:
     case Rederive(p: Option[String], writes: Cli.Writes, following: Cli.Following)
     case Corrections(st: Option[String], ev: Option[String], limit: Option[Int])
     case Catalogues()
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Links(id: String, re: Boolean, confirm: List[String], reject: List[String])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Candidates(all: Boolean, ev: Option[String], limit: Option[Int], following: Cli.Following)
     case Leads(kind: Option[String], tier: Option[String], area: Option[String], f: Filter)
 
@@ -146,6 +157,7 @@ object EventsCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Search(q, kind, hist, place, tier, ctx, f, json) =>

@@ -10,7 +10,10 @@ import com.histmersion.config.*
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion attestations` arguments")
 object AttestationsCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
@@ -32,6 +35,7 @@ object AttestationsCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Search(ck, tt, ti, limit, offset) =>

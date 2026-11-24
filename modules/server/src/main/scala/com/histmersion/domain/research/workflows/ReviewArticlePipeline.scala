@@ -52,6 +52,7 @@ import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW
@@ -92,6 +93,8 @@ import com.histmersion.domain.Creator
   * them on their steps, carries the ledger in memory, and hands the fixer's unwritten revision to the next pass IN
   * MEMORY, so a `fix` dry run exercises every pass a real one would.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class ReviewArticlePipeline(
     site: ResearchSite,
     ledgers: => ReviewLedgerService,
@@ -105,6 +108,7 @@ final class ReviewArticlePipeline(
   /** The running totals; `fixed` = the fixer has run at least once; `reasons` = the critique reasons this run stored (a
     * dry run's snapshots count them, since it never wrote them).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class Carry(
       ledger: Ledger,
       applied: Int,
@@ -117,6 +121,7 @@ final class ReviewArticlePipeline(
     * run's unwritten body (what the next snapshot reads instead of the stored one), and whether it was a targeted pass
     * (what a confirming full panel would confirm).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class State(
       merged: Merged,
       snap: Snapshot,
@@ -128,13 +133,18 @@ final class ReviewArticlePipeline(
   /** The last pass: its number, whether it was the confirming full panel, and the MAJORs that panel found new and
     * deferred to the next run (§6.9).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class End(state: State, round: Int, confirmed: Boolean, deferred: List[Finding.Id] = Nil)
 
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(p)).flatMap(runFor(ctx, _))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def runFor(ctx: RunCtx, slug: Slug)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val fix = ctx.run.params.fixes
     val rounds = ReviewArticle.rounds(
@@ -152,19 +162,25 @@ final class ReviewArticlePipeline(
 
   private def runId(ctx: RunCtx): Run.Id = ctx.runId
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def minRatio: AgentVerify.MinRatio = AgentVerify.MinRatio(lib.verify.quoteMinRatio.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def domainBody(b: ReviewArticle.Fix.Body): domain.research.Article.Body =
     domain.research.Article.Body(b.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apiBody(b: ReviewArticle.Fix.Body): Article.Body = Article.Body(b.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def checked[O](r: Either[List[Problem], (O, List[String])]): Either[List[Problem], Checked[O]] =
     r.map((o, ws) => Checked(o, ws.map(Checked.Warnings(_))))
 
   /** After pass `r`: fix and verify while a MAJOR is open and passes remain, then (maybe) confirm. `start`: the run's
     * first snapshot — what the confirming panel's regressions are measured from.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loop(
       ctx: RunCtx,
       slug: Slug,
@@ -224,6 +240,8 @@ final class ReviewArticlePipeline(
     * regression of the run is deferred to the next run. The skeptic's not-material rulings are stored as critique
     * reasons with the ledger.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def full(
       ctx: RunCtx,
       slug: Slug,
@@ -286,6 +304,7 @@ final class ReviewArticlePipeline(
   /** A verification pass after a fix: the lint again, then each reviewer that owns a finding the fixer claims to have
     * fixed re-checks those, and the edited passages, only.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def targeted(
       ctx: RunCtx,
       slug: Slug,
@@ -317,6 +336,7 @@ final class ReviewArticlePipeline(
     ledgers.get(slug).map(_.getOrElse(Ledger(slug)))
 
   /** Write the ledger through the run's gate (a dry run keeps it in memory only). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def persist(ctx: RunCtx, l: Ledger)(using WritePermit)(using Creator.New): Ledger =
     ctx.write(
       s"review ledger of [[${l.slug}]]: ${l.open.size} open (${l.openMajors.size} major), " +
@@ -329,6 +349,7 @@ final class ReviewArticlePipeline(
     * findings (a "fixed" missing critique whose pair is still open recorded not fixed, §6.9), then the pass's findings
     * — one per critique pair, deduplicated across reviewers by [[merge]] — matched to the ledger or added.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def absorbFull(
       ctx: RunCtx,
       l: Ledger,
@@ -358,6 +379,7 @@ final class ReviewArticlePipeline(
     dropped.foreach(ctx.warn)
     ReviewLedger.absorb(counted, fs, run, ReviewLedger.Closure.Round(r))._1
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def absorbTargeted(
       ctx: RunCtx,
       l: Ledger,
@@ -387,6 +409,7 @@ final class ReviewArticlePipeline(
     * reviewer reads the database — told the ledger does not replace that (a sonnet rules reviewer given a ledger
     * answered from it alone, with no tool call, #1840); the cold reader is not.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ledgerText(l: Ledger, lookups: Boolean, only: Option[Reviewer] = None): String =
     val t = ReviewLedger.promptText(
       l,
@@ -406,6 +429,7 @@ final class ReviewArticlePipeline(
   // ── the critique checklist (docs/research-review-convergence.md §6.8) ─────────────────────────────
 
   /** Who stored a reason, as the checklist shows it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def by(ctx: RunCtx, role: String): CritiqueReason.By =
     CritiqueReason.By(s"$role (agent run ${ctx.run.id.value.take(8)})")
 
@@ -425,6 +449,7 @@ final class ReviewArticlePipeline(
   /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the carry). A refusal
     * — the edge went meanwhile — is a warning, never a failed run.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def storeReasons(ctx: RunCtx, slug: Slug, rs: List[CritiqueReason])(using WritePermit, Creator.New): Unit =
     if rs.nonEmpty then
       val p = Article.Patch(critiqueReasons = rs)
@@ -437,6 +462,7 @@ final class ReviewArticlePipeline(
   /** The skeptic's part of the brief: the checklist (§6.8), the open pairs it rules on shown in full — in the
     * confirming panel only to verify (§6.9).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def checklistText(s: Snapshot, confirming: Boolean): (String, List[CritiquePair]) =
     val (prompt, shown) = Critiques.promptText(
       s.critiques,
@@ -459,6 +485,7 @@ final class ReviewArticlePipeline(
       )
 
   /** The rules reviewer's part: the stored critique reasons, so a wrong one can be challenged. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def reasonsText(s: Snapshot): String =
     val reasoned = s.critiques.filter(_.state == CritiqueState.Reasoned).take(cfg.review.critiqueReasoned.value)
     if reasoned.isEmpty then ""
@@ -472,6 +499,7 @@ final class ReviewArticlePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def snapshot(
       ctx: RunCtx,
       slug: Slug,
@@ -513,6 +541,7 @@ final class ReviewArticlePipeline(
     * run says so once. After a fix (`before`: the body the fixer revised) also the formatting errors `check_edits`
     * finds in the new body and not in the old one — what the edits broke.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int, before: Option[ReviewArticle.Fix.Body])(using
       WritePermit
   ): List[Finding] =
@@ -556,6 +585,7 @@ final class ReviewArticlePipeline(
   /** Does `[[t]]` resolve — a citekey (or its unique short form) or an article slug? Resolved once per body, in three
     * queries, as the page renderer does.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def isTarget(body: ReviewArticle.Fix.Body): Slug => Boolean =
     val resolve = site.articles.pageLinks(
       AgentVerify.wikilinks(AgentVerify.Text(body.value)).map(w => WikiLinks.Occurrence.Target(w.value))
@@ -567,6 +597,7 @@ final class ReviewArticlePipeline(
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def recordText(ck: Citekey): Option[AgentVerify.SourceBody] =
     site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(Api.Error(_)).toOption.map { s =>
       AgentVerify.SourceBody(
@@ -577,10 +608,13 @@ final class ReviewArticlePipeline(
 
   /** [[recordText]] read once per source for one answer's checks (a reviewer cites a few records many times over).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def records(): Citekey => Option[AgentVerify.SourceBody] =
     val seen = java.util.concurrent.ConcurrentHashMap[String, Option[AgentVerify.SourceBody]]()
     ck => seen.computeIfAbsent(ck.value, _ => recordText(ck))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def reviewInput(s: Snapshot): String =
     val cut = if s.truncated.value then s"\n(The body is cut at ${cfg.review.articleChars} characters.)" else ""
     s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body.value)}" +
@@ -604,6 +638,8 @@ final class ReviewArticlePipeline(
   /** The sections code generates from the article's filter (#958), shown after the body as the page shows them — data,
     * like the article, and not part of the body an edit can change.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def generatedText(s: Snapshot): String =
     s.generated.fold("")(g =>
       "\n\nAfter the body the page shows these sections, which CODE generates from the article's filter and its " +
@@ -614,6 +650,8 @@ final class ReviewArticlePipeline(
   /** The three reviewers, in parallel, each with the ledger and asked to check its own open findings. The step numbers
     * are taken first, in a fixed order.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def panel(
       ctx: RunCtx,
       s: Snapshot,
@@ -689,6 +727,7 @@ final class ReviewArticlePipeline(
     * claims (fewer when the article cites fewer sources in the corpus), each read by a tool call of the step. None when
     * nothing is required.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spotRule(s: Snapshot, calls: List[AgentVerify.ToolUse]): Option[SpotRule] =
     val inCorpus = s.cited.filter(_.title.isDefined).map(_.citekey).distinct
     val required = spotChecksRequired(SpotCheckMin(cfg.review.spotChecks.value), CitedInCorpusCount(inCorpus.size))
@@ -711,6 +750,7 @@ final class ReviewArticlePipeline(
     * fixed (none for the others), each given those findings, the edited passages, its part of the ledger and the
     * article. Its turns: `agents.review.recheck-turns` plus one per finding, never more than its agent's `max-turns`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def recheck(
       ctx: RunCtx,
       s: Snapshot,
@@ -750,6 +790,8 @@ final class ReviewArticlePipeline(
   /** What a re-check reads: the findings to verify (in full, with their evidence and the fixer's claim), the edited
     * passages, its own closed findings and the lessons, then the article.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def recheckInput(
       s: Snapshot,
       rv: Reviewer,
@@ -777,6 +819,7 @@ final class ReviewArticlePipeline(
       Prompt.data("article", s.body.value) + (if rv == Reviewer.ColdReader then "" else generatedText(s) + citedText(s))
 
   /** The skeptic's verified corrections, routed through the approval gate. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def propose(ctx: RunCtx, m: Merged)(using WritePermit)(using Creator.New): List[String] =
     m.proposals.map { p =>
       val o = approvals.propose(ctx, p)
@@ -794,6 +837,8 @@ final class ReviewArticlePipeline(
     * with the guards: the pairing repair, the pairs its edits leave unanswered or bring in, the closed findings they
     * would reopen. `reasons`: the critique reasons this run stored (a dry run's count as stored).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def fixer(
       ctx: RunCtx,
       s: Snapshot,
@@ -897,6 +942,7 @@ final class ReviewArticlePipeline(
     * not cite where code cannot tell which work the name means. Code appends a citekey itself where the name is
     * unambiguous, after the fix.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): String =
     val (hits, resolved) = site.articles.pairing(apiBody(s.body))
     val resolve = resolved
@@ -946,6 +992,7 @@ final class ReviewArticlePipeline(
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone else wrote the article
     * meanwhile) drops this fix — the next round reviews their text — and never overwrites it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger)(using
       WritePermit
   )(using Creator.New): Either[Problems, ReviewArticle.Patched] =
@@ -990,6 +1037,7 @@ final class ReviewArticlePipeline(
     * lost track of is rewritten rather than duplicated; the per-finding items earlier runs left for it, and any second
     * item, are closed as superseded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(ctx: RunCtx, slug: Slug, end: End)(using
       WritePermit
   )(using Creator.New): Either[Problems, String] =
@@ -1028,6 +1076,7 @@ final class ReviewArticlePipeline(
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def backlog(ctx: RunCtx, slug: Slug, l: Ledger)(using WritePermit): Ledger =
     val tasks = Queue.Kind.Tasks.label
     val open = site.queues.list(Queue.Kind.Tasks, QueueScope.Open)

@@ -2,7 +2,10 @@ package com.histmersion
 package util.console
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "writes to and reads from the terminal")
 trait Console:
   def readTerminalLine(prompt: Console.Prompt): Option[Console.Line] = None
   final lazy val out: Console.Output = new Console.Output:
@@ -37,6 +40,7 @@ object Console:
     def println(): Unit
     def flush(): Unit
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def system: Console = Streams(
     () => System.out,
     () => System.err,

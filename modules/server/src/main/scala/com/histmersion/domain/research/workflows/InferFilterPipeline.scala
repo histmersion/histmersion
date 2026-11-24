@@ -32,6 +32,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage
@@ -45,14 +46,19 @@ import com.histmersion.domain.Creator
   *
   * A DRY run records the approval (or the write) it would make on its step and makes neither.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, research: => ResearchAgentsConfig)
     extends PipelineDef:
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(p)).flatMap(runFor(ctx, _))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runFor(ctx: RunCtx, slug: Slug)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
     for
@@ -88,6 +94,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def load(slug: Slug): Either[Problems, Loaded] =
     site.articles.get(slug).left.map(_.problems).map { v =>
       val a = v.article
@@ -124,6 +132,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def input(l: Loaded): String =
     val lim = limits(research.inferFilter)
     val cited = if l.citedLines.isEmpty then "none"
@@ -140,6 +150,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       f"${lim.minCitedShare.value * 100}%.0f%% of the sources the article cites."
 
   /** An answer's filter, measured against the corpus and the article's citations. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def check(
       slug: Slug,
       l: Loaded,
@@ -170,6 +181,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   /** The proposal, through the write gate: an open approval (manual), or the filter recorded at once with an approval
     * already approved (auto). None passed: nothing is recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(ctx: RunCtx, slug: Slug, inf: Inferred)(using
       WritePermit
   )(using Creator.New): Either[Problems, Recorded] =
@@ -241,6 +253,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               )
             )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[Problems, String] =
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).map(_.value)
 
@@ -253,6 +266,7 @@ object InferFilterPipeline:
   val ExcerptChars = 4000
 
   /** The checks a proposed filter is held to (`agents.infer-filter`), each within its range. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limits(c: AgentInferFilterConfig): FilterInference.Limits = FilterInference.Limits(
     FilterInference.Limits.MinHits(math.max(1, c.minHits.value)),
     FilterInference.Limits.MaxHits(math.max(c.minHits.value, c.maxHits.value)),
@@ -260,6 +274,7 @@ object InferFilterPipeline:
   )
 
   /** The article as the step sees it (checkpointed). `tags0` = the corpus's tags. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Loaded(
       slug: Slug,
       title: Title,
@@ -289,6 +304,7 @@ object InferFilterPipeline:
   /** What the record step did: the approval it opened (or recorded approved), whether the filter is on the article now,
     * and the line for the log.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], applied: Boolean, line: Recorded.Line)
       derives JsonCodec
 
@@ -299,6 +315,8 @@ object InferFilterPipeline:
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal)(using
       Creator.New
   ): Either[String, String] =

@@ -62,6 +62,7 @@ import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The second slice of #1446 through the server, against the test database (HISTMERSION_TEST_DB_URL; skipped otherwise)
   * and fakes only — no network, no sidecar: a paper's illustration chosen from its figures with a thumbnail from the
@@ -69,10 +70,12 @@ import com.histmersion.util.database.TestCreators.given
   * by ISBN, politely, 404 as "none"; a place's card through an equivalent; the import as a JOB, batch by batch,
   * followed in `jobs`. Fixtures: `zqms`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaSourcesSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base
@@ -118,6 +121,7 @@ class MediaSourcesSuite extends DbSuite:
   /** A converter whose only work is thumbnails: a fixed small JPEG, and every call recorded. */
   final private class ThumbConverter extends ConverterClient:
     val calls = scala.collection.mutable.ListBuffer.empty[(ConverterClient.Filename, Pixels)]
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -128,6 +132,7 @@ class MediaSourcesSuite extends DbSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def thumbnail(
         bytes: ConverterClient.DocumentBytes,
         filename: ConverterClient.Filename,
@@ -152,6 +157,7 @@ class MediaSourcesSuite extends DbSuite:
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqms%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqms%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()

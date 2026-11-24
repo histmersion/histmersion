@@ -16,6 +16,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A viewer's options over the vector styles ([[BaseMaps]]): names on or off, their language, the contours (Physical),
   * the sea's depth in each style (`depthPhysical`, `depthReadable`). `None`: the default (names on, English — or
@@ -31,11 +32,13 @@ final case class MapPrefs(
       CanEqual:
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaDepth(style: VectorStyle): Boolean = style match
     case VectorStyle.Physical => depthPhysical.fold(MapPrefs.depthByDefault(style))(_.value)
     case VectorStyle.Readable => depthReadable.fold(MapPrefs.depthByDefault(style))(_.value)
 
   /** The viewer's choice of the depth in `style`; the style's default is kept as no choice. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def withSeaDepth(style: VectorStyle, on: MapPrefs.SeaDepth): MapPrefs =
     val v = Option.when(on.value != MapPrefs.depthByDefault(style))(on.value)
     style match
@@ -65,7 +68,9 @@ object MapPrefs:
 
   /** Kept as one JSON value; anything unreadable is no options at all. */
   given FieldCodec[MapPrefs]:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def encode(a: MapPrefs) =
       if a == MapPrefs() then Nil else List(FieldCodec.Token(writeToString(a)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def decode(vs: List[FieldCodec.Token]) =
       Some(vs.headOption.flatMap(v => RawJson.decode[MapPrefs](v.value).toOption).getOrElse(MapPrefs()))

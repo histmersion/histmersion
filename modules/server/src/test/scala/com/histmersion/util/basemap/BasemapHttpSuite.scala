@@ -30,11 +30,14 @@ import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
   * stored (gzip-encoded vector, image terrain), 204 outside the extract, 404 for an unknown layer, the fetch's
   * refusals, and the removal (behind the API key, as every write). Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class BasemapHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -51,6 +54,7 @@ class BasemapHttpSuite extends DbSuite:
       http.send(key.fold(b)(k => b.header("Authorization", s"Bearer $k")).build(), HttpResponse.BodyHandlers.ofString())
     (r.statusCode, r.body)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base

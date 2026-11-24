@@ -2,9 +2,12 @@ package com.histmersion
 package api.automation
 import com.histmersion.api.{OffsetPage, YearFmt}
 import com.histmersion.api.Markdown.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 object GoalsMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def goalLine(g: Goal): String =
     val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, ("")) match
       case "" => ""
@@ -12,9 +15,13 @@ object GoalsMarkdown:
     val parent = g.parentSlug.map(p => s" ⊂ $p").getOrElse("")
     (s"- **${g.title}** `${g.slug}` _(${g.status})_$period$parent")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalList(result: Goal.List): String =
     OffsetPage.markdown(result.page, ("goal(s)"), ("_No matching goals._"), result.goals)(goalLine).value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goal(g: Goal): String =
     val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"
     val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, ("")) match

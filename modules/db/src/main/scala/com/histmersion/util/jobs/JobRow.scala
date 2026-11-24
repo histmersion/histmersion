@@ -11,6 +11,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
 final private[jobs] case class JobRow(
@@ -34,6 +35,7 @@ object JobRow:
   object Kind extends Newtype[String, Pure]
   type Status = Status.T
   object Status extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Citekey = domain.library.Citekey
   val Citekey: domain.library.Citekey.type = domain.library.Citekey
   type Progress = Progress.T

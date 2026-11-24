@@ -4,10 +4,13 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
   * installation.
   */
+@atBoundary(BoundaryKind.Process, "runs a shell command and returns its output")
 trait Shell:
   def run(cmd: List[String]): Either[Problem, String]
   def isRunning(processMatch: Shell.ProcessMatch): Boolean
@@ -20,6 +23,7 @@ object Shell:
 
   object System extends Shell:
 
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def run(cmd: List[String]): Either[Problem, String] =
       scala.util
         .Try {
@@ -39,5 +43,7 @@ object Shell:
           identity
         )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def isRunning(processMatch: ProcessMatch): Boolean =
       run(List("pgrep", "-f", processMatch.value)).exists(_.trim.nonEmpty)

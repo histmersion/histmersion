@@ -10,7 +10,9 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class GeoHit(
     citekey: Citekey,
     title: GeoHit.Title,
@@ -35,4 +37,5 @@ object GeoHit:
   type Significance = Significance.T
   object Significance extends Newtype[String, Pure]
   type SourceKind = SourceKind.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SourceKind extends Newtype[String, Pure]

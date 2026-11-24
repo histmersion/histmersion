@@ -10,6 +10,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Named periods for agents — the same two modes as `places`: no `id` → search, `id` → show. */
 object PeriodsTools:
@@ -35,6 +36,8 @@ object PeriodsTools:
     type To = To.T
     object To extends Newtype[Long, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PeriodsInput] = KindlingsSchema
       .derived[PeriodsInput]
       .schema
@@ -44,6 +47,8 @@ object PeriodsTools:
       .modify(_.from)(_.description("Signed year (BCE negative): periods overlapping from..to"))
       .modify(_.to)(_.description("Signed year (BCE negative): periods overlapping from..to"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(periods: PeriodsControllers) =
     List(
       tool("periods")

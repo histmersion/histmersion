@@ -21,6 +21,7 @@ import com.histmersion.api.catalogue.{Period, Place, Year}
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 import com.histmersion.util.ocr.Pixels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The answers of every first-party media collection's provider, the settings that switch them all on at no pause, the
   * places and events a map holds for them, and what an import stored — the fixtures the media traffic and the media
@@ -65,6 +66,7 @@ object MediaWire:
       "property":"P18","datavalue":{"value":"Kadesh relief.jpg","type":"string"}},"rank":"normal"}]}},
       "Q5001":{"id":"Q5001","claims":{}}}}"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def metObject(url: String): Either[String, HttpAnswer] =
     val id = url.reverse.takeWhile(_ != '/').reverse
     val obj = fx("met-object.json").replace("252448", id)
@@ -107,6 +109,8 @@ object MediaWire:
     */
   final class Wire(answer: String => Either[String, HttpAnswer] = route) extends HttpTransport:
     private val out = StringBuilder()
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -125,6 +129,7 @@ object MediaWire:
 
   /** Thumbnails made here: one per call, named after the file. */
   final class Thumbs extends ConverterClient:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -134,6 +139,7 @@ object MediaWire:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def thumbnail(
         bytes: ConverterClient.DocumentBytes,
         filename: ConverterClient.Filename,
@@ -171,6 +177,8 @@ object MediaWire:
   def load(more: String): Either[Problems, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def place(
       id: Place.Id,
       label: Place.Label,
@@ -190,9 +198,11 @@ object MediaWire:
       List(Place.Name(Place.Name.Value(label.value)))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def span(from: Long, to: Long) = Some(Period(Year(from), Year(to)))
 
   /** The places on the map (each holds a finding), their Wikidata and Pleiades links, and two events. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seed(ds: DataSource): Unit =
     val _ = PlaceFixtures.upsertPlaces(
       ds,

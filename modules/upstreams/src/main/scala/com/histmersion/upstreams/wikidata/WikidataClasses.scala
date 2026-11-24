@@ -2,6 +2,7 @@ package com.histmersion
 package upstreams.wikidata
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object WikidataClasses:
   type ClassLabel = ClassLabel.T
   object ClassLabel extends Newtype[String, Pure]
@@ -10,6 +11,8 @@ object WikidataClasses:
 
   /** Pure: `(qid, kind)` per well-formed entry, in order, each class once; the kind as written. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: WikidataText): List[(WikidataItem.Id, ClassLabel)] =
     (Option(s).toList
       .flatMap((_).value.split(","))

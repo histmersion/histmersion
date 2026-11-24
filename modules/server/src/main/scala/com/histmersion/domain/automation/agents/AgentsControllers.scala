@@ -72,6 +72,7 @@ import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -80,6 +81,7 @@ import com.histmersion.domain.Creator
   * `clientFor` is the seam a test uses to put sttp-ai's scripted model in place of a provider; `planSeams` how the plan
   * pools are read on purpose ([[PlanPools.Seams]]).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class AgentsControllers(
     site: EngineSite,
     clientFor: LlmClient.Factory,
@@ -241,6 +243,7 @@ final class AgentsControllers(
   /** One agent server per database: the engine and the managers start only in the server that holds it (ttl 3 × the
     * managers' tick).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val lease: AgentLease =
     AgentLease(ds, AgentLease.TtlSeconds(3 * math.max(5, cfg.managers.tickSeconds.value)), workers = workers)
 
@@ -250,6 +253,7 @@ final class AgentsControllers(
     * paused; idempotent — agents on or off). Returns how many interrupted runs were paused (0 when the lease is held
     * elsewhere).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start()(using Creator.New): Int = maintenance.writing:
     val _ = managers.migrateSchedules(java.time.Instant.now(clock))
     if !cfg.enabled.value then 0
@@ -289,6 +293,8 @@ final class AgentsControllers(
   /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research workspace installs is
     * one of the trees.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def generate(req: GenerateRequest): Either[Problems, GenerateResult] =
     for
       rts <- req.runtimes
@@ -306,6 +312,8 @@ final class AgentsControllers(
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def covers(p: PlanQuota.PoolId): List[PlanQuota.PoolStatus.Covers] = p match
     case PlanQuota.PoolId.ClaudePlan  => List(PlanQuota.PoolStatus.Covers(s"${ProviderKind.ClaudeCode.wire}:*"))
     case PlanQuota.PoolId.ChatgptPlan =>
@@ -319,6 +327,8 @@ final class AgentsControllers(
     * recorded — the ChatGPT pool as the app-server's last read (a run, the scheduler's pass or schedule, or `agent
     * quota refresh` takes one), the Claude pool from what runs, probes and mods reported.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def quota: PlanQuota.QuotaInfo =
     val now = PlanQuotaRepo.EpochMillis(clock.millis())
     PlanQuota.QuotaInfo(
@@ -353,6 +363,8 @@ final class AgentsControllers(
     maintenance.writing:
       setPoolHeld(pool, in)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def setPoolHeld(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet)(using
       WritePermit
   ): Either[Problems, PlanQuota.PoolStatus] =
@@ -374,6 +386,9 @@ final class AgentsControllers(
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Problems, PlanQuota.QuotaInfo] =
     maintenance.writing:
       roleOf(role).map { r =>
@@ -391,6 +406,8 @@ final class AgentsControllers(
     maintenance.writing:
       refreshQuotaHeld(in)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def refreshQuotaHeld(
       in: PlanQuota.QuotaRefresh
   )(using WritePermit): Either[Problems, PlanQuota.QuotaRefreshed] =
@@ -446,6 +463,7 @@ final class AgentsControllers(
     * interrupted runs paused and queued ones enqueued (the engine and the managers keep their threads; their next unit
     * of work runs on the new database).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def adoptDatabase()(using Creator.New): Unit = maintenance.writing:
     if cfg.enabled.value then
       val _ = managers.migrateSchedules(java.time.Instant.now(clock))
@@ -455,6 +473,7 @@ final class AgentsControllers(
       scribe.info(s"agents: running on the new database ($paused interrupted run(s) paused there)")
 
   /** Off unless `agents.enabled`: every agent operation but the read-only model listing refuses. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enabled: Either[Problems, Unit] =
     if cfg.enabled.value then Right(())
     else
@@ -471,6 +490,7 @@ final class AgentsControllers(
   /** The price table, parsed once per call (config is immutable; parsing is microseconds): every entry that does not
     * read is a problem of its own.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def prices: Either[Problems, Map[ModelRef.Model, Price]] =
     Agents.Prices
       .parse(Agents.Prices.Wire(cfg.prices.value))
@@ -495,6 +515,7 @@ final class AgentsControllers(
 
   def knownProviders: Set[Plugin.Id] = BuiltinAi.known(site.aiProviders())
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def knownPluginNames: Set[ProviderKind.Plugin.Name] =
     knownProviders.map(id => ProviderKind.Plugin.Name(id.value))
 
@@ -523,8 +544,11 @@ final class AgentsControllers(
   /** `GET /api/agents/models` — each role's chain, the model it would use now, and every allowance's use per window.
     * Sends nothing to a provider: clients are constructed, spends summed.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def models: ModelsInfo = models(PlanQuotaRepo.EpochMillis(clock.millis()))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def models(now: PlanQuotaRepo.EpochMillis): ModelsInfo =
     val chains = picker.roleChains(now)
     val roles = chains.map { c =>
@@ -591,6 +615,8 @@ final class AgentsControllers(
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def chainOf(role: Role): Either[Problems, ModelChains.RoleChain] =
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
@@ -604,6 +630,7 @@ final class AgentsControllers(
   def setChain(role: Role.Wire, in: ModelChains.ChainSet): Either[Problems, ModelChains.RoleChain] =
     maintenance.writing(setChainHeld(role, in))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def setChainHeld(role: Role.Wire, in: ModelChains.ChainSet)(using
       WritePermit
   ): Either[Problems, ModelChains.RoleChain] =
@@ -623,6 +650,7 @@ final class AgentsControllers(
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
   def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] = maintenance.writing(resetChainHeld(role))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def resetChainHeld(role: Role.Wire)(using WritePermit): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
@@ -634,6 +662,8 @@ final class AgentsControllers(
   def setAllowance(in: ModelChains.AllowanceSet): Either[Problems, ModelChains.AllowanceStatus] =
     maintenance.writing(setAllowanceHeld(in))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def setAllowanceHeld(in: ModelChains.AllowanceSet)(using
       WritePermit
   ): Either[Problems, ModelChains.AllowanceStatus] =
@@ -663,6 +693,7 @@ final class AgentsControllers(
   def removeAllowance(target: ModelChains.AllowanceSet.Target): Either[Problems, Goal.Plans.Removed] =
     maintenance.writing(removeAllowanceHeld(target))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def removeAllowanceHeld(target: ModelChains.AllowanceSet.Target)(using
       WritePermit
   ): Either[Problems, Goal.Plans.Removed] =
@@ -677,6 +708,8 @@ final class AgentsControllers(
       )
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def doctor(offline: AgentsControllers.Offline): Agents.DoctorReport =
     val r =
       AgentDoctor(
@@ -743,6 +776,8 @@ final class AgentsControllers(
   )(using Creator.New): Either[Api.Error, RunInfo] =
     maintenance.guard(WriteGate.OperationName("start_run"))(startRunHeld(req, origin, parent, tweak))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def startRunHeld(
       req: RunRequest,
       origin: Origin,
@@ -788,6 +823,8 @@ final class AgentsControllers(
     * without creating it. `creating`: the goal the caller creates in the same transaction as the run (a new research
     * area); a goal pipeline's target is that goal, which no other connection sees yet.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def prepare(
       req: RunRequest,
       parent: Option[RunInfo],
@@ -877,6 +914,8 @@ final class AgentsControllers(
     * ref (or `a > b` chain) that parses. Whether that model can run is checked with the rest of the roles (the
     * readiness `models set` shows).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, ModelName]] =
     val roles = host.runRoles(p)
     asked.foldLeft[Either[Api.Error, Map[Role, ModelName]]](Right(Map.empty)) { (acc, o) =>
@@ -926,6 +965,8 @@ final class AgentsControllers(
     }
 
   /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def targetOf(p: Pipeline, raw: AgentsControllers.Target): Either[Api.Error, AgentsControllers.Target] =
     host
       .runTarget(p, AutomationHost.RunTargetRaw(raw.value))
@@ -944,6 +985,8 @@ final class AgentsControllers(
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def goalOf(
       p: Pipeline,
       target: AgentsControllers.Target,
@@ -965,10 +1008,13 @@ final class AgentsControllers(
         case None    => Right(None)
         case Some(g) => slug(g).flatMap(s => host.goal(s).map(_ => Some(s)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def goalBudget(goal: DomainGoal.Slug): Option[BudgetUsd] =
     goals.planAndBudget(goal).flatMap(_._2).map(b => BudgetUsd(b.toDouble))
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def positive(v: PositiveAmount, what: String): Either[Problems, PositiveAmount] =
     if v.value >= 0.000001 then Right(v)
     else
@@ -981,11 +1027,16 @@ final class AgentsControllers(
         )
       )
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def notFound(message: Problem): Api.Error =
     Api.Error(message, Some(Api.Error.Code(Write.CodeNotFound)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def searchPage: PageSize = PageSize.applyUnsafe(math.max(1, site.config.limits.search.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def runs(
       status: Option[RunQuery.Status],
       limit: Option[PageSize],
@@ -1005,6 +1056,7 @@ final class AgentsControllers(
   /** `GET /api/agents/runs` — one page, newest first ([[Paging]]), with the per-state counts of the runs (of `goal`,
     * when given).
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def runsPage(
       status: Option[RunQuery.Status],
       limit: Option[PageSize],
@@ -1025,6 +1077,7 @@ final class AgentsControllers(
   /** `GET /api/agents/runs` filtered ([[ListFilters.RunFilter]]): one page, newest first, with the per-state counts and
     * the facet counts under the same filter.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def runsPage(
       f: ListFilters.RunFilter,
       limit: Option[PageSize],
@@ -1060,9 +1113,12 @@ final class AgentsControllers(
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def cursor(c: Option[Paging.Cursor]): Option[Paging.Cursor] =
     c.map(x => Paging.Cursor(x.value.trim)).filter(_.value.nonEmpty)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def run(id: DomainRun.Id): Either[Api.Error, RunDetail] =
     runs
       .get(id)
@@ -1079,6 +1135,9 @@ final class AgentsControllers(
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
     * plan pools.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def compare(ids: List[DomainRun.Id]): Either[Api.Error, RunCompare.Comparison] =
     for
       wanted <- AgentsControllers.runIds(ids.map(_.value))
@@ -1099,6 +1158,7 @@ final class AgentsControllers(
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def billingOf(ref: CompareRuns.Step.Model): Option[CompareRuns.StepSide.Billing] =
     ModelRef
       .parse(ModelRef.Wire(ref.value), knownPluginNames)
@@ -1114,6 +1174,8 @@ final class AgentsControllers(
   )(using Creator.New): Either[Api.Error, RunInfo] =
     maintenance.guard(WriteGate.OperationName("control_run"))(controlHeld(id, action, budgetUsd, budgetTokens))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def controlHeld(
       id: DomainRun.Id,
       action: Action,
@@ -1140,6 +1202,7 @@ final class AgentsControllers(
   /** `GET /api/agents/approvals` — readable whether or not agents are on (a person can still decide what an earlier run
     * proposed).
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def approvalsList(
       state: Option[ApprovalQuery.State],
       limit: Option[PageSize]
@@ -1151,6 +1214,7 @@ final class AgentsControllers(
     )
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approvalsPage(
       state: Option[ApprovalQuery.State],
       limit: Option[PageSize],
@@ -1167,6 +1231,7 @@ final class AgentsControllers(
   /** `GET /api/agents/approvals` filtered ([[ListFilters.ApprovalFilter]]): one page, with the per-state and facet
     * counts under the same filter.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def approvalsPage(
       f: ListFilters.ApprovalFilter,
       limit: Option[PageSize],
@@ -1190,6 +1255,8 @@ final class AgentsControllers(
   )(using Creator.New): Either[Api.Error, ApprovalInfo] =
     maintenance.guard(WriteGate.OperationName("decide_approval"))(decideHeld(id, decision, req))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def decideHeld(
       id: DomainApproval.Id,
       decision: DomainApproval.Outcome,
@@ -1209,6 +1276,8 @@ final class AgentsControllers(
   // ── goals: view, links, schedules (P3) ─────────────────────────────────────────────────────────
 
   /** `GET /api/goals/{slug}/view` — readable whether or not agents are on. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def goalView(slug: DomainGoal.Slug): Either[Api.Error, GoalView] =
     host.goal(slug).map { g =>
       val (plan, budget) = goals.planAndBudget(slug).getOrElse((None, None))
@@ -1225,6 +1294,8 @@ final class AgentsControllers(
   def addGoalLink(slug: DomainGoal.Slug, in: LinkAdd)(using Creator.New): Either[Api.Error, GoalLink] =
     maintenance.guard(WriteGate.OperationName("add_goal_link"))(addGoalLinkHeld(slug, in))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def addGoalLinkHeld(slug: DomainGoal.Slug, in: LinkAdd)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, GoalLink] =
@@ -1269,6 +1340,8 @@ final class AgentsControllers(
   def removeGoalLink(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref): Either[Api.Error, Removed] =
     maintenance.guard(WriteGate.OperationName("remove_goal_link"))(removeGoalLinkHeld(slug, kind, ref))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def removeGoalLinkHeld(slug: DomainGoal.Slug, kind: LinkKind.Wire, ref: BGoalLinkRow.Ref)(using
       WritePermit
   ): Either[Api.Error, Removed] =
@@ -1305,6 +1378,7 @@ final class AgentsControllers(
     * than `agents.scheduler.min-interval-minutes`). Works with agents off: nothing fires until they are on and the
     * watcher is resumed.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def setSchedule(
       slug: DomainGoal.Slug,
       kind: ScheduleKind.Wire,
@@ -1336,6 +1410,7 @@ final class AgentsControllers(
   def probe(req: ProbeRequest): Either[Api.Error, ProbeResult] =
     maintenance.guard(WriteGate.OperationName("probe"))(probeHeld(req))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def probeHeld(req: ProbeRequest)(using WritePermit): Either[Api.Error, ProbeResult] =
     for
       _ <- enabled.left.map(Api.Error(_))
@@ -1366,6 +1441,8 @@ final class AgentsControllers(
     * pipeline step is, whatever the runtime. Usage, cost and time are summed over the attempts; the last answer is the
     * one shown.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def probeCall(
       client: LlmClient,
       billing: Billing,
@@ -1451,6 +1528,7 @@ object AgentsControllers:
   object Target extends Newtype[String, Pure]
 
   /** A run id a request names: one that is not a run id names no run. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def runId(raw: String): Either[Api.Error, DomainRun.Id] =
     DomainRun.Id
       .either(raw)
@@ -1473,6 +1551,7 @@ object AgentsControllers:
       )
 
   /** A goal slug a request names: one that is not a slug names no goal. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def goalSlug(raw: String): Either[Api.Error, DomainGoal.Slug] =
     DomainGoal.Slug
       .either(raw)
@@ -1494,6 +1573,7 @@ object AgentsControllers:
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken
     * provider.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def call[A](model: ModelRef)(a: => A): Either[Either[ModelLimitReached, Api.Error], A] =
     try Right(a)
     catch
@@ -1506,6 +1586,7 @@ object AgentsControllers:
   /** A provider call that threw (unreachable host, an API error, a malformed response) → a value, logged with the model
     * but never with the request (which can carry an API key header).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def attempt[A](model: ModelRef)(a: => A): Either[Problems, A] =
     try Right(a)
     catch

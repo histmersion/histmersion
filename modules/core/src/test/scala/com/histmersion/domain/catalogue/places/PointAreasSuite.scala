@@ -13,12 +13,15 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.catalogue.places.PointAreas.{Dating, Group, Listed}
 import com.histmersion.api.checks.Lint
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `lint --rule place-imported-point-area`'s pure half: how a period reads, the listing (group counts and every finding
   * holder always, then a sample) and the fix line.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PointAreasSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
 
   test("Dating: an unknown start is end-only, an open range undated, anything else dated"):

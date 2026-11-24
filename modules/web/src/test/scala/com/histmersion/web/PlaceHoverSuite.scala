@@ -18,8 +18,11 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.catalogue.{Place, Year}
 import com.histmersion.api.ByteCount
 import com.histmersion.api.plugins.PluginDescription
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #716/#717/#718 — the map's place card, click-to-filter and the About window, in their pure parts. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class PlaceHoverSuite extends munit.FunSuite:
 
   override def beforeEach(context: BeforeEach): Unit =
@@ -32,6 +35,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     var t: Double = 0
     private val queue = mutable.ListBuffer.empty[(Double, HoverIntent.TimerId, () => Unit)]
     private var ids = 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def later(ms: HoverIntent.DelayMs, g: () => Unit): HoverIntent.TimerId =
       ids += 1
       val id = HoverIntent.TimerId(ids)

@@ -8,7 +8,9 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.config.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ConfigSuite extends munit.FunSuite:
   test("reference.conf loads with defaults"):
     val cfg = AppConfig.load()
@@ -531,6 +533,7 @@ class ConfigSuite extends munit.FunSuite:
     val wrong = confFile("histmersion.basemap.bathymetry.source = srtm")
     assert(AppConfig.loadWithUserFile(env(), Some(wrong)).isLeft, "an unknown sea floor is refused")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def minutes(s: ScheduledRefresh): Option[Int] = s match
     case ScheduledRefresh.Every(i) => Some(i.value)
     case ScheduledRefresh.Off      => None

@@ -4,11 +4,13 @@ package pluginhost
 import com.histmersion.config.{AcquireConfig, LandingConfig}
 import com.histmersion.domain.library.acquisition.{CoreEndpoint, Endpoint, LandingSettings, SearchDefaults}
 import com.histmersion.upstreams.settings.UpstreamSettings
+import com.histmersion.lint.{LintRule, tolerated}
 
 extension (c: AcquireConfig)
   /** The upstreams' settings as `histmersion.acquire` holds them: what the host's own upstream clients are built with,
     * and what the first-party fetchers decode from the same keys.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def upstreamSettings: UpstreamSettings =
     UpstreamSettings(
       UpstreamSettings.ContactEmail(c.contactEmail.value),
@@ -29,6 +31,7 @@ extension (c: AcquireConfig)
     )
 
 extension (l: LandingConfig)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def upstreamSettings: LandingSettings =
     LandingSettings(
       LandingSettings.Enabled(l.enabled.value),

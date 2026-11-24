@@ -9,6 +9,7 @@ import java.nio.file.Path
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.instance.About
 import com.histmersion.api.maintenance.Storage
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Storage part of `histmersion about` that only the CLI can see: the locations on the machine the CLI runs on that
   * the server knows nothing of — the host directory of Calibre originals (`cli.calibre.originals-dir`) and the install
@@ -17,6 +18,8 @@ import com.histmersion.api.maintenance.Storage
   */
 object LocalStorage:
   /** The locations, from the CLI's config. Pure but for finding the install (it must hold a kit). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def locations(
       cfg: AppConfig,
       env: UserPaths.Lookup,
@@ -41,6 +44,9 @@ object LocalStorage:
         .toList
 
   /** Measure them within the `storage.*` caps and add them to `about`'s report. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def add(
       a: About,
       serverUrl: Client.ServerUrl,

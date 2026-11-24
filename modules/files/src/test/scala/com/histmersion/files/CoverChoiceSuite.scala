@@ -4,8 +4,10 @@ package files
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.library.Isbn
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where a book's cover comes from ([[CoverChoice]], [[OpenLibrary]]). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CoverChoiceSuite extends munit.FunSuite:
 
   test("a book's cover: Calibre's own file first, then Open Library by ISBN, then by OCLC"):

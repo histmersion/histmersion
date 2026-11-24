@@ -16,12 +16,14 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one size cap at the `/mcp` edge: every tool's arguments and answer, over the protocol, and the edge as the only
   * place the MCP server is built.
   */
 class McpSizeCapSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def limits(result: Int, arguments: Int) =
     McpConfig(McpConfig.ResultMaxChars(result), McpConfig.ArgumentsMaxChars(arguments))
 

@@ -8,6 +8,8 @@ import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets.{US_ASCII, UTF_8}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The container of a `.hmx` bundle: a POSIX ustar archive, gzip-compressed — written and read as a STREAM, so 1.6 GB
   * of assets never sit in memory, and DETERMINISTIC, so two exports of an unchanged database are byte-identical: every
@@ -20,6 +22,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   *
   * zstd (which the design named) would need a JNI library; gzip is in the JDK.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Json, "reads and writes the tar stream of a `.hmx` bundle")
 object BundleTar:
 
   val Block = 512
@@ -29,6 +33,8 @@ object BundleTar:
   val MaxSize: ByteCount = ByteCount.applyUnsafe((1L << 33) - 1)
 
   /** One ustar header for a regular file. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def header(name: Entry.Name, size: ByteCount): Either[Problem, Array[Byte]] =
     val nameBytes = name.value.getBytes(UTF_8)
     if nameBytes.length > MaxName then
@@ -66,6 +72,7 @@ object BundleTar:
   object Entry:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Size = ByteCount
     val Size: ByteCount.type = ByteCount
 
@@ -99,6 +106,8 @@ object BundleTar:
   private def damaged(entry: String, damage: Problem.Io.Damage): Problem =
     Problem.Io.Corrupt(Problem.Io.Format.Tar, Problem.Where(s"$entry"), damage)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def padding(size: ByteCount): Int = ((Block - (size.value % Block)) % Block).toInt
 
   // ── writing ────────────────────────────────────────────────────────────────────────────────
@@ -107,6 +116,7 @@ object BundleTar:
   final class Writer(out: OutputStream):
     private val gz = GZIPOutputStream(out, 1 << 16)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def entry(name: Entry.Name, size: ByteCount)(body: OutputStream => Unit): Either[Problem, Unit] =
       header(name, size).flatMap { h =>
         gz.write(h)
@@ -147,6 +157,7 @@ object BundleTar:
     private var remaining: Long = 0L
     private var pad: Int = 0
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def next(): Either[Problem, Option[Entry]] =
       scala.util
         .Try {

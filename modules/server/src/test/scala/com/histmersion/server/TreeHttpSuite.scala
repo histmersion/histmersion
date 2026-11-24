@@ -12,6 +12,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `/api/aggregate` with the §1.6 axes over real HTTP: the nested tree, its parameters and its errors. Gated on
   * HISTMERSION_TEST_DB_URL like every other server suite.
@@ -22,6 +23,7 @@ import com.histmersion.util.database.TestCreators.given
   * fallback that `put_source` now genuinely maintains (it re-materialises THIS citekey on every write); the containment
   * path is covered by `TreeRepoSuite`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TreeHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -54,6 +56,7 @@ class TreeHttpSuite extends munit.FunSuite:
     )
 
   /** Two nested regions; the inner one carries the name the fixture's finding is labelled with. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val places = Lpf.render(
     List(
       Place.Input(

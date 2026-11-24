@@ -21,6 +21,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.web.settings.SettingsPages
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pages of Library, Research and Settings, and of single items (a run, a goal, a place…), shown over Explore —
   * which stays as it is underneath, hidden, so coming back finds the map where it was. Each section shows the view that
@@ -38,6 +39,7 @@ object Pages:
 
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def element(ui: UiConfig): HtmlElement =
     // a Research page's query (`?goal=`) is part of what it shows
     val shown = Router.route
@@ -50,6 +52,8 @@ object Pages:
       child <-- shown.map((r, missing, s) => if missing then notFound else page(ui, r, s))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def page(ui: UiConfig, r: Route, search: UrlQuery): HtmlElement = r match
     case Route.Explore     => div()
     case Route.Library(s)  => libraryPage(ui, s)
@@ -69,6 +73,8 @@ object Pages:
 
   // ── the frame ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def layout(
       navName: UiLabels.Text,
       side: List[Modifier[HtmlElement]],
@@ -89,6 +95,8 @@ object Pages:
   private def single(body: HtmlElement): HtmlElement =
     div(cls := "page-layout page-single", mainTag(cls := "page-main wm-content", idAttr := "page-main", body))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sideLink(r: Route, label: UiLabels.Text, on: Boolean, mods: Modifier[HtmlElement]*): HtmlElement =
     RouteLink(
       r,
@@ -102,6 +110,8 @@ object Pages:
   private def group(name: UiLabels.Text): HtmlElement = div(cls := "side-group", name)
 
   /** A watched list's link: bold while it has something new, with the count of what waits on someone. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notice(b: Board): Modifier[HtmlElement] =
     val c = Notices.counter(b)
     List(
@@ -128,6 +138,7 @@ object Pages:
 
   /** Library's lists beside the filter panel (which lies over this page's left edge), or a way of adding sources.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def libraryPage(ui: UiConfig, s: LibrarySection): HtmlElement =
     if s.isList then
       div(
@@ -143,6 +154,9 @@ object Pages:
 
   // ── Research ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def researchSide(ui: UiConfig, r: Route): List[Modifier[HtmlElement]] =
     val on = r.researchSection
     def item(s: ResearchSection, mods: Modifier[HtmlElement]*) =
@@ -161,6 +175,8 @@ object Pages:
       "The backlog holds the agents' next steps. “To acquire” holds books and papers only you can get."
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def research(ui: UiConfig, r: Route, goal: Option[Goal.Slug]): HtmlElement = r match
     case Route.Research(s) =>
       val body = s match
@@ -184,15 +200,21 @@ object Pages:
     case Route.Job(id)     => item(r, jobPage(id))
     case _                 => notFound
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def section(heading: UiLabels.Text, body: HtmlElement): HtmlElement =
     div(h1(cls := "page-title", heading), body)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def agentsOff(text: UiLabels.Text): HtmlElement =
     p(cls := "muted", text, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
 
   /** The merged list through one of its chips — or one of the detailed lists it sums up, under the chips and a way back
     * to the list.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def activity(ui: UiConfig, t: ActivityTab, goal: Option[Goal.Slug]): HtmlElement =
     if t.isChip then ActivityView.pane(ui, t, goal)
     else
@@ -215,6 +237,8 @@ object Pages:
   /** One item's page: its name, "pin as window" (it floats over whatever is shown next; the page goes back to its
     * list), and its view.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(r: Route, body: HtmlElement): HtmlElement =
     val heading = Var(Router.title(r))
     div(
@@ -242,12 +266,16 @@ object Pages:
     )
 
   /** The list an item's page belongs to. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def parent(r: Route): Route = r match
     case Route.Goal(_)    => Route.Research(ResearchSection.Goals)
     case Route.Manager(_) => Route.Research(ResearchSection.Overview)
     case _                => Route.Activity(ActivityTab.Everything)
 
   /** A job's page: an agent run is its run's page; any other job, its row of the jobs list. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobPage(id: JobId): HtmlElement =
     val job = Var(Option.empty[Either[String, JobInfo]])
     div(
@@ -268,6 +296,8 @@ object Pages:
     )
 
   /** Pause, resume and cancel of a long background job, on its page. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobControls(j: JobInfo): HtmlElement =
     val e = Activity.Entry(
       Activity.Entry.Key(s"job:${j.id.value}"),
@@ -287,17 +317,23 @@ object Pages:
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def settingsSide(on: SettingsSection): List[Modifier[HtmlElement]] =
     val (common, rare) = SettingsSection.values.toList.partition(s => !s.rare.value)
     common.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++ List(group(UiLabels.Text("Rarely needed"))) ++
       rare.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++
       List(RouteLink(Route.Setup, cls := "side-link setup-again", span(cls := "side-label", "Run the setup again")))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def settings(ui: UiConfig, s: SettingsSection): HtmlElement =
     SettingsPages.page(ui, s)
 
   // ── places and events ───────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cardPage(target: Preview.Target, route: Route, mapLink: HtmlElement): HtmlElement =
     val card = Var(Option.empty[Either[String, Preview.Card]])
     div(
@@ -313,6 +349,8 @@ object Pages:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placePage(id: PlaceId): HtmlElement =
     cardPage(
       Preview.Target.Place(id, None),
@@ -331,6 +369,7 @@ object Pages:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def eventPage(id: EventId): HtmlElement =
     cardPage(Preview.Target.Event(id), Route.Event(id), RouteLink(Route.Explore, cls := "btn", "Back to the map"))
 

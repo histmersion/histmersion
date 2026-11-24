@@ -14,11 +14,14 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
   * link's reference and the probe's subject in the domains' terms, the plan's works and vocabulary, and the
   * housekeeping. The composition root implements it over its wiring (`server/agents/ServerAutomationHost`).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AutomationHost:
   /** Is there an article with this slug? */
   def articleExists(slug: Slug): Boolean

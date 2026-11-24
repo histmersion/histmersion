@@ -8,7 +8,9 @@ import com.histmersion.util.storage.{ByteSource, Location, Storage}
 
 import java.nio.file.Files
 import com.histmersion.util.storage.Store
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ProcessesSuite extends munit.FunSuite:
 
   test("a process runs in its store with the variables added, its output read line by line"):

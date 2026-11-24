@@ -5,6 +5,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
   * confidence mark, a layer switch, an icon — is built HERE, once, so the sidebar, the tabs, the map popup and the
@@ -28,4 +29,5 @@ object MapLayer:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromWire(s: Wire): Option[MapLayer] = values.find(_.wire.value == s.value.trim.toLowerCase)

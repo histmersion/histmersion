@@ -25,12 +25,14 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The alias rule over real HTTP and MCP (#1799, #890): for every renamed kind — source, article, event, goal, place —
   * a put, a patch, a delete and a rename naming the OLD identifier go to the record under its current one, and the
   * answer names the current one; a reference (an attestation's target) is stored against the current id; a
   * `place=<old id>` filter selects what `place=<new id>` does. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AliasRuleHttpSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -59,6 +61,7 @@ class AliasRuleHttpSuite extends DbSuite with db.Bounded:
   private def decode[A: JsonValueCodec](s: String): A = RawJson.decode[A](s).fold(e => fail(s"$e in $s"), identity)
   private def ok(r: (Int, String)): String = { assertEquals(r._1, 200, r._2); r._2 }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -69,6 +72,7 @@ class AliasRuleHttpSuite extends DbSuite with db.Bounded:
     }
 
   /** A previous run's rows and aliases must not be in the way. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def clean(): Unit =
     val ds = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     com.augustnagro.magnum.transact(ds):

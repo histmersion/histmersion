@@ -7,6 +7,7 @@ import com.histmersion.api.automation.Queue
 import scala.scalajs.js
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be bookmarked, shared,
   * and opened in a new tab; the open windows and the filters ride along in the hash ([[UiState]]). `/source/…` and
@@ -31,6 +32,8 @@ enum Route derives CanEqual:
   case Job(id: Route.Job.Id)
 
   /** The address of the page — without the hash, which carries the filters and the open windows. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def path: String = this match
     case Explore       => "/explore"
     case Library(s)    => sub("/library", s.slug.value)
@@ -71,8 +74,10 @@ enum Route derives CanEqual:
 
 object Route:
   type ManagerId = ManagerId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ManagerId extends Newtype[String, Pure]
   type RunId = RunId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RunId extends Newtype[String, Pure]:
     def of(run: api.automation.Agents.RunInfo.Id): RunId = RunId(s"$run")
 
@@ -81,6 +86,7 @@ object Route:
     export api.automation.Goal.Slug
 
   object Source:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = Preview.Target.Source.Citekey
     val Citekey: Preview.Target.Source.Citekey.type = Preview.Target.Source.Citekey
 
@@ -122,6 +128,7 @@ object Route:
   /** The page an address stands for; `None` for one the web UI does not know. The root and the old addresses of the
     * lists (`/acquire`, `/tasks`, `/log`, `/merge`) are [[legacy]]'s.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(path: ParsePath): Option[Route] =
     segments(path) match
       case List("explore")   => Some(Explore)
@@ -179,6 +186,7 @@ object Route:
     case _ => None
 
   /** The page of an item that also opens as a window — what a link to it points at, for a new tab. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofItem(key: WindowKey): Option[Route] = key match
     case WindowKey.Source(ck)    => Some(Source(Preview.Target.Source.Citekey(ck.value)))
     case WindowKey.Article(slug) => Some(Article(Preview.Item.Slug(slug.value)))
@@ -188,6 +196,7 @@ object Route:
     case _                       => None
 
   /** The window this page also opens as ("pin as window"), if it has one. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def window(r: Route): Option[WindowKey] = r match
     case Run(id)     => Some(WindowKey.Run(WindowKey.Run.Id(id.value)))
     case Goal(slug)  => Some(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)))
@@ -206,6 +215,7 @@ object Route:
   /** Where a link to `key` points: the item's own page, the page that took over its window, else the map with that
     * window open (a citation graph, a source's editor).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hrefOf(key: WindowKey): String =
     ofItem(key)
       .orElse(ofWindow(key))
@@ -214,6 +224,7 @@ object Route:
       .getOrElse(s"${Explore.path}#open=${js.URIUtils.encodeURIComponent(key.wire.value)}")
 
   /** The page of a list item: the list, scrolled to the item and marked (`?item=`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def queueItem(kind: Queue.Kind, id: api.automation.Goal.Plans.GoalLink.QueueNumber): String =
     val list = kind match
       case Queue.Kind.Acquire => Research(ResearchSection.Acquire)
@@ -229,6 +240,7 @@ object Route:
     * are dropped, and the windows of single items stay open over it. `None` when the address is already a page of its
     * own and names no toolbar window. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def legacy(path: LegacyPath, open: List[WindowKey]): Option[Landing] =
     val byPath: Option[Route] = segments(path) match
       case Nil           => Some(Explore)

@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class ReviewFinding(
     id: ReviewFinding.Id,
@@ -41,6 +42,7 @@ object ReviewFinding:
   type Where = Where.T
   object Where extends Newtype[String, Pure]
   type Problem = Problem.T
+  @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
   object Problem extends Newtype[String, Pure]
   type Fix = Fix.T
   object Fix extends Newtype[String, Pure]

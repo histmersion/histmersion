@@ -11,10 +11,13 @@ import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.api.automation.ModelChains
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.PlanQuota
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the agent models window: what a person types (a chain, limits, a reserve), the used-share of a
   * limit, a chained model's state, and an allowance paused run's words.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ModelsViewSuite extends munit.FunSuite:
 
   test("a chain as typed: > or , separate the models; blanks are dropped"):

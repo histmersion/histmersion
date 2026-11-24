@@ -17,14 +17,17 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `SourceNote.note` must be the inverse of `SourceNote.parseNote` — that round trip is what lets the Markdown wiki
   * stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourceNoteSuite extends munit.FunSuite:
 
   private val ck = Citekey("haak2015_massive")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val source = Source(
     citekey = ck,
     title = Title("Massive migration from the steppe"),

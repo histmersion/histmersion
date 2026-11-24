@@ -9,8 +9,11 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refs(articleUrl: WikiClient.ArticleUrl): Either[Problem, WikirefsResult] =
     AcquireParse
       .wikiPageTitle(Http.Url(articleUrl.value))

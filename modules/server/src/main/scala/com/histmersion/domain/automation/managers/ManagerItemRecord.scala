@@ -6,8 +6,10 @@ import com.histmersion.api.automation.Managers.{Hold, ItemState}
 import java.time.Instant
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A manager's work item as [[ManagerService.InMemory]] holds it. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class ManagerItemRecord(
     id: ManagerItemRecord.Id,
     managerId: ManagerItemRecord.ManagerId,

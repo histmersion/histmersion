@@ -25,17 +25,26 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a
   * deterministic order, and written in by an import.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the event rows for bundle export and import")
 private[events] object EventBundleRepo:
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given given_DbCodec_BundleCorrection: DbCodec[Bundle.Correction] = DbCodec.derived
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def events(scope: BundleScope)(using DbCon): Vector[Bundle.Event] =
     val w = where(scope, sql"e.uid", sql"e.updated_at")
     val rows = sql"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
@@ -137,6 +146,7 @@ private[events] object EventBundleRepo:
     }
 
   /** Old event ids and goal slugs (V053) of the events and goals in scope. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def eventAliases(scope: BundleScope)(using DbCon): Vector[Bundle.EventAlias] =
     sql"""SELECT x.alias, e.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE ${where(
@@ -149,6 +159,8 @@ private[events] object EventBundleRepo:
       .map((alias, uid, at) => Bundle.EventAlias(Bundle.EventAlias.Alias(alias), uid, Bundle.EventAlias.CreatedAt(at)))
 
   /** What the catalogues say about the events in scope (`event_catalogue`): by event, then the record's key. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def eventCatalogue(scope: BundleScope)(using DbCon): Vector[Bundle.EventCatalogue] =
     sql"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
                        c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
@@ -183,6 +195,7 @@ private[events] object EventBundleRepo:
   /** The corrections by hand (`corrections`, V088); an event's carries its uid. The clock is the later of the person's
     * change and the last refresh.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def corrections(scope: BundleScope)(using DbCon): Vector[Bundle.Correction] =
     val eventUid = sql"(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
     sql"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
@@ -221,6 +234,7 @@ private[events] object EventBundleRepo:
   private def eventIdOf(u: UUID)(using DbCon): Option[BEventRow.Id] =
     sql"SELECT id FROM events WHERE uid = $u".query[BEventRow.Id].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def eventExists(id: BEventRow.Id)(using DbCon): Boolean =
     sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
@@ -232,6 +246,8 @@ private[events] object EventBundleRepo:
   /** An event renamed over there: the rename here first — its datings, edges and links follow, and the old id stays an
     * alias — then the row.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def eventRenames(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.followRenames(
@@ -243,6 +259,8 @@ private[events] object EventBundleRepo:
     )((from, to) => EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
 
   /** Events: the rows, then their parents (a parent may come later in uid order), then the sets. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def eventsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val placeHere = PlacesCarried.placeHere(w)
@@ -306,6 +324,7 @@ private[events] object EventBundleRepo:
     }
 
   /** Old event ids (V053): after every event is in. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def eventAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.eventAliases.foreach { a =>
@@ -326,6 +345,8 @@ private[events] object EventBundleRepo:
   // decision: these are what the importers and the person found, not the event's content. Idempotent: a line the
   // collection already has, or has newer, writes nothing.
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def eventCatalogueIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
@@ -358,6 +379,8 @@ private[events] object EventBundleRepo:
       }
 
   /** The corrections by hand: the newer change wins; an event's follows the event here, a place's the place. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def correctionsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()

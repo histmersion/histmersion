@@ -9,6 +9,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object MediaProvider:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
@@ -35,6 +36,7 @@ object MediaProvider:
   val Smithsonian = "smithsonian"
 
   val Europeana = "europeana"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[Id] = List(
     Id(Source),
     Id(Commons),
@@ -49,11 +51,15 @@ object MediaProvider:
     Id(Europeana)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val museums: Set[Id] = Set(Id(Met), Id(Cleveland), Id(ArtInstitute))
 
   /** Covers carry the publisher's rights, no reuse licence: shown in the local UI only, never carried in a bundle. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val covers: Set[Id] = Set(Id(Calibre), Id(OpenLibrary))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def title(p: Id): Info.Title = p.value match
     case Source            => Info.Title("source figures")
     case Commons           => Info.Title("Wikimedia Commons")

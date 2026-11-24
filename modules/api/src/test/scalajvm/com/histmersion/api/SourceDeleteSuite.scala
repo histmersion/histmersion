@@ -11,8 +11,10 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.{CalibreEntryCheck, Citekey, DeleteBlocker, DeleteCount, DeletePart, Edge}
 import com.histmersion.api.library.Source
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #969: the pure half of deleting a source — the refusal message, the log line, the rendering and the wire shape. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourceDeleteSuite extends munit.FunSuite:
 
   private val Ck = Citekey("beckman2011_ahhiyawa")

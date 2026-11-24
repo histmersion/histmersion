@@ -3,7 +3,10 @@ package api.library
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 object PassagesMarkdown:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(r: PassageResult): String =
     val what = if (r.regex) == PassageResult.Regex(true) then s"/${r.query}/" else s"\"${r.query}\""
     if r.passages.isEmpty then (s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
@@ -27,6 +30,8 @@ object PassagesMarkdown:
       val tail = if more > 0 then List(s"_$more more — raise limit or narrow the query._") else Nil
       ((head :: items ++ tail).mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def marked(p: PassageHit): String =
     val text = p.text.value
     val b = new StringBuilder(text.length + p.matches.size * 4)

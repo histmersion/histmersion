@@ -13,6 +13,7 @@ import com.histmersion.util.database.TestPermits.given
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.time.SystemTimer
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The lint runner over registered rules, without a database: the stated order whatever the registration order, the
   * selection and its refusal, one run per report, and the fixes — every call's and the named ones — summed in fix
@@ -29,7 +30,9 @@ class CheckRunnerSuite extends munit.FunSuite:
 
   final private class Fake(name: Rule.Name, items: Int, override val fix: Option[SafeFix] = None) extends CheckRule:
     val owner: DataOwner = DataOwner("test")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val rule: Rule = Rule(name, Rule.Description(s"$name rule"))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
       Lint.report(
         rule,
@@ -37,6 +40,7 @@ class CheckRunnerSuite extends munit.FunSuite:
         Lint.ItemLimit(maxItems.value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixing(
       line: LintFixResult.Applied,
       edges: LintFixResult.EdgesResolved,

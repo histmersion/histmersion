@@ -5,8 +5,11 @@ import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.domain.{ItemKey, ItemUid}
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.api.ItemKind
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A target as the tables' columns hold it. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[personal] case class TargetColumns(
     kind: ItemKind.Wire,
     key: Option[ItemKey],

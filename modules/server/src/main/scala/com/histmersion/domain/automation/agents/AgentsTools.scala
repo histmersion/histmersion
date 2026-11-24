@@ -67,6 +67,9 @@ object AgentsTools:
   /** `repairAcquire`: the acquisition list's one-shot repair (dry run or not), as Markdown — the library's, bound by
     * the composition.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def apply(
       a: AgentsControllers,
       repairAcquire: RepairAcquire => Either[Api.Error, String],
@@ -692,6 +695,8 @@ object AgentsTools:
     * the role's tools whatever the runtime does. A definition that does not load gets no endpoint (and its steps fail
     * with why).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def agentEndpoints(a: AgentsControllers, limits: () => McpConfig) =
     a.definitions.agentNames.flatMap { n =>
       a.definitions.agent(n) match
@@ -719,9 +724,12 @@ object AgentsTools:
         )
     }
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false, quota: Boolean = false)
       derives JsonCodec
   object ModelsInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ModelsInput] = KindlingsSchema
       .derived[ModelsInput]
       .schema
@@ -731,6 +739,7 @@ object AgentsTools:
       .modify(_.offline)(_.description("With doctor: skip the providers' model listings (no network)"))
       .modify(_.quota)(_.description("Show the subscription pools instead: windows, floors, resets, reading age, hold"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class SetModelsInput(
       role: Option[String] = None,
       models: List[String] = Nil,
@@ -746,6 +755,8 @@ object AgentsTools:
   ) derives JsonCodec
   object SetModelsInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SetModelsInput] = KindlingsSchema
       .derived[SetModelsInput]
       .schema
@@ -777,6 +788,7 @@ object AgentsTools:
         )
       )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class RunInput(
       pipeline: String,
       target: String,
@@ -797,6 +809,8 @@ object AgentsTools:
   ) extends Creation.Named derives JsonCodec
   object RunInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RunInput] = KindlingsSchema
       .derived[RunInput]
       .schema
@@ -845,6 +859,7 @@ object AgentsTools:
         _.description("enrich-source: the acquisition item this run fulfils (ticked off at the end)")
       )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class RunsInput(
       id: Option[String] = None,
       status: Option[String] = None,
@@ -863,6 +878,7 @@ object AgentsTools:
       subject: Option[String] = None
   ) derives JsonCodec:
     /** The listing's filter ([[ListFilters.RunFilter]]): `status` and `manager` may be comma-separated. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def filter: ListFilters.RunFilter =
       ListFilters.RunFilter(
         status.toList.map(ListFilters.RunFilter.Status(_)),
@@ -878,6 +894,8 @@ object AgentsTools:
       )
   object RunsInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RunsInput] = KindlingsSchema
       .derived[RunsInput]
       .schema
@@ -906,6 +924,7 @@ object AgentsTools:
       .modify(_.compare)(_.description("Two or more run ids to compare side by side (one pipeline, one target)"))
       .modify(_.before)(_.description("Listing: the next older page — the id of the last run shown"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class GoalLinkInput(
       goal: String,
       kind: String,
@@ -916,6 +935,8 @@ object AgentsTools:
   ) extends Creation.Named derives JsonCodec
   object GoalLinkInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GoalLinkInput] = KindlingsSchema
       .derived[GoalLinkInput]
       .schema
@@ -925,6 +946,7 @@ object AgentsTools:
       .modify(_.note)(_.description("Why it is linked"))
       .modify(_.remove)(_.description("Unlink instead of link"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class ScheduleInput(
       goal: Option[String] = None,
       kind: Option[String] = None,
@@ -936,6 +958,8 @@ object AgentsTools:
   ) extends Creation.Named derives JsonCodec
   object ScheduleInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ScheduleInput] = KindlingsSchema
       .derived[ScheduleInput]
       .schema
@@ -950,6 +974,8 @@ object AgentsTools:
       .modify(_.budgetUsd)(_.description("The cost cap of each run it starts (default: the goal's, then the server's)"))
       .modify(_.remove)(_.description("Delete the schedule"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ApprovalsInput(
       state: Option[String] = None,
       limit: Option[Int] = None,
@@ -960,6 +986,7 @@ object AgentsTools:
       decidedBy: List[String] = Nil,
       digest: Boolean = false
   ) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(
       state.map(ListFilters.ApprovalFilter.State(_)),
       kind.map(ListFilters.ApprovalFilter.Kind(_)),
@@ -969,6 +996,8 @@ object AgentsTools:
     )
   object ApprovalsInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ApprovalsInput] = KindlingsSchema
       .derived[ApprovalsInput]
       .schema
@@ -988,6 +1017,7 @@ object AgentsTools:
         _.description("true: the digest of everything waiting for a person, by kind, instead of the listing")
       )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class DecideInput(
       id: Option[Long] = None,
       decision: String,
@@ -1001,6 +1031,8 @@ object AgentsTools:
   ) extends Creation.Named derives JsonCodec
   object DecideInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[DecideInput] = KindlingsSchema
       .derived[DecideInput]
       .schema
@@ -1024,6 +1056,8 @@ object AgentsTools:
   ) derives JsonCodec
   object SchedulerInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SchedulerInput] = KindlingsSchema
       .derived[SchedulerInput]
       .schema
@@ -1035,6 +1069,7 @@ object AgentsTools:
       )
       .modify(_.limit)(_.description("status, queue: how many waiting items to show (default 50; queue 200)"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class ManagerInput(
       action: String = "list",
       id: Option[String] = None,
@@ -1060,6 +1095,8 @@ object AgentsTools:
   ) extends Creation.Named derives JsonCodec
   object ManagerInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ManagerInput] = KindlingsSchema
       .derived[ManagerInput]
       .schema

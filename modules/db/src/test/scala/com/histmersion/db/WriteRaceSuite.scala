@@ -22,6 +22,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the token, then wrote — with
   * nothing stopping a second patch from doing all three in between. Both saw the token they were given, both
@@ -29,11 +30,13 @@ import com.histmersion.domain.research.Slug
   *
   * These tests race two real threads against one row; exactly one must win.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WriteRaceSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d

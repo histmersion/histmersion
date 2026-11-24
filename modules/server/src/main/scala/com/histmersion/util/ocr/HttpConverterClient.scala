@@ -12,17 +12,24 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.Duration
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is shared by the worker
   * pool, and every request carries its own body.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Http, "sends a PDF to the OCR converter and reads its answer")
 final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
     extends ConverterClient: // by name: a reload may move it
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def base = cfg.url.value.trim.stripSuffix("/")
 
   private val ConversionTimeoutHint =
     "raise converter.seconds-per-page or converter.timeout-seconds for documents like this one"
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def health: Either[Problem, ConverterClient.HealthSummary] =
     send(
       HttpRequest.newBuilder(URI.create(s"$base/health")).timeout(Duration.ofSeconds(5)).GET().build(),
@@ -51,6 +58,9 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       ConverterClient.PageCount.Scanned(json.cursor.get[Int]("scanned").getOrElse(0))
     )).toOption
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def convert(
       file: Blob,
       filename: ConverterClient.Filename,
@@ -73,6 +83,8 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
         .map(e => s"converter at $base returned unreadable JSON: $e")
     yield doc).left.map((text => Problem.Unclassified(Legacy.Text(text))))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def thumbnail(
       bytes: ConverterClient.DocumentBytes,
       filename: ConverterClient.Filename,
@@ -137,6 +149,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
     * (so the request is not chunked). Reading it whole first held a 250 MB scan in the heap twice to send it once (and
     * the accepted upload limit is exactly 256 MB).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def multipart(
       boundary: String,
       file: Blob,

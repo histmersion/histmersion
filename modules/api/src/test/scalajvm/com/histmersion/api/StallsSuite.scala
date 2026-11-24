@@ -8,11 +8,13 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Stalls.*
 import com.histmersion.api.automation.StallsMarkdown
 import com.histmersion.api.automation.Stalls
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The stall report, pure (#3762 proposal 4): which goals count as stalled, the one reason each stands still (in order:
   * draining, a person, a hold, paused managers, a budget, quota, the queue, a block, running, a failed item, no
   * candidates, idle), the action, the order and the counts.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StallsSuite extends munit.FunSuite:
 
   private def f(slug: Facts.Slug = Facts.Slug("g"), idle: Option[Facts.IdleDays] = Some(Facts.IdleDays(5))) =

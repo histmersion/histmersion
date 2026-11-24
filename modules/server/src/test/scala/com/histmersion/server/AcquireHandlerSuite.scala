@@ -67,18 +67,22 @@ import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing
   * typed edges, applying a verdict to `status`, and the ingest sequence — including that a re-ingest does NOT wipe an
   * enriched source.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class AcquireHandlerSuite extends DbSuite:
 
   private val ByBacklog = domain.automation.workflows.InTreeWorkflow.IngestBacklog.creator
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -110,22 +114,26 @@ class AcquireHandlerSuite extends DbSuite:
       notices: List[UpdateNotice] = Nil,
       hits: List[WorkRef] = Nil
   ) extends DiscoveryClient:
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def search(
         q: Search.Query,
         since: Option[com.histmersion.Year],
         sort: Option[DiscoveryClient.SearchSort],
         limit: DiscoveryClient.SearchLimit
     ) = Right(hits)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def meta(doi: domain.library.Doi) = Right(work.modify(_.doi).setTo(Some(Doi(doi.value))))
     def references(doi: domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), refs))
     def updates(doi: domain.library.Doi) = Right(notices)
 
   private class FakeCitations(rows: List[FollowupRow]) extends CitationsClient:
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def citing(work: WorkRef, since: Option[com.histmersion.Year], limit: CitationsClient.CitingLimit) = Right(
       (CitationsClient.Backend("semantic-scholar"), rows)
     )
 
   private object NoPdf extends OaFetcher:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def fetch(doi: Option[domain.library.Doi], arxiv: Option[ArxivId]) = Left(
       Problem.Unclassified(Legacy.Text("no legal open-access PDF found"))
     )
@@ -134,6 +142,7 @@ class AcquireHandlerSuite extends DbSuite:
       source: FetchedFile.Source = FetchedFile.Source("unpaywall"),
       licence: Option[plugin.Licence] = None
   ) extends OaFetcher:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fetch(doi: Option[domain.library.Doi], arxiv: Option[ArxivId]) =
       Right(
         FetchedFile(
@@ -146,6 +155,8 @@ class AcquireHandlerSuite extends DbSuite:
       )
 
   private object NoWiki extends WikiClient:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def refs(url: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used here")))
 
   /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
@@ -153,6 +164,7 @@ class AcquireHandlerSuite extends DbSuite:
     import com.histmersion.plugin.{CollectionFile, CollectionId, CollectionItem, CollectionQuery}
     val collection = new SourceCollection:
       def title = SourceCollection.Title("archive.org")
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       private val one = CollectionItem(
         CollectionId(archived.identifier.value),
         archived.title.map(t => CollectionItem.Title(t.value)),
@@ -170,11 +182,14 @@ class AcquireHandlerSuite extends DbSuite:
       )
       def search(query: CollectionQuery) = Right(List(one))
       def item(id: CollectionId) = Right(Some(one))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def file(i: CollectionItem, format: Option[SourceCollection.FileFormat]) =
         i.files
           .find(_.name.value.endsWith(".epub"))
           .orElse(i.files.headOption)
           .toRight(Problem.Unclassified(Legacy.Text("no file")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def original(i: CollectionItem, f: CollectionFile) = Left(
         Problem.Unclassified(Legacy.Text("the chain downloads it"))
       )
@@ -230,6 +245,7 @@ class AcquireHandlerSuite extends DbSuite:
 
   // ── fixtures in the database ────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: String,
       doi: Option[String] = None,
@@ -792,11 +808,13 @@ class AcquireHandlerSuite extends DbSuite:
     val asked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def fetch(w: WorkKey, c: Fetch.Context) = {
         asked.incrementAndGet(); Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("stub")))
       }
     val open = new SourceFetcher:
       val access = Access.Open
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def fetch(w: WorkKey, c: Fetch.Context) =
         Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(
@@ -1069,6 +1087,8 @@ class AcquireHandlerSuite extends DbSuite:
     // the download is the acquisition chain's: here a fetcher over the same client, by the item's identifier
     val byIdentifier = new SourceFetcher:
       val access = Access.Open
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def fetch(work: WorkKey, ctx: Fetch.Context) =
         work.archive.fold(Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no identifier"))))(_ =>
           Fetch.Found(
@@ -1168,12 +1188,15 @@ class AcquireHandlerSuite extends DbSuite:
   test("a DOI no upstream knows is refused rather than stored as an `anonnd` junk source"):
     // the metadata guard, the counterpart of the Calibre one: no title upstream and no citekey given
     val blind = new DiscoveryClient:
+      @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
       def search(
           q: Search.Query,
           since: Option[com.histmersion.Year],
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
       ) = Right(Nil)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def meta(doi: domain.library.Doi) = Left(Problem.Unclassified(Legacy.Text(s"$doi: HTTP 404")))
       def references(doi: domain.library.Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
       def updates(doi: domain.library.Doi) = Right(Nil)

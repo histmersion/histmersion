@@ -23,10 +23,13 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Approval
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion agent …` — the embedded research agents (docs/research-embedded-agents.md). The server runs them; this
   * only starts, follows and steers runs over HTTP. Off unless the SERVER has `HISTMERSION_AGENTS_ENABLED=true`.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion agent` arguments")
 object AgentCmd:
 
   /** How often `--follow` polls. This process's own cadence, not a server tunable. */
@@ -34,6 +37,9 @@ object AgentCmd:
   private val PollMs = 2000
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
   private[cli] def follow(c: Client, id: Agents.RunInfo.Id, last: String)(using
       console: Console
@@ -70,8 +76,10 @@ object AgentCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Allowance(target: String, limits: List[String], reserve: Int, remove: Boolean)
     case Generate(rts: List[String], out: Option[String])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Doctor(offline: Boolean)
     case Probe(ck: String, model: Option[String])
     case Runs(
@@ -80,6 +88,7 @@ object AgentCmd:
         before: Option[String],
         json: Cli.JsonOutput
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Show(id: String, msgs: Boolean, fol: Boolean)
     case Compare(ids: List[String], json: Cli.JsonOutput)
     case Approvals(
@@ -96,9 +105,11 @@ object AgentCmd:
     case QuotaHold(pool: String)
     case QuotaRelease(pool: String)
     case QuotaFloors(pool: String, floors: QuotaFloorsChange)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case QuotaFallthrough(role: String, on: Boolean)
     case QuotaRefresh(pool: Option[String])
     case Control(action: Agents.Action, id: String, budgetUsd: Option[Double], budgetTokens: Option[Long])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Run(
         pipeline: String,
         target: String,
@@ -123,6 +134,9 @@ object AgentCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Allowance(target, limits, reserve, remove) =>

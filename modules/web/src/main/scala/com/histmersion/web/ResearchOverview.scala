@@ -20,6 +20,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.{OpenWork, ResearchApi}
 import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Research › Overview: the agents' state as ONE three-way control with what they are doing and the AI plan's weekly
   * allowance; the oldest decisions waiting for the person, each with its reason and what to read first BEFORE the
@@ -37,6 +38,7 @@ object ResearchOverview:
   /** A goal's progress: its managers' work items done, of all of them (done and still open). */
 
   final case class Progress(done: Progress.Done, total: Progress.Total):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pct: Percent =
       if total.value <= 0 then Percent(0) else Percent((done.value * 100 / total.value).max(0).min(100))
 
@@ -47,6 +49,8 @@ object ResearchOverview:
     type Total = Total.T
     object Total extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def progressOf(goal: Goal.Slug, managers: List[Managers.ManagerInfo]): Progress =
     val mine = managers.filter(_.goal.contains(goal))
     Progress(
@@ -57,6 +61,9 @@ object ResearchOverview:
   /** What keeps a goal from moving on, in words: the focus's reason it cannot use a slot, a decision it waits for, or a
     * manager that is starved or held.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def blocker(
       g: Autopilot.GoalProgress,
       focus: Option[Autopilot.FocusInfo],
@@ -79,12 +86,15 @@ object ResearchOverview:
       .map(UiLabels.Text(_))
 
   /** The decisions to show first: the oldest waiting. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def oldestFirst(as: List[ApprovalInfo]): List[ApprovalInfo] =
     as.filter(_.state == ApprovalState.Open.wire).sortBy(a => (a.createdAt.value: String, a.id.value: Long))
 
   /** What to read before deciding, and where it is: the source a status or edge is about (and the work it points at),
     * the article draft, the goal's plan, the manager a hint is for.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidence(a: ApprovalInfo): List[(UiLabels.Text, UiLabels.Text)] =
     val own = ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
@@ -118,6 +128,8 @@ object ResearchOverview:
     else List(UiLabels.Text("Read the whole proposal") -> UiLabels.Text(Route.Research(ResearchSection.Decisions).path))
 
   /** `5 hours`, `2 days`: how long the oldest decision has waited. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waited(createdMs: EpochMillis, nowMs: EpochMillis): UiLabels.Text =
     val h = math.max(0L, ((nowMs.value - createdMs.value) / 3600000).toLong)
     if h < 1 then UiLabels.Text("less than an hour")
@@ -125,6 +137,8 @@ object ResearchOverview:
     else UiLabels.Text(s"${h / 24} days")
 
   /** The weekly limit left, per plan pool that reports one: `Claude plan: 61% of this week's limit left`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def weekly(q: PlanQuota.QuotaInfo): List[UiLabels.Text] =
     q.plans.flatMap { p =>
       p.windows
@@ -141,6 +155,9 @@ object ResearchOverview:
   private def write(f: () => Unit): Unit = if Auth.writableNow then f() else WindowManager.open(WindowKey.ApiKey)
 
   /** The agents: one control of three choices, what is running and waiting, the weekly allowance. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
   private def agentsCard(status: Var[Option[AutopilotStatus]]): HtmlElement =
     val quota = Var(List.empty[String])
     val busy = Var(false)
@@ -191,6 +208,9 @@ object ResearchOverview:
     )
 
   /** One decision: the question, why it was proposed, what to read first — and only then accept or reject. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decision(a: ApprovalInfo, decided: () => Unit): HtmlElement =
     val busy = Var(false)
     def decide(d: Decision): Unit = write { () =>
@@ -245,6 +265,8 @@ object ResearchOverview:
       )
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decisionsCard(): HtmlElement =
     val open = Var(Option.empty[List[ApprovalInfo]])
     def load(): Unit =
@@ -280,6 +302,7 @@ object ResearchOverview:
       }
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalsCard(
       status: Signal[Option[AutopilotStatus]],
       managers: Signal[List[Managers.ManagerInfo]]
@@ -333,6 +356,7 @@ object ResearchOverview:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def activityCard(ui: UiConfig): HtmlElement =
     sectionTag(
       cls := "card research-activity",
@@ -357,6 +381,9 @@ object ResearchOverview:
     )
 
   /** The page. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig): HtmlElement =
     val status = Var(Option.empty[AutopilotStatus])
     val managers = Var(List.empty[Managers.ManagerInfo])

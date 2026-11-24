@@ -3,6 +3,7 @@ package util.data.exchange
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 enum DecisionKind:
   case KeepLeft
 
@@ -52,5 +53,7 @@ object DecisionKind:
 
   given WireEnumValues[DecisionKind]:
     def all: Array[DecisionKind] = values
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire(e: DecisionKind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: WireEnumValues.Wire): Option[DecisionKind] = values.find(k => wireOf(k) == Wire((s).value.trim))

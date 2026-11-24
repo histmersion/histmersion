@@ -7,7 +7,10 @@ import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class CatalogRecord(
     provider: CatalogRecord.Provider,
     providerId: CatalogRecord.ProviderId,
@@ -36,6 +39,7 @@ final case class CatalogRecord(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key: (CatalogRecord.Provider, EventCatalogueRef.ProviderId) =
     (CatalogRecord.Provider((provider).value), EventCatalogueRef.ProviderId((providerId).value))
 object CatalogRecord:
@@ -47,8 +51,10 @@ object CatalogRecord:
     type P31Json = P31Json.T
     object P31Json extends Newtype[String, Pure]
   type EventId = EventId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object EventId extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type EventIdProvider = Provider
   val EventIdProvider: Provider.type = Provider
   export EventCatalogueRef.ProviderId as EventIdProviderId
@@ -81,6 +87,8 @@ object CatalogRecord:
 
   def eventId(r: CatalogRecord): EventId = eventId(r.provider, r.providerId)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def eventId(provider: EventIdProvider, providerId: CatalogRecord.EventIdProviderId): EventId =
     EventId(
       ((provider).value + "_" + providerId)
@@ -89,6 +97,8 @@ object CatalogRecord:
         .stripSuffix("_")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def owner(
       eventId: EventId,
       catalogue: Provider,

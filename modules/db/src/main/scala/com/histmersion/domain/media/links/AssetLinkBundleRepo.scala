@@ -16,8 +16,11 @@ import com.histmersion.util.database.{Jsonb, StoredCreator}
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label
   * here.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the asset link rows for bundle export and import")
 private[links] object AssetLinkBundleRepo:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def assetLinks(scope: BundleScope)(using DbCon): Vector[Bundle.AssetLink] =
     sql"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
                        ${targetUid(sql"l.target_type", sql"l.target_id")}, l.xywh, l.notes, ${Timestamps.iso(
@@ -60,6 +63,8 @@ private[links] object AssetLinkBundleRepo:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def assetLinksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.assetLinks.filter(l => w.writes(l.uid)).foreach { l =>

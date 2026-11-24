@@ -59,6 +59,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers' phase 2 against a `*_test` database (docs/research-process-managers.md §4, §6): infer-filter
   * before a review (the filter checked against the corpus, held for its approval, the review waiting for it), the
@@ -67,6 +68,7 @@ import com.histmersion.util.database.TestCreators.given
   * routing of the page buttons. Models are scripted ([[ScriptedClient]]); no provider is called. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ManagerPhase2Suite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -79,18 +81,27 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
   private val GoalSubject = ApprovalInfo.Subject("zzagent-goal2")
   private val Ck = Citekey("zzagent2019_tin")
   private val Ck2 = Citekey("zzagent2024_iso")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Enrich = ManagerInfo.Id(EnrichId)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val InferKind = ManagerItem.Kind(InferFilter)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ProposeKind = ManagerItem.Kind(ProposeArticles)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CompileKind = ManagerItem.Kind(ArticleCompile)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val EnrichKind = ManagerItem.Kind(SourceEnrich)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ExtendKind = ManagerItem.Kind(ArticleExtend)
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-17T12:00:00Z")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
@@ -224,6 +235,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
         .isRight
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val articleBody =
     s"""Tin reached the Aegean by sea [[$Ck]].
        |
@@ -235,13 +247,17 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
        |
        |Where the tin was mined is open [[$Ck]].""".stripMargin
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ckTarget(c: Citekey) = ManagerItem.Target(c.value)
 
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(mid, kind, target)).get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def why(r: RunInfo): String =
     (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)

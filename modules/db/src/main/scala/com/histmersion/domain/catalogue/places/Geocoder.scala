@@ -21,6 +21,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the
@@ -29,8 +31,12 @@ import com.histmersion.util.database.Unused
   *
   * Used by `enrich-source` for every finding's place and by the `finding-geocode` lint repair.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "looks up gazetteer places by name in the places tables")
 private[places] object Geocoder:
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Candidate] = DbCodec.derived
 
   /** The places whose label or one of whose names has `key`, with a geometry, optionally only those intersecting place
@@ -39,6 +45,8 @@ private[places] object Geocoder:
     * only 1935–1956), so the time rule of [[Geocode.rank]] reads the name's dates too. `tier` is who brought the place
     * in ([[Geocode.tierOf]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def candidates(key: Geocode.Key, within: Option[Place.Id])(using DbCon): List[Candidate] =
     if key.value.isEmpty then Nil
     else
@@ -70,6 +78,7 @@ private[places] object Geocoder:
   /** Where `name` is, for a finding of period `at` about a place of kind `hint`. `None` = no gazetteer place by that
     * name (nothing is ever guessed).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def resolve(
       name: Attempt.Name,
       hint: KindHint,
@@ -78,6 +87,8 @@ private[places] object Geocoder:
   )(using DbCon): Option[Resolution] =
     resolveIn(name, hint, at, placeholderMin)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin)(
       using DbCon
   ): Option[Resolution] =
@@ -87,6 +98,7 @@ private[places] object Geocoder:
       .flatMap(a => attempt(Resolution.Asked(name.value.trim), a, hint, at, placeholderMin))
       .nextOption()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def attempt(
       asked: Resolution.Asked,
       a: Attempt,
@@ -104,6 +116,8 @@ private[places] object Geocoder:
     * ([[Geocode.compassBox]]): the point on the surface of the shape cut to that part of its bounding box. A point
     * place, or a cut that leaves nothing, keeps the point it had.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def toward(r: Resolution, a: Attempt)(using DbCon): Resolution =
     a.approx.collect { case Geocode.Approximation.Qualifier(d) => d }.flatMap(Geocode.compassBox) match
       case None                       => r
@@ -121,6 +135,8 @@ private[places] object Geocoder:
           .headOption
           .fold(r)((lon, lat) => r.copy(lon = Longitude(lon), lat = Latitude(lat)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def chosen(
       asked: Resolution.Asked,
       a: Attempt,
@@ -141,6 +157,7 @@ private[places] object Geocoder:
 
   // ── the repair ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final private case class Placed(
       id: Placed.Id,
       citekey: Citekey,
@@ -174,6 +191,7 @@ private[places] object Geocoder:
     * `legacy` is the old rule, verbatim: exact `lower()` match on a label or any name, then site < feature < polity <
     * region, then the smaller area, then the id; the point on its surface.
     */
+  @tolerated(LintRule.TotalOrder, "n is a CTE of findings: id is the finding's key")
   val legacySql: Frag =
     sql"""WITH asked AS (
          SELECT DISTINCT ON (f.id) f.id, btrim(p->>'place') AS place
@@ -209,6 +227,9 @@ private[places] object Geocoder:
   /** The moves the repair would make: every old-geocoder point that the current ranking puts more than `repairKm` away.
     * Read-only.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def movesIn(s: GeocodeSettings)(using DbCon): List[Move] =
     sql"$legacySql"
       .query[Placed]
@@ -235,6 +256,7 @@ private[places] object Geocoder:
       }
       .filter(m => Geocode.worthMoving(m, Geocode.Move.MinKm(s.repairKm.value)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def moves(s: GeocodeSettings)(using DbCon): List[Move] = movesIn(s)
 
   /** Apply the moves: each finding gets the new point and the name that was asked as its region, but only while its
@@ -242,6 +264,7 @@ private[places] object Geocoder:
     * touched sources' `updated_at` moves and their `finding_places` are re-materialised, in the same transaction.
     * Returns the findings moved.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def apply(ms: List[Move], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
     if ms.isEmpty then RowCount(0)
     else
@@ -289,6 +312,9 @@ private[places] object Geocoder:
     * uses (no kind hint: a stored finding has none; its period steers the choice). A finding that already has a point
     * is never listed. Read-only.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def placementsIn(s: GeocodeSettings)(using DbCon): List[Placement] =
     sql"$unplacedSql".query[Unplaced].run().toList.flatMap { u =>
       resolveIn(
@@ -307,12 +333,14 @@ private[places] object Geocoder:
         )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def placements(s: GeocodeSettings)(using DbCon): List[Placement] = placementsIn(s)
 
   /** Give each finding its point — only while it still has NONE (compare-and-set: a finding placed or edited since is
     * left alone; its name is never touched). The touched sources' `updated_at` moves and their `finding_places` are
     * re-materialised, in the same transaction. Returns the findings placed.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def place(ps: List[Placement], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
     if ps.isEmpty then RowCount(0)
     else

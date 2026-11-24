@@ -9,6 +9,7 @@ import scala.util.Try
 import com.histmersion.config.{AuthConfig, ServerConfig}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Who the server lets in, read from the `auth` settings once, when the listener is bound: each listed network and what
   * a request from it gets, the names a request may give as its `Host`, the page origins that may send changes besides
@@ -25,6 +26,7 @@ final case class AccessPolicy private (
 
   /** The policy in one line for the log: each network and what it gets, the proxy networks, and the names answered to.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary: String =
     val listed =
       if networks.isEmpty then "no network accepted"
@@ -57,10 +59,15 @@ final case class AccessPolicy private (
     * be reached from that no listed network covers, or one only authenticated networks cover while no key is set. Each
     * open address is reported once, by the first range it is reached from that is open ([[reachOf]]).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def exposure(binds: NonEmptyVector[ServerConfig.Host], keySet: Boolean): Either[Problems, Unit] =
     Problems.from(binds.toVector.flatMap(b => exposureOf(b, keySet).left.toOption)).toLeft(())
 
   /** Whether listening on `bind` leaves a network open ([[exposure]] of one address). */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def exposureOf(bind: ServerConfig.Host, keySet: Boolean): Either[Problem, Unit] =
     reachOf(bind).iterator
       .flatMap(range => uncovered(range, keySet).map(range -> _))
@@ -75,6 +82,7 @@ final case class AccessPolicy private (
     * owner's trust. Loopback is covered when a proxy network holds `127.0.0.1` or `::1`, as it is trusted when a
     * trusted network holds either.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def proxyNeeded(publicUrl: ServerConfig.PublicUrl): Either[Problem, Unit] =
     val https = Origin.parse(s"$publicUrl").exists(_.scheme == "https")
     val loopbackTrusted = LoopbackPeers.exists(a => requirementOf(a).contains(Requirement.Trusted))
@@ -159,6 +167,7 @@ object AccessPolicy:
     * address under a wildcard bound on its port) or takes that address's connections from the wildcard's (macOS lets
     * it). `0.0.0.0` and `::1` overlap too: the JDK binds `0.0.0.0` as the dual-stack `::`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def overlaps(binds: NonEmptyVector[ServerConfig.Host]): Vector[Problem] =
     val all = binds.toVector.zipWithIndex
     all.find((b, _) => isWildcard(b)).toVector.flatMap { (wildcard, at) =>
@@ -204,6 +213,7 @@ object AccessPolicy:
     val Schemes: Set[String] = Set("http", "https")
 
     /** The origin of an `Origin` header, a `Referer` or a URL setting; `None` for `null` and anything unparsable. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(text: String): Option[Origin] =
       Try(URI(text.trim)).toOption.flatMap { u =>
         for
@@ -224,6 +234,8 @@ object AccessPolicy:
     * address that leaves a network open ([[exposure]]), or an HTTPS public URL in front of a trusted loopback no proxy
     * network covers ([[proxyNeeded]]). A repeated address is checked once, at its first entry.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def forListener(auth: AuthConfig, server: ServerConfig): Either[Problems, AccessPolicy] =
     from(auth, server).flatMap { p =>
       val binds = once(server.host)
@@ -236,6 +248,7 @@ object AccessPolicy:
     * setting that is wrong. One network named in two lists contradicts itself: the later list is named, against the
     * earlier (trusted, authenticated, refused).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def from(auth: AuthConfig, server: ServerConfig): Either[Problems, AccessPolicy] =
     val lists = List(
       (TrustedKey, auth.trustedNetworks, Requirement.Trusted),
@@ -291,12 +304,15 @@ object AccessPolicy:
     val bad = read.collect { case Left(p) => p }.toVector
     if bad.nonEmpty then Left(bad) else Right(read.collect { case Right(n) => n })
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def malformed(key: String, raw: String): Problem =
     Problem.Config.Setting(Problem.SettingKey(key), Problem.Config.Fault.Malformed(Problem.Raw(raw)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unknown(key: String, raw: String): Problem =
     Problem.Config.Setting(Problem.SettingKey(key), Problem.Config.Fault.Unknown(Problem.Raw(raw)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bindText(bind: ServerConfig.Host): String = s"$bind".trim.stripPrefix("[").stripSuffix("]")
 
   private def isWildcard(bind: ServerConfig.Host): Boolean =

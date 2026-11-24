@@ -11,6 +11,7 @@ import scala.concurrent.duration.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Secret
 import com.histmersion.plugin.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The first-party secret vaults (docs/research-plugins.md §3.7): each a plugin, built into the server and DISABLED
   * until `histmersion.plugins.<id>.enabled = true`. Each one runs the vault's own CLI as a subprocess ([[Subprocess]])
@@ -33,6 +34,8 @@ object Vaults:
   private[vaults] def timeout(seconds: Int): FiniteDuration = seconds.max(1).seconds
 
   /** Pure: `<entry>#<field>`, the field defaulting to `dflt` (split at the LAST `#`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entryAndField(ref: Secret.Vault.ResolveRef, dflt: Field): (KeePassXcSession.Entry, Field) =
     ref.value.lastIndexOf('#') match
       case -1 => (KeePassXcSession.Entry(ref.value.trim), dflt)
@@ -52,10 +55,14 @@ object Vaults:
     s.fold[Either[Problems, Option[Secret.Resolved]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
 
   /** Pure: `~/x` against HOME. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[vaults] def expand(p: Path, home: Option[EnvVar.Value]): Path =
     home.filter(_ => p == Path("~") || p.value.startsWith("~/")).fold(p)(h => Path(h.value + p.value.drop(1)))
 
   /** Run the tool and turn its answer into the value or an error naming the reference — never the value. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[vaults] def answer(
       vault: Secret.Vault.Name,
       ref: Secret.Vault.ResolveRef,
@@ -78,9 +85,11 @@ object Vaults:
 
   extension (vault: Secret.Vault.Name)
     /** The vault failed: `failure`. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[vaults] def failed(failure: Problem.Plugin.Retrieval): Problem =
       Problem.Plugin.Vault(Problem.Plugin.Id(s"$vault"), failure)
 
     /** The vault said what no shared case names: `claim`, in its own words. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[vaults] def said(claim: Problem.Plugin.Claim, words: String): Problem =
       Problem.Plugin.Said(Problem.Plugin.Id(s"$vault"), claim, External.PluginSaid.of(words))

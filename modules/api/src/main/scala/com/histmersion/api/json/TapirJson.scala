@@ -9,10 +9,13 @@ import sttp.tapir.Schema
 import sttp.tapir.json.jsoniter.TapirJsonJsoniter
 
 import util.json.RawJson
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Tapir's jsoniter-scala bodies (`jsonBody[A]`), with a refused body said as [[RawJson.decode]] says it: where in the
   * body and why (`findings[0].quote: missing required field`), not jsoniter's byte offset.
   */
+@atBoundary(BoundaryKind.Json, "gives HTTP bodies their jsoniter codec, a refused body said by where and why")
 object TapirJson extends TapirJsonJsoniter:
   override def jsoniterCodec[T](using JsonValueCodec[T], Schema[T]): JsonCodec[T] =
     sttp.tapir.Codec.json { s =>

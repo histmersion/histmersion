@@ -3,6 +3,7 @@ package domain.automation
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Approval:
   type Id = Id.T
@@ -45,11 +46,14 @@ object Approval:
     type Blocking = Blocking.T
     object Blocking extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = parse(Wire((s).value))
 
   enum Mode(val wire: Mode.Wire) derives CanEqual:
@@ -60,6 +64,7 @@ object Approval:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Mode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   enum State(val wire: State.Wire) derives CanEqual:
@@ -72,6 +77,7 @@ object Approval:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe):
@@ -91,6 +97,7 @@ object Approval:
 
     val AutoResult = "applied automatically"
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[DecidedBy] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     def of(state: State.Wire, note: Option[Note], result: Option[Outcome]): Option[DecidedBy] =

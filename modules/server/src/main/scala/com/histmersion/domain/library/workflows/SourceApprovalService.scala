@@ -14,7 +14,9 @@ import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait SourceApprovalService:
   def record(
       jobId: Option[Job.Id],
@@ -44,6 +46,7 @@ object SourceApprovalService:
   final private class Implementation(db: Transactor, approvals: ApprovalService, clock: Clock)
       extends SourceApprovalService:
     private def now: Instant = Instant.now(clock)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def record(
         jobId: Option[Job.Id],
         kind: ApprovalKind,
@@ -86,8 +89,10 @@ object SourceApprovalService:
       extends SourceApprovalService:
     private def now: Instant = Instant.now(clock)
     private def rows: Vector[ApprovalRecord] = state.get.approvals
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val Open = ApprovalRecord.State(ApprovalState.Open.wire.value)
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def record(
         jobId: Option[Job.Id],
         kind: ApprovalKind,
@@ -135,6 +140,7 @@ object SourceApprovalService:
         )
         .flatMap(approvals.approval)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def proposedBefore(
         kind: ApprovalKind,
         citekey: Citekey,

@@ -21,12 +21,14 @@ import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
   * under the versions of what it reads, and answered 304 when the browser holds it. The sites and the events are the
   * catalogue's own layers; the pictures are `media`'s, a [[MapLayer]] the media domain draws. A mechanism over the
   * layers' SQL on one connection: it has no in-memory twin.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class MapTileService(
     db: Transactor,
     settings: () => UiMapTilesSettings,
@@ -41,8 +43,10 @@ final class MapTileService(
 ):
   import MapTiles.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val cache: TileCache = TileCache(() => ByteCount.assume(settings().cacheMb.value.toLong.max(1) * 1024 * 1024))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tile(q: TilesApi.TileQuery): Either[Problems, TilesApi.TileAnswer] =
     val s = settings()
     for
@@ -94,6 +98,7 @@ final class MapTileService(
         )
 
   /** The groups' versions, their change rows folded first where they have grown many. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def currentVersions(): Map[TileRepo.GroupName, UndatedBuild.Version] =
     db.readToCompletion(TileRepo.changeRows).foreach((g, n) => if n.value > CompactAbove then compact(g))
     db.readToCompletion(TileRepo.versions)
@@ -101,11 +106,13 @@ final class MapTileService(
   /** Fold group `g`'s change rows: an upkeep a tile read triggers, so a tile stays a read while a restore runs — then
     * it is skipped (the versions read the same either way) and a later tile read folds them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def compact(g: TileRepo.GroupName): Unit =
     gate.permit(db.write(TileRepo.compact(g))) match
       case Right(_) => ()
       case Left(_)  => scribe.debug(s"tile change rows of $g not folded now: a restore holds the database")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def window(f: Filter): Option[(SignedYear, SignedYear)] =
     f.period.map(p => (SignedYear(p.start.value.min(p.end.value)), SignedYear(p.start.value.max(p.end.value))))
 
@@ -113,6 +120,7 @@ final class MapTileService(
     * span shows by its findings counted once, as dated), each alone when the tile keeps that many, else counted by its
     * grid's squares together ([[UndatedCells]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sitesWithUndated(
       c: TileCoord,
       grid: TileGrid,
@@ -128,6 +136,7 @@ final class MapTileService(
       datedItems.map(_.modify(_.undated).setTo(TileCell.Undated(0))) ++ undatedSites.items(c, siteType, shownByFindings)
     else UndatedCells.merge(c.z, datedCounts, undatedCounts)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): VectorTileWriter.VectorTile =
     val points = layer match
       case TileLayer.Sites =>

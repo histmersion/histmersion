@@ -8,6 +8,8 @@ import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Classical-world geographic features from the Ancient World Mapping Center (AWMC).
   *
@@ -18,6 +20,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * (Pleiades ID). Geometry is MultiLineString (label placement lines), not polygons — but the Pleiades link lets us
   * match to sites with real geometry.
   */
+@atBoundary(BoundaryKind.Json, "reads the AWMC download into place records")
 object Awmc extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
   object Ordinal extends Newtype[Int, Pure]
@@ -34,6 +37,8 @@ object Awmc extends DownloadedGazetteer:
     Some(GazetteerRights.LicenceUrl("https://opendatacommons.org/licenses/odbl/1-0/"))
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
     RawJson
       .parse(text.value)
@@ -55,6 +60,7 @@ object Awmc extends DownloadedGazetteer:
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def readFeature(j: Json, ordinal: Ordinal): Either[Problem, GazetteerPlace] =
     j.asObject
       .toRight(Problem.Invalid.Missing(Problem.Field("object"), Vector(Problem.Field(s"feature #$ordinal"))))
@@ -93,6 +99,8 @@ object Awmc extends DownloadedGazetteer:
   /** The map's kind of an AWMC type: a mountain, plain, island or labelled feature is a `feature`, anything else a
     * `region`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def kindOf(pType: GazetteerPlace.Kind): GazetteerPlace.Kind = pType.value.toLowerCase match
     case "region"                        => GazetteerPlace.Kind("region")
     case "people, tribe" | "people"      => GazetteerPlace.Kind("region")

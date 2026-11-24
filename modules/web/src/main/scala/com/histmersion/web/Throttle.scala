@@ -5,6 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Runs `f` at most once per `intervalMs`: the first call runs at once, calls inside the window collapse into one
   * trailing run with the latest arguments. Unlike a debounce it keeps firing during a continuous drag, so live views
@@ -12,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *
   * `now` and `later` are injectable so the timing can be tested without a browser clock.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class Throttle[A](
     intervalMs: Throttle.IntervalMs,
     f: A => Unit,
@@ -20,10 +22,12 @@ final class Throttle[A](
       Throttle.TimerId(dom.window.setTimeout(() => g(), ms.value)),
     cancel: Throttle.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private var lastRun: ResearchOverview.EpochMillis = ResearchOverview.EpochMillis(Double.NegativeInfinity)
   private var pending: Option[A] = None
   private var timer: Throttle.TimerId = Throttle.TimerId(0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(a: A): Unit =
     val t = now()
     val wait = lastRun.value + intervalMs.value - t.value

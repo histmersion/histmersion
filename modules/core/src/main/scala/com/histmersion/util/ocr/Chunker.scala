@@ -2,6 +2,7 @@ package com.histmersion
 package util.ocr
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Splits a Markdown body into FTS chunks — pure, no I/O, no config lookups.
   *
@@ -21,12 +22,16 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Chunker:
 
   type ChunkMarkdown = ChunkMarkdown.T
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   object ChunkMarkdown extends Newtype[String, Pure]
   type ChunkMaxChars = ChunkMaxChars.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ChunkMaxChars extends Newtype[Int, Pure]
 
   private val Heading = """^(#{1,6})\s+(.*?)\s*#*\s*$""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chunk(markdown: ChunkMarkdown, maxChars: ChunkMaxChars): List[Chunk] =
     val max = math.max(1, maxChars.value)
     val text = Option(markdown.value).getOrElse("").replace("\u0000", "").replace("\r\n", "\n").replace('\r', '\n')
@@ -62,6 +67,7 @@ object Chunker:
       out.result()
 
   /** Section text → bodies of at most `max` chars, cut on blank lines, then on whitespace. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def split(section: String, max: Int): List[Chunk.Body] =
     val paragraphs = section.split("\n[ \t]*\n").toList.map(_.trim).filter(_.nonEmpty)
     val out = List.newBuilder[String]

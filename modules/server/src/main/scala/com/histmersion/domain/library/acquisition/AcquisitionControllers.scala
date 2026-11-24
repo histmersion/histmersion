@@ -74,6 +74,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.plugin.{FetchedFile, WorkKey}
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every acquisition & assessment operation (stream 2.6): discovery, a paper's references and follow-ups, its
   * assessment, the Retraction Watch mirror, an ingest by identifier, archive.org's import, the goals' candidates. REST
@@ -123,9 +124,12 @@ final class AcquisitionControllers(
 
   private def err(problems: Problems): Api.Error = Api.Error(problems)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def step(name: String, ok: Boolean, detail: String): Ingest.Step =
     Ingest.Step(Ingest.Step.Value(name), Ingest.Step.Ok(ok), Ingest.Step.Detail(detail))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def held(k: com.histmersion.api.library.Citekey): Boolean = Citekey.option(k.value).exists(sources.exists)
 
   /** The work `work` has no DOI, which `purpose` needs. */
@@ -158,6 +162,9 @@ final class AcquisitionControllers(
     )
 
   /** A goal's (or every goal's) candidates in one state (`new` by default), with the counts per state. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def candidates(
       goal: Option[com.histmersion.api.automation.Goal.Slug],
       state: Option[Candidates.State.Wire],
@@ -197,6 +204,7 @@ final class AcquisitionControllers(
       )
 
   /** Read a goal's watches from their watermarks and store what is new (no model). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sweepCandidates(r: CandidateSweep.Request)(using Creator.New): Either[Api.Error, CandidateSweep] =
     goalSlug(r.goal.value.trim).flatMap { g =>
       // a dry run runs the same sweep (it stores nothing): under the gate too
@@ -206,6 +214,7 @@ final class AcquisitionControllers(
       )
     }
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def markCandidates(m: CandidateMark): Either[Api.Error, CandidateMarked] =
     maintenance.guard(WriteGate.OperationName("candidates/mark")):
       Candidates.State
@@ -223,6 +232,10 @@ final class AcquisitionControllers(
   // ── discover ────────────────────────────────────────────────────────────────────────────────
 
   /** OpenAlex search, with each hit marked `inDb` so a queue-builder can skip what we already have. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def discover(
       q: AcquireApi.Query,
       since: Option[Year],
@@ -258,6 +271,8 @@ final class AcquisitionControllers(
           DiscoverResult(DiscoverResult.Query(query), DiscoverResult.Count(kept.size), kept)
         }
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def meta(id: AcquireApi.Identifier): Either[Api.Error, WorkRef] =
     Ident.parse(Ident.Written(id.value)).left.map(e => err(e)).flatMap {
       case Ident.Doi(doi) =>
@@ -280,6 +295,8 @@ final class AcquisitionControllers(
           }
     }
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def wikirefs(url: com.histmersion.api.library.Title): Either[Api.Error, WikirefsResult] =
     wiki.refs(WikiClient.ArticleUrl(url.value)).left.map(e => err(e)).map { r =>
       val index = sources.doiIndex
@@ -290,6 +307,8 @@ final class AcquisitionControllers(
   /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller marking a whole page
     * reads the DOI index once.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def mark(w: WorkRef, index: Map[Doi, Citekey]): WorkRef =
     val byDoi =
       w.doi.flatMap(d => Doi.option(d.value)).flatMap(index.get).map(c => com.histmersion.api.library.Citekey(c.value))
@@ -303,6 +322,7 @@ final class AcquisitionControllers(
   /** The generated key `generated`, unless no record has it and one has the pre-#878 key of the same metadata — then
     * that one, so a re-import lands on the existing record, not a duplicate.
     */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def stored(
       generated: com.histmersion.api.library.Citekey,
       authors: List[com.histmersion.api.library.AuthorName],
@@ -318,6 +338,9 @@ final class AcquisitionControllers(
   /** The deposited reference list, with each entry resolved to a stored source where possible. `apply` writes those as
     * `references` edges out of the target.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def refs(req: RefsRequest)(using Creator.New): Either[Api.Error, RefsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
@@ -359,6 +382,9 @@ final class AcquisitionControllers(
     * unique citekey PREFIX — the same widening `resolveEdges` does for short edge targets (`heggarty2023` →
     * `heggarty2023_language`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def resolveRefs(rows: List[RefRow]): List[RefRow] =
     val index = sources.doiIndex
     val citekeys = sources.citekeys
@@ -381,6 +407,11 @@ final class AcquisitionControllers(
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def assessNow(req: AssessRequest, store: Boolean = true)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, Assessment] =
@@ -453,6 +484,7 @@ final class AcquisitionControllers(
 
   /** The notices, verbatim, so a later reader sees WHY a verdict was reached without asking Crossref again.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def noticesJson(rw: List[RetractionNotice], up: List[UpdateNotice]): AssessmentRecord.NoticesJson =
     AssessmentRecord.NoticesJson(Json.obj("retractionWatch" -> rw.asJson, "crossrefUpdates" -> up.asJson).noSpaces)
 
@@ -464,6 +496,8 @@ final class AcquisitionControllers(
     * [[retractionsStatus]]. The two fields of mutable state below are the price of that: a flag so two callers cannot
     * run it twice, and the last error so a failed refresh is visible instead of silent.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def updateRetractionsNow(): Either[Problems, RetractionsUpdate] =
     if !rwRunning.compareAndSet(false, true) then Right(retractionsStatus)
     else
@@ -492,6 +526,7 @@ final class AcquisitionControllers(
   /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last failure if there was
     * one.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def retractionsStatus: RetractionsUpdate =
     RetractionsUpdate(
       RetractionsUpdate.Rows(assessments.retractionCount.value),
@@ -502,6 +537,11 @@ final class AcquisitionControllers(
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def followupsNow(
       req: FollowupsRequest
   )(using WritePermit)(using Creator.New): Either[Api.Error, FollowupsResult] =
@@ -583,6 +623,9 @@ final class AcquisitionControllers(
     * Every step is reported, including the ones that failed, because "no OA copy" is a normal outcome that the user
     * answers with a manual drop-in.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ingestNow(req: Ingest.Request, path: IngestPath, by: Creator.New)(using
       WritePermit
   ): Either[Api.Error, Ingest.Report] =
@@ -637,6 +680,7 @@ final class AcquisitionControllers(
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def acquireOnce(
       doi: Doi,
       text: Queue.QueueItem.Text,
@@ -680,6 +724,10 @@ final class AcquisitionControllers(
     (id, added)
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ingestWith(
       doi: Option[Doi],
       arxiv: Option[ArxivId],
@@ -896,6 +944,9 @@ final class AcquisitionControllers(
     * ones without closing them. With no file there is no job, and an item asking for the work stays open — the record
     * alone does not fulfil it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def acquireSteps(
       doi: Option[Doi],
       title: Title,
@@ -918,6 +969,7 @@ final class AcquisitionControllers(
       }
 
   /** arXiv mints a DataCite DOI for every submission, which is how OpenAlex indexes preprints. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def arxivDoi(id: ArxivId): Doi =
     Doi.applyUnsafe(s"10.48550/arxiv.${id.value}")
 
@@ -926,6 +978,10 @@ final class AcquisitionControllers(
   /** Import `file` of the PUBLIC archive.org item `item` (the library's archive.org collection described it, refused a
     * lending-only one and picked the file): the download is the chain's `archive-org` fetcher.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def archiveImportNow(
       item: ArchiveItem,
       file: ArchiveFile,
@@ -1006,6 +1062,8 @@ final class AcquisitionControllers(
     }
 
   /** The fetched copy in the acquisition spool; a failure to write it is a step of the report. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def spoolCopy(
       citekey: Citekey,
       f: FetchedFile,
@@ -1045,6 +1103,7 @@ final class AcquisitionControllers(
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
     CreatorControllers(req.createdBy, req.via).overRest.left.map(Api.Error(_)).flatMap(ingestAs(req, _))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ingestAs(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
       ingestNow(
@@ -1078,6 +1137,7 @@ final class AcquisitionControllers(
   /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's
     * settings or key change, which makes the acquisition list's items due for a re-check again.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation(generation)
 
   def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest)(using
@@ -1095,6 +1155,7 @@ final class AcquisitionControllers(
   /** Resolve `<doi|arxiv:id|citekey>` to both a DOI (for the upstreams) and a stored citekey (for the writes),
     * whichever of the two the caller happened to give us.
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def target(id: String): Either[Api.Error, Target] =
     Ident.parse(Ident.Written(id)).left.map(e => err(e)).map {
       case Ident.Doi(doi) =>
@@ -1131,6 +1192,7 @@ object AcquisitionControllers:
   /** What original an existing source already has, in words — a converted body, else a stored file (`sources.sha256`) —
     * or None for a metadata-only source (or no source at all). `body` is None when the source does not exist.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def originalOf(body: Option[Option[Source.OcrMarkdown]], sha256: Option[Sha256]): Option[String] =
     body.flatMap { b =>
       if b.exists(_.value.trim.nonEmpty) then Some("a converted body")

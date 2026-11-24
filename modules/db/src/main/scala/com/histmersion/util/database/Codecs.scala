@@ -1,11 +1,15 @@
 package com.histmersion
 package util.database
 import com.augustnagro.magnum.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `DbCodec[List[String]]` for Postgres `text[]` columns — THE way arrays cross the JDBC boundary. Reads via
   * `java.sql.Array`, writes via `createArrayOf("text", ...)`: select the column as-is and bind a list as
   * `$list::text[]`. NULL (a LEFT JOIN miss) reads as `Nil`.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@atBoundary(BoundaryKind.Sql, "reads and writes text[] columns")
 given DbCodec[List[String]] = new DbCodec[List[String]]:
   val cols: IArray[Int] = IArray(java.sql.Types.ARRAY)
   def readSingle(rs: java.sql.ResultSet, pos: Int): List[String] = readSingleOption(rs, pos).getOrElse(Nil)

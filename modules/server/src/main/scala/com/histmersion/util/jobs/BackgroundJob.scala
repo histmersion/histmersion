@@ -18,6 +18,7 @@ import scala.annotation.{nowarn, tailrec}
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at
@@ -68,6 +69,9 @@ object BackgroundJob:
     private[BackgroundJob] def free(): Unit = held.set(None)
 
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def busy(what: Work, current: Option[Work], code: Option[Api.Error.Code] = None): Api.Error =
     Api.Error(
       Problem.Unclassified(
@@ -85,6 +89,7 @@ object BackgroundJob:
   /** How a run of a job's body ended, for its row: done or failed with its outcome, or stopped by a person (a job whose
     * body ended by itself after a stop was asked ends as it ended). Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def ending(out: Outcome, thrown: Option[JobStop], asked: Option[JobStop]): Either[JobStop, Outcome] =
     thrown match
       case Some(stop)         => Left(stop)
@@ -155,12 +160,14 @@ object BackgroundJob:
       body: (JobInfo, JobInfo.Progress => Unit) => WritePermit ?=> Outcome
   ):
     /** The job row's id, as the database keeps it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val id: Job.Id = Job.Id.assume(job.id.value)
     private val db = Transactor(ds)
 
     /** The body on its own daemon thread, its row moved from `from` to running and on to how it ended. The slot is held
       * by the caller and freed when the run ends.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def run(from: JobState): Unit =
       slot.note(Work(s"job ${job.id}"))
       // the body holds the unit's permit (the detached thread's), so a restore fences it off
@@ -194,6 +201,7 @@ object BackgroundJob:
       workers.detached(Quiescent.Name(s"$kind job ${job.id}"))(() => work())
 
     /** The row did not move to `running`: the body is not run, and the log says what the row is instead. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def notStarted(from: JobState): Unit =
       val now =
         try db.read(JobRepo.get(id)).map(_.status)
@@ -203,6 +211,8 @@ object BackgroundJob:
       )
 
     /** Run the body and record how it ended. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def ran(last: AtomicReference[Option[JobInfo.Progress]], report: JobInfo.Progress => Unit)(using
         WritePermit
     ): Unit =
@@ -268,6 +278,7 @@ object BackgroundJob:
       * database the job wrote to) is not tried again, since the row it would write is gone; either is logged. When
       * every try fails, the failure is logged with the outcome it could not record.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def recordEnding(as: JobState)(write: => Option[JobState]): Unit =
       @tailrec def attempt(left: Int): Unit =
         val tried =

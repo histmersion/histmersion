@@ -8,7 +8,12 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventSummary(
     id: Event.Id,
     label: EventSummary.Label,
@@ -45,6 +50,7 @@ object EventSummary:
   type Scale = Scale.T
   object Scale extends Newtype[String, Pure]
   type ScaleStated = ScaleStated.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ScaleStated extends Newtype[Boolean, Pure]
   type Tier = Tier.T
   object Tier extends Newtype[String, Pure]

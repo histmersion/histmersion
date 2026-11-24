@@ -10,11 +10,15 @@ import org.ekrich.config.ConfigFactory
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SettingsReaderSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(s: String) = SettingKey.parse(SettingKey.ParseRaw(s)).toOption.get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readings(text: String, env: Map[String, String] = Map.empty, prefix: Option[String] = None) =
     val d = Files.createTempDirectory("histmersion-settings-read")
     val f = d.resolve("histmersion.conf")

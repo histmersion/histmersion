@@ -6,6 +6,7 @@ import com.histmersion.domain.catalogue.events.HeldEvent
 import com.histmersion.domain.catalogue.periods.StoredPeriod
 import com.histmersion.domain.catalogue.places.{HeldOverride, HeldPlace, HeldSite}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The catalogue's rows held in memory, one record the `InMemory` services of its features share (each reads and
   * changes its own part, through lenses): the named periods and the bundled seeds' versions; the attestations and the
@@ -14,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * links were computed; the Wikidata sites whose type is refined; the gazetteer's places, the old ids of renamed and
   * merged ones, the kinds and periods a person set and the ids a person removed.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class CatalogueState(
     periods: Vector[StoredPeriod],
     seedVersions: Map[CatalogueState.SeedVersionsKey, CatalogueState.SeedVersionsValue],

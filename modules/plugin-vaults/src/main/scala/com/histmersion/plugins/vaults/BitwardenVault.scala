@@ -10,6 +10,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class BitwardenVault(
     val name: Secret.Vault.Name,
@@ -19,6 +20,7 @@ final class BitwardenVault(
     timeout: FiniteDuration
 )(using processes: Processes)
     extends Secret.Vault:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(ref: Secret.Vault.ResolveRef): Either[Problems, Secret.Resolved] =
     val (item, f) = Vaults.entryAndField(ref, field)
     for
@@ -33,6 +35,7 @@ final class BitwardenVault(
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(i.value))
     yield v
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def classify(item: String)(err: String): Option[Problem] =
     if err.contains("vault is locked") || err.contains("not logged in") then
       Some(

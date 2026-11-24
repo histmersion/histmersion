@@ -2,6 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a gazetteer dataset says about reuse, as its provider states it — never judged by the plugin.
   *
@@ -24,4 +25,5 @@ object GazetteerRights:
   type Credit = Credit.T
   object Credit extends Newtype[String, Pure]
   type LicenceUrl = LicenceUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenceUrl extends Newtype[String, Pure]

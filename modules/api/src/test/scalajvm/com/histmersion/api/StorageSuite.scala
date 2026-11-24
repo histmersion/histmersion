@@ -9,12 +9,16 @@ import com.histmersion.api.backup.BackupsUsage
 import com.histmersion.api.instance.{About, AboutMarkdown, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
 import com.histmersion.api.maintenance.{Storage, StorageMarkdown}
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StorageSuite extends munit.FunSuite:
 
   private val GB = 1000L * 1000 * 1000
   private val vol = Storage.Volume.Id("/Volumes/Data (/dev/disk3s5)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val entryVolume = Storage.Entry.Volume(vol.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def e(
       key: Storage.Entry.Key,
       path: Option[Storage.Entry.Path],
@@ -32,6 +36,7 @@ class StorageSuite extends munit.FunSuite:
       shrink = shrink
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shrinkOf(key: Storage.Entry.Key, keep: Storage.Advice.Keep): Option[Storage.Entry.Shrink] =
     Storage.Advice.shrink(key, keep).map(h => Storage.Entry.Shrink(h.value))
 
@@ -234,6 +239,7 @@ class StorageSuite extends munit.FunSuite:
     assertEquals(merged.volumes.map(_.id), List(vol, Storage.Volume.Id("/usb")))
     assertEquals(Storage.addLocal(server, local.take(1), Nil), server)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val report = Storage.Report(
     measuredAt = Some(Storage.Report.MeasuredAt("2026-10-19T10:00:00Z")),
     tookMillis = (Some(420)).map(Storage.Report.DurationMillis.apply),

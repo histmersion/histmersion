@@ -10,6 +10,8 @@ import com.histmersion.api.library.Source
 import com.histmersion.util.console.Console
 import com.histmersion.api.Api
 import com.histmersion.config.CalibreCliConfig
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
   *
@@ -18,11 +20,13 @@ import com.histmersion.config.CalibreCliConfig
   * Calibre id is printed so a person can decide, after a read-only look in the library says whether the entry is still
   * there.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion delete` arguments")
 object DeleteCmd:
   final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json) extends Cli.Command:
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   object Args:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = api.library.Citekey
     val Citekey: api.library.Citekey.type = api.library.Citekey
     export Api.Apply
@@ -34,6 +38,10 @@ object DeleteCmd:
   /** The linked entry as the host's library has it (#1776), read-only: the record's `calibreId` may name an entry a
     * person has deleted since. Not a number, or no library: unchecked, with why.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def calibreCheck(
       calibreId: Source.CalibreId,
       libraryExists: => Boolean,
@@ -55,6 +63,9 @@ object DeleteCmd:
 
   /** Carries out Args commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(a: Args): Either[Cli.Error, Unit] =
       c.deleteSource(a.citekey, a.apply).flatMap { d =>
         lazy val check = d.calibreId.map { id =>

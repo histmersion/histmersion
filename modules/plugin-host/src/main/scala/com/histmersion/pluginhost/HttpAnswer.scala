@@ -8,6 +8,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One HTTP answer: the status, the headers (names in lower case, first value) and the body. */
 final case class HttpAnswer(
@@ -15,8 +16,10 @@ final case class HttpAnswer(
     headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue],
     body: HttpAnswer.Body
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def header(name: CoreQuota.HeaderName): Option[CoreQuota.HeaderValue] =
     headers.get(CoreQuota.HeaderName(name.value.toLowerCase(Locale.ROOT)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text: HttpAnswer.Text = HttpAnswer.Text(new String(body.value, UTF_8))
 
 object HttpAnswer:

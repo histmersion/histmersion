@@ -14,17 +14,22 @@ import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
   * (`EventRepo.patch` records them, `EventImportRepo.save` reconciles and applies them). Everything here runs inside
   * the caller's transaction.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the correction tables and their row codecs")
 private[events] object CorrectionRepo:
   private val Cols =
     sql"c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, c.upstream_now::text, c.created_at::text, c.checked_at::text"
 
   /** The corrections of one target, by field. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def of(kind: Correction.TargetKind, id: Correction.TargetId)(using DbCon): List[CorrectionRow] =
     sql"""SELECT $Cols FROM corrections c WHERE c.target_kind = $kind AND c.target_id = $id
           ORDER BY c.field""".query[CorrectionRow].run().toList
@@ -33,6 +38,7 @@ private[events] object CorrectionRepo:
     * correction is needed (one there goes); otherwise it is recorded, or updated — the upstream value then is what
     * upstream says NOW, and the status starts `active` again.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def record(
       kind: Correction.TargetKind,
       id: Correction.TargetId,
@@ -60,6 +66,8 @@ private[events] object CorrectionRepo:
     * conflicts ([[Corrections.reconcile]]) and records `now`. Answers the values the target must keep (field → the
     * person's value) and the outcomes.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def reconcile(kind: Correction.TargetKind, id: Correction.TargetId, now: Map[Correction.Field, Json])(using
       DbCon
   ): (Map[Correction.Field, Json], List[Corrections.Outcome]) =
@@ -83,6 +91,8 @@ private[events] object CorrectionRepo:
   /** `histmersion events corrections`: the corrections of `kind` (one target's with `id`), the ones in `status`
     * (default: all but the retired), conflicts first, with each event's label.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(
       kind: Correction.TargetKind,
       id: Option[Correction.TargetId],

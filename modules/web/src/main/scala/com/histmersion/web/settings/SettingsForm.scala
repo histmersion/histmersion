@@ -43,6 +43,9 @@ object SettingsForm:
     type Fallback = Fallback.T
     object Fallback extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def apply(title: ApplyTitle, intro: Option[Intro], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
     val draft = Draft()
     sectionTag(
@@ -77,6 +80,8 @@ object SettingsForm:
     )
 
   /** Save / Undo for a form's draft, and what the save did. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def saveBar(draft: Draft, consent: () => Boolean = () => false): HtmlElement =
     div(
       cls := "settings-save",

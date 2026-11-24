@@ -17,11 +17,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.MergeJobState
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `jobs` rows of merge applies (kind `merge-apply`): one is `running` from its start (it runs on its own thread,
   * never queued), with its bundle and its plan; it ends `done` with its report or `failed` with why. A restart fails an
   * unfinished one as `interrupted`, like every other job.
   */
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 trait MergeApplyRuns:
   /** Is a merge apply running? One at a time. */
   def running: Boolean
@@ -41,8 +43,10 @@ object MergeApplyRuns:
 
   final private class Implementation(ds: DataSource) extends MergeApplyRuns:
     def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit)(using Creator.New): Job.Id =
       Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit =
       if !Transactor(ds).write(JobRepo.finishMergeApply(id, outcome)) then
         scribe.warn(s"merge apply $id ended, but its row was no longer running (a restart failed it): left as it is")
@@ -54,6 +58,7 @@ object MergeApplyRuns:
   /** The rows in memory, keyed by id; ids are numbered in start order. */
   final class InMemory(state: AtomicReference[Map[Job.Id, Run]] = AtomicReference(Map.empty[Job.Id, Run]))
       extends MergeApplyRuns:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def idOf(n: Int): Job.Id = Job.Id.assume(UUID(0L, n.toLong).toString)
 
     def running: Boolean = state.get().values.exists(_.outcome.isEmpty)
@@ -67,6 +72,7 @@ object MergeApplyRuns:
         m.get(id).filter(_.outcome.isEmpty).fold(m)(r => m + (id -> r.modify(_.outcome).setTo(Some(outcome))))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def status(id: Job.Id): Option[MergeApplyJob] =
       state.get().get(id).map { r =>
         val job = MergeApplyJob.Job(id.value)

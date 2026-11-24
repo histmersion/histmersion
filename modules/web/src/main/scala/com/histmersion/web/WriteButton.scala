@@ -4,11 +4,13 @@ package web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A button that starts a WRITE. While the server wants an API key and none is held it is drawn locked and opens the
   * key window instead ([[Auth]]) — it asks for the key rather than failing.
   */
 object WriteButton:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def apply(icon: Icon, label: String, tip: String, action: () => Unit): HtmlElement =
     button(
       typ := "button",

@@ -18,10 +18,14 @@ import com.histmersion.domain.AuthorName
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the candidate tables and their row codecs")
 private[acquisition] object CandidateRepo:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
@@ -40,6 +44,7 @@ private[acquisition] object CandidateRepo:
   ) derives DbCodec
 
   /** A goal's watches as they were last read. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def watches(goal: Goal.Slug)(using DbCon): List[CandidateWatch] =
     sql"""SELECT goal, kind, subject, index_name, to_char(watermark, 'YYYY-MM-DD'),
                    to_char(last_run AT TIME ZONE 'UTC', $ts), last_error, last_found
@@ -63,6 +68,7 @@ private[acquisition] object CandidateRepo:
   /** A watch read: its new watermark (on success; a failed read keeps the old one, so nothing is skipped), what it
     * found, or why it failed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def recordWatch(
       w: CandidateWatch,
       watermark: Option[CandidateWatch.Watermark],
@@ -80,6 +86,7 @@ private[acquisition] object CandidateRepo:
 
   /** Store a candidate: a new one (`true`), or one found again — every watch that found it kept, its state as it was.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def upsert(c: Source.Candidate)(using DbCon)(using creator: Creator.New): Boolean =
     val existed =
       sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
@@ -96,6 +103,7 @@ private[acquisition] object CandidateRepo:
     !existed
 
   /** The DOIs a goal has candidates for already (any state): a sweep does not count them as new. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def dois(goal: Goal.Slug)(using DbCon): Set[Doi] =
     sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[Doi].run().toSet
 
@@ -117,6 +125,8 @@ private[acquisition] object CandidateRepo:
   ) derives DbCodec
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def list(goal: Option[Goal.Slug], state: Source.Candidate.State, limit: Limit, offset: Offset)(using
       DbCon
   ): List[Source.Candidate] =
@@ -147,6 +157,7 @@ private[acquisition] object CandidateRepo:
       )
 
   /** How many candidates there are in each state (of one goal, or of all). */
+  @tolerated(LintRule.TotalOrder, "GROUP BY state: one row per state")
   def counts(goal: Option[Goal.Slug])(using DbCon): List[CandidateCount] =
     sql"""SELECT state, count(*)::int FROM source_candidates WHERE ($goal::text IS NULL OR goal = $goal)
             GROUP BY state ORDER BY CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END, state"""
@@ -163,6 +174,7 @@ private[acquisition] object CandidateRepo:
       RowCount(sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run())
 
   /** Set the state of a goal's candidates with these DOIs (a ranking's picks). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def markDois(goal: Goal.Slug, dois: List[Doi], state: Source.Candidate.State)(using DbCon): RowCount =
     if dois.isEmpty then RowCount(0)
     else

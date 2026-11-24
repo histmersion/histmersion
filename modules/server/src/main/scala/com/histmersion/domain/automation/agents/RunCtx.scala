@@ -30,11 +30,14 @@ import com.histmersion.domain.automation.approvals.ApprovalQuery
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a running pipeline sees: its run, and the two kinds of step. Every step is checkpointed in `agent_steps`;
   * before running step `n` the context looks for a finished attempt of `n` and, if there is one, REPLAYS its output
   * instead — so a resumed run never repeats a completed step, and never pays for an LLM answer twice.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class RunCtx private[automation] (
     val run: RunInfo,
     engine: Engine,
@@ -58,8 +61,11 @@ final class RunCtx private[automation] (
   private val cfg = engine.cfg
 
   /** This run's id, read back from the store it was saved in. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val runId: Run.Id = Run.Id.assume(run.id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val jobId: Job.Id = Job.Id.assume(run.id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val agentJobKind: Job.Kind = Job.Kind.assume(JobKind)
 
   /** The next step's number. A `var` because the pipeline is straight-line code calling steps in order; the counter IS
@@ -67,6 +73,7 @@ final class RunCtx private[automation] (
     */
   private var nextSeq = 0
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claimSeq(): AgentRepo.StepRecord.Seq = { nextSeq += 1; AgentRepo.StepRecord.Seq(nextSeq) }
 
   /** The next `n` step numbers, for steps that then run IN PARALLEL ([[llmAt]] inside one [[RunCtx.parallel]]):
@@ -93,10 +100,12 @@ final class RunCtx private[automation] (
       case Some(h) => Left(h)
       case None    => Right(results.collect { case Right(a) => a }.toList)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def warn(w: String)(using WritePermit): Unit =
     engine.agents.jobRuns.warn(agentJobKind, runId, JobRepo.WarningText(w.take(500)))
 
   /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dryRun: Boolean = run.dryRun.value
 
   /** The writes this run's current step skipped (a dry run), recorded with the step when it ends. A concurrent queue: a
@@ -113,18 +122,21 @@ final class RunCtx private[automation] (
     * the result. `perform` holds the run's unit permit (the engine's worker: a restore pauses the run and fences it
     * off).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def write[A](what: String, payload: => Json)(perform: WritePermit ?=> A)(simulated: => A): A =
     if !dryRun then engine.agents.workers.unit(perform)
     else
       skipped.add(WouldWrite(WouldWrite.What(what), WouldWrite.Payload(payload.noSpaces)))
       simulated
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def progress(p: String)(using WritePermit): Unit =
     engine.agents.jobRuns.progress(agentJobKind, runId, JobRow.Progress(p))
 
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline changed under a paused
     * run, which is refused rather than misread.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def replay[O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name
@@ -156,6 +168,8 @@ final class RunCtx private[automation] (
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at
     * most once per run.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[Problems, O])(using
       WritePermit
   ): Either[Halt, O] =
@@ -232,6 +246,7 @@ final class RunCtx private[automation] (
     * opens none: the proposal is recorded on the step as not written, and the run goes on as if it were approved, so
     * the steps after it run too (and skip their writes).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approval(name: AgentRepo.StepRecord.Name, kind: ApprovalKind, subject: ApprovalQuery.Subject, mode: ApprovalMode)(
       payload: => Either[Problems, String]
   )(using WritePermit)(using Creator.New): Either[Halt, Decided] =
@@ -345,6 +360,7 @@ final class RunCtx private[automation] (
     * appends to its USER message — never the system prompt: they are fenced, and subordinate to the record. Empty when
     * the run has none.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def notes: String = Prompt.notes(run.params.noteList.map(_.value))
 
   def llm[A, O: JsonValueCodec](
@@ -378,6 +394,7 @@ final class RunCtx private[automation] (
     * opencode's events), so an answer that says it looked something up can be held to a call that did (#1840). A retry
     * amends its answer without repeating its lookups, so the earlier attempts' calls count.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def llmAtSeen[A, O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
@@ -425,6 +442,7 @@ final class RunCtx private[automation] (
   /** The model for the next call of `role`: the first of its chain with allowance left ([[ModelPicker.pick]]). None
     * left = the run pauses until the earliest window frees.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pickModel(name: AgentRepo.StepRecord.Name, role: Role)(using WritePermit): Either[Halt, Picked] =
     engine.agents.picker.pick(
       role,
@@ -447,6 +465,8 @@ final class RunCtx private[automation] (
           .foreach(why => warn(s"${role.wire}: passed over $why; used ${p.client.model.wire}"))
         Right(p)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def attempts[A, O: JsonValueCodec](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
@@ -691,6 +711,7 @@ final class RunCtx private[automation] (
     go(before + 1, before, Nil, None, Nil)
 
   /** An exception a step's own code threw, logged under a new problem id ([[ProblemLog.unexpected]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unexpected(e: Exception): Problem = ProblemLog.unexpected(e, Problem.Where(s"agent run ${run.id}"))
 
   /** What the provider said about an attempt that came back: the model that served it, the input of its first model
@@ -707,6 +728,7 @@ final class RunCtx private[automation] (
   /** One attempt of an LLM step: done when it carries no `error` (its `output` is then the checkpoint), failed
     * otherwise (an `output` then is the rejected answer). `served` = what the provider reported.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(
       seq: AgentRepo.StepRecord.Seq,
       attempt: Int,

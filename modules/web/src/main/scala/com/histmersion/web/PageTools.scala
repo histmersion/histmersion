@@ -3,6 +3,7 @@ package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The tools of a source's or an article's own page: the width of its text and the theme, at the top of the page — also
   * where the top bar has no room for its theme button. The width is kept in the browser's storage (and read back with
@@ -14,17 +15,21 @@ object PageTools:
 
   private val width = Var(PageWidth.Reading)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def apply(w: PageWidth): Unit =
     width.set(w)
     Option(dom.document.body).foreach(b =>
       if w == PageWidth.Wide then b.classList.add(WideClass) else b.classList.remove(WideClass)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def choose(w: PageWidth): Unit =
     if w == PageWidth.Reading then Store.Browser.remove(StorageKey) else Store.Browser.put(StorageKey, w.wire.value)
     apply(w)
 
   /** Read the stored width, apply it, and put the tools above the page's text. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(): Unit =
     apply(PageWidth.fromWire(PageWidth.Wire(Store.Browser.get(StorageKey).orNull)))
     Option(dom.document.getElementById("page-content")).foreach { content =>
@@ -33,6 +38,7 @@ object PageTools:
       val _ = render(holder, element)
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def element: HtmlElement =
     div(
       cls := "page-tools toolbar",

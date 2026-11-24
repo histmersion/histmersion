@@ -31,6 +31,7 @@ import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.ShapeStyle
 import com.histmersion.web.ui.ThemeTokens
 import com.histmersion.api.Geo
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Gazetteer place picker for the filter bar. Ported from places.js (241 lines).
   *
@@ -43,15 +44,19 @@ object PlacesInput:
   val ChipTextSignalId: Pages.PlaceId.type = Pages.PlaceId
 
   /** Cached label/kind/contested for gazetteer ids. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private case class KnownPlace(label: UiLabels.Text, kind: KnownPlace.Kind, contested: Boolean)
 
   object KnownPlace:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def knownOf(label: String, kind: String, contested: Boolean): KnownPlace =
     KnownPlace(UiLabels.Text(label), KnownPlace.Kind(kind), contested)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val known = BoundedCache[PlaceId, KnownPlace](BoundedCache.MaxEntries(Layout.placeLabelCacheSize.value))
 
   /** The labels' figures, for [[Diagnostics]]. */
@@ -60,12 +65,14 @@ object PlacesInput:
   /** Moves whenever `known` learns a place, so every chip that names one re-reads its label. */
   private val knownVersion = Var(0)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def learn(id: PlaceId, k: KnownPlace): Unit =
     if !known.get(id).contains(k) then
       known.put(id, k)
       knownVersion.update(_ + 1)
 
   /** Suggestion items: either a gazetteer place or the "text:" fallback row. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private case class SuggestItem(
       id: String,
       label: String,
@@ -89,6 +96,7 @@ object PlacesInput:
   private val menuHidden = Var(true)
 
   // The chip list renders from UiState directly
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val chipsSignal: Signal[List[(String, String, Boolean, Boolean)]] =
     UiState.placeIds.signal.combineWith(UiState.places.signal, knownVersion.signal).map { (ids, texts, _) =>
       val gazChips = ids.map { raw =>
@@ -117,10 +125,14 @@ object PlacesInput:
   private def ids(): List[PlaceId] = UiState.placeIds.now().map(PlaceId(_))
   private def texts(): List[String] = UiState.places.now()
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fetchPlace(id: PlaceId, year: Option[Years.Astronomical]): Future[PlaceDetail] =
     ApiClient.place(Place.Id(id.value), year.map(a => Api.AggregateQuery.AsOf(a.value)))
 
   /** The year the gazetteer is read at: the middle of the selected span. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def asOf(): Option[Years.Astronomical] =
     val f = UiState.from.now()
     val t = UiState.to.now()
@@ -142,9 +154,12 @@ object PlacesInput:
     items = Nil
     activeIdx = -1
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def setIds(next: List[PlaceId]): Unit =
     UiState.set(UiState.placeIds := next.map(_.value))()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def addId(id: PlaceId): Unit =
     if id.value.nonEmpty && !ids().contains(id) then setIds(ids() :+ id)
     close()
@@ -162,12 +177,16 @@ object PlacesInput:
   private def removeTextAt(i: Int): Unit =
     UiState.set(UiState.places := texts().zipWithIndex.collect { case (v, j) if j != i => v })()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def pick(it: SuggestItem): Unit =
     if it.textFallback then addText(it.label)
     else addId(PlaceId(it.id))
 
   // ── suggestions ────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def suggest(): Unit =
     if inputEl == null then ()
     else
@@ -214,6 +233,7 @@ object PlacesInput:
           case Failure(_)    => show(Nil)
         }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def schedule(): Unit =
     if timer != 0 then dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => suggest(), uiConfig.debounce.suggestMs.value.toDouble).toInt
@@ -223,6 +243,7 @@ object PlacesInput:
   /** The chosen places' shapes (`.hd-place-pick`'s colour; a disputed extent dashed and fainter), and the hovered
     * suggestion's (`.hd-place-preview`, dotted). A point is drawn as a site's dot.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pickSet: ShapeSet = TheMap.surface.shapes(
     MapSurface.ShapesId("place-pick"),
     ShapeStyle(
@@ -236,6 +257,7 @@ object PlacesInput:
       interactive = ShapeStyle.Interactive(true)
     )
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def previewSet: ShapeSet = TheMap.surface.shapes(
     MapSurface.ShapesId("place-preview"),
     ShapeStyle(
@@ -250,6 +272,8 @@ object PlacesInput:
   )
 
   /** A place's geometry on the map: its shape (a point-only region or a people: its name instead). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def drawPlace(
       id: PlaceId,
       d: PlaceDetail,
@@ -282,6 +306,8 @@ object PlacesInput:
     names.clear()
 
   /** Draw every selected place's shape. Re-fetched when the selection or span changed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def draw(fit: Boolean): Unit =
     if !layer then ()
     else
@@ -313,6 +339,9 @@ object PlacesInput:
 
   // ── public API ─────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def init(config: UiConfig): HtmlElement =
     uiConfig = config
     Preview.placeAsOf = () => asOf() // a place chip's card reads the gazetteer at the map's year
@@ -492,6 +521,9 @@ object PlacesInput:
 
   /** Draw ONE place's shape as a TRANSIENT overlay and fit the map to it. Toggle behavior: same id clears it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def preview(id: PlaceId, asOfYear: Option[Years.Astronomical]): Unit =
     if !layer then ()
     else
@@ -525,6 +557,10 @@ object PlacesInput:
   private var chosenOnMap = false
 
   /** Remember what a gazetteer id is called, so its chip reads as a name the moment it appears. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def remember(id: PlaceId, label: UiLabels.Text, kind: KnownPlace.Kind, contested: Boolean = false): Unit =
     if label.value.trim.nonEmpty then learn(id, KnownPlace(label, kind, contested))
 
@@ -532,6 +568,9 @@ object PlacesInput:
     * the lists narrow to it and its descendants and its chip appears — or, when it already is chosen, it is unchosen.
     * Returns whether it is chosen now.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def toggleFromMap(id: PlaceId, label: UiLabels.Text, kind: PlaceHover.PlaceKind): Boolean =
     remember(id, label, KnownPlace.Kind(kind.value), known.get(id).exists(_.contested))
     chosenOnMap = true
@@ -540,6 +579,7 @@ object PlacesInput:
   /** The chosen places as chips ON the map — in the narrow layout the filter bar is a closed drawer, and a filter set
     * by tapping the map must be visible (and clearable) where the tap happened.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mapChips: HtmlElement =
     div(
       cls := "map-place-chips",
@@ -566,6 +606,8 @@ object PlacesInput:
   /** A gazetteer chip answers like the place on the map ([[Preview]]): hover or focus shows its card, a click or Enter
     * pins it so its links can be followed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeCard(id: PlaceId, label: UiLabels.Text): Modifier[HtmlElement] =
     List(
       dataAttr("place") := id.value,
@@ -576,15 +618,20 @@ object PlacesInput:
     )
 
   /** What a gazetteer id is CALLED. Falls back to the id when the label is not cached. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelOf(id: PlaceId): UiLabels.Text =
     known.get(id).map(_.label).getOrElse(UiLabels.Text(id.value))
 
   /** The (label, kind) of a place this page has seen, if any. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def describe(id: PlaceId): Option[(UiLabels.Text, KnownPlace.Kind)] = known.get(id).map(k => (k.label, k.kind))
 
   /** Pure: a chosen place as a chip names it — its label and kind ("Kingdom of Patones (polity)"), NEVER its id: while
     * the label is still being fetched, "…".
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chipText(id: PlaceId, lookup: PlaceId => Option[(UiLabels.Text, KnownPlace.Kind)]): UiLabels.Text =
     lookup(id).fold(UiLabels.Text("…"))((label, kind) =>
       if kind.value.trim.isEmpty then label
@@ -592,6 +639,9 @@ object PlacesInput:
     )
 
   /** Fetch the label of a chosen place the page has not seen (one from a link or a restored state). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def ensureKnown(id: PlaceId): Unit =
     if id.value.nonEmpty && !known.contains(id) && !fetching.contains(id) then
       fetching += id
@@ -603,6 +653,7 @@ object PlacesInput:
   private val fetching = scala.collection.mutable.Set.empty[PlaceId]
 
   /** A chip's text for a chosen place, following what the page learns about it ([[chipText]]). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def chipTextSignal(id: PlaceId): Signal[UiLabels.Text] =
     ensureKnown(id)
     knownVersion.signal.map(_ => chipText(id, describe))

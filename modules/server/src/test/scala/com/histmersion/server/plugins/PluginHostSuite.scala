@@ -30,6 +30,7 @@ import com.histmersion.plugin.Secret
 import com.histmersion.plugin.Registry
 import com.histmersion.pluginhost.Registries
 import com.histmersion.config.ConfigReload
+import com.histmersion.lint.{LintRule, tolerated}
 
 // ── test plugins (their defaults are under src/test/resources/META-INF/histmersion/plugins/) ──────
 
@@ -59,10 +60,15 @@ final class MakerPlugin(
   type Config = MakerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("0.2.0"), Plugin.Info.SpiVersion(Spi.Version))
   override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def register(c: MakerConfig, ctx: Plugin.Context) =
     escape += ctx
     val vault = new Secret.Vault:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       val name = Secret.Vault.Name(c.vault)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def resolve(ref: Secret.Vault.ResolveRef) =
         calls.incrementAndGet()
         if ref.value == "missing" then Left(Problem.Unclassified(Legacy.Text(s"no entry '$ref'")))
@@ -84,15 +90,20 @@ final class BatchVaultPlugin(
   type Config = MakerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("0.3.0"), Plugin.Info.SpiVersion(Spi.Version))
   override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: MakerConfig, ctx: Plugin.Context) =
     ctx.secretVaults
       .add(
         Registry.AddId(c.vault),
         new Secret.Vault:
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
           val name = Secret.Vault.Name(c.vault)
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
           def resolve(ref: Secret.Vault.ResolveRef) = {
             singles.incrementAndGet(); Right(Secret.Resolved(s"one($ref)"))
           }
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+          @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
           override def resolveAll(refs: List[Secret.Vault.ResolveRef]) =
             batches += refs.map(_.value)
             refs
@@ -114,6 +125,7 @@ final class ConsumerPlugin(
   type Config = ConsumerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
   override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/consumer.conf")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: ConsumerConfig, ctx: Plugin.Context) =
     (c.token :: c.extra).foreach(s => ctx.secret(s).foreach(v => got += v.value))
     Right(())
@@ -131,15 +143,18 @@ final class MissingLibraryPlugin extends Plugin:
   override def defaultsResource = Plugin.DefaultsResource("META-INF/histmersion/plugins/maker.conf")
   def register(c: MakerConfig, ctx: Plugin.Context) = throw new NoClassDefFoundError("org/example/xml/Elem")
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginHostSuite extends munit.FunSuite:
   private def conf(s: String): Config = ConfigFactory.parseString(s)
   private def env(kv: (String, String)*): Config = ConfigFactory.parseMap(kv.toMap.asJava)
 
   final private class Logs:
     val lines = scala.collection.mutable.Buffer.empty[String]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val services = HostServices(
       () =>
         new Plugin.Http {
+          @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
             Left(Problem.Unclassified(Legacy.Text("offline")))
         },
@@ -155,6 +170,7 @@ class PluginHostSuite extends munit.FunSuite:
     val (l, s) = services(e)
     (PluginHost.build(plugins, conf(user), e, s), l)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def statusOf(g: Generation, id: String): PluginStatus =
     g.report.plugins.find(_.id.value == id).getOrElse(fail(s"no $id"))
 
@@ -332,6 +348,7 @@ class PluginHostSuite extends munit.FunSuite:
   test("resolve: value: is the literal, env: the variable, a vault its answer; errors name the reference only"):
     val vault = new Secret.Vault {
       val name = Secret.Vault.Name("kp");
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Right(Secret.Resolved("vx"))
       else Left(Problem.Plugin.Vault(Problem.Plugin.Id("kp"), Problem.Plugin.Retrieval.Locked))
     }
@@ -645,6 +662,7 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(batches.size, 1)
     val throwing = new Secret.Vault:
       val name = Secret.Vault.Name("t")
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def resolve(r: Secret.Vault.ResolveRef) = if r.value == "b" then throw new IllegalStateException("kaput")
       else Right(Secret.Resolved(s"one($r)"))
       override def resolveAll(refs: List[Secret.Vault.ResolveRef]) = throw new IllegalStateException("kaput")
@@ -660,6 +678,8 @@ class PluginHostSuite extends munit.FunSuite:
   test("a vault without resolveAll (an SPI-2 plugin compiled before it) is asked one reference at a time"):
     val default = new Secret.Vault {
       val name = Secret.Vault.Name("d");
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(Problem.Unclassified(Legacy.Text("locked")))
       else Right(Secret.Resolved(s"v($r)"))
     }
@@ -695,6 +715,7 @@ class PluginHostSuite extends munit.FunSuite:
   // ── the real thing: the built-in vaults on the server's class path ──────────────────────────
 
   /** The vault plugins among the first-party ones on the server's class path. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vaults(found: List[Plugin]): List[Plugin] =
     found.filter(p => Set("1password", "bitwarden", "keepassxc")(p.info.id.value))
 

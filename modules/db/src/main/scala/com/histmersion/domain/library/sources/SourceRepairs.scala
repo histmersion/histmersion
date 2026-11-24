@@ -11,10 +11,12 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's repairs that run as several transactions: the re-chunk of the corpus and of the stale sources (one
   * transaction per source, so a large corpus never sits in one) and the safe fixes of `lint --fix`.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SourceRepairs(db: Transactor):
 
   /** Rebuild the chunk index — `POST /api/reindex`. Needed once after V004 (the existing corpus was imported before
@@ -26,6 +28,8 @@ final class SourceRepairs(db: Transactor):
     * order from `after`, and the call stops once `maxChars` of body text have been re-chunked (always at least one
     * source, so progress is guaranteed). The result carries the cursor and how many sources are left.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def reindexChunks(
       chunkChars: Chunker.ChunkMaxChars,
       after: Option[Citekey] = None,
@@ -45,6 +49,7 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reindexAll(chunkChars: Chunker.ChunkMaxChars)(using WritePermit): ReindexResult =
     @annotation.tailrec
     def go(after: Option[Citekey], sources: Int, chunks: Int)(using WritePermit): ReindexResult =
@@ -61,6 +66,8 @@ final class SourceRepairs(db: Transactor):
     * and always does at least one source, so repeated calls make progress. Returns the same shape as `/api/reindex`,
     * with `remaining` = stale sources still untouched.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def reindexStale(chunkChars: Chunker.ChunkMaxChars, maxChars: SourceRepairs.MaxChars)(using
       WritePermit
   ): ReindexResult =
@@ -87,6 +94,7 @@ final class SourceRepairs(db: Transactor):
   // ── the safe fixes of `lint --fix`, each as the part of the result it reports ─────────────────
 
   /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolveEdgesFix()(using WritePermit)(using Creator.New): LintFixResult =
     val resolved = db.write(SourceRepo.resolveEdges())
     LintFixResult(
@@ -98,6 +106,7 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reindexFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val r = reindexStale(
       Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
@@ -113,6 +122,7 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def regeocodeFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
     val moved = db.write(
@@ -135,6 +145,7 @@ final class SourceRepairs(db: Transactor):
     )
 
   /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
     val placed = db.write(
@@ -162,6 +173,7 @@ object SourceRepairs:
 
   /** The citekeys of `pending` (in order) whose bodies fit in `maxChars` together. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def budget(pending: Vector[(Citekey, SourceRepo.BodyChars)], maxChars: MaxChars): List[Citekey] =
     @annotation.tailrec
     def loop(rest: List[(Citekey, SourceRepo.BodyChars)], spent: Long, out: List[Citekey]): List[Citekey] = rest match

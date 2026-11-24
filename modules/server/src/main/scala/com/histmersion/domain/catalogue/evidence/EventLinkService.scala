@@ -14,10 +14,13 @@ import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.Title
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources proposed as discussing an event — scored, then confirmed or rejected — and which events' proposals were
   * computed.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait EventLinkService:
   /** One event's candidates, the confirmed first, then by score; the rejected ones only when `rejected` lists them. A
     * candidate whose source is gone is not listed.
@@ -42,13 +45,18 @@ object EventLinkService:
   def apply(db: Transactor): EventLinkService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends EventLinkService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def candidates(id: Event.Id, rejected: RejectedLinks): List[EventLinkCandidate] =
       db.read(EventLinkRepo.candidates(BEventRow.Id(id.value), rejected))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit)(using Creator.New): Unit =
       db.write(EventLinkRepo.saveCandidates(BEventRow.Id(id.value), cs))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean =
       db.write(EventLinkRepo.setStatus(BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def isChecked(id: Event.Id): Boolean = db.read(EventLinkRepo.isChecked(BEventRow.Id(id.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def eventsToCheck(which: EventsToCheck, limit: PageSize): List[Event.Id] =
       val all = which == EventsToCheck.Every
       db.read(EventLinkRepo.eventsToCheck(all = all, limit)).map(i => Event.Id.assume(i.value))
@@ -58,6 +66,8 @@ object EventLinkService:
     */
   final class InMemory(state: AtomicReference[CatalogueState], title: Citekey => Option[Option[Title]])
       extends EventLinkService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def candidates(id: Event.Id, rejected: RejectedLinks): List[EventLinkCandidate] =
       val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
       state.get.candidates
@@ -73,6 +83,8 @@ object EventLinkService:
         .sortBy(c => (c.status.value != Event.LinkStatus.Confirmed, -c.score.value, c.citekey.value.toString))
         .toList
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit)(using Creator.New): Unit =
       val _ = state.updateAndGet { s =>
         val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
@@ -107,6 +119,8 @@ object EventLinkService:
         s.modify(_.candidates).setTo(written).modify(_.checked).using(_ + CatalogueState.Checked(id.value))
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean =
       val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
       val apiKey = com.histmersion.api.library.Citekey(citekey.value)
@@ -123,8 +137,10 @@ object EventLinkService:
       )
       had
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def isChecked(id: Event.Id): Boolean = state.get.checked(CatalogueState.Checked(id.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def eventsToCheck(which: EventsToCheck, limit: PageSize): List[Event.Id] =
       val s = state.get
       s.events

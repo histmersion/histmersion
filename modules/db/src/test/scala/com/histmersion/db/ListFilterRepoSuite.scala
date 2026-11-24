@@ -25,16 +25,19 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.automation.Agents
 import com.histmersion.util.database.given
 import com.histmersion.api.jobs.JobState
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core `ListFilters`)
   * against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write the same tables at the same
   * time, so every fixture carries this run's tag in what the text filter (`subject`) matches, and every assertion is
   * made under that filter.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ListFilterRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))

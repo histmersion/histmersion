@@ -9,6 +9,8 @@ import com.histmersion.values.testsupport.ComparedByValue.given
 import com.histmersion.{Latitude, LatLon, Longitude, Period, Year}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.catalogue.places.Wikidata
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ValuesSuite extends munit.FunSuite:
 
   test("a period may not end before it starts; a point is one year"):

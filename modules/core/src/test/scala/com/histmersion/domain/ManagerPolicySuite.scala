@@ -20,10 +20,13 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.Approval
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers' pure policy (docs/research-process-managers.md §3.4): the one-run items' rules, the backoff,
   * the dispatch order and fairness, capacity with pools, holds, hints, the cron and the daily cap.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ManagerPolicySuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-15T12:00:00Z")
@@ -443,6 +446,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     maxRuns = WatchManagerDefaults.MaxRuns(1),
     autoIngestPerDay = WatchManagerDefaults.AutoIngestPerDay(5)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val mcfg = ManagerDefaults(
     ManagerDefaults.MaxFailures(3),
     ManagerDefaults.BackoffMinutes(15),

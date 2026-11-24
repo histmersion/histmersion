@@ -72,12 +72,14 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.plugin.CollectionUpdateEntry
 import com.histmersion.plugin.CollectionChange
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
   * from the records, setting fields, the audit, the gaps (sources whose original is in no collection) and the sync. The
   * collection is the plugin's; every rule of what the library stores is here.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait CollectionsService:
   def collections(): List[CollectionInfo]
   def collection(name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo]
@@ -168,6 +170,7 @@ object CollectionsService:
       registry: () => ListMap[Registries.SourceCollectionsKey, SourceCollection],
       archiveRows: Limit
   ) extends CollectionsService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val run = Implementation(() => linked.get.sortBy(_.citekey.value), library, registry, archiveRows)
     export run.*
 
@@ -181,21 +184,31 @@ object CollectionsService:
       archiveRows: Limit
   ) extends CollectionsService:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def fail(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def usage(message: String): Api.Error = usageOf(Problem.Unclassified(Legacy.Text(message)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def usageOf(problems: Problems): Api.Error = Api.Error(problems, Some(Api.Error.Code(CollectionsApi.Usage)))
     private def failed(problems: Problems): Api.Error = fail(problems.sentences.mkString("; "))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def apiKey(ck: domain.library.Citekey): Citekey = Citekey(ck.value)
 
     /** The citekey a request names, or the 400 that refuses it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     private def checked(raw: Citekey): Either[Api.Error, domain.library.Citekey] =
       domain.library.Citekey
         .parse(raw.value)
         .left
         .map(p => Write.invalid(p))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def lookup(name: CollectionName): Either[Api.Error, HostCollection] =
       registry()
         .get(Registries.SourceCollectionsKey(name.value))
@@ -211,10 +224,12 @@ object CollectionsService:
         )
 
     /** The collections the library links sources to: Calibre alone (`sources.calibre_id`). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def linking(name: CollectionName): Either[Api.Error, HostCollection] =
       if name == Calibre then lookup(name)
       else Left(fail(s"the library links sources to Calibre only, not to '$name'"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def info(c: HostCollection): CollectionInfo =
       val reach = c.reach
       CollectionInfo(
@@ -228,17 +243,22 @@ object CollectionsService:
         reach.left.toOption.toList.flatMap(_.toVector)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def collections(): List[CollectionInfo] =
       registry().toList.map((n, c) => info(HostCollection(HostCollection.Name(n.value), c)))
 
     def collection(name: CollectionName): Either[Api.Error, CollectionInfo] = lookup(name).map(info)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def apiAuthors(authors: List[CollectionItem.Authors]): List[AuthorName] =
       authors.map(a => AuthorName(a.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def apiYear(year: Option[Year]): Option[com.histmersion.api.catalogue.Year] =
       year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def entry(i: CollectionItem): CollectionEntry =
       CollectionEntry(
         CollectionEntry.Id(i.id.value),
@@ -253,8 +273,10 @@ object CollectionsService:
         i.files.map(f => CollectionEntry.Formats(f.name.value))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def linkedIds(): Set[String] = linked().flatMap(_.id.value.trim.toIntOption).map(_.toString).toSet
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def search(
         name: CollectionName,
         q: Option[domain.library.search.Search.Query],
@@ -290,6 +312,7 @@ object CollectionsService:
 
     // ── import ────────────────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def importItem(
         caller: Caller,
         name: CollectionName,
@@ -343,6 +366,7 @@ object CollectionsService:
     /** Create the source, or enrich it if the citekey exists — a re-import never wipes the findings and notes an agent
       * compiled; either way the record ends up linked to this entry.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def upsert(
         ck: domain.library.Citekey,
         item: CollectionItem,
@@ -397,6 +421,7 @@ object CollectionsService:
     /** The imported book's cover, best-effort: the collection's own, else Open Library's by its ISBN; a missing cover
       * never fails the import.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def coverOf(
         c: HostCollection,
         ck: domain.library.Citekey,
@@ -448,6 +473,7 @@ object CollectionsService:
             case None    => CollectionCover(CollectionCover.Line("Cover: none (no cover file in Calibre, no ISBN)"))
 
     /** The conversion: the same upload `histmersion ingest <file>` makes, marked as Calibre's. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def convert(
         c: HostCollection,
         item: CollectionItem,
@@ -471,6 +497,7 @@ object CollectionsService:
 
     // ── link, push, update, set ───────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def link(caller: Caller, name: CollectionName, req: CollectionLinkRequest)(using
         Creator.New
     ): Either[Api.Error, CollectionLinked] =
@@ -488,6 +515,7 @@ object CollectionsService:
         )
       yield CollectionLinked(sw.source.citekey, CollectionLinked.Id(req.id.value), Title(item.title.fold("")(_.value)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def metadata(ck: domain.library.Citekey, s: CalibreGap): CollectionMetadata =
       CollectionMetadata(
         CollectionMetadata.Key(ck.value),
@@ -503,6 +531,8 @@ object CollectionsService:
 
     /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def original(ck: domain.library.Citekey, hint: String): Either[Api.Error, FetchedFile] =
       for
         o <- library
@@ -525,6 +555,7 @@ object CollectionsService:
     /** One push: the source's metadata, its stored original into the collection as a new item, and the new id recorded
       * so it stops counting as a gap.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def pushOne(
         c: HostCollection,
         ck: domain.library.Citekey
@@ -536,6 +567,7 @@ object CollectionsService:
         _ <- library.pushed(CalibrePushRequest(apiKey(ck), Source.CalibreId(id.value)))
       yield (id, s.title)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def push(caller: Caller, name: CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
       linking(name).flatMap { c =>
         checked(req.citekey).flatMap { ck =>
@@ -563,6 +595,7 @@ object CollectionsService:
         }
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def updateOne(
         caller: Caller,
         name: CollectionName,
@@ -582,6 +615,7 @@ object CollectionsService:
         s.title
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def updateAll(caller: Caller, name: CollectionName, apply: UpdateAllApply): Either[Api.Error, CollectionUpdateAll] =
       @tailrec def links(rest: List[LinkedSource], acc: List[CollectionLink]): Either[Api.Error, List[CollectionLink]] =
         rest match
@@ -596,6 +630,7 @@ object CollectionsService:
         entries <- c.updateAll(ls, SourceCollection.UpdateAllApply(apply.value)).left.map(failed)
       yield CollectionUpdateAll(entries.map(updateRow), CollectionUpdateAll.Applied(apply.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def updateRow(e: CollectionUpdateEntry): CollectionUpdateRow =
       def changes(cs: List[CollectionChange]) =
         cs.map(ch =>
@@ -622,6 +657,7 @@ object CollectionsService:
         reason.toList.flatMap(_.toVector)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def set(caller: Caller, name: CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
       linking(name).flatMap(
         _.set(
@@ -639,6 +675,7 @@ object CollectionsService:
 
     // ── audit, gaps, sync ─────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def audit(name: CollectionName): Either[Api.Error, CollectionAudit] =
       val recs = linked()
       val records =
@@ -675,6 +712,7 @@ object CollectionsService:
         CollectionAudit.Checked(recs.flatMap(_.id.value.trim.toIntOption).distinct.size)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def gaps(name: CollectionName, limit: Option[Limit]): Either[Api.Error, CollectionGaps] =
       linking(name).map { _ =>
         val rows = library.gaps(limit.map(l => CollectionLibrary.Limit(l.value))).gaps.map(GapOriginal.row)
@@ -687,6 +725,7 @@ object CollectionsService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sync(caller: Caller, name: CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
       for
         g <- gaps(name, req.limit.map(l => Limit(l.value)))
@@ -707,6 +746,7 @@ object CollectionsService:
 
     // ── archive.org ───────────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def archiveFile(f: CollectionFile): ArchiveFile =
       ArchiveFile(
         ArchiveFile.Name(f.name.value),
@@ -714,6 +754,7 @@ object CollectionsService:
         ArchiveFile.Megabytes(f.megabytes.fold(0.0)(_.value))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def archiveItem(i: CollectionItem): ArchiveItem =
       ArchiveItem(
         ArchiveItem.Identifier(i.id.value),
@@ -726,6 +767,7 @@ object CollectionsService:
         i.files.map(archiveFile)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def archiveSearch(
         q: domain.library.search.Search.Query,
         rows: Option[Limit]
@@ -750,6 +792,7 @@ object CollectionsService:
           items.map(archiveItem)
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def archiveFound(
         c: HostCollection,
         id: domain.library.ArchiveId
@@ -762,6 +805,7 @@ object CollectionsService:
     /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
       * archive.org, and circumventing that is not something this pipeline does.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def archiveImport(caller: Caller, req: ArchiveImportRequest)(using Creator.New): Either[Api.Error, Ingest.Report] =
       for
         c <- lookup(ArchiveOrg)

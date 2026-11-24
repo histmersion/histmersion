@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `onDemand`: the deeper relief read from `url` as a page needs it ([[BasemapOnDemandConfig]]); `focusRegions`: "name
   * minLon,minLat,maxLon,maxLat" — the regions `fetch --focus <name>` keeps to that depth.
   */
+@movesTo(FeaturePlace.UtilBasemap)
 final case class BasemapTerrainConfig(
     url: BasemapTerrainConfig.Url,
     maxZoom: BasemapTerrainConfig.MaxZoom,

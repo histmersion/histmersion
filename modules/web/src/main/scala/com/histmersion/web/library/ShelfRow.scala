@@ -5,11 +5,14 @@ import com.histmersion.api.personal.{Bookmark, Note, PersonalMarkdown, ReadMark,
 import com.histmersion.api.ItemKind
 import com.histmersion.api.YearFmt
 import com.histmersion.web.marks.Ago
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One row of a shelf of My library, as it reads: what it points at, its name, what it is (`kind`), the line under it
   * (where it is, a note's first line, the authors), when, and whether it is a source or an article not marked read.
   * Pure.
   */
+@tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 final case class ShelfRow(
     key: String,
     target: Target,
@@ -26,6 +29,8 @@ object ShelfRow:
   private def readable(t: Target, isRead: Target.Identity => Boolean): Boolean =
     ItemKind.Readable.contains(t.kind) && t.identity.exists(i => !isRead(i))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def of(b: Bookmark, isRead: Target.Identity => Boolean, ago: String => String): ShelfRow =
     val where = Target.where(b.target)
     val line = List(
@@ -43,6 +48,8 @@ object ShelfRow:
       bookmark = Some(b)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def of(n: Note, isRead: Target.Identity => Boolean, ago: String => String): ShelfRow =
     val where = Target.where(n.target)
     ShelfRow(
@@ -56,6 +63,8 @@ object ShelfRow:
       note = Some(n)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def of(m: ReadMark, ago: String => String): ShelfRow =
     ShelfRow(
       s"opened:${m.kind.wire}:${m.id.value}",
@@ -67,6 +76,7 @@ object ShelfRow:
       !m.read.value
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(u: UnreadRow): ShelfRow =
     ShelfRow(
       s"unread:${u.kind.wire}:${u.id.value}",
@@ -85,7 +95,9 @@ object ShelfRow:
     )
 
   /** "Recently opened": the marks opened, last first. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def recent(marks: Iterable[ReadMark]): List[ReadMark] =
     marks.filter(_.openedAt.isDefined).toList.sortBy(_.openedAt.fold("")(_.value)).reverse
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultAgo(iso: String): String = Ago.of(Ago.IsoDate(iso)).value

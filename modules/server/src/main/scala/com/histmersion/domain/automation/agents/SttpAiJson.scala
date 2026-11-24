@@ -11,12 +11,14 @@ import sttp.apispec.Schema
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** sttp-ai, the agent loop's library, takes circe codecs for a tool's input and a step's typed answer; our records have
   * jsoniter codecs. This is the one place the two meet: sttp-ai gets each record's own codec as circe's, its JSON
   * Schemas are written by Kindlings' apispec codecs (what apispec's circe module wrote, byte for byte), and its
   * decoding failures are read here.
   */
+@atBoundary(BoundaryKind.Json, "the one place sttp-ai's circe codecs and JSON Schemas meet ours")
 object SttpAiJson:
   /** A record's own codec, as sttp-ai takes it. A failure names where in the answer it is (`.findings[0].quote`), which
     * the step's retry prompt shows the model.

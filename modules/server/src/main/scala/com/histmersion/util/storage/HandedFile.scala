@@ -2,6 +2,7 @@ package com.histmersion
 package util.storage
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A store's file as the supporting areas hand it to another program (a child process's directory or log), and a file
   * the HTTP layer hands in (an upload, kept where the server put it).
@@ -18,6 +19,7 @@ object HandedFile:
     type Size = Size.T
     object Size extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def snapshot(file: HandedFile): Snapshot =
     Snapshot(Snapshot.Name(file.getName), Snapshot.Size(file.length()), source(file))
   def source(file: HandedFile): ByteSource = ByteSource.file(file.toPath)

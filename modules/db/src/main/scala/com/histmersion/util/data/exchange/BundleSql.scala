@@ -7,15 +7,20 @@ import com.histmersion.api.catalogue.Year
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SQL every carried kind's lines are read with: a range as three columns, the rows a scope selects, and the uid of
   * whatever a label names (a clock as the wire carries it is [[Timestamps.iso]]).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object BundleSql:
 
   /** A range as the three columns [[range]] reads back. */
   def rangeCols(col: Frag): Frag = sql"$col IS NULL, ${RangeSql.cols(col)}"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def range(
       isNull: Bundle.RangeIsNull,
       lo: Option[Bundle.RangeLower],
@@ -29,12 +34,16 @@ object BundleSql:
     )
 
   /** A bundle range as the `int8range` literal ([[RangeSql.bounds]]), NULL when the bundle has none. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def rangeLiteral(p: Option[com.histmersion.api.exchange.Bundle.Range]): Option[String] =
     p.map(r =>
       RangeSql.bounds(r.start.map(y => DeepTime.SignedYear(y.value)), r.end.map(y => DeepTime.SignedYear(y.value)))
     )
 
   /** A bundle range where no range means every year (`(,)`) — places, relations, types, periods. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def rangeOrAll(p: Option[com.histmersion.api.exchange.Bundle.Range]): String =
     RangeSql.bounds(
       p.flatMap(_.start).map(y => DeepTime.SignedYear(y.value)),
@@ -42,6 +51,7 @@ object BundleSql:
     )
 
   /** `WHERE` for the scope, on a table's uid and change-clock columns. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def where(scope: BundleScope, uid: Frag, clock: Frag): Frag = scope match
     case BundleScope.All       => sql"TRUE"
     case BundleScope.Since(at) => sql"$clock > $at::timestamptz"

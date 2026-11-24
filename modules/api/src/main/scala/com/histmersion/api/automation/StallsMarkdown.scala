@@ -1,10 +1,14 @@
 package com.histmersion
 package api.automation
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object StallsMarkdown:
 
   import Stalls.*
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(r: StallReport): String =
     val head = s"# Stalled goals: ${r.stalled.size} of ${r.goals} with no progress in ${r.days} day(s)"
     val reasons =

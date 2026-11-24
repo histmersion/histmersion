@@ -6,6 +6,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a catalogue says about an event, as its bundle line reads it. */
 final private[events] case class BCatalogueRow(
@@ -33,6 +34,7 @@ object BCatalogueRow:
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
   type ProviderId = ProviderId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ProviderId extends Newtype[String, Pure]
   type Url = Url.T
   object Url extends Newtype[String, Pure]

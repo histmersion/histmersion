@@ -12,6 +12,7 @@ import com.histmersion.util.storage.{Location, Reservation, Storage, Store}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.util.Using
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Small PMTiles archives built in a test, and a [[RangeHttp]] that answers from a local file — no network anywhere in
   * the base-map suites.
@@ -22,11 +23,14 @@ object BasemapFixtures:
   def store(dir: Path): Store = Storage.at(Location.Basemap, dir)
 
   /** A writer of the archive at `out`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def writer(out: Path): PmTilesWriter =
     val a = out.toAbsolutePath
     PmTilesWriter(store(a.getParent), Store.Key.applyUnsafe(a.getFileName.toString))
 
   /** The archive at `p`, opened. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def open(p: Path): Either[Problem, PmTiles.File] =
     val a = p.toAbsolutePath
     store(a.getParent)
@@ -34,6 +38,7 @@ object BasemapFixtures:
       .toRight(Problem.Unclassified(Legacy.Text(s"$p: no such file")))
       .flatMap(PmTiles.File.open(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def commands(cs: Int*): Vector[Mvt.GeometryCommand] = cs.map(Mvt.GeometryCommand(_)).toVector
 
   private val KindKey = Mvt.PropKey("kind")
@@ -48,6 +53,8 @@ object BasemapFixtures:
     * farmed land cover, land use, a peak and a restaurant, a road, a town, and a layer an older build has
     * (`physical_point`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def vectorTile(z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow): PmTiles.PlainBytes =
     Mvt.tile(
       List(
@@ -124,6 +131,7 @@ object BasemapFixtures:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def header(t: PmTiles.TileType, c: PmTiles.Compression, maxZoom: PmTiles.Zoom) =
     PmTiles.Header(
       PmTiles.Header.RootOffset(0),
@@ -153,6 +161,7 @@ object BasemapFixtures:
     )
 
   /** A world archive of zooms 0…`maxZoom`, every tile from `tile` (stored with `compression`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def archive(out: Path, maxZoom: PmTiles.Zoom, t: PmTiles.TileType, c: PmTiles.Compression, extra: Json = Json.obj())(
       tile: (PmTiles.Zoom, PmTiles.TileColumn, PmTiles.TileRow) => PmTiles.PlainBytes
   ): Path =
@@ -184,6 +193,7 @@ object BasemapFixtures:
     archive(out, maxZoom, PmTiles.TileType.Mvt, PmTiles.Compression.Gzip, extra)(vectorTile)
 
   /** A terrain archive whose tiles are just their own name (a fetch never decodes them). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def terrainArchive(out: Path, maxZoom: PmTiles.Zoom = PmTiles.Zoom(4)): Path =
     archive(out, maxZoom, PmTiles.TileType.Webp, PmTiles.Compression.None)((z, x, y) =>
       PmTiles.PlainBytes(s"RIFF$z/$x/$y".getBytes)
@@ -199,8 +209,10 @@ object BasemapFixtures:
   ) extends RangeHttp:
     val requests = AtomicInteger(0)
     val downloads = AtomicInteger(0)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def size = RemoteFile.Size(Files.size(file))
     def text(url: RangeHttp.Url): Either[Problem, RangeHttp.ResponseText] = Right(builds)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(
         url: RangeHttp.Url,
         offset: ByteOffset,
@@ -210,6 +222,7 @@ object BasemapFixtures:
       val all = Files.readAllBytes(file)
       val end = math.min(all.length.toLong, offset.value + length.value)
       Right((RangeHttp.ResponseBytes(all.slice(offset.value.toInt, end.toInt)), RemoteFile(size, Some(etag))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def download(
         url: RangeHttp.Url,
         offset: ByteOffset,

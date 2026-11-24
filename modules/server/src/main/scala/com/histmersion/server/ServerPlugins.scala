@@ -10,16 +10,20 @@ import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.util.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 import com.histmersion.config.ConfigReload
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server's plugin generations: [[Plugins]] with what this host supplies — the command-line AI runtimes it still
   * runs itself ([[BuiltinAi]]), the one acquisition client every plugin of a generation is lent, and the CORE budget
   * `ctx.quota("core")` lends.
   */
+@movesTo(FeaturePlace.Server)
 object ServerPlugins:
 
   /** The generation for `loaded`; on a config reload, `previous` and the keys that `changed` ([[Plugins.load]]). `core`
     * is the server's CORE budget, which every generation lends and the new-source search spends from too.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def load(
       loaded: LoadedConfig,
       previous: Option[Generation] = None,
@@ -32,6 +36,7 @@ object ServerPlugins:
     Plugins.load(loaded, providers, () => HttpPlugin(http), quotas(loaded, core), previous, changed)
 
   /** The first-party source fetchers alone (and `extra`, a test's) over `http` ([[Plugins.fetchers]]). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def fetchers(
       loaded: LoadedConfig,
       http: () => Plugin.Http,
@@ -57,5 +62,6 @@ object ServerPlugins:
     */
   def providers: List[Plugin] = BuiltinAi.plugins
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def quotas(loaded: LoadedConfig, core: CoreBudget): HostServices.Quotas =
     CoreBudget.quotas(core, CoreBudget.limits(loaded.config.acquire.core))

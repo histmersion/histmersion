@@ -17,12 +17,14 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats places of this collection's own: one the bundle renamed is renamed here too — unless its new
   * id is a different place's here, then ours keeps its id and what the bundle points at the new id points at ours; one
   * id added on both sides is one place when where and when agree, else a question; one under another id here is one
   * when its label and geometry are (the database compared them: `placeMatches`).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   import PlacePlan.*
 
@@ -37,16 +39,19 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
 
   /** The same place: ours, with the bundle's names, parents, external ids and types. */
   private val SamePlace: PlanMerge = new PlanMerge:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit =
       folds.fold(f, o, Bundle.Kind.Place)
       placeLine(o) = es => foldPlace(localPlace(o), placeIn(es, o))
       folds.count(_.modify(_.placesMerged).using(n => MergeTally.PlacesMerged(n.value + 1)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
       PlanMerge.InfoText(s"place $label: the bundle's $bundleLabel is the same place — one place, names unioned")
 
   // a place the bundle renamed (its uid is here under another id, #888): the import follows the rename — unless the
   // new id is a different place's here; then ours keeps its id, and what the bundle points at the new id points at
   // ours. A bundle place matched to one here under another id: what points at it by id follows
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
     renames ++= renamedPlaces(in.foreign.places, in.local.places, mapped.keySet)
     val renameKept: Map[UUID, Bundle.Place.Id] = renames.collect { case (p, ours, true) => p.uid -> ours }.toMap
@@ -60,6 +65,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
         .modify(_.places)
         .setTo(repointed.places.map(p => renameKept.get(p.uid).fold(p)(ours => p.copy(id = ours))))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def notices: List[PairQuestions.InfoLine] =
     renames.toList.map { (p, ours, kept) =>
       if kept then
@@ -78,6 +84,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
 
   // places added on both sides: one id is one place when where and when agree, a question when they do not; a place
   // under another id is one when its label and geometry are
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def addedOnBoth(q: PlanQuestions): Unit =
     val localPlaceById = in.local.places.map(p => p.id -> p).toMap
     q.localized.places.filter(p => q.writesInitially(p.uid)).sortBy(_.id.value).foreach { p =>
@@ -123,6 +130,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
     }
 
   // a place added on both sides under one id: ours stays, or theirs wins
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
       case (MergeIssue.Kind.PlaceDiffers, Bundle.Kind.Place, Some(d), Some(f), Some(o)) =>
@@ -144,6 +152,7 @@ object PlacePlan:
     * that id. Pure.
     */
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   def repoint(es: BundleEntities, places: Map[Bundle.Place.Id, Bundle.Place.Id]): BundleEntities =
     if places.isEmpty then es
     else
@@ -182,6 +191,7 @@ object PlacePlan:
   /** One place out of two that are the same place: ours, with the bundle's names, parents, external ids and types that
     * ours lacks.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def foldPlace(
       l: Bundle.Place,
       r: Bundle.Place

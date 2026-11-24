@@ -53,6 +53,7 @@ final class ImportsControllers(
   /** The importer an import request names, or why it cannot run (unknown, its plugin switched off, or its own
     * `media.<provider>.enabled` off).
     */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def providerOf(p: MediaItem.Provider): Either[Api.Error, MediaImporter] =
     MediaImporters
       .resolve(MediaImporters.ImporterKey(p.value), collections()._1, imports, store, cfg, http, converter)
@@ -62,6 +63,8 @@ final class ImportsControllers(
   /** The place or event a request names, as the domain's ids: a blank one names none, a malformed one is no place or
     * event that exists. A place wins over an event.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def targetsOf(req: MediaImportRequest): Either[Api.Error, (Option[Place.Id], Option[Event.Id])] =
     for
       place <- req.place.map(_.value.trim).filter(_.nonEmpty) match
@@ -89,6 +92,7 @@ final class ImportsControllers(
     yield (place, event)
 
   /** `GET /api/media/providers`: what `media import` can run, as the registries hold it. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def providers: List[MediaProvider.Info] =
     val (registered, owner) = collections()
     MediaImporters.infos(
@@ -109,6 +113,9 @@ final class ImportsControllers(
     * A real run over many is a job ([[importJob]], #1491): asked here it outlived the CLI's request while the server
     * kept going.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def importMedia(req: MediaImportRequest)(using Creator.New): Either[Api.Error, MediaImportReport] =
     def go(using WritePermit)(using Creator.New): Either[Api.Error, MediaImportReport] =
       providerOf(req.provider).flatMap { imp =>
@@ -158,6 +165,10 @@ final class ImportsControllers(
     * next (so a stopped job resumes after the last one), until none is left, `limit` targets are done, or a batch gets
     * no answer at all.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def importJob(req: MediaImportRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     providerOf(req.provider).flatMap { imp =>
       if req.dryRun.value then
@@ -201,6 +212,8 @@ final class ImportsControllers(
     * never the end of the job; a batch that throws is reported and ends it (its targets are not recorded as asked, so
     * the next job resumes there, not past it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def runImport(
       imp: MediaImporter,
       place: Option[Place.Id],
@@ -271,20 +284,26 @@ object ImportsControllers:
   type TotalCount = TotalCount.T
   object TotalCount extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private[imports] def error(message: Problem, code: String): Api.Error =
     Api.Error(message, Some(Api.Error.Code(code)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private[imports] def seenKey(t: Target): SeenKey = SeenKey(s"${t.targetType}:${t.id}")
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def single(req: MediaImportRequest): Boolean =
     req.place.exists(_.value.trim.nonEmpty) || req.event.exists(_.value.trim.nonEmpty)
 
   /** Pure: a running import job's progress line — `n/total` asked (a total of 0 or less is unknown, and a total passed
     * by the asked count is the asked count: places cited meanwhile join in).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def progressLine(r: MediaImportReport, total: TotalCount, requests: Polite.RequestCount): JobInfo.Progress =
     val of = if total.value > 0 then s"/${total.value.max(r.targets.value)}" else ""
     JobInfo.Progress(
@@ -298,6 +317,8 @@ object ImportsControllers:
     )
 
   /** Pure: a finished import job's line in `histmersion jobs`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def summary(r: MediaImportReport): BackgroundJob.Outcome.Summary =
     BackgroundJob.Outcome.Summary(
       List(

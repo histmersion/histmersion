@@ -9,7 +9,9 @@ import com.histmersion.api.log.LogEvent.{Subject, What}
 import com.histmersion.api.time.TimeBound
 
 import java.time.Instant
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LogQuerySuite extends munit.FunSuite:
   private val now = Instant.parse("2026-11-20T12:00:00Z")
   private val traceA = LogEvent.Trace("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f")

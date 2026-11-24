@@ -19,6 +19,7 @@ import com.histmersion.config.Environment
 import com.histmersion.util.system.JvmHome
 import com.histmersion.util.storage.Store
 import com.augustnagro.magnum.sql
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Writes the generated per-runtime trees (docs/research-agent-runtimes.md §2.2) under the runtimes directory:
   * `<data dir>/agents/{claude-code,codex,opencode}/` and `manifest.json`.
@@ -28,6 +29,8 @@ import com.augustnagro.magnum.sql
   * login and sessions, and `claude-code/login` an optional CLAUDE_CONFIG_DIR. Login state is only ever created by the
   * vendor's own login command there.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths = AgentTrees.NoEnvironment)(using
     stores: Stores,
     clock: java.time.Clock
@@ -47,8 +50,10 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
   def opencodeXdg: Option[Path] = root.map(_.resolve("opencode").resolve("xdg"))
   def opencodeConfig: Option[Path] = root.map(_.resolve("opencode").resolve("config"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def publicUrl = app.server.publicUrl.value.stripSuffix("/")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings(version: AgentTrees.SettingsVersion): GenSettings =
     val agentMcp =
       Option(cfg.providers.claudeCode.mcpUrl.value.trim).filter(_.nonEmpty).getOrElse(s"$publicUrl/mcp/agent")
@@ -64,6 +69,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     )
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def load(known: Set[ToolName]): Either[Problems, AgentGenerator.Defs] =
     for
       as <- defs.agents
@@ -74,6 +80,7 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def generate(
       known: Set[ToolName],
       runtimes: List[AgentRuntime] = AgentRuntime.Generated,
@@ -112,6 +119,7 @@ object AgentTrees:
   /** `~` as the JVM's home directory: what the command-line runtimes still read (their slice gives them the injected
     * environment, §25).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expand(p: String)(using home: JvmHome): String = home.expand(JvmHome.Path(p)).value
 
   /** `agents.runtimes.dir`, else the data directory the bundle uses (`runtime.data-dir`, else
@@ -120,6 +128,7 @@ object AgentTrees:
   def root(app: AppConfig, paths: UserPaths): Option[Path] = root(app, paths.environment.lookup, paths.osName)
 
   /** [[root]] in the environment `env` of the operating system `osName`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def root(app: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): Option[Path] =
     Option(app.agents.runtimes.dir)
       .map(_.value.trim)
@@ -129,6 +138,7 @@ object AgentTrees:
       .map(_.toAbsolutePath.normalize)
 
   /** `~` at the start of `p` as the environment's `HOME` (left as it is when there is none). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expandIn(p: String, env: UserPaths.Lookup): String =
     env(Environment.VariablesKey("HOME"))
       .map(_.value.trim)
@@ -143,6 +153,7 @@ object AgentTrees:
     codexHome(app, paths.environment.lookup, paths.osName)
 
   /** [[codexHome]] in the environment `env` of the operating system `osName`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def codexHome(app: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): Option[Path] =
     Option(app.agents.providers.codex.home)
       .map(_.value.trim)
@@ -151,6 +162,7 @@ object AgentTrees:
       .orElse(root(app, env, osName).map(_.resolve("codex").resolve("home")))
 
   /** The definitions' fingerprint: what the trees were generated from. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha(d: AgentGenerator.Defs): Sha256 =
     Prompt.sha256(
       (d.agents.sortBy[String](_.name.value).map(a => s"${a.name}\u0000${a.body}\u0000${a.fingerprint}") ++

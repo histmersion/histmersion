@@ -50,6 +50,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.catalogue.events.EventSql
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1449 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V085's kinds and tables, writing placed
   * catalogue records (a compiled event matched, never overwritten), the tier and the kind-group / tier / area /
@@ -57,11 +58,13 @@ import com.histmersion.domain.catalogue.events.EventSql
   * their statuses, lead facts, an article's catalogue events, and site types in the places feed. Fixtures sit at
   * 150–152°E, 40°S; ids start with `zqec`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventCatalogRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -116,6 +119,7 @@ class EventCatalogRepoSuite extends DbSuite:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       p: CatalogRecord.Provider,
       id: CatalogRecord.ProviderId,
@@ -144,6 +148,7 @@ class EventCatalogRepoSuite extends DbSuite:
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqec%'".update.run()
     val _ = sql"DELETE FROM event_import_parts WHERE provider = 'zztest'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()

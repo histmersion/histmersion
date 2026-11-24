@@ -8,9 +8,11 @@ import com.histmersion.api.automation.Creation
 object SourcesMarkdown:
 
   type SourceRenamedListXs = String
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SourceRenamedListXs:
     inline def apply(v: String): String = v
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourceFindingsOnly(findings: Vector[Finding.Row]): String =
     if findings.isEmpty then ("_(no findings)_")
     else
@@ -30,6 +32,9 @@ object SourcesMarkdown:
       }
       (s"## Findings (${findings.size})\n${items.mkString("\n")}")
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): String =
     val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
     val meta = List(
@@ -80,6 +85,8 @@ object SourcesMarkdown:
           .getOrElse("\n\n_(no full text stored)_")
     (header + topics + regions + tags + doi + prov + uid + created + summary + notes + findingsMd + body)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def neighbors(citekey: Citekey, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then
       (s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
@@ -115,6 +122,8 @@ object SourcesMarkdown:
           Source.Neighbor.Line(s"**${r.citekey}**")
         )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def graph(g: Source.Graph): String =
     if g.nodes.isEmpty then (s"_No graph data for **${g.root}**._")
     else
@@ -136,6 +145,8 @@ object SourcesMarkdown:
         .mkString("\n")
       (s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contradictions(result: ContradictionsResult, citekey: Option[Citekey]): String =
     if result.rows.isEmpty then
       citekey match
@@ -164,6 +175,8 @@ object SourcesMarkdown:
         "_Edge kinds: references, challenges, refutes, updates, superseded_by. " +
         "An empty result is not evidence of agreement._"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourceRenamed(r: Source.Renamed): String =
     val c = r.counts
     def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")

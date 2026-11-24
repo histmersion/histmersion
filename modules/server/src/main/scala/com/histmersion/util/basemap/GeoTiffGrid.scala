@@ -8,6 +8,7 @@ import io.github.iltotore.iron.*
 
 import java.nio.{ByteBuffer, ByteOrder}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A single-band elevation grid in a GeoTIFF, as far as reading it by range needs: where it lies (its north-west corner
   * and the size of a pixel, in degrees), its size in pixels, where each row's signed 16-bit samples begin in the file,
@@ -24,13 +25,17 @@ final case class GeoTiffGrid(
     noData: Option[GeoTiffGrid.NoData]
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rowBytes: ByteCount = ByteCount.applyUnsafe(width.value * 2L)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def east: Degrees = Degrees(west.value + width.value * stepX.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def south: Degrees = Degrees(north.value - height.value * stepY.value)
 
   /** The pixels whose area meets `b` (half-open on the east and south edges, so a grid that only touches the box is not
     * read); None when none does.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def window(b: BBox): Option[GridWindow] =
     val c0 = math.floor((b.minLon.value - west.value) / stepX.value).toInt.max(0)
     val c1 = (math.ceil((b.maxLon.value - west.value) / stepX.value).toInt - 1).min(width.value - 1)
@@ -43,6 +48,7 @@ final case class GeoTiffGrid(
   /** The window's rows as range requests of whole rows, each at most `maxBytes` (and at least one row): rows that
     * follow each other in the file share a request.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runs(w: GridWindow, maxBytes: ByteCount): List[RowRun] =
     val rowLength = rowBytes.value
     val perRun = math.max(1L, maxBytes.value / rowLength).toInt
@@ -64,6 +70,7 @@ final case class GeoTiffGrid(
     out.result()
 
   /** The pixel whose area holds (`lon`, `lat`), fractional: its column and row, centres at `.5`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pixelAt(lon: Degrees, lat: Degrees): (GeoTiffGrid.PixelX, GeoTiffGrid.PixelY) =
     (
       GeoTiffGrid.PixelX((lon.value - west.value) / stepX.value),
@@ -116,6 +123,7 @@ object GeoTiffGrid:
       raw(tag).map(_.map((e, b) => (0 until e.count.toInt).toVector.map(i => le(b).getDouble(i * 8))))
     def text(tag: Int): Either[Problem, Option[String]] =
       raw(tag).map(_.map((_, b) => new String(b, "US-ASCII").takeWhile(_ != '\u0000').trim))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def one(tag: Int, default: Option[Long] = None): Either[Problem, Long] =
       ints(tag).flatMap(
         _.flatMap(_.headOption)
@@ -131,6 +139,7 @@ object GeoTiffGrid:
     * strip offsets of a large grid). A little-endian classic TIFF holding one band of uncompressed signed 16-bit
     * samples in strips — GEBCO's GeoTIFFs — and nothing else: anything else is refused with what it is.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(
       head: RangeHttp.ResponseBytes,
       read: (ByteOffset, ByteCount) => Either[Problem, RangeHttp.ResponseBytes]
@@ -179,6 +188,7 @@ object GeoTiffGrid:
       grid <- gridOf(Directory(entries, bytesAt))
     yield grid
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def gridOf(d: Directory): Either[Problem, GeoTiffGrid] =
     for
       width <- d.one(ImageWidth)
@@ -246,6 +256,7 @@ object GeoTiffGrid:
       GeoTiffGrid(Degrees(west), Degrees(north), stepX, stepY, w, h, offsets, noData)
 
   /** Where each row begins: its strip's offset, plus the rows before it in that strip. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rowOffsets(
       strips: Vector[Long],
       perStrip: Long,

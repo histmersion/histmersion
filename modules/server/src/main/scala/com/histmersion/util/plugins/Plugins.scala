@@ -19,6 +19,7 @@ import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.plugin.UpstreamQuota
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The plugin generations: discover the providers on the server's class path — the first-party fetchers, event
   * catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin — add the plugins
@@ -27,6 +28,8 @@ import com.histmersion.plugin.UpstreamQuota
   * database, no listener, no socket (the HTTP client is built only when a plugin or a fetch first asks for it) — so
   * `--self-check` can call it.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object Plugins:
   type CoreKey = CoreKey.T
   object CoreKey extends Newtype[String, Pure]
@@ -34,6 +37,7 @@ object Plugins:
   /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
     * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Keys: List[ConfigReload.Key] = ConfigReload.Key(PluginHost.Root) :: FirstPartySettings.hostKeys
 
   /** Build the generation for `loaded`, with `provided` beside the class path's plugins. On a config reload, `previous`
@@ -43,6 +47,7 @@ object Plugins:
     * `http` lends every plugin of the generation the one acquisition client (built on its first use); `quota` is what
     * `ctx.quota(<upstream>)` lends.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def load(
       loaded: LoadedConfig,
       provided: List[Plugin],
@@ -57,6 +62,7 @@ object Plugins:
   /** The generation of the first-party source fetchers alone (and `extra`, a test's) over `http`, for `loaded`: the
     * chain a test or a one-off caller runs.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def fetchers(
       loaded: LoadedConfig,
       http: () => Plugin.Http,
@@ -66,6 +72,9 @@ object Plugins:
     val (found, errors) = PluginHost.discover(getClass.getClassLoader)
     generation(loaded, extra ++ found.filter(p => Fetchers(p.info.id)), errors, http, quota, Map.empty)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def generation(
       loaded: LoadedConfig,
       all: List[Plugin],
@@ -99,6 +108,7 @@ object Plugins:
   /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
     * with its environment instead.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def hostSettings(loaded: LoadedConfig): org.ekrich.config.Config =
     if !loaded.merged.root.isEmpty then loaded.merged else referenceSettings(loaded.env)
 
@@ -109,12 +119,14 @@ object Plugins:
   /** First-party: one of Histmersion's own ids ([[ReservedNames.firstPartyPlugins]]) loaded from the image's own class
     * path — not a plugin of the set a relink added under that id.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def firstParty(set: Option[PluginSet])(id: Plugin.Info.Id): Boolean =
     ReservedNames.firstPartyPlugins(ReservedNames.Name(id.value)) && !set.exists(
       _.jars.exists(_.plugins.exists(_.id.value == id.value))
     )
 
   /** The keys each plugin's defaults resource declares (`enabled` aside): where a former plugin's key goes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultKeys(plugins: List[Plugin]): util.plugins.Plugin.Id => Set[SettingsService.ConfigPath] =
     val keys = plugins
       .map(p =>
@@ -136,6 +148,8 @@ object Plugins:
     * `events.<catalogue>.*`, the landing step oa-unpaywall's contact; never a media collection or an AI provider, which
     * read theirs at each use), any other plugin the keys that shape the client it is lent.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def carried(
       previous: Generation,
       changed: List[ConfigReload.Key]
@@ -173,6 +187,8 @@ object Plugins:
   /** The plugin a changed key belongs to (`histmersion.plugins.<id>.…`); `None` for any other key — `order`, the whole
     * block, a host setting — which concerns every plugin.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pluginId(key: ConfigReload.Key): Option[util.plugins.Plugin.Id] =
     scala.util.Try(ConfigUtil.splitPath(key.value).asScala.toList).toOption match
       case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey =>
@@ -182,6 +198,8 @@ object Plugins:
   /** CORE's key as the generation's `oa-core` plugin resolved it (its `api-key` secret reference, else `hostKey`,
     * `acquire.core.api-key`): the new-source search's `core` index asks with it too. `None` when the plugin is off.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def coreKey(g: Generation, hostKey: Option[CoreKey]): Option[CoreKey] =
     Option
       .when(g.registered(CorePlugin))(
@@ -221,6 +239,7 @@ object Plugins:
       services(
         () =>
           new Plugin.Http {
+            @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
               Left(Problem.Unclassified(Legacy.Text("offline")))
           },
@@ -238,6 +257,7 @@ object Plugins:
   private val Offline: Set[Plugin.Info.Id] = Set(Plugin.Info.Id("calibre"))
 
   /** The first-party source fetchers' plugins, which an offline generation leaves out. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Fetchers: Set[Plugin.Info.Id] =
     Set("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "pmc", "arxiv").map(Plugin.Info.Id(_))
 
@@ -245,9 +265,13 @@ object Plugins:
   def services(http: () => Plugin.Http, env: org.ekrich.config.Config): HostServices =
     HostServices(http, env, log, files = new DiskLocalFiles, processes = new SystemProcesses)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def quotaOf(quota: HostServices.Quotas): HostServices.Upstream => UpstreamQuota =
     upstream => quota(upstream.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(id: HostServices.PluginId, warn: Boolean, message: HostServices.Line): Unit =
     val line = if id.value.isEmpty then s"plugins: $message" else s"plugin $id: $message"
     if warn then scribe.warn(line) else scribe.info(line)

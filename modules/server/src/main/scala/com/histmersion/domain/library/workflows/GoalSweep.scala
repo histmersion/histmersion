@@ -26,19 +26,23 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[workflows] trait GoalSweep:
   protected def site: LibrarySite
   protected def goals: GoalService
 
   /** The goal a run is about (the run record is our own). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def goalOf(ctx: RunCtx): Goal.Slug =
     Goal.Slug.assume(ctx.run.target.value)
 
   /** The sources a goal is about: linked directly, and cited by the articles linked to it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def goalSources(goal: Goal.Slug, max: GoalSweep.Limit): List[Citekey] =
     val direct = goals.refs(goal, Goal.LinkKind.Source).map(r => Citekey.assume(r.value))
     val viaArts = goals
@@ -47,6 +51,8 @@ private[workflows] trait GoalSweep:
     (direct ++ viaArts).distinct.take(math.max(0, max.value))
 
   /** Every DOI in the acquisition queue (open or done) → its item id. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   protected def queuedDois(): Map[Doi, Queue.QueueItem.Id] =
     site.queues
       .list(Queue.Kind.Acquire, QueueScope.All)
@@ -57,6 +63,8 @@ private[workflows] trait GoalSweep:
     * (another watcher's sweep: looked up again right before adding); link the item to the goal either way.
     * `Right(true)` = a new item (a dry run: one it would add). Both writes go through the run's gate.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   protected def queueOnce(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -101,6 +109,7 @@ private[workflows] trait GoalSweep:
             }
         )(Right(true))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def log(ctx: RunCtx, line: String): Either[Problems, String] =
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 

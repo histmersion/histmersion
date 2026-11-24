@@ -37,12 +37,17 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
   * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every
   * stored picture shares — the media list and facets, the media layer, the cards' thumbnails. Every method runs on the
   * connection it is given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the media tables and their row codecs")
 private[assets] object MediaRepo:
   type Degrees = Degrees.T
   object Degrees extends Newtype[Double, Pure]
@@ -68,6 +73,7 @@ private[assets] object MediaRepo:
   type SetSourcePictureProperty = SetSourcePictureProperty.T
   object SetSourcePictureProperty extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def known(provider: MediaItemRow.Provider, keys: List[MediaItemRow.ProviderKey])(using
       DbCon
   ): Map[MediaItemRow.ProviderKey, Known] =
@@ -83,6 +89,8 @@ private[assets] object MediaRepo:
   /** Store a provider's picture (or replace the bytes and rights of the one stored under its key); its point and period
     * come from the place or event it is first stored for. Returns its uid and whether it is new.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def save(a: ProviderAsset, firstTarget: (Target.TargetType, Target.Id))(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): (MediaItemRow.Uid, Boolean) =
@@ -111,6 +119,7 @@ private[assets] object MediaRepo:
     * (else its place's) and outer span. An open period (a place with no dates is stored as `(,)`) is not copied: a
     * time-filtered media layer shows dated pictures only.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def placeAt(uid: MediaItemRow.Uid, target: (Target.TargetType, Target.Id))(using DbCon): Unit =
     val (tt, id) = target
     if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
@@ -134,6 +143,7 @@ private[assets] object MediaRepo:
     ()
 
   /** Re-read rights on a stored picture whose bytes are kept (a refresh that does not re-download). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def refreshRights(uid: MediaItemRow.Uid, r: Rights)(using DbCon): Unit =
     Unused(
       sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
@@ -144,6 +154,7 @@ private[assets] object MediaRepo:
   /** Link a stored picture to a place or event in a role — with `basis`, why a collection's record is tied to it
     * (V094). Returns whether the link is new.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def link(
       uid: MediaItemRow.Uid,
       targetType: Target.TargetType,
@@ -162,6 +173,7 @@ private[assets] object MediaRepo:
           RETURNING (xmax = 0)""".query[Boolean].run().head
 
   /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setThumb(
       uid: MediaItemRow.Uid,
       bytes: ProviderAsset.Thumb,
@@ -178,6 +190,7 @@ private[assets] object MediaRepo:
     )
 
   /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setSourcePicture(
       citekey: Citekey,
       uid: MediaItemRow.Uid,
@@ -195,6 +208,7 @@ private[assets] object MediaRepo:
       .run()
 
   /** The source's picture in `role`, if it has one: its uid and the provider key or figure name. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sourcePicture(citekey: Citekey, role: MediaRole.Wire)(using DbCon): Option[(MediaItemRow.Uid, PictureKey)] =
     sql"""SELECT a.uid::text, coalesce(a.provider_key, a.name) FROM media_links m JOIN assets a ON a.uid = m.asset_uid
           WHERE m.target_type = 'source' AND m.target_id = $citekey AND m.role = $role LIMIT 1"""
@@ -204,6 +218,8 @@ private[assets] object MediaRepo:
 
   // ── reads ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def thumbOf(r: MediaThumbRow): MediaThumb =
     MediaThumb(
       MediaItem.Uid(r.uid.value),
@@ -222,6 +238,8 @@ private[assets] object MediaRepo:
     * thumbnail is shown from its own bytes (a figure is already small enough); a provider's picture of a place needs
     * one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def thumbsIn(targetType: Target.TargetType, targetId: Target.Id, limit: Limit)(using DbCon): List[MediaThumb] =
     // one row per picture (an event's P18 image may also be one of its depictions), in its best role
     sql"""SELECT uid, role, credit, license, license_url, source_url, w, h FROM (
@@ -239,6 +257,8 @@ private[assets] object MediaRepo:
   /** Pure: `km` as degrees of arc for `ST_DWithin` on lon/lat geometry — a latitude degree, so a little generous
     * east–west away from the equator, which a "same site" test can afford.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def kmToDegrees(km: EventMatcher.NearFinding.Km): Degrees = Degrees(km.value.max(0) / 111.32)
 
   /** A PLACE's pictures for its card (#1446): its own, and those stored for its equivalents —
@@ -250,6 +270,9 @@ private[assets] object MediaRepo:
     * Best role first, then the place's own before an equivalent's, then the provider's preference. Index lookups only
     * (label key, GiST on the point, the links' item), within the hover budget.
     */
+  @tolerated(LintRule.TotalOrder, "hits hold one row per asset: uid is unique in them")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def placeThumbsIn(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit)(using
       DbCon
   ): List[MediaThumb] =
@@ -285,6 +308,9 @@ private[assets] object MediaRepo:
        a.kind, a.caption, a.license, a.license_url, a.author, a.credit, a.source_url, a.original_url,
        to_char(a.retrieved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), a.thumb IS NOT NULL"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def item(r: MediaItemRow, targets: List[MediaTarget]): MediaItem =
     MediaItem(
       MediaItem.Uid(r.uid.value),
@@ -336,6 +362,8 @@ private[assets] object MediaRepo:
   /** The list: by provider (`source` = a source's figures), licence (`none` = no licence), the place or event a picture
     * is linked to, and a text match; newest first. `total` ignores the limit.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(q: Api.MediaQuery, limit: Limit)(using DbCon): MediaList =
     val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
     val (place, event) = (clean(q.place.map(_.value)), clean(q.event.map(_.value)))
@@ -363,6 +391,7 @@ private[assets] object MediaRepo:
       UnreadPage.Offset(offset)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def show(uid: MediaItemRow.Uid)(using DbCon): Option[MediaItem] =
     sql"SELECT $itemCols FROM assets a WHERE a.uid = $uid::uuid"
       .query[MediaItemRow]
@@ -371,6 +400,7 @@ private[assets] object MediaRepo:
       .map(r => item(r, targetsOf(List(r.uid)).getOrElse(r.uid, Nil)))
 
   /** The thumbnail's bytes and type — a source's figure without one is its own thumbnail. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def thumb(uid: MediaItemRow.Uid)(using DbCon): Option[(ProviderAsset.ThumbMime, ProviderAsset.Thumb)] =
     sql"""SELECT CASE WHEN thumb IS NOT NULL THEN coalesce(thumb_mime, mime) ELSE mime END, coalesce(thumb, bytes)
           FROM assets WHERE uid = $uid::uuid
@@ -380,12 +410,14 @@ private[assets] object MediaRepo:
       .headOption
 
   /** The stored rendition's (or figure's) bytes and type. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def file(uid: MediaItemRow.Uid)(using DbCon): Option[(AssetBytesRow.Mime, AssetBytesRow.Bytes)] =
     sql"SELECT mime, bytes FROM assets WHERE uid = $uid::uuid"
       .query[(AssetBytesRow.Mime, AssetBytesRow.Bytes)]
       .run()
       .headOption
 
+  @tolerated(LintRule.TotalOrder, "GROUP BY 1: column 1 is unique")
   def facets(using DbCon): MediaFacets =
     val providers = sql"""SELECT coalesce(provider, ${MediaProvider.Source}), count(*)::int FROM assets
           GROUP BY 1 ORDER BY 2 DESC, 1"""
@@ -402,6 +434,8 @@ private[assets] object MediaRepo:
     MediaFacets(providers, licences)
 
   /** The media layer: geolocated pictures in the span, by kind, provider and licence. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geo(q: Api.MediaGeoQuery, limit: Limit)(using DbCon): List[MediaGeoHit] =
     val k = q.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
@@ -421,6 +455,7 @@ private[assets] object MediaRepo:
       .map(geoHit)
 
   /** The pictures of `uids` as the map's tiles draw one ([[geo]]'s hits), by uid. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geoOf(uids: List[MediaItemRow.Uid])(using DbCon): Map[MediaItemRow.Uid, MediaGeoHit] =
     if uids.isEmpty then Map.empty
     else
@@ -434,6 +469,7 @@ private[assets] object MediaRepo:
   /** The pictures of the media layer as the map's tiles select them — [[geo]]'s selection, every one whose dates
     * overlap `window` (none: whatever their dates), in the tile's box `envelope`: uid, point and dates.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def tileCandidates(
       kind: Option[MediaItemRow.Kind],
       provider: Option[MediaItemRow.Provider],
@@ -463,6 +499,9 @@ private[assets] object MediaRepo:
        lower(a.period), upper(a.period) - 1, a.caption, a.uid::text, a.provider, a.license, a.credit,
        a.thumb IS NOT NULL, a.source_url, a.license_url, a.author"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def geoHit(r: MediaGeoRow): MediaGeoHit =
     MediaGeoHit(
       r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
@@ -500,6 +539,7 @@ private[assets] object MediaRepo:
          ORDER BY a.provider NULLS LAST, 1, a.uid""".query[(GapItem, GapDetail)].run().toList
 
   /** A source's stored figures (images only), as the illustration's choice weighs them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sourceFigures(citekey: Citekey)(using DbCon): List[SourceFigure] =
     sql"""SELECT uid::text, name, width, height, thumb IS NOT NULL FROM assets
           WHERE citekey = $citekey AND mime LIKE 'image/%' ORDER BY name"""

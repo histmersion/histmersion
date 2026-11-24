@@ -7,11 +7,13 @@ import com.histmersion.pluginhost.Registries
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.config.MediaPluginCollectionsConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own media collections, by name only — the plugins of `plugins/media` implement them; the host keeps
   * what it says about one whose plugin is switched off, the names it records and stores their pictures under, the
   * allowlist each is judged by, the names `media import` also takes, and the names no other plugin may take.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object BuiltinMedia:
   type Alias = Alias.T
   object Alias extends Newtype[String, Pure]
@@ -28,14 +30,18 @@ object BuiltinMedia:
     */
   type KeyedNeed = KeyedNeed.T
   object KeyedNeed extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type EntryName = Entry.Name
   val EntryName: Entry.Name.type = Entry.Name
   type CanonicalAsked = CanonicalAsked.T
   object CanonicalAsked extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckOfName = EntryName
   val CheckOfName: EntryName.type = EntryName
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ProviderOfName = EntryName
   val ProviderOfName: EntryName.type = EntryName
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type LicencesForName = EntryName
   val LicencesForName: EntryName.type = EntryName
 
@@ -49,6 +55,7 @@ object BuiltinMedia:
   )
 
   object Entry:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Name = Registries.MediaCollectionsKey
     val Name: Registries.MediaCollectionsKey.type = Registries.MediaCollectionsKey
     type Title = Title.T
@@ -58,6 +65,7 @@ object BuiltinMedia:
     export domain.media.assets.MediaItemRow.Provider
 
   /** In the order `media import`'s list names them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val entries: List[Entry] = List(
     Entry(
       Plugin.Id("media-wikidata"),
@@ -154,9 +162,11 @@ object BuiltinMedia:
   private val byName: Map[EntryName, Entry] = entries.map(e => e.name -> e).toMap
 
   /** The first-party collection `name` names, if it is one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def entry(name: EntryName): Option[Entry] = byName.get(name)
 
   /** The other names `media import` takes for a built-in collection. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val aliases: Map[Alias, EntryName] = Map(
     Alias("si") -> EntryName("smithsonian"),
     Alias("smithsonian-open-access") -> EntryName("smithsonian"),
@@ -177,6 +187,7 @@ object BuiltinMedia:
   /** Names a plugin's collection may not take: the built-in imports, their aliases, and every provider the host stores
     * pictures under (a plugin's pictures would be taken for theirs).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val reserved: Set[ReservedName] = entries.map(e => ReservedName(e.name.value)).toSet ++ aliases.keySet.map(a =>
     ReservedName(a.value)
   ) ++ MediaProvider.all.map(p => ReservedName(p.value)) ++
@@ -185,6 +196,8 @@ object BuiltinMedia:
   /** Pure: the name an import request means — an alias resolved, blank = `wikidata`, else as given (lower case): the
     * registry decides whether it exists.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def canonical(asked: CanonicalAsked): EntryName =
     val s = asked.value.trim.toLowerCase(java.util.Locale.ROOT)
     if s.isEmpty then EntryName("wikidata") else aliases.getOrElse(Alias(s), EntryName(s))
@@ -197,15 +210,21 @@ object BuiltinMedia:
     own.filter(registered.contains) ++ registered.filterNot(own.contains)
 
   /** The name a collection's checks and report are recorded under: a first-party one's own, else its name. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkOf(name: CheckOfName): CheckName = entry(name).fold(CheckName(name.value))(e => CheckName(e.check.value))
 
   /** The provider a collection's pictures are stored under: a first-party one's own, else its name. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def providerOf(name: ProviderOfName): Provider =
     entry(name).fold(Provider(name.value))(e => Provider(e.provider.value))
 
   /** The allowlist a collection is judged by: a first-party one's own `media.<provider>.licences`, a plugin's
     * `media.collections` (its `per-collection` entry, else the default).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def licencesFor(name: LicencesForName, cfg: MediaConfig): Licences =
     entry(name).fold(
       Licences(cfg.collections.licencesFor(MediaPluginCollectionsConfig.PerCollectionKey(name.value)).value)

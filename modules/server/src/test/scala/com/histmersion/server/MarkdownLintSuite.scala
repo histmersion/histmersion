@@ -19,23 +19,27 @@ import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Filter
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each problem the lint
   * calls an error, the rendered HTML to prove the page really does get it wrong (the lint parses with the page's own
   * flexmark configuration, so the two must agree).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MarkdownLintSuite extends munit.FunSuite:
 
   private val article = Context(article = Context.Article(true))
   private def body(md: Scan.Text, ctx: Context = article) = MarkdownLint.issues(md, FormatField.Body, ctx)
   private def rules(md: Scan.Text, ctx: Context = article): List[FormatRule] = body(md, ctx).map(_.rule)
   private def fixed(md: Scan.Text, ctx: Context = article): Scan.Text = MarkdownLint.fix(md, FormatField.Body, ctx)._1
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def html(md: Scan.Text): String = MarkdownHtml.render(FullText.Shown.Markdown(md.value)).markup
 
   /** A clean article in the corpus's own conventions: `# Title`, sections, `[[citekey]]` citations (with labels, in
     * bold, in a Glossary TABLE with a `|label`), a `_Method_` line with snake_case citekeys, starred reconstructions
     * written as literals, a numbered list, a quote.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val clean = Scan.Text("""# Sea Peoples
       |
       |## Summary

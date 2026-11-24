@@ -10,7 +10,11 @@ import sttp.ai.core.agent.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.api.automation.Agents
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
+@movesTo(FeaturePlace.AutomationAgents)
 object CliOutcomes:
   /** Two sttp-ai finish reasons compare with `==` and `!=`, also under `-language:strictEquality`: a CLI agent's
     * outcome is read for its answer only when it stopped naturally. The one such instance, imported by name
@@ -24,6 +28,8 @@ object CliOutcomes:
   type TextProblemText = TextProblemText.T
   object TextProblemText extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def result[Out](
       o: CliOutcome,
       user: LlmCall.User,
@@ -63,6 +69,8 @@ object CliOutcomes:
     * (nothing was answered) or a text that is a JSON object. What the step records and the retry is told, instead of
     * "not the JSON the schema asks for".
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def textProblem(text: TextProblemText): Option[AnswerNotJson] =
     val t = text.value.trim
     if t.isEmpty then None
@@ -89,6 +97,8 @@ object CliOutcomes:
     else t
 
   /** A plan's usage limit as a CLI words it ("You've hit your usage limit", "rate limit reached"). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isLimit(message: ClaudeCode.Limit.Sentence): Boolean =
     val low = message.value.toLowerCase(java.util.Locale.ROOT)
     low.contains("usage limit") || low.contains("rate limit reached") || low.contains("rate_limit_reached") ||

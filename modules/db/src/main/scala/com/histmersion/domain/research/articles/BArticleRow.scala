@@ -29,8 +29,10 @@ final private[articles] case class BArticleRow(
 ) derives DbCodec
 
 object BArticleRow:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Slug = domain.research.Slug
   val Slug: domain.research.Slug.type = domain.research.Slug
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   export Article.Kind

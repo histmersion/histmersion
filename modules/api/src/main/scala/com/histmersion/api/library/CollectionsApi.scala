@@ -5,10 +5,13 @@ import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's source collections (the Calibre library, archive.org): what the server can run, and the operations
   * `histmersion calibre …` makes over HTTP. `{name}` is the collection's registered name.
   */
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the collections routes with their request and response bodies")
 object CollectionsApi:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
@@ -21,6 +24,7 @@ object CollectionsApi:
   lazy val collections: PublicEndpoint[Unit, Api.Error, List[CollectionInfo], Any] =
     base.get.out(jsonBody[List[CollectionInfo]])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val collection: PublicEndpoint[Collection.Name, Api.Error, CollectionInfo, Any] =
     (named.get
       .out(jsonBody[CollectionInfo]))
@@ -28,6 +32,8 @@ object CollectionsApi:
         (refactorEncoded12: Collection.Name) => (refactorEncoded12).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
   lazy val search
       : PublicEndpoint[(Collection.Name, Option[Query], Option[Limit], Boolean), Api.Error, CollectionSearch, Any] =
     (named.get
@@ -53,6 +59,7 @@ object CollectionsApi:
         )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val importItem: PublicEndpoint[(Collection.Name, CollectionImportRequest), Api.Error, CollectionImported, Any] =
     (named.post
       .in("import")
@@ -64,6 +71,7 @@ object CollectionsApi:
         (((refactorEncoded14)._1).value, (refactorEncoded14)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val link: PublicEndpoint[(Collection.Name, CollectionLinkRequest), Api.Error, CollectionLinked, Any] =
     (named.post
       .in("link")
@@ -75,6 +83,7 @@ object CollectionsApi:
         (((refactorEncoded15)._1).value, (refactorEncoded15)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val push: PublicEndpoint[(Collection.Name, CollectionPushRequest), Api.Error, CollectionPushed, Any] =
     (named.post
       .in("push")
@@ -86,6 +95,7 @@ object CollectionsApi:
         (((refactorEncoded16)._1).value, (refactorEncoded16)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val updateOne: PublicEndpoint[(Collection.Name, CollectionUpdateOne), Api.Error, CollectionUpdatedOne, Any] =
     (named.post
       .in("update")
@@ -97,6 +107,7 @@ object CollectionsApi:
         (((refactorEncoded6)._1).value, (refactorEncoded6)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val updateAll
       : PublicEndpoint[(Collection.Name, CollectionUpdateAll.Request), Api.Error, CollectionUpdateAll, Any] =
     (named.post
@@ -110,6 +121,7 @@ object CollectionsApi:
         (((refactorEncoded7)._1).value, (refactorEncoded7)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val set: PublicEndpoint[(Collection.Name, CollectionSetRequest), Api.Error, CollectionSetDone, Any] =
     (named.post
       .in("set")
@@ -121,6 +133,8 @@ object CollectionsApi:
         (((refactorEncoded8)._1).value, (refactorEncoded8)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
   lazy val audit: PublicEndpoint[Collection.Name, Api.Error, CollectionAudit, Any] =
     (named.get
       .in("audit")
@@ -129,6 +143,7 @@ object CollectionsApi:
         (refactorEncoded9: Collection.Name) => (refactorEncoded9).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val gaps: PublicEndpoint[(Collection.Name, Option[Limit]), Api.Error, CollectionGaps, Any] =
     (named.get
       .in("gaps")
@@ -143,6 +158,7 @@ object CollectionsApi:
         (((refactorEncoded10)._1).value, ((refactorEncoded10)._2).map(refactorElement6 => (refactorElement6).value))
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val sync: PublicEndpoint[(Collection.Name, CollectionSync.Request), Api.Error, CollectionSync, Any] =
     (named.post
       .in("sync")

@@ -4,6 +4,7 @@ package domain.library.collections
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source linked to an item of the Calibre library (`sources.calibre_id`), with what an audit compares. */
 final case class LinkedSource(
@@ -17,7 +18,9 @@ final case class LinkedSource(
 object LinkedSource:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Authors = AuthorName
   val Authors: AuthorName.type = AuthorName

@@ -22,6 +22,7 @@ import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.util.problem.Text.sentences
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Measuring tools for docs/research-terrain-basemap.md (and how the browser fixture's vector extract was made), with
   * the fetch's own code — never run by the tests:
@@ -63,6 +64,7 @@ object BasemapExtractTool:
   )
 
   /** The store of `p`'s directory and `p`'s name in it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(p: Path): (Store, Store.Key) =
     val a = p.toAbsolutePath
     (BasemapFixtures.store(a.getParent), Store.Key.applyUnsafe(a.getFileName.toString))
@@ -74,6 +76,8 @@ object BasemapExtractTool:
   private def orDie[A](r: Either[Problem, A]): A = r.fold(p => sys.error(p.sentence), identity)
 
   /** The politeness the configuration asks for. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def paceOf(cfg: BasemapConfig): BasemapFetch.Pace = BasemapFetch.Pace(
     BasemapFetch.Pace.GapMs(cfg.requestGapMs.value.toLong),
     ByteCount.applyUnsafe(cfg.maxRequestMb.value.toLong << 20),
@@ -81,9 +85,13 @@ object BasemapExtractTool:
   )
 
   /** The region an archive's header covers. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def boxOf(h: PmTiles.Header): BBox =
     BBox(Longitude(h.minLon.value), Latitude(h.minLat.value), Longitude(h.maxLon.value), Latitude(h.maxLat.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def run(args: List[String]): Unit = args match
     case "extract" :: build :: bbox :: z :: out :: rest =>
       extract(
@@ -111,6 +119,7 @@ object BasemapExtractTool:
     case _ => sys.error("extract <build|latest> <bbox> <maxZoom> <out> [keep-all] | sizes <file>")
 
   /** Every layer's `kind`s at zoom `z` of an archive, counted over its tiles (what a style can select). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kinds(file: Path, z: Basemap.Zoom): Unit =
     val f = orDie(BasemapFixtures.open(file))
     val h = f.header
@@ -131,6 +140,8 @@ object BasemapExtractTool:
   /** The relief of a region from zoom `z0` to `z1` (a focus region, as `fetch --focus` stores it): its download
     * measured from the directories alone, or written to `out`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def relief(
       bbox: BBox.Text,
       z0: BasemapFetch.Plan.MinZoom,
@@ -169,6 +180,8 @@ object BasemapExtractTool:
       println(s"RELIEF $o: $tiles tiles, $bytes bytes")
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def extract(
       build: BasemapVectorConfig.Build,
       bbox: BBox.Text,
@@ -234,6 +247,7 @@ object BasemapExtractTool:
     val _ = base.deleteTree(workKey)
     scribe.info(s"$out: $tiles tiles, $bytes bytes, downloaded ${plan.requestBytes} bytes")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sizes(file: Path): Unit =
     val f = orDie(BasemapFixtures.open(file))
     val drop =
@@ -277,6 +291,7 @@ object BasemapExtractTool:
     )
     f.close()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inspect(file: Path, b: BBox, z: Basemap.Zoom): Unit =
     val f = orDie(BasemapFixtures.open(file))
     val kinds = collection.mutable.TreeMap.empty[String, Int]
@@ -308,6 +323,7 @@ object BasemapExtractTool:
     keys.foreach((k, n) => println(f"$n%8d  key $k"))
     f.close()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def subset(in: Path, b: BBox, maxZoom: PmTiles.Zoom, out: Path): Unit =
     val f = orDie(BasemapFixtures.open(in))
     val w = BasemapFixtures.writer(out.toAbsolutePath)

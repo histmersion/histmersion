@@ -126,11 +126,15 @@ import com.histmersion.api.media.Iiif
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
   * one of them.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@movesTo(FeaturePlace.Api)
 object Api:
   object Search:
     type Limit = Limit.T
@@ -207,6 +211,8 @@ object Api:
   /** `region` is still sent by older links and clients; it is one more place name. */
 
   final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toFilter: Filter =
       region
         .map((_).value.trim)
@@ -219,14 +225,17 @@ object Api:
 
     def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def read(t: (Filter, Option[String])): FindingsQuery = t match
       case (filter, region) => FindingsQuery(filter, region.map(Region(_)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def write(v: FindingsQuery): (Filter, Option[String]) = (v.filter, v.region.map(_.value))
 
   private lazy val base = endpoint.in("api").errorOut(problemOut)
 
   /** The parameter names are fixed: saved links, the web UI and the CLI rely on them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val filterQuery: EndpointInput[Filter] =
     import com.histmersion.api.library.Filter.Docs as D
     def q[A](p: D.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) =
@@ -327,9 +336,11 @@ object Api:
   lazy val about: PublicEndpoint[Unit, Error, About, Any] =
     base.get.in("about").out(jsonBody[About])
 
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.deleteIfExists")
   lazy val config: PublicEndpoint[Unit, Error, UiConfig, Any] =
     base.get.in("config").out(jsonBody[UiConfig])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val search: PublicEndpoint[(Option[Search.Text], Option[Search.Limit]), Error, List[SearchHit], Any] =
     (base.get
       .in("search")
@@ -348,6 +359,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val resolveId: PublicEndpoint[Lookup.Text, Error, ResolvedId, Any] =
     (base.get
       .in("resolve" / path[String]("id"))
@@ -356,6 +368,7 @@ object Api:
         (refactorEncoded108: Lookup.Text) => (refactorEncoded108).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val getSource: PublicEndpoint[
     (Citekey, SourceViewQuery.FullText),
     Error,
@@ -375,6 +388,7 @@ object Api:
         (((refactorEncoded109)._1).value, ((refactorEncoded109)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val sourceArticles: PublicEndpoint[Citekey, Error, List[Backlink], Any] =
     (base.get
       .in("sources" / path[String]("citekey") / "articles")
@@ -383,6 +397,7 @@ object Api:
         (refactorEncoded4).value
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SourceViewQuery(
       citekey: Citekey,
       fullText: SourceViewQuery.FullText = SourceViewQuery.FullText(false),
@@ -405,6 +420,7 @@ object Api:
     type Chars = Chars.T
     object Chars extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val sourceView: PublicEndpoint[SourceViewQuery, Error, Source.View, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "view")
@@ -456,6 +472,7 @@ object Api:
     type Context = Context.T
     object Context extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val passages: PublicEndpoint[PassagesQuery, Error, PassageResult, Any] =
     endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "passages")
@@ -495,6 +512,7 @@ object Api:
       .mapIn(FindingsQuery.read)(FindingsQuery.write)
       .out(jsonBody[GeoHitPage])
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AggregateQuery(
       by: Option[AggregateQuery.By],
       unit: Option[AggregateQuery.Unit],
@@ -506,12 +524,16 @@ object Api:
   )
 
   object AggregateQuery:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type TimeUnit = Unit
     val TimeUnit: Unit.type = Unit
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type TreeUnit = Unit
     val TreeUnit: Unit.type = Unit
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type TreeAsOf = AsOf
     val TreeAsOf: AsOf.type = AsOf
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type TreeSamples = Samples
     val TreeSamples: Samples.type = Samples
 
@@ -541,6 +563,7 @@ object Api:
     ): AggregateQuery =
       AggregateQuery(Some(by), unit, filter, depth.orElse(Some(Depth(0))), asOf, samples)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val aggregate: PublicEndpoint[AggregateQuery, Error, TimeHistogram, Any] =
     base.get
       .in("aggregate")
@@ -574,6 +597,7 @@ object Api:
       )
       .out(jsonBody[TimeHistogram])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val neighbors: PublicEndpoint[(Citekey, List[Edge.Kind.Wire]), Error, List[NeighborRow], Any] =
     (base.get
       .in("neighbors" / path[String]("citekey"))
@@ -588,6 +612,7 @@ object Api:
         (((refactorEncoded5)._1).value, ((refactorEncoded5)._2).map(refactorElement6 => (refactorElement6).value))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val graph: PublicEndpoint[
     (Citekey, Option[Source.Graph.DepthCount]),
     Error,
@@ -611,6 +636,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val contradictions: PublicEndpoint[
     (Option[Citekey], Option[AggregateQuery.AsOf]),
     Error,
@@ -637,6 +663,7 @@ object Api:
   lazy val seed: PublicEndpoint[SeedRequest, Error, SeedResult, Any] =
     base.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val reindex: PublicEndpoint[(Option[Reindex.Scope], Option[Reindex.Limit]), Error, ReindexResult, Any] =
     (base.post
       .in("reindex")
@@ -658,6 +685,7 @@ object Api:
   lazy val sources: PublicEndpoint[Filter, Error, SearchResult, Any] =
     base.get.in("sources").in(filterQuery).out(jsonBody[SearchResult])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val facets: PublicEndpoint[(Facets.Field, Option[Facets.Prefix], Filter), Error, List[Facet], Any] =
     (base.get
       .in("facets")
@@ -683,6 +711,7 @@ object Api:
     .default(false)
     .description("refuse the write when its Markdown has a formatting error (default: report only)")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putSource: PublicEndpoint[(Citekey, Source.Put, Overwrite), Error, Source.WithFindings, Any] =
     (endpoint.put
       .in("api" / "sources" / path[String]("citekey"))
@@ -717,6 +746,7 @@ object Api:
         (((refactorEncoded117)._1).value, (refactorEncoded117)._2, ((refactorEncoded117)._3).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val lintSource: PublicEndpoint[Citekey, Error, FormatReport, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "lint")
@@ -726,6 +756,7 @@ object Api:
         (refactorEncoded118).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val fixSourceFormat: PublicEndpoint[Citekey, Error, FormatReport, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "lint" / "fix")
@@ -735,6 +766,7 @@ object Api:
         (refactorEncoded13).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val renameSource: PublicEndpoint[(Citekey, Rename.Request), Error, Source.Renamed, Any] =
     (base.post
       .in("sources" / path[String]("citekey") / "rename")
@@ -744,6 +776,7 @@ object Api:
         (Citekey((refactorDecoded120)._1), (refactorDecoded120)._2)
       )((refactorEncoded120: (Citekey, Rename.Request)) => (((refactorEncoded120)._1).value, (refactorEncoded120)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val deleteSource: PublicEndpoint[(Citekey, Source.DeleteRequest), Error, Source.Deletion, Any] =
     (base.post
       .in("sources" / path[String]("citekey") / "delete")
@@ -761,6 +794,7 @@ object Api:
   lazy val importNote: PublicEndpoint[NoteImport, Error, SeedResult, Any] =
     base.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val exportSource: PublicEndpoint[Citekey, Error, Source.Export, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "export")
@@ -773,6 +807,7 @@ object Api:
         (refactorEncoded17: Source.Export) => (refactorEncoded17).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val citekeys: PublicEndpoint[Unit, Error, List[Citekey], Any] =
     (base.get
       .in("citekeys")
@@ -800,6 +835,7 @@ object Api:
   lazy val backups: PublicEndpoint[Unit, Error, List[Backup.Info], Any] =
     base.get.in("backups").out(jsonBody[List[Backup.Info]])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val downloadBackup: PublicEndpoint[Backup.Name, Error, TapirFile, Any] =
     (endpoint.get
       .in("api" / "backups" / path[String]("file"))
@@ -818,6 +854,8 @@ object Api:
   lazy val setInstance: PublicEndpoint[InstanceLabel, Error, InstanceInfo, Any] =
     base.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.createDirectories, GET: File Files.createTempFile, GET: File Files.deleteIfExists, GET: File Files.move, GET: File Files.newOutputStream, GET: File Files.setPosixFilePermissions")
   lazy val exportBundle: PublicEndpoint[Option[Bundle.Name], Error, (TapirFile, FileName), Any] =
     (endpoint.get
       .in("api" / "bundle")
@@ -836,6 +874,7 @@ object Api:
     base.post.in("bundle" / "verify").in(fileBody).out(jsonBody[Bundle.VerifyResult])
 
   /** Not an MCP tool: its input is a file upload, which an MCP call cannot carry. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val importBundle: PublicEndpoint[(Apply, TapirFile), Error, Bundle.ImportResult, Any] =
     (base.post
       .in("bundle" / "import")
@@ -861,6 +900,7 @@ object Api:
   lazy val mergeApply: PublicEndpoint[MergeApplyRequest, Error, MergeApplyJob, Any] =
     base.post.in("merge" / "apply").in(jsonBody[MergeApplyRequest]).out(jsonBody[MergeApplyJob])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mergeApplyStatus: PublicEndpoint[Merge.Id, Error, MergeApplyJob, Any] =
     (base.get
       .in("merge" / "apply" / path[String]("job"))
@@ -869,6 +909,7 @@ object Api:
         (refactorEncoded23).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mergeSession: PublicEndpoint[Merge.Id, Error, MergeSession, Any] =
     (base.get
       .in("merge" / "sessions" / path[String]("bundle"))
@@ -877,6 +918,7 @@ object Api:
         (refactorEncoded130).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putMergeSession: PublicEndpoint[(Merge.Id, MergeResolutions), Error, MergeSession, Any] =
     (base.put
       .in("merge" / "sessions" / path[String]("bundle"))
@@ -888,6 +930,7 @@ object Api:
         (((refactorEncoded131)._1).value, (refactorEncoded131)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val parseResolutions: PublicEndpoint[Merge.Id, Error, MergeResolutions, Any] =
     (base.post
       .in("merge" / "resolutions")
@@ -897,6 +940,7 @@ object Api:
         (refactorEncoded26).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val merges: PublicEndpoint[Option[Merge.Limit], Error, List[MergeInfo], Any] =
     (base.get
       .in("merges")
@@ -908,6 +952,7 @@ object Api:
         (refactorEncoded133).map(refactorElement114 => (refactorElement114).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mergeLedger
       : PublicEndpoint[(Option[Merge.Id], Option[Merge.Entity], Option[Merge.Limit]), Error, MergeLedger, Any] =
     (base.get
@@ -931,6 +976,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mergeDetail: PublicEndpoint[Merge.Id, Error, MergeDetail, Any] =
     (base.get
       .in("merges" / path[String]("id"))
@@ -939,6 +985,7 @@ object Api:
         (refactorEncoded29).value
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ArticleQuery(
       filter: Filter = Filter(),
       kind: Option[ArticleQuery.Kind] = None,
@@ -950,6 +997,7 @@ object Api:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val articles: PublicEndpoint[ArticleQuery, Error, Article.List, Any] =
     base.get
       .in("articles")
@@ -961,6 +1009,7 @@ object Api:
       }(v => (v.filter, v.kind.map(_.value), v.text.map(_.value)))
       .out(jsonBody[Article.List])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val renameArticle: PublicEndpoint[(ReviewGoal.Slug, LabelRename), Error, LabelRenamed, Any] =
     (base.post
       .in("articles" / path[String]("slug") / "rename")
@@ -972,6 +1021,7 @@ object Api:
         (((refactorEncoded136)._1).value, (refactorEncoded136)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val getArticle: PublicEndpoint[(ReviewGoal.Slug, Article.FullText), Error, Article.View, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug"))
@@ -988,6 +1038,7 @@ object Api:
         (((refactorEncoded137)._1).value, ((refactorEncoded137)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putArticle: PublicEndpoint[(ReviewGoal.Slug, Article.Put, Overwrite), Error, Article.View, Any] =
     (endpoint.put
       .in("api" / "articles" / path[String]("slug"))
@@ -1001,6 +1052,7 @@ object Api:
         (((refactorEncoded138)._1).value, (refactorEncoded138)._2, ((refactorEncoded138)._3).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val patchArticle: PublicEndpoint[(ReviewGoal.Slug, Article.Patch, Apply), Error, Article.View, Any] =
     (endpoint.patch
       .in("api" / "articles" / path[String]("slug"))
@@ -1014,6 +1066,7 @@ object Api:
         (((refactorEncoded33)._1).value, (refactorEncoded33)._2, ((refactorEncoded33)._3).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val lintArticle: PublicEndpoint[ReviewGoal.Slug, Error, FormatReport, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "lint")
@@ -1023,6 +1076,7 @@ object Api:
         (refactorEncoded140: ReviewGoal.Slug) => (refactorEncoded140).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val fixArticleFormat: PublicEndpoint[ReviewGoal.Slug, Error, FormatReport, Any] =
     (endpoint.post
       .in("api" / "articles" / path[String]("slug") / "lint" / "fix")
@@ -1032,6 +1086,7 @@ object Api:
         (refactorEncoded35: ReviewGoal.Slug) => (refactorEncoded35).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val checkArticle: PublicEndpoint[
     (ReviewGoal.Slug, Article.Edits.ArticleCheckRequest),
     Error,
@@ -1050,6 +1105,7 @@ object Api:
         (((refactorEncoded142)._1).value, (refactorEncoded142)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val articleCoverage: PublicEndpoint[ReviewGoal.Slug, Error, Coverage, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "coverage")
@@ -1059,6 +1115,7 @@ object Api:
         (refactorEncoded37: ReviewGoal.Slug) => (refactorEncoded37).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val articleReview: PublicEndpoint[ReviewGoal.Slug, Error, Article.ReviewView, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "review")
@@ -1068,6 +1125,7 @@ object Api:
         (refactorEncoded38: ReviewGoal.Slug) => (refactorEncoded38).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val deleteArticle: PublicEndpoint[ReviewGoal.Slug, Error, Article.Deleted, Any] =
     (endpoint.delete
       .in("api" / "articles" / path[String]("slug"))
@@ -1077,6 +1135,7 @@ object Api:
         (refactorEncoded145: ReviewGoal.Slug) => (refactorEncoded145).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val exportArticle: PublicEndpoint[ReviewGoal.Slug, Error, Article.Export, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "export")
@@ -1092,6 +1151,7 @@ object Api:
   lazy val importArticle: PublicEndpoint[Article.Import, Error, SeedResult, Any] =
     base.post.in("articles" / "import").in(jsonBody[Article.Import]).out(jsonBody[SeedResult])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val articleVersions: PublicEndpoint[ReviewGoal.Slug, Error, List[Article.Version], Any] =
     (base.get
       .in("articles" / path[String]("slug") / "versions")
@@ -1100,6 +1160,7 @@ object Api:
         (refactorEncoded148: ReviewGoal.Slug) => (refactorEncoded148).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val articleVersion: PublicEndpoint[(ReviewGoal.Slug, Article.VersionId), Error, Article.VersionFull, Any] =
     (base.get
       .in("articles" / path[String]("slug") / "versions" / path[Long]("versionId"))
@@ -1110,6 +1171,7 @@ object Api:
         (((refactorEncoded149)._1).value, ((refactorEncoded149)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val articleSlugs: PublicEndpoint[Unit, Error, List[ReviewGoal.Slug], Any] =
     (base.get
       .in("article-slugs")
@@ -1286,6 +1348,7 @@ object Api:
     ManagersApi.steering ++ AutopilotApi.draining ++ ManagersApi.stalled ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ PersonalApi.all ++
     CollectionsApi.all ++ LogApi.all ++ ResearchApi.all
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val places: PublicEndpoint[
     (Option[Place.Kind.Wire], Option[AggregateQuery.AsOf], Option[PlacesGeoQuery.Limit]),
     Error,
@@ -1315,6 +1378,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PlacesGeoQuery(
       kind: Option[PlacesGeoQuery.Kind] = None,
       asOf: Option[PlacesGeoQuery.AsOf] = None,
@@ -1335,6 +1399,7 @@ object Api:
     object To extends Newtype[Long, Pure]
     export GeoPick.Wire as Pick
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, Error, PlacesGeo.Json, Any] =
     (base.get
       .in("places" / "geo")
@@ -1370,6 +1435,7 @@ object Api:
         (refactorEncoded14: PlacesGeo.Json) => (refactorEncoded14).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placeChildren: PublicEndpoint[(Place.Id, Option[AggregateQuery.AsOf]), Error, List[Place.Summary], Any] =
     (base.get
       .in("places" / path[String]("id") / "children")
@@ -1384,6 +1450,7 @@ object Api:
         (((refactorEncoded45)._1).value, ((refactorEncoded45)._2).map(refactorElement36 => (refactorElement36).value))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placeTree
       : PublicEndpoint[(Place.Id, Option[AggregateQuery.AsOf], Option[Place.Depth]), Error, List[Place.TreeRow], Any] =
     (base.get
@@ -1406,6 +1473,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val place
       : PublicEndpoint[(Place.Id, Option[AggregateQuery.AsOf], Option[Place.Detail]), Error, PlaceDetail, Any] =
     (base.get
@@ -1428,6 +1496,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placeFootprints: PublicEndpoint[(Place.Id, Option[AggregateQuery.AsOf]), Error, List[Place.Footprint], Any] =
     (base.get
       .in("places" / path[String]("id") / "footprints")
@@ -1445,6 +1514,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placeLinks: PublicEndpoint[Place.Id, Error, List[Place.Link], Any] =
     (base.get
       .in("places" / path[String]("id") / "links")
@@ -1453,6 +1523,7 @@ object Api:
         (refactorEncoded49).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val periods: PublicEndpoint[
     (
         Option[CorpusCounts.Periods.Source],
@@ -1502,6 +1573,7 @@ object Api:
           )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val period: PublicEndpoint[Period.Id, Error, Period.Detail, Any] =
     (base.get
       .in("periods" / path[String]("id"))
@@ -1510,6 +1582,7 @@ object Api:
         (refactorEncoded157: Period.Id) => (refactorEncoded157).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val seedPeriods: PublicEndpoint[Overwrite, Error, Period.ImportResult, Any] =
     (base.post
       .in("periods" / "seed")
@@ -1519,6 +1592,7 @@ object Api:
         (refactorEncoded158: Overwrite) => (refactorEncoded158).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val importPeriods: PublicEndpoint[
     (List[CorpusCounts.Periods.Source], Option[CorpusCounts.Periods.Collection], CorpusCounts.Periods.Name),
     Error,
@@ -1551,6 +1625,7 @@ object Api:
           )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val fetchPeriods: PublicEndpoint[
     (CorpusCounts.Periods.Source, List[CorpusCounts.Periods.Collection]),
     Error,
@@ -1575,6 +1650,7 @@ object Api:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val init: PublicEndpoint[Overwrite, Error, JobInfo, Any] =
     (base.post
       .in("init")
@@ -1584,6 +1660,7 @@ object Api:
         (refactorEncoded161: Overwrite) => (refactorEncoded161).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val importPlaces: PublicEndpoint[
     (Option[ExternalPlaces.Source], Option[ExternalPlaces.Locator], ExternalPlaces.Format),
     Error,
@@ -1614,6 +1691,7 @@ object Api:
   lazy val rebuildPlaces: PublicEndpoint[Unit, Error, Place.RebuildResult, Any] =
     base.post.in("places" / "rebuild").out(jsonBody[Place.RebuildResult])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val fetchExternalPlaces: PublicEndpoint[(ExternalPlaces.Source, Apply), Error, Place.ImportResult, Any] =
     (base.post
       .in("places" / "fetch")
@@ -1630,6 +1708,7 @@ object Api:
   lazy val placeSources: PublicEndpoint[Unit, Error, List[Gazetteer.SourceInfo], Any] =
     base.get.in("places" / "sources").out(jsonBody[List[Gazetteer.SourceInfo]])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val loadPlaces: PublicEndpoint[(ExternalPlaces.Source, Apply), Error, JobInfo, Any] =
     (base.post
       .in("places" / "load")
@@ -1643,6 +1722,7 @@ object Api:
       )
 
   /** Declared before `places/{id}` so `names` is never read as an id. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placeNames: PublicEndpoint[Option[Place.Id], Error, List[ManualPlaceName], Any] =
     (base.get
       .in("places" / "names")
@@ -1654,6 +1734,7 @@ object Api:
         (refactorEncoded59).map(refactorElement66 => (refactorElement66).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val addPlaceName: PublicEndpoint[(Place.Id, Place.NameAdd), Error, Place.NameChanged, Any] =
     (base.post
       .in("places" / path[String]("id") / "names")
@@ -1663,6 +1744,7 @@ object Api:
         (Place.Id((refactorDecoded60)._1), (refactorDecoded60)._2)
       )((refactorEncoded60: (Place.Id, Place.NameAdd)) => (((refactorEncoded60)._1).value, (refactorEncoded60)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val removePlaceName: PublicEndpoint[(Place.Id, Place.NameRemove), Error, Place.NameChanged, Any] =
     (base.post
       .in("places" / path[String]("id") / "names" / "remove")
@@ -1675,6 +1757,7 @@ object Api:
       )
 
   /** Declared before `places/{id}` so `overrides` is never read as an id. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val placeOverrides: PublicEndpoint[Option[Place.Id], Error, List[Place.Override], Any] =
     (base.get
       .in("places" / "overrides")
@@ -1686,6 +1769,7 @@ object Api:
         (refactorEncoded168).map(refactorElement160 => (refactorElement160).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val setPlaceOverride: PublicEndpoint[(Place.Id, Place.OverrideSet), Error, Place.OverrideChanged, Any] =
     (base.post
       .in("places" / path[String]("id") / "override")
@@ -1697,6 +1781,7 @@ object Api:
         (((refactorEncoded169)._1).value, (refactorEncoded169)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mergePlace: PublicEndpoint[(Place.Id, Place.MergeIn), Error, Place.Gone, Any] =
     (base.post
       .in("places" / path[String]("id") / "merge")
@@ -1706,6 +1791,7 @@ object Api:
         (Place.Id((refactorDecoded64)._1), (refactorDecoded64)._2)
       )((refactorEncoded64: (Place.Id, Place.MergeIn)) => (((refactorEncoded64)._1).value, (refactorEncoded64)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val removePlace: PublicEndpoint[(Place.Id, Place.RemoveIn), Error, Place.Gone, Any] =
     (base.post
       .in("places" / path[String]("id") / "remove")
@@ -1721,6 +1807,7 @@ object Api:
   lazy val buildHierarchy: PublicEndpoint[Unit, Error, SpatialHierarchyResult, Any] =
     base.post.in("places" / "build-hierarchy").out(jsonBody[SpatialHierarchyResult])
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventQuery(
       filter: Filter = Filter(),
       text: Option[EventQuery.Text] = None,
@@ -1733,6 +1820,7 @@ object Api:
   )
 
   object EventQuery:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def read(
         t: (
             Filter,
@@ -1757,6 +1845,7 @@ object Api:
           area.map(Area(_))
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def write(v: EventQuery): (
         Filter,
         Option[String],
@@ -1818,6 +1907,7 @@ object Api:
       .mapIn(EventQuery.read)(EventQuery.write)
       .out(jsonBody[EventGeo.List])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val renameEvent: PublicEndpoint[(Event.Uid, LabelRename), Error, LabelRenamed, Any] =
     (base.post
       .in("events" / path[String]("id") / "rename")
@@ -1827,6 +1917,7 @@ object Api:
         (Event.Uid((refactorDecoded66)._1), (refactorDecoded66)._2)
       )((refactorEncoded66: (Event.Uid, LabelRename)) => (((refactorEncoded66)._1).value, (refactorEncoded66)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val getEvent: PublicEndpoint[Event.Uid, Error, EventDetail, Any] =
     (endpoint.get
       .in("api" / "events" / path[String]("id"))
@@ -1836,6 +1927,7 @@ object Api:
         (refactorEncoded67).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putEvent: PublicEndpoint[(Event.Uid, EventPut), Error, EventDetail, Any] =
     (endpoint.put
       .in("api" / "events" / path[String]("id"))
@@ -1846,6 +1938,7 @@ object Api:
         (Event.Uid((refactorDecoded174)._1), (refactorDecoded174)._2)
       )((refactorEncoded174: (Event.Uid, EventPut)) => (((refactorEncoded174)._1).value, (refactorEncoded174)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val patchEvent: PublicEndpoint[(Event.Uid, EventPatch), Error, EventDetail, Any] =
     (endpoint.patch
       .in("api" / "events" / path[String]("id"))
@@ -1856,6 +1949,7 @@ object Api:
         (Event.Uid((refactorDecoded175)._1), (refactorDecoded175)._2)
       )((refactorEncoded175: (Event.Uid, EventPatch)) => (((refactorEncoded175)._1).value, (refactorEncoded175)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val deleteEvent: PublicEndpoint[Event.Uid, Error, EventDeleted, Any] =
     (endpoint.delete
       .in("api" / "events" / path[String]("id"))
@@ -1865,6 +1959,7 @@ object Api:
         (refactorEncoded176: Event.Uid) => (refactorEncoded176).value
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AttestationQuery(
       citekey: Option[Citekey] = None,
       targetType: Option[AttestationQuery.TargetType] = None,
@@ -1875,14 +1970,17 @@ object Api:
 
   object AttestationQuery:
     type TargetType = TargetType.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetId extends Newtype[String, Pure]
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
     type Offset = Offset.T
     object Offset extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val attestations: PublicEndpoint[AttestationQuery, Error, Attestation.List, Any] =
     base.get
       .in("attestations")
@@ -1910,6 +2008,7 @@ object Api:
       )
       .out(jsonBody[Attestation.List])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val getAttestation: PublicEndpoint[Attestation.Id, Error, Attestation, Any] =
     (endpoint.get
       .in("api" / "attestations" / path[Long]("id"))
@@ -1926,6 +2025,7 @@ object Api:
       .errorOut(problemOut)
       .out(jsonBody[Attestation])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val patchAttestation: PublicEndpoint[(Attestation.Id, Attestation.Patch), Error, Attestation, Any] =
     (endpoint.patch
       .in("api" / "attestations" / path[Long]("id"))
@@ -1938,6 +2038,7 @@ object Api:
         (((refactorEncoded72)._1).value, (refactorEncoded72)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val deleteAttestation: PublicEndpoint[Attestation.Id, Error, Attestation.Deleted, Any] =
     (endpoint.delete
       .in("api" / "attestations" / path[Long]("id"))
@@ -1947,6 +2048,7 @@ object Api:
         (refactorEncoded179: Attestation.Id) => (refactorEncoded179).value
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class GoalQuery(
       status: Option[GoalQuery.Status] = None,
       limit: Option[GoalQuery.Limit] = None,
@@ -1960,6 +2062,7 @@ object Api:
     type Offset = Offset.T
     object Offset extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val goals: PublicEndpoint[GoalQuery, Error, Goal.List, Any] =
     base.get
       .in("goals")
@@ -1971,6 +2074,7 @@ object Api:
       }(v => (v.status.map(_.value), v.limit.map(_.value), v.offset.map(_.value)))
       .out(jsonBody[Goal.List])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val renameGoal: PublicEndpoint[(Goal.Uid, LabelRename), Error, LabelRenamed, Any] =
     (base.post
       .in("goals" / path[String]("slug") / "rename")
@@ -1980,6 +2084,7 @@ object Api:
         (Goal.Uid((refactorDecoded180)._1), (refactorDecoded180)._2)
       )((refactorEncoded180: (Goal.Uid, LabelRename)) => (((refactorEncoded180)._1).value, (refactorEncoded180)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val renamePlace: PublicEndpoint[(Place.Id, LabelRename), Error, LabelRenamed, Any] =
     (base.post
       .in("places" / path[String]("id") / "rename")
@@ -1989,6 +2094,7 @@ object Api:
         (Place.Id((refactorDecoded181)._1), (refactorDecoded181)._2)
       )((refactorEncoded181: (Place.Id, LabelRename)) => (((refactorEncoded181)._1).value, (refactorEncoded181)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val getGoal: PublicEndpoint[Goal.Uid, Error, Goal, Any] =
     (endpoint.get
       .in("api" / "goals" / path[String]("slug"))
@@ -1998,6 +2104,7 @@ object Api:
         (refactorEncoded182).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putGoal: PublicEndpoint[(Goal.Uid, Goal.Put), Error, Goal, Any] =
     (endpoint.put
       .in("api" / "goals" / path[String]("slug"))
@@ -2016,6 +2123,7 @@ object Api:
       .errorOut(problemOut)
       .out(jsonBody[Goal.AreaCreated])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val patchGoal: PublicEndpoint[(Goal.Uid, Goal.Patch), Error, Goal, Any] =
     (endpoint.patch
       .in("api" / "goals" / path[String]("slug"))
@@ -2026,6 +2134,7 @@ object Api:
         (Goal.Uid((refactorDecoded78)._1), (refactorDecoded78)._2)
       )((refactorEncoded78: (Goal.Uid, Goal.Patch)) => (((refactorEncoded78)._1).value, (refactorEncoded78)._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val deleteGoal: PublicEndpoint[Goal.Uid, Error, Goal.Deleted, Any] =
     (endpoint.delete
       .in("api" / "goals" / path[String]("slug"))
@@ -2038,6 +2147,7 @@ object Api:
   lazy val agentStateList: PublicEndpoint[Unit, Error, List[AgentStateEntry], Any] =
     base.get.in("agent-state").out(jsonBody[List[AgentStateEntry]])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val agentStateGet: PublicEndpoint[AgentState.Key, Error, AgentStateEntry, Any] =
     (endpoint.get
       .in("api" / "agent-state" / path[String]("key"))
@@ -2047,6 +2157,7 @@ object Api:
         (refactorEncoded80: AgentState.Key) => (refactorEncoded80).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val agentStateSet: PublicEndpoint[(AgentState.Key, AgentStatePut), Error, AgentStateEntry, Any] =
     (endpoint.put
       .in("api" / "agent-state" / path[String]("key"))
@@ -2059,6 +2170,7 @@ object Api:
         (((refactorEncoded187)._1).value, (refactorEncoded187)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val agentStateDelete: PublicEndpoint[AgentState.Key, Error, AgentStateDeleted, Any] =
     (endpoint.delete
       .in("api" / "agent-state" / path[String]("key"))
@@ -2071,6 +2183,7 @@ object Api:
   /** Query parameters, not a multipart part list: tapir's netty server has no multipart request-body support
     * (`RawBodyType.MultipartBody` throws `UnsupportedOperationException`), so the document travels as the raw body.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val ingestParams: EndpointInput[Ingest.Params] =
     query[String]("citekey")
       .and(query[Option[String]]("filename"))
@@ -2150,6 +2263,7 @@ object Api:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[Ingest.Accepted])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val reocr: PublicEndpoint[(Citekey, Overwrite), Error, Ingest.Accepted, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "reocr")
@@ -2163,6 +2277,7 @@ object Api:
         (((refactorEncoded189)._1).value, ((refactorEncoded189)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val original: PublicEndpoint[Citekey, Error, (TapirFile, FileName), Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "original")
@@ -2176,6 +2291,7 @@ object Api:
         (refactorDecoded._1, FileName(refactorDecoded._2))
       )((refactorEncoded: (TapirFile, FileName)) => (refactorEncoded._1, (refactorEncoded._2).value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val job: PublicEndpoint[SpatialHierarchyResult.Job.Id, Error, JobInfo, Any] =
     (base.get
       .in("jobs" / path[String]("id"))
@@ -2184,6 +2300,7 @@ object Api:
         SpatialHierarchyResult.Job.Id(refactorDecoded192)
       )((refactorEncoded192: SpatialHierarchyResult.Job.Id) => (refactorEncoded192).value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val jobControl: PublicEndpoint[(SpatialHierarchyResult.Job.Id, JobControl.Action), Error, JobInfo, Any] =
     (endpoint.post
       .in("api" / "jobs" / path[String]("id") / path[String]("action"))
@@ -2195,6 +2312,7 @@ object Api:
         ((refactorEncoded._1).value, (refactorEncoded._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val activity: PublicEndpoint[
     (
         Option[Activity.Kind],
@@ -2255,6 +2373,7 @@ object Api:
           )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val jobs: PublicEndpoint[
     (ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter]),
     Error,
@@ -2292,6 +2411,7 @@ object Api:
           )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val assets: PublicEndpoint[Assets.Kind, Error, List[AssetInfo], Any] =
     (base.get
       .in("sources" / path[String]("citekey") / "assets")
@@ -2300,6 +2420,7 @@ object Api:
         (refactorEncoded89: Assets.Kind) => (refactorEncoded89).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putAssets: PublicEndpoint[(Assets.Owner, List[AssetInput]), Error, AssetsStored, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "assets")
@@ -2312,6 +2433,7 @@ object Api:
         (((refactorEncoded90)._1).value, (refactorEncoded90)._2)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val asset: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, (FileBytes, ContentType), Any] =
     (endpoint.get
       .in("source" / path[String]("citekey") / "assets" / path[String]("name"))
@@ -2330,6 +2452,7 @@ object Api:
         (((refactorEncoded92)._1).value, ((refactorEncoded92)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val assetDetail: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, AssetDetail, Any] =
     (base.get
       .in("sources" / path[String]("citekey") / "assets" / path[String]("name") / "detail")
@@ -2340,6 +2463,7 @@ object Api:
         (((refactorEncoded93)._1).value, ((refactorEncoded93)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val patchAsset: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant, AssetPatch), Error, AssetDetail, Any] =
     (base.patch
       .in("sources" / path[String]("citekey") / "assets" / path[String]("name"))
@@ -2376,6 +2500,7 @@ object Api:
     type License = License.T
     object License extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mediaGeo: PublicEndpoint[MediaGeoQuery, Error, List[MediaGeoHit], Any] =
     base.get
       .in("media-geo")
@@ -2431,6 +2556,7 @@ object Api:
     type Offset = Offset.T
     object Offset extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mediaList: PublicEndpoint[MediaQuery, Error, MediaList, Any] =
     base.get
       .in("media")
@@ -2472,6 +2598,7 @@ object Api:
   lazy val mediaProviders: PublicEndpoint[Unit, Error, List[MediaProvider.Info], Any] =
     base.get.in("media" / "providers").out(jsonBody[List[MediaProvider.Info]])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mediaShow: PublicEndpoint[Bundle.Asset.Uid, Error, MediaItem, Any] =
     (base.get
       .in("media" / path[String]("uid"))
@@ -2500,6 +2627,7 @@ object Api:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val putSourceCover: PublicEndpoint[(SourceCoverParams, FileBytes), Error, MediaItem, Any] =
     (base.put
       .in("media" / "sources" / path[String]("citekey") / "cover")
@@ -2520,6 +2648,7 @@ object Api:
         ((refactorDecoded96)._1, FileBytes((refactorDecoded96)._2))
       )((refactorEncoded96: (SourceCoverParams, FileBytes)) => ((refactorEncoded96)._1, ((refactorEncoded96)._2).value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val fillFigureLicences: PublicEndpoint[Apply, Error, FigureLicenceFill, Any] =
     (base.post
       .in("media" / "fill-licences")
@@ -2529,6 +2658,7 @@ object Api:
         (refactorEncoded97).value
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mediaThumb: PublicEndpoint[Bundle.Asset.Uid, Error, (FileBytes, ContentType), Any] =
     (endpoint.get
       .in("media" / path[String]("uid") / "thumb")
@@ -2545,6 +2675,7 @@ object Api:
         (((refactorEncoded205)._1).value, ((refactorEncoded205)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val mediaFile: PublicEndpoint[Bundle.Asset.Uid, Error, (FileBytes, ContentType), Any] =
     (endpoint.get
       .in("media" / path[String]("uid") / "file")
@@ -2561,6 +2692,7 @@ object Api:
         (((refactorEncoded101)._1).value, ((refactorEncoded101)._2).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val assetLinks: PublicEndpoint[
     (Option[Bundle.Asset.Uid], Option[AssetLinks.Kind], Option[AssetLinks.TargetId], Option[AssetLinks.TargetKind]),
     Error,
@@ -2601,6 +2733,7 @@ object Api:
   lazy val createAssetLink: PublicEndpoint[AssetLink.Put, Error, AssetLink, Any] =
     base.post.in("asset-links").in(jsonBody[AssetLink.Put]).out(jsonBody[AssetLink])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val deleteAssetLink: PublicEndpoint[AssetLink.Id, Error, AssetLink.Deleted, Any] =
     (base.delete
       .in("asset-links" / path[Long]("id"))
@@ -2610,6 +2743,7 @@ object Api:
       )
 
   /** Registered before the image endpoint so Tapir matches it first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val iiifInfo: PublicEndpoint[(Bundle.Asset.Uid, Bundle.Asset.Variant), Error, Json, Any] =
     (endpoint.get
       .in("iiif" / path[String]("citekey") / path[String]("name") / "info.json")
@@ -2625,6 +2759,7 @@ object Api:
   /** IIIF Image API Level 1: region `full|x,y,w,h`, size `max|^max|w,|,h|w,h|!w,h`, rotation `0` only, quality
     * `default`, format `jpg|png`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val iiifImage: PublicEndpoint[
     (Bundle.Asset.Uid, Iiif.RegionText, Iiif.SizeText, Iiif.Rotation, Iiif.Quality, Iiif.Format),
     Error,
@@ -2680,6 +2815,7 @@ object Api:
     * refusal by (the citekey, the field of a patch, a collection's usage). The body is
     * `{"problems": [...], "code": ...}`.
     */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Error(problems: NonEmptyVector[Problem], code: Option[Error.Code])
       derives JsonCodec,
         KindlingsSchema,
@@ -2705,6 +2841,7 @@ object Api:
 
     extension (e: Error)
       /** The server answered "not found" (an unknown citekey, id or slug). */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def isNotFound: Boolean =
         NonEmptyVector.toVector(e.problems).exists(_.isNotFound) || e.code.contains(Code(Write.CodeNotFound))
 
@@ -2718,6 +2855,7 @@ object Api:
         * with the codes in step 7): a site that still gives a code answering other than 400 keeps that code's status
         * ([[CodeStatus]]), as the six hand-written error outputs answered it.
         */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def status: StatusCode = e.code.flatMap(c => CodeStatus.get(s"$c")).getOrElse(Answer.status(e.problems: Problems))
 
     /** TEMPORARY (G60 step 5): the codes the six error outputs answered other than 400 by, and their statuses; and a
@@ -2755,10 +2893,13 @@ object Api:
     val Begin = "<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->"
     val End = "<!-- END API INDEX -->"
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def path(e: AnyEndpoint): PathTemplate = PathTemplate(e.showPathTemplate(showQueryParam = None))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def method(e: AnyEndpoint): HttpMethod.Wire = HttpMethod.Wire(e.method.map(_.method).getOrElse("GET"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(endpoints: List[AnyEndpoint]): Markdown =
       val order = List("GET", "POST", "PUT", "PATCH", "DELETE")
       val byPath =
@@ -2771,6 +2912,8 @@ object Api:
 
     val Page = "docs/user-guide/reference/rest-api.md"
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def splice(readme: Readme, index: Markdown): Either[Problem, Readme] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
       if b < 0 || e < b then Left(Problem.Invalid.Missing(Problem.Field(s"$Begin"), Vector(Problem.Field(s"$Page"))))
@@ -2781,10 +2924,13 @@ object Api:
           )
         )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def current(readme: Readme): Option[Current] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
       Option.when(b >= 0 && e > b)(Current((readme).value.substring(b + Begin.length, e).trim))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @main def generateApiIndex(repo: String): Unit =
     val p = java.nio.file.Path.of(repo).resolve(Index.Page)
     Index.splice(Index.Readme(java.nio.file.Files.readString(p)), Index.markdown(all)) match

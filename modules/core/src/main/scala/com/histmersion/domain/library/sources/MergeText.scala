@@ -8,11 +8,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import com.histmersion.domain.library.Isbn
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
   * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of
   * `java.text.Normalizer` (in [[Fingerprint]]).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object MergeText:
 
   /** A name, title or venue as written, before it is folded for comparison. */
@@ -54,15 +56,23 @@ object MergeText:
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
   /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): [[Fingerprint.fold]]. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fold(s: Text): Folded = Folded(Fingerprint.fold(Fingerprint.FoldS(s.value)).value)
 
   /** Folded alphanumeric tokens, in order. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tokens(s: Text): List[Token] = Fingerprint.tokens(Fingerprint.TokensS(s.value)).map(t => Token(t.value))
 
   /** The folded words of a text, joined by single spaces. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def words(s: Text): Words = Words(tokens(s).map(_.value).mkString(" "))
 
   /** OpenRefine's key-collision fingerprint: folded tokens, de-duplicated, sorted, joined. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fingerprint(s: Text): Fingerprint = Fingerprint.of(Fingerprint.OfS(s.value))
 
   private val stopwords: Set[String] = Set(
@@ -118,17 +128,22 @@ object MergeText:
     "e"
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def significant(ts: List[Token]): List[Token] = ts.filterNot(t => stopwords(t.value))
 
   // ── titles ───────────────────────────────────────────────────────────────────────────────────
 
   /** The main title: cut at the first `:`, ` - `, ` — `, ` – ` or `. ` (a subtitle follows). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mainTitle(title: Title): Title =
     val text = title.value
     val cuts = List(":", " - ", " — ", " – ", ". ", "? ").flatMap(c => Option(text.indexOf(c)).filter(_ > 0))
     Title(cuts.minOption.fold(text)(i => text.take(i)).trim)
 
   /** The blocking key of a title: the first three significant tokens of the main title, sorted. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def titleKey(title: Title): TitleKey =
     TitleKey(significant(tokens(Text(mainTitle(title).value))).take(3).map(_.value).sorted.mkString(" "))
 
@@ -140,6 +155,7 @@ object MergeText:
     */
   final case class Person(surname: List[Token], forenames: List[Token], surnameKnown: Person.SurnameKnown):
     /** The surname as one key (`lopezruiz`). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def key: SurnameKey = SurnameKey(surname.map(_.value).mkString)
     def all: List[Token] = forenames ++ surname
 
@@ -177,6 +193,7 @@ object MergeText:
 
   private val suffixes: Set[String] = Set("jr", "sr", "ii", "iii", "iv")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def nameTokens(s: String): List[Token] =
     tokens(Text(s)).filterNot(t => t.value.forall(_.isDigit)).filterNot(t => suffixes(t.value))
 
@@ -184,6 +201,8 @@ object MergeText:
     * Jr./Sr. are dropped; hyphens split a double surname into its words, so `López-Ruiz` and `Lopez Ruiz` compare
     * equal. `None` for an empty name.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def person(name: AuthorName): Option[Person] =
     val raw = name.value
     val parts = raw.split(",").toList.map(_.trim).filter(_.nonEmpty)
@@ -209,6 +228,7 @@ object MergeText:
   /** Given names compatible: pairwise, the same initial, and where both are written out, the same name (or one a prefix
     * of the other). Missing forenames are compatible with anything.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def givenCompatible(a: List[Token], b: List[Token]): Boolean =
     a.zip(b).forall { (x, y) =>
       x.value.head == y.value.head && (x.value.length == 1 || y.value.length == 1 || x.value.startsWith(
@@ -220,6 +240,8 @@ object MergeText:
     * surname — `Carolina Lopez Ruiz` against `López-Ruiz, Carolina`), and the forenames names that are left are
     * compatible. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def samePerson(a: Person, b: Person): Boolean =
     def splits(p: Person): List[(List[Token], List[Token])] =
       if p.surnameKnown.value then List(p.surname -> p.forenames)
@@ -231,6 +253,8 @@ object MergeText:
     }
 
   /** The blocking keys of a first author: the surname as one word and its last word. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def surnameKeys(name: AuthorName): Set[SurnameKey] =
     person(name).toSet.flatMap(p => Set(p.key, SurnameKey(p.surname.last.value)))
 
@@ -261,6 +285,8 @@ object MergeText:
   // ── string similarity ────────────────────────────────────────────────────────────────────────
 
   /** Jaro-Winkler similarity in [0, 1] (Winkler 1990: prefix scale 0.1, up to 4 characters). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jaroWinkler(first: Words, second: Words): Similarity = Similarity(jaroWinklerOf(first.value, second.value))
 
   private def jaroWinklerOf(s1: String, s2: String): Double =
@@ -287,12 +313,15 @@ object MergeText:
         val prefix = s1.zip(s2).take(4).takeWhile((x, y) => x == y).length
         jaro + prefix * 0.1 * (1 - jaro)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jaccard[A](a: Set[A], b: Set[A]): Similarity =
     Similarity(if a.isEmpty && b.isEmpty then 1.0 else (a intersect b).size.toDouble / (a union b).size)
 
   // ── identifiers ──────────────────────────────────────────────────────────────────────────────
 
   /** A DOI as a key — as V032's `histmersion_doi_key`: no resolver prefix, no `doi:`, lower case. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doiKey(doi: WrittenDoi): Option[DoiKey] =
     Option(
       doi.value.trim
@@ -301,6 +330,8 @@ object MergeText:
     ).filter(_.nonEmpty).map(k => DoiKey(k))
 
   /** An ISBN as ISBN-13 digits; an ISBN-10 is converted. `None` when it is not a valid ISBN. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isbn13(raw: Isbn): Option[Isbn] =
     val s = raw.value.filter(c => c.isDigit || c == 'X' || c == 'x').toUpperCase(java.util.Locale.ROOT)
     def check13(d: String): Boolean =

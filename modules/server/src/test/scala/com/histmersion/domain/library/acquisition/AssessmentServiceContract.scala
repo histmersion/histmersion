@@ -13,10 +13,13 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.Caller
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the assessments' store answers, the same on the database and in memory: the mirror replaced whole (a DOI listed
   * twice keeps its last row), its notices by DOI whatever its case, a verdict recorded and replaced.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
 
   private def row(doi: Doi, reason: RetractionNotice.Account, date: RetractionNotice.Date) =

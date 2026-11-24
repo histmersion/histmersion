@@ -9,6 +9,7 @@ import com.histmersion.domain.media.imports.{MediaMatch, MediaRecord}
 import com.histmersion.plugin.*
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.catalogue.places.Wikidata
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A collection searched by a place's name, run by the host's own collection import ([[CollectionImport]]): the plugin
   * searches and describes; the host reads each stated licence ([[PluginMedia.rights]]) and judges it against `allowed`
@@ -24,8 +25,12 @@ final class PluginCollection(
     col: MediaCollection,
     allowed: MediaCollectionConfig.Licences
 ) extends SearchedCollection:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val role: MediaRole.Wire = MediaRole.Wire(col.role.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val latest = col.latestYear.map(y => com.histmersion.Year(y.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val conf: MediaCollectionConfig =
     MediaCollectionConfig(
       enabled = MediaCollectionConfig.Enabled(true),
@@ -53,6 +58,8 @@ final class PluginCollection(
         PluginMedia.record(it)
       }))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   override def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve) =
     col.matchRule match
       case MediaMatchRule.Map(maxYear) => MediaMatch.map(rec, place, resolve, com.histmersion.Year(maxYear.value))
@@ -60,6 +67,7 @@ final class PluginCollection(
 
   override def usesIds: Boolean = col.matchRule.isInstanceOf[MediaMatchRule.PlaceIds]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def matchesWithIds(
       rec: MediaRecord,
       place: MediaMatch.PlaceInfo,
@@ -78,6 +86,7 @@ final class PluginCollection(
         )
       case _ => matches(rec, place, resolve)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def complete(fetch: Polite, rec: MediaRecord): Either[Problem, MediaRecord] =
     items.get(MediaItem.Key(rec.key.value)) match
       case None     => Right(rec)
@@ -87,11 +96,14 @@ final class PluginCollection(
           .map(PluginMedia.record)
 
 object PluginCollection:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def maxYear(rule: MediaMatchRule): com.histmersion.Year = rule match
     case MediaMatchRule.Map(y) => com.histmersion.Year(y.value)
     case _                     => com.histmersion.Year(0)
 
   /** The place as a plugin sees it: what the store holds, each value as its type (one that is not left out). Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def place(p: PlaceFacts): MediaPlace =
     MediaPlace(
       MediaPlace.Id(p.id.value),

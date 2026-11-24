@@ -31,6 +31,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -47,6 +48,8 @@ import com.histmersion.domain.Creator
   * the acquisition item and the log line. A DRY run records each on its step instead (`refs` and `assess` then only
   * read upstream).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class EnrichSourcePipeline(
     site: LibrarySite,
     cfg: => AgentsConfig,
@@ -57,6 +60,8 @@ final class EnrichSourcePipeline(
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     for
       ck <- Citekey.parse(ctx.run.target.value).left.map(Halt.Fail(_))
@@ -90,6 +95,7 @@ final class EnrichSourcePipeline(
       closed <- ctx.code[Closed](AgentRepo.StepRecord.Name("close"))(close(ctx, ck, patched, routed))
     yield PipelineDef.Summary(closed.line.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def accepted[A](
       r: Either[List[Problem], (A, List[EnrichSource.Description])]
   ): Either[List[Problem], Checked[A]] =
@@ -97,6 +103,7 @@ final class EnrichSourcePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(ck: Citekey): Either[Problems, Loaded] =
     site.sources
       .get(ck, body = SourcesControllers.GetBody(true))
@@ -137,10 +144,13 @@ final class EnrichSourcePipeline(
           )
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def meta(l: Loaded): String =
     s"citekey: ${l.citekey}\ntitle: ${l.title}\nauthors: ${l.authors.mkString("; ")}\n" +
       s"year: ${l.year.fold("unknown")(_.toString)}\nvenue: ${l.venue.getOrElse("unknown")}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def classifyInput(l: Loaded): String =
     s"Classify this source.\n\n${meta(l)}\n\nThe opening of its text:\n\n${Prompt.data("source-text", l.head.value)}"
 
@@ -148,6 +158,8 @@ final class EnrichSourcePipeline(
     * gazetteer the `geocode` step will use (#1424: asking before the answer is accepted is the only point where a
     * better name can still be asked for).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def findings(ctx: RunCtx, l: Loaded, c: Classified)(using WritePermit): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
     val guards =
@@ -188,6 +200,7 @@ final class EnrichSourcePipeline(
     * so a person can audit it. An unknown place keeps its name with no point, and an approximate choice (a qualifier
     * dropped, a placeholder point) is kept with a warning; both are said.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def geocode(ctx: RunCtx, fs: List[VerifiedFinding])(using WritePermit): Geocoded =
     val placed = fs.map { f =>
       val hit = f.place.flatMap(p =>
@@ -223,6 +236,7 @@ final class EnrichSourcePipeline(
     }
     Geocoded(placed.map(_._1), placed.flatMap(_._2))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notesInput(l: Loaded, c: Classified, fs: List[VerifiedFinding]): String =
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
@@ -233,6 +247,7 @@ final class EnrichSourcePipeline(
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def write(
       ctx: RunCtx,
       ck: Citekey,
@@ -281,6 +296,7 @@ final class EnrichSourcePipeline(
   // ── upstream: metadata, refs, assess ──────────────────────────────────────────────────────────
 
   /** Why an upstream step cannot run, if it cannot: switched off, or no DOI to ask about. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def upstreamBlocked(l: Loaded): Option[String] =
     if !lib.enrich.upstream.value then Some("upstream checks are off (agents.enrich.upstream)")
     else if l.doi.forall(_.value.trim.isEmpty) then Some("the source has no DOI")
@@ -289,6 +305,7 @@ final class EnrichSourcePipeline(
   /** The record against OpenAlex/Crossref. Differences are WARNINGS for a person (a wrong year can mean a wrong
     * citekey, which only a person renames); nothing is written.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def metadata(ctx: RunCtx, l: Loaded)(using WritePermit): MetaChecked =
     upstreamBlocked(l) match
       case Some(why) => MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(why))
@@ -305,6 +322,7 @@ final class EnrichSourcePipeline(
   /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a warning, never a
     * failed run — the enrichment is already written).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refs(ctx: RunCtx, l: Loaded)(using WritePermit)(using Creator.New): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
@@ -325,6 +343,7 @@ final class EnrichSourcePipeline(
             )
 
   /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def assess(ctx: RunCtx, l: Loaded)(using WritePermit)(using Creator.New): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
@@ -345,6 +364,7 @@ final class EnrichSourcePipeline(
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
     * `assess` outranks any proposal.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(ctx: RunCtx, ck: Citekey, c: Classified, p: Patched, a: Upstreamed)(using
       WritePermit
   )(using Creator.New): StatusRouted =
@@ -380,6 +400,7 @@ final class EnrichSourcePipeline(
     * started for ticked off, and a `log` line. Calibre is untouched: a source not in Calibre is already what
     * `histmersion calibre gaps` reports, host-side.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def close(ctx: RunCtx, ck: Citekey, p: Patched, r: StatusRouted)(using
       WritePermit
   ): Either[Problems, Closed] =
@@ -411,6 +432,8 @@ final class EnrichSourcePipeline(
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def tickOff(id: Queue.QueueItem.Id, ck: Citekey, runId: Agents.RunInfo.Id): String =
     Queue.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: ${m.sentence}"

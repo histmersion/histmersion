@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.{CRC32, Deflater, Inflater}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Elevation tiles as Terrarium PNGs (the encoding MapLibre's `raster-dem` reads as `terrarium`): metres + 32768 spread
   * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.
@@ -23,6 +24,7 @@ object TerrariumPng:
   private val SubFilter = 1
 
   /** A square tile of `size` × `size` elevations (row by row, metres) as a Terrarium PNG. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def encode(metres: Array[Float], size: TileSize): Png.PngBytes =
     val side: Int = size.value
     val rowLength = 1 + side * 3
@@ -61,6 +63,8 @@ object TerrariumPng:
     Png.PngBytes(out.toByteArray)
 
   /** A Terrarium PNG's elevations (metres, row by row) and its width: 8-bit RGB or RGBA, not interlaced. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decode(file: Png.PngBytes): Either[Problem, (Array[Float], TileSize)] =
     val png: Array[Byte] = file.value
     if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then
@@ -96,6 +100,7 @@ object TerrariumPng:
           }
         }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unfilter(raw: Array[Byte], width: Int, height: Int, bpp: Int): Either[Problem, Array[Byte]] =
     val stride = width * bpp
     val out = new Array[Byte](stride * height)
@@ -148,6 +153,7 @@ object TerrariumPng:
       out.toByteArray
     finally d.end()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inflate(z: Array[Byte], expected: Int): Either[Problem, Array[Byte]] =
     val inf = Inflater()
     try

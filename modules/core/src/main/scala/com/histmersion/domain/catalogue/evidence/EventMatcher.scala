@@ -10,8 +10,11 @@ import com.histmersion.api.catalogue.Attestation
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object EventMatcher:
 
   /** How far a finding may be from the event (`km`) and how many years apart (`years`; 0 = their spans overlap), what a
@@ -60,6 +63,7 @@ object EventMatcher:
   /** Pure: the names worth searching a body for — distinct ignoring case, at least `minChars` long and more than a bare
     * kind word ("Battle", "Siege"), longest first (a longer name is the stronger match).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchNames(names: List[String], minChars: Weights.MinNameChars): List[String] =
     val generic =
       (EventTaxonomy.kinds.map(_.label.value) ++ EventTaxonomy.kinds.map(_.kind.value)).map(_.toLowerCase).toSet
@@ -75,6 +79,8 @@ object EventMatcher:
   /** Pure: how much one finding says — 1 at the event's place and time, falling linearly to 0 at `km` away and at
     * `years` apart.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def findingWeight(f: NearFinding, w: Weights): FindingWeight =
     val space = if w.km.value <= 0 then 0.0 else (1.0 - f.km.value / w.km.value).max(0.0)
     val time =
@@ -87,6 +93,9 @@ object EventMatcher:
     * summed finding weights (at most `finding`). Sources below `minScore` are dropped; the best `maxCandidates` kept,
     * best first.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def candidates(
       eventId: Event.Id,
       near: List[NearFinding],
@@ -137,12 +146,16 @@ object EventMatcher:
   /** Pure: the passage an attestation is written from — the longest name matched, the first place it occurs. `None`
     * when no passage names the event: then no attestation may be written.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def attestationPassage(ps: List[EventPassage]): Option[EventPassage] =
     ps.sortBy(p => (-p.name.value.length, p.start.value: Int)).headOption
 
   /** Pure: the attestation a confirmed passage becomes — the quote and its offsets (W3C TextQuoteSelector +
     * TextPositionSelector), and a note saying how it was found.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def attestation(eventId: Event.Id, citekey: Citekey, p: EventPassage): Attestation.Put =
     Attestation.Put(
       com.histmersion.api.library.Citekey(citekey.value),

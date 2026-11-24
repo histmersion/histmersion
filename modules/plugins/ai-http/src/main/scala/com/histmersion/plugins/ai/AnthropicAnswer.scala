@@ -10,12 +10,15 @@ import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import com.histmersion.plugin.AiTool
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the Anthropic Messages API answered, read as these providers have always read it: a message (its first text
   * block the answer's text, its `tool_use` blocks the tool calls, its usage with the cache reads and writes counted in
   * the input), or the failure — an error status's body as it came, an error in a success answer by its message, an
   * answer that is neither by why it cannot be read as an error.
   */
+@atBoundary(BoundaryKind.Json, "reads the Anthropic API's answer JSON")
 final case class AnthropicAnswer(
     provider: Problem.Upstream.Name,
     url: Problem.Upstream.Url,
@@ -24,6 +27,7 @@ final case class AnthropicAnswer(
 ):
 
   /** The turn the answer says, or the failure: `provider`'s answer at `url`, its words the start of the body. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def turn: Either[Problem, AiTurn] =
     def answered(said: String) =
       Problem.Upstream.Http.here(

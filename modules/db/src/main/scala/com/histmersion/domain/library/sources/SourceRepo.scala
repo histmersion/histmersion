@@ -43,6 +43,8 @@ import com.histmersion.api.automation.Creation
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
   * caller opened.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the source tables and their row codecs")
 private[sources] object SourceRepo:
   type BodyChars = BodyChars.T
   object BodyChars extends Newtype[Int, Pure]
@@ -53,14 +55,26 @@ private[sources] object SourceRepo:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(ck.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiToDomain(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.applyUnsafe(ck.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiCitekeyOf(t: WikiLinks.Occurrence.Target): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(t.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def domainCitekey(ck: com.histmersion.api.library.Citekey): Option[Citekey] =
     Citekey.either(ck.value).toOption
 
@@ -68,11 +82,16 @@ private[sources] object SourceRepo:
 
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   private given DbCodec[TocEntry] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Source.Detail] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Finding.Row] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Source.Ref] = DbCodec.derived
 
   /** The sources whose chunks contain `name` as a phrase (the FTS index), most chunks first, at most `limit`. */
+  @tolerated(LintRule.TotalOrder, "GROUP BY citekey: one row per citekey")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def naming(name: Name, limit: Limit)(using DbCon): List[Citekey] =
     sql"""SELECT citekey FROM source_chunks WHERE tsv @@ phraseto_tsquery('english', $name)
             GROUP BY citekey ORDER BY count(*) DESC, citekey LIMIT $limit""".query[Citekey].run().toList
@@ -81,6 +100,7 @@ private[sources] object SourceRepo:
   /** The findings of `citekey` placed again (`finding_places`), inside the caller's transaction: what a write that
     * touched the source's findings leaves to do.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[histmersion] def placeFindingsIn(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(
       using DbCon
   ): RowCount =
@@ -94,6 +114,7 @@ private[sources] object SourceRepo:
     )
 
   /** [[put]] inside the caller's transaction. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def putIn(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(
       using DbCon
   )(using Creator.New, CreatedAt): Source.UpdatedAt =
@@ -101,6 +122,7 @@ private[sources] object SourceRepo:
     Source.UpdatedAt(domainCitekey(s.citekey).flatMap(token(_)).getOrElse(""))
 
   /** [[patch]] inside the caller's transaction. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def patchIn(
       requested: Citekey,
       p: Source.Patch,
@@ -133,10 +155,13 @@ private[sources] object SourceRepo:
   /** Take the row lock the patch's compare-and-swap needs. A missing row is not an error here — `load` reports the 404
     * — so nothing is read out of it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def lockRow(citekey: Citekey)(using DbCon): Unit =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $citekey FOR UPDATE".query[String].run()
 
   /** The write itself, inside the caller's transaction. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def write(
       s: Source,
       chunkChars: Chunker.ChunkMaxChars,
@@ -240,6 +265,7 @@ private[sources] object SourceRepo:
         .pipe(RowCount(_))
 
   /** A source just arrived: every parked edge that named it exactly becomes a real edge. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[histmersion] def promote(citekey: Citekey)(using DbCon): Unit =
     Unused(
       sql"""INSERT INTO edges (src, dst, kind, creator)
@@ -252,10 +278,14 @@ private[sources] object SourceRepo:
   /** The opaque last-write token: `updated_at` rendered UTC-normalised so it is stable to compare and safe to echo back
     * through JSON, whatever the session's TimeZone setting.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def token(citekey: Citekey)(using DbCon): Option[String] =
     sql"""SELECT to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[String].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def load(citekey: Citekey)(using DbCon): Option[Source] =
     sql"""SELECT citekey, title, authors, doi, year, venue, status, topics, regions, tags,
                  ${RangeSql.cols(sql"period")}, summary, cited_by_count, influential_citations,
@@ -340,6 +370,7 @@ private[sources] object SourceRepo:
     * chunks, and one round trip per chunk makes a full reindex take minutes (long enough for the server's request
     * timeout to cut it off).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[histmersion] def replaceChunks(
       citekey: Citekey,
       markdown: Option[Chunker.ChunkMarkdown],
@@ -359,10 +390,12 @@ private[sources] object SourceRepo:
           ORDER BY citekey""".query[(Citekey, BodyChars)].run()
 
   /** One source's full-text chunks rebuilt from its stored body; how many chunks it now has. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def rechunk(citekey: Citekey, chunkChars: Chunker.ChunkMaxChars)(using DbCon): RowCount =
     val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $citekey".query[Option[String]].run()
     replaceChunks(citekey, md.headOption.flatten.map(Chunker.ChunkMarkdown(_)), chunkChars)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def resolveEdges()(using DbCon)(using creator: Creator.New): RowCount =
     val parked = sql"SELECT src, dst, kind FROM unresolved_edges".query[EdgeRow].run().toList
     val aliases = resolveAliases(parked.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
@@ -396,6 +429,7 @@ private[sources] object SourceRepo:
     * `lint --rule unresolved-short-citekeys` is where a human picks one. One query for the whole body, whatever its
     * number of links.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def resolveAliases(targets: List[WikiLinks.Occurrence.Target])(using
       DbCon
   ): Map[WikiLinks.Occurrence.Target, Citekey] =
@@ -427,6 +461,7 @@ private[sources] object SourceRepo:
     * `SourcesControllers.canonical`, and [[patch]]), so an old id keeps working everywhere at once. Exact only: the
     * short-form prefix rule belongs to wikilinks ([[resolveAliases]]), not to ids in URLs.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def canonical(id: Citekey)(using DbCon): Option[Citekey] =
     canonicalAll(List(id)).get(id)
 
@@ -444,16 +479,20 @@ private[sources] object SourceRepo:
         .map((id, rows) => id -> rows.minBy(_._3)._2)
 
   /** The source `ck` was renamed to, when `ck` is an old citekey. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def aliasOf(ck: Citekey)(using DbCon): Option[Citekey] = aliasTarget(ck)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def aliasTarget(ck: Citekey)(using DbCon): Option[Citekey] =
     sql"SELECT citekey FROM source_aliases WHERE alias = $ck".query[Citekey].run().headOption
 
   /** The OLD citekeys that now name `ck` (V027) — an edge written on `ck` may give one as its `src`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def aliasesOf(ck: Citekey)(using DbCon): Set[Citekey] =
     (sql"SELECT alias FROM source_aliases WHERE citekey = $ck".query[Citekey].run().toSet)
 
   /** The Calibre book id recorded for a source, if any. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def calibreId(ck: Citekey)(using DbCon): Option[FullSourceRow.CalibreId] =
     (sql"SELECT calibre_id FROM sources WHERE citekey = $ck"
       .query[Option[FullSourceRow.CalibreId]]
@@ -462,6 +501,7 @@ private[sources] object SourceRepo:
       .flatten)
 
   /** Every old citekey and the source it names now, by alias. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def aliases(using DbCon): List[Source.Alias] =
     (
       sql"""SELECT alias, citekey FROM source_aliases ORDER BY alias COLLATE "C""""
@@ -489,6 +529,7 @@ private[sources] object SourceRepo:
     *   - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *   - `old` becomes an alias of `new`, so it keeps resolving.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def rename(oldCk: Citekey, newRaw: Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using
       DbCon
   )(using Creator.New, CreatedAt): Either[Api.Error, Rename.Counts] =
@@ -501,6 +542,8 @@ private[sources] object SourceRepo:
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
     * source was renamed on the other side (`BundleImport`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def renameIn(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
       DbCon
   )(using Creator.New, CreatedAt): Either[Api.Error, Rename.Counts] =
@@ -564,6 +607,8 @@ private[sources] object SourceRepo:
                 )
               Right(renameNow(oldCk, newCk, referrers))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
       DbCon
   )(using Creator.New, CreatedAt): Rename.Counts =
@@ -615,6 +660,7 @@ private[sources] object SourceRepo:
     )
 
   /** Promote the parked edges whose target is `dst` as edges to `ck` (never a self-edge). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def promoteAs(dst: WikiLinks.Occurrence.Target, ck: Citekey)(using DbCon): RowCount =
     val n = sql"""INSERT INTO edges (src, dst, kind, creator)
                   SELECT src, $ck, kind, creator FROM unresolved_edges WHERE dst = $dst AND src <> $ck
@@ -625,6 +671,8 @@ private[sources] object SourceRepo:
   /** Rewrite links in every source's notes and summary; returns (citekey, links moved) per source that changed. A plain
     * UPDATE, not [[write]]: nothing but the text changes, so the findings, chunks and edges need no rewrite.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def retargetSourceText(needle: SourceRename.Needle, to: Citekey => Option[Citekey])(using
       DbCon
   ): List[(Citekey, RowCount)] =
@@ -660,6 +708,7 @@ private[sources] object SourceRepo:
     else sql"""SELECT citekey, doi, authors, year, title, status FROM sources
               WHERE citekey = ANY($wanted::text[]) ORDER BY citekey""".query[Source.Ref].run().toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(citekey: Citekey)(using DbCon): Option[(Source.Detail, Vector[Finding.Row])] =
     val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,
                              ${RangeSql.cols(sql"period")},
@@ -678,6 +727,8 @@ private[sources] object SourceRepo:
   // ── get_source sectioning (plan §6 A1/A7/A18) ────────────────────────────────────────────────
 
   /** Table of contents: distinct headings from source_chunks with first ord and total chars. */
+  @tolerated(LintRule.TotalOrder, "headings grouped over disjoint ords: min(ord) differs between groups")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toc(citekey: Citekey)(using DbCon): List[TocEntry] =
     sql"""SELECT heading, min(ord), sum(length(body))::int
             FROM source_chunks
@@ -687,6 +738,7 @@ private[sources] object SourceRepo:
 
   /** Full body text: chunks concatenated in ord order, or raw ocr_markdown when unchunked. */
   /** A source's converted text as stored — where its figures are linked from. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def markdown(citekey: Citekey)(using DbCon): FullSourceRow.OcrMarkdown =
     FullSourceRow.OcrMarkdown(
       sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
@@ -698,12 +750,15 @@ private[sources] object SourceRepo:
 
   // ── the uploaded ORIGINAL's digest, on `sources.sha256` (V001 already has the column) ─────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def citekeyOfSha256(sha: Sha256)(using DbCon): Option[Citekey] =
     sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[Citekey].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setSha256(citekey: Citekey, sha: Sha256)(using DbCon): Unit =
     Unused(sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run(), Unused.Why.Idempotent)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sha256Of(citekey: Citekey)(using DbCon): Option[Sha256] =
     sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[Sha256]].run().headOption.flatten
 
@@ -730,27 +785,33 @@ private[sources] object SourceRepo:
   final private case class DoiKey(doi: domain.library.Doi, citekey: Citekey) derives DbCodec
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def citekeyOfDoi(doi: domain.library.Doi)(using DbCon): Option[Citekey] =
     val d = doi.value.trim.toLowerCase
     sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[Citekey].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def exists(citekey: Citekey)(using DbCon): Boolean =
     sql"SELECT count(*)::int FROM sources WHERE citekey = $citekey".query[Int].run().headOption.exists(_ > 0)
 
   // ── the licence a source is published under, as stored (classified on read by the service) ──
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def licenceOf(citekey: Citekey)(using DbCon): Option[Licence.Id] =
     sql"SELECT license FROM sources WHERE citekey = $citekey".query[Option[Licence.Id]].run().headOption.flatten
 
   /** The licence a fetched copy came with, recorded as the source's when it has none — one set by hand or an earlier
     * copy is kept. `true` when it was written.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def recordLicence(citekey: Citekey, licence: Licence.Id)(using DbCon): Boolean =
     sql"""UPDATE sources SET license = $licence, updated_at = now()
           WHERE citekey = $citekey AND (license IS NULL OR btrim(license) = '')""".update.run() > 0
 
   // ── Calibre: the sources not in it yet, and the id written back after a push ────────────────
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final private case class GapRow(
       citekey: Citekey,
       title: GapRow.Title,
@@ -764,6 +825,8 @@ private[sources] object SourceRepo:
       calibreId: Option[GapRow.CalibreId],
       isbn: Option[GapRow.Isbn]
   ) derives DbCodec:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def gap: CalibreGap =
       CalibreGap(
         apiCitekey(citekey),
@@ -782,6 +845,7 @@ private[sources] object SourceRepo:
   object GapRow:
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = domain.Title
     val Title: domain.Title.type = domain.Title
     type Authors = Authors.T
@@ -802,6 +866,7 @@ private[sources] object SourceRepo:
   /** Sources that are NOT in Calibre yet: provenance is something other than `calibre` (or missing) and no `calibre_id`
     * has been written back, in citekey order, at most `limit`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def calibreGaps(limit: Option[Limit])(using DbCon): List[CalibreGap] =
     val cap = limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)
     sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
@@ -815,17 +880,20 @@ private[sources] object SourceRepo:
   /** The push metadata for ONE source, whether or not it currently counts as a gap — `calibre push <citekey>` needs the
     * authors as a LIST, which the comma-joined `SourceDetail.authors` cannot give back unambiguously.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def calibrePushMeta(citekey: Citekey)(using DbCon): Option[CalibreGap] =
     sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
             (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
           FROM sources WHERE citekey = $citekey""".query[GapRow].run().headOption.map(_.gap)
 
   /** Write the Calibre id back after a push; how many sources it named (0 or 1). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId)(using DbCon): RowCount =
     sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update
       .run()
       .pipe(RowCount(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bodyText(citekey: Citekey)(using DbCon): FullSourceRow.OcrMarkdown =
     val chunks = sql"""SELECT body FROM source_chunks
                          WHERE citekey = $citekey ORDER BY ord""".query[String].run()
@@ -843,6 +911,7 @@ private[sources] object SourceRepo:
     * without chunks — the raw `ocr_markdown` as one headingless piece. Joined by
     * [[com.histmersion.domain.PassageFinder.body]] this is exactly [[bodyText]].
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bodyChunks(citekey: Citekey)(using DbCon): List[Chunk] =
     val chunks = sql"""SELECT ord, heading, body FROM source_chunks
                          WHERE citekey = $citekey ORDER BY ord"""
@@ -861,6 +930,8 @@ private[sources] object SourceRepo:
         .toList
 
   /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def bodyUnderHeading(citekey: Citekey, heading: FilterSql.SnippetRow.Heading)(using
       DbCon
   ): FullSourceRow.OcrMarkdown =

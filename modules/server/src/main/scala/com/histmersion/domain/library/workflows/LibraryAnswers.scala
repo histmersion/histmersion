@@ -6,19 +6,25 @@ import com.histmersion.domain.EnrichSource
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The typed answers of the library's LLM steps (enrich-source, the acquisition sweep's ranking), one value each,
   * beside its pipelines until the library contributes its workflows (the engine's own are `AnswerSchemas`, research's
   * `ResearchAnswers`).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object LibraryAnswers:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val classification: ResponseSchema[EnrichSource.Classification] =
     ResponseSchema.derived[EnrichSource.Classification]()
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val findings: ResponseSchema[EnrichSource.Findings] = ResponseSchema.derived[EnrichSource.Findings]()
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val notes: ResponseSchema[EnrichSource.Notes] = ResponseSchema.derived[EnrichSource.Notes]()
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] = ResponseSchema.derived[AcquisitionSweepRules.Ranking]()
 
   /** Its step schemas, by name. */

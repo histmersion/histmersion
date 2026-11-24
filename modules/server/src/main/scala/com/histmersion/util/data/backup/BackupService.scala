@@ -19,6 +19,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The database's dumps: `pg_dump` / `pg_restore` against the database this server is configured for (the CLI holds no
   * credentials, so the dump is taken here), the archives in the backups store (`backups.dir`), their listing and
@@ -80,18 +81,24 @@ object BackupService:
 
   private def guards(registry: DataContributions): List[GuardedTable] = registry.backups.flatMap(_._2.guarded)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rowsLeftOut(registry: DataContributions): List[String] =
     registry.backups.flatMap(_._2.rowsLeftOut).map(t => s"--exclude-table-data=public.$t")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def problem(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def command(parts: String*): List[ProcessLaunch.Command] = parts.toList.map(ProcessLaunch.Command(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refusalOver(registry: DataContributions, rows: RowCount): Api.Error =
     val noun = guards(registry).map(_.noun).distinct.mkString("/")
     problem(s"the database still holds $rows $noun(s); restoring would drop them — re-run with force")
 
   /** The archives of `store`, newest first; `where` names it in the error. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def listing(store: Store): Either[Api.Error, List[Backup.Info]] =
     if !store.isDirectory(Store.Key.Root) then Right(Nil)
     else
@@ -118,6 +125,7 @@ object BackupService:
         .left
         .map(e => problem(s"cannot list ${store.where().value}: ${e.getMessage}"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolving(store: Store, file: PreparedBackup.File): Either[Api.Error, Store.Key] =
     for
       name <- Backup.safeName(Backup.Name(file.value)).left.map(m => problem(m.sentence))
@@ -127,6 +135,7 @@ object BackupService:
     yield key
 
   /** The name of a new archive taken at `now`, not taken by an archive nor by a dump being written. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def freshName(store: Store, now: Instant): PreparedBackup.File =
     PreparedBackup.File(
       Backup
@@ -140,6 +149,7 @@ object BackupService:
   /** Delete the archives beyond `keep` — AFTER a dump succeeded, never the one just written. Best effort: a file that
     * will not go is logged and stays; the backup itself still succeeded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pruned(store: Store, keep: Backup.Retention, keeping: PreparedBackup.File): List[Backup.Result.Pruned] =
     listing(store).toOption.toList.flatMap { rows =>
       Backup
@@ -153,6 +163,7 @@ object BackupService:
         .map(n => Backup.Result.Pruned(n.value))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def usable(store: Store): Either[Api.Error, Store] =
     store
       .makeDirectory()
@@ -170,12 +181,14 @@ object BackupService:
   ) extends BackupService:
 
     private def backups = settings().backups
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def timeoutS = math.max(1, backups.timeoutSeconds.value: Int)
     private def store: Store = storage.store(Location.Backups)
 
     /** `backups.pg-bin-dir` wins when set (homebrew's libpq is keg-only, so `pg_dump` is off PATH on a macOS dev box);
       * otherwise the search path. The failure message says exactly what to do.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def exe(name: String): Either[Api.Error, ProcessLaunch.Command] =
       val key = Store.Key.applyUnsafe(name)
       Option(backups.pgBinDir.value)
@@ -208,6 +221,7 @@ object BackupService:
       * hung the request forever. Redirecting to a file lets the process write freely (no pipe-buffer deadlock either)
       * while `waitFor` does the actual bounding, and the output is read back afterwards.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def run(cmd: List[ProcessLaunch.Command]): Either[Api.Error, (ProcessResult.ExitCode, List[String])] =
       val scratch = storage.scratch(Storage.ScratchPurpose("histmersion-pg-"))
       val log = Store.Key.applyUnsafe("pg.log")
@@ -248,17 +262,20 @@ object BackupService:
     /** The captured output, bounded: a `pg_restore` complaining about every statement can write megabytes, and only the
       * last handful of lines ever reaches an error message.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def tail(logs: Store, log: Store.Key): List[String] =
       scala.util
         .Try(logs.get(log).fold(List.empty[String])(b => (b.text().value: String).linesIterator.toList.takeRight(200)))
         .getOrElse(Nil)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def target: Either[Api.Error, Backup.PgTarget] =
       Backup.parseJdbc(Backup.JdbcUrl(settings().db.url.value)).left.map(m => problem(s"cannot back up: ${m.sentence}"))
 
     /** A non-zero exit becomes an `ApiError` quoting the last output lines — the actual `pg_*` message, not a stack
       * trace.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def succeeded(what: String, res: (ProcessResult.ExitCode, List[String])): Either[Api.Error, Unit] =
       if res._1.value == 0 then Right(())
       else Left(problem(s"$what failed (exit ${res._1.value}): ${res._2.takeRight(5).mkString("; ")}"))
@@ -266,6 +283,7 @@ object BackupService:
     /** `pg_dump -Fc` into the archive's reservation (`<name>.part`), moved into place only on success, so the listing
       * never shows a half-written archive.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def prepare(now: Instant): Either[Api.Error, PreparedBackup] =
       for
         t <- target
@@ -322,6 +340,7 @@ object BackupService:
       * are skipped, so a dump taken on an installation with other role names loads cleanly. The caller re-issues the
       * read-only role's grants afterwards.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def restore(archive: Store.Key): Either[Api.Error, (RestoreDuration, List[RestoreNote])] =
       for
         t <- target
@@ -338,6 +357,7 @@ object BackupService:
           .map(m => problem(m.sentence))
       yield (RestoreDuration((System.nanoTime() - started) / 1000000L), warnings.map(o => RestoreNote(o.value)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def guardedRows: RowCount =
       transactor.read(RowCount(guards(registry).map(g => BackupRepo.rows(g.table).value: Int).sum))
 
@@ -353,6 +373,7 @@ object BackupService:
       rows: AtomicReference[RowCount] = AtomicReference(RowCount(0)),
       dumped: Array[Byte] = "PGDMP".getBytes("UTF-8")
   ) extends BackupService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def prepare(now: Instant): Either[Api.Error, PreparedBackup] =
       usable(store).map { dir =>
         val name = freshName(dir, now)
@@ -379,6 +400,7 @@ object BackupService:
     def resolve(file: PreparedBackup.File): Either[Api.Error, Store.Key] = resolving(store, file)
     def archive(file: PreparedBackup.File): Either[Api.Error, HandedFile] =
       resolving(store, file).flatMap(k => store.onDiskFile(k).left.map(e => problem(e.message.sentence)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def restore(archive: Store.Key): Either[Api.Error, (RestoreDuration, List[RestoreNote])] =
       store.get(archive).toRight(Backup.missing(Backup.Result.File(archive.value))).map(_ => (RestoreDuration(0L), Nil))
     def guardedRows: RowCount = rows.get

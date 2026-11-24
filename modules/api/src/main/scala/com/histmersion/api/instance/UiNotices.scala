@@ -7,6 +7,7 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `latest` and `seen` are ISO-8601 UTC strings in one fixed format (`YYYY-MM-DDTHH:MM:SS.ffffffZ`, as the store
   * renders them), so they compare as strings.
@@ -25,6 +26,7 @@ object UiNotices:
     type Counted = Counted.T
     object Counted extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Board] =
       values.find(_.wire == Wire(Option(s).map((_).value.trim.toLowerCase).getOrElse("")))
     def wires: List[Wire] = values.toList.map(_.wire)
@@ -49,6 +51,7 @@ object UiNotices:
     type Fresh = Fresh.T
     object Fresh extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AgentsGlance(
       running: AgentsGlance.Running = AgentsGlance.Running(0),
       queued: AgentsGlance.Queued = AgentsGlance.Queued(0),
@@ -59,6 +62,7 @@ object UiNotices:
         api.json.Schema:
 
     /** The agents at a glance, as the top bar says it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wording: String =
       def runs(n: AgentsGlance.Running) = if n == AgentsGlance.Running(1) then "1 run" else s"$n runs"
       if !(on).value || (((draining) == AgentsGlance.Draining(true)) && running == AgentsGlance.Running(0)) then
@@ -89,9 +93,12 @@ object UiNotices:
   object SeenMark:
     export Counter.Seen as At
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fresh(latest: Option[Counter.Latest], seen: Option[Counter.Seen]): Boolean =
     (latest.exists(l => seen.forall(s => (l).value > (s).value)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counter(
       board: Board,
       count: Option[Counter.Count],
@@ -108,5 +115,6 @@ object UiNotices:
 
   def advance(held: Option[Counter.Seen], at: SeenMark.At): Counter.Seen = held.filter((_) > (at)).getOrElse(at)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def badge(count: Option[Counter.Count]): Option[String] =
     count.filter((_).value > 0).map(n => if (n).value > 99 then ("99+") else (n.toString))

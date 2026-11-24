@@ -4,6 +4,7 @@ package cli
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A Scala package name the project's sources are written in. */
 type ScalaPackage = ScalaPackage.T
@@ -17,4 +18,5 @@ object ScalaPackage extends Newtype[String, Match["[a-z][a-z0-9_]*(\\.[a-z][a-z0
 
   extension (pkg: ScalaPackage)
     /** `org.example` → `org/example`. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def path: Path = Path(pkg.value.replace('.', '/'))

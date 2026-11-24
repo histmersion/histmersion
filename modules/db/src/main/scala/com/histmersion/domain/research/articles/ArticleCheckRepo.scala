@@ -17,6 +17,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Edge
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *
@@ -24,6 +26,8 @@ import com.histmersion.api.library.Edge
   * + pure classifier** (`ArticleLint.articleFiller`, `ArticleLint.articleCritiquePairing`, …, pure and unit-tested
   * without a database). No rule takes a parameter; the statements are constant `sql"..."` fragments.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the article check tables and their row codecs")
 private[articles] object ArticleCheckRepo:
 
   /** Rules that are one SQL statement. Ordered so the report is stable. */
@@ -51,6 +55,7 @@ private[articles] object ArticleCheckRepo:
     */
   val citekeysSql = sql"SELECT citekey FROM sources"
   // ── article-critique-pairing: the disagreement edges, the sources' names, the aliases ─────────
+  @tolerated(LintRule.TotalOrder, "columns 1, 2, 3 are src, kind, dst: the edges' key")
   val disagreementEdgesSql =
     sql"SELECT src, kind, dst FROM edges WHERE kind IN ('challenges', 'refutes', 'updates', 'superseded_by') ORDER BY 1, 2, 3"
   val sourceNamesSql = sql"SELECT citekey, authors, year FROM sources ORDER BY citekey"
@@ -81,9 +86,13 @@ private[articles] object ArticleCheckRepo:
   private val ArticleRows = CheckInput(articles(articlesSql))
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def storedCitekey(using run: CheckRun)(using DbCon): Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection; `format` is the formatting check. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def report(r: Rule, format: FormatChecker, maxItems: ReportMaxItems)(using
       run: CheckRun
   )(using DbCon): LintRuleReport =
@@ -121,12 +130,14 @@ private[articles] object ArticleCheckRepo:
   /** What the pairing rule reads from the corpus: how a `[[target]]` resolves, the disagreement edges, and each
     * source's names and year.
     */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class PairingCorpus(
       resolve: CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
       edges: List[Coverage.Edge],
       work: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work]
   )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def pairingCorpusIn()(using DbCon): PairingCorpus =
     val names = sourceNamesSql
       .query[(String, List[String], Option[Int])]
@@ -161,6 +172,7 @@ private[articles] object ArticleCheckRepo:
   )
 
   object PairingRepair:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Slug = domain.research.Slug
     val Slug: domain.research.Slug.type = domain.research.Slug
     type UpdatedAt = UpdatedAt.T

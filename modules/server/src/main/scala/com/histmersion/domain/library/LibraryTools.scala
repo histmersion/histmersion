@@ -58,6 +58,9 @@ object LibraryTools:
     "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, " +
       "a broken link). Default false: the write goes through and the problems are listed under 'Formatting'."
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def apply(
       search: SearchControllers,
       labels: LabelsControllers,
@@ -437,6 +440,8 @@ object LibraryTools:
     type Verbose = Verbose.T
     object Verbose extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SearchInput] = Filter.Docs
       .describe(KindlingsSchema.derived[SearchInput].schema)
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
@@ -489,12 +494,15 @@ object LibraryTools:
     )
   object FacetsInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[FacetsInput] = Filter.Docs
       .describe(KindlingsSchema.derived[FacetsInput].schema)
       .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
       .modify(_.prefix)(_.description("Case-insensitive prefix match for autocompletion"))
       .modify(_.limit)(_.description("At most this many values"))
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class GetSourceInput(
       citekey: Citekey,
       fullText: GetSourceInput.FullText = GetSourceInput.FullText(false),
@@ -506,9 +514,14 @@ object LibraryTools:
   object GetSourceInput:
     type FullText = FullText.T
     object FullText extends Newtype[Boolean, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Offset = com.histmersion.Offset
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GetSourceInput] = KindlingsSchema
       .derived[GetSourceInput]
       .schema
@@ -540,6 +553,8 @@ object LibraryTools:
   val FindCitekey: McpOut.Markdown = "Find a citekey with search."
 
   /** `passages` as Markdown, or why not. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): Either[Api.Error, McpOut.Markdown] =
     sources
       .passages(Api.PassagesQuery(ApiCitekey(in.citekey.value), in.query, in.regex, in.limit, in.context))
@@ -554,6 +569,8 @@ object LibraryTools:
   ) derives JsonCodec
   object PassagesInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PassagesInput] = KindlingsSchema
       .derived[PassagesInput]
       .schema
@@ -593,6 +610,7 @@ object LibraryTools:
       region: Option[Filter.Places] = None,
       offset: Option[Filter.Offset] = None
   ) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toQuery: Api.FindingsQuery =
       val effectiveFrom = from.orElse(periodStart)
       val effectiveTo = to.orElse(periodEnd)
@@ -621,6 +639,8 @@ object LibraryTools:
       ) // region is folded into places, not passed separately
   object GeoWhenInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GeoWhenInput] = Filter.Docs
       .describe(KindlingsSchema.derived[GeoWhenInput].schema)
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
@@ -631,6 +651,8 @@ object LibraryTools:
   object NeighborsInput:
     export Edge.Kind.Wire as Kinds
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[NeighborsInput] = KindlingsSchema
       .derived[NeighborsInput]
       .schema
@@ -645,6 +667,8 @@ object LibraryTools:
   ) derives JsonCodec
   object GraphInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GraphInput] = KindlingsSchema
       .derived[GraphInput]
       .schema
@@ -657,6 +681,8 @@ object LibraryTools:
   ) derives JsonCodec
   object ContradictionsInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ContradictionsInput] = KindlingsSchema
       .derived[ContradictionsInput]
       .schema
@@ -665,6 +691,7 @@ object LibraryTools:
 
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class PutSourceInput(
       citekey: Citekey,
       source: com.histmersion.api.library.Source.Put,
@@ -675,11 +702,14 @@ object LibraryTools:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PutSourceInput] = KindlingsSchema
       .derived[PutSourceInput]
       .schema
       .modify(_.strict)(_.description(StrictDoc))
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class PatchSourceInput(
       citekey: Citekey,
       patch: com.histmersion.api.library.Source.Patch,
@@ -690,6 +720,8 @@ object LibraryTools:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PatchSourceInput] = KindlingsSchema
       .derived[PatchSourceInput]
       .schema
@@ -702,12 +734,15 @@ object LibraryTools:
   ) extends Creation.Named derives JsonCodec
   object RenameSourceInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RenameSourceInput] = KindlingsSchema
       .derived[RenameSourceInput]
       .schema
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class ExportSourceInput(citekey: Citekey)
       derives JsonCodec,
         KindlingsSchema,
@@ -741,6 +776,7 @@ object LibraryTools:
       /** @deprecated use `places` */
       region: Option[Filter.Places] = None
   ) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toFilter: Filter =
       val effectiveFrom = from.orElse(periodStart)
       val effectiveTo = to.orElse(periodEnd)
@@ -766,6 +802,8 @@ object LibraryTools:
       )
   object HistogramInput:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[HistogramInput] = Filter.Docs
       .describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))

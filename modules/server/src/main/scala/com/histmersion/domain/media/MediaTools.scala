@@ -34,11 +34,13 @@ import com.histmersion.domain.CreatorControllers
   * imports and the sources' pictures are not tools, on purpose (an operator's decision; a picture is for the reader).
   * `sourceExists` says whether a citekey names a source (the library's), for an empty answer's wording.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MediaTools:
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
 
   import com.histmersion.util.mcp.ToolInputs.given
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class AssetsInput(citekey: Citekey) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   final case class PatchAssetInput(
@@ -62,6 +64,8 @@ object MediaTools:
     type License = License.T
     object License extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PatchAssetInput] = KindlingsSchema
       .derived[PatchAssetInput]
       .schema
@@ -92,6 +96,8 @@ object MediaTools:
     type Notes = Notes.T
     object Notes extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[AssetLinksInput] = KindlingsSchema
       .derived[AssetLinksInput]
       .schema
@@ -106,11 +112,16 @@ object MediaTools:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[DeleteAssetLinkInput] = KindlingsSchema
       .derived[DeleteAssetLinkInput]
       .schema
       .modify(_.id)(_.description("Asset link id to delete"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def apply(assets: AssetsControllers, links: AssetLinksControllers, sourceExists: Citekey => Boolean) =
     List(
       tool("assets")

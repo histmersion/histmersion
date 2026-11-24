@@ -14,10 +14,13 @@ import javax.xml.parsers.DocumentBuilderFactory
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one thing read from a plugin's POM here: whose it is. Everything else in it (dependencies, properties, parents,
   * dependency management) is coursier's to read.
   */
+@atBoundary(BoundaryKind.Json, "reads a plugin POM's XML to find whose it is")
 object Pom:
   type ElementName = ElementName.T
   object ElementName extends Newtype[String, Pure]
@@ -27,9 +30,12 @@ object Pom:
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
   export PluginArtifact.Pom as CoordinatesXml
   export PluginArtifact.Pom as ParseXml
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type TextName = ElementName
   val TextName: ElementName.type = ElementName
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def coordinates(xml: Pom.CoordinatesXml): Either[Problems, ModuleCoordinates] =
     parse(xml).flatMap { project =>
       val parent = child(project, ElementName("parent"))
@@ -46,12 +52,14 @@ object Pom:
     * it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds several, of the libraries
     * shaded into it: no POM can be told to be the plugin's then.
     */
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def of(jar: Path): Option[Pom.CoordinatesXml] =
     val beside = besideJar(jar)
     if Files.isRegularFile(beside) then Some(Pom.CoordinatesXml(Files.readString(beside, UTF_8))) else embedded(jar)
 
   def besideJar(jar: Path): Path = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom")
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def embedded(jar: Path): Option[Pom.CoordinatesXml] =
     (Try {
       val zip = ZipFile(jar.toFile)
@@ -66,6 +74,9 @@ object Pom:
       finally zip.close()
     }.toOption.flatten[String]).map(refactorValue => PluginArtifact.Pom(refactorValue))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def parse(xml: Pom.ParseXml): Either[Problem, Element] =
     Try {
       val factory = DocumentBuilderFactory.newInstance()
@@ -87,6 +98,7 @@ object Pom:
       )
       .filterOrElse(_.getLocalName == "project", Problem.Invalid.Missing.here(Problem.Field("project")))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def child(e: Element, name: ElementName): Option[Element] =
     val nodes = e.getChildNodes
     (0 until nodes.getLength).map(nodes.item).collectFirst {

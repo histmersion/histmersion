@@ -3,6 +3,7 @@ package plugins.media
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `europeana`: Europeana's Search API (a user's personal key, sent as a header): one search by the place's name,
   * openly reusable images only; a record to store is read again through the Record API, whose licence must be the
@@ -10,6 +11,7 @@ import com.histmersion.plugin.*
   * they carry, else by the museum rule's names. The aggregators, institutions and `dc:type`s the collection excludes
   * (natural-history specimens) are refused, and so is an object made after `max-year`.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key], licences: LicenceReader)
     extends KeyedCollection(
       conf,
@@ -26,12 +28,15 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
       "media.europeana.max-year are refused; needs a personal API key " +
       "(histmersion.plugins.media-europeana.api-key, a secret reference)"
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def matchRule = MediaMatchRule.PlaceIds(Set(MediaMatchRule.PlaceIds.Deeper(Europeana.Spatial)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val exclusions = Europeana.Exclusions(
     CollectionSettings.items(conf.excludeProviders).map(i => Europeana.Exclusions.Providers(i.value)),
     CollectionSettings.items(conf.excludeDataProviders).map(i => Europeana.Exclusions.DataProviders(i.value)),
     CollectionSettings.items(conf.excludeTypes).map(i => Europeana.Exclusions.Types(i.value))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def headers = Map(
     Header.Name(Europeana.KeyHeader) -> Header.Value(apiKey.value)
   )

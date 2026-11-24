@@ -7,11 +7,13 @@ import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank,
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the identity area: the tombstones, written before every other row (a row the other side
   * deleted makes room for one it created in its place).
   */
 object TombstonesCarried:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val tombstones: CarriedKind =
     CarriedKind.owned[Bundle.Tombstone](
       DataOwner("util.identity"),

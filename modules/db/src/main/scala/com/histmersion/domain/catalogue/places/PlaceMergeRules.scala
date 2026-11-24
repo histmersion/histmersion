@@ -12,11 +12,13 @@ import com.histmersion.util.data.exchange.{BundleScope, MergeRules}
 
 import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge treats places: the ledger names one by its id; a plan knows which of the bundle's place ids and old ids
   * name a place here, which of the bundle's places with no uid here are one here — by id, or by label and geometry (the
   * plan's `merge.place-*` settings) — and which of the places the bundle's events point at are here.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object PlaceMergeRules extends MergeRules:
 
   override val planning: Option[PlanRules] = Some(CataloguePlan)
@@ -24,6 +26,7 @@ object PlaceMergeRules extends MergeRules:
   val kind: Bundle.Kind = Bundle.Kind.Place
   override val ledgerLabel: Option[Frag] = Some(sql"SELECT id FROM places WHERE uid = l.local_uid")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def gather(
       bundle: BundleEntities,
       localized: BundleEntities,

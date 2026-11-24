@@ -16,13 +16,18 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one-piece jobs' rows, the same on the database and in memory: created `queued`, moved by compare-and-set (a
   * second claim is refused), progress only while running, the error and progress of the last move kept.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class JobRecordsContract extends DbSuite:
   protected def fresh(): Option[JobRecords]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(info: JobInfo): Job.Id = Job.Id.applyUnsafe(info.id.value)
 
   private def jtest(title: String)(body: JobRecords => Unit): Unit = test(title)(fresh().foreach(body))
@@ -89,6 +94,7 @@ class JobRecordsInMemorySuite extends JobRecordsContract:
 class JobRecordsDbSuite extends JobRecordsContract:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch =
     ScratchDatabases("histmersion_s10j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   private val made = AtomicLong(0L)

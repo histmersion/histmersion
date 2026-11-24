@@ -2,7 +2,9 @@ package com.histmersion
 package web
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DiagnosticsSuite extends munit.FunSuite:
 
   test("toJs: one object per cache, an unbounded weight as -1") {

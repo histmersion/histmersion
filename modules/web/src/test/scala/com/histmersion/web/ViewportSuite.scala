@@ -3,10 +3,13 @@ package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.instance.UiConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The narrow (phone) layout's decisions, purely: which mode a width is, and how the bottom sheet steps and snaps. What
   * the modes look like is the stylesheet's.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class ViewportSuite extends munit.FunSuite:
 
   test("a thin screen is narrow; so is a short TOUCH screen (a phone held sideways); a desktop is not"):

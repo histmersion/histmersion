@@ -11,6 +11,7 @@ import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the gazetteer's records keep, alike in memory and in the database: an import's places, names and edges
   * read back (a dangling parent reported, never fatal); the search's order; a person's names (an imported one is kept);
@@ -18,14 +19,18 @@ import com.histmersion.util.database.TestCreators.given
   * a removal, neither undone by the next import. What only a database answers (a shape's GeoJSON, the findings matched
   * to a place, a point override) is the database suites'.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 abstract class PlaceServiceContract extends CatalogueStoreSuite:
 
   private val Tolerance = GeocodeSettings.ToleranceKm(10.0)
   private val RegionKind = Place.KindValue("region")
   private val SiteKind = Place.KindValue("site")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def square(x0: Double, y0: Double, x1: Double, y1: Double): Option[Place.Geometry] =
     Some(Place.Geometry(s"""{"type":"Polygon","coordinates":[[[$x0,$y0],[$x1,$y0],[$x1,$y1],[$x0,$y1],[$x0,$y0]]]}"""))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def point(x: Double, y: Double): Option[Place.Geometry] = Some(
     Place.Geometry(s"""{"type":"Point","coordinates":[$x,$y]}""")
   )
@@ -324,6 +329,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     assertEquals(p.count(), 6)
   }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def changed(c: Place.OverrideChanged) =
     (c.placeId, c.label, c.reset, c.kindBefore, c.kindAfter, c.periodBefore.value: String, c.periodAfter.value: String)
 

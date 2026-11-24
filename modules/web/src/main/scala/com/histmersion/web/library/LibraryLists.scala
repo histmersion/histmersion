@@ -17,6 +17,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.Offset
 import com.histmersion.web.ErrorLine
 import com.histmersion.api.RowCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Library's two lists, a page at a time: the sources and the articles the filter panel selects (the map's view never
   * narrows them: Library lists everywhere), the sources in [[LibrarySort]]'s order. Both are read whenever the filter
@@ -33,14 +34,19 @@ object LibraryLists:
   private var readFor: Option[String] = None
   private var timer: Int = 0
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sort: LibrarySort = LibrarySort.of(UiState.librarySort.now().map(LibrarySort.Wire(_)))
 
   /** The filter the lists follow: the panel's, everywhere. */
   def filter(): Filter = UiState.toFilter(except = Set(UiState.ToFilterExcept("bbox")))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(f: Filter): String = s"$f|${sort.wire.value}"
 
   /** The table's rows of `section`, as keys. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keys(section: LibrarySection): List[TableRow.Key] =
     if section == LibrarySection.Articles then articles.now().rows.map(a => TableRow.Key(a.slug.value))
     else sources.now().rows.map(h => TableRow.Key(h.source.citekey.value))
@@ -54,6 +60,7 @@ object LibraryLists:
       readArticles(f, Offset(0))
 
   /** [[refresh]] after the filter has stopped changing (typing in the words field), as Explore's lists do. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refreshSoon(): Unit =
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(
@@ -62,9 +69,15 @@ object LibraryLists:
     )
 
   /** Turn `section`'s list to the page starting at `offset`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def turnTo(section: LibrarySection, offset: Offset): Unit =
     if section == LibrarySection.Articles then readArticles(filter(), offset) else readSources(filter(), offset)
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def readSources(f: Filter, offset: Offset): Unit =
     sources.update(_.copy(loading = true, error = None))
     val page = f
@@ -79,6 +92,11 @@ object LibraryLists:
       m => sources.update(_.copy(loading = false, loaded = true, error = Some(Problem.Unclassified(Legacy.Text(m)))))
     )
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def readArticles(f: Filter, offset: Offset): Unit =
     articles.update(_.copy(loading = true, error = None))
     val page = f
@@ -92,6 +110,8 @@ object LibraryLists:
     )
 
   /** How many sources and articles the collection holds, whatever the filter: "Everything"'s count. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def everything(): Future[RowCount] =
     ApiClient
       .sources(Filter(limit = Filter.Limit(1)))

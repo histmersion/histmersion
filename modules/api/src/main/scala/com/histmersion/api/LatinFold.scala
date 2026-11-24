@@ -1,10 +1,13 @@
 package com.histmersion
 package api
 
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 /** Diacritic folding as a lookup table: this code is also compiled to Scala.js, which has no `java.text.Normalizer`.
   * The single-letter part was generated from Unicode NFD decompositions; the letters NFD does not decompose (`ß`, `æ`,
   * `ø`, `ł`, `đ`, `þ`, …) are mapped by hand.
   */
+@movesTo(FeaturePlace.UtilCommon)
 object LatinFold:
 
   type Pairs = PairsValue
@@ -77,6 +80,7 @@ object LatinFold:
 
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def foldChar(c: FoldCharC): String =
     if (isCombiningMark(c)) == (true) then ("") else Table.getOrElse(((c)), c.toString)
 

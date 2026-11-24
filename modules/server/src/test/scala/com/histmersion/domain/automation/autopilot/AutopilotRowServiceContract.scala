@@ -8,10 +8,13 @@ import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import java.time.Instant
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the autopilot's row keeps: made off on first use; switched only when it changes; its times, strategy,
   * digest day and drain as written.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class AutopilotRowServiceContract extends EngineStoreSuite:
   private val t = Instant.parse("2026-10-20T08:30:00Z")
   private def a(s: EngineStores) = s.autopilot

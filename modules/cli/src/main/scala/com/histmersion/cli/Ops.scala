@@ -18,6 +18,8 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
@@ -25,12 +27,14 @@ import com.histmersion.api.automation.Creation
   * `queue` reads as the plan specifies (`queue acquire add "…"`, `queue tasks`, `queue done 3`, `queue export <dir>`):
   * each list and each verb is a subcommand.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion lint`, `queue`, `query` and `schema` arguments")
 object Ops:
 
   // ── queue ───────────────────────────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
   enum QueueCmd extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Show(list: Queue.Kind.Label, all: Boolean, json: Cli.JsonOutput)
     case Add(
         list: Queue.Kind.Label,
@@ -50,6 +54,7 @@ object Ops:
     /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
       * the caps allow; a pass of more than one item is a server job, followed unless told to return.
       */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Recheck(
         writes: Cli.Writes,
         limit: Option[Int],
@@ -66,6 +71,8 @@ object Ops:
   /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server from the rows. Used
     * by `queue export` and by `histmersion export`, so both produce identical files.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[String]] =
     val _ = Files.createDirectories(dir)
     val files: List[(String, () => Either[Cli.Error, String])] =
@@ -85,6 +92,9 @@ object Ops:
   /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only keep some of them.
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
     if !Files.isDirectory(dir) then Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir"))))
     else
@@ -105,6 +115,8 @@ object Ops:
   /** `lint --fix` applies the server-side repairs and then loops while sources remain to re-chunk (or point-only
     * imported areas to remove), because a whole-corpus pass is far longer than one HTTP request.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @annotation.tailrec
   private def fixLoop(using
       console: Console
@@ -172,6 +184,9 @@ object Ops:
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written
     * back over the file. A note file's frontmatter is the note's own and is not sent.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
     if !java.nio.file.Files.isRegularFile(p) then
       Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
@@ -188,6 +203,8 @@ object Ops:
 
   /** Carries out QueueCmd commands against one server. */
   final private[cli] class RunQueue(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: QueueCmd): Either[Cli.Error, Unit] =
       cmd match
         case QueueCmd.Show(list, all, json) =>
@@ -235,6 +252,7 @@ object Ops:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Lint(
         rules: List[String],
         fix: Boolean,
@@ -250,6 +268,8 @@ object Ops:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Lint(rules, fix, article, source, file, json) =>

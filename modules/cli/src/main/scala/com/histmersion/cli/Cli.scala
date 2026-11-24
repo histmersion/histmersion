@@ -33,10 +33,13 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.Paging
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Filter
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses the top-level `histmersion` command line and dispatches to the command parsers")
 object Cli:
   enum Writes derives CanEqual:
     case DryRun, Apply
@@ -74,6 +77,8 @@ object Cli:
   def out(using console: Console): Console.Output = console.out
   def err(using console: Console): Console.Output = console.err
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def report(r: SeedResult)(using console: Console): Unit =
     out.println(
       s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), " +
@@ -90,6 +95,8 @@ object Cli:
     * article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout has a root, the compiled articles beside
     * `sources/` are imported too (plan §5.2 stream 2.7).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostSeed(c: Client, dir: Path, force: Api.Overwrite)(using
       console: Console
   ): Either[Error, Unit] =
@@ -151,12 +158,14 @@ object Cli:
   private val FigureCount = Paging.Limit(200)
 
   /** The directory a kind's notes go in under the export's directory, as the mirror's layout places them. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def placed(out: Path, placement: MirrorPlacement): Path =
     placement.directory.fold(out)(d => out.resolve(d.value))
 
   /** Delete `<sources>/<alias>.md` for every old citekey (V027). Best effort: a server without the alias endpoint, or a
     * file that cannot be removed, is reported and does not fail the export.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def pruneRenamed(c: Client, sources: Path)(using console: Console): Unit =
     c.sourceAliases match
       case Left(e)   => err.println(s"  ! could not list renamed citekeys: ${e.problems.sentences.mkString("; ")}")
@@ -178,6 +187,8 @@ object Cli:
   /** The server re-chunks a bounded slice per call (a whole 89 MB corpus takes minutes — far past the HTTP timeout), so
     * the CLI drives the cursor and reports progress until nothing is left.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @annotation.tailrec
   private def reindexLoop(
       c: Client,
@@ -212,11 +223,14 @@ object Cli:
   /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted `histmersion restore` can
     * never destroy a database by accident; use `--yes` for that.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def confirm(question: Question)(using console: Console): Boolean =
     err.print(s"$question [y/N] ")
     err.flush()
     Option(console.readLine()).map(_.value.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def run(args: Array[String])(using console: Console): Unit =
     // #901: a working directory macOS will not let this binary read fails on the first `user.dir`
     // read with a bare stack trace. Only the commands that resolve a local path read it (`ingest
@@ -231,6 +245,7 @@ object Cli:
         Error(Problem.Unclassified(Legacy.Text(WorkingDir.message))).exitCode.exit()
 
   /** The exit code is decided here, at the edge. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def runCommand(args: Array[String])(using console: Console): Unit =
     CommandLine.parse(args.toSeq) match
       case CommandLine.Outcome.Help(text)                   => out.println(text); sys.exit(0)
@@ -265,6 +280,7 @@ object Cli:
         e.exitCode.exit()
 
   /** The token in the file `cli.token-file` names (none when it names none); a file that does not read is a problem. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def tokenFile: Either[Problem, Option[Client.Token]] =
     Option(Settings.app.cli.tokenFile.value.trim).filter(_.nonEmpty) match
       case None       => Right(None)
@@ -282,6 +298,7 @@ object Cli:
           )
           .map(Client.Token.firstLine)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Error(
       problems: Problems,
       origin: ExitCode.Origin = ExitCode.Origin.Local,
@@ -303,17 +320,21 @@ object Cli:
   object Error:
     def answered(problems: Problems): Error = Error(problems, ExitCode.Origin.Server)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def traceLine(trace: LogEvent.Trace): String =
       s"trace $trace — what happened: histmersion log --trace $trace"
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Vacuum(analyze: Boolean, tables: List[String], following: Following)
     case Version()
     case Health()
     case About(json: JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Seed(dir: String, force: Boolean)
     case Reindex()
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Search(
         q: Option[String],
         group: Option[String],
@@ -332,6 +353,7 @@ object Cli:
         f: Filter,
         json: JsonOutput
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Get(
         ck: String,
         full: Boolean,
@@ -341,6 +363,7 @@ object Cli:
         chars: Option[Int],
         json: JsonOutput
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Passages(ck: String, q: String, regex: Boolean, limit: Option[Int], context: Option[Int])
     case GeoWhen(region: Option[String], f: Filter, json: JsonOutput)
     case Histogram(
@@ -354,6 +377,7 @@ object Cli:
     case Graph(ck: String, depth: Option[Int], json: JsonOutput)
     case Contradictions(ck: Option[String], since: Option[Long], json: JsonOutput)
     case Put(file: String)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Patch(
         ck: String,
         json: Option[String],
@@ -375,6 +399,7 @@ object Cli:
         remE: List[String],
         strict: Boolean
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Export(
         dir: String,
         only: List[String],
@@ -385,12 +410,18 @@ object Cli:
     )
     case Backup(into: Option[String])
     case Backups(json: JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Restore(file: String, force: Boolean, yes: Boolean)
 
     def run(c: Client)(using Console): Either[Error, Unit] = PerformTop(c)(this)
 
   /** Carries out TopCommand commands against one server. */
   final private[cli] class PerformTop(c: Client)(using console: Console):
+    @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: TopCommand): Either[Error, Unit] =
       cmd match
         case TopCommand.Version() =>

@@ -2,9 +2,11 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 class UndatedCellsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cell(
       gx: GridCell.Gx,
       n: GridCell.N,

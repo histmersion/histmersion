@@ -4,15 +4,19 @@ package cli
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.{Goal, ListFilters}
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The filter options of the three listings — `agent approvals`, `agent runs`, `jobs` — over core [[ListFilters]]: the
   * same names as the REST query (kebab-case here), every list option repeatable or comma-separated, and the server
   * checks the values. The "next page" line repeats them ([[PageCmd]]).
   */
+@atBoundary(BoundaryKind.CliArgs, "parses the list options of `agent approvals`, `agent runs` and `jobs`")
 object ListOpts:
 
   /** The help lines that name a vocabulary. */
   object Help:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     val approvalState: String =
       s"Only approvals in this state: ${(ApprovalState.values.map(_.wire.value) :+ "all").mkString("|")} (default open)"
     val approvalKind: String = s"Only these kinds: ${ApprovalKind.values.map(_.wire).mkString("|")}"
@@ -21,6 +25,7 @@ object ListOpts:
       s"Only runs in these states: ${RunState.values.map(_.wire).mkString("|")} (waiting = for an approval)"
     val pipeline: String = s"Only these pipelines: ${Pipeline.values.map(_.wire).mkString("|")}"
     val origin: String = s"Only runs started by: ${Origin.values.map(_.wire).mkString("|")}"
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     val jobStatus: String =
       s"Only jobs in these states: ${JobState.values.map(_.wire).mkString("|")} (an agent run's too: ${RunState.values.map(_.wire.value).filterNot(JobState.values.map(_.wire.value).contains).mkString("|")})"
 

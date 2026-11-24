@@ -6,11 +6,14 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 import scala.jdk.CollectionConverters.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The config side of an in-place reload (docs/research-plugins.md §3.5), pure: which settings differ between the
   * running config and the one just read, which of them a running server can take on, and the config it switches to. The
   * server's `hot.HotGraph` rebuilds the components those settings feed ([[HotPlan]]).
   */
+@movesTo(FeaturePlace.UtilSettings)
 object ConfigReload:
   type Key = Key.T
   object Key extends Newtype[String, Pure]
@@ -62,9 +65,11 @@ object ConfigReload:
     Key("histmersion.auth.origins") -> SetOnce.Access
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def restartOnly(key: Key): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
 
   /** Every leaf setting (a value or a list; `null` leaves none) with its value rendered. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def leaves(c: org.ekrich.config.Config): Map[Key, Rendered] =
     c.entrySet.asScala.iterator
       .map(e => Key(e.getKey) -> Rendered(e.getValue.render(ConfigRenderOptions.concise)))
@@ -82,6 +87,7 @@ object ConfigReload:
   /** The settings the server switches to: `next`, with every restart-only setting that changed put back to its
     * `running` value — so the config the server reports is the one it runs.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def effective(
       running: org.ekrich.config.Config,
       next: org.ekrich.config.Config,
@@ -101,6 +107,7 @@ object ConfigReload:
     type Watch = Watch.T
     object Watch extends Newtype[Boolean, Pure]
     type WatchDebounceMs = WatchDebounceMs.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object WatchDebounceMs extends Newtype[Int, Pure]
     type DrainSeconds = DrainSeconds.T
     object DrainSeconds extends Newtype[Int, Pure]

@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on the user's machine,
   * not in the container).
@@ -17,6 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   optional host directory holding the fetched originals as `<citekey>/paper.*`, an override for
   *   `calibre push`/`sync`, which otherwise download the original the server stored
   */
+@movesTo(FeaturePlace.LibraryCalibre)
 final case class CalibreCliConfig(
     libraryDir: CalibreCliConfig.LibraryDir,
     calibredb: CalibreCliConfig.Calibredb,
@@ -24,10 +27,13 @@ final case class CalibreCliConfig(
     originalsDir: CalibreCliConfig.OriginalsDir
 ) derives ConfigReader:
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
   private def expand(p: String): String =
     if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def library: CalibreCliConfig.LibraryDir = CalibreCliConfig.LibraryDir(expand(libraryDir.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def originals: Option[CalibreCliConfig.OriginalsDir] =
     Option(originalsDir).map(d => expand(d.value).trim).filter(_.nonEmpty).map(CalibreCliConfig.OriginalsDir(_))
 

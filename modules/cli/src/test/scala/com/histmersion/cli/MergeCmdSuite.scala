@@ -7,10 +7,12 @@ import java.nio.file.Files
 import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergeResolution, MergeResolutions}
 import com.histmersion.cli.Cli
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion merge plan` and the resolution flags of `bundle import`: they parse, and the file plus the flags make
   * one resolution set, flags winning, every bad line reported. No server.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergeCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

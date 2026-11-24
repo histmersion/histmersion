@@ -17,11 +17,13 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An event's scale (#1440) over real HTTP and MCP: PUT and PATCH take it and refuse a value that is none, `auto`
   * forgets it, `GET /api/events/geo` answers (and is not read as the event `geo`), and the `patch_event` tool writes
   * the same through the one handler. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventScaleHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

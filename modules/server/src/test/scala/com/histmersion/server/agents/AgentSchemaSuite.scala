@@ -30,10 +30,12 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The JSON schemas sttp-ai sends to a provider come from the same Kindlings-derived Tapir schemas the MCP tools
   * advertise — no second schema stack.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AgentSchemaSuite extends munit.FunSuite:
 
   test("a typed answer's response schema renders from its Kindlings schema"):

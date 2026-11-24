@@ -3,10 +3,13 @@ package api
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`), so a wording never seen before reads as
   * [[ServiceState.Unknown]] at worst.
   */
+@movesTo(FeaturePlace.Kernel)
 enum ServiceState:
   case Ok, Busy, Down, Unknown
 
@@ -34,6 +37,7 @@ object ServiceState:
     "answered"
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(text: Option[Wire]): ServiceState =
     text.map((_).value.trim.toLowerCase).filter(_.nonEmpty) match
       case None                                                               => Unknown

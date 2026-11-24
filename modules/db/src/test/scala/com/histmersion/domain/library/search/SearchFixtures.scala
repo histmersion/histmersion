@@ -14,8 +14,10 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.time.Timer
 import com.histmersion.util.database.Transactor
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The db suites' reads of the search on a database of their own. */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object SearchFixtures:
   private given Timer = new Timer {
     def start(): Timer.Measure = new Timer.Measure {
@@ -63,12 +65,14 @@ object SearchFixtures:
     try Transactor(ds).readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
     catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
   def tables(ds: DataSource): List[SchemaTable] = connect(ds)(QueryRepo.tables)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def periodsQuery(
       unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
   ): Frag =
     AggregateRepo.periodsQuery(unit, filter, scope)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def treeRowsQuery(
       unit: AggregateRepo.Unit,
       filter: Filter,

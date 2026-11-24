@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The boundaries of a playback, drawn from every state fetched so far and faded in and out by the playhead at each
   * frame (#3764): the year's states were fetched five times a second and the map replaced its shapes with each answer —
@@ -23,6 +24,8 @@ object PlaybackAreas:
     * over `fade` years before it begins and after it ends, gone beyond.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def alpha(ph: FractionalYear, start: FractionalYear, end: FractionalYear, fade: FadeYears): Opacity =
     if ph >= start && ph <= end then Opacity(1.0)
     else if fade.value <= 0 then Opacity(0.0)
@@ -33,15 +36,21 @@ object PlaybackAreas:
   /** Pure: the alpha drawn — `a` in steps of 1/`steps`, so a frame restyles only the states whose look changed (the map
     * recolours a state per change).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def step(a: Opacity, steps: StepCount = StepCount(20)): Opacity = Opacity(
     math.round(a.value * steps.value).toDouble / steps.value
   )
 
   /** Pure: a playback state's key: its place and its years (one place's versions are different shapes). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(id: AreaKey, start: Option[FractionalYear], end: Option[FractionalYear]): AreaKey =
     AreaKey(s"${id.value}@${start.fold("")(_.value.toLong.toString)}..${end.fold("")(_.value.toLong.toString)}")
 
   /** Pure: whether a state of years [`start`, `end`] still counts once the playhead is at `ph` (it ended no more than
     * `fade` years ago).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def live(ph: FractionalYear, end: FractionalYear, fade: FadeYears): Boolean = end.value + fade.value >= ph.value

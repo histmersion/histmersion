@@ -13,6 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** ONE controller for the newest-first list windows — jobs, agent runs, approvals (#1798 item 6): the rows
   * ([[ListPaging]]: keyset pages, "Show older", a poll that keeps the pages loaded), the poll ([[Poll]], none for a
@@ -29,6 +30,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param later
   *   `setTimeout`, injectable for a test; `cancel` its `clearTimeout`
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class PolledList[A](
     fetch: (Option[Paging.Cursor], Option[Paging.Cursor]) => Future[(List[A], Paging.Page)],
     id: A => PolledList.ItemId,
@@ -68,6 +70,8 @@ final class PolledList[A](
   /** A poll — or an outside change (a decision, a job started here): the rows shown, current again. */
   def refresh(changed: Poll.DataChanged = Poll.DataChanged(false)): Unit = load(reset = false, changed)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def load(reset: Boolean, changed: Poll.DataChanged): Unit =
     if mounted then
       cancel(timer)
@@ -80,6 +84,9 @@ final class PolledList[A](
         if mounted && latest.isCurrent(ticket) then answered(r, cur, upTo, reset, changed)
       )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[web] def answered(
       r: Try[(List[A], Paging.Page)],
       cur: ListPaging.Listing[A],
@@ -105,6 +112,8 @@ final class PolledList[A](
         schedule(Poll.next(delay, Poll.LiveMode(live(rows, page)), Poll.DataChanged(moved)))
 
   /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def showOlder(): Unit =
     listing.now().page.next.foreach { cursor =>
       if mounted then
@@ -135,10 +144,13 @@ final class PolledList[A](
   def item: Signal[Option[A]] = listing.signal.map(_.rows.headOption)
 
   /** The "Show older" button under the list. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def olderButton: HtmlElement =
     ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.value), () => showOlder())
 
   /** The error line: what the last request answered, `what` naming the list. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def errorLine(what: UiLabels.Text): HtmlElement =
     div(
       child.maybe <-- failure.signal.map(
@@ -163,6 +175,7 @@ object PolledList:
   type Restarting = Restarting.T
   object Restarting extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def single[A](
       fetch: () => Future[A],
       live: A => Boolean,

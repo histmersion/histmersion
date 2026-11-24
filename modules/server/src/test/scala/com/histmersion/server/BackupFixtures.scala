@@ -5,9 +5,12 @@ import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigF
 import com.histmersion.util.data.backup.BackupService
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.process.Processes
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The backups of a server over `cfg` with no database behind them (nothing here counts guarded rows). */
 object BackupFixtures:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def service(cfg: AppConfig): BackupService =
     BackupService(
       () => cfg,

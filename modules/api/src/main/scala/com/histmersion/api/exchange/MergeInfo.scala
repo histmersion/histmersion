@@ -8,6 +8,7 @@ import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MergeInfo(
     id: UUID,
@@ -25,6 +26,7 @@ final case class MergeInfo(
 
 object MergeInfo:
   type BundleSha256 = BundleSha256.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object BundleSha256 extends Newtype[String, Pure]
   type AppliedAt = AppliedAt.T
   object AppliedAt extends Newtype[String, Pure]

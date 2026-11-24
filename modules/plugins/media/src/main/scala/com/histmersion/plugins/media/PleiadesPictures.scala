@@ -3,6 +3,7 @@ package plugins.media
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `pleiades`: pictures a Pleiades place record links. For each place on the map that carries a Pleiades id, its place
   * record is read once; the Wikimedia Commons files its references name ([[PleiadesLinks]]) — at most `per-place`, in
@@ -14,6 +15,7 @@ import com.histmersion.plugin.*
 final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
   private val conf = media.pleiades
   val title = MediaCollection.Title("Pleiades-linked pictures")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override val description = MediaCollection.Description(
     "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades id " +
       "(matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), Commons " +
@@ -21,10 +23,14 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
   )
   val role = MediaCollection.Image
   override def matchRule = MediaMatchRule.Own
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def placesCarrying = Some(MediaCollection.PlacesCarrying(PleiadesPictures.Scheme))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def perPlace = MediaCollection.PerPlace(conf.perPlace.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def requestIntervalMs = MediaCollection.RequestIntervalMs(conf.requestIntervalMs.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def check =
     Either.cond(
       conf.enabled.value,
@@ -45,9 +51,11 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeTarget(p: MediaPlace): MediaTarget.Id =
     MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // 1. each place's record(s): the picture links, in order
     val read = places.map { p =>

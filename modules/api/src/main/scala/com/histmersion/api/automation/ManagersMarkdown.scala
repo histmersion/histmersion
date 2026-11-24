@@ -4,11 +4,15 @@ import com.histmersion.util.problem.Text.sentence
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ManagersMarkdown:
 
   import Managers.*
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counts(c: ItemCounts): String =
     List(
       "pending" -> c.pending.value,
@@ -22,6 +26,9 @@ object ManagersMarkdown:
       case "" => ("no items")
       case s  => (s)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def today(m: ManagerInfo): String =
     val cap = m.effective.dailyUsd.orElse(m.config.dailyUsd).filter((_).value > 0)
     s"today ${usd(m.spentTodayUsd.value)}${cap.fold("")(c => s" of ${usd(c.value)}")} USD" +
@@ -34,6 +41,8 @@ object ManagersMarkdown:
     def one(x: Double) = BigDecimal((x)).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then (s"${one(((n) / 1e6))}M") else if n >= 1000 then (s"${one(((n) / 1e3))}k") else (n.toString)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def backlog(n: ManagerInfo.Backlog, days: Option[ManagerInfo.BacklogDays]): String =
     s"${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n.value == 0
                                                                                                                                then
@@ -53,6 +62,8 @@ object ManagersMarkdown:
                                                                                                                                    case None =>
                                                                                                                                      " (not draining: auto-ingest off, a cap of 0, or the watcher not active)")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line(m: ManagerInfo): String =
     val goal = m.goal.fold("")(g => s" · goal $g")
     val runs = if (m.pauseRuns) == ManagerInfo.PauseRuns(true) then " (its runs paused too)" else ""
@@ -64,6 +75,8 @@ object ManagersMarkdown:
   def list(ms: List[ManagerInfo]): String =
     if ms.isEmpty then ("_No managers._") else ("# Managers\n\n" + ms.map(m => s"- ${line(m)}").mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(i: ManagerItem): String =
     val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.value.take(8)}"))(r =>
       s" · run ${r.id.value.take(8)} ${r.status}" + r.progress
@@ -83,6 +96,8 @@ object ManagersMarkdown:
       (if (i.failures).value > 0 then s", ${i.failures} failed" else "") + run + hold + nb +
       i.outcome.filter(_.value.nonEmpty).fold("")(o => s" · $o")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def items(p: ItemPage): String =
     if p.items.isEmpty then ("_No items._")
     else
@@ -91,12 +106,17 @@ object ManagersMarkdown:
         .mkString("\n")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def event(e: ManagerEvent): String =
     s"${e.at} · ${e.kind}${e.itemId.fold("")(i => s" · item #$i")}${e.runId.fold("")(r => s" · run ${r.value.take(8)}")} · ${e.text}"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def events(p: EventPage): String =
     if p.events.isEmpty then ("_No events._") else (p.events.map(e => s"- ${event(e)}").mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def effect(e: HintEffect): String =
     if e.action == HintEffect.Verb.Config.word then (s"settings: ${e.config.fold("none")(configLine)}")
     else
@@ -104,6 +124,8 @@ object ManagersMarkdown:
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
         e.untilSource.fold("")(s => s" until $s exists") + e.priority.fold("")(p => s" (priority $p)")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configLine(c: ManagerConfig): String =
     List(
       c.maxRuns.map(n => s"maxRuns=$n"),
@@ -134,6 +156,8 @@ object ManagersMarkdown:
       case "" => ("the defaults")
       case s  => (s)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hint(h: ManagerHint): String =
     val scope = h.itemId.fold("manager-wide")(i => s"item #$i")
     val eff = h.effect.fold("")(e => s" · ${effect(e)}")
@@ -143,10 +167,15 @@ object ManagersMarkdown:
     (s"#${h.id} (${if (h.standing) == ManagerHint.Standing(true) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if (h.uses).value > 0 then s" · reached ${h.uses} run(s)" else ""))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enqueued(r: EnqueueResult): String =
     val head = if r.items.isEmpty then s"Nothing queued for **${r.managerId}**." else s"Queued for **${r.managerId}**:"
     ((List(head) ++ r.items.map(i => s"- ${item(i)}") ++ r.skipped.map(x => s"- not queued: $x")).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def detail(d: ManagerDetail): String =
     val m = d.manager
     val cfg = m.effective

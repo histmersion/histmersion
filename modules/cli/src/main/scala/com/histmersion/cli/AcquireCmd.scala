@@ -23,11 +23,14 @@ import com.histmersion.util.console.Console
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion discover|refs|assess|followups|ingest|archive` — the acquisition & assessment commands (plan §5.2
   * stream 2.6), each a thin wrapper over one endpoint that prints the SHARED Markdown rendering, or the raw JSON with
   * `--json`.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion acquire` arguments")
 object AcquireCmd:
 
   // ── discover ────────────────────────────────────────────────────────────────────────────────
@@ -37,6 +40,9 @@ object AcquireCmd:
   /** The server downloads and rewrites the mirror in the background — one HTTP request cannot hold a 30 MB download
     * plus 60 000 inserts — so the CLI drives the wait, exactly as `reindex` does.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
   private def pollRetractions(c: AcquireClient, waited: Int)(using
       console: Console
@@ -72,6 +78,7 @@ object AcquireCmd:
   /** Whether an identifier's ingest asks the legal chain alone: yes, unless the person says `--allow-unauthorised`;
     * `--legal-only` says the default aloud, and the two together are refused. Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def legalOnly(legalOnly: Boolean, allowUnauthorised: Boolean): Either[Problem, Boolean] =
     if legalOnly && allowUnauthorised then
       Left(
@@ -94,6 +101,7 @@ object AcquireCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case DiscoverSearch(
         q: String,
         since: Option[Int],
@@ -106,8 +114,10 @@ object AcquireCmd:
     case DiscoverWikirefs(url: String, json: Cli.JsonOutput)
     case Refs(id: String, writes: Cli.Writes, json: Cli.JsonOutput)
     case AssessUpdateRetractions(json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Assess(id: String, writes: Cli.Writes, force: Boolean, json: Cli.JsonOutput)
     case Followups(id: String, since: Option[Int], limit: Option[Int], writes: Cli.Writes, json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Ingest(
         id: IngestTarget,
         citekey: Option[String],
@@ -133,6 +143,9 @@ object AcquireCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.DiscoverSearch(q, since, sort, limit, notInDb, json) =>

@@ -23,12 +23,14 @@ import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.api.automation.Stalls
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The managers' phase 2 over real HTTP and MCP (agents off: managing works without them, nothing runs): a seeding
   * manager is created paused with its first propose item, `/api/agents/enqueue` routes review / extend / enrich / seed,
   * a bad kind is a 400, and the `manager` tool creates and enqueues through the same handlers. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ManagersHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

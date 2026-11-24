@@ -5,11 +5,13 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A clustered dot that is not a finding — a site, an event, a picture: what the bubble counts and colours, and the row
   * its list shows (its kind's icon, its name, a note, `mid` the middle of its dated span on the period ramp). A
   * finding's dot carries its [[GeoHit]]s instead.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class DotEntry(
     kind: DotKind,
     id: DotEntry.Id,

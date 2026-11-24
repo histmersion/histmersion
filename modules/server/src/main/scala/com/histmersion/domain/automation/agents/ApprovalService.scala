@@ -24,11 +24,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The approvals, as the engine's features reach them: what a run proposed for a person to decide — open until decided
   * (once), or recorded approved when it was applied at once — and the reads the lists, the digest, the autopilot and
   * the scheduler make of them.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait ApprovalService:
 
   def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo]
@@ -130,6 +133,7 @@ object ApprovalService:
   def apply(db: Transactor, clock: Clock): ApprovalService = Implementation(db, clock)
 
   final private class Implementation(db: Transactor, clock: Clock) extends ApprovalService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] =
       AgentRepo.approval(ApprovalInfo.Id(id.value))
     private def now: Instant = Instant.now(clock)
@@ -141,9 +145,12 @@ object ApprovalService:
 
     def creatorOf(id: Approval.Id): Option[Creator.New] = proposed(id).flatMap((_, c) => StoredCreator.recorded(c))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approval(id: Approval.Id): Option[ApprovalInfo] = db.read(AgentRepo.approval(ApprovalInfo.Id(id.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       db.read(AgentRepo.approvals(state, PageSize.assume(limit.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalPage(
         state: Option[ApprovalState],
         limit: ApprovalQuery.Limit,
@@ -158,6 +165,7 @@ object ApprovalService:
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalPage(
         q: ApprovalQuery,
         limit: ApprovalQuery.Limit,
@@ -177,6 +185,7 @@ object ApprovalService:
     ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
       db.read(AgentRepo.approvalFacets(q))
     def approvalCounts(): List[(Approval.State.Wire, RowCount)] = db.read(AgentRepo.approvalCounts())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openForStep(
         jobId: Job.Id,
         seq: StepSeq,
@@ -198,6 +207,7 @@ object ApprovalService:
           now
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openSubject(
         jobId: Option[Job.Id],
         kind: ApprovalKind,
@@ -221,16 +231,20 @@ object ApprovalService:
       db.read(AgentRepo.approvalsOf(jobId, kind))
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       db.read(AgentRepo.autoApprovedSince(kind, since))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       db.read(AgentRepo.openOfKinds(kinds, PageSize.assume(limit.value)))
     def openLight(): List[ApprovalDigest.Open] = db.read(AgentRepo.openLight())
     def openCount(kind: ApprovalKind): RowCount = db.read(AgentRepo.openCount(kind))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openBySubject(): Map[ApprovalQuery.Subject, RowCount] =
       db.read(AgentRepo.openBySubject()).map((k, v) => ApprovalQuery.Subject(k.value) -> v)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
     def closeForRun(jobId: Job.Id, why: Problem)(using WritePermit): RowCount =
       db.write(AgentRepo.closeForRun(jobId, why))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String])(using
         WritePermit
     ): Boolean =
@@ -242,6 +256,7 @@ object ApprovalService:
           result.map(ApprovalInfo.Result(_))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome)(using WritePermit): Unit =
       db.write(AgentRepo.settle(ApprovalInfo.Id(id.value), to, ApprovalInfo.Result(result.value)))
 
@@ -253,7 +268,9 @@ object ApprovalService:
     def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = approval(id)
     private def now: Instant = Instant.now(clock)
     private def rows: Vector[ApprovalRecord] = state.get.approvals
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val Open = ApprovalState.Open.wire.value
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def info(r: ApprovalRecord): ApprovalInfo =
       AgentRepo.info(
         AgentRepo.ApprovalRow(
@@ -275,6 +292,7 @@ object ApprovalService:
           r.seq.map(s => StepInfo.Seq(s.value))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def newest(rs: Vector[ApprovalRecord]): Vector[ApprovalRecord] =
       rs.sortBy[(Instant, Long)](r => (r.createdAt, r.id.value)).reverse
 
@@ -288,7 +306,9 @@ object ApprovalService:
 
     def creatorOf(id: Approval.Id): Option[Creator.New] = row(id).flatMap(_.creator)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approval(id: Approval.Id): Option[ApprovalInfo] = rows.find(_.id.value == id.value).map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       newest(rows.filter(r => state.forall(_.wire.value == r.state.value)))
         .take(math.max(1, limit.value))
@@ -302,6 +322,7 @@ object ApprovalService:
     ): Either[Problem, (List[ApprovalInfo], Boolean)] =
       approvalPage(ApprovalQuery(state), limit, before, upTo)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def decidedBy(r: ApprovalRecord): Option[String] =
       if r.state.value == Open then None
       else if r.note.exists(_.byAutopilot) then Some(ListFilters.DecidedBy.Autopilot.wire.value)
@@ -310,6 +331,7 @@ object ApprovalService:
     private def contains(v: Option[String], t: String): Boolean = v.exists(_.toLowerCase.contains(t.toLowerCase))
 
     /** Whether `r` passes every filter of `q` but `except`'s. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def matches(q: ApprovalQuery, except: String)(r: ApprovalRecord): Boolean =
       lazy val run = r.jobId.flatMap(j => runs.get(Run.Id.assume(j.value)))
       (except == "state" || q.state.forall(_.wire.value == r.state.value)) &&
@@ -324,6 +346,7 @@ object ApprovalService:
       q.goal.forall(g => r.subject.exists(_.value == g.value) || run.exists(_.row.goal.exists(_.value == g.value))) &&
       (except == "decidedBy" || q.decidedBy.isEmpty || decidedBy(r).exists(d => q.decidedBy.exists(_.wire.value == d)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalPage(
         q: ApprovalQuery,
         limit: ApprovalQuery.Limit,
@@ -350,6 +373,7 @@ object ApprovalService:
           else shown.lastOption.exists(last => all.exists(r => ordering.lt(key(r), key(last))))
         (shown.toList.map(info), older)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def facet(values: Vector[String]): List[(String, RowCount)] =
       values
         .groupBy(identity)
@@ -358,6 +382,7 @@ object ApprovalService:
         .sortBy((v, n) => (-n, v))
         .take(ListFilters.FacetMax)
         .map((v, n) => (v, RowCount(n)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalFacets(
         q: ApprovalQuery
     ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
@@ -368,8 +393,10 @@ object ApprovalService:
           "decidedBy" -> facet(rows.filter(matches(q, "decidedBy")).flatMap(decidedBy))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalCounts(): List[(Approval.State.Wire, RowCount)] =
       facet(rows.map(_.state.value)).map((s, n) => (Approval.State.Wire(s), n))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openForStep(
         jobId: Job.Id,
         seq: StepSeq,
@@ -404,6 +431,7 @@ object ApprovalService:
             )
         )
       forStep(jobId, seq).get
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openSubject(
         jobId: Option[Job.Id],
         kind: ApprovalKind,
@@ -437,12 +465,14 @@ object ApprovalService:
         )
         .flatMap(approval)
         .get
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind]): List[ApprovalInfo] =
       rows
         .filter(r => r.jobId.contains(jobId) && kind.forall(_.wire.value == r.kind.value))
         .sortBy[Long](_.id.value)
         .toList
         .map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       rows
         .filter(r =>
@@ -454,6 +484,7 @@ object ApprovalService:
         .sortBy[Long](_.id.value)
         .toList
         .map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       rows
         .filter(r => r.state.value == Open && kinds.exists(_.wire.value == r.kind.value))
@@ -461,6 +492,7 @@ object ApprovalService:
         .take(math.max(1, limit.value))
         .toList
         .map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openLight(): List[ApprovalDigest.Open] =
       rows
         .filter(_.state.value == Open)
@@ -474,23 +506,28 @@ object ApprovalService:
             ApprovalDigest.Open.CreatedAt(AutomationState.text(r.createdAt).value)
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openCount(kind: ApprovalKind): RowCount = RowCount(
       rows.count(r => r.state.value == Open && r.kind.value == kind.wire.value)
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openBySubject(): Map[ApprovalQuery.Subject, RowCount] =
       rows
         .filter(_.state.value == Open)
         .flatMap(_.subject)
         .groupBy(_.value)
         .map((s, rs) => ApprovalQuery.Subject(s) -> RowCount(rs.size))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       rows.find(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value)).map(info)
 
     /** Change the rows `which` selects by `f`; how many. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def change(which: ApprovalRecord => Boolean)(f: ApprovalRecord => ApprovalRecord): RowCount =
       RowCount(
         state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which)
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def closeForRun(jobId: Job.Id, why: Problem)(using WritePermit): RowCount =
       val at = now
       change(r => r.jobId.contains(jobId) && r.seq.isDefined && r.state.value == Open)(
@@ -501,6 +538,7 @@ object ApprovalService:
           .modify(_.decidedAt)
           .setTo(Some(at))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String])(using
         WritePermit
     ): Boolean =
@@ -515,6 +553,7 @@ object ApprovalService:
           .modify(_.decidedAt)
           .setTo(Some(at))
       ).value > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome)(using WritePermit): Unit =
       val _ = change(_.id.value == id.value)(
         _.modify(_.state)

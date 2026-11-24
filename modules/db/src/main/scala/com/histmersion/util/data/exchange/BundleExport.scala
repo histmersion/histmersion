@@ -12,6 +12,8 @@ import java.io.OutputStream
 import javax.sql.DataSource
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `bundle export` (docs/research-merge-import.md §4, milestone M1): the database as a `.hmx` bundle, written to a
   * stream, from the carried kinds of the registry.
@@ -24,8 +26,11 @@ import com.histmersion.api.ByteCount
   * Deterministic: the same database gives the same bytes (see [[BundleTar]] and [[BundleManifest]]), which is the M1
   * acceptance test.
   */
+@atBoundary(BoundaryKind.Sql, "reads the database rows of a bundle export")
 object BundleExport:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def write(
       ds: DataSource,
       out: OutputStream,

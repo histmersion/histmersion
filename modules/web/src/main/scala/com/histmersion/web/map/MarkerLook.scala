@@ -4,6 +4,7 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class MarkerLook(ops: List[MarkerPaint], val w: Double, val h: Double):
   private val pad = 12.0
@@ -149,6 +150,7 @@ object MarkerLook:
   private val Fn = "^(rgba?|hsla?|color)\\(".r
   private val Clear = "rgba\\(\\s*\\d+,\\s*\\d+,\\s*\\d+,\\s*0\\s*\\)".r
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Shadow(colour: String, dx: Double, dy: Double, blur: Double, spread: Double, inset: Boolean)
 
   final case class Stop(colour: String, at: Double)
@@ -185,6 +187,7 @@ object MarkerLook:
         case (c :: _, rest) => (c, rest.mkString(" "))
         case (Nil, rest)    => ("", rest.mkString(" "))
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def shadows(s: String): List[Shadow] =
     if s.trim.isEmpty || s.trim == "none" then Nil
     else
@@ -265,6 +268,7 @@ object MarkerLook:
         s"A $rx $ry 0 0 1 ${x + w - rx} ${y + h} H ${x + rx} A $rx $ry 0 0 1 $x ${y + h - ry} V ${y + ry} " +
         s"A $rx $ry 0 0 1 ${x + rx} $y Z"
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def polyPath(points: String, closed: Boolean): String =
     val ns = WsComma
       .split(points.trim)

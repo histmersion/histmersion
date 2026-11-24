@@ -31,17 +31,20 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.domain.library.sources.SourceRepairs
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
   * The fixtures are deliberately one source per defect, all under a `zzlint_` prefix, so the assertions can ignore
   * whatever else the test database happens to hold.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LintRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -49,6 +52,7 @@ class LintRepoSuite extends DbSuite:
 
   private val Prefix = "zzlint_"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val geo =
     GeocodeSettings(
       GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
@@ -56,6 +60,7 @@ class LintRepoSuite extends DbSuite:
       GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       citekey: String,
       status: Source.Status = Source.Status.Current,
@@ -88,6 +93,7 @@ class LintRepoSuite extends DbSuite:
     edges = edges
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(
       id: Finding.Id,
       ck: String,
@@ -109,6 +115,7 @@ class LintRepoSuite extends DbSuite:
   /** A stand-in for the server's flexmark check (the db module has no renderer): every `**` is a problem, so the
     * formatting rules' SQL and wiring are tested here, the check in `MarkdownLintSuite`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val checker: FormatChecker = (text, field, article) =>
     if text.contains("**") then
       List(
@@ -124,6 +131,7 @@ class LintRepoSuite extends DbSuite:
       )
     else Nil
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(rule: Lint.Rule.Name): List[LintItem] =
     val rep =
       SourceCheckFixtures.run(
@@ -136,11 +144,13 @@ class LintRepoSuite extends DbSuite:
       )
     rep.rules.head.items.filter(i => i.citekey.value.startsWith(Prefix))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def keys(rule: Lint.Rule.Name): List[String] = run(rule).map(_.citekey.value).distinct
 
   /** The rules the catalogue and the media register themselves (`domain.catalogue.CatalogueData`,
     * `domain.media.MediaData`): their own suites run them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val OwnRules: Set[Lint.Rule.Name] =
     Set(
       Lint.PlaceKindRule,

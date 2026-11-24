@@ -6,6 +6,7 @@ import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.upstreams.ArchiveId
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `archive-org` plugin's fetcher: a PUBLIC archive.org item's file, by its identifier — the format the caller
   * prefers (`WorkKey.format`), else an EPUB, a text PDF, a PDF. A lending-only (access-restricted) item is refused,
@@ -13,6 +14,7 @@ import com.histmersion.upstreams.ArchiveId
   */
 final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.archive match
       case None     => ByDoi.noIdentifier(Problem.Field("archive.org identifier"))

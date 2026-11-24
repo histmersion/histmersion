@@ -26,6 +26,7 @@ import com.histmersion.domain.library.search.Search
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to
@@ -35,6 +36,7 @@ import com.histmersion.domain.Creator
   * model runs here: the sweep only calls the indexes, so a schedule can run it as often as it likes for the price of
   * the requests, and starts a model only when it found something new.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class CandidateSearch(
     candidates: CandidateService,
     sources: SourceService,
@@ -48,6 +50,7 @@ final class CandidateSearch(
 ):
 
   /** The goal's watches as of now: what is read, from where (the watermark is the stored one). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plan(goal: Goal): List[CandidateWatch] =
     val c = cfg
     val links = goals.links(domain.automation.Goal.Slug.assume(goal.slug.value))
@@ -78,6 +81,9 @@ final class CandidateSearch(
     q ++ citing
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def sweep(
       goal: domain.automation.Goal.Slug,
       dryRun: CandidateSearch.SweepDryRun

@@ -10,12 +10,15 @@ import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion, Ye
 import com.histmersion.domain.catalogue.{CatalogueStores, CatalogueStoreSuite}
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the named periods keep: parents written before their parts and the inclusive span read back, the
   * placement a re-import keeps, an idempotent upsert, the presets and the search by label, region and span, the seed's
   * deletions and version, a label search with `_` and `%` literal.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class PeriodServiceContract extends CatalogueStoreSuite:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def hp(id: HistoricalPeriod.Id, s: Year, e: Year, parent: Option[HistoricalPeriod.ParentId] = None) =
     HistoricalPeriod(
       id,

@@ -7,14 +7,17 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How the library reads a filter: its page, and the places its `places` values name. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
 
   /** `limit <= 0` means "use the configured page size" — no literal page size exists in the code — and any limit is
     * CAPPED at `limits.max-page`. An uncapped `limit` is a denial of service by query parameter: `?limit=100000000`
     * used to build every row of it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(f: Filter): Filter =
     val c = cfg()
     f.modify(_.limit)
@@ -31,6 +34,7 @@ final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
     * into every query, so the sidebar, the map, the facets and the histogram all agree. No `places` filter ⇒ no query
     * at all.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scope(f: Filter): PlaceScope =
     if f.places.isEmpty then PlaceScope.empty
     else places.scopeFor(f.places.map(p => PlaceService.ScopeForValues(p.value)), f.period)

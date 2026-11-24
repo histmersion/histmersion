@@ -18,12 +18,14 @@ import com.histmersion.util.time.Pause
 import com.histmersion.config.UserPaths
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.domain.automation.approvals.ApprovalEffects
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the composition root gives the engine as it builds it: the settings and the database of the generation it runs
   * on, the work lists, how work keeps its generation, the plugins' AI providers, the agent roster, and — asked once the
   * engine exists — the domains' contributions and the host the engine reaches the rest of the server through
   * (`server/agents/ServerEngineSite` over the composition).
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 trait EngineSite:
   /** The settings now (a reload switches them). */
   def stores: Stores
@@ -64,10 +66,12 @@ trait EngineSite:
   def aiProviders: () => ListMap[Plugin.Id, AiProvider]
 
   /** How many sources a goal gathers before its articles are planned (`agents.seed.min-sources`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourcesToPlan: AgentsControllers.SourcesCount =
     AgentsControllers.SourcesCount(config.libraryAgents.seed.minSources.value)
 
   /** The most panel rounds a run or a manager may ask a review for (`agents.review.rounds-cap`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roundsCap: AgentsControllers.RoundsCap = AgentsControllers.RoundsCap(config.researchAgents.review.roundsCap.value)
 
   /** What the definitions are held to: the contributed tools and roles. */

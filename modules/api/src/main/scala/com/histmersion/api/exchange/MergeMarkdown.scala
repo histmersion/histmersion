@@ -5,12 +5,19 @@ import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MergeMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def who(i: Bundle.Instance): String =
     (i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plan(p: MergePlan, all: Boolean = (false)): String =
     val m = p.matches
     val open =
@@ -69,6 +76,8 @@ object MergeMarkdown:
           s"(${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applied(r: MergeApplyResult): String =
     val t = r.tally
     def count(k: Bundle.Kind)(f: Bundle.KindCounts => Bundle.KindCounts.Inserted): Bundle.KindCounts.Inserted =
@@ -113,6 +122,8 @@ object MergeMarkdown:
     ).flatten
     ((head :: body ++ sections).mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applyJob(j: MergeApplyJob): String =
     j.state match
       case MergeJobState.Running =>
@@ -123,6 +134,7 @@ object MergeMarkdown:
         (s"**The merge apply was interrupted** (job `${j.job}`): ${j.problems.fold(MergeApplyJob.InterruptedText.sentence)(_.sentences.mkString("; "))}")
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def merges(ms: List[MergeInfo]): String =
     if ms.isEmpty then ("_No merges yet: nothing was imported from another collection._")
     else
@@ -134,6 +146,8 @@ object MergeMarkdown:
             s"${m.backup.getOrElse("—")} |"
         )).mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def detail(d: MergeDetail): String =
     val m = d.merge
     val head = List(
@@ -158,6 +172,8 @@ object MergeMarkdown:
     )
     ((head :: report ++ res.toList ++ rem.toList).mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ledger(l: MergeLedger): String =
     val head = l.query.fold("**Merge ledger** (latest)")(q => s"**Merge ledger** of `$q`")
     val rows =
@@ -176,6 +192,8 @@ object MergeMarkdown:
     )
     (((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def renamed(r: LabelRenamed): String =
     val what = r.entity match
       case Bundle.Kind.Article => "Article"
@@ -188,6 +206,8 @@ object MergeMarkdown:
   private def section(title: String, lines: List[String]): Option[String] =
     Option.when(lines.nonEmpty)((s"**$title**\n" + lines.mkString("\n")))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def issue(i: MergeIssue): String =
     val cond = i.condition.fold("")(c => s" _(if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)})_")
     val lines = List(
@@ -202,10 +222,13 @@ object MergeMarkdown:
     ).flatten
     ((s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def by(b: MergeIssue.DecidedBy): String = b match
     case MergeIssue.DecidedBy.Remembered => (" as an earlier merge apply did")
     case other                           => (s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def argHint(i: MergeIssue, k: MergeDecision.Kind): String = k match
     case MergeDecision.Kind.Map => (":" + List(i.left, i.right).flatten.map(_.label).mkString("|"))
     case MergeDecision.Kind.RenameRight | MergeDecision.Kind.RenameLeft | MergeDecision.Kind.File =>

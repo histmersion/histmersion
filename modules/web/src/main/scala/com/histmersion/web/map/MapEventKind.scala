@@ -4,8 +4,10 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What happened on the map. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 enum MapEventKind derives CanEqual:
   case MoveStart, Move, MoveEnd, ZoomStart, ZoomEnd, Resize
 

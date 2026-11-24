@@ -10,6 +10,8 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
 import com.histmersion.web.ui.Layout
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a polygon is an area; a point region or polity is a label; a point site is a dot"):

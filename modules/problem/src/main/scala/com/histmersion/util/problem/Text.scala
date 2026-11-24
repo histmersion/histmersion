@@ -5,16 +5,20 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import java.time.Instant
 
 import Problem.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The English sentence of every problem: what the HTTP body's `text`, the CLI's `error:` line, the MCP tool's error
   * and the web's error line show. It may change wording freely; what a column stores is [[Stored]]'s, frozen.
   *
   * Outside text ([[External]]) follows the case's own words after an em dash.
   */
+@atBoundary(BoundaryKind.Render, "writes the English sentence of every problem, the one the HTTP body, the CLI, MCP, the web, the logs and the plugin resolver show")
 object Text:
 
   extension (problem: Problem)
     /** The sentence that says what failed. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def sentence: String = problem match
       case Invalid.Malformed(t, c, raw, at)    => s"${path(at)}'$raw' is not ${t.aNoun}: ${c.description}"
       case Invalid.Unknown(t, raw, known, at)  => s"${path(at)}unknown ${t.noun} '$raw'${oneOf(known)}"
@@ -317,6 +321,7 @@ object Text:
       case Problem.Run.PauseCause.Stalled     => "stalled"
 
   extension (failure: Problem.Run.Failure)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def said: String = failure match
       case Problem.Run.Failure.Failed(why)         => why.toVector.map(_.sentence).mkString("; ")
       case Problem.Run.Failure.Unsettled(attempts) =>
@@ -338,6 +343,7 @@ object Text:
     /** A type's name without its package: `Citekey`, `Source.Status`. A `Wire` newtype is the wire spelling of the type
       * it is nested in, and is named by that type: `ProviderKind.Wire` is `ProviderKind`.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def short: String =
       val named = s"$typeName".split('.').toVector.dropWhile(_.headOption.forall(_.isLower))
       (if named.size > 1 && named.lastOption.contains("Wire") then named.dropRight(1) else named).mkString(".")
@@ -352,6 +358,7 @@ object Text:
       * not qualify (`Place.Add.Kind` is `place kind`); an abbreviation is spelled out ([[Spelled]]). It may read
       * loosely; it never shows a package, a dot or a code name.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def noun: String =
       val named = s"$typeName".split('.').toVector.filter(_.nonEmpty).dropWhile(_.headOption.forall(_.isLower))
       val segments = named.reverse.dropWhile(s => named.size > 1 && FormSegments(s)).reverse
@@ -375,6 +382,7 @@ object Text:
     def aNoun: String = a(typeName.noun)
 
     /** The noun counted: `1 article`, `3 findings`. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def counted(n: Count): String = if s"$n" == "1" then s"$n ${typeName.noun}" else s"$n ${plural(typeName.noun)}"
 
   /** The segments that name the written form of the type they are nested in, not a type of their own. */
@@ -488,7 +496,8 @@ object Text:
 
   private def path(at: Vector[Field]): String = if at.isEmpty then "" else s"${at.mkString(".")}: "
 
-  extension (at: EpochMs) private def iso: String = s"${Instant.ofEpochMilli(s"$at".toLong)}"
+  extension (at: EpochMs) @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+                          private def iso: String = s"${Instant.ofEpochMilli(s"$at".toLong)}"
 
   private def until(at: Option[EpochMs]): String = at.fold("")(t => s" until ${t.iso}")
 
@@ -497,6 +506,7 @@ object Text:
 
   /** A share to two decimals: `0.42`. */
   extension (share: Share)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def twoDecimals: String = s"${BigDecimal(s"$share".toDouble).setScale(2, BigDecimal.RoundingMode.HALF_UP)}"
 
   /** `1st`, `2nd`, `11th`, `23rd`. */
@@ -512,11 +522,13 @@ object Text:
     s"$n$suffix"
 
   /** `1 source`, `3 sources`. */
-  extension (n: Count) private def sources: String = if s"$n" == "1" then s"$n source" else s"$n sources"
+  extension (n: Count) @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+                       private def sources: String = if s"$n" == "1" then s"$n source" else s"$n sources"
 
   private def oneOf(known: Vector[Raw]): String = if known.isEmpty then "" else s" (one of: ${known.mkString(", ")})"
 
   extension (bounds: Invalid.Bounds)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def range: String = bounds match
       case Invalid.Bounds(Some(least), Some(greatest)) => s"not between $least and $greatest"
       case Invalid.Bounds(Some(least), None)           => s"below $least"
@@ -524,6 +536,7 @@ object Text:
       case Invalid.Bounds(None, None)                  => "out of range"
 
   extension (rule: Invalid.Rule)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = rule match
       case Invalid.Rule.CronFields(stated, shortcuts) =>
         s"'$stated' is not a cron expression: give five fields (minute hour day-of-month month day-of-week, in UTC) " +
@@ -652,6 +665,7 @@ object Text:
 
   extension (year: Invalid.Year)
     /** The year as a reader writes it: `900 BCE`, `530 CE`; there is no year 0, which is read as 1 BCE. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def era: String =
       val signed = s"$year".toLong
       if signed < 0 then s"${-signed} BCE" else if signed == 0 then "1 BCE" else s"$signed CE"
@@ -665,6 +679,7 @@ object Text:
     /** Why a key chosen for a new value is not free, naming the key by its own word and the value by its type's (a
       * `Place.Id` is the `id` of a `place`), and that another must be chosen.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said(typeName: TypeName, key: Raw): String =
       val (own, owner) = typeName.parts
       clash match
@@ -677,6 +692,7 @@ object Text:
     /** A key type's own word and the word of the type it is the key of: `Place.Id` is (`id`, `place`); a type nested in
       * nothing is the key of a `record`.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def parts: (String, String) =
       val named = s"$typeName".split('.').toVector.filter(_.nonEmpty).dropWhile(_.headOption.forall(_.isLower))
       val own = named.lastOption.fold(s"$typeName".toLowerCase)(o => nounWords(o).mkString(" "))
@@ -684,6 +700,7 @@ object Text:
       (own, owner)
 
   extension (flaw: Invalid.CronFlaw)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = flaw match
       case Invalid.CronFlaw.NotNumber(stated, least, greatest) => s"'$stated' is not a number from $least to $greatest"
       case Invalid.CronFlaw.Step(stated)                       => s"step '$stated' must be a positive number"
@@ -707,6 +724,7 @@ object Text:
   private val ReferenceForms = "value:<literal>, env:<NAME> or <vault>:<ref>"
 
   extension (form: Invalid.Form)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = form match
       case Invalid.Form.Bare            => s"a secret is a reference ($ReferenceForms), not a bare value"
       case Invalid.Form.EmptyValue      => "value: has no value"
@@ -743,6 +761,7 @@ object Text:
         activity.listing.fold("")(l => s" — $l shows what was applied")
 
   extension (metered: Config.Metered)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = metered match
       case Config.Metered.ApiKey(provider) => s"$provider is set to use an API key, so it bills the API, not the plan"
       case Config.Metered.Opencode         => "an opencode model is metered unless it is openai/… on a ChatGPT login"
@@ -797,6 +816,7 @@ object Text:
       case Upstream.Shape.Range    => "a byte range"
 
   extension (kind: Io.Kind)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def missed: String = kind match
       case Io.Kind.File              => "is not a file"
       case Io.Kind.Directory         => "is not a directory"
@@ -808,6 +828,7 @@ object Text:
       case Io.Kind.Inside(directory) => s"is outside $directory, the directory it is confined to"
 
   extension (damage: Io.Damage)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said(format: Io.Format): String = damage match
       case Io.Damage.Checksum                => "fails its checksum"
       case Io.Damage.Truncated               => "is cut short"
@@ -844,6 +865,7 @@ object Text:
       case other             => s"${other.named} data"
 
   extension (variant: Io.Variant)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = variant match
       case Io.Variant.PngLayout(colour, depth, interlace) =>
         s"is a PNG of colour type $colour, depth $depth, interlace $interlace: only 8-bit RGB(A) non-interlaced PNGs " +
@@ -863,6 +885,7 @@ object Text:
       case Io.Variant.Tiled                     => "is a tiled TIFF (only strips are read)"
 
   extension (flaw: Io.Flaw)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = flaw match
       case Io.Flaw.NotFeatureCollection   => "is not a FeatureCollection"
       case Io.Flaw.NoLandPolygons         => "holds no land polygons"
@@ -900,6 +923,7 @@ object Text:
       case Io.Flaw.NoStripForRow(row)     => s"has no strip for row $row"
 
   extension (held: Io.Held)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def missed(path: Io.Path, setting: Option[SettingKey]): String =
       val set = setting.fold("")(s => s" (set $s)")
       held match
@@ -910,6 +934,7 @@ object Text:
         case Io.Held.CodexHome         => s"no Codex home at $path$set"
 
   extension (pinning: Io.Pinning)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said(extract: Raw): String = pinning match
       case Io.Pinning.Unlisted(manifest) => s"$manifest pins no '$extract' extract"
       case Io.Pinning.NotBuilt(manifest) =>
@@ -927,6 +952,7 @@ object Text:
 
   extension (bytes: Count)
     /** A size in bytes as people read it: `812 B`, `1.4 MB` (powers of 1000, one decimal). */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def human: String =
       val n = s"$bytes".toLong
       val units = Vector("kB", "MB", "GB", "TB")
@@ -937,6 +963,7 @@ object Text:
         s"${tenths / 10}.${tenths % 10} ${units(exp - 1)}"
 
   extension (work: Refused.Work)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def refused(needs: Count, on: Io.Path, free: Count, least: Count): String =
       val room = s"(${free.human} free), which would leave less than ${least.human} (basemap.min-free-gb)"
       work match
@@ -950,6 +977,7 @@ object Text:
         case Refused.Work.Labels => s"refused: the physical names need about ${needs.human} on $on $room"
 
   extension (reference: Conflict.Reference)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = reference.by match
       case Conflict.Referrer.Events       => s"${reference.count} event(s)"
       case Conflict.Referrer.Attestations => s"${reference.count} attestation(s)"
@@ -961,6 +989,7 @@ object Text:
   /** The languages a place has a name in by hand, after a name it lacks in the one asked: ` (it has it with en, no
     * language — pass that language)`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hasIn(has: Vector[Raw]): String =
     if has.isEmpty then ""
     else
@@ -968,6 +997,7 @@ object Text:
         "language)"
 
   extension (fault: Io.Fault)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said(archive: String, entry: Io.Path): String = fault match
       case Io.Fault.Missing      => s"the $archive holds no $entry"
       case Io.Fault.Omitted      => s"$entry is listed in the manifest but missing from the $archive"
@@ -982,6 +1012,7 @@ object Text:
         s"$entry ${measure.holds(found)}, but the manifest lists $listed"
 
   extension (measure: Io.Measure)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def holds(found: Raw): String = measure match
       case Io.Measure.Sha256  => s"has sha256 $found"
       case Io.Measure.Bytes   => s"holds $found bytes"
@@ -994,6 +1025,7 @@ object Text:
 
   extension (answer: NotFound.Answer)
     /** One fetcher's answer as the ingest report and the acquisition list show it: `oapen: no copy — no record`. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def line: String = s"${answer.fetcher}: ${answer.said.label} — ${answer.why.sentence}"
 
   extension (said: NotFound.Said)
@@ -1009,6 +1041,7 @@ object Text:
       case NotFound.Said.Refused(NotFound.Refusal.LicenceForbids) => "refused (licence)"
 
   extension (scope: NotFound.Scope)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def missed(t: TypeName, key: Raw, from: Where): String = scope match
       case NotFound.Scope.Bundle       => s"$from: ${t.noun} $key is not in the bundle"
       case NotFound.Scope.BundleOrHere => s"$from: needs ${t.noun} $key, which is neither in the bundle nor here"
@@ -1016,6 +1049,7 @@ object Text:
         s"$from: ${t.noun} '$key' is not in this gazetteer — run `histmersion init` (or import that place) first"
 
   extension (hold: Conflict.Hold)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said(subject: Where): String = hold match
       case Conflict.Hold.Open                  => s"$subject: open — decide it (`merge plan --write-template`)"
       case Conflict.Hold.SameWork(here, basis) =>
@@ -1049,6 +1083,7 @@ object Text:
         s"$subject is already stored as '$citekey' — pass force to ingest it again under a different citekey"
 
   extension (ending: Io.Ending)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = ending match
       case Io.Ending.Exited(code, stderr) =>
         s"exited with $code${if s"$stderr".isEmpty then "" else s" — $stderr"}"
@@ -1057,6 +1092,7 @@ object Text:
       case Io.Ending.Unanswered(request)  => s"ended without answering $request"
 
   extension (fault: Config.Fault)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = fault match
       case Config.Fault.Empty           => "is empty"
       case Config.Fault.Unset(variable) => s"reads $variable, which is not set"
@@ -1110,6 +1146,7 @@ object Text:
       case Config.ValueKind.Null   => "null"
 
   extension (fault: Plugin.Fault)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = fault match
       case Plugin.Fault.Threw(reported)            => s"loading it threw — $reported"
       case Plugin.Fault.SpiMismatch(built, speaks) =>
@@ -1129,6 +1166,7 @@ object Text:
       case other                  => words(other.productPrefix)
 
   extension (refusal: Plugin.Refusal)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = refusal match
       case Plugin.Refusal.LicenceNotAllowed(f)     => s"licence $f not allowed"
       case Plugin.Refusal.NotOpen(field, stated)   => s"not Open Access ($field is ${statedOr(stated)})"
@@ -1138,6 +1176,7 @@ object Text:
   private def statedOr(stated: Vector[Raw]): String = if stated.isEmpty then "missing" else stated.mkString(", ")
 
   extension (failure: Plugin.Retrieval)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = failure match
       case Plugin.Retrieval.NoVault        => "no vault of that name is registered (enable the plugin that provides it)"
       case Plugin.Retrieval.Failed(stderr) => s"its tool failed — $stderr"
@@ -1167,6 +1206,7 @@ object Text:
       case Problem.Run.Floor.Allowance       => "below their allowance"
 
   extension (frees: Problem.Run.Frees)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = frees match
       case Problem.Run.Frees.At(at, model, held) =>
         (s"next reset at ${at.iso} ($model), when the run resumes by itself" +: held.map(_.said)).mkString("; ")
@@ -1175,6 +1215,7 @@ object Text:
 
   /** What is wrong with a definition, after its file: most after a colon, what it names that is missing without. */
   extension (flaw: Config.Flaw)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = flaw match
       case Config.Flaw.NoHeader                => ": no YAML header (--- … ---)"
       case Config.Flaw.HeaderUnclosed          => ": the YAML header is not closed"
@@ -1212,6 +1253,7 @@ object Text:
         "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)"
 
   extension (decoding: Content.Decoding)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = decoding match
       case Content.Decoding.Mismatch(path, reported) => s"the answer does not match the schema at $path: $reported"
       case Content.Decoding.NotJson(reported)        => s"the answer is not valid JSON: $reported"
@@ -1219,10 +1261,12 @@ object Text:
       case Content.Decoding.NotSchema                => "the answer is not the JSON the schema asks for"
 
   extension (held: Problem.Run.HeldPool)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String =
       s"the ${held.title} is held (release it with `histmersion agent quota release ${held.pool}`)"
 
   extension (control: Conflict.Control)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said(job: Raw, status: Conflict.State): String = control match
       case Conflict.Control.OnePiece(kind) =>
         s"a $kind job cannot be paused or cancelled: it runs as one piece and ends by itself"
@@ -1239,6 +1283,7 @@ object Text:
       case Content.Flaw.HandWrittenSourcesCited => "a hand-written Sources cited section (the page generates it)"
 
   extension (rule: Content.Requirement)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = rule match
       case Content.Requirement.CitesNoSource => "the text cites no source"
       case Content.Requirement.StandIn       =>
@@ -1370,6 +1415,7 @@ object Text:
         "no proposed article passed the checks: fix the ones above or propose others"
 
   extension (rule: Content.PanelRule)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def said: String = rule match
       case Content.PanelRule.RecordsCited                        => "this reviewer cites no records"
       case Content.PanelRule.QuoteInSourceRecord(citekey, quote) =>

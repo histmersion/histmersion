@@ -22,6 +22,7 @@ object SavedViews:
   object Name extends Newtype[String, Pure]
 
   /** The view on screen, as a bookmark's target. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def current(): Target =
     val s = Option.when(TheMap.isUp)(TheMap.surface)
     Target(
@@ -35,6 +36,7 @@ object SavedViews:
     )
 
   /** A name to offer for the view: its span, and the words or the first filter. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def suggestedName(words: Option[String], from: Option[Year], to: Option[Year]): Name =
     val span = Fmt.periodStr(from, to)
     List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span.value).filter(_.nonEmpty)).flatten
@@ -47,6 +49,8 @@ object SavedViews:
   private val onExplore: Signal[Boolean] = Router.route.map(_ == Route.Explore)
 
   /** Save the view on screen as `name`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def save(name: Name): Unit =
     if Auth.writableNow then
       MyItems
@@ -59,6 +63,7 @@ object SavedViews:
     else WindowManager.open(WindowKey.ApiKey)
 
   /** The filter panel's "Saved views" part (Explore only). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def panelSection: HtmlElement =
     val naming = Var(Option.empty[Name])
     div(

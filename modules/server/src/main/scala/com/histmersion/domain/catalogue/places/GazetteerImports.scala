@@ -27,6 +27,8 @@ import com.histmersion.domain.automation.workflows.InTreeWorkflow
   * the downloads (`download` into a file, `text` a url's text), the plugins' sources and the client they read through;
   * `cfg` is read at each call.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class GazetteerImports(
     db: Transactor,
     places: PlaceService,
@@ -63,6 +65,8 @@ final class GazetteerImports(
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass
     * over every file that reported a dangling parent, then `finding_places`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def seed(seed: Store, note: JobInfo.Progress => Unit)(using
       WritePermit
   )(using Creator.New): Either[Problem, GazetteerImports.Summary] =
@@ -140,6 +144,7 @@ final class GazetteerImports(
           GazetteerImports.Summary(s"${first._1} place(s) from ${files.size} file(s); ${r.links} finding→place link(s)")
 
   /** Natural Earth's land downloaded and every polity clipped to it again (a dry run counts the polygons). */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def land(
       dryRun: GazetteerControllers.DryRun
   )(using WritePermit): Either[Problem, com.histmersion.api.catalogue.Place.ImportResult] =
@@ -159,6 +164,7 @@ final class GazetteerImports(
   def thirdParty: List[BuiltinGazetteers.Entry.Name] = BuiltinGazetteers.thirdParty(registered())
 
   /** A plugin's source read and its places upserted in batches (a dry run counts them), then the findings matched. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def fetch(
       source: GazetteerSource,
       dryRun: GazetteerControllers.DryRun

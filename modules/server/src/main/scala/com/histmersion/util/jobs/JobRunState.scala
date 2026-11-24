@@ -4,10 +4,12 @@ import com.histmersion.util.problem.Problem
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A run's row as [[JobRuns.InMemory]] holds it: what it was created with, what changed since, the order it was made
   * (`created`) and last changed (`updated`) in, and when.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 final case class JobRunState(
     id: JobRunState.Id,
     row: RunRow,

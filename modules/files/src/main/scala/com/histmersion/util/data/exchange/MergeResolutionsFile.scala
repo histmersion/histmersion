@@ -13,6 +13,7 @@ import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.ValidUUID
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it, and write the
   * template `--write-template` starts one from. Pure.
@@ -41,6 +42,8 @@ object MergeResolutionsFile:
 
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(text: Text): Either[List[Problem], MergeResolutions] =
     scala.util
       .Try(Option(yaml.load[AnyRef](text.value)))
@@ -123,9 +126,11 @@ object MergeResolutionsFile:
         case Some(_) => Left(List(notYaml("the top", Problem.Io.Damage.Undecodable)))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notYaml(at: String, damage: Problem.Io.Damage): Problem =
     Problem.Io.Corrupt(Problem.Io.Format.Yaml, Problem.Where(s"$at"), damage)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unknown[A](key: String, known: Vector[String], at: String*)(using
       hearth.typename.TypeName[A]
   ): Problem =
@@ -137,9 +142,11 @@ object MergeResolutionsFile:
     )
 
   /** `ID=decision` of a `--resolve` flag. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def flag(s: MergeResolutions.Text.Flag): Either[Problem, MergeResolution] =
     MergeResolutions.Text.flag(s)
 
   /** The template (written by [[MergeResolutionsText]], shared with the web review screen). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def template(p: MergePlan, current: MergeResolutions): MergeResolutions.Text.Template =
     MergeResolutions.Text.template(p, current)

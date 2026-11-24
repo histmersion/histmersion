@@ -45,11 +45,13 @@ import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle
   * changing nothing. The behaviour in depth is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleHttpSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -58,6 +60,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
   private val http = HttpClient.newHttpClient()
   private val work = Files.createTempDirectory("histmersion-bundles")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base

@@ -4,6 +4,7 @@ package web
 import com.histmersion.api.library.TimeBucket
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The timeline's count curve, pure: buckets a few pixels wide, each one point at its middle, joined by a MONOTONE
   * cubic (Fritsch–Carlson, the rule of d3's `curveMonotoneX`). Between two points the curve never leaves the band their
@@ -26,6 +27,7 @@ object TimelineCurve:
   /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height its share of the
     * largest count between `baseY` (none) and `top` (the largest).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def points(
       bs: Seq[TimeBucket],
       from: Years.Astronomical,
@@ -51,6 +53,7 @@ object TimelineCurve:
   /** Pure: the tangent (dy/dx) at each point of a monotone cubic through them (`xs` increasing). Where the neighbouring
     * slopes differ in sign (a peak or a valley) or one is flat, it is flat.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tangents(px: IndexedSeq[ScreenPixels], py: IndexedSeq[ScreenPixels]): Array[Double] =
     val xs = px.map(_.value)
     val ys = py.map(_.value)
@@ -93,6 +96,7 @@ object TimelineCurve:
   )
 
   /** Pure: the cubic segments from each point to the next (none for fewer than two). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def segments(pts: IndexedSeq[Pt]): Vector[Segment] =
     if pts.length < 2 then Vector.empty
     else
@@ -116,6 +120,7 @@ object TimelineCurve:
     if r == r.toLong.toDouble then r.toLong.toString else r.toString
 
   /** Pure: the path's commands after its first point (` C …` per segment). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def curve(pts: IndexedSeq[Pt]): String =
     val sb = new StringBuilder
     segments(pts).foreach { s =>
@@ -135,11 +140,13 @@ object TimelineCurve:
     sb.toString
 
   /** Pure: the line through the points. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linePath(pts: IndexedSeq[Pt]): String =
     if pts.isEmpty then ""
     else s"M ${num(pts.head.x.value)} ${num(pts.head.y.value)}" + curve(pts)
 
   /** Pure: the area under the line, closed along `baseY` (one point: a sliver a pixel wide). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def areaPath(pts: IndexedSeq[Pt], baseY: ScreenPixels): String =
     if pts.isEmpty then ""
     else
@@ -150,6 +157,7 @@ object TimelineCurve:
       else s"$start${curve(pts)} L ${num(pts.last.x.value)} ${num(baseY.value)} Z"
 
   /** Pure: the point nearest screen x `x` (points in increasing x), by binary search — the hover's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nearest(pts: IndexedSeq[Pt], x: ScreenPixels): Option[Pt] =
     if pts.isEmpty then None
     else

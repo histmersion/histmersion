@@ -8,6 +8,7 @@ import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE pagination look of the sidebar's result tabs (sources, articles, events, by time, by region): a count line
   * on top — `showing 1–20 of 285 sources · 491 findings · 1475 BCE → 1465 BCE` — and under the rows one
@@ -26,6 +27,8 @@ object ResultsPaging:
     * `no things` for none; then the tab's own `extras`, each after a ` · `.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def countLine(
       shown: Paging.Shown,
       total: Paging.Page.Total,
@@ -45,15 +48,19 @@ object ResultsPaging:
   /** The button's label: `show 20 more (265 left)` — how many the next click brings (at most `page`) and how many are
     * left; `None` when nothing is.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def moreLabel(left: RowCount, page: PageNumber): Option[UiLabels.Text] =
     Option.when(left.value > 0)(UiLabels.Text(s"show ${math.min(page.value, left.value)} more ($left left)"))
 
   /** The filter's time window, as every tab's count line ends: `1475 BCE → 1465 BCE`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def span(from: Option[Year], to: Option[Year]): UiLabels.Text = UiLabels.Text(s"${Fmt.yr(from)} → ${Fmt.yr(to)}")
 
   /** The count line's element (`.count`; `is-loading` adds `· loading…`, `is-error` colours a failure). `id` keeps the
     * sources tab's `#count`, which the map's tests wait on.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def countBar(
       text: Signal[UiLabels.Text],
       loading: Signal[Loading],
@@ -70,6 +77,7 @@ object ResultsPaging:
 
   /** The button under the rows: `label` (none = no button), disabled and reading `loading…` while a page is on its way.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def moreButton(label: Signal[Option[UiLabels.Text]], loading: Signal[Loading], onMore: () => Unit): HtmlElement =
     div(
       cls := "results-more",

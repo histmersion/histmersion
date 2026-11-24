@@ -8,6 +8,7 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 import sttp.client4.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The placeholders of a tile URL template ([[ApiClient.tileTemplate]]). Pure. */
 object TilePlaceholder:
@@ -18,4 +19,5 @@ object TilePlaceholder:
   val Y: TileQuery.Y = TileQuery.Y(900000003L)
 
   /** `uri` with the placeholder tile replaced by `{z}/{x}/{y}`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fill(uri: String): String = uri.replace(s"/$Z/$X/$Y", "/{z}/{x}/{y}")

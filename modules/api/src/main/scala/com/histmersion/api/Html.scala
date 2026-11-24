@@ -3,6 +3,8 @@ package api
 
 import scala.annotation.tailrec
 import scala.quoted.*
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Markup a page may put into its document as it is. A value is made in only three ways, so a text that came from
   * outside (a title, a credit, an OCR'd body, an agent's notes) never becomes markup by accident:
@@ -15,6 +17,8 @@ import scala.quoted.*
   *
   * The web page's DOM sinks and the server's HTML pages take this type, never a `String`.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@movesTo(FeaturePlace.UtilMarkdown)
 type Html = Html.T
 
 object Html:
@@ -113,17 +117,24 @@ object Html:
         else c.toString.getBytes("UTF-8").map(b => f"%%${b & 0xff}%02X").mkString
       }
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def sourceLink(citekey: library.Citekey, doi: Option[library.Doi], label: String): T =
       val doiAttr = doi.map(_.value.trim).filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc(d)}"""")
       s"""<a class="src-ref" data-ck="${esc(citekey.value)}"$doiAttr href="/source/${esc(
           segment(citekey.value)
         )}">${esc(label)}</a>"""
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def articleLink(slug: research.ReviewGoal.Slug, label: String): T =
       s"""<a class="art-ref" data-slug="${esc(slug.value)}" href="/article/${esc(segment(slug.value))}">${esc(
           label
         )}</a>"""
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def confidenceBadge(c: library.Confidence): T =
       val wire = c.toString.toLowerCase
       s"""<span class="conf-badge conf-$wire" title="${esc(ConfidenceStyle.label(c))}">""" +
@@ -392,6 +403,7 @@ object Html:
     "xmp"
   )
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def escape(s: String, apostrophe: Boolean): String =
     val sb = new java.lang.StringBuilder(s.length + 8)
     s.foreach(c => escapeChar(c, apostrophe, sb))
@@ -407,6 +419,7 @@ object Html:
       case other              => sb.append(other)
 
   final private case class Attribute(name: String, value: Option[String])
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class Tag(
       closing: Boolean,
       name: String,
@@ -534,6 +547,7 @@ object Html:
   /** A tag in its strict form only: a name, then attributes each after white space (a value double-, single- or
     * unquoted), then `>` or `/>`. Anything else is no tag, and its `<` is text.
     */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def tagAt(s: String, lt: Int): Option[Tag] =
     val n = s.length
     val closing = lt + 1 < n && s.charAt(lt + 1) == '/'

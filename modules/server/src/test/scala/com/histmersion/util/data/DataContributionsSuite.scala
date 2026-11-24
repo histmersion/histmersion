@@ -13,10 +13,12 @@ import com.histmersion.config.DbConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.data.exchange.CarriedKinds
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The registry: one contribution per owner, one owner per table, and — on a migrated database — every table of the
   * schema owned by exactly one contributor. The schema part is skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DataContributionsSuite extends DbSuite:
   private val testDb = TestDb.url
 

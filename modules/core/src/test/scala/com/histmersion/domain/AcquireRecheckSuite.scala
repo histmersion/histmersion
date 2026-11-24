@@ -13,11 +13,14 @@ import java.time.Instant
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.jobs.JobState
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's legal re-check, pure: when an item is due (its window, a new fetcher generation), what a pass
   * does with it (close, fetch into the metadata-only source, nothing without a DOI), the reason it carries, how many
   * items a pass may try within its caps and the shared allowance, and the generation digest.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class AcquireRecheckSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-27T12:00:00Z")

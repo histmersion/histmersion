@@ -15,10 +15,14 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.automation.Goal.Rationale
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** plan-goal's pure checks: what a retry can fix is sent back, what it cannot is dropped with a note, DOIs are looked
   * up before a person sees them, and the acquisition item of a work.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class PlanGoalSuite extends munit.FunSuite:
 
   private val caps = Caps(

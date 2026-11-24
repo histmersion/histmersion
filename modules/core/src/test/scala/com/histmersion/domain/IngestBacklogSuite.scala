@@ -25,11 +25,15 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Managers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The watchers' ingest backlog, pure: a sweep's allowance after the backlog, the drain's order and caps, where a pick
   * goes when it is not ingested, what a failed ingest leads to, the days to drain, and the repair's decision per
   * acquisition item.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class IngestBacklogSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-19T12:00:00Z")

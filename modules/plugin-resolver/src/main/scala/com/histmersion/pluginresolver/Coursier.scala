@@ -10,15 +10,19 @@ import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Resolution with coursier against Maven repositories, in the order given. The modules resolve to jars in coursier's
   * cache (`cache`, else coursier's own, `COURSIER_CACHE` or the platform's).
   */
+@atBoundary(BoundaryKind.Process, "resolves plugin dependencies to jars with coursier")
 final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
 
   /** The modules `roots` resolve to, the `excluded` modules and everything only they depend on left out, and each
     * module's jar (none for a module that is only a POM).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def resolve(
       roots: List[ModuleCoordinates],
       excluded: Set[ModuleKey]
@@ -45,6 +49,7 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
           .map(_.toList.distinctBy(_._1))
       }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def module(k: ModuleKey): Module = Module.of(k.group.value, k.artifact.value)
 
 object Coursier:
@@ -53,12 +58,14 @@ object Coursier:
 
   /** Maven's version order (`1.10` after `1.9`, `1.0-RC1` before `1.0`). */
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val order: Resolution.VersionOrder = (a, b) => Version.compare(a.value, b.value)
 
   /** The repository every resolution falls back to when none is named: Maven Central. */
   def central: RepositoryUrl = RepositoryUrl.applyUnsafe(Repository.central().getBase)
 
   /** Where a module's main jar sits in a Maven repository, from its root. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def jarPath(c: ModuleCoordinates): JarPath =
     val a = c.key.artifact.value
     val v = c.version.value
@@ -68,6 +75,8 @@ object Coursier:
     * reads their POMs (parents, properties, dependency management) as it reads any other. The plugins without a POM are
     * left out: they have no dependencies of their own.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pluginRepository(
       dir: Path,
       plugins: List[PluginArtifact]

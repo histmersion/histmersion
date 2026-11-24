@@ -35,8 +35,10 @@ object AssetBundleRow:
   object Name extends Newtype[String, Pure]
   type Mime = Mime.T
   object Mime extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Sha = Sha256
   val Sha: Sha256.type = Sha256
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Bytes = ByteCount
   val Bytes: ByteCount.type = ByteCount
   type Width = Width.T

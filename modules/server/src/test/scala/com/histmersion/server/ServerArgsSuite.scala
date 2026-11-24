@@ -3,7 +3,9 @@ package server
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ServerArgsSuite extends munit.FunSuite:
 
   test("no arguments serves; --self-check and --help are the only flags"):

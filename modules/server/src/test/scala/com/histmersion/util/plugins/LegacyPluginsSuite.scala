@@ -7,10 +7,12 @@ import com.histmersion.util.settings.SettingsService
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[LegacyPlugins.migrate]] alone: pure config in, config and warnings out (docs/research-plugins.md §20.2). What the
   * mapped config does to the plugins is in BuiltinFetchersSuite.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LegacyPluginsSuite extends munit.FunSuite:
 
   private val known: Plugin.Id => Set[SettingsService.ConfigPath] =

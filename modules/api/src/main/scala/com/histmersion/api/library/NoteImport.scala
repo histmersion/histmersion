@@ -10,6 +10,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class NoteImport(
     text: NoteImport.Text,
     citekey: Option[Citekey] = None,

@@ -7,6 +7,7 @@ import scala.concurrent.duration.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.CoreQuota
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A bot-protection CHALLENGE (Cloudflare's "Just a moment…" interstitial and its kin) rather than an answer. Such a
   * host is treated as having no copy: it is neither retried nor worked around.
@@ -14,6 +15,8 @@ import com.histmersion.domain.CoreQuota
 object Challenge:
   type Body = Body.T
   object Body extends Newtype[Array[Byte], Pure]
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isChallenge(
       code: HttpPolicy.StatusCode,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue],
@@ -31,6 +34,8 @@ object Challenge:
     * assets under `/.within.website/x/` — and a file never starts with them, so any status counts; a PDF is never read
     * as one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def isAnubis(body: Body): Boolean =
     val head = new String(body.value.take(32768), "ISO-8859-1").toLowerCase
     !head.startsWith("%pdf") &&

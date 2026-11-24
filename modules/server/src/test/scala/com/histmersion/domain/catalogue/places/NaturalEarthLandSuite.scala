@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NaturalEarthLandSuite extends munit.FunSuite:
 
   test("polygon geometries are extracted one by one; points, lines and null geometries are skipped"):

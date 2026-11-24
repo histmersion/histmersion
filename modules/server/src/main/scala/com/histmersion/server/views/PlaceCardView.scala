@@ -9,6 +9,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A place's page as the gazetteer, the corpus and the pictures show it together (the web UI's map hover card): the
   * gazetteer's `place` (the row, its geometry and the hierarchy around it), and — with `counts` — what `place=<id>`
@@ -20,6 +21,7 @@ final class PlaceCardView(
     counts: PlaceCardView.PlaceId => Place.Counts,
     pictures: PlaceCardView.PlaceId => List[MediaThumb]
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(
       id: PlaceCardView.PlaceId,
       asOf: Option[DeepTime.SignedYear],

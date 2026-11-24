@@ -19,16 +19,19 @@ import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The vocabulary codecs (#1798 item 11): a stored value the vocabulary does not know reads as its UNKNOWN — a
   * confidence as "not stated", a status as unassessed, a place's dating as unknown — never as a confident member (an
   * unknown confidence used to read as `high`).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class VocabCodecSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d

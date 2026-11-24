@@ -8,10 +8,12 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article.Edits.*
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Edits anchored on an article's own text: the four operations, the anchor rules (exactly once, whitespace
   * normalised), the order they apply in, and skipped edits.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleEditsSuite extends munit.FunSuite:
   private val MissingText: Problem = Problem.Invalid.Missing.here(Problem.Field("text"))
   private val MissingAnchor: Problem = Problem.Invalid.Missing.here(Problem.Field("anchor"))
@@ -28,6 +30,7 @@ class ArticleEditsSuite extends munit.FunSuite:
       |Two dates are argued [[knapp2016_tin]].
       |""".stripMargin
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Article.Body(BodyText)
 
   private def e(op: Op, anchor: Anchor, text: Option[NewText] = None) = EditAnswer(op, anchor, text)

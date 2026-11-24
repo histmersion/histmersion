@@ -21,10 +21,15 @@ import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.config.ServerConfig
 import com.histmersion.server.agents.CliOutcomes.finishEquality
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP config, and the
   * `stream-json` output read back into sttp-ai's result types.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@atBoundary(BoundaryKind.Process, "builds the claude CLI arguments and MCP config and reads its stream-json output")
+@movesTo(FeaturePlace.AutomationAgents)
 object ClaudeCode:
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
@@ -38,9 +43,12 @@ object ClaudeCode:
   object SchemaJson extends Newtype[String, Pure]
 
   val McpServer = AgentDefinitions.McpServer
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toolId(name: ToolUse.Tool): String = ToolStyle.Claude.tool(name)
 
   /** The one MCP server of a run: the agent endpoint, with the step's run token. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def mcpConfig(url: GenSettings.AgentMcpUrl, token: Option[RunGrant.Token]): Json =
     val server = Json.obj(
       ("type", "http".asJson) :: ("url", Json.fromString(url.value)) ::
@@ -79,6 +87,8 @@ object ClaudeCode:
     * so the ones not offered are removed from the model's context outright; `web` the built-in web tools a web role
     * keeps.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def argv(
       cfg: ClaudeCodeConfig,
       model: ModelRef.Model,
@@ -137,6 +147,8 @@ object ClaudeCode:
     * claude.ai connectors, the output cap, a config dir of its own when set, and what the quota-guard mod reads (the
     * run token, where to report).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def environment(
       cfg: ClaudeCodeConfig,
       maxTokens: LlmCall.MaxTokens,
@@ -169,6 +181,8 @@ object ClaudeCode:
     * prompt in place of Claude Code's, no tools, no MCP server, no skills or settings, one turn, no session kept. Its
     * `rate_limit_event` is the reading.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def probeArgv(cfg: ClaudeCodeConfig, model: ClaudePlanConfig.ProbeModel): List[Argument] =
     (List(
       cfg.command.value,
@@ -197,6 +211,8 @@ object ClaudeCode:
   /** The probe's environment: a run's ([[environment]]: no API key unless asked, no claude.ai connectors, the config
     * dir), with the output capped at `maxTokens` and no run token or quota URL.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def probeEnvironment(
       cfg: ClaudeCodeConfig,
       maxTokens: ClaudePlanConfig.ProbeMaxTokens,
@@ -209,6 +225,9 @@ object ClaudeCode:
   /** A `rate_limit_event` line as it arrives: recorded in the Claude plan pool; when the pool is now below its floor
     * (or held) the answer says why, and the process is stopped.
     */
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def watch(line: CliProcess.Run.Lines, pools: PoolSink)(using WritePermit): Option[CliProcess.Run.Stopped] =
     if !line.value.contains("rate_limit_event") then None
     else
@@ -230,6 +249,8 @@ object ClaudeCode:
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty
     * answer (§3a P3).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def abortedByGuard(r: Result): Boolean =
     r.terminalReason.contains(Result.TerminalReason.AbortedStreaming) && r.text.value.trim.isEmpty &&
       r.structured.isEmpty
@@ -330,6 +351,8 @@ object ClaudeCode:
       content.asArray.toList.flatten.flatMap(b => b.cursor.downField("text").as[String].toOption).mkString("\n")
     )
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parse(lines: List[CliProcess.Run.Lines]): Outcome =
     val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => RawJson.parse(l).toOption)
     val names = scala.collection.mutable.Map.empty[String, String] // tool_use id → tool name
@@ -448,6 +471,8 @@ object ClaudeCode:
     type Sentence = Sentence.T
     object Sentence extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def usageLimit(r: Result): Option[Limit] =
     val all = (r.text.value :: r.errors.map(_.value)).mkString(" ")
     val low = all.toLowerCase(java.util.Locale.ROOT)
@@ -463,6 +488,8 @@ object ClaudeCode:
   /** The one JSON object of a text answer: the body of a ```json fence, else the text from its first `{` to its last
     * `}`. None when that is not a JSON object.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def jsonInText(answer: Result.Text): Option[Json] =
     val text = answer.value
     val fenced = "(?s)```(?:json)?\\s*(\\{.*\\})\\s*```".r.findFirstMatchIn(text).map(_.group(1))
@@ -472,6 +499,8 @@ object ClaudeCode:
     fenced.orElse(braces).flatMap(t => RawJson.parse(t).toOption).filter(_.isObject)
 
   /** sttp-ai's result from what the CLI printed, or the plan's usage limit (Left). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def result[Out](
       o: Outcome,
       user: LlmCall.User,
@@ -541,6 +570,8 @@ object ClaudeCode:
         )
 
   /** The `claude-code` client for `ref`, or why it cannot be used here. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.ClaudeCode then
       Left(
@@ -565,6 +596,8 @@ object ClaudeCode:
   object Env:
     /** `127.x`, `::1`, `localhost` — a bind nobody else can reach. `0.0.0.0` (every interface) is not. */
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def isLoopback(host: ServerConfig.Host): Boolean =
       val h = host.value.trim.toLowerCase(java.util.Locale.ROOT).stripPrefix("[").stripSuffix("]")
       h == "localhost" || h == "::1" || h.startsWith("127.")

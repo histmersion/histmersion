@@ -15,6 +15,8 @@ import java.util.UUID
 import com.histmersion.api.Sha256
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the `.hmx` bundle (docs/research-merge-import.md §4): canonical JSON, record revisions, the
   * deterministic bundle id, and the checks a manifest must pass. The tar stream is [[BundleTar]]; reading the database
@@ -30,6 +32,8 @@ import com.histmersion.api.ByteCount
   * content have the same rev whatever their timestamps and whoever made them (the creator is provenance, not content —
   * ADR 0029), which is what lets an import say "unchanged" and the merge ledger remember what was merged.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Json, "writes and reads the canonical JSON of a `.hmx` bundle record")
 object BundleFormat:
   /** The canonical text of a JSON value. */
   def print(json: Json): String = json.canonical.noSpaces
@@ -51,18 +55,21 @@ object BundleFormat:
     sb.toString
 
   /** The rev of a record already in JSON form. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def revOf(obj: JsonObject): String =
     sha256Hex(print(Json.fromJsonObject(obj.filterKeys(k => !Unrevved(k))))).value
 
   /** A record as its NDJSON line (no newline) and its rev. The record's own `rev` field, whatever it holds, is replaced
     * by the computed one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def stamp[A](a: A)(using JsonValueCodec[A]): Stamped =
     val obj = a.asJson.asObject.getOrElse(JsonObject.empty)
     val rev = revOf(obj)
     Stamped(rev, print(Json.fromJsonObject(obj.updated("rev", Json.fromString(rev)))))
 
   /** A line that is not a stamped record carries no rev: it is printed as it is. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def line[A](a: A)(using JsonValueCodec[A]): String = print(a.asJson)
 
   final case class Stamped(rev: String, line: String)
@@ -70,6 +77,7 @@ object BundleFormat:
   /** Parse one line, found at `at` (`entities/sources.ndjson:3`), and for a stamped kind check that its `rev` is the
     * rev of its content.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def decodeLine[A](line: String, stamped: Boolean, at: Problem.Where)(using JsonValueCodec[A]): Either[Problem, A] =
     RawJson.parse(line).left.map(e => at.unreadable(s"$e")).flatMap { json =>
       val revOk =
@@ -107,6 +115,7 @@ object BundleFormat:
     val bb = java.nio.ByteBuffer.wrap(d, 0, 16)
     UUID(bb.getLong, bb.getLong)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def bundleId(
       instance: UUID,
       since: Option[Bundle.Manifest.Since],
@@ -120,6 +129,7 @@ object BundleFormat:
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def manifestBytes(m: Bundle.Manifest): Array[Byte] =
     (line(m) + "\n").getBytes(UTF_8)
 
@@ -132,6 +142,8 @@ object BundleFormat:
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def compatible(m: Bundle.Manifest, serverSchema: Option[Bundle.Manifest.SchemaVersion]): List[Problem] =
     def num(v: Bundle.Manifest.SchemaVersion) = v.value.trim.toIntOption
     List(
@@ -173,6 +185,8 @@ object BundleFormat:
     ).flatten
 
   /** The manifest's file list against what the tar holds: missing, unexpected and mismatching files. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def checkFiles(m: Bundle.Manifest, seen: Map[Bundle.FileInfo.Path, Bundle.FileInfo]): List[Problem] =
     val listed = m.files.map(f => f.path -> f).toMap
     def entry(path: Bundle.FileInfo.Path, fault: Problem.Io.Fault): Problem =
@@ -203,6 +217,7 @@ object BundleFormat:
     if lines.isEmpty then Array.emptyByteArray
     else lines.mkString("", "\n", "\n").getBytes(UTF_8)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def fileInfo(path: Bundle.FileInfo.Path, payload: Array[Byte]): Bundle.FileInfo =
     Bundle.FileInfo(path, lines(payload), ByteCount(payload.length.toLong), sha256Hex(payload))
 

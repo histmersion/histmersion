@@ -12,8 +12,10 @@ import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[findings] case class GeoFeedRow(
     citekey: Citekey,
     title: GeoFeedRow.Title,
@@ -32,6 +34,10 @@ final private[findings] case class GeoFeedRow(
     topics: List[GeoFeedRow.Topics],
     hasCover: GeoFeedRow.HasCover
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def toHit: GeoHit =
     val apiDoi = doi.map(d => com.histmersion.api.library.Doi(d.value))
     GeoHit(

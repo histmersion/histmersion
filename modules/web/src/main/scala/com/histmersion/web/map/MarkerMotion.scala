@@ -1,8 +1,10 @@
 package com.histmersion
 package web.map
 
+import com.histmersion.lint.{LintRule, tolerated}
 object MarkerMotion:
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Motion(dx: Double, dy: Double, alpha: Double, scale: Double, running: Boolean)
 
   enum Clock derives CanEqual:
@@ -36,6 +38,8 @@ object MarkerMotion:
   private def easeOut(t: Double): Double = bezier(0, 0, 0.58, 1, t)
   private def easeIn(t: Double): Double = bezier(0.42, 0, 1, 1, t)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def motion(present: Set[String], mx: Double, my: Double, elapsed: Double, still: Boolean): Motion =
     def p(ms: Double): Double = math.max(0.0, math.min(1.0, elapsed / ms))
     if still then

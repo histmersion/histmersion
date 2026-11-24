@@ -16,12 +16,14 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `auth` settings read into a policy, and the start-up rule: a server one of whose bind addresses can be reached
   * from a network its settings leave open does not start, nor one whose HTTPS public URL sits in front of a trusted
   * loopback with no proxy declared. Pure but for the last test, which builds a server that must refuse before it opens
   * anything (no database).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AccessPolicySuite extends munit.FunSuite:
 
   private val defaults = AppConfig.load(ConfigFactory.empty)
@@ -34,6 +36,7 @@ class AccessPolicySuite extends munit.FunSuite:
 
   private def at(text: String): InetAddress = Cidr.literal(text).getOrElse(fail(text))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def auth(
       key: String = "",
       trusted: List[String] = List("127.0.0.0/8", "::1/128"),
@@ -53,6 +56,7 @@ class AccessPolicySuite extends munit.FunSuite:
       .modify(_.proxyNetworks)
       .setTo(proxies.map(AuthConfig.Network(_)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def binds(first: String, more: String*): NonEmptyVector[ServerConfig.Host] =
     NonEmptyVector.of(ServerConfig.Host(first), more.map(ServerConfig.Host(_))*)
 
@@ -62,6 +66,7 @@ class AccessPolicySuite extends munit.FunSuite:
   private def listener(a: AuthConfig, first: String, more: String*): Either[Problems, AccessPolicy] =
     AccessPolicy.forListener(a, bound(first, more*))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def exposed(bind: String, reach: String, why: Problem.Config.Exposure): Problem =
     Problem.Config.Exposed(Problem.Raw(bind), Problem.Raw(reach), why)
 
@@ -507,6 +512,7 @@ class AccessPolicySuite extends munit.FunSuite:
 
   // ── the proxy rule ─────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def public(url: String): ServerConfig =
     bound("127.0.0.1").modify(_.publicUrl).setTo(ServerConfig.PublicUrl(url))
 

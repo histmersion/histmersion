@@ -8,10 +8,12 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the refinement of site types keeps: the Wikidata sites on the map not asked yet, by id, with their item
   * and class; asked ones left out, unless refreshed and asked before the run began.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class SiteTypeServiceContract extends CatalogueStoreSuite:
   stest("the sites to ask, asked, and asked again on a refresh") { s =>
     val t = s.siteTypes

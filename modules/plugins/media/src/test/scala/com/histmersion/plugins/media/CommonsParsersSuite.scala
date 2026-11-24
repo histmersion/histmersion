@@ -17,12 +17,14 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Wikimedia Commons as every Commons-backed collection reads it (#1446): file titles, the `imageinfo` URL and answer,
   * and each file's licence, author and credit line as Commons states them ([[CommonsFiles]]) — a file whose terms
   * cannot be used withheld with the reason — and the Wikidata statement → role map. No network: Commons' answer is
   * built from the `extmetadata` each case names.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CommonsParsersSuite extends munit.FunSuite:
 
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
@@ -99,6 +101,7 @@ class CommonsParsersSuite extends munit.FunSuite:
   /** Commons' answer for one file, `File:X.jpg`, with this `extmetadata`; every request recorded. */
   final private class OneFile(meta: Map[String, String]) extends Plugin.Http:
     val asked = scala.collection.mutable.ListBuffer.empty[String]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       asked += url.value
       val ext = Json.fromFields(meta.toList.map((k, v) => k -> Json.obj("value" -> Json.fromString(v))))
@@ -174,6 +177,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("a file Commons does not answer for, or does not have, is stated with the reason it cannot be used"):
     val http = new Plugin.Http:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
         Right(
           Plugin.HttpResponse.Body("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8))

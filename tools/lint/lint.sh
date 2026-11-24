@@ -16,4 +16,4 @@ exec scala-cli run --server=false -q -S "$scala" \
   --java-opt -Xmx6g --main-class scalafix.cli.Cli tools/lint/rules -- \
   --config "$config" --scala-version "$scala" --sourceroot . \
   --auto-classpath --auto-classpath-roots target/out "${roots[@]}" \
-  --files "${LINT_FILES:-modules}" "$@"
+  --files "${LINT_FILES:-modules}" --exclude 'glob:**/plugin-fixtures/**' "$@"

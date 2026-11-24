@@ -6,8 +6,11 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What became of an imported book's cover: one line for a person, a `warning` when it could not be stored. */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionCover(
     line: CollectionCover.Line,
     warning: CollectionCover.Warning = CollectionCover.Warning(false)

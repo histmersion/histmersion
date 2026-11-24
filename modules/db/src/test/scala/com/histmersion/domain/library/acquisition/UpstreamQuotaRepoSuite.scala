@@ -16,6 +16,7 @@ import java.time.{Instant, LocalDate}
 import com.histmersion.db.DbSuite
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.automation.ProviderKind
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A metered upstream's budget survives the database unchanged (HISTMERSION_TEST_DB_URL; skipped otherwise): the day,
   * both counts, the block and the last window — and a later save replaces it.
@@ -24,12 +25,14 @@ class UpstreamQuotaRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val Up = "zzquota-test"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val UpKind = ProviderKind.Wire(Up)
 
   override def afterSuite(): Unit =

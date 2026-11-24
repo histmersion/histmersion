@@ -8,11 +8,14 @@ import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.unpaywall.OaAccess
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The upstream JSON parsers, driven by REAL responses captured from OpenAlex, Crossref, Unpaywall, Semantic Scholar,
   * archive.org and Wikipedia (trimmed, in `src/test/resources/acquire`). Fixtures rather than mocks: when an upstream
   * changes shape, re-capturing the fixture is what tells us.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class AcquireParseSuite extends munit.FunSuite:
 
   private def fixture(name: String) =

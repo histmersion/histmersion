@@ -21,6 +21,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an Athenian tribe beside
   * Athens, provinces and a site on atlas grid squares' centres, a withdrawn duplicate and its replacement, a deme filed
@@ -32,6 +33,7 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   protected lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -45,8 +47,10 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def pt(lon: Longitude, lat: Latitude) =
     Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}"""))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def types(t: String) = Some(Place.Properties(s"""{"feature_types":"$t"}"""))
 
   protected val City = "zzrc_city"
@@ -66,6 +70,7 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   protected val DupId = domain.catalogue.Place.Id("pleiades_999100007")
   protected val PeirId = domain.catalogue.Place.Id("pleiades_999100009")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected val places = List(
     Place(
       Place.Id(City),
@@ -144,6 +149,7 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint]) =
     Finding(
       Finding.Id(s"zzrc_src#$n"),
@@ -179,6 +185,7 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
     f(6, Some(Finding.Region("Zzrc Hellas")), Some(GeoPoint(Longitude(142.5), Latitude(-47.5))))
   ) // round numbers ON a grid centre
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def seed(): Unit =
     val _ =
       PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))))
@@ -208,6 +215,7 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
     )
 
   /** The fixture places finding `n` belongs to. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def at(n: Int): Set[Place.Id] =
     PlaceFixtures
       .placesOf(ds, Finding.Id(s"zzrc_src#$n"))

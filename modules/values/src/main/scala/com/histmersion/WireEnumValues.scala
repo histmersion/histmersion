@@ -1,6 +1,8 @@
 package com.histmersion
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+@atBoundary(BoundaryKind.Json, "lists an enum's wire spellings and how to read one back")
 trait WireEnumValues[E]:
   def all: Array[E]
   def wire(e: E): WireEnumValues.Wire

@@ -12,13 +12,16 @@ import com.histmersion.pluginhost.HttpTransport
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.Registries
 import com.histmersion.plugin.CatalogueEvent
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own event catalogues run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does (the host's own `histmersion.events` settings supplied to a
   * first-party plugin) and answers its requests from canned answers — never the network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CataloguePluginsKitSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixture(name: String): HttpAnswer.Text =
     HttpAnswer.Text(scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString)
 

@@ -11,8 +11,12 @@ import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.api.media.{AssetInfo, AssetsMarkdown}
 import com.histmersion.api.given
 import com.histmersion.api.RowCount
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object IngestMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def job(j: JobInfo): String =
     val lines = List(
       Some(s"- **status:** ${j.status}"),
@@ -49,6 +53,7 @@ object IngestMarkdown:
     ).flatten
     (s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jobs(
       js: Vector[JobInfo],
       page: Paging.Page = Paging.Page.empty,
@@ -75,4 +80,5 @@ object IngestMarkdown:
         ))
         .mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def assets(citekey: Citekey, as: Vector[AssetInfo]): String = AssetsMarkdown.assets(citekey, as)

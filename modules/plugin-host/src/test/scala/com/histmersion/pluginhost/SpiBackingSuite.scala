@@ -12,11 +12,13 @@ import org.ekrich.config.{Config, ConfigFactory}
 import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How the host backs the SPI members added within SPI 2: an answer with its status and headers sent once, the budget
   * of a metered upstream, the plugins a fetch is told of, the settings it supplies a first-party plugin from its own
   * keys (never in the report), first-party status for a reserved name, and a plugin's resolved secret by its setting.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SpiBackingSuite extends munit.FunSuite:
 
   private def services(quota: HostServices.Upstream => UpstreamQuota = _ => UpstreamQuota.Unlimited): HostServices =
@@ -60,6 +62,7 @@ class SpiBackingSuite extends munit.FunSuite:
   test("the acquisition client's fetch is sent once, with the policy's User-Agent, and answers as it came"):
     val sent = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
     val wire = new HttpTransport:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         sent += url.value -> headers.map((k, v) => k.value -> v.value)
         Right(
@@ -110,6 +113,7 @@ class SpiBackingSuite extends munit.FunSuite:
   test("a plugin's quota for an upstream is the host's own budget for it; any other upstream is unlimited"):
     val taken = scala.collection.mutable.ListBuffer.empty[String]
     val core = new UpstreamQuota:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def take(purpose: UpstreamQuota.TakePurpose) = {
         taken += purpose.value
         if taken.size > 1 then Left(Problem.Upstream.Limited(Problem.Upstream.Name("core"), None))
@@ -146,6 +150,7 @@ class SpiBackingSuite extends munit.FunSuite:
     val asked = scala.collection.mutable.ListBuffer.empty[(String, Boolean)]
     val peerAware = new SourceFetcher:
       val access = Access.Open
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fetch(work: WorkKey, ctx: Fetch.Context) =
         List("oa-unpaywall", "oa-openalex").foreach(id =>
           asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id))
@@ -195,6 +200,7 @@ class SpiBackingSuite extends munit.FunSuite:
     override def defaultsResource = Plugin.DefaultsResource("zq-first-defaults.conf")
     def register(c: Supplied, ctx: Plugin.Context) = { received = Some(c); Right(()) }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val supplied: Plugin.Info.Id => Config = id =>
     if id.value == "zq-first" then
       ConfigFactory.parseString("""acquire.endpoint.url = "https://host.example", contact-email = "host@example.org"""")
@@ -253,7 +259,9 @@ class SpiBackingSuite extends munit.FunSuite:
     def licence = Licence("CC0-1.0")
     def citation = EventCatalogue.Citation("Volcanoes")
     def home = EventCatalogue.Home("https://volcanoes.example")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def parts(query: CatalogueQuery) = Nil
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   test("a reserved catalogue name is kept for the first-party plugin; any other plugin is refused it"):
@@ -276,6 +284,7 @@ class SpiBackingSuite extends munit.FunSuite:
 
   final private case class Keyed(apiKey: Option[Secret]) derives ConfigReader
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private class KeyedPlugin extends Plugin:
     type Config = Keyed
     val info =

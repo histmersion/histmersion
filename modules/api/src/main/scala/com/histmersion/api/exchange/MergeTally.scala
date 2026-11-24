@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MergeTally(
     sourcesMerged: MergeTally.SourcesMerged = MergeTally.SourcesMerged(0),
@@ -51,18 +52,23 @@ object MergeTally:
   type SelfLoopsDropped = SelfLoopsDropped.T
   object SelfLoopsDropped extends Newtype[Int, Pure]
   type ArticlesThreeWay = ArticlesThreeWay.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ArticlesThreeWay extends Newtype[Int, Pure]
   type ArticlesFastForward = ArticlesFastForward.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ArticlesFastForward extends Newtype[Int, Pure]
   type ArticlesBoth = ArticlesBoth.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ArticlesBoth extends Newtype[Int, Pure]
   type ArticlesFromFile = ArticlesFromFile.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ArticlesFromFile extends Newtype[Int, Pure]
   type EventsMerged = EventsMerged.T
   object EventsMerged extends Newtype[Int, Pure]
   type GoalsMerged = GoalsMerged.T
   object GoalsMerged extends Newtype[Int, Pure]
   type QueueMerged = QueueMerged.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object QueueMerged extends Newtype[Int, Pure]
   type Redirects = Redirects.T
   object Redirects extends Newtype[Int, Pure]

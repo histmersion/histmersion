@@ -21,11 +21,14 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))

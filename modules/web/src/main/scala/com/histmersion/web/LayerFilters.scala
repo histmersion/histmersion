@@ -9,6 +9,7 @@ import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy, EventTier, SiteTypes}
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy, listed under its two groups
   * (each group's "all" first), and the tiers; the site types. "all" is no filter. Each option shows what the map draws
@@ -17,12 +18,14 @@ import com.histmersion.api.Html.html as markup
   */
 object LayerFilters:
   /** Pure: a badge of `shape` with `glyph`, as an option's icon (in the accent colour: no date). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def badge(shape: Shape, glyph: Glyphs.BadgeName): Html =
     markup"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>"""
 
   /** Pure: a layer's own switch icon, the "all" option's. */
   def layerIcon(k: PointKind[?]): Html = Icon.html(k.icon)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val eventKinds: List[IconSelect.Opt] =
     IconSelect.Opt(
       IconSelect.Opt.Value(""),
@@ -49,6 +52,8 @@ object LayerFilters:
     }
 
   /** What each event tier means; the tier menu's tooltips. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tierMeaning(tier: EventSummary.Tier): Option[IconSelect.Opt.Hint] = tier.value match
     case EventTier.Attested =>
       Some(
@@ -58,6 +63,7 @@ object LayerFilters:
       Some(IconSelect.Opt.Hint("Events only an external catalogue knows; no source in the corpus attests them yet."))
     case _ => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val tiers: List[IconSelect.Opt] = List(
     IconSelect.Opt(
       IconSelect.Opt.Value(""),
@@ -78,6 +84,7 @@ object LayerFilters:
       hint = tierMeaning(EventSummary.Tier(EventTier.Catalogue))
     )
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val siteTypes: List[IconSelect.Opt] =
     IconSelect.Opt(IconSelect.Opt.Value(""), IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteTypes.all
       .map(t =>

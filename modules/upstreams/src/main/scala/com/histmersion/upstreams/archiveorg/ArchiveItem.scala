@@ -4,6 +4,7 @@ package upstreams.archiveorg
 import com.histmersion.upstreams.ArchiveId
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class ArchiveItem(
     identifier: ArchiveItem.Identifier,
     title: Option[ArchiveItem.Title] = None,
@@ -16,11 +17,13 @@ final case class ArchiveItem(
 )
 
 object ArchiveItem:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Identifier = ArchiveId
   val Identifier: ArchiveId.type = ArchiveId
   export WorkKey.Title
   type Creator = Creator.T
   object Creator extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Year = plugin.Year
   val Year: plugin.Year.type = plugin.Year
   type Publisher = Publisher.T

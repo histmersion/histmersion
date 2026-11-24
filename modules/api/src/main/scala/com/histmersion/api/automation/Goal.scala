@@ -22,6 +22,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Goal(
     slug: Goal.Slug,
     title: Goal.Title,
@@ -53,6 +54,7 @@ object Goal:
   type Stage = Stage.T
   object Stage extends Newtype[String, Pure]
   type StageMeaning = StageMeaning.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object StageMeaning extends Newtype[String, Pure]
   type Uid = Uid.T
   object Uid extends Newtype[String, Pure]
@@ -63,6 +65,7 @@ object Goal:
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type StatusValue = StatusValue.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object StatusValue extends Newtype[String, Pure]
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]:
@@ -83,6 +86,7 @@ object Goal:
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: scala.List[All] = scala.List(All(Planned), All(Seeding), All(Compiled), All(Reviewed), All(Done))
 
   /** What a goal is linked to. */
@@ -100,10 +104,13 @@ object Goal:
 
     val SearchQuery: LinkKind = Query
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[LinkKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: LinkKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[LinkKind] = parse(Wire((s).value))
 
   final case class Deleted(
@@ -125,10 +132,12 @@ object Goal:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page: OffsetPage = OffsetPage(total, offset, RowCount(goals.size))
 
   object List:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(total: RowCount, rows: scala.List[Goal], offset: UnreadPage.Offset): List =
       List(
         RowCount((total).value),
@@ -242,6 +251,7 @@ object Goal:
     export com.histmersion.api.research.DraftMode
     export com.histmersion.api.automation.ScheduleKind
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class ArticleDraft(
         slug: api.research.Article.Slug,
         mode: DraftMode,
@@ -270,6 +280,7 @@ object Goal:
       type Filter = Filter.T
       object Filter extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class GoalLink(
         kind: LinkKind,
         ref: GoalLink.Ref,
@@ -283,6 +294,7 @@ object Goal:
 
     object GoalLink:
       type QueueNumber = QueueNumber.T
+      @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
       object QueueNumber extends Newtype[Int, Pure]
       type Ref = Ref.T
       object Ref extends Newtype[String, Pure]
@@ -310,6 +322,7 @@ object Goal:
       object Note extends Newtype[String, Pure]
 
     /** `cron`: five fields in UTC, or `@daily`… */
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class GoalSchedule(
         goal: Slug,
         kind: ScheduleKind,
@@ -334,6 +347,7 @@ object Goal:
       type NextRunAt = NextRunAt.T
       object NextRunAt extends Newtype[String, Pure]
       type LastRunAt = LastRunAt.T
+      @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
       object LastRunAt extends Newtype[String, Pure]
       type LastRun = LastRun.T
       object LastRun extends Newtype[String, Pure]
@@ -362,6 +376,7 @@ object Goal:
       type Value = Value.T
       object Value extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
     final case class GoalView(
         goal: Goal,
         children: scala.List[Goal] = Nil,
@@ -393,6 +408,7 @@ object Goal:
   object Stages:
     export Goal.{Stage as MeaningStatus, StageMeaning as MeaningResult}
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: scala.List[(Stage, StageMeaning)] = scala.List(
       {
         val refactorTuple6 = Status.Planned -> "created; nothing works on it yet";
@@ -412,6 +428,8 @@ object Goal:
       }
     )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def meaning(status: Stage): Option[StageMeaning] = all.collectFirst {
       case (s, m) if s == status => StageMeaning((m).value)
     }

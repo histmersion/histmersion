@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `plugin repo`, `plugin api-jar` and `plugin new`: what a plugin author needs from the install on this machine. They
   * read files only, and need no server.
@@ -18,6 +19,8 @@ object PluginAuthoring:
     * instead).
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def localRepository(install: Either[Cli.Error, LocalInstall]): Either[Cli.Error, LocalInstall] =
     install.flatMap { i =>
       Either.cond(
@@ -37,6 +40,8 @@ object PluginAuthoring:
   /** The local Maven repository, `$HOME/.m2/repository`: where Maven, Gradle, sbt (`Resolver.mavenLocal`) and scala-cli
     * (`m2Local`) look for artifacts installed on this machine.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def mavenLocal(env: LocalInstall.EnvVariable => Option[LocalInstall.EnvSetting]): Either[Problems, Path] =
     env(LocalInstall.EnvVariable("HOME"))
       .map(_.value.trim)
@@ -50,6 +55,9 @@ object PluginAuthoring:
     * platform and the testkit: every file that is missing there or differs (a SNAPSHOT rebuilt by a newer install),
     * nothing else. The files copied, relative to the repository.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def publishToMavenLocal(install: Either[Cli.Error, LocalInstall], m2: Path): Either[Cli.Error, List[Path]] =
     localRepository(install).flatMap { i =>
       scala.util
@@ -78,6 +86,8 @@ object PluginAuthoring:
     * directory or a URL), else the local Maven repository, into which the install's are copied first (the files
     * copied).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def repository(
       named: Option[String],
       install: => Either[Cli.Error, LocalInstall],
@@ -98,6 +108,8 @@ object PluginAuthoring:
     localRepository(install).map(i => (i.apiJar, i.apiSources))
 
   /** Write a new project into `dir`, which must not exist or be empty; the paths written. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def write(dir: Path, files: List[TemplateFile]): Either[Problems, List[Path]] =
     val occupied = Files.exists(dir) && (!Files.isDirectory(dir) || {
       val s = Files.list(dir)
@@ -116,6 +128,7 @@ object PluginAuthoring:
       })
 
   /** What to do next, for the person who ran `plugin new`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[String] =
     val publishDir = PluginTemplate.PublishDir
     (s"wrote a scala-cli project in $dir:" :: written.map(p => s"  ${dir.relativize(p)}")) ++ List(

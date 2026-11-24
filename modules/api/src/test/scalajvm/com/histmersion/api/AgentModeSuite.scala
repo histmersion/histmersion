@@ -4,9 +4,13 @@ package api
 /** The three-way agents control over the two switches underneath (autopilot on/off, drain on/off). */
 
 import com.histmersion.api.automation.AgentMode
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class AgentModeSuite extends munit.FunSuite:
   import com.histmersion.api.automation.AgentMode.Step
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val switches = for on <- List(false, true); draining <- List(false, true)
   yield (Step.Autopilot.On(on), Step.Drain.On(draining))
 

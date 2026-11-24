@@ -6,6 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.TheMap
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the page holds, readable from outside (#1949): `window.histmersionDiagnostics()` answers every bounded cache's
   * entries and weight against its ceilings, the names the map places, and the findings kept for time-only redraws. The
@@ -18,6 +19,7 @@ object Diagnostics:
 
   /** Every cache and its figures, by name. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def caches: List[(CacheName, BoundedCache.Stats)] =
     List(
       CacheName("places.geo") -> MapView.geoCacheStats,
@@ -36,6 +38,7 @@ object Diagnostics:
       )
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toJs(cs: List[(CacheName, BoundedCache.Stats)]): js.Object =
     val o = js.Dictionary.empty[js.Any]
     cs.foreach { (n, s) =>
@@ -48,6 +51,7 @@ object Diagnostics:
     }
     js.Dynamic.literal(caches = o).asInstanceOf[js.Object]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(): Unit =
     dom.window.asInstanceOf[js.Dynamic].histmersionDiagnostics = (() =>
       val o = toJs(caches).asInstanceOf[js.Dynamic]

@@ -21,17 +21,20 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.api.automation.Activity
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The list filters over real HTTP and MCP (core `ListFilters`): `/api/agents/approvals`, `/api/agents/runs` and
   * `/api/jobs` filter on the server, the body stays the plain array, the facet counts come back in their header, a bad
   * value is a 400 naming the allowed words, and the MCP list tools take the same filters and print the counts. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ListFiltersHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg = {
     val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   }
@@ -61,6 +64,7 @@ class ListFiltersHttpSuite extends DbSuite:
       )
       .body
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def facets(h: Map[String, String]): Map[ListFilters.FacetName, Map[ListFilters.Term, RowCount]] =
     h.get(ListFilters.FacetsHeader.toLowerCase)
       .fold(Map.empty)(s => ListFilters.decodeFacets(ListFilters.EncodedFacets(s)).map((f, vs) => f -> vs.toMap).toMap)

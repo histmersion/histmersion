@@ -14,6 +14,8 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.time.Timer
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Finds passages inside ONE source's converted body (#954) — pure, no I/O.
   *
@@ -35,6 +37,8 @@ import com.histmersion.util.time.Timer
   * when a line break is in reach, else to whole words. Matches whose passage would overlap the previous one are merged
   * into it.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibrarySources)
 object PassageFinder:
   type ContextChars = ContextChars.T
   object ContextChars extends Newtype[Int, Pure]
@@ -52,10 +56,14 @@ object PassageFinder:
   object TimeoutMs extends Newtype[Long, Pure]
 
   /** The body `get_source` reads — chunks in order, joined by a blank line (`SourceRepo.bodyText`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def body(segments: Seq[Chunk]): Passage = Passage(segments.map(_.body.value).mkString(Separator))
 
   private val Separator = "\n\n"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def find(
       citekey: Citekey,
       segments: Seq[Chunk],
@@ -105,6 +113,8 @@ object PassageFinder:
       }
 
   /** The query as a pattern over the FOLDED body. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def compile(q: Query, regex: Regex): Either[Problem, Pattern] =
     val flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.MULTILINE
     if regex.value then
@@ -216,6 +226,7 @@ object PassageFinder:
     * than the match does); any other starts a passage of its own, which begins no earlier than where the previous one
     * ended — so no text is shown twice, and dense matches do not snowball into one enormous passage.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def merge(spans: Vector[(Int, Int)], text: String, context: Int): Vector[Range] =
     val half = context / 2
     spans.foldLeft(Vector.empty[Range]) { case (acc, (s, e)) =>
@@ -269,6 +280,7 @@ object PassageFinder:
     * lines are still in the text — the nearest Markdown heading above it.
     */
   final private class Headings(segments: Seq[Chunk], text: String):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val starts: Array[Int] =
       segments.iterator.scanLeft(0)((at, c) => at + c.body.value.length + Separator.length).take(segments.size).toArray
 
@@ -276,6 +288,7 @@ object PassageFinder:
       val Heading = """(?m)^#{1,6}[ \t]+(.*?)[ \t]*#*[ \t]*$""".r
       Heading.findAllMatchIn(text).map(m => (m.start, m.group(1))).filter(_._2.nonEmpty).toVector
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def at(offset: Int): Option[String] =
       val i = java.util.Arrays.binarySearch(starts, offset) match
         case k if k >= 0 => k

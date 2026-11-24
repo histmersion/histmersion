@@ -5,6 +5,7 @@ import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Place:
 
@@ -24,8 +25,12 @@ object Place:
     val Site = "site"
     val Feature = "feature"
     val People = "people"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[Wire] = List(Wire(Region), Wire(Polity), Wire(Site), Wire(Feature), Wire(People))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
     def parse(s: Wire): Option[Wire] =
       val t = (s).value.trim.toLowerCase
       if t.isEmpty then None
@@ -66,6 +71,7 @@ object Place:
     val CellsMicro: List[CellsMicro] =
       List(CellsMicroValue(5000000L), CellsMicroValue(1000000L), CellsMicroValue(500000L))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def gridCentre(lon: Longitude, lat: Latitude): Boolean =
       val x = lon.micro
       val y = lat.micro
@@ -76,9 +82,12 @@ object Place:
 
     val Approximate: Approximate = ApproximateValue("approximate (atlas grid square)")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Precision] = values.find(_.wire.value == Ascii.lower(((s).value.trim)))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Precision): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Precision] = parse(Wire((s).value))

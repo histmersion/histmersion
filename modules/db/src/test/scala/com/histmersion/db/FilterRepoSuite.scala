@@ -23,15 +23,18 @@ import com.histmersion.api.library.{AuthorName, Citekey, Title}
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own
   * metadata OR its findings, and every count is DISTINCT sources.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FilterRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -39,6 +42,7 @@ class FilterRepoSuite extends DbSuite:
     seed(d)
     d
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(
       ck: Citekey,
       n: Int,
@@ -62,6 +66,7 @@ class FilterRepoSuite extends DbSuite:
       Some(Confidence.High)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: Citekey,
       title: Title,
@@ -203,6 +208,7 @@ class FilterRepoSuite extends DbSuite:
   // Case-fold fixtures (plan §1.3): the same vocabulary spelled two ways. Prefixed `zzc_` so the
   // `zzf_` assertions are untouched, and the words are unique to this suite so the shared test DB
   // cannot pollute the counts. "Zzftolia" is on two sources, "zzftolia" on one → it is the label.
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cased(ck: Citekey, region: Source.Regions, tag: Source.Tags) =
     source(
       ck,
@@ -241,10 +247,15 @@ class FilterRepoSuite extends DbSuite:
     (List(alpha, beta, gamma) ++ cases).foreach(SourceFixtures.upsert(d, _, Limits.ChunkChars(4000)))
 
   /** Only ever look at the synthetic rows — the test DB may hold other streams' fixtures. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.value.startsWith("zzf_"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey.value == ck).get
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val words = Search.SnippetWords(AppConfig.load().limits.snippetWords.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(f: Filter) =
     SearchFixtures.sources(
       ds,
@@ -433,6 +444,7 @@ class FilterRepoSuite extends DbSuite:
 
   // ── the map feed: `/api/findings` through the SAME filter (plan §1.0) ────────────────────────
   /** Findings of THIS suite's fixtures only (the test DB is shared with other suites' rows). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def feed(f: Filter) =
     FindingFixtures
       .findingsFor(ds, f.modify(_.limit).setTo(Filter.Limit(if f.limit.value <= 0 then 200 else f.limit.value)))
@@ -482,6 +494,7 @@ class FilterRepoSuite extends DbSuite:
 
   // ── facets fold case (plan §1.3) ────────────────────────────────────────────────────────────
   private val caseScope = Filter(places = List(Filter.Places("zzftolia")))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def casedKeys(r: SearchResult) =
     r.hits.map(_.source.citekey.value).filter(_.startsWith("zzc_")).sorted
 

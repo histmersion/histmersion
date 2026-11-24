@@ -7,10 +7,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Repository landing pages (#1580): which pages are a repository's, what their tags name, Zenodo's files. Pure; the
   * recorded pages and records are exercised end to end in the server's `LandingFetchSuite`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RepositoryLandingSuite extends munit.FunSuite:
   import RepositoryLanding.*
 

@@ -7,6 +7,7 @@ import com.histmersion.api.given
 
 import java.nio.file.{Path, Paths}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Confining a caller-supplied path to a configured directory.
   *
@@ -30,6 +31,7 @@ object SafePath:
   type Candidate = Candidate.T
   object Candidate extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def confine(base: Option[Base], candidate: Candidate): Either[Problem, Path] =
     val root = base.map(_.value.trim).filter(_.nonEmpty)
     val raw = Option(candidate).map(_.value.trim).getOrElse("")
@@ -46,6 +48,7 @@ object SafePath:
           else Left(Problem.Io.Wrong(Problem.Io.Path(s"$candidate"), Problem.Io.Kind.Inside(Problem.Io.Path(s"$dir"))))
 
   /** The same test for an already-built [[Path]] — what the frontmatter reader needs. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def within(base: Option[Base], candidate: Path): Boolean =
     base.map(_.value.trim).filter(_.nonEmpty) match
       case None      => true
@@ -53,4 +56,5 @@ object SafePath:
         candidate.toAbsolutePath.normalize.startsWith(Paths.get(dir).toAbsolutePath.normalize)
 
   /** Whether confinement is switched on at all — the caller logs a warning when it is not. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configured(base: Option[Base]): Boolean = base.exists(_.value.trim.nonEmpty)

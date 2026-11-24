@@ -19,6 +19,8 @@ import com.histmersion.api.automation.Creation
   * ([[EventEntry]]) and the page the server answers (`EventDetail`, which adds the event's pictures) both are one, so
   * the page renders from either.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 trait EventCard:
   def event: EventSummary
   def geometry: Option[EventGeometry.Geojson]

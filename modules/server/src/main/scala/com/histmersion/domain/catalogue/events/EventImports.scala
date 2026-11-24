@@ -31,12 +31,15 @@ import com.histmersion.upstreams.dating.CatalogDating
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;
   * `presentYear` the year the datings are held inside; `held` whether a maintenance run holds the lock (a run stops
   * between parts).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class EventImports(
     store: EventImportService,
     registered: () => ListMap[CatalogRecord.Provider, EventCatalogue],
@@ -94,6 +97,9 @@ final class EventImports(
     * place each record ([[CatalogMerge.place]]) against what is stored and what this run placed before, and (not a dry
     * run) write the part and record it as read.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def runImport(
       provider: CatalogRecord.Provider,
       req: EventImportRequest,
@@ -305,6 +311,8 @@ final class EventImports(
     * the events their catalogue created refreshed ([[EventImportService.save]], corrections by hand applied),
     * `rederive-batch` records a transaction.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runRederive(
       provider: Option[CatalogRecord.Provider],
       dryRun: Boolean,
@@ -384,6 +392,8 @@ final class EventImports(
   extension [A](l: List[A]) private def ifEmpty(d: => List[A]): List[A] = if l.isEmpty then d else l
 
   /** The labels and aliases of the Wikidata items among `recs`, in the configured languages. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def withNames(recs: List[CatalogRecord], report: EventImportReport): List[CatalogRecord] =
     val ids = recs.flatMap(_.wikidata).distinct
     if ids.isEmpty then recs

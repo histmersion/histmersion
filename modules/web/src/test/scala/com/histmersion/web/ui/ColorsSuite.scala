@@ -10,8 +10,11 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.Wcag
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The palettes are the stylesheet's; the code holds their names and reads their values. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class ColorsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()

@@ -8,6 +8,8 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which open acquisition items a source that just came in fulfils (#970).
   *
@@ -24,6 +26,8 @@ import com.histmersion.domain.library.Doi
   *
   * Pure: the job (server) supplies the items and the source, and writes what this decides.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryAcquisition)
 object AcquireMatch:
   type DecimalText = DecimalText.T
   object DecimalText extends Newtype[String, Pure]
@@ -41,10 +45,13 @@ object AcquireMatch:
   object Token extends Newtype[String, Pure]
 
   /** What the job does about one item. */
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ScoreAuthors = AuthorName
   val ScoreAuthors: AuthorName.type = AuthorName
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type DecideTitle = Title
   val DecideTitle: Title.type = Title
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type DecideAuthors = AuthorName
   val DecideAuthors: AuthorName.type = AuthorName
 
@@ -61,6 +68,7 @@ object AcquireMatch:
     object Propose:
       type Score = Score.T
       object Score extends Newtype[Double, Pure]
+      @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
       type OtherDoi = Doi
       val OtherDoi: Doi.type = Doi
 
@@ -74,8 +82,11 @@ object AcquireMatch:
   /** A DOI as a key: lower case, no resolver prefix or `doi:` scheme, no trailing punctuation, and a closing
     * parenthesis kept only when the DOI opened one (`10.1002/(SICI)1097-…` keeps its pair).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doiKey(raw: DoiText): Option[Doi] = doiKeyOf(raw.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doiKeyOf(raw: String): Option[Doi] =
     val s = Option(raw)
       .getOrElse("")
@@ -94,6 +105,8 @@ object AcquireMatch:
       else d
 
   /** Every DOI written anywhere in `text`, as keys. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doisIn(text: DoiText): Set[Doi] = doisInText(text.value)
 
   private def doisInText(text: String): Set[Doi] =
@@ -143,6 +156,8 @@ object AcquireMatch:
   /** The distinctive words of a title or item text: accents folded, lower case, three letters or more (or a number,
     * like a year or a volume), stop words dropped.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tokens(text: MatchText): Set[Token] =
     tokensOf(text.value).map(Token(_))
 
@@ -156,6 +171,7 @@ object AcquireMatch:
       .toSet
 
   /** The first author's surname, folded: the part before the comma of `Last, First`, else the last word. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def surname(authors: List[AuthorName]): Option[Surname] =
     authors
       .map(_.value.trim)
@@ -171,9 +187,12 @@ object AcquireMatch:
     * distinctive words the item contains (three quarters of the weight), and whether it names the first author's
     * surname (the rest). Without authors the title words are the whole score. Two decimals, so a listing is stable.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def score(itemText: MatchText, title: Title, authors: List[ScoreAuthors]): Decision.Propose.Score =
     scoreOf(itemText.value, title.value, authors)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scoreOf(itemText: String, title: String, authors: List[AuthorName]): Decision.Propose.Score =
     val want = tokensOf(title)
     if want.isEmpty then Decision.Propose.Score(0.0)
@@ -189,6 +208,7 @@ object AcquireMatch:
     * closed; other items scoring at least `proposeAt` are proposed, best first. Items already done, notes and other
     * lists are never touched.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decide(
       items: List[Queue.QueueItem],
       doi: Option[Doi],
@@ -214,6 +234,8 @@ object AcquireMatch:
   /** One line per decision, for a job's progress and an import's output. `closed` maps an item to the outcome of the
     * write that closed it (`Left(reason)` when it could not be).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(d: Decision, closed: Queue.QueueItem.Id => Either[Problem, Unit] = _ => Right(())): Description = d match
     case Decision.Close(i) =>
       closed(i.id).fold(
@@ -230,6 +252,8 @@ object AcquireMatch:
       )
 
   /** `0.83`, with a dot whatever the default locale (`f"%.2f"` writes `0,83` under en_PL). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decimal(x: Decision.Propose.Score): DecimalText =
     val cents = math.round(x.value * 100)
     DecimalText(f"${cents / 100}.${cents % 100}%02d")

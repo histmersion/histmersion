@@ -12,6 +12,7 @@ import com.histmersion.plugin.Processes
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.plugin.CollectionFile
 import com.histmersion.plugin.CollectionQuery
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Calibre plugin's reading and writing: both readers produce the same book, the metadata guard refuses junk, and
   * the commands assembled for `calibredb` are the ones we mean to run.
@@ -19,10 +20,12 @@ import com.histmersion.plugin.CollectionQuery
   * The fixtures are REAL output captured from `calibredb list --for-machine` and from `sqlite3 -readonly -json` against
   * the same book, with the home directory rewritten. No Calibre installation is needed to run this.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CalibreSuite extends munit.FunSuite:
 
   private given LocalFiles = new DiskLocalFiles
   private given Processes = new SystemProcesses
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixture(name: String) = Processes.Result.Out(scala.io.Source.fromResource(s"acquire/$name").mkString)
 
   private val lib = Calibre.Library.Value("/Users/example/Calibre Library")
@@ -132,6 +135,7 @@ class CalibreSuite extends munit.FunSuite:
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
   private class LibraryShell(onShelf: String) extends RecordingShell():
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
       commands = commands :+ cmd
       if cmd.exists(_.value == "list") then Right(Processes.Result.Out(onShelf)) else Right(Processes.Result.Out(""))
@@ -157,6 +161,7 @@ class CalibreSuite extends munit.FunSuite:
     s"""[{"id":1567,"title":"Kumarbi","authors":"$authors","pubdate":"$pubdate","publisher":"$publisher",""" +
       s""""comments":"$comments","tags":$tags,"identifiers":$identifiers,"formats":[]}]"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fields(shell: RecordingShell) =
     val cmd = shell.commands.find(_.exists(_.value == "set_metadata")).getOrElse(fail("no set_metadata ran"))
     assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib.value, "1567"))
@@ -458,6 +463,7 @@ class CalibreSuite extends munit.FunSuite:
 
   test("reading falls back to sqlite3 when calibredb refuses (the GUI case)"):
     val shell = new RecordingShell():
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
         commands = commands :+ cmd
         if cmd.head.value.endsWith("calibredb") then
@@ -536,6 +542,7 @@ class CalibreSuite extends munit.FunSuite:
   )
 
   /** A [[Shell]] that records instead of executing. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private class RecordingShell(running: Boolean = false) extends Shell:
     var commands: List[List[Processes.RunArgv]] = Nil // a test double is the one place a var is the simplest thing
     def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
@@ -551,6 +558,7 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.parseMachineJson(Processes.Result.Out("[]")), Right(Nil))
     // the GUI case: calibredb refuses, sqlite3 -json prints nothing at all for an empty result
     val shell = new RecordingShell():
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
         commands = commands :+ cmd
         if cmd.head.value.endsWith("calibredb") then

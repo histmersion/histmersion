@@ -6,6 +6,7 @@ import com.histmersion.web.{LibrarySection, Pages, Route}
 
 import scala.scalajs.js
 import scala.util.control.NonFatal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a Library list shows and has chosen, in the address: `/library?item=<citekey>`,
   * `/library/articles?item=<slug>`, a shelf of My library (`/library?shelf=bookmarks`) — so the choice survives a
@@ -26,19 +27,26 @@ object LibraryAddress:
       .filter(_.nonEmpty)
 
   /** The chosen item of an address's query (`?item=…`, with or without its `?`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(search: Pages.UrlQuery): Option[ItemKey] = param(search.value, Key).map(ItemKey(_))
 
   /** The shelf of My library an address's query names; none is "Everything". */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shelf(search: Pages.UrlQuery): Shelf =
     param(search.value, ShelfKey).flatMap(s => Shelf.parse(Shelf.Wire(s))).getOrElse(Shelf.Everything)
 
   /** The query that chooses `item` on `shelf` (empty for none on Everything). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(item: Option[ItemKey], shelf: Shelf = Shelf.Everything): Pages.UrlQuery =
     val parts = Option.when(shelf != Shelf.Everything)(s"$ShelfKey=${shelf.wire.value}").toList ++
       item.map(_.value.trim).filter(_.nonEmpty).map(i => s"$Key=${js.URIUtils.encodeURIComponent(i)}").toList
     Pages.UrlQuery(if parts.isEmpty then "" else parts.mkString("?", "&", ""))
 
   /** The address of a list with `item` chosen. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def href(section: LibrarySection, item: Option[ItemKey], shelf: Shelf = Shelf.Everything): String =
     Route.Library(section).path + search(item, shelf).value
 

@@ -4,16 +4,23 @@ package api
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.instance.UiNotices.*
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class UiNoticesSuite extends munit.FunSuite:
 
   private val t1 = "2026-10-11T08:00:00.000000Z"
   private val t2 = "2026-10-11T08:00:00.000001Z"
   private val t3 = "2026-10-12T00:00:00.000000Z"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val l1 = Counter.Latest(t1)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val l2 = Counter.Latest(t2)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val s1 = Counter.Seen(t1)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val s2 = Counter.Seen(t2)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val s3 = Counter.Seen(t3)
 
   test("something is new only when its newest change is after the mark"):

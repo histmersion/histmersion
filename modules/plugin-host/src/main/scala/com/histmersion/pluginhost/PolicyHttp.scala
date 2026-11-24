@@ -13,6 +13,8 @@ import sttp.client4.*
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition client: every request a source fetcher (a plugin's through [[Plugin.Http]], or a built-in one) and
   * the metadata lookups make, over one [[HttpTransport]].
@@ -23,6 +25,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   * is asked again on the same schedule. A bot challenge ends the request ([[Challenge]]). `tries` counts the first
   * request; `sleep` and `clock` are parameters so a test does not wait.
   */
+@tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+@tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+@atBoundary(BoundaryKind.Http, "sends acquisition requests under the outbound policy: User-Agent, retries, Retry-After")
 final class PolicyHttp(
     userAgent: HttpPolicy.UserAgent,
     transport: HttpTransport,
@@ -33,11 +38,13 @@ final class PolicyHttp(
     log: HostLog = HostLog.scribe
 ):
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private val maxRetries = HttpPolicy.MaxRetries((tries.value - 1).max(0))
 
   /** The headers as sent: a caller's own `User-Agent` replaces the configured one; either goes through
     * [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def identified(
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =
@@ -50,6 +57,7 @@ final class PolicyHttp(
   /** One GET: the body of a 2xx answer, or why there is none. A caller's own `User-Agent` replaces the configured one;
     * either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def bytes(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
@@ -102,10 +110,13 @@ final class PolicyHttp(
     * budget meters is sent [[once]], answered with its status and headers.
     */
   def plugin: Plugin.Http = new Plugin.Http:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def sent(headers: Map[Header.Name, Header.Value]) =
       headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       bytes(HttpTransport.Url(url.value), sent(headers)).map(b => Plugin.HttpResponse.Body(b.value))
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     override def fetch(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]
@@ -130,6 +141,7 @@ object PolicyHttp:
     * every metadata lookup of a generation share: `acquire.user-agent`, and the media politeness's patience with
     * `Retry-After`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def acquisition(
       cfg: AppConfig,
       transport: HttpTransport,
@@ -145,6 +157,7 @@ object PolicyHttp:
     )
 
   /** The transport the acquisition client sends on: `acquire.timeout-seconds`, `acquire.tls`'s trust. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def acquisitionTransport(cfg: AppConfig): HttpTransport =
     SttpTransport(
       SttpTransport.TimeoutSeconds(cfg.acquire.timeoutSeconds.value),

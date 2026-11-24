@@ -3,10 +3,13 @@ package config.edit
 
 import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
   * is the answer.
   */
+@movesTo(FeaturePlace.UtilSettings)
 enum SettingError:
   case BadKey(why: Problem)
   case UnknownKey(key: SettingKey, closest: List[SettingKey])
@@ -42,6 +45,7 @@ enum SettingError:
   case NoFile(why: Problem)
   case Io(why: Problem)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def message: Problems = this match
     case BadKey(why)            => why
     case UnknownKey(k, closest) =>
@@ -71,6 +75,7 @@ enum SettingError:
     case NoFile(why) => why
     case Io(why)     => why
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def setting(key: SettingKey, fault: Problem.Config.Fault): Problem =
     Problem.Config.Setting(Problem.SettingKey(s"$key"), fault)
 

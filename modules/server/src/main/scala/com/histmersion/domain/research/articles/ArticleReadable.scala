@@ -10,14 +10,17 @@ import com.histmersion.domain.Title
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The articles a person has not marked read, by title, as "Not read yet" lists them. */
 final class ArticleReadable(db: Transactor) extends Readable:
   val kind: ItemKind = ArticleReferable.Kind
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notRead(read: Set[ItemRef]): Frag =
     sql" FROM articles i WHERE NOT (i.slug = ANY(${read.toList.map(_.key)}::text[]) OR i.uid = ANY(${read.toList.flatMap(_.uid).map(u => u.value.toString)}::uuid[]))"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows =

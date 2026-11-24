@@ -14,10 +14,12 @@ import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 class JobRunsDbSuite extends JobRunsContract("db"):
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch =
     ScratchDatabases("histmersion_s7j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   private val made = java.util.concurrent.atomic.AtomicInteger(0)
@@ -32,6 +34,7 @@ class JobRunsDbSuite extends JobRunsContract("db"):
       (r, Instant.now())
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def row(
       runs: JobRuns,
       id: Run.Id

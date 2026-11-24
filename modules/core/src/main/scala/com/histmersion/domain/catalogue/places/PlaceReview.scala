@@ -9,6 +9,7 @@ import com.histmersion.Period
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a point-only seed region IS, from what its sources say (`lint --rule place-kind`, 2026-10-09). Pleiades files a
   * people, a civic tribe, a province, a deme and a district alike as a "region" with one representative point; this
@@ -32,6 +33,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *      Messenia as historical countries too.
   * Anything else is left as it is.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object PlaceReview:
 
   /** Why a place is proposed for a change or a review: the account of the lint's decision, not a failure. */
@@ -39,13 +41,16 @@ object PlaceReview:
   object Rationale extends Newtype[String, Pure]
 
   /** Pleiades types that make a place an administrative unit. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val PolityTypes: Set[Evidence.FeatureTypes] =
     Set("province", "province-2", "satrapy", "regio-augusti", "state", "diocese").map(Evidence.FeatureTypes(_))
 
   /** Pleiades types that make a place a people. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val PeopleTypes: Set[Evidence.FeatureTypes] = Set("people").map(Evidence.FeatureTypes(_))
 
   /** Pleiades types that make a "region" a settlement. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val SiteTypes: Set[Evidence.FeatureTypes] =
     Set("settlement", "settlement-modern", "deme-attic").map(Evidence.FeatureTypes(_))
 
@@ -68,6 +73,8 @@ object PlaceReview:
   private val RegionAside = "(?i).*\\([^)]*\\bregion\\b[^)]*\\).*".r
   private val WithdrawnDuplicate = "(?i)^withdrawn\\s*\\(?duplicate\\)?\\s*:\\s*(.+)$".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodText(p: Period): String =
     YearFmt.period(
       Some(Year(p.start.value.toLong)),
@@ -144,9 +151,11 @@ object PlaceReview:
     def id: Evidence.Id
 
     /** One line: id, label, current → proposed kind, why, and the evidence. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: Proposal.Line = Proposal.Line(s"$id $detail")
 
     /** The line without the id — a lint item, which carries the id beside it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def detail: Proposal.Line =
       def ev(e: List[Proposal.EvidenceLine]) = if e.isEmpty then "" else e.mkString(" [", "; ", "]")
       this match
@@ -171,6 +180,8 @@ object PlaceReview:
     object Line extends Newtype[String, Pure]
 
   /** The duplicate's name, when the title says "Withdrawn (duplicate): X". */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def duplicateOf(label: Evidence.Label): Option[Evidence.Label] = label.value.trim match
     case WithdrawnDuplicate(x) => Some(x.trim).filter(_.nonEmpty).map(Evidence.Label(_))
     case _                     => None
@@ -178,10 +189,15 @@ object PlaceReview:
   /** The name keys a withdrawn duplicate's replacement may carry: the whole name's, and each of the alternatives a
     * Pleiades title joins with '/' ("Peiros/Piros (river)" → "Peiros (river)").
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def duplicateKeys(name: Evidence.Label): List[Geocode.Key] =
     (Geocode.key(name.value) :: name.value.split("/").toList.map(Geocode.key)).filter(_.value.nonEmpty).distinct
 
   /** The evidence lines every proposal carries. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidenceOf(e: Evidence): List[Proposal.EvidenceLine] =
     val types = Option.when(e.featureTypes.nonEmpty)(s"Pleiades types: ${e.featureTypes.mkString(", ")}")
     val tps = Option.when(e.timePeriods.nonEmpty)(s"Pleiades periods: ${e.timePeriods.mkString(", ")}")
@@ -196,6 +212,7 @@ object PlaceReview:
   /** The period a polity gets: its own when both ends are stated and it is not "still extant", else a linked item's,
     * else none.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def polityPeriod(e: Evidence): Option[Period] =
     val own = for s <- e.start; t <- e.end if t < ExtantYear && s <= t; p <- DeepTime.span(s, t) yield p
     own.orElse(e.items.flatMap(_.period).headOption)
@@ -203,6 +220,8 @@ object PlaceReview:
   /** The proposal for one place (`None` = leave it). `candidates` are the seed places a withdrawn duplicate's name
     * resolves to (empty otherwise). Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def propose(e: Evidence, candidates: List[Candidate] = Nil): Option[Proposal] =
     val types = e.featureTypes.map(t => Evidence.FeatureTypes(t.value.trim.toLowerCase(java.util.Locale.ROOT))).toSet
     val ev = evidenceOf(e)

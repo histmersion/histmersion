@@ -11,8 +11,11 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.{AtomicMoveNotSupportedException, Files, LinkOption, Path, StandardCopyOption}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings file at `path` on this machine's disk, as `histmersion config` changes it without a server. */
+@atBoundary(BoundaryKind.Config, "reads and replaces the settings file on this machine's disk")
 final class LocalSettingsFile(val path: Path) extends SettingsFile:
 
   def shown: SettingsFile.Shown = SettingsFile.Shown(path.toString)
@@ -20,6 +23,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
   /** The file a symbolic link at `path` points to (the new text is written beside it), else `path`. */
   private def target: Path = if Files.isSymbolicLink(path) then path.toRealPath() else path
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def read(): Either[SettingError, ConfigFileState] =
     try
       if !Files.exists(path) then
@@ -31,6 +35,9 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
         parse(path).map(c => ConfigFileState(Some(text), FileVersion.of(Some(text)), c, AppConfig.writtenIn(path)))
     catch case e: IOException => Left(SettingError.Io(Problem.Unclassified(Legacy.Text(e.getMessage))))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
   ): Either[SettingError, Option[WriteOutcome.Backup]] =
@@ -61,6 +68,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
         val _ = Files.deleteIfExists(temp)
     catch case e: IOException => Left(SettingError.Io(Problem.Unclassified(Legacy.Text(e.getMessage))))
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def backup(existed: Boolean): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed then Right(None)
     else
@@ -80,6 +88,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     catch case _: AtomicMoveNotSupportedException => Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING)
     Right(())
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def parse(file: Path): Either[SettingError, Config] =
     AppConfig
       .parseUserFile(file)

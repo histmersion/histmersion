@@ -8,6 +8,7 @@ import scala.annotation.tailrec
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where an agent definition is run, which decides how it is rendered (docs/research-agent-runtimes.md §2): the three
   * CLI runtimes, the direct API (sttp-ai, the engine's own loop), and the person's own interactive Claude Code session
@@ -30,6 +31,7 @@ object AgentRuntime:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[AgentRuntime] =
     values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 

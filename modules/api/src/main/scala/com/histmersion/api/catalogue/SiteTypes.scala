@@ -20,6 +20,7 @@ object SiteTypes:
     type Fcode = Fcode.T
     object Fcode extends Newtype[String, Pure]
   type ReportSummary = ReportSummary.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ReportSummary extends Newtype[String, Pure]
 
   export SiteType.{Icon as IconResult, Id as IconId}
@@ -55,6 +56,7 @@ object SiteTypes:
   val Bridge = "bridge"
   val Aqueduct = "aqueduct"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[SiteType] = List(
     SiteType(SiteType.Id(Settlement), SiteType.Label("settlement"), SiteType.Icon("building-2")),
     SiteType(SiteType.Id(Villa), SiteType.Label("villa, house"), SiteType.Icon("house")),
@@ -77,9 +79,14 @@ object SiteTypes:
 
   private val byId: Map[SiteType.Id, SiteType] = all.map(t => t.id -> t).toMap
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(id: SiteType.Id): Option[SiteType] = byId.get(SiteType.Id((id).value.trim.toLowerCase(java.util.Locale.ROOT)))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def icon(id: SiteTypes.IconId): Option[SiteTypes.IconResult] = get(id).map(_.icon)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val pleiadesTypes: Map[Pleiades.FeatureType, SiteType.Id] = Map(
     {
       val refactorTuple = "settlement" -> Settlement;
@@ -333,6 +340,7 @@ object SiteTypes:
     }
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val preference: List[SiteType.Id] = List(
     SiteType.Id(Palace),
     SiteType.Id(Sanctuary),
@@ -353,12 +361,15 @@ object SiteTypes:
     SiteType.Id(Findspot)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def best(types: Iterable[SiteType.Id]): Option[SiteType.Id] =
     (types.toList.distinct
       .sortBy(t => preference.indexOf(t) match { case -1 => preference.size; case i => i })
       .headOption)
       .map(refactorValue6 => SiteType.Id((refactorValue6).value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pleiades(featureTypes: Pleiades.FeatureType): Option[SiteType.Id] =
     best(
       Option(featureTypes).toList
@@ -369,6 +380,7 @@ object SiteTypes:
         .flatMap(t => pleiadesTypes.get(Pleiades.FeatureType(t)))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val geonamesCodes: Map[Geonames.Fcode, SiteType.Id] = Map(
     {
       val refactorTuple288 = "S.RUIN" -> Findspot;
@@ -468,6 +480,8 @@ object SiteTypes:
     { val refactorTuple330 = "T.CAVE" -> Cave; (Geonames.Fcode(refactorTuple330._1), SiteType.Id(refactorTuple330._2)) }
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geonames(fcode: Geonames.Fcode): Option[SiteType.Id] =
     Option(fcode).map((_).value.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
       geonamesCodes.get(Geonames.Fcode(c)).orElse(Option.when(c.startsWith("P."))(SiteType.Id(Settlement)))
@@ -477,6 +491,7 @@ object SiteTypes:
   val HumanSettlement = "Q486972"
 
   /** The comment beside each id is its Wikidata label. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val wikidataClasses: Map[CatalogRecord.Wikidata.Class, SiteType.Id] = Map(
     {
       val refactorTuple331 = HumanSettlement -> Settlement;
@@ -709,6 +724,8 @@ object SiteTypes:
     }
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def wikidata(
       p31: List[SiteTypes.WikidataP31],
       superclasses: List[CatalogRecord.Wikidata.Class],
@@ -724,13 +741,18 @@ object SiteTypes:
         (refactorValue9) => refactorFunction5(CatalogRecord.Wikidata.Class((refactorValue9).value))
       })
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wikidataOwn(p31: List[CatalogRecord.Wikidata.Class]): Option[SiteType.Id] = best(
     p31.map(c => CatalogRecord.Wikidata.Class(c.value.trim)).flatMap(wikidataClasses.get)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def p31Of(json: Option[CatalogRecord.Wikidata.P31Json]): List[CatalogRecord.Wikidata.Class] =
     json.toList.flatMap(s => "Q[0-9]+".r.findAllIn((s).value).toList.map(CatalogRecord.Wikidata.Class(_)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def of(
       placeId: Place.Id,
       placeKind: Place.Kind.Wire,
@@ -784,6 +806,7 @@ object SiteTypes:
     type Failed = Failed.T
     object Failed extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def summary(r: Report): ReportSummary =
       if (r.dryRun).value then ReportSummary(s"${r.pending} Wikidata site(s) on the map would be asked about")
       else

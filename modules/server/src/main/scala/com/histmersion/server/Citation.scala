@@ -7,8 +7,10 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
+@movesTo(FeaturePlace.ResearchArticles)
 enum Citation:
   /** A stored source, through a typed edge (`references`, `challenges`, …). */
   case ToSource(ref: Source.Ref, kind: Citation.ToSource.Kind)

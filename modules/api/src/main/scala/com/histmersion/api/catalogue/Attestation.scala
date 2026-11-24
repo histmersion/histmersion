@@ -14,6 +14,7 @@ import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Attestation(
     id: Attestation.Id,
     citekey: Citekey,
@@ -39,8 +40,10 @@ object Attestation:
   type Id = Id.T
   object Id extends Newtype[Long, Pure]
   type TargetType = TargetType.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetType extends Newtype[String, Pure]
   type TargetId = TargetId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetId extends Newtype[String, Pure]
   type Quote = Quote.T
   object Quote extends Newtype[String, Pure]
@@ -84,10 +87,12 @@ object Attestation:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page: OffsetPage = OffsetPage(total, offset, RowCount(attestations.size))
 
   object List:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(total: RowCount, rows: scala.List[Attestation], offset: UnreadPage.Offset): List =
       List(
         RowCount((total).value),

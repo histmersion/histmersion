@@ -16,16 +16,20 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What research's articles answer, the same on the database and in memory: an article written whole and merged from
   * patches with its token and versions, its link graph, a critique reason refused when no source is stored, renamed
   * with its old slug kept and its links followed, deleted with its versions and old slugs.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class ArticleServiceContract extends ResearchStoreSuite:
 
   private val Me = Caller.Local
   private val TokenRe = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z".r
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def article(slug: Slug, title: Article.Title, body: Article.Body): Article =
     Article(
       Article.Slug(slug.value),

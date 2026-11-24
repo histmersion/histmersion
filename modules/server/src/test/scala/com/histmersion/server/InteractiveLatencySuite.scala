@@ -12,6 +12,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The interactive budgets (docs/research-interactive-performance.md) as a CI check: the requests a hover, a keystroke
   * and a filter change fire, against a server on the test database, each repeated so the statement is prepared
@@ -19,6 +20,7 @@ import com.histmersion.util.database.TestCreators.given
   * [[Slack]]. Loose on purpose — a CI box is slower and noisier than the reader's machine; scripts/perf/bench.py
   * measures the real thing against a live-sized copy. Gated on HISTMERSION_TEST_DB_URL like the other server suites.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class InteractiveLatencySuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -60,6 +62,7 @@ class InteractiveLatencySuite extends munit.FunSuite:
     val m = p50(url)
     assert(m <= budgetMs * Slack, f"$url: p50 $m%.1f ms over $budgetMs ms × $Slack")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val doc = Lpf.render(
     List(
       Place.Input(

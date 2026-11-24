@@ -6,6 +6,8 @@ import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Repository LANDING PAGES (#1580): an open-access location whose URL is an HTML record page rather than the PDF — a
   * Zenodo record, a DSpace/EPrints/Pure item, a DataCite DOI that resolves to one. The fetch resolves such a page ONE
@@ -26,18 +28,23 @@ import io.github.iltotore.iron.constraint.any.Pure
   * A page behind bot protection or a 403 is no copy: the HTTP layer reports it as a failure, and the work goes to the
   * acquisition queue as before. Everything here is pure and total.
   */
+@atBoundary(BoundaryKind.Json, "reads a repository landing page into download links")
 object RepositoryLanding:
   type Host = Host.T
   object Host extends Newtype[String, Pure]
   type HostLabel = HostLabel.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object HostLabel extends Newtype[String, Pure]
   type HostWord = HostWord.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object HostWord extends Newtype[String, Pure]
   type HostPattern = HostPattern.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object HostPattern extends Newtype[String, Pure]
   type Href = Href.T
   object Href extends Newtype[String, Pure]
   type Html = Html.T
+  @tolerated(LintRule.HtmlNewtype, "pending G96 (one markup type, api.Html)")
   object Html extends Newtype[String, Pure]
   type MetaContent = MetaContent.T
   object MetaContent extends Newtype[String, Pure]
@@ -58,20 +65,27 @@ object RepositoryLanding:
 
   type PublisherSourceType = PublisherSourceType.T
   object PublisherSourceType extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OnHostUrl = HostUrl
   val OnHostUrl: HostUrl.type = HostUrl
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type HostUrl = Candidate.Url
   val HostUrl: Candidate.Url.type = Candidate.Url
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MetaTagsHtml = Html
   val MetaTagsHtml: Html.type = Html
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type GeneratorsHtml = Html
   val GeneratorsHtml: Html.type = Html
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CitationPdfUrlsHtml = Html
   val CitationPdfUrlsHtml: Html.type = Html
   export Candidate.{Url as CitationPdfUrlsPageUrl, Url as IsRepositoryPageUrl}
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type IsRepositoryHtml = Html
   val IsRepositoryHtml: Html.type = Html
   export Candidate.{Repository as PdfsOfIndexSaysRepository, Url as PdfsOfPageUrl}
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PdfsOfHtml = Html
   val PdfsOfHtml: Html.type = Html
   export Candidate.Url as GalleyPdfUrlsPageUrl
@@ -129,6 +143,7 @@ object RepositoryLanding:
     /** A publisher's host: a denied host or its subdomain, or — unless the host is allowed — a label that is or starts
       * with a denied word (`press.…`, `journals.…`: a university press on a `.edu`).
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def denied(host: Host): Boolean =
       denyHosts.exists(d => matchesHost(host, d)) ||
         (!allowed(host) && host.value
@@ -140,18 +155,21 @@ object RepositoryLanding:
     /** A university's host: `.edu` (`.edu.au` too), `.ac.<cc>`, or a label that is a configured word ([[wordLabel]]:
       * `repository`, `eprints`, `pure`, `opus4`, `uni-tuebingen` for `uni-`).
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def academic(host: Host): Boolean =
       val labels = (host).value.split('.').toList
       labels.contains("edu") || labels.dropRight(1).lastOption.contains("ac") ||
       labels.dropRight(1).exists(l => academicHostWords.exists(w => wordLabel(HostLabel(l), w)))
 
     /** A platform `generator` tag that names a repository (`DSpace 6.3`) — and not a journal's. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def repositoryGenerator(gs: List[Rules.Generators]): Boolean =
       val low = gs.map((_).value.toLowerCase)
       !low.exists(g => denyGenerators.exists(d => (d).value.nonEmpty && g.contains(d.value))) &&
       low.exists(g => generators.exists(p => (p).value.nonEmpty && g.contains(p.value)))
 
     /** A journal platform's page (`Open Journal Systems`): a publisher's, whatever its host. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def journalGenerator(gs: List[Rules.Generators]): Boolean =
       (gs.map((_).value.toLowerCase).exists(g => denyGenerators.exists(d => (d).value.nonEmpty && g.contains(d.value))))
 
@@ -166,21 +184,28 @@ object RepositoryLanding:
     * `pure-portal`), or, for a word ending in `-`, any label it starts (`uni-` → `uni-koeln`)? Never a longer word
     * (`pure` is not `purepharma`, `press` is not `pressreader`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def wordLabel(label: HostLabel, w: HostWord): Boolean =
     val (l, word) = (label.value, w.value)
     word.nonEmpty && (l == word || (word.endsWith("-") && l.startsWith(word)) ||
       (l.startsWith(word) && l.length > word.length && { val c = l.charAt(word.length); c == '-' || c.isDigit }))
 
   /** A host entry matches the host itself or any subdomain of it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def matchesHost(host: Host, entry: HostPattern): Boolean =
     val e = (entry).value.trim.toLowerCase.stripPrefix(".")
     (e.nonEmpty && (host == Host(e) || (host).value.endsWith("." + e)))
 
   /** Pure: the lower-case host of an absolute http(s) URL. */
   /** The host of `url` when it is one of `hosts` or a subdomain of one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def onHost(url: OnHostUrl, hosts: List[HostPattern]): Option[Host] =
     host(url).filter(h => hosts.exists(matchesHost(h, _)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def host(url: HostUrl): Option[Host] =
     "(?i)^https?://([^/?#:]+)".r
       .findFirstMatchIn((url).value.trim)
@@ -257,6 +282,7 @@ object RepositoryLanding:
   /** Pure: is this an open-access publisher's OPEN location (#2550) — read although it is a publisher's: an index says
     * it is open, and its host is on `oa-publisher-hosts`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def oaPublisherPage(c: Candidate, rules: Rules): Boolean =
     ((c.open) == Candidate.Open(true)) && host(c.url).exists(rules.oaPublisher)
 
@@ -281,6 +307,8 @@ object RepositoryLanding:
   /** Pure: the Zenodo record id of a record URL (`zenodo.org/record/3695551`, `…/records/…`) or of a Zenodo DOI
     * (`10.5281/zenodo.3695551`, bare or as a `doi.org` URL).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def zenodoRecordId(urlOrDoi: ZenodoLocator): Option[ZenodoRecordId] =
     val t = (urlOrDoi).value.trim
     ZenodoRecord.findFirstMatchIn(t).orElse(ZenodoDoi.findFirstMatchIn(t)).map(m => ZenodoRecordId(m.group(1)))
@@ -314,6 +342,8 @@ object RepositoryLanding:
   /** Pure: the `<meta>` tags of a page as (name or property, lower-cased; content), in order — whatever order the
     * attributes come in, entities in the content decoded.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def metaTags(html: MetaTagsHtml): List[(MetaName, MetaContent)] =
     MetaTag.findAllMatchIn((html).value.take(MaxHead)).toList.flatMap { m =>
       val attrs = Attr
@@ -347,12 +377,17 @@ object RepositoryLanding:
       .replace("&#47;", "/"))
 
   /** Pure: the page's `generator` tags (`DSpace 6.3`, `EPrints 3.4`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def generators(html: GeneratorsHtml): List[Rules.Generators] = metaTags(html).collect {
     case (refactorPattern, g) if (refactorPattern.value == "generator") && ((g).value.nonEmpty) =>
       Rules.Generators((g).value)
   }
 
   /** Pure: the `citation_pdf_url`s a page names, made absolute against `pageUrl`, http(s) only. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def citationPdfUrls(
       html: CitationPdfUrlsHtml,
       pageUrl: RepositoryLanding.CitationPdfUrlsPageUrl
@@ -366,6 +401,8 @@ object RepositoryLanding:
       .distinct
 
   /** Pure: `href` against the page it is on (`/bitstream/…` → `https://host/bitstream/…`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def absolute(href: Href, pageUrl: Candidate.Url): Option[Candidate.Url] =
     val h = (href).value.trim
     if "(?i)^https?://".r.findPrefixOf(h).isDefined then Some(Candidate.Url(h))
@@ -382,6 +419,9 @@ object RepositoryLanding:
     * page (`deny-generators`: Open Journal Systems); otherwise when an OA index calls the location a repository, the
     * host is allowed or academic, or the page names a repository platform as its generator.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def isRepository(
       pageUrl: RepositoryLanding.IsRepositoryPageUrl,
       indexSaysRepository: Candidate.Repository,
@@ -399,6 +439,9 @@ object RepositoryLanding:
     * its `citation_pdf_url`s and its OJS PDF galleys, an OJS viewer link turned into its download, on the page's own
     * host or another OA publisher's only.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def pdfsOf(
       pageUrl: RepositoryLanding.PdfsOfPageUrl,
       indexSaysRepository: RepositoryLanding.PdfsOfIndexSaysRepository,
@@ -423,6 +466,9 @@ object RepositoryLanding:
     * OJS 3.5+ theme lists as JSON (`{"label":"PDF","href":…}`, escaped inside an attribute) — made absolute against
     * `pageUrl`, http(s) only.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def galleyPdfUrls(html: Html, pageUrl: RepositoryLanding.GalleyPdfUrlsPageUrl): List[Candidate.Url] =
     val page = (html).value.take(MaxHead)
     val links = GalleyLink
@@ -451,10 +497,14 @@ object RepositoryLanding:
   /** Pure: an OJS galley's viewer URL (`…/article/view/<article>/<galley>`, an HTML page around the PDF) as its
     * download (`…/article/download/<article>/<galley>`); any other URL as it is.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def ojsDownload(url: Candidate.Url): Candidate.Url =
     Candidate.Url(OjsView.replaceFirstIn((url).value, "/article/download/$1/$2"))
 
   /** Pure: does a non-PDF answer look like an HTML page (worth reading for its tags)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def looksLikeHtml(b: PageBytes): Boolean =
     val head = new String(b.value.take(2048), "ISO-8859-1").toLowerCase
     head.contains("<html") || head.contains("<!doctype html") || head.contains("<head") || head.contains("<meta")

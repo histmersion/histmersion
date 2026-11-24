@@ -69,6 +69,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot against a `*_test` database (docs/research-process-managers.md "As built: the autopilot"): one switch
   * carries a planned goal through plan → sources → articles → review to `reviewed` with the checked auto approvals on —
@@ -78,6 +79,8 @@ import com.histmersion.util.database.TestCreators.given
   * ([[ScriptedClient]]), a review run is settled by hand; no provider is called. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -93,12 +96,19 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private val Ck = Citekey("zzagent2019_tin")
   private val Ck2 = Citekey("zzagent2024_iso")
   private val ApiCk2 = api.library.Citekey("zzagent2024_iso")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val PlanGoalKind = ManagerItem.Kind(PlanGoalItem)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ProposeKind = ManagerItem.Kind(ProposeArticles)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CompileKind = ManagerItem.Kind(ArticleCompile)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ExtendKind = ManagerItem.Kind(ArticleExtend)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val SweepKind = ManagerItem.Kind(AcquisitionSweep)
   private val NewTarget = ManagerItem.Target("zzagent_new")
   private val IngestedKind = ManagerRepo.EventKind(Feed.Ingested)
@@ -109,6 +119,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   /** Checked auto approvals ON (article-plan, goal-plan, article-publish = checked), the autopilot's housekeeping off,
     * room for every manager's run.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val autoCfg =
     val b = AppConfig.load()
     val m = Model.wire
@@ -286,6 +297,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .isRight
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val articleBody =
     s"""Tin reached the Aegean by sea [[$Ck]].
        |
@@ -312,11 +324,14 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private def draftJson(body: String) =
     s"""{"title":"Zz new","summary":"Where Aegean tin came from.","body":${str(body)},"section":null,"reasons":[]}"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
 
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(mid, kind, target)).get
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runOf(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): RunInfo =
     connect(ds)(
       AgentRepo.get(
@@ -324,6 +339,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       )
     ).get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def why(r: RunInfo): String =
     (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
@@ -335,6 +351,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     connect(ds)(AgentRepo.get(id)).get
 
   /** The watchers' sweeps need no model (offline: nothing found): run what they queued. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def drainWatchers(a: AgentsControllers): Unit =
     connect(ds)(AgentRepo.list(Some(Run.State.Wire("queued")), PageSize(200)))
       .filter(_.managerId.exists(_.value.startsWith("watch:")))

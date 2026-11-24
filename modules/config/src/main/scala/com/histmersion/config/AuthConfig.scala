@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Who the server lets in. A request from a network in `trustedNetworks` acts as `trustedAs` with no credential; one
   * from a network in `authenticatedNetworks` needs `Authorization: Bearer <apiKey>`, reads and writes alike; one from a
@@ -18,6 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * from a network these settings leave open, or when its public URL is HTTPS while loopback is trusted and no proxy
   * network covers it.
   */
+@movesTo(FeaturePlace.Config)
 final case class AuthConfig(
     apiKey: AuthConfig.ApiKey,
     trustedNetworks: List[AuthConfig.Network],

@@ -4,6 +4,7 @@ package domain.catalogue.maptiles
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Writes Mapbox vector tiles (version 2, https://github.com/mapbox/vector-tile-spec) of point layers. Each key and
   * value is stored once per layer. Pure.
@@ -18,12 +19,15 @@ object VectorTileWriter:
   object LayerName extends Newtype[String, Pure]
 
   /** A tile of the `layers` given (name → its points); an empty layer is left out. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tile(layers: Seq[(LayerName, Seq[TilePoint])]): VectorTile =
     val out = ByteArrayOutputStream()
     layers.filter(_._2.nonEmpty).foreach((name, points) => message(out, 3, layer(name, points).value))
     VectorTile(out.toByteArray)
 
   /** One layer's message. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def layer(name: LayerName, points: Seq[TilePoint]): LayerMessage =
     val keys = scala.collection.mutable.LinkedHashMap.empty[String, Int]
     val values = scala.collection.mutable.LinkedHashMap.empty[TileValue, Int]
@@ -52,6 +56,9 @@ object VectorTileWriter:
     varintField(out, 5, TileCoord.Extent.value.toLong)
     LayerMessage(out.toByteArray)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def value(v: TileValue): Array[Byte] =
     val out = ByteArrayOutputStream()
     v match

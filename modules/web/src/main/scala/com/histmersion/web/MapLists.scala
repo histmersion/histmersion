@@ -19,6 +19,7 @@ import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.personal.Target
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Places and Pictures tabs of the results: "On the map", what the map's sites and pictures layers hold in its view
   * (with what they only count there); "Everywhere", the places named by the filter's words, or every picture of the
@@ -42,6 +43,8 @@ object MapLists:
   type PaneName = PaneName.T
   object PaneName extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def countLine(
       listed: ListedCount,
       total: TotalCount,
@@ -57,6 +60,8 @@ object MapLists:
     )
 
   /** Pure: a site's row note — its type, its dates, or that it has none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def siteNote(p: SitePoint): SiteNote =
     SiteNote(
       List(
@@ -76,6 +81,8 @@ object MapLists:
         .mkString(" · ")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def siteRow(p: SitePoint): Option[MapListRow] =
     p.id.map(id =>
       MapListRow(
@@ -90,6 +97,8 @@ object MapLists:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeRow(h: Place.Hit): MapListRow =
     MapListRow(
       MapListRow.Key(h.id.value),
@@ -105,6 +114,8 @@ object MapLists:
       () => ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(h.id.value), MapView.spanMid()))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pictureRow(h: MediaGeoHit): MapListRow =
     MapListRow(
       MapListRow.Key(h.uid.value),
@@ -133,6 +144,7 @@ object MapLists:
   private var askedEverywhere: Option[Asked] = None
 
   /** The lists follow the map's layers as they read their tiles, the view, and the filter. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def follow(config: UiConfig): Unit =
     given Owner = unsafeWindowOwner
     MapView.sitesLayer.changed.signal.foreach(_ => if UiState.inView.now() then refresh(config))
@@ -143,6 +155,8 @@ object MapLists:
     }
 
   /** Read both lists again: from the map's layers, or (everywhere) from the server when what is asked changed. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refresh(config: UiConfig): Unit =
     val onMap = UiState.inView.now()
     if onMap then
@@ -194,6 +208,9 @@ object MapLists:
         askedEverywhere = Some(key)
         everywhere(config)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def everywhere(config: UiConfig): Unit =
     UiState.q.now().map(_.trim).filter(_.nonEmpty) match
       case Some(words) =>
@@ -258,6 +275,7 @@ object MapLists:
     )
 
   /** One tab's list. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(state: Var[MapListState], name: PaneName): HtmlElement =
     div(
       cls := s"map-list map-list-$name",
@@ -265,6 +283,8 @@ object MapLists:
       ul(cls := "list", role := "list", children <-- state.signal.map(_.rows.map(row)))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def row(r: MapListRow): HtmlElement =
     li(
       cls := "hit map-row",

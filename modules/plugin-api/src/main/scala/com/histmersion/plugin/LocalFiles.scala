@@ -4,10 +4,13 @@ package plugin
 import com.histmersion.util.problem.{Problem, Problems}
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Local filesystem operations supplied by the host. Path construction alone performs no I/O. Read failures preserve
   * the underlying IOException so a plugin can explain its own operation.
   */
+@atBoundary(BoundaryKind.Process, "the local file operations the host lends to plugins")
 trait LocalFiles:
   def isFile(path: Path): Boolean
   def isDirectory(path: Path): Boolean
@@ -42,6 +45,7 @@ object LocalFiles:
     def isExecutable(path: Path): Boolean = unavailable
     def read(path: Path): Content = unavailable
     def readPrefix(path: Path, length: ReadPrefixLength): Content = unavailable
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def staged[A](name: StagedName, bytes: Content)(
         use: Path => Either[Problems, A]
     ): Either[Problems, A] =

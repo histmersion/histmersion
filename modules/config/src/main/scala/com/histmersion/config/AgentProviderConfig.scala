@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Embedded research agents (docs/research-embedded-agents.md §5.3). OFF by default: with `enabled = false` the server
   * refuses every agent run and the external Claude Code workflow is untouched.
@@ -14,12 +16,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   * be a string: `roles.*` are `provider:model` references (`Agents.ModelRef`) and `prices` is a price table
   * (`Agents.Prices`).
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentProviderConfig(
     baseUrl: AgentProviderConfig.BaseUrl,
     apiKey: AgentProviderConfig.ApiKey,
     strictTools: AgentProviderConfig.StrictTools,
     timeoutSeconds: AgentProviderConfig.TimeoutSeconds
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def toString: String =
     s"AgentProviderConfig($baseUrl, apiKey=${if apiKey.value.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"

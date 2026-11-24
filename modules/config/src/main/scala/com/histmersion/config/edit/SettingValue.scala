@@ -15,8 +15,12 @@ import org.ekrich.config.{
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One value to write into the config file. */
+@atBoundary(BoundaryKind.Config, "turns a typed setting value into the HOCON value written to the file")
+@movesTo(FeaturePlace.UtilSettings)
 enum SettingValue derives CanEqual:
   case Text(text: SettingValue.Text.Value)
   case Number(number: BigDecimal)
@@ -24,6 +28,7 @@ enum SettingValue derives CanEqual:
   case Items(items: List[SettingValue])
 
   /** As HOCON holds it. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def toConfig: ConfigValue = this match
     case Text(t)   => ConfigValueFactory.fromAnyRef(t.value)
     case Number(n) =>
@@ -62,6 +67,7 @@ object SettingValue:
   /** What a person typed, read as a setting of `kind` — the CLI's argument, a field of the web form. Text is taken as
     * typed; a number, a flag and a list are read; `Any` (a plugin's own key) guesses the kind.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parse(raw: Typed, kind: SettingKind): Either[Problem.Config.Fault, SettingValue] =
     val t = Option(raw).map(_.value).getOrElse("")
     def notA(expected: Problem.Config.ValueKind) =

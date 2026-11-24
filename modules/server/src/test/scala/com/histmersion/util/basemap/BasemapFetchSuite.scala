@@ -21,12 +21,16 @@ import com.histmersion.util.storage.Store
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.util.problem.Text.sentences
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
   * and its pure parts.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class BasemapFetchSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val noPause = BasemapFetch.Pace(
     BasemapFetch.Pace.GapMs(0),
     ByteCount.applyUnsafe(1L << 20),
@@ -35,6 +39,7 @@ class BasemapFetchSuite extends munit.FunSuite:
   )
   private val overfetch = BasemapFetch.Pace.Overfetch(0.05)
   private val aegean = BBox(Longitude(22), Latitude(35), Longitude(29), Latitude(41))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val dropRules = Basemap
     .parseDrop(Basemap.DropRule.Spec(AppConfig.load().basemap.vector.drop.value))
     .fold(e => fail(e.sentences.mkString("; ")), identity)
@@ -50,10 +55,12 @@ class BasemapFetchSuite extends munit.FunSuite:
   private val Wikidata = Mvt.PropKey("wikidata")
   private val Ref = Mvt.PropKey("ref")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def commands(cs: Int*): Vector[Mvt.GeometryCommand] = cs.map(Mvt.GeometryCommand(_)).toVector
 
   private def tmp(): Path = Files.createTempDirectory("basemap")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def check(
       code: Int,
       range: Option[String],

@@ -9,12 +9,16 @@ import com.histmersion.domain.*
 import java.time.LocalDate
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** arXiv: newest submissions first; the Atom feed has no date filter, so what is older than `since`'s year is dropped
   * here (the stored candidates keep a work found twice from counting as new).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = ScholarlyIndex.Name("arxiv")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     http
       .text(

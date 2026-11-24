@@ -25,6 +25,7 @@ import java.util.UUID
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `bundle import` and `merge apply` over the registry's carried kinds (docs/research-merge-import.md §6–§7): ONE
   * transaction, holding the import lock, in two passes over the bundle:
@@ -39,6 +40,7 @@ import com.histmersion.domain.library.Citekey
   * `histmersion.importing` is on. The derived steps run with it off, so a LOCAL row the import changes moves and is
   * exported next time like any other change. Then the ledger and the `merges` row ([[MergeRepo.record]]).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object BundleImporter:
   type BackupFile = BackupFile.T
   object BackupFile extends Newtype[String, Pure]
@@ -69,6 +71,8 @@ object BundleImporter:
           )
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def failed(
       m: Bundle.Manifest,
       opts: ImportOptions,
@@ -87,19 +91,24 @@ object BundleImporter:
     )
 
   /** The issue as a problem line names it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def named(i: MergeIssue): IssueName =
     IssueName(s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}")
 
   extension (i: MergeIssue)
     /** The issue as a problem that holds the import up until it is decided. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def holdingUp: Problem = Problem.Conflict.Held(Problem.Where(s"${named(i)}"), Problem.Conflict.Hold.Open)
 
     /** Does `problem` say that carrying out this issue's decision is `merge apply`'s? */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def carriedBy(problem: Problem): Boolean = problem match
       case Problem.Conflict.Held(subject, Problem.Conflict.Hold.Carries(_)) => s"$subject" == s"${i.id}"
       case _                                                                => false
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counted(decided: List[MergePlanner.Row]): List[Bundle.KindCounts] =
     Bundle.Kind.values.toList
       .map(k => BundlePlan.counts(k, decided.filter(_.kind == k).map(_.decision)))
@@ -115,6 +124,8 @@ object BundleImporter:
     * label), two works kept apart (`both`) — and refuses, with the plan's issues, while any issue is open or a decision
     * needs `merge apply` (M5).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def importIn(
       bundle: ByteSource,
       bundleSha: Sha256,
@@ -183,6 +194,8 @@ object BundleImporter:
   /** Every kind's steps over the decided lines: the rows, the blobs, what hangs off them and the derived state. Inside
     * the caller's transaction; the importing flag is left on.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def writeAll(
       bundle: ByteSource,
       input: MergePlanner.Input,
@@ -221,6 +234,8 @@ object BundleImporter:
     MergeRepo.importing(MergeRepo.Importing(true))
 
   /** sha256 → its uses, for the blobs a WRITTEN row needs (an unchanged row's blob is skipped). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def neededBlobs(es: BundleEntities, writes: UUID => Boolean): Map[Sha256, List[BlobUse]] =
     es.blobRefs.view
       .mapValues(_.filter(u => writes(u.record)))
@@ -232,6 +247,8 @@ object BundleImporter:
     * returned. A blob any use keeps in the database is held in memory (an OCR body or an asset, bounded by
     * `limits.asset-bytes`) and checked first; one only file stores take is streamed into them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def blobs(
       in: InputStream,
       needed: Map[Sha256, List[BlobUse]],
@@ -288,6 +305,7 @@ object BundleImporter:
     * task per merged article and a `log` entry. Last, the same bundle is planned again inside the transaction: what
     * that plan would still change is reported — 0 when the merge is idempotent.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(
       ds: DataSource,
       bundle: ByteSource,
@@ -339,6 +357,8 @@ object BundleImporter:
               )
             )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyIn(
       bundle: ByteSource,
       bundleSha: Sha256,

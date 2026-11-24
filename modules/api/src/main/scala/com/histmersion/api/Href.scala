@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 /** An address a page may link to or show an image from, its scheme checked: only the web (`http`, `https`), mail
   * (`mailto`, links only), an address on this server (relative, no scheme) and, for an image only, an inline raster
   * picture (`data:image/png|jpeg|gif|webp;base64,…`). `javascript:`, `vbscript:`, every other `data:` (an SVG image can
@@ -10,6 +12,7 @@ package api
   * It is read as a browser reads it: tabs and line breaks anywhere and control characters or spaces around it do not
   * count (`java\tscript:` is `javascript:`); the address kept is the one checked, without them.
   */
+@movesTo(FeaturePlace.UtilMarkdown)
 type Href = Href.T
 
 object Href:

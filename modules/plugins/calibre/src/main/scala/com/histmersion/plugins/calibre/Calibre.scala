@@ -18,6 +18,7 @@ import com.histmersion.plugin.CollectionFile
 import com.histmersion.plugin.Processes
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Calibre library read and written through Calibre's own tools.
   *
@@ -33,15 +34,18 @@ import com.histmersion.plugin.Plugin
 final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles):
   import Calibre.{said, Book}
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def libArgs: List[Calibre.Argument] = Calibre.argv("--with-library", cfg.library.value)
 
   /** The Calibre GUI holds an exclusive lock on the library for writes. */
   def guiRunning: Boolean = shell.isRunning(cfg.guiProcess)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def libraryExists: Boolean = files.isFile(Path.of(cfg.library.value, "metadata.db"))
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(
       query: CollectionQuery.Text,
       limit: Calibre.SearchLimit = Calibre.SearchLimit(20)
@@ -49,14 +53,17 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     viaCalibredb(Some(query), limit.value).orElse(viaSqlite(Some(query), None, limit.value))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def all(limit: Calibre.AllLimit = Calibre.AllLimit(1000000)): Either[Problems, List[Book]] =
     viaCalibredb(None, limit.value).orElse(viaSqlite(None, None, limit.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def byId(id: Book.Id): Either[Problems, Option[Book]] =
     viaCalibredb(Some(CollectionQuery.Text(s"id:$id")), 1)
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), 1).map(_.headOption))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def viaCalibredb(
       query: Option[CollectionQuery.Text],
       limit: Int
@@ -71,6 +78,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       ) ++ query.toList.flatMap(q => Calibre.argv("--search", q.value))
     shell.run(cmd).flatMap(Calibre.parseMachineJson)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def viaSqlite(
       query: Option[CollectionQuery.Text],
       id: Option[Book.Id],
@@ -97,6 +105,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * the whole reason this pipeline pushes metadata at all is that Calibre's own metadata sources key on ISBN and
     * cannot identify a journal article.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def add(file: Path, meta: Calibre.Push): Either[Problems, Book.Id] =
     for
       _ <- Calibre.guard(meta.title, meta.authors)
@@ -120,6 +129,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * complete: identifiers merged, tags = the record's topics, the record's year. What is written is
     * [[Calibre.updatePlan]]; nothing is run when the entry already agrees. Returns what changed.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def update(
       id: Book.Id,
       meta: Calibre.Push
@@ -136,6 +146,8 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
     * write the entries that would change. An entry linked from more than one record (a chapter and its volume) is left
     * alone — which record it should show is a decision for a person, `calibre update <citekey>`.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(linked: List[LinkedRecord], apply: Calibre.UpdateAllApply): Either[Problems, List[UpdateEntry]] =
     for
       _ <- Either.cond(!apply.value || !guiRunning, (), GuiRunning)
@@ -163,6 +175,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]] (`enrich-calibre` applies
     * approved fixes with it). Same guards as every other write.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def set(id: Book.Id, fields: List[(Calibre.Field.Name, Calibre.Field.Value)]): Either[Problems, Unit] =
     for
       cmd <- Calibre.setCmd(cfg.calibredb, libArgs, id, fields)
@@ -174,6 +187,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
   /** Replace the file of an EXISTING entry: `calibredb add_format`, which replaces the entry's format of the same type.
     * Unlike [[add]] it never creates an entry, so the link stays valid.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def replaceFormat(id: Book.Id, file: Path): Either[Problems, CollectionFile.Format] =
     for
       fmt <- Calibre.formatOf(file)
@@ -183,6 +197,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def addCmd(file: Path, meta: Calibre.Push): List[Calibre.Argument] =
     Calibre.argv(cfg.calibredb.value, "add", file.toString) ++ libArgs ++
       Calibre.argv("--title", meta.title.value.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
@@ -191,6 +206,7 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       (if meta.tags.isEmpty then Nil else Calibre.argv("--tags", meta.tags.mkString(",")))
 
   /** The fields `calibredb add` cannot set. Best-effort: a failure here leaves a usable entry. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def setMetadata(id: Book.Id, meta: Calibre.Push): Either[Problems, Unit] =
     val fields = List(
       meta.publisher.map("publisher:" + _),
@@ -238,6 +254,7 @@ object Calibre:
   private val Blank = Set("", "unknown", "unknown author", "untitled", "n/a", "?", "none")
 
   /** `tool`'s answer is not JSON: what the reader said. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unreadable(tool: String, e: Any): Problem =
     Problem.Io.Corrupt(
       Problem.Io.Format.Json,
@@ -248,6 +265,7 @@ object Calibre:
   private[calibre] def isBlank(s: String): Boolean = Blank.contains(Option(s).getOrElse("").trim.toLowerCase)
 
   /** The metadata guard, shared by `import` (Calibre → corpus) and `push` (corpus → Calibre). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def guard(title: Push.Title, authors: List[Author]): Either[Problems, Unit] =
     val missing = List(
       Option.when(isBlank(title.value))("title"),
@@ -265,6 +283,7 @@ object Calibre:
   val ReplaceableFormats: List[CollectionFile.Format] =
     List(CollectionFile.Format("pdf"), CollectionFile.Format("epub"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def formatOf(file: Path): Either[Problems, CollectionFile.Format] =
     val ext = CollectionFile.Format(file.getFileName.toString.reverse.takeWhile(_ != '.').reverse.toLowerCase)
     Either.cond(
@@ -281,6 +300,7 @@ object Calibre:
   /** `calibredb add_format` replaces the entry's existing format of the same type (that is its default;
     * `--dont-replace` would be the opposite).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def replaceFormatCmd(
       calibredb: Settings.ExecutablePath,
       libArgs: List[Argument],
@@ -304,6 +324,7 @@ object Calibre:
     * Languages are not written: the corpus records no language for a source. `Left` when the record would put a blank
     * or Unknown title/author into Calibre.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updatePlan(
       meta: Push,
       current: Book
@@ -359,6 +380,7 @@ object Calibre:
     }
 
   /** `calibredb set_metadata` writing `changes` into entry `id`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setMetadataCmd(
       calibredb: Settings.ExecutablePath,
       libArgs: List[Argument],
@@ -373,6 +395,7 @@ object Calibre:
     * only in case is left as Calibre has it. A value with a comma cannot cross `--field identifiers:` (the comma
     * separates the pairs), so it is left out.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mergeIdentifiers(
       current: Map[Book.IdentifiersKey, Book.IdentifiersValue],
       doi: Option[Push.Doi],
@@ -392,6 +415,7 @@ object Calibre:
         .map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def identifiersValue(ids: Map[Book.IdentifiersKey, Book.IdentifiersValue]): String =
     ids.toList.sortBy(_._1.value).map((k, v) => s"$k:$v").mkString(",")
 
@@ -410,6 +434,7 @@ object Calibre:
     * library-style dates. `Clunies Ross, Margaret (ed.)` → `Margaret Clunies Ross`; `King, Martin Luther, Jr.` →
     * `Martin Luther King Jr.`. A name with more commas than that is not one "Last, First" and is left in its order.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normaliseAuthor(raw: Author): Author =
     val unbracketed = (raw).value.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]", " ")
     val bare = Iterator
@@ -427,10 +452,12 @@ object Calibre:
     Author(ordered.replaceAll("\\s+", " ").trim)
 
   /** [[normaliseAuthor]] over a list, dropping names that end up empty and repeats. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normaliseAuthors(authors: List[Author]): List[Author] =
     authors.map(normaliseAuthor).filter(_.value.nonEmpty).distinct
 
   /** Plan `update --all`: one [[UpdateEntry]] per linked Calibre id, in id order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def planAll(
       linked: List[LinkedRecord],
       books: Map[Book.Id, Book]
@@ -467,6 +494,7 @@ object Calibre:
   /** `calibredb set_metadata` for [[Calibre.set]], or why it is refused: an unknown field, nothing to set, or a
     * blank/"Unknown" title or author (the metadata guard).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setCmd(
       calibredb: Settings.ExecutablePath,
       libArgs: List[Argument],
@@ -504,6 +532,7 @@ object Calibre:
     yield argv(calibredb.value, "set_metadata") ++ libArgs ++ argv(id.toString) ++
       fields.flatMap((k, v) => argv("--field", s"$k:$v"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAddedId(out: Processes.Result.Out): Option[Book.Id] =
     AddedIds
       .findFirstMatchIn(out.value)
@@ -515,6 +544,7 @@ object Calibre:
   /** `calibredb list --for-machine`: authors as `A & B`, tags/formats as arrays, identifiers as an object, formats as
     * ABSOLUTE paths.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseMachineJson(out: Processes.Result.Out): Either[Problems, List[Book]] =
     if out.value.trim.isEmpty then Right(Nil) // no match: nothing is printed at all
     else
@@ -576,6 +606,7 @@ object Calibre:
   /** `sqlite3 -json`: every column is a scalar, the multi-valued ones joined by [[sqliteQuery]], and `formats` relative
     * to the library root.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseSqliteJson(
       out: Processes.Result.Out,
       libraryDir: Library.Value
@@ -617,17 +648,20 @@ object Calibre:
           }
         })
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def splitAuthors(s: String): List[Author] =
     s.split(" & ").map(_.trim).filter(_.nonEmpty).toList.map(name => Author(name))
 
   /** Single-quote a SQL literal for the `sqlite3` command line. The only user value that reaches SQL is a search term,
     * and it goes through here.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sqlLiteral(s: CollectionQuery.Text): SqlLiteral = SqlLiteral("'" + s.value.replace("'", "''") + "'")
 
   /** The read-only projection that mirrors `calibredb --for-machine` (Calibre's schema: `books` plus link tables for
     * authors/tags/publishers/identifiers, and `data` for the files).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sqliteQuery(where: SqlWhere, limit: SqliteQueryLimit): SqlQuery =
     SqlQuery(
       s"""SELECT b.id AS id, b.title AS title,
@@ -661,6 +695,8 @@ object Calibre:
         .trim
 
     /** Equal after [[norm]], or one extends the other: Calibre often keeps or drops a subtitle. */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def titleMatches(a: AuditRecord.Title, b: Book.Title): Boolean =
       val (x, y) = (norm(a.value), norm(b.value))
       x.nonEmpty && y.nonEmpty && (x.startsWith(y) || y.startsWith(x))
@@ -672,18 +708,25 @@ object Calibre:
       val name = author.replaceAll("\\([^)]*\\)", " ").trim
       norm(if name.contains(",") then name.takeWhile(_ != ',') else name.split("\\s+").last)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def authorsMatch(a: List[AuditRecord.Authors], b: List[Author]): Boolean =
       (a.map(x => surname(x.value)).toSet & b.map(x => surname(x.value)).toSet).exists(_.nonEmpty)
 
     /** Calibre's placeholder year for "unknown" is 101; anything before 1000 is not a real pubdate. */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def year(b: Book): Option[Book.Year] =
       b.pubdate.flatMap(_.value.take(4).toIntOption).filter(_ >= 1000).map(y => Book.Year(y))
 
     /** The metadata a scrape or a bad import leaves: blank/Unknown, or a title that is a web page. */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def junk(b: Book): Boolean =
       isBlank(b.title.value) || b.title.value.length > 300 || b.authors.isEmpty ||
         b.authors.exists(a => isBlank(a.value) || a.value.toLowerCase(java.util.Locale.ROOT).contains("unknown"))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def issues(r: AuditRecord, b: Book): List[AuditIssue] =
       List(
         Option.when(junk(b))(AuditIssue.Junk),
@@ -693,6 +736,7 @@ object Calibre:
           .when(r.year.isDefined && year(b).isDefined && r.year.map(_.value) != year(b).map(_.value))(AuditIssue.Year)
       ).flatten
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def audit(records: List[AuditRecord], books: Map[Book.Id, Book]): List[AuditFinding] =
       records.groupBy(_.calibreId).toList.sortBy(_._1).flatMap { (id, rs) =>
         val keys = rs.map(_.citekey).sorted.map(k => AuditFinding.Citekeys(k.value))
@@ -734,18 +778,22 @@ object Calibre:
     /** Calibre writes `0101-01-01` for "no date"; a year below [[CalibreBook.FirstYear]] is that placeholder, not a
       * publication year.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def year: Option[Book.Year] = pubdate
       .map(_.value.take(4))
       .filter(_.forall(_.isDigit))
       .flatMap(_.toIntOption)
       .filter(_ >= Book.FirstYear.value)
       .map(y => Book.Year(y))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def doi: Option[Push.Doi] =
       (identifiers.get(Book.IdentifiersKey("doi"))).map(refactorValue24 => Push.Doi((refactorValue24).value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def isbn: Option[Push.Isbn] =
       (identifiers.get(Book.IdentifiersKey("isbn"))).map(refactorValue25 => Push.Isbn((refactorValue25).value))
 
     /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pick(format: Option[CollectionFile.Format]): Option[Book.Formats] =
       val wanted = format.map(_.value.toLowerCase).toList ++ List("pdf", "epub")
       wanted.iterator.map(ext => formats.find((_).value.toLowerCase.endsWith("." + ext))).collectFirst { case Some(f) =>
@@ -880,6 +928,7 @@ object Calibre:
     ): Library =
       library(home, searchPath, path => files.isExecutable(path))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def library(
         home: Option[EnvVar.Value],
         searchPath: Option[EnvVar.Value],
@@ -923,6 +972,7 @@ object Calibre:
     /** `name` as configured when it holds a `/`; otherwise the first executable `name` on `searchPath`, then in
       * [[InstallDirs]].
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def locate(
         name: Calibredb,
         home: Option[EnvVar.Value],

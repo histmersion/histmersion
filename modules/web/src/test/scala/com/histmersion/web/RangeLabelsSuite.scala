@@ -5,8 +5,10 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.RangeLabels.*
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The timeline overview's "from" and "to" years never overlap and never leave the bar. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RangeLabelsSuite extends munit.FunSuite:
 
   private val bar = ElementSize(600.0)
@@ -16,6 +18,7 @@ class RangeLabelsSuite extends munit.FunSuite:
     case Placement.Outside(f, t) => List(f, t)
     case Placement.Joined(l)     => List(l)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def assertReadable(p: Placement): Unit =
     labels(p).foreach(l => assert(l.x.value >= 0 && l.end.value <= bar.value, s"$l leaves the bar"))
     labels(p) match

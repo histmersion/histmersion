@@ -7,7 +7,9 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.RepairAcquire
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaCoversReport(
     dryRun: RepairAcquire.RepairRequest.DryRun,
     sources: MediaCoversReport.Sources = MediaCoversReport.Sources(0),
@@ -31,6 +33,7 @@ object MediaCoversReport:
   type Failed = Failed.T
   object Failed extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
       RepairAcquire.RepairRequest.DryRun(

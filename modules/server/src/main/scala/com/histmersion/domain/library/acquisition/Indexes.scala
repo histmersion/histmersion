@@ -8,6 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.pluginhost.upstreamSettings
 import com.histmersion.upstreams.core.CoreApi
 import com.histmersion.util.plugins.Plugins
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Indexes:
   /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's
@@ -15,6 +16,8 @@ object Indexes:
     * `core` the server's CORE budget.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       cfg: AcquireConfig,
       http: Http,

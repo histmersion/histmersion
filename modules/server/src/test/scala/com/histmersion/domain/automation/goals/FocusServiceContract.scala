@@ -13,10 +13,13 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the focus's reads and records keep: every goal with what the focus recorded; the goals of linked
   * sources and articles; each goal's last stop and its sources.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class FocusServiceContract extends EngineStoreSuite:
   private def f(s: EngineStores) = s.focus
   private val t = Instant.parse("2026-11-03T06:00:00Z")

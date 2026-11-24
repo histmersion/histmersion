@@ -31,6 +31,8 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and
@@ -39,12 +41,15 @@ import com.histmersion.util.database.Unused
   * A foreign row is the local row with the same uid, or no row; what happens to it is [[BundlePlan]]'s decision, or the
   * merge plan's. Rows are written in dependency order, with the bundle's own uids, origins and timestamps.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@atBoundary(BoundaryKind.Sql, "writes a bundle's records into the database")
 object BundleImport:
   export com.histmersion.util.data.exchange.ImportOptions as Options
 
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
   val DeletedRev: BundlePlan.Rev = BundlePlan.Rev(BundlePlan.DeletedRev)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def importing(on: MergeRepo.Importing)(using DbCon): Unit = MergeRepo.importing(on)
 
   // ── the writes ──────────────────────────────────────────────────────────────────────────────
@@ -97,6 +102,7 @@ object BundleImport:
       sql"SELECT citekey FROM sources WHERE uid = $u".query[Citekey].run().headOption
 
     /** The label a target has HERE, when its uid names a row here; else the bundle's label. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def targetLabel(tt: Writer.TargetType, tid: Writer.TargetId, tuid: Option[UUID]): Writer.TargetId =
       tuid
         .flatMap { u =>
@@ -137,6 +143,8 @@ object BundleImport:
     def once[A](o: Once[A]): A = computed.getOrElseUpdate(o, o.make(this)).asInstanceOf[A]
 
     /** Tombstones first: a row the other side deleted makes room for one it created in its place. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
     def tombstones(): Unit =
       val tombs = es.tombstones.map(t => t.uid -> t).toMap
       decided
@@ -175,6 +183,8 @@ object BundleImport:
 
   object Writer:
     type TargetId = TargetId.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetId extends Newtype[String, Pure]
     type TargetType = TargetType.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetType extends Newtype[String, Pure]

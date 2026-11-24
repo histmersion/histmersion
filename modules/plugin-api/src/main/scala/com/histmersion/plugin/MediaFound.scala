@@ -4,6 +4,7 @@ package plugin
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a collection with its own targets' pictures ([[MediaMatchRule.Own]]) found for a batch of targets.
   *
@@ -41,6 +42,7 @@ object MediaFound:
     * pleiades_1`), a batch (`Wikidata Q1…`), one file.
     */
   final case class Failed(about: Failed.About, problem: Problem):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: Failed.Line = Failed.Line(s"$about: ${problem.sentence}")
 
   object Failed:

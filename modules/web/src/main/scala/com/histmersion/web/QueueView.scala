@@ -19,6 +19,7 @@ import com.histmersion.api.Paging
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The three bookkeeping lists — the acquisition queue, the backlog and the worklog — each a window of the main UI,
   * drawn by this ONE implementation parameterised by [[Queue.Kind]] (`/acquire`, `/tasks` and `/log` open the app with
@@ -74,6 +75,7 @@ object QueueView:
     object Url:
       export Preview.Item.Href as Value
     object Cite:
+      @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
       type Citekey = Preview.Target.Source.Citekey
       val Citekey: Preview.Target.Source.Citekey.type = Preview.Target.Source.Citekey
     object Ident:
@@ -99,12 +101,15 @@ object QueueView:
       tick: (Spec.TickDone, Spec.TickReopen)
   ):
     /** Whether items carry a checkbox; the worklog's do not. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checkable: Boolean = kind.checkboxes.value
 
     /** Whether an item can be edited and deleted here; the worklog is only added to. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def editable: Boolean = kind.checkboxes.value
 
     /** Whether an item carries a reason (why it is wanted); a worklog entry is its own record. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reasons: Boolean = kind.checkboxes.value
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */
@@ -124,6 +129,7 @@ object QueueView:
     type TickReopen = TickReopen.T
     object TickReopen extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def spec(kind: Queue.Kind): Spec = kind match
     case Queue.Kind.Acquire =>
       Spec(
@@ -164,6 +170,8 @@ object QueueView:
 
   /** Split an item's text into runs to render: bold, italic, DOIs, URLs, citekeys and bare identifiers; the rest text.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def segments(text: UiLabels.Text): List[Seg] =
     val out = List.newBuilder[Seg]
     var last = 0
@@ -184,6 +192,7 @@ object QueueView:
   /** A topic path (`**Group** > sub_topic`) as its heading and the path above it, readable; `untitled` stands in for an
     * item with no topic.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def heading(
       topic: Option[Queue.QueueItem.Topic],
       untitled: UiLabels.Text = UiLabels.Text("Uncategorised")
@@ -205,6 +214,7 @@ object QueueView:
   /** The day a worklog group is about: the date its topic starts with (a range such as `2026-06-24/25` keeps its first
     * day), else the day its newest entry was written; `""` when neither is known, which sorts last.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logDate(topic: Option[Queue.QueueItem.Topic], items: List[Queue.QueueItem]): UiLabels.Text =
     topic.map(_.value.trim) match
       case Some(LeadingDate(d)) => UiLabels.Text(d)
@@ -218,6 +228,8 @@ object QueueView:
   /** The items grouped by topic, each group in id order. The checkbox lists keep the groups in the order their first
     * item was added; the worklog puts the newest date first (ties: file order).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def groups(
       kind: Queue.Kind,
       items: List[Queue.QueueItem]
@@ -231,6 +243,8 @@ object QueueView:
 
   /** The line above the list: how many are left (and done), or for the worklog how many entries over how many days.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(spec: Spec, items: List[Queue.QueueItem]): UiLabels.Text =
     if spec.checkable then
       val done = items.count(_.status.value == Queue.Done)
@@ -251,10 +265,13 @@ object QueueView:
   /** The write that ticks `item` off as fulfilled by the source `citekey` — the core rule ([[Queue.fulfil]]) the
     * server's OCR job applies too, addressed to the item.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fulfil(item: Queue.QueueItem, citekey: Preview.Target.Source.Citekey): (Queue.QueueItem.Id, Queue.QueuePatch) =
     item.id -> Queue.fulfil(item, citekey)
 
   /** The add form, as typed. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   final case class AddDraft(
       text: AddDraft.Text = AddDraft.Text(""),
       topic: AddDraft.Topic = AddDraft.Topic(""),
@@ -272,6 +289,9 @@ object QueueView:
   /** The item to add, or why not: the text must not be blank; a blank topic or reason is left out (a worklog entry with
     * no topic joins today's date, server-side); the worklog takes no reason.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def validateAdd(sp: Spec, d: AddDraft): Either[Problem, Queue.QueueAdd] =
     if d.text.value.trim.isEmpty then Left(Problem.Unclassified(Legacy.Text(EmptyText)))
     else
@@ -290,6 +310,9 @@ object QueueView:
   /** The patch an inline edit makes: only what changed (`None` = nothing did); a blank topic moves the item out of its
     * group; a blank text is refused.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def editPatch(
       item: Queue.QueueItem,
       text: Queue.QueueItem.Text,
@@ -306,6 +329,7 @@ object QueueView:
   /** The topics to offer while one is typed: those the list already uses, in the order they first appear, matching what
     * is typed (case and underscores aside), without the one typed exactly.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def topicSuggestions(
       items: List[Queue.QueueItem],
       typed: Api.Search.Text,
@@ -328,6 +352,10 @@ object QueueView:
 
   /** One window's pane. Its state lives with the pane, so each window loads its own list. */
   /** A list's page; with `goal`, only the items that serve that research goal. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def pane(kind: Queue.Kind, goal: Option[Goal.Slug] = None): HtmlElement =
     val sp = spec(kind)
     val recheck = Var(Option.empty[Either[String, Acquire.Checks.RecheckResult]])
@@ -522,10 +550,15 @@ object QueueView:
   )
 
   /** A topic path as the suggestion list shows it: readable, the levels joined by `›`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def topicLabel(t: Queue.QueueItem.Topic): UiLabels.Text =
     val (last, path) = heading(Some(t))
     UiLabels.Text((path :+ last).mkString(" › "))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def addForm(
       sp: Spec,
       items: Signal[List[Queue.QueueItem]],
@@ -610,6 +643,8 @@ object QueueView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderGroup(
       sp: Spec,
       topic: Option[Queue.QueueItem.Topic],
@@ -641,6 +676,8 @@ object QueueView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderItem(
       sp: Spec,
       item: Queue.QueueItem,
@@ -739,12 +776,15 @@ object QueueView:
     )
 
   /** A list as Research's side navigation names it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def listName(kind: Queue.Kind): UiLabels.Text = kind match
     case Queue.Kind.Acquire => UiLabels.Text("To acquire")
     case Queue.Kind.Tasks   => UiLabels.Text("Backlog")
     case Queue.Kind.Log     => UiLabels.Text("Worklog")
 
   /** Who wrote an item and who ticked it off: the agent run or background job, each a link to its page. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def provenance(item: Queue.QueueItem): Option[HtmlElement] =
     val parts = item.createdBy
       .map(id =>
@@ -761,6 +801,9 @@ object QueueView:
     )
 
   /** What one agent run or background job wrote to the lists and ticked off — its page's side of the links. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofJob(jobId: JobInfo.Id): HtmlElement =
     val found = Var(Option.empty[List[Queue.QueueItem]])
     div(
@@ -797,9 +840,13 @@ object QueueView:
     )
 
   /** The id of an item's row, which a link to it scrolls to. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemAnchor(id: Queue.QueueItem.Id): String = s"queue-item-$id"
 
   /** The item a link to the list points at (`?item=12`). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def targetItem(search: Api.Search.Text): Option[Queue.QueueItem.Id] =
     Option(search.value)
       .map(_.stripPrefix("?"))
@@ -811,6 +858,8 @@ object QueueView:
       .map(Queue.QueueItem.Id(_))
 
   /** A small button on an item; a write is disabled while writes are not allowed. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def actionButton(text: UiLabels.Text, act: () => Unit, write: Writes = Writes(true)): HtmlElement =
     button(
       typ := "button",
@@ -820,6 +869,8 @@ object QueueView:
       onClick --> (_ => act())
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def editForm(item: Queue.QueueItem, ops: Ops, topicsId: String, close: () => Unit): HtmlElement =
     val text = Var(item.text)
     val topic = Var(item.topic.getOrElse(Queue.QueueItem.Topic("")))
@@ -863,6 +914,9 @@ object QueueView:
     )
 
   /** Search the corpus as the reader types; picking a source ticks the item off as fulfilled by it. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def linkPicker(item: Queue.QueueItem, ops: Ops, close: () => Unit): HtmlElement =
     val query = Var(QueueItemRef.searchQuery(item))
     val hits = Var(Option.empty[List[SearchHit]])
@@ -915,6 +969,8 @@ object QueueView:
       div(cls := "form-actions", button(typ := "button", cls := "btn", "cancel", onClick --> (_ => close())))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def render(s: Seg): Modifier[HtmlElement] = s match
     case Seg.Text(t)   => t.value
     case Seg.Bold(t)   => b(t)

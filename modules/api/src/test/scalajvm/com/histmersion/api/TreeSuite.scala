@@ -16,33 +16,41 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.{Bucket, Citekey, TimeHistogram, Title}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Place.Relation.{ChildId, ParentId}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive counts with their
   * `overlap`, the `unlocated` leaf, samples and the depth clamp. No database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TreeSuite extends munit.FunSuite:
 
   // ── a tiny gazetteer, exactly the §1.6a acceptance shape ────────────────────────────────────
   //   asia ─┬─ anatolia ─┬─ hatti    (-1650…-1180) ─┬─ hattusa   (edge -1650…-1180)
   //         │            └─ phrygia  (-1200… -700) ─┘           (edge -1200… -700)
   //         └─ near_east ── mitanni  (-1500…-1300)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val asia = RegionNode(RegionNode.Id("asia"), RegionNode.Label("Asia"), RegionNode.Kind(Place.Kind.Region))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val anatolia =
     RegionNode(RegionNode.Id("anatolia"), RegionNode.Label("Anatolia"), RegionNode.Kind(Place.Kind.Region))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val nearEast =
     RegionNode(RegionNode.Id("near_east"), RegionNode.Label("Near East"), RegionNode.Kind(Place.Kind.Region))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hatti = RegionNode(
     RegionNode.Id("hatti"),
     RegionNode.Label("Hittite Empire"),
     RegionNode.Kind(Place.Kind.Polity),
     Some(Period(Year(-1650), Year(-1180)))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val phrygia = RegionNode(
     RegionNode.Id("phrygia"),
     RegionNode.Label("Phrygia"),
     RegionNode.Kind(Place.Kind.Polity),
     Some(Period(Year(-1200), Year(-700)))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val mitanni =
     RegionNode(
       RegionNode.Id("mitanni"),
@@ -51,11 +59,13 @@ class TreeSuite extends munit.FunSuite:
       Some(Period(Year(-1500), Year(-1300))),
       contested = RegionNode.Contested(true)
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hattusa =
     RegionNode(RegionNode.Id("hattusa"), RegionNode.Label("Hattusa"), RegionNode.Kind(Place.Kind.Site))
 
   private val nodes = List(asia, anatolia, nearEast, hatti, phrygia, mitanni, hattusa)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def part(child: ChildId, parent: ParentId, p: Option[Period] = None) =
     Place.Relation(child, parent, Place.Relation.Kind(Place.Relation.PartOf), p)
 
@@ -70,6 +80,7 @@ class TreeSuite extends munit.FunSuite:
     part(ChildId("hattusa"), ParentId("phrygia"), Some(Period(Year(-1200), Year(-700))))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def row(key: TreeRow.Key, start: Year, end: Year, places: RegionNode.Id*) =
     TreeRow(key, Citekey(key.value), Title(s"Title of ${key.value}"), Some(start), Some(end), places.toList)
 
@@ -512,6 +523,7 @@ class TreeSuite extends munit.FunSuite:
     )
 
 /** Root eligibility and the "is this split worth drawing" rule (§1.6, UX items 7 and 8). Pure. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TreeRootsSuite extends munit.FunSuite:
 
   private def node(

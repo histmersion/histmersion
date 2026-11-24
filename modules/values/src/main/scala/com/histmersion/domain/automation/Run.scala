@@ -4,6 +4,7 @@ package domain.automation
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Run:
 
@@ -26,6 +27,7 @@ object Run:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     def next(from: State, to: State): Option[State] = (from, to) match

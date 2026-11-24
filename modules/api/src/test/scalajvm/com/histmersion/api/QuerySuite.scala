@@ -7,12 +7,15 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.Query.*
 import com.histmersion.api.library.Query
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the read-only query surface: the Markdown table and the generated tool description (plan §5.2
   * stream 2.8). Execution is the search's `QueryRepo`, tested against Postgres.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class QuerySuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def row(vs: String*): List[Option[QueryResult.Rows]] =
     vs.toList.map(v => if v == null then None else Some(QueryResult.Rows(v)))
 

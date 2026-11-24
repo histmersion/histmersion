@@ -18,12 +18,14 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `POST /api/maintenance/vacuum` and the MCP `vacuum` tool (#1445) over real HTTP: the request answers at once with a
   * `vacuum` job, the job runs VACUUM (ANALYZE) outside any transaction (inside one, Postgres refuses it: "VACUUM cannot
   * run inside a transaction block") and ends `done` with a line per table. Gated on HISTMERSION_TEST_DB_URL like the
   * other server suites. Vacuums only small tables, so it is quick and leaves the other suites' fixtures alone.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class VacuumHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -49,6 +51,7 @@ class VacuumHttpSuite extends munit.FunSuite:
     RawJson.decode[JobInfo](body).fold(e => fail(s"not a job: $body ($e)"), identity)
 
   /** Poll the job until it ends (a vacuum of two tiny tables takes well under a second). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def await(url: String, id: SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =
     val (s, b) = get(s"$url/api/jobs/$id")
     assertEquals(s, 200, b)

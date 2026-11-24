@@ -20,20 +20,31 @@ import com.histmersion.domain.CreatorControllers
   * pinned extracts and the drop folder).
   */
 object PlacesRoutes:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def missing(id: ApiPlace.Id): Api.Error =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def exact(id: ApiPlace.Id): Either[Api.Error, Place.Id] = Place.Id.either(id.value).left.map(_ => missing(id))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def trimmed(id: ApiPlace.Id): Either[Api.Error, Place.Id] =
     Place.Id.either(id.value.trim).left.map(_ => missing(id))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def year(asOf: Option[Api.AggregateQuery.AsOf]): Option[DeepTime.SignedYear] =
     asOf.map(y => DeepTime.SignedYear(y.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def apply(
       places: PlacesControllers,
       gazetteer: GazetteerControllers,

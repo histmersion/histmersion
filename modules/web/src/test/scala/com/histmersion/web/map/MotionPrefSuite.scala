@@ -4,11 +4,14 @@ package web.map
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.{Store, UiState}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The reader's "Map motion" (#4718): what each choice decides with and without the system's reduced-motion setting,
   * what MapLibre is told, the stylesheet's attribute, when the menu's note shows — and the choice kept per device. Runs
   * in Node: no `matchMedia`, so the system's setting is set by hand.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class MotionPrefSuite extends munit.FunSuite:
 
   override def afterEach(context: AfterEach): Unit =

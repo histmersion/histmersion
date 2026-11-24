@@ -4,8 +4,11 @@ package config
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.domain.automation.Pipeline
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Per run defaults (overridable per run) and the global caps checked before every LLM call. */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentBudgetsConfig(
     runUsd: AgentBudgetsConfig.RunUsd,
     runTokens: AgentBudgetsConfig.RunTokens,
@@ -36,6 +39,7 @@ object AgentBudgetsConfig:
   type CacheReadWeight = CacheReadWeight.T
   object CacheReadWeight extends Newtype[Double, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parsePipelineTokens(s: PipelineRunTokens): Map[Pipeline.Wire, RunTokens] =
     s.value
       .split(",")

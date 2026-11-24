@@ -13,6 +13,7 @@ import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.util.storage.{Blob, RandomReader}
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The PMTiles v3 archive format (https://github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md): one file holding a
   * tile pyramid, addressed by a Hilbert-curve tile id, readable with HTTP range requests. The terrain base map's two
@@ -21,6 +22,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Everything here is a PURE transformation of bytes — the header, the varint directories, the tile id — so the reader
   * ([[PmTilesFile]]), the writer ([[PmTilesWriter]]) and the remote extract ([[BasemapFetch]]) share one tested codec.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 object PmTiles:
 
   /** The place in the data that a problem names: where in a PMTiles archive its header is. */
@@ -33,6 +35,7 @@ object PmTiles:
   type CompressedBytes = CompressedBytes.T
   object CompressedBytes extends Newtype[Array[Byte], Pure]
   type HeaderBytes = HeaderBytes.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object HeaderBytes extends Newtype[Array[Byte], Pure]
   type PlainBytes = PlainBytes.T
   object PlainBytes extends Newtype[Array[Byte], Pure]
@@ -108,20 +111,28 @@ object PmTiles:
   )
 
   object Header:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type RootOffset = ByteOffset
     val RootOffset: ByteOffset.type = ByteOffset
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type RootLength = ByteCount
     val RootLength: ByteCount.type = ByteCount
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type MetadataOffset = ByteOffset
     val MetadataOffset: ByteOffset.type = ByteOffset
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type MetadataLength = ByteCount
     val MetadataLength: ByteCount.type = ByteCount
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type LeafOffset = ByteOffset
     val LeafOffset: ByteOffset.type = ByteOffset
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type LeafLength = ByteCount
     val LeafLength: ByteCount.type = ByteCount
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type DataOffset = ByteOffset
     val DataOffset: ByteOffset.type = ByteOffset
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type DataLength = ByteCount
     val DataLength: ByteCount.type = ByteCount
     type AddressedTiles = AddressedTiles.T
@@ -151,12 +162,14 @@ object PmTiles:
     * data section); `runLength == 0` points to a LEAF directory instead (relative to the leaf section).
     */
   final case class Entry(tileId: Entry.TileId, offset: Entry.Offset, length: Entry.Length, runLength: Entry.RunLength):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def isLeaf: Boolean = runLength.value == 0
 
   object Entry:
 
     type TileId = TileId.T
     object TileId extends Newtype[Long, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Offset = ByteOffset
     val Offset: ByteOffset.type = ByteOffset
     type Length = Length.T
@@ -168,6 +181,8 @@ object PmTiles:
 
   // ── the header ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseHeader(b: HeaderBytes): Either[Problem, Header] =
     val a: Array[Byte] = b.value
     if a.length < HeaderLength then
@@ -242,6 +257,8 @@ object PmTiles:
         Header.CenterLat(e7(123))
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def encodeHeader(h: Header): HeaderBytes =
     val bb = ByteBuffer.allocate(HeaderLength).order(ByteOrder.LITTLE_ENDIAN)
     bb.put(Magic).put(3.toByte)
@@ -273,9 +290,13 @@ object PmTiles:
   // ── tile ids ────────────────────────────────────────────────────────────────────────────────────
 
   /** The first tile id of zoom `z`: the number of tiles on all zooms below it, (4^z − 1) / 3. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoomBase(z: Zoom): Entry.TileId = Entry.TileId(((1L << (2 * z.value)) - 1) / 3)
 
   /** The tile id of `z/x/y`: [[zoomBase]] plus the tile's position on the zoom's Hilbert curve. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tileId(z: Zoom, x: TileColumn, y: TileRow): Entry.TileId =
     val zv: Int = z.value
     val xv: Long = x.value
@@ -303,6 +324,8 @@ object PmTiles:
     Entry.TileId(zoomBase(z).value + d)
 
   /** The inverse of [[tileId]]: `(z, x, y)`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zxy(id: Entry.TileId): (Zoom, TileColumn, TileRow) =
     val idv: Long = id.value
     var z = 0 // the zoom whose id range holds `id`
@@ -357,6 +380,7 @@ object PmTiles:
   /** A directory's bytes, uncompressed: the count, then the id deltas, run lengths, lengths and offsets column by
     * column (an offset of 0 means "right after the previous entry").
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def encodeDirectory(entries: IndexedSeq[Entry]): PlainBytes =
     val out = ByteArrayOutputStream()
     writeVarint(out, entries.size.toLong)
@@ -371,6 +395,8 @@ object PmTiles:
     }
     PlainBytes(out.toByteArray)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decodeDirectory(b: PlainBytes): Either[Problem, Vector[Entry]] =
     try
       val v = Varints(b.value)
@@ -417,6 +443,7 @@ object PmTiles:
   /** The entry that holds `id` in one sorted directory: the last whose id is ≤ `id` — a leaf pointer (to look further
     * in) or a run that covers it. `None`: not in this directory.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def find(entries: IndexedSeq[Entry], id: Entry.TileId): Option[Entry] =
     var lo = 0
     var hi = entries.size - 1
@@ -435,6 +462,8 @@ object PmTiles:
   /** Where entry `e` lies in the file, in the section that starts at `section`: the offset to read from and the number
     * of bytes.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def range(section: ByteOffset, e: Entry): Either[Problem, (ByteOffset, ByteCount)] =
     for
       at <- ByteOffset
@@ -449,11 +478,15 @@ object PmTiles:
 
   // ── compression ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gzip(b: PlainBytes): CompressedBytes =
     val out = ByteArrayOutputStream()
     Using.resource(GZIPOutputStream(out))(_.write(b.value: Array[Byte]))
     CompressedBytes(out.toByteArray)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gunzip(b: CompressedBytes): Either[Problem, PlainBytes] =
     try Right(PlainBytes(Using.resource(GZIPInputStream(ByteArrayInputStream(b.value: Array[Byte])))(_.readAllBytes())))
     catch
@@ -464,10 +497,14 @@ object PmTiles:
             .in(Problem.Io.Format.Gzip, Problem.Where("compressed data"))
         )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isGzip(b: TileBytes): Boolean =
     val a: Array[Byte] = b.value
     a.length >= 2 && (a(0) & 0xff) == 0x1f && (a(1) & 0xff) == 0x8b
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decompress(b: CompressedBytes, c: Compression): Either[Problem, PlainBytes] = c match
     case Compression.None | Compression.Unknown => Right(PlainBytes(b.value))
     case Compression.Gzip                       => gunzip(b)
@@ -478,6 +515,8 @@ object PmTiles:
           .in(Problem.Io.Format.PmTiles, AtHeader)
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def compress(b: PlainBytes, c: Compression): CompressedBytes = c match
     case Compression.Gzip => gzip(b)
     case _                => CompressedBytes(b.value)
@@ -498,8 +537,10 @@ object PmTiles:
 
     private val leaves = ConcurrentHashMap[Long, Vector[Entry]]()
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def read(at: ByteOffset, e: Entry): Array[Byte] = reader.read(at, ByteLength(e.length.value)).value
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def leaf(e: Entry): Either[Problem, Vector[Entry]] =
       Option(leaves.get(e.offset.value)).map(Right(_)).getOrElse {
         range(header.leafOffset, e)
@@ -513,6 +554,7 @@ object PmTiles:
       }
 
     /** The entry for `z/x/y`, walking leaf directories (at most four levels, as the spec allows). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def entry(z: Zoom, x: TileColumn, y: TileRow): Either[Problem, Option[Entry]] =
       val zoom: Int = z.value
       if zoom < header.minZoom.value || zoom > header.maxZoom.value || x.value < 0 || y.value < 0 || x.value >= (1L << zoom) || y.value >= (1L << zoom)
@@ -533,6 +575,7 @@ object PmTiles:
     /** The stored bytes of `z/x/y` (still compressed as [[PmTiles.Header.tileCompression]] says), or `None` when the
       * archive has no such tile.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def tile(z: Zoom, x: TileColumn, y: TileRow): Either[Problem, Option[TileBytes]] =
       entry(z, x, y).flatMap {
         case None    => Right(None)
@@ -548,6 +591,7 @@ object PmTiles:
     type MaxLeaves = MaxLeaves.T
     object MaxLeaves extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def open(blob: Blob, maxLeaves: MaxLeaves = MaxLeaves(256)): Either[Problem, File] =
       val where = blob.where
       def unread(e: java.io.IOException): Problem =
@@ -580,6 +624,7 @@ object PmTiles:
         catch case e: java.io.IOException => Left(unread(e))
       opened.left.map(_.inside(Problem.Where.of(where)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def metadata(reader: RandomReader, h: Header): Either[Problem, Json] =
       if h.metadataLength.value <= 0 then Right(Json.obj())
       else if h.metadataLength.value > 16L * 1024 * 1024 then

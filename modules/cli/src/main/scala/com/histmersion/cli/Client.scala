@@ -100,6 +100,8 @@ import com.histmersion.api.instance.CorpusCounts
 import com.histmersion.api.media.AssetLinks
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api.HttpMethod.equality
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the server interprets,
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
@@ -112,6 +114,7 @@ final class Client(
 ):
   import Client.{transport, unexpected, ConnectTimeout, Histmersion, HttpStatus, PollTimeout, Write}
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private val base = Uri.unsafeParse(serverUrl.value)
 
   def createdBy: Option[Creation.By] = caller.createdBy
@@ -148,6 +151,7 @@ final class Client(
   /** The bearer token on a request. EVERY request goes through here — the typed calls and the two file downloads alike
     * (#767: `downloadBackup` was built by hand and sent none).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def authed[T](req: Request[T]): Request[T] = token.fold(req)(t => req.auth.bearer(t.value))
 
   /** One place turns a response into a result. Decoding does NOT throw: an answer the endpoint does not describe (the
@@ -155,6 +159,7 @@ final class Client(
     * "cannot reach … is the server running?". Only a failure to TALK to the server is that; everything else says what
     * the server answered.
     */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def send[O](req: Request[sttp.tapir.DecodeResult[Either[Api.Error, O]]]): Either[Cli.Error, O] =
     val write = Write.of(req.method)
     scala.util.Try(req.send(backend)) match
@@ -180,6 +185,7 @@ final class Client(
   def version: Either[Cli.Error, Version.Info] = call(Api.version)(())
   def health: Either[Cli.Error, Health] = call(Api.health)(())
   def about: Either[Cli.Error, About] = call(Api.about)(())
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(q: Option[Api.Search.Text], limit: Option[Paging.Limit]): Either[Cli.Error, List[SearchHit]] =
     call(Api.search)((q, limit.map(l => Api.Search.Limit(l.value))))
   def sources(f: Filter): Either[Cli.Error, SearchResult] = call(Api.sources)(f)
@@ -200,11 +206,13 @@ final class Client(
   ): Either[Cli.Error, ContradictionsResult] =
     call(Api.contradictions)((ck, since))
   def seed(req: SeedRequest): Either[Cli.Error, SeedResult] = call(Api.seed)(req)
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def reindex(after: Option[Api.Reindex.Scope], limit: Option[Paging.Limit]): Either[Cli.Error, ReindexResult] =
     call(Api.reindex)((after, limit.map(l => Api.Reindex.Limit(l.value))))
 
   // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
   def configReload: Either[Cli.Error, ReloadReport] = call(Api.configReload)(())
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def settings(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
     call(ConfigEditApi.get)(prefix.map(p => ConfigEdit.Page.Selector(p.value)))
   def writeSettings(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
@@ -253,9 +261,11 @@ final class Client(
   def mergeImport(req: MergeImportRequest): Either[Cli.Error, Bundle.ImportResult] = call(Api.mergeImport)(req)
   def mergeApply(req: MergeApplyRequest): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApply)(req)
   def mergeApplyStatus(job: Api.Merge.Id): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApplyStatus)(job)
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def merges(limit: Option[Paging.Limit]): Either[Cli.Error, List[MergeInfo]] =
     call(Api.merges)(limit.map(l => Api.Merge.Limit(l.value)))
   def mergeDetail(id: Api.Merge.Id): Either[Cli.Error, MergeDetail] = call(Api.mergeDetail)(id)
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def mergeLedger(
       uid: Option[Api.Merge.Id],
       merge: Option[Api.Merge.Entity],
@@ -273,12 +283,14 @@ final class Client(
     call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def putSource(
       ck: Citekey,
       in: Source.Put,
       strict: Cli.Strict = Cli.Strict(false)
   ): Either[Cli.Error, Source.WithFindings] =
     call(Api.putSource)((ck, in, Api.Overwrite(strict.value)))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchSource(
       ck: Citekey,
       p: Source.Patch,
@@ -304,6 +316,7 @@ final class Client(
     call(Api.deleteSource)((ck, Source.DeleteRequest(apply)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def places(
       q: Option[Api.Search.Text],
       asOf: Option[Api.AggregateQuery.AsOf],
@@ -320,6 +333,7 @@ final class Client(
       depth: Option[Place.Depth]
   ): Either[Cli.Error, List[Place.TreeRow]] =
     call(Api.placeTree)((id, asOf, depth))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def importPlaces(
       kind: Option[Api.ExternalPlaces.Source],
       body: Api.ExternalPlaces.Format,
@@ -357,6 +371,7 @@ final class Client(
   def period(id: Period.Id): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
   def seedPeriods(replace: Api.Overwrite = Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] =
     call(Api.seedPeriods)(replace)
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def importPeriods(
       collections: List[CorpusCounts.Periods.Source],
       body: CorpusCounts.Periods.Name,
@@ -403,12 +418,14 @@ final class Client(
   def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
   def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] =
     call(Api.getArticle)((slug, Article.FullText(false)))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def putArticle(
       slug: ReviewGoal.Slug,
       in: Article.Put,
       strict: Cli.Strict = Cli.Strict(false)
   ): Either[Cli.Error, Article.View] =
     call(Api.putArticle)((slug, in, Api.Overwrite(strict.value)))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchArticle(
       slug: ReviewGoal.Slug,
       p: Article.Patch,
@@ -428,6 +445,7 @@ final class Client(
   // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
   def lint(rules: List[Lint.Wire]): Either[Cli.Error, Lint.LintReport] = call(OpsApi.lint)(rules)
   def lintFix(rules: List[Lint.Wire]): Either[Cli.Error, Lint.LintFixResult] = call(OpsApi.lintFix)(rules)
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def queueList(list: Queue.Wire, all: Boolean): Either[Cli.Error, QueueListing] =
     call(OpsApi.queueList)((list, all, None, None))
   def queueAdd(list: Queue.Wire, in: Queue.QueueAdd): Either[Cli.Error, Queue.QueueItem] =
@@ -452,19 +470,25 @@ final class Client(
   def basemapStatus(): Either[Cli.Error, Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Either[Cli.Error, JobInfo] = call(BasemapApi.fetch)(q)
   def basemapRemove(q: Basemap.RemoveQuery): Either[Cli.Error, Basemap.Removed] = call(BasemapApi.remove)(q)
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def jobs(
       f: ListFilters.JobFilter,
       limit: Option[Paging.Limit],
       before: Option[Api.Jobs.Status] = None
   ): Either[Cli.Error, (List[JobInfo], Paging.Page)] =
     call(Api.jobs)((f, limit.map(l => Api.Jobs.Limit(l.value)), before, None))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def assets(ck: Citekey): Either[Cli.Error, List[AssetInfo]] = call(Api.assets)(Api.Assets.Kind(ck.value))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def putAssets(ck: Citekey, in: List[AssetInput]): Either[Cli.Error, AssetsStored] =
     call(Api.putAssets)((Api.Assets.Owner(ck.value), in))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def assetDetail(ck: Citekey, name: Bundle.Asset.Variant): Either[Cli.Error, AssetDetail] =
     call(Api.assetDetail)((Bundle.Asset.Uid(ck.value), name))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchAsset(ck: Citekey, name: Bundle.Asset.Variant, p: AssetPatch): Either[Cli.Error, AssetDetail] =
     call(Api.patchAsset)((Bundle.Asset.Uid(ck.value), name, p))
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def assetLinks(
       ck: Option[Citekey],
       asset: Option[Bundle.Asset.Variant],
@@ -564,6 +588,7 @@ object Client:
 
   val PollTimeout: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration(30, "s")
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def transport(thrown: Throwable, serverUrl: ServerUrl, sent: Problem.Upstream.Url, write: Write): Problem =
     val reported = External.Reported.of(s"${thrown.getClass.getSimpleName}: ${thrown.getMessage}")
     def unreachable =
@@ -583,6 +608,8 @@ object Client:
   /** What to say when the server answered something the endpoint does not describe. Pure. A refusal names what was
     * refused (#819: a refused backup download used to read "refused this write").
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def unexpected(status: HttpStatus, serverUrl: ServerUrl, write: Write): Problem = status.value match
     case 401 =>
       Problem.Unclassified(

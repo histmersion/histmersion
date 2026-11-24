@@ -3,12 +3,15 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Repository landing pages (#1580, [[RepositoryLanding]]): whether the fetch resolves them one step, how many it reads
   * per work, and the host and platform lists that decide what is a repository (each comma-separated; a host matches
   * itself and its subdomains). `denyHosts` — publishers, and sites that are not repositories — wins over every other
   * signal; `denyHostsExtra` is added to it, so a user's config can deny more hosts without restating the shipped list.
   */
+@movesTo(FeaturePlace.LibraryAcquisition)
 final case class LandingConfig(
     enabled: LandingConfig.Enabled,
     maxPages: ItemCount,
@@ -26,6 +29,7 @@ final case class LandingConfig(
       */
     browserDownloadHosts: CommaList = CommaList("")
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refusingHosts: List[LandingConfig.RefusingHost] =
     browserDownloadHosts.entries.map(e => LandingConfig.RefusingHost(e.value))
 

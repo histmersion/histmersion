@@ -23,11 +23,14 @@ import com.histmersion.domain.catalogue.events.EventService
 import com.histmersion.api.catalogue.Year
 import com.augustnagro.magnum.sql
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What an event's card and the leads are computed from: the sources attesting an event, the dated findings near it,
   * the facts of each event's lead (its size, the findings around it, the sources proposed and confirmed), and the
   * catalogue events an article's region and period hold.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait LeadService:
   /** The sources attesting one event: its own, then those of the attestations naming it. */
   def attestingSources(id: Event.Id): List[EventSourceRef]
@@ -121,6 +124,8 @@ object LeadService:
       source: Citekey => Option[(Option[EventSourceRef.Title], Option[Year])]
   ) extends LeadService:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def attestingSources(id: Event.Id): List[EventSourceRef] =
       val s = state.get
       val own = s.events
@@ -159,6 +164,7 @@ object LeadService:
         limit: PageSize
     ): List[EventFindingRef] = Nil
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def factsOf(s: CatalogueState, id: Event.Id): Option[LeadRow] =
       s.events.find(_.id == id).map { e =>
         val recs = s.catalogueRecords.filter(_._1 == id).map(_._2)
@@ -185,6 +191,7 @@ object LeadService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def leads(
         selection: EventSelection,
         km: CM.Tolerance.Km,

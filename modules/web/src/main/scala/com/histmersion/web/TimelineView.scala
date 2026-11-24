@@ -19,13 +19,16 @@ import com.histmersion.api.personal.Bookmark
 import com.histmersion.api.UiLabels
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.marks.PeriodMarks
+import com.histmersion.lint.{LintRule, tolerated}
 
 object TimelineView:
   private val OH = Layout.overviewHeight.value
   private val O_BASE = Layout.overviewBase.value
   private val DH = Layout.detailHeight.value
   private val D_BASE = Layout.detailBase.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val MIN_SPAN = Layout.minSpan.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val HANDLE_W = Layout.handleWidth.value
   private val ZOOM = 2.0
 
@@ -35,10 +38,14 @@ object TimelineView:
   /** The span shown IS `UiState.from/to` (no copy): a drag writes the fields live without committing, and commits once,
     * on release.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spanFrom: Years.Astronomical = Years.Astronomical(UiState.from.now().getOrElse(limits.defaultFrom.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spanTo: Years.Astronomical = Years.Astronomical(UiState.to.now().getOrElse(limits.defaultTo.value))
 
   /** A span of the timeline as the filter and the labels read it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(from: Years.Astronomical, to: Years.Astronomical): Period =
     Period(Year(from.value), Year(to.value))
   private val detailBars = Var(List.empty[TimeBucket])
@@ -112,6 +119,7 @@ object TimelineView:
   val folded: Var[Boolean] = Var(try Option(dom.window.localStorage.getItem(foldedKey)).contains("1")
   catch case _: Exception => false)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def setFolded(on: Boolean): Unit =
     folded.set(on)
     try dom.window.localStorage.setItem(foldedKey, if on then "1" else "0")
@@ -119,6 +127,8 @@ object TimelineView:
 
   // ── span algebra ──────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def clamp(a0: Years.Astronomical, b0: Years.Astronomical): (Years.Astronomical, Years.Astronomical) =
     var a = Math.round(Math.min(a0.value.toDouble, b0.value.toDouble))
     var b = Math.round(Math.max(a0.value.toDouble, b0.value.toDouble))
@@ -134,6 +144,7 @@ object TimelineView:
   /** Locked, the timeline keeps its span: no drag, wheel, click or menu of its own changes it. */
   val locked: Var[Boolean] = Var(false)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def setLocked(on: Boolean): Unit =
     locked.set(on)
     Flash.say(if on then Flash.Text("The timeline is locked: its years stay until you unlock it.")
@@ -142,6 +153,8 @@ object TimelineView:
   /** The person's own periods ([[marks.PeriodMarks]]) and the naming of a new one, in the presets menu. */
   private val namingPeriod = Var(Option.empty[Bookmark.Label])
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def setSpan(from: Years.Astronomical, to: Years.Astronomical, push: Router.Push = Router.Push(true)): Unit =
     val (nf, nt) = clamp(from, to)
     if locked.now() then bumpRender()
@@ -158,12 +171,14 @@ object TimelineView:
 
   // ── data loading ──────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scheduleDetail(): Unit =
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => loadDetail(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(150)).value)
 
   /** What the detail strip was last asked for: the filter over the span on screen. */
   private var lastDtKey: String = ""
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def detailKey(): String = UiState.toFilter().copy(period = Some(period(spanFrom, spanTo))).toString
 
   private[web] val MAX_BUCKETS = Layout.maxBuckets
@@ -171,6 +186,8 @@ object TimelineView:
   /** A bucket every [[TimelineCurve.PxPerBucket]] px (one a pixel drew a staircase of 1-px risers), and never more than
     * `Layout.maxBuckets`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def bucketSizeFor(spanYears: Years.Shift, pixelWidth: Double): PlaybackBuckets.BucketYears =
     val byPixels =
       Math.ceil(spanYears.value.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket.value)).toLong
@@ -183,6 +200,9 @@ object TimelineView:
     * newest change next (it fired one per change, undebounced: sweeping the pointer down a suggestion list sent one per
     * row). Only the newest answer is drawn.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val overview = LatestOnly[Double] { (pixelWidth, done) =>
     val ticket = overviewLatest.start()
     val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
@@ -210,6 +230,9 @@ object TimelineView:
       }
   }
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadDetail(): Unit =
     // a load now answers whatever was scheduled: the strip's mount scheduled one and loaded at once,
     // asking twice for the same strip on every page load
@@ -243,6 +266,7 @@ object TimelineView:
     }
 
   /** The presets are the periods the seed files under a region heading ([[PresetMenu]]). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   private def loadPresets(): Unit =
     if periodPresets.now().isEmpty then
       ApiClient.periods().foreach(ps => periodPresets.set(ps.filter(_.preset.isDefined)))
@@ -280,6 +304,7 @@ object TimelineView:
     * ([[TimelineCurve]]), no mark per bucket (the hover marker says one bucket's count). Answers the points drawn, for
     * the hover.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def drawAreaCurve(
       svg: dom.Element,
       bs: List[TimeBucket],
@@ -334,6 +359,7 @@ object TimelineView:
   /** The bucket nearest screen x `px` of a curve drawn as `pts` and moved on screen by (`tx`, `scale`), and where it
     * stands on screen. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hoverAt(
       pts: IndexedSeq[TimelineCurve.Pt],
       px: Double,
@@ -344,11 +370,14 @@ object TimelineView:
     else TimelineCurve.nearest(pts, TimelineCurve.ScreenPixels((px - tx) / scale)).map(p => (tx + p.x.value * scale, p))
 
   /** Pure: what the hover marker says of a bucket. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hoverText(b: TimeBucket): UiLabels.Text =
     val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value
     else s"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
     UiLabels.Text(s"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showHover(layer: dom.Element, at: Option[(Double, TimelineCurve.Pt)], w: Double): Unit =
     if layer != null then
       clearLayer(layer)
@@ -394,6 +423,7 @@ object TimelineView:
     g
 
   /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def realign(
       drawn: (Years.Astronomical, Years.Astronomical, Double),
       now: (Years.Astronomical, Years.Astronomical, Double)
@@ -423,6 +453,7 @@ object TimelineView:
   private def dtHeight: Double = elHeight(detailSvg, DH.toDouble)
   private def dtBase(h: Double): Double = h - (DH - D_BASE)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderOverviewCurve(): Unit =
     if overviewSvg != null then
       val w = elWidth(overviewSvg)
@@ -450,6 +481,7 @@ object TimelineView:
     val stale = applyTransform(ovCurveLayer, 0.0, if lastOvWidth > 0 then w / lastOvWidth else 1)
     if stale then ovCurveLayer.classList.add("tl-stale") else ovCurveLayer.classList.remove("tl-stale")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderOverviewSelection(): Unit =
     if overviewSvg != null then
       val svg = overviewSvg
@@ -517,6 +549,7 @@ object TimelineView:
 
   /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs to the edges.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def underlayBuckets(
       bs: List[TimeBucket],
       from: Years.Astronomical,
@@ -566,6 +599,7 @@ object TimelineView:
       )
     renderDetailAxis(w)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderDetailAxis(w: Double): Unit =
     val ns = svgNs
     val g = dtAxisLayer
@@ -620,6 +654,7 @@ object TimelineView:
           lastLabelEnd = x + 3 + textWidth(lbl) + 8
       yr += major.toLong
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderDetailOverlay(): Unit =
     if detailSvg != null then
       val svg = detailSvg
@@ -674,6 +709,8 @@ object TimelineView:
   /** One region heading, folded unless the map is looking at it; each row says the span, WHERE the definition applies
     * (PeriodO's coverage) and WHO defines it, and its title says it in full.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def presetGroup(g: PresetMenu.Group): HtmlElement =
     htmlTag[dom.HTMLElement]("details")(
       cls := "tl-preset-group",
@@ -711,6 +748,9 @@ object TimelineView:
     )
 
   /** The timeline's own actions: lock it, start it at the years shown, keep the years as one of my periods. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def menuEntries(config: UiConfig): List[ContextMenu.Entry] =
     val (a, b) = (Year(spanFrom.value), Year(spanTo.value))
     List(
@@ -740,6 +780,10 @@ object TimelineView:
 
   // ── public entry point ────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def init(config: UiConfig): HtmlElement =
     limits = config.time
     val sf = Years.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))

@@ -21,14 +21,21 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the
   * import's steps that write them: the renames the other side made, the goals with their parents, links and schedules,
   * their old slugs.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the goal rows for bundle export and import")
 private[goals] object GoalBundleRepo:
 
+  @tolerated(LintRule.TotalOrder, "a goal's schedules and watches, one row per goal (uid) and kind")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, sql"g.uid", sql"g.updated_at")
     val rows = sql"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
@@ -118,6 +125,7 @@ private[goals] object GoalBundleRepo:
       )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def goalAliases(scope: BundleScope)(using DbCon): Vector[Bundle.GoalAlias] =
     sql"""SELECT x.alias, g.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE ${where(
@@ -131,6 +139,8 @@ private[goals] object GoalBundleRepo:
 
   // ── the import's steps ──────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goalRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.followRenames(
@@ -150,6 +160,8 @@ private[goals] object GoalBundleRepo:
     * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule
     * brought in has no next run until it is saved here: an imported collection never starts agent runs on its own.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def goalSets(w: BundleImport.Writer, g: Bundle.Goal)(using DbCon): Unit =
     val slug = sql"SELECT slug FROM goals WHERE uid = ${g.uid}".query[String].run().head
     g.links.getOrElse(Nil).foreach { l =>
@@ -189,6 +201,8 @@ private[goals] object GoalBundleRepo:
   /** Goals: the rows, their parents, then — after every goal is in (a link can name another goal's record, a schedule
     * its own goal) — their sets.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goalsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val goals = w.es.goals.filter(g => w.writes(g.uid))
@@ -221,6 +235,7 @@ private[goals] object GoalBundleRepo:
   private def goalSlugOf(u: UUID)(using DbCon): Option[Goal.Slug] =
     sql"SELECT slug FROM goals WHERE uid = $u".query[Goal.Slug].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def goalAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.goalAliases.foreach { a =>

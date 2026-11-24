@@ -5,6 +5,8 @@ package domain.catalogue.events
   * and what became of the refreshed events' corrections by hand.
   */
 import com.histmersion.api.catalogue.Correction
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class EventSaved(
     created: EventSaved.Created,
     updated: EventSaved.Updated,
@@ -13,9 +15,12 @@ final case class EventSaved(
 )
 
 object EventSaved:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Created = RowCount
   val Created: RowCount.type = RowCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Updated = RowCount
   val Updated: RowCount.type = RowCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Rows = RowCount
   val Rows: RowCount.type = RowCount

@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a tile's query answers before the tile is written: ONE item (`key` the item's, `n` 1) or a CELL of `n` items
   * (`key` the cell's), at `x`/`y` in tile units (a cell's: its items' mean), the least and greatest middle of their
@@ -21,6 +22,7 @@ final case class TileCell(
     north: TileCell.North,
     undated: TileCell.Undated = TileCell.Undated(0)
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isItem: Boolean = n.value == 1
 
 object TileCell:

@@ -20,6 +20,8 @@ import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `propose-articles` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (b), phase
   * 2): a planner proposes the articles a research area (a goal) should have — each a new slug, a title, a kind and the
@@ -27,6 +29,8 @@ import com.histmersion.domain.automation.Run
   * the filter returns at least `minSources` sources, and it shares less than `maxOverlap` of them with every article of
   * the area (and with every proposal kept before it). A person ALWAYS approves the plan before anything is compiled.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.ResearchWorkflows)
 object PlanArticles:
   type LastRound = LastRound.T
   object LastRound extends Newtype[Boolean, Pure]
@@ -58,6 +62,8 @@ object PlanArticles:
     type Tags = Tags.T
     object Tags extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ArticleAnswer] = KindlingsSchema
       .derived[ArticleAnswer]
       .schema
@@ -77,6 +83,8 @@ object PlanArticles:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ArticlesAnswer] = KindlingsSchema
       .derived[ArticlesAnswer]
       .schema
@@ -106,6 +114,7 @@ object PlanArticles:
   )
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def overlap(mine: Set[Citekey], theirs: Set[Citekey]): ProposedArticle.Overlap =
     ProposedArticle.Overlap(if mine.isEmpty then 0.0 else mine.count(theirs).toDouble / mine.size)
 
@@ -113,6 +122,8 @@ object PlanArticles:
     * selects something. Left = the problems a retry should fix (nothing usable, an empty rationale); the ones it cannot
     * fix are dropped with why.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(
       a: ArticlesAnswer,
       maxArticles: Limits.MaxArticles,
@@ -173,6 +184,8 @@ object PlanArticles:
     * source count and its sources), `existing` (each article of the area with its sources). Every candidate that passes
     * is kept, and the next ones are measured against it too.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verify(
       goal: Goal.Slug,
       rationale: ArticlesAnswer.Rationale,
@@ -242,6 +255,8 @@ object PlanArticles:
     loop(cs, Vector.empty, Vector.empty)
 
   /** The worklog line of a run. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logLine(goal: Goal.Slug, plan: ArticlePlan, outcome: Outcome, runId: Run.Id): LogLine =
     LogLine(
       s"propose-articles $goal: ${Plural.count(Plural.CountN(plan.articles.size.toLong), Plural.CountSingular("article"))} proposed, ${plan.dropped.size} dropped — $outcome " +

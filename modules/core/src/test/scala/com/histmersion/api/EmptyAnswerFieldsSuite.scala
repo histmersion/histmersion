@@ -31,6 +31,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.library.WorkRef
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A strict-schema provider (Codex) sends `""` or `null` for a field it has nothing for, and `null` decodes like an
   * absent field. An answer whose NEEDED field is empty or null must fail its step's check with a problem that says
@@ -38,6 +39,7 @@ import com.histmersion.api.library.WorkRef
   * `{"citekey":"huxley1956_catalogue","title":"","year":null}`). One test per answer type; genuinely optional fields
   * stay optional.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   private val minRatio = AgentVerify.MinRatio(0.9)
@@ -218,6 +220,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Some(List("say why the record is not used"))
     )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val facts = List(
     SourceFact(
       domain.library.Citekey("a2019_tin"),
@@ -226,6 +229,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Source.Status.Current
     )
   )
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val ev = evidence(
     Goal.Plans.ArticleDraft.Filter("f"),
     com.histmersion.RowCount(1),
@@ -249,11 +253,13 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     ),
     Nil
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val corpus = Corpus(
     Set(domain.library.Citekey("a2019_tin")),
     _.value == "a2019_tin",
     _ => Some(Source.Status.Current)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val body = Article.Body("""Tin reached the Aegean by sea [[a2019_tin]].
       |
       |## Disagreements

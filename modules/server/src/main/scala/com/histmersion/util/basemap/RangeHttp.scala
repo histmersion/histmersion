@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.util.storage.Reservation
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE seam between the base-map fetch and the network: a test answers from a local file and never opens a socket.
   * Failures are `Left(message)`.
@@ -45,16 +46,19 @@ object RangeHttp:
   object Url extends Newtype[String, Pure]:
     extension (url: Url)
       /** The upstream a failed request names: the URL's host (the URL itself when it has none). */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def upstream: Problem.Upstream.Name =
         Problem.Upstream.Name(
           s"${scala.util.Try(java.net.URI.create(s"$url").getHost).toOption.flatMap(Option(_)).getOrElse(s"$url")}"
         )
 
       /** The URL as a failed request names it. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def address: Problem.Upstream.Url = Problem.Upstream.Url(s"$url")
 
   /** Pure: `Content-Range: bytes 0-99/12345` → `(0, 99, Some(12345))`. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contentRange(v: ContentRangeHeader): Option[(ByteOffset, ByteOffset, Option[ByteCount])] =
     val R = """(?i)\s*bytes\s+(\d+)-(\d+)/(\d+|\*)\s*""".r
     val header: String = v.value
@@ -69,6 +73,7 @@ object RangeHttp:
   /** Pure: is this answer the range asked for? A 200 (the server ignored the range) is refused — reading a 100 GB
     * planet file whole is exactly what this must never do.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(
       url: Url,
       code: StatusCode,

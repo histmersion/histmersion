@@ -10,10 +10,12 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the imports' store answers on a collection that holds no place and no event — the same on the database and in
   * memory: a target named by id is not there, a batch is empty, nothing is pending, a check is recorded.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class ImportServiceContract extends MediaStoreSuite:
 
   stest("nothing on the map: a target by id refused, a batch empty, nothing pending, no facts") { s =>

@@ -29,6 +29,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
@@ -37,15 +38,19 @@ import com.histmersion.api.catalogue.Latitude
   * counts), a period on each polity so the as-of walk has something to drop, and **one finding nowhere at all** so the
   * `unlocated` leaf has an occupant.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class TreeRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
     Place.Geometry(
       s"""{"type":"Polygon","coordinates":[[[$minLon,$minLat],[$maxLon,$minLat],[$maxLon,$maxLat],[$minLon,$maxLat],[$minLon,$minLat]]]}"""
@@ -57,6 +62,7 @@ class TreeRepoSuite extends DbSuite:
   // Deliberately in an EMPTY corner of the South Pacific: the db suites share one test database, and
   // a fixture polygon drawn over Anatolia silently changes what `PlaceRepoSuite` (and any seeded
   // gazetteer) materialises. Keep new fixture geometry away from real places.
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val batch = List(
     Place.Input(
       Place(Place.Id("zzt_world"), Place.Label("Zzt World"), Place.KindValue(Place.Kind.Region)),
@@ -114,6 +120,7 @@ class TreeRepoSuite extends DbSuite:
 
   private val Tag = "zzt-tree-fixture"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val src = Source(
     citekey = Citekey("zzt_src"),
     title = api.library.Title("Tree fixture"),
@@ -180,11 +187,13 @@ class TreeRepoSuite extends DbSuite:
   /** Only the fixture: the tag rides on the SOURCE, and the finding-level tag predicate unions
     * `findings.tags ∪ sources.tags`, so every one of its findings matches and nothing else does.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val filter = Filter(
     tags = List(Filter.Tags(Tag)),
     period = Some(Period(Year(-1600), Year(-1200)))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def find(bs: List[Bucket], key: String): Option[Bucket] =
     bs.iterator.map(b => if b.key.value == key then Some(b) else find(b.children, key)).collectFirst { case Some(b) =>
       b

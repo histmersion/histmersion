@@ -37,12 +37,15 @@ import com.histmersion.web.{:=, given}
   * row holds is shown at once; the rest when the item is read.
   */
 object ReadingPane:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val sourceReads =
     BoundedCache[String, Future[SourceReading]](BoundedCache.MaxEntries(Layout.libraryPage.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val articleReads =
     BoundedCache[String, Future[Article.View]](BoundedCache.MaxEntries(Layout.libraryPage.value))
 
   /** A failed read is forgotten, so choosing the item again tries again. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def cached[A](cache: BoundedCache[String, Future[A]], key: String)(read: => Future[A]): Future[A] =
     cache.getOrElseUpdate(
       key, {
@@ -54,6 +57,9 @@ object ReadingPane:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readSource(ck: Citekey): Future[SourceReading] =
     cached(sourceReads, ck.value) {
       val record = ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false))
@@ -62,9 +68,14 @@ object ReadingPane:
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
     }
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readArticle(slug: Article.Slug): Future[Article.View] =
     cached(articleReads, slug.value)(ApiClient.getArticle(slug, brief = Article.FullText(true)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def element(section: LibrarySection, chosen: Signal[Option[ItemKey]]): HtmlElement =
     htmlTag("aside")(
       cls := "reading-pane",
@@ -85,6 +96,7 @@ object ReadingPane:
 
   // ── the actions ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def actions(
       section: LibrarySection,
       page: String,
@@ -130,10 +142,12 @@ object ReadingPane:
     )
 
   /** Explore's address with the filters: what a modifier click on "Show on the map" opens. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def explore: String =
     val hash = UiState.hashString
     Route.Explore.path + (if hash.value.nonEmpty then s"#$hash" else "")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def head(h: ReadingHead): HtmlElement =
     div(
       cls := "reading-head",
@@ -154,6 +168,9 @@ object ReadingPane:
 
   // ── a source ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def sourcePane(ck: Citekey): HtmlElement =
     val row = LibraryLists.sources.now().rows.find(_.source.citekey == ck).map(_.source)
     val reading = Var(Option.empty[Either[Problem, SourceReading]])
@@ -214,6 +231,7 @@ object ReadingPane:
     )
 
   /** The box around a source's located findings, for the map to show. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bounds(findings: List[Finding.Row]): Option[GeoBounds] =
     val points = findings.flatMap(f => f.lat.zip(f.lon)).map((la, lo) => (la.value, lo.value))
     Option.when(points.nonEmpty)(
@@ -225,6 +243,8 @@ object ReadingPane:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def findings(ck: WindowKey.Source.Citekey, all: List[Finding.Row]): Modifier[HtmlElement] =
     Option.when(all.nonEmpty)(
       div(
@@ -251,6 +271,7 @@ object ReadingPane:
   private def countLink(href0: String, text: String, n: Int): HtmlElement =
     if n > 0 then a(href := href0, text) else span(cls := "reading-none", text)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def sourceLinks(ck: Citekey, c: CitationCounts): HtmlElement =
     val page = SourceLink.href(ck)
     navTag(
@@ -269,6 +290,9 @@ object ReadingPane:
 
   // ── an article ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def articlePane(slug: Article.Slug): HtmlElement =
     val row = LibraryLists.articles.now().rows.find(_.slug == slug)
     val reading = Var(Option.empty[Either[Problem, Article.View]])
@@ -327,6 +351,7 @@ object ReadingPane:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refNow(reading: Var[Option[Either[Problem, SourceReading]]], ref0: ItemRef): ItemRef =
     reading
       .now()
@@ -335,5 +360,7 @@ object ReadingPane:
         ItemRef.source(ref0.target.itemKey.map(k => Citekey(k.value)).getOrElse(Citekey("")), r.source.source.title)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def message(e: Throwable): Problem =
     Problem.Unclassified(Legacy.Text(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)))

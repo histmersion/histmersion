@@ -9,10 +9,12 @@ import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.domain.automation.agents.Prompts
 import com.histmersion.util.storage.Location
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `just plugin`: writes the checked-in Claude Code plugin under the repository root, its definitions holding the agent
   * tools and roles the engine is given today.
   */
+@movesTo(FeaturePlace.Server)
 @main def generatePlugin(root: String): Unit =
   given Stores = Stores.disk
   given Resources = Resources.classpath(classOf[Prompts].getClassLoader)

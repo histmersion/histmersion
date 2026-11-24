@@ -5,6 +5,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.{BBox, WireEnum}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]) derives CanEqual:
   case Aegean
@@ -105,17 +106,22 @@ enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, va
       )
   case Broad extends PresetRegion(PresetRegion.Wire("broad"), PresetRegion.Label("Continent-wide definitions"), None)
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object PresetRegion:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromWire(s: Wire): Option[PresetRegion] = values.find(_.wire == Wire((s).value.trim))
 
   given WireEnumValues[PresetRegion]:
     def all: Array[PresetRegion] = values
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire(e: PresetRegion): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def fromWire(s: WireEnumValues.Wire): Option[PresetRegion] = PresetRegion.fromWire(Wire((s).value))
 
   given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[PresetRegion] = WireEnum.codec

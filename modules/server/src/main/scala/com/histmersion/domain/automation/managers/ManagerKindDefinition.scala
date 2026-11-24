@@ -21,17 +21,21 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
   * its cron and its selection put in its queue, the run each of its items starts, what a finished run left and what
   * follows it. The loop, the holds, the retries, the cron's timing, the settling of approvals and the hints are the
   * engine's ([[ManagerSupervisor]]), which a kind reaches through [[ManagerContext]].
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait ManagerKindDefinition:
   def kind: Kind
   def creator: Creator.New
 
   /** The item kinds it drives: an item is evaluated, followed up and started by the kind that lists its kind. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def items: List[ManagerContext.ItemKind] = Managers.itemKinds(kind).map(k => ManagerContext.ItemKind(k.value))
 
   /** The cron a new manager of this kind gets when a person names none (UTC); `None`: no cron. */
@@ -106,6 +110,7 @@ trait ManagerKindDefinition:
   /** The work its domain does at every tick besides the items, after the holds and before the crons: each with the name
     * a failure is logged under. `draining` = nothing new may start.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def housework(now: Instant, draining: => Boolean)(using
       WritePermit
   )(using Creator.New): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] = Nil
@@ -131,6 +136,7 @@ trait ManagerKindDefinition:
   )(using WritePermit): Unit = ()
 
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expand(
       c: ManagerContext,
       raw: Managers.ManagerItem.Target

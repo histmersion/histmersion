@@ -22,6 +22,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to
@@ -33,6 +34,7 @@ import com.histmersion.domain.Creator
   * index requests and the ingests' own caps. A goal without a watcher yet (the autopilot makes one) is left for the
   * next tick.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SeedService(
     candidates: CandidateService,
     cfg: => AgentsConfig,
@@ -45,6 +47,7 @@ final class SeedService(
   /** The goals to seed now, in the scheduler's order: unfinished, no source linked, a watcher, not swept in
     * `seed-every-hours`. Pure over what it is given.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def due(
       goals: List[FocusService.Goal],
       sources: Map[Goal.Slug, RowCount],
@@ -70,6 +73,8 @@ final class SeedService(
       .map(_._2)
 
   /** The id of a goal's watcher manager. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def watcherOf(goal: Goal.Slug): ManagerInfo.Id =
     watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
 
@@ -77,6 +82,7 @@ final class SeedService(
   private val seeded = java.util.concurrent.ConcurrentHashMap[String, Instant]()
 
   /** One tick's seeding; one line per goal seeded. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tick(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val n = cfg.scheduler.seedGoalsPerTick.value
     if n <= 0 || !agents.autopilot.on || agents.drain.draining then Nil
@@ -112,6 +118,8 @@ final class SeedService(
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def seed(goal: Goal.Slug)(using WritePermit)(using Creator.New): Option[String] =
     acquisition().sweepCandidates(goal, dryRun = AgentUpstream.SweepCandidatesDryRun(false)) match
       case Left(why) =>

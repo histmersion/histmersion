@@ -7,12 +7,17 @@ import com.histmersion.api.given
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of a goal's schedules (docs/research-embedded-agents.md §14): whether a due schedule may start a run
   * now (the previous run, the daily/monthly cost caps, `max-concurrent-runs`), its cost cap, and the DOIs an
   * acquisition item names (how the work lists are deduplicated). The sweeps' own rules are the library's
   * (`AcquisitionSweepRules`, `CurrencyCheckRules`).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationScheduler)
 object Scheduling:
   type ActiveCount = ActiveCount.T
   object ActiveCount extends Newtype[Int, Pure]
@@ -49,6 +54,7 @@ object Scheduling:
     case Busy(active: ActiveCount)
 
     /** The account as a person reads it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String = this match
       case Unsettled(state)  => s"its previous run is still ${state.wire}"
       case DailySpent(spent) =>
@@ -58,12 +64,14 @@ object Scheduling:
       case Busy(active) => s"$active run(s) already queued or running (agents.max-concurrent-runs)"
 
   /** A run that has not settled: a schedule does not start another beside it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def unsettled(s: Run.State): Boolean = !s.isTerminal
 
   /** Before a scheduled run starts: its previous run must have settled, today's and this month's agent spend must be
     * under the caps (checked BEFORE the start, so a scheduled run never begins past a cap), and fewer than
     * `maxConcurrent` runs may be queued or running.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decide(
       previous: Option[Run.State],
       spentDay: BigDecimal,
@@ -82,6 +90,7 @@ object Scheduling:
         else Decision.Start
 
   /** The cost cap of a scheduled run: the schedule's own, else the goal's, else the server default. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def budget(schedule: Option[Budget], goal: Option[Budget], default: Budget): Budget =
     schedule.orElse(goal).filter(_.value > 0).getOrElse(default)
 

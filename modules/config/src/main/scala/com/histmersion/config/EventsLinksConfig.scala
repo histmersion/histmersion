@@ -3,7 +3,9 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
+@movesTo(FeaturePlace.CatalogueEvents)
 final case class EventsLinksConfig(
     km: EventsLinksConfig.Km,
     years: EventsLinksConfig.Years,

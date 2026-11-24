@@ -21,11 +21,14 @@ import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.agents.GenSettings
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the CLI runtimes (`claude-code`, `codex`, `opencode`) share: the definitions, the generated trees they launch,
   * the run tokens their steps reach the agent MCP endpoint with, and the plan pools their streams report to. One per
   * server.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final class CliRuntime(
     val app: AppConfig,
     val definitions: AgentDefinitions,
@@ -47,6 +50,7 @@ final class CliRuntime(
   def quotaUrl: GenSettings.QuotaUrl = trees.settings(AgentTrees.SettingsVersion("")).quotaUrl
 
   /** A token for one step attempt, alive a little longer than the CLI may run. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: CliProcess.RunTimeoutSeconds): Option[RunGrant] =
     agent.map(a =>
       tokens.issue(a, call.scope, RunTokens.TtlMillis((math.max(1, timeoutSeconds.value).toLong + 60L) * 1000L))
@@ -57,6 +61,7 @@ object CliRuntime:
     * take).
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using
       stores: Stores,
       resources: Resources,

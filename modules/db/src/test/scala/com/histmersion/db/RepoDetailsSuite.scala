@@ -27,21 +27,25 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the `findings_flat` upper
   * bound.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RepoDetailsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val ck = Citekey("zzdetail_src")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(
       body: Option[Source.OcrMarkdown] = Some(Source.OcrMarkdown("The sea peoples reached the Nile delta."))
   ): Source.UpdatedAt =
@@ -109,6 +113,7 @@ class RepoDetailsSuite extends DbSuite:
 
   // ── 21 + 22: the assets contract ─────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def png(byte: Byte) = NewFigure(
     NewFigure.Name("fig1.png"),
     NewFigure.Mime("image/png"),

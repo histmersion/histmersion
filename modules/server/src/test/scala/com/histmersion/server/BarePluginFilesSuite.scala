@@ -8,10 +8,12 @@ import scala.jdk.CollectionConverters.*
 
 import com.histmersion.util.plugins.PluginKit
 import Supervisor.{rewrittenOnce, PluginFile}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The once-only rewrite, at the server's start, of the plugin files an earlier version wrote with a bare problem: on
   * files in a temporary directory, never the install's.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BarePluginFilesSuite extends munit.FunSuite:
 
   private val dir = FunFixture[Path](_ => Files.createTempDirectory("plugin-rewrite"), d => delete(d))

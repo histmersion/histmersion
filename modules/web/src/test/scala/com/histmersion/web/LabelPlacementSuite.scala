@@ -5,11 +5,13 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Geo.{Latitude, Longitude}
 import com.histmersion.web.LabelPlacement.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1442 / #1447 — every region and polity is named at its shape's centre or, near the screen edge, in its visible
   * part; sized by the whole shape on screen; hidden only by collisions (larger shapes first). The placement is pure;
   * these are its rules.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LabelPlacementSuite extends munit.FunSuite:
 
   private def ring(pts: (Double, Double)*): Vector[Pt] = pts.map((x, y) => Pt(x, y)).toVector
@@ -96,6 +98,7 @@ class LabelPlacementSuite extends munit.FunSuite:
     )
 
   /** A 4 × 4 grid of small square islands, 0.2° a side, 1° apart — no island is half the land. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val islands: Seq[Seq[Seq[(Latitude, Longitude)]]] =
     for i <- 0 until 4; j <- 0 until 4 yield
       val la = 36.0 + i

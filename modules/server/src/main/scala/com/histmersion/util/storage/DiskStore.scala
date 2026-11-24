@@ -27,10 +27,14 @@ import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
 import com.histmersion.util.basemap.PmTiles
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A store over a directory on disk: a key is a path below `root`. */
+@atBoundary(BoundaryKind.Process, "stores named files on disk")
 final private[storage] class DiskStore(val location: Location, root: Path) extends Store:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def path(key: Store.Key): Path = if key.isRoot then root else root.resolve(key.value)
 
   private def keyOf(p: Path): Store.Key = Store.Key.applyUnsafe(root.relativize(p).toString.replace('\\', '/'))
@@ -72,11 +76,13 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     val p = path(key)
     Option.when(Files.isRegularFile(p))(DiskStore.FileBlob(key, p))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(prefix: Store.Key): List[Stored] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
     else Using.resource(Files.list(dir))(_.iterator.asScala.toList).map(stored).sortBy(_.key.value)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def walk(prefix: Store.Key): List[Stored] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
@@ -86,6 +92,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         .map(stored)
         .sortBy(_.key.value)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def put(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] =
     reserve(key).flatMap { r =>
       try
@@ -94,6 +101,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       finally r.close()
     }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def write(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = io(Problem.Io.Access.Write, key) {
     val p = path(key)
     Option(p.getParent).foreach(Files.createDirectories(_))
@@ -107,6 +115,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     stored(p)
   }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def reserve(key: Store.Key, temp: TempName, throughLink: Store.ThroughLink): Either[Store.Error, Reservation] =
     io(Problem.Io.Access.Create, key) {
       val asked = path(key)
@@ -127,6 +136,8 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     Files.move(path(from), t, StandardCopyOption.REPLACE_EXISTING): Unit
   }
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] =
     io(Problem.Io.Access.Write, to) {
       val options =
@@ -156,6 +167,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
   def touch(key: Store.Key, at: Instant): Unit =
     val _ = scala.util.Try(Files.setLastModifiedTime(path(key), FileTime.from(at)))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def size: ByteCount = ByteCount.applyUnsafe(walk().iterator.map(_.size.value).sum)
 
   def usableSpace: ByteCount =
@@ -246,6 +258,7 @@ private[storage] object DiskStore:
 
   /** The files `rule` removes, oldest first. */
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pruned(files: List[Stored], rule: PruneRule): List[Stored] =
     val oldest = files.sortBy(s => (s.modified, s.key.value))
     rule match
@@ -308,6 +321,7 @@ private[storage] object DiskStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(withChannel(_.size()))
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def read(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = withChannel { c =>
       val len = length.value
       val buf = ByteBuffer.allocate(len)
@@ -320,6 +334,7 @@ private[storage] object DiskStore:
       ByteSource.Content(buf.array())
     }
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def readUpTo(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = withChannel { c =>
       val buf = ByteBuffer.allocate(length.value)
       @tailrec def loop(at: Long): Unit =
@@ -344,6 +359,7 @@ private[storage] object DiskStore:
 
     def output(): OutputStream = Files.newOutputStream(file)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def writeAt(offset: ByteOffset, bytes: ByteSource.Content): Unit =
       Using.resource(FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) { ch =>
         val buf = ByteBuffer.wrap(bytes.value)
@@ -353,6 +369,7 @@ private[storage] object DiskStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(if Files.exists(file) then Files.size(file) else 0L)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def commit(keepPermissions: Store.KeepPermissions): Either[Store.Error, Stored] =
       try
         if keepPermissions.value && Files.exists(asked) then

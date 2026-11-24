@@ -10,6 +10,8 @@ import com.histmersion.plugin.*
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `loc`: the Library of Congress JSON API (https://www.loc.gov/apis/json-and-yaml/), no key: the maps format
   * (`/maps/?q=&fo=json`) narrowed to the Geography and Map Division, then each candidate's item (`/item/{id}/?fo=json`)
@@ -17,6 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * restrictions" and its date is no later than `max-year` (1928: US works published before 1929). Its `location` list
   * is where it is of. A 403 is loc.gov's bot challenge to automated clients — reported as such, never worked around.
   */
+@atBoundary(BoundaryKind.Json, "reads the loc collection collection's JSON answers into media records")
 final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.ThumbPx)
     extends MuseumCollection(conf, MuseumCollection.Provider("Library of Congress"), MuseumCollection.Key("media.loc")):
   val title = MediaCollection.Title("Library of Congress maps")
@@ -27,6 +30,7 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
         "locations name"
     )
   val role = MediaCollection.Map
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def matchRule = MediaMatchRule.Map(Year(conf.maxYear.value))
 
   /** loc.gov refuses automated clients with a bot challenge at the moment (a 403): said so, not worked around. */
@@ -35,6 +39,7 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
       Problem.Upstream.Challenged(name, url, status, at)
     case other => other
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(
       place: MediaPlace,
       http: Plugin.Http
@@ -63,6 +68,7 @@ object LocCollection:
 
   export MediaSettings.ThumbPx
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       base: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
@@ -72,12 +78,14 @@ object LocCollection:
       s"${base.value.stripSuffix("/")}/maps/?q=${name.value.enc}&fo=json&c=${limit.value.max(1)}&fa=${"partof:geography and map division".enc}"
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def itemUrl(base: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.Url =
     Plugin.Http.Url(s"${base.value.stripSuffix("/")}/item/${id.value.enc}/?fo=json")
 
   private val ItemId = """.*/item/([^/?#]+)/?.*""".r
 
   /** Pure: the item id of a result's `id`/`url` (`http://www.loc.gov/item/2007627513/` → `2007627513`). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def itemId(url: Plugin.Http.Url): Option[MediaItem.Key] = url.value match
     case ItemId(id) => Some(MediaItem.Key(id))
     case _          => None
@@ -94,6 +102,7 @@ object LocCollection:
         }.distinct)
 
   /** Pure: the years in a date string (`1890`, `[ca. 1880]`, `1906-1910` → its range). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def yearsOf(date: Date): Option[Period] =
     val ys = """(?<![0-9])([0-9]{4})(?![0-9])""".r.findAllMatchIn(date.value).map(_.group(1).toLong).toList
     ys.headOption.flatMap(_ => Period.span(ys.min, ys.max))
@@ -103,6 +112,7 @@ object LocCollection:
   /** Pure: one item answer. `maxYear` is the public-domain boundary; `displayPx`/`thumbPx` choose among the item's JPEG
     * files (the largest no wider than display, the smallest no narrower than thumb).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(
       json: Json,
       base: CollectionSettings.ApiUrl,

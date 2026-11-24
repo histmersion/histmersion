@@ -11,7 +11,9 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TargetSuite extends munit.FunSuite:
 
   private val point = Target(

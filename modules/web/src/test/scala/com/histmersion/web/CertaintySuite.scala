@@ -9,10 +9,12 @@ import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.ConfidenceStyle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[Certainty]] (#1946): a finding that states no confidence is drawn in its own neutral look — grey, dashed, its own
   * legend pip — never as high, and never lets a bubble look high. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CertaintySuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()

@@ -10,6 +10,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.catalogue.{Period, Year}
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.{Article, Articles, Coverage}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
   * [[Frontmatter.parseNote]], for articles.
@@ -20,6 +21,7 @@ import com.histmersion.api.research.{Article, Articles, Coverage}
   *
   * JVM-only (snakeyaml); the pure text extractors `heading` and `lede` live in [[Articles]].
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object ArticleNote:
   /** Frontmatter key order of a rendered article note. `generated` (#958) is the coverage sections code renders from
     * the filter; they go after the body between [[ArticleCoverage.GeneratedStart]] and
@@ -27,6 +29,8 @@ object ArticleNote:
     * and reasons they come from travel in the frontmatter.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(a: Article, generated: Option[String] = None): String =
     val reasons = Option.when(a.reasons.nonEmpty) {
       val r = new java.util.LinkedHashMap[String, Any]()
@@ -50,6 +54,8 @@ object ArticleNote:
       .value
 
   /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filterMap(f: Article.Filter): java.util.Map[String, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
     f.query.foreach(m.put("query", _))
@@ -70,6 +76,7 @@ object ArticleNote:
     * dropped. `question:` (a report's driving question) and `topics:`/ `cultures:` (list dimensions) ARE kept — as the
     * summary and as tags respectively — because they are the same thing under another name.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(text: String, fallbackSlug: Article.Slug, fallbackKind: Article.KindValue): Option[Article] =
     split(text).map { (yaml, rawBody) =>
       val m = parseYaml(yaml)

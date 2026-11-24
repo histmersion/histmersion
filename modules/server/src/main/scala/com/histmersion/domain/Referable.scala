@@ -9,6 +9,7 @@ import com.histmersion.domain.Title
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Implemented by each domain whose records others point at — a person's bookmarks, notes and read marks, a goal's
   * links, a picture's links. The pointing side stores an [[ItemRef]] and asks here, when it shows the reference, what
@@ -39,6 +40,7 @@ object Referable:
     def put(key: ItemKey, title: Title, uid: Option[ItemUid]): Unit =
       records.updateAndGet(r => r.modify(_.live).setTo(r.live + (key -> Record(uid, title)))): Unit
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
     def rename(from: ItemKey, to: ItemKey): Unit =
       records.updateAndGet { r =>
         r.live.get(from).fold(r)(rec => r.copy(live = r.live - from + (to -> rec), aliases = r.aliases + (from -> to)))
@@ -54,11 +56,14 @@ object Referable:
           case _ => r
       }: Unit
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
     def delete(key: ItemKey, at: Instant): Unit =
       records.updateAndGet { r =>
         r.live.get(key).fold(r)(rec => r.copy(live = r.live - key, tombstones = r.tombstones ++ rec.uid.map(_ -> at)))
       }: Unit
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def resolve(kind: ItemKind, key: ItemKey): Either[Problem, ItemRef] =
       val r = records.get
       r.live

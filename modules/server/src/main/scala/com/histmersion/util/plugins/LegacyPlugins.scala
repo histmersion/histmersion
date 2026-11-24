@@ -11,6 +11,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import com.histmersion.util.process.ProcessLaunch
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Plugin ids that were SPLIT, and how their settings are still honoured (docs/research-plugins.md §20.2).
   *
@@ -46,9 +47,12 @@ object LegacyPlugins:
   def ids: Set[Plugin.Id] = All.map(_.id).toSet
 
   /** The plugins a key of `id` concerns: the successors of a former id, else the id itself. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def expand(id: Plugin.Id): List[Plugin.Id] = All.find(_.id == id).fold(List(id))(_.into)
 
   /** The environment variable the host reads for a plugin's `enabled` (its defaults declare it). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enabledEnv(id: Plugin.Id): ProcessLaunch.EnvironmentKey =
     ProcessLaunch.EnvironmentKey(
       s"HISTMERSION_PLUGIN_${id.value.toUpperCase(java.util.Locale.ROOT).replace('-', '_')}_ENABLED"
@@ -71,11 +75,14 @@ object LegacyPlugins:
       Migrated(u2, e1, m.warnings ++ w1 ++ w2 ++ w3)
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def path(id: Plugin.Id): String = s"${PluginHost.Root}.${id.value}"
 
   private def has(c: Config, p: String): Boolean = Try(c.hasPathOrNull(p)).getOrElse(false)
 
   /** The former block's keys onto the successors; the block itself removed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def block(
       user: Config,
       split: Split,
@@ -121,6 +128,7 @@ object LegacyPlugins:
           )
 
   /** `order`: the former id replaced in place by its successors not listed already. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def order(user: Config, env: Config, split: Split): (Config, List[Migrated.Warnings]) =
     val at = s"${PluginHost.Root}.${PluginHost.OrderKey}"
     val listed = Try(user.withFallback(env).resolve().getStringList(at).asScala.toList.map(_.trim)).toOption
@@ -139,6 +147,7 @@ object LegacyPlugins:
       case _ => (user, Nil)
 
   /** The former `enabled` variable for each successor's that is not set. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def environment(env: Config, split: Split): (Config, List[Migrated.Warnings]) =
     val old = enabledEnv(split.id).value
     Option(env.root.get(old)) match
@@ -156,6 +165,8 @@ object LegacyPlugins:
           )
         )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def successors(split: Split): String =
     s"'${split.id}' is ${split.into.size} plugins now (${split.into.map(_.value).mkString(", ")})"
 

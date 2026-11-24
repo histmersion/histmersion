@@ -10,7 +10,9 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Activity:
   type Actor = Actor.T
   object Actor extends Newtype[String, Pure]
@@ -23,6 +25,7 @@ object Activity:
   type Subject = Subject.T
   object Subject extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   enum EntryKind(val wire: EntryKind.Wire) derives CanEqual:
     case Run extends EntryKind(EntryKind.Wire("run"))
     case Job extends EntryKind(EntryKind.Wire("job"))
@@ -40,6 +43,7 @@ object Activity:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[EntryKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   enum Writer(val wire: Writer.Wire):
@@ -64,6 +68,7 @@ object Activity:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Show] =
       val t = (s).value.trim.toLowerCase
       values.find(v => v.wire == Wire(t) || v.toString.toLowerCase == t)
@@ -112,12 +117,14 @@ object Activity:
     export api.research.ReviewGoal.Slug as Article
     export Goal.Plans.GoalLink.QueueNumber as QueueItem
     type QueueList = QueueList.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object QueueList extends Newtype[String, Pure]
     type Approval = Approval.T
     object Approval extends Newtype[Long, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type TargetKind = TargetKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetKind extends Newtype[String, Pure]
 
   final case class Counts(
@@ -146,4 +153,6 @@ object Activity:
   val MaxLimit = 200
   val DefaultLimit = 30
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keyOf(kind: EntryKind, id: Entry.Id): Entry.Key = Entry.Key(s"${kind.wire}:$id")

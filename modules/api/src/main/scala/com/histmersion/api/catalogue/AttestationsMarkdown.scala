@@ -2,9 +2,12 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.Markdown.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 object AttestationsMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def attestationLine(a: Attestation): String =
     val loc = List(
       a.page.map(p => s"p.$p"),
@@ -18,6 +21,8 @@ object AttestationsMarkdown:
     val n = a.note.map(n => s" — $n").getOrElse("")
     (s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def attestationList(result: Attestation.List): String =
     OffsetPage
       .markdown(result.page, ("attestation(s)"), ("_No matching attestations._"), result.attestations)(
@@ -25,6 +30,8 @@ object AttestationsMarkdown:
       )
       .value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def attestation(a: Attestation): String =
     val header = s"# Attestation #${a.id}\n\n_[[${a.citekey}]] → ${a.targetType}:`${a.targetId}`_"
     val loc = List(

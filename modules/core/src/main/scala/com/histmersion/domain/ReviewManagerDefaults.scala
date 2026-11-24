@@ -2,7 +2,10 @@ package com.histmersion
 package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.ResearchWorkflows)
 final case class ReviewManagerDefaults(
     maxRuns: ReviewManagerDefaults.MaxRuns,
     rounds: ReviewManagerDefaults.Rounds,
@@ -23,6 +26,7 @@ object ReviewManagerDefaults:
   type Rounds = Rounds.T
   object Rounds extends Newtype[Int, Pure]
   type MaxRunsPerArticle = MaxRunsPerArticle.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object MaxRunsPerArticle extends Newtype[Int, Pure]
   type NoProgressRuns = NoProgressRuns.T
   object NoProgressRuns extends Newtype[Int, Pure]

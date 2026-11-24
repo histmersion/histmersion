@@ -41,8 +41,14 @@ import com.histmersion.util.database.StoredCreator
 import com.histmersion.api.automation.Creation
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the article tables and their row codecs")
 given DbCodec[Backlink] = DbCodec.derived
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 given given_DbCodec_ArticleVersion: DbCodec[Article.Version] = DbCodec.derived
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 given given_DbCodec_ArticleVersionFull: DbCodec[Article.VersionFull] = DbCodec.derived
 
 /** The ARTICLES store (plan §5.2 stream 2.7) — the compiled wiki.
@@ -63,12 +69,17 @@ private[articles] object ArticleRepo:
   type VersionId = VersionId.T
   object VersionId extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Backlink] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Article.Version] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Article.VersionFull] = DbCodec.derived
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   private given DbCodec[Article.Row] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[CitedSource] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Article.Ref] = DbCodec.derived
 
   /** `\` escapes `%`/`_` in every ILIKE here, as in [[FilterSql]] (whose copy is private). */
@@ -92,8 +103,11 @@ private[articles] object ArticleRepo:
   private val LoadCols = sql"$RowCols, a.coverage_filter::text, a.coverage_reasons::text"
 
   /** The filter and the reasons as the jsonb columns store them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def filterJson(a: Article): Option[String] =
     a.filter.map(_.asJson.withoutNulls.noSpaces)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def reasonsJson(a: Article): String =
     Json
       .obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> Json.fromString(s"$v"))*)
@@ -117,6 +131,8 @@ private[articles] object ArticleRepo:
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE transaction, so two
     * concurrent patches cannot interleave and `ifUpdatedAt` means something.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patch(slug: Slug, p: Article.Patch, by: CritiqueRepo.By = CritiqueRepo.By("person"))(using
       DbCon
   )(using Creator.New, CreatedAt): Either[Api.Error, Article.UpdatedAt] =
@@ -140,6 +156,7 @@ private[articles] object ArticleRepo:
                   .applyIn(slug, p.critiqueReasons, by)(if !p.onlyCritiques then write(updated))
                   .map(_ => Article.UpdatedAt(token(slug.value).getOrElse("")))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def delete(slug: Slug)(using DbCon): Boolean =
     sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0
 
@@ -173,9 +190,12 @@ private[articles] object ArticleRepo:
   /** Rewrite one article's outgoing links. A `[[x]]` is a SOURCE link iff x is citekey-shaped AND a source with that
     * citekey exists — resolved with one query over the citekey-shaped candidates.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def writeLinks(slug: Slug, body: BArticleRow.Body)(using DbCon): Unit =
     linkRows(slug.value, body.value)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def linkRows(slug: String, body: String)(using DbCon): Unit =
     Unused(sql"DELETE FROM article_links WHERE src_slug = $slug".update.run(), Unused.Why.Idempotent)
     val written =
@@ -203,6 +223,8 @@ private[articles] object ArticleRepo:
     * [[write]], so the previous text is kept in `article_versions` and `article_links` is recomputed. Returns (slug,
     * links moved) for each article that changed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def retargetLinks(
       needle: Article.Link.Target,
       to: Article.Link.Target => Option[Article.Link.Target]
@@ -239,6 +261,8 @@ private[articles] object ArticleRepo:
     * when an article was renamed on the other side, and what `merge apply` does to keep two articles apart. Returns the
     * articles whose links moved.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def renameIn(oldSlug: Slug, newSlug: Slug)(using
       DbCon
   )(using Creator.New, CreatedAt): Either[Api.Error, List[Slug]] =
@@ -298,6 +322,7 @@ private[articles] object ArticleRepo:
     renameIn(oldSlug, newSlug)
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def canonical(slug: Slug)(using DbCon): Slug =
     sql"SELECT slug FROM article_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = $slug)"
       .query[Slug]
@@ -313,6 +338,8 @@ private[articles] object ArticleRepo:
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   /** The whole article as the DOMAIN model — the input side of a patch, and what `export` renders. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def load(slug: Slug)(using DbCon): Option[Article] =
     sql"SELECT $LoadCols FROM articles a WHERE a.slug = $slug"
       .query[FullArticleRow]
@@ -337,6 +364,7 @@ private[articles] object ArticleRepo:
         )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(slug: Slug)(using DbCon): Option[Article.Row] =
     sql"SELECT $ViewCols FROM articles a WHERE a.slug = ${canonical(slug)}"
       .query[Article.Row]
@@ -344,6 +372,7 @@ private[articles] object ArticleRepo:
       .headOption
 
   /** The article plus both directions of its link graph — one connection, three queries. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def view(requested: Slug)(using DbCon): Option[Article.View] =
     val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
     sql"SELECT $ViewCols FROM articles a WHERE a.slug = $slug"
@@ -356,6 +385,7 @@ private[articles] object ArticleRepo:
     * `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather than `LIKE` so an underscore in a
     * slug stays a literal underscore.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def backlinks(slug: Slug)(using DbCon): List[Backlink] =
     sql"""SELECT 'article' AS kind, a.slug AS id, a.title
           FROM article_links l JOIN articles a ON a.slug = l.src_slug
@@ -391,6 +421,7 @@ private[articles] object ArticleRepo:
     * Reuses [[Backlink]] deliberately: "something that points at me, with a kind, an id and a title" is the same shape
     * whichever end you stand at, and a second near-identical DTO would only give the two sides a way to drift.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def backlinksForSource(citekey: domain.library.Citekey)(using DbCon): List[Backlink] =
     sql"""SELECT 'article' AS kind, a.slug AS id, a.title
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
@@ -400,6 +431,7 @@ private[articles] object ArticleRepo:
   /** Which of `slugs` actually exist — the article half of resolving a `[[wikilink]]`. One query for the whole body, so
     * rendering an article is still three round trips.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def existingSlugs(slugs: List[Slug])(using DbCon): Set[Slug] =
     val wanted = slugs.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Set.empty
@@ -410,6 +442,7 @@ private[articles] object ArticleRepo:
         .toSet
 
   /** The link view (slug, title, summary) of the given articles; unknown slugs are absent. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def refs(slugs: List[Slug])(using DbCon): List[Article.Ref] =
     val wanted = slugs.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Nil
@@ -422,6 +455,7 @@ private[articles] object ArticleRepo:
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in the corpus still
     * appears (with a NULL title) — a dangling citation is a lint finding, not a reason to hide it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sourcesCited(slug: Slug)(using DbCon): List[CitedSource] =
     sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors, s.doi
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
@@ -435,6 +469,9 @@ private[articles] object ArticleRepo:
     * -not, or), OR'd with a case-insensitive substring of the TITLE, so `peop` finds "The Sea Peoples" before the word
     * is finished. `total` is the count for the filter, ignoring limit/offset.
     */
+  @tolerated(LintRule.TotalOrder, "pending G58 (ORDER BY ends with a unique key)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(
       filter: Filter,
       scope: PlaceScope,
@@ -464,6 +501,8 @@ private[articles] object ArticleRepo:
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The filter's part is
     * [[FilterSql.articleWhere]] (the one rule relating articles to sources).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def listWhere(
       filter: Filter,
       scope: PlaceScope,
@@ -485,6 +524,7 @@ private[articles] object ArticleRepo:
     if parts.isEmpty then sql"TRUE"
     else parts.joined(sql" AND ")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def tsQuery(q: Search.Query): Frag = Search.tsQuery(q)
 
   def slugs(using DbCon): Vector[Slug] =
@@ -509,6 +549,7 @@ private[articles] object ArticleRepo:
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def listVersions(slug: Slug, limit: Limit = Limit(20))(using DbCon): List[Article.Version] =
     sql"""SELECT v.id, v.slug, left(v.summary, 200),
             $VerToken, $VerCreated,
@@ -523,6 +564,7 @@ private[articles] object ArticleRepo:
   def count()(using DbCon): Count = Count(sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong)
 
   /** The newest saved version of an article: after a write, the row holding the text it replaced. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def latestVersion(slug: Slug)(using DbCon): Option[VersionId] =
     sql"SELECT max(id) FROM article_versions WHERE slug = $slug"
       .query[Option[Long]]
@@ -531,6 +573,7 @@ private[articles] object ArticleRepo:
       .flatten
       .map(VersionId(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def getVersion(slug: Slug, versionId: VersionId)(using DbCon): Option[Article.VersionFull] =
     sql"""SELECT v.id, v.slug, v.body, v.summary,
             $VerToken, $VerCreated
@@ -541,6 +584,7 @@ private[articles] object ArticleRepo:
 
   /** Every goal's linked articles that exist: goal → slugs. */
   /** Is there an article with this slug? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def slugExists(slug: Slug)(using DbCon): Boolean =
     sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0
 

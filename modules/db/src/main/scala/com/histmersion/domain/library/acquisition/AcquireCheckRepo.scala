@@ -12,7 +12,10 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Sql, "reads and writes the acquire check tables and their row codecs")
 private[acquisition] object AcquireCheckRepo:
 
   type SaidWire = SaidWire.T
@@ -170,6 +173,7 @@ private[acquisition] object AcquireCheckRepo:
         .run()
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using DbCon): Unit =
     val trigger = AcquireAttemptRow.Trigger.of(attempt.trigger).wire
     val fetchers = attempt.answers.map(_.fetcher).toList

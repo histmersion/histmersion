@@ -3,11 +3,15 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The physical names (seas, ranges, deserts, lakes, rivers, peaks …): Natural Earth's label layers, `url` with
   * `{file}` for each of `files`, cut to the region and written as a small vector archive of zooms 0…`maxZoom`;
   * `language` is the names a style shows unless it says otherwise.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@movesTo(FeaturePlace.UtilBasemap)
 final case class BasemapLabelsConfig(
     url: BasemapLabelsConfig.Url,
     files: List[BasemapLabelsConfig.Files],

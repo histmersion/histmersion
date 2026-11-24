@@ -6,6 +6,7 @@ import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Wording
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling (`source:ck`, `jobs`, …) is
   * what the URL hash carries, so a reload or a shared link reopens the same windows; everything else in the UI works
@@ -72,6 +73,7 @@ enum WindowKey derives CanEqual:
   /** One manager: its state, items in flight, items, hints, events and settings. */
   case Manager(id: WindowKey.Manager.Id)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire: WindowKey.Wire = this match
     case Source(ck)     => WindowKey.Wire(s"source:${ck.value}")
     case Article(slug)  => WindowKey.Wire(s"article:${slug.value}")
@@ -95,6 +97,7 @@ enum WindowKey derives CanEqual:
     case Manager(id)    => WindowKey.Wire(s"manager:${id.value}")
 
   /** The citekey or slug a window is about, if any. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def subject: Option[ItemKey] = this match
     case Source(ck)     => Some(ItemKey(ck.value))
     case Article(slug)  => Some(ItemKey(slug.value))
@@ -105,6 +108,7 @@ enum WindowKey derives CanEqual:
   /** A title to show before the content has told us a better one (the item's own title: the window retitles itself once
     * it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's tooltip carries.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def initialTitle: UiLabels.Text = this match
     case Source(_)     => UiLabels.Text("Source")
     case Article(_)    => UiLabels.Text("Article")
@@ -136,6 +140,7 @@ object WindowKey:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
   object Source:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = api.library.Citekey
     val Citekey: api.library.Citekey.type = api.library.Citekey
 
@@ -143,10 +148,12 @@ object WindowKey:
     export api.research.Article.Slug
 
   object Graph:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = api.library.Citekey
     val Citekey: api.library.Citekey.type = api.library.Citekey
 
   object EditSource:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = api.library.Citekey
     val Citekey: api.library.Citekey.type = api.library.Citekey
 
@@ -175,6 +182,7 @@ object WindowKey:
   private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r
 
   /** Pure: a hash entry back into a key; anything unknown is `None` (dropped, not guessed). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: Wire): Option[WindowKey] =
     Option(raw).map(_.value.trim).getOrElse("") match
       case Keyed("source", id)  => Some(Source(Source.Citekey(id)))

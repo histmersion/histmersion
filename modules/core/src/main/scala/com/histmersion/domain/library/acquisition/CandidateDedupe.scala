@@ -3,8 +3,10 @@ package domain.library.acquisition
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The works an acquisition search found, one per work: keyed by DOI, the richer record kept. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object CandidateDedupe:
 
   /** The search that found a work. */
@@ -26,6 +28,8 @@ object CandidateDedupe:
   /** An arXiv preprint without a DOI gets arXiv's DataCite DOI (`10.48550/arxiv.<id>`), so the same preprint from two
     * indexes is one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keyOf(w: WorkRef): Option[Doi] =
     w.doi
       .flatMap(d => Ident.doi(Ident.Written(d.value)))
@@ -33,6 +37,7 @@ object CandidateDedupe:
         w.arxivId.flatMap(a => Doi.option(s"10.48550/arxiv.${a.value.trim.toLowerCase.replaceAll("v\\d+$", "")}"))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dedupe(
       found: List[(FoundBy, WorkRef)],
       known: Set[Doi]

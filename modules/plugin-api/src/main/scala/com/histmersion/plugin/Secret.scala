@@ -4,16 +4,19 @@ package plugin
 import com.histmersion.util.problem.{Problem, Problems, Raised}
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A credential in a config: a REFERENCE to the value, parsed when the config is read and resolved by the host when the
   * plugin is registered (through [[Plugin.Context.secret]]). `toString` shows the reference —
   * `Secret(env:PORTAL_TOKEN)`, `Secret(value:***)` — never the value.
   */
 final class Secret private (val ref: Secret.Ref):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def toString: String = s"Secret(${ref.shown})"
   override def equals(o: Any): Boolean = o.isInstanceOf[Secret] && o.asInstanceOf[Secret].ref == ref
   override def hashCode: Int = ref.hashCode
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object Secret:
   /** A secret's value once resolved. Never logged. */
   type Resolved = Resolved.T
@@ -53,6 +56,7 @@ object Secret:
     case Vault(vault: Ref.Vault.Value, ref: Ref.Vault.Ref)
 
     /** The reference as it may be shown: a literal is masked, everything else is shown as written. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shown: Ref.Shown = this match
       case Value(_)        => Ref.Shown(s"${Ref.ValueScheme}:${Ref.Mask}")
       case Env(n)          => Ref.Shown(s"${Ref.EnvScheme}:$n")
@@ -89,6 +93,7 @@ object Secret:
     val Forms = "value:<literal>, env:<NAME> or <vault>:<ref>"
 
     /** Pure: a reference from its text. Never echoes the text back in an error (it may be a value). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(text: ParseText): Either[Problem, Ref] =
       val t = Option((text).value).getOrElse("").trim
       def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference.here(form))

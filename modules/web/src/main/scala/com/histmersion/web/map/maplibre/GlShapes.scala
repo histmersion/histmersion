@@ -10,12 +10,14 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.ShapeFeature
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One [[ShapeSet]] as a GeoJSON source and its layers. Its features carry numeric ids (feature state needs them) and
   * their own id as `hid`; colour and visibility live in feature state, so a restyle never sends the geometry again.
   */
 final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val look: ShapeStyle) extends ShapeSet:
   // `var`s: the next numeric id, and what is drawn: our id → (numeric id, geometry, colour, alpha, dashed)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val sourceId: String = id.value
   private var next = 1
   final private class Drawn(
@@ -33,6 +35,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
   // after the geometry is sent anew — the others carry theirs in their properties
   private val stated = mutable.HashSet.empty[ShapeFeature.Id]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def colourExpr: js.Any = look.colour match
     case Some(c) => c.value
     case None    => js.Array("coalesce", js.Array("feature-state", "c"), js.Array("get", "c"))
@@ -40,6 +43,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
   private def times(k: Double): js.Any = js.Array("*", k, alphaExpr)
   private val notPoint = js.Array("!=", js.Array("geometry-type"), "Point")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def layerIds: List[MapSurface.LayerId] =
     List(
       Option.when(look.fillOpacity.value > 0)(MapSurface.LayerId(s"$sourceId-fill")),
@@ -48,6 +52,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
       Option.when(look.circleRadius.value > 0)(MapSurface.LayerId(s"$sourceId-points"))
     ).flatten
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def layers: List[js.Object] =
     val fill = Option.when(look.fillOpacity.value > 0)(
       js.Dynamic.literal(
@@ -102,6 +107,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
     )
     ((fill.toList :+ solid) ++ dashed.toList ++ points.toList).map(_.asInstanceOf[js.Object])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def collection: js.Object =
     js.Dynamic
       .literal(
@@ -129,6 +135,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
         stated.foreach(k => drawn.get(k).foreach(state))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def state(d: Drawn): Unit =
     scala.util.Try(
       gl.setFeatureState(
@@ -143,13 +150,16 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
 
   // `var`: how many times the outlines were sent (diagnostics)
   private var sent = 0
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def uploads: ShapeSet.UploadCount = ShapeSet.UploadCount(sent)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def styleOf(k: ShapeFeature.Id): Option[(ShapeStyle.Colour, ShapeFeature.Alpha)] =
     drawn.get(k).map(d => (ShapeStyle.Colour(d.colour.value), d.alpha))
 
   /** The shapes under map point `at` (screen point `p`), topmost (last drawn) first: an area that holds it, a point
     * within its circle.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def under(at: LatLon, p: ScreenPt, s: MapSurface): Seq[ShapeFeature.Id] =
     // a shape faded out (playback's states before and after their years) answers nothing
     drawn.toSeq.reverseIterator

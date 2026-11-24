@@ -6,10 +6,13 @@ import com.histmersion.api.maintenance.Vacuum
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `VACUUM` for `histmersion maintenance vacuum`. VACUUM cannot run inside a transaction block, so it runs on a
   * connection in autocommit mode — never in a transaction.
   */
+@atBoundary(BoundaryKind.Sql, "runs vacuum and reads table maintenance state")
 object VacuumRepo:
   type Analyze = Analyze.T
   object Analyze extends Newtype[Boolean, Pure]
@@ -22,6 +25,7 @@ object VacuumRepo:
   object TableState:
     type DeadRows = DeadRows.T
     object DeadRows extends Newtype[Long, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Bytes = ByteCount
     val Bytes: ByteCount.type = ByteCount
 
@@ -42,6 +46,7 @@ object VacuumRepo:
   /** Run `VACUUM [(ANALYZE)]` on one table, on a connection outside any transaction. The name must have passed
     * [[Vacuum.plan]] (shape and existence).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def vacuum(table: String, analyze: Analyze)(using con: DbCon): Unit =
     val c = con.connection
     val st = c.createStatement()

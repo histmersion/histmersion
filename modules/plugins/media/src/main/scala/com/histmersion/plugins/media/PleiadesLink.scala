@@ -4,6 +4,7 @@ package plugins.media
 import io.github.iltotore.iron.constraint.any.Pure
 
 import PleiadesLink.Untaken
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A reference of a Pleiades place record that names a picture: the Commons file (`Right("File:…")`) or why it is not
   * taken, and the reference's CiTO type (`seeFurther`, `citesAsRelated`).
@@ -39,6 +40,7 @@ object PleiadesLink:
     case Elsewhere(host: Host)
 
     /** The reason, in words. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def words: String = this match
       case OnFlickr             => "on Flickr (its API needs a key)"
       case Category             => "a Commons category, not a file"

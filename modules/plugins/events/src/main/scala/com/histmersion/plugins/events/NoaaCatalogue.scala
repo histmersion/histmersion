@@ -12,12 +12,15 @@ import com.histmersion.upstreams.dating.CatalogDating
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** NOAA NCEI's significant earthquakes, eruptions and tsunamis: its hazard service
   * (`/hazel/hazard-service/api/v1/{earthquakes,volcanoes,tsunamis/events}`), page by page. A part is a page of a
   * dataset, `<dataset>:<page>`, the next page named by the one before; the pages of a dataset are of its newest
   * records, so every one is read at every import.
   */
+@atBoundary(BoundaryKind.Json, "reads the NOAA catalogue answer into event records")
 final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   // a U.S. federal work: public domain; NCEI asks to be cited
   def title = EventCatalogue.Title("NOAA NCEI Natural Hazards")
@@ -28,14 +31,17 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
         "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K"
     )
   def home = EventCatalogue.Home("https://www.ngdc.noaa.gov/hazard/")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def requestIntervalMs: EventCatalogue.RequestIntervalMs =
     EventCatalogue.RequestIntervalMs(cfg.requestIntervalMs.value)
   override def everyPartEachImport: EventCatalogue.EveryPartEachImport =
     EventCatalogue.EveryPartEachImport(true)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] =
     cfg.datasetList.map(ds => EventCatalogue.ReadPart(s"${ds.value}:1"))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
@@ -60,6 +66,8 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
         )
 
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
       .flatMap(t => RawJson.parse(t.value).toOption)
@@ -87,9 +95,11 @@ object NoaaCatalogue:
 
   private val Page = "([a-z]+):(\\d+)".r
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def path(ds: Dataset): Path = if ds == Tsunamis then Path("tsunamis/events") else Path(ds.value)
 
   /** Pure: one page of a dataset's events up to `to` (and from `from`). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def url(
       base: NoaaSettings.Url,
       dataset: Dataset,
@@ -115,6 +125,7 @@ object NoaaCatalogue:
         Right((items.toList.flatMap(i => record(dataset, i.cursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 
   /** Pure: the dataset a NOAA record's id names (`volcano:1351` → volcanoes). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def datasetOf(providerId: CatalogueEvent.Id): Option[Dataset] =
     providerId.value.takeWhile(_ != ':') match
       case "earthquake" => Some(Earthquakes)
@@ -123,6 +134,7 @@ object NoaaCatalogue:
       case _            => None
 
   /** Pure: "SYRIA:  UGARIT" → "Syria: Ugarit" — NOAA's upper-case place names in title case. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def titleCase(s: JsonFields.Text): Title =
     Title(
       "(^|[\\s(/,-])(\\p{L})".r.replaceAllIn(
@@ -132,6 +144,7 @@ object NoaaCatalogue:
     )
 
   /** Pure: one item of a dataset's answer as an event. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(dataset: Dataset, i: Cursor): Option[CatalogueEvent] =
     import JsonFields.*
     val kind = dataset match

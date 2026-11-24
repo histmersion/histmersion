@@ -15,6 +15,9 @@ import com.histmersion.domain.{CreatedAt, Creator}
 /** The events a source is the primary source of, the relations and participants sourced to it (they refuse a delete),
   * and the datings it gives (they go with it).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the event rows that point at a deleted source")
 final class EventSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =

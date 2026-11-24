@@ -1,7 +1,9 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.lint.{LintRule, tolerated}
 /** The settings only a person changes: what an agent's tool call is refused. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PersonHeldSettingsSuite extends munit.FunSuite:
 
   private def key(raw: SettingKey.ParseRaw): SettingKey = SettingKey.parse(raw).toOption.get

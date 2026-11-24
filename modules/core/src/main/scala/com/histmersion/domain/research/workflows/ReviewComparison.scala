@@ -9,6 +9,7 @@ import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
 
 import scala.annotation.tailrec
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** review-article's runs compared by their outputs (`agent compare`, #992): the last round's verdict, the rounds, round
   * 1 per reviewer and by kind, its major findings, and the ones two runs share.
@@ -20,9 +21,13 @@ object ReviewComparison extends OutputComparison:
     */
   val ProblemSimilarity = 0.5
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def round(name: CompareRuns.OutputName, prefix: String): Option[Int] =
     Option.when(name.value.startsWith(prefix))(name.value.stripPrefix(prefix).toIntOption).flatten
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def reviewSide(d: Run): ReviewSide =
     val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
     val last = merges.lastOption.flatMap((_, n) => CompareRuns.output[Merged](d, n))
@@ -65,6 +70,8 @@ object ReviewComparison extends OutputComparison:
   /** The same major finding, as two runs' reviewers worded it: the same `where` (normalised) and a similar problem, or
     * the same quoted passage.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sameMajor(a: Finding, b: Finding): Boolean =
     val (qa, qb) =
       (
@@ -94,6 +101,7 @@ object ReviewComparison extends OutputComparison:
             case None    => loop(tail, acc, left)
     loop(a, Nil, b)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def overlaps(runs: List[Run]): List[MajorOverlap] =
     val majors = runs.map(d =>
       d.run.id -> CompareRuns.output[Merged](d, CompareRuns.OutputName("merge-1")).toList.flatMap(_.majors)

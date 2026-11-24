@@ -11,10 +11,13 @@ import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the attestations keep: ids in the order they were made, every field read back, the list narrowed by
   * source, target kind and target and paged, a patch changing only what it names, a delete once.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class AttestationServiceContract extends CatalogueStoreSuite:
   stest("made, read back, listed and paged, patched, deleted") { s =>
     val a = s.attestations

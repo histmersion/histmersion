@@ -17,6 +17,7 @@ import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a source's status, a
   * disagreement edge — each with its evidence and the quote code verified, and approve / reject behind the write gate.
@@ -37,6 +38,7 @@ object ApprovalsView:
   /** What approving each kind does, and where it sits in a goal's life (goal-plan → article-plan → compile-article's
     * article-publish → review); a tooltip on the kind wherever it is shown.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def kindMeaning(kind: Approval.Kind.Wire): Option[String] = ApprovalKind.parse(kind).map {
     case ApprovalKind.GoalPlan =>
       "A research goal's plan: its sub-goals, search queries and works to read. " +
@@ -59,6 +61,8 @@ object ApprovalsView:
   }
 
   /** What each state the filter buttons offer means; a tooltip on the button. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateMeaning(state: Approval.State.Wire): Option[String] =
     if state.value == "all" then Some("Every approval, whatever its state.")
     else
@@ -71,6 +75,7 @@ object ApprovalsView:
       }
 
   /** Who decided an approval, in a sentence; a tooltip on the "decided by" chips. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def decidedByMeaning(by: Approval.DecidedBy.Wire): Option[String] = ListFilters.DecidedBy.parse(by).map {
     case ListFilters.DecidedBy.Person =>
       "Decided by a person: every decision that is not the autopilot's or an automatic one."
@@ -81,6 +86,8 @@ object ApprovalsView:
   }
 
   /** What an approval would change, in words. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(a: ApprovalInfo): String =
     ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
@@ -104,11 +111,14 @@ object ApprovalsView:
         s"manager ${a.subject.getOrElse("?")}: ${a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))}"
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
 
   /** The evidence line under the change — unless the plan block shows it: a plan's evidence IS its rationale, which
     * [[planBlock]] prints at its top (#882: it used to appear twice).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidenceLine(a: ApprovalInfo): Option[String] =
     Option(a.evidence.value).filter(_.nonEmpty).filterNot(e => a.plan.exists(_.rationale.value == e))
 
@@ -116,6 +126,8 @@ object ApprovalsView:
   val States: List[Approval.State.Wire] = ApprovalState.values.toList.map(_.wire) :+ Approval.State.Wire("all")
 
   /** The state a button stands for as the URL keeps it: the open ones are the default (`None`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateValue(button: Approval.State.Wire): Option[String] =
     Option.when(button != ApprovalState.Open.wire)(button.value)
 
@@ -140,6 +152,7 @@ object ApprovalsView:
       UiState.approvalSubject.now()
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filterOfFields(
       state: Option[String],
       kinds: List[String],
@@ -156,12 +169,14 @@ object ApprovalsView:
   /** The rows a filter shows, from the rows already loaded — what the list shows the moment a state or a kind is
     * picked, before the server's page replaces it. (The text and the decider are left to the server.)
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def visible(as: List[ApprovalInfo], f: ListFilters.ApprovalFilter): List[ApprovalInfo] =
     val n = f.normalized
     val state = shownState(n.state)
     as.filter(a => (state.value == "all" || a.state == state) && (n.kind.isEmpty || n.kind.exists(_ == a.kind)))
 
   /** The heading's words before the noun: `open` (or the state picked) and the kinds picked. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def qualifier(f: ListFilters.ApprovalFilter): Option[ListFilters.Qualifier] = f.qualifier
 
   /** The approvals a bulk decision would apply to: those selected that are still shown and open. */
@@ -169,6 +184,8 @@ object ApprovalsView:
     shown.filter(a => selected(a.id) && isOpen(a))
 
   /** What the confirmation of a bulk decision asks. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def confirmText(d: Decision, as: List[ApprovalInfo]): String =
     val kinds = as
       .groupMapReduce(_.kind)(_ => 1)(_ + _)
@@ -180,16 +197,22 @@ object ApprovalsView:
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
   /** Who decided an approval, as its row says it (nothing while it is open). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decidedLine(a: ApprovalInfo): Option[String] =
     ListFilters.DecidedBy.of(a.state, a.note, a.result.map(r => Approval.Outcome(r.value))).map(_.describe.value)
 
   /** The self-check line of a draft. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
     else
       s"The code self-check still found ${Plural.count(Plural.CountN(d.problems.size), Plural.CountSingular("problem"))} after the writer's last attempt:"
 
   /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def planBlock(plan: Goal.Plans.Plan): HtmlElement =
     div(
       cls := "approval-plan",
@@ -229,6 +252,8 @@ object ApprovalsView:
     )
 
   /** A draft: its self-check, what it cites and leaves out, and the text itself. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def draftBlock(d: Goal.Plans.ArticleDraft): HtmlElement =
     div(
       cls := "approval-draft",
@@ -265,6 +290,8 @@ object ApprovalsView:
     * filter reloads — but the window gets the same restart when the last row shown is gone, and drops an answer that
     * lands after it closed.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val list = PolledList[ApprovalInfo](
     fetch = (upTo, before) => ApiClient.approvals(currentFilter(), Some(Limit), upTo = upTo, before = before),
     id = a => PolledList.ItemId(key(a)),
@@ -276,11 +303,16 @@ object ApprovalsView:
   private val selected = Var(Set.empty[ApprovalInfo.Id])
   private val bulkBusy = Var(false)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def key(a: ApprovalInfo): String = a.id.toString
 
   /** Reload what is shown, keeping the pages loaded ([[ListPaging]]). */
   private def refresh(): Unit = list.refresh()
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def decide(a: ApprovalInfo, d: Decision, note: String): Unit =
     busy.update(_ + a.id)
     ApiClient
@@ -297,6 +329,9 @@ object ApprovalsView:
     * endpoint (and checks) of its own button — an approval decided meanwhile is refused (409) and the rest go on; the
     * refusals are reported together.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def decideAll(as: List[ApprovalInfo], d: Decision): Unit =
     bulkBusy.set(true)
     busy.update(_ ++ as.map(_.id))
@@ -327,18 +362,24 @@ object ApprovalsView:
   /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page replaces them a
     * moment later.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def shownSignal: Signal[(ListPaging.Listing[ApprovalInfo], ListFilters.ApprovalFilter)] =
     list.listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
 
   /** An approval's state (or "all") as its button and badge read it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateLabel(s: Approval.State.Wire): String =
     if s.value == "all" then "All"
     else ApprovalState.parse(s).fold[String](Wording.humanize(Wording.Id(s.value)))(Wording.approvalState)
 
   /** An approval's kind as a person reads it ([[Wording.approvalKind]]). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindLabel(kind: Approval.Kind.Wire): String =
     ApprovalKind.parse(kind).fold[String](Wording.humanize(Wording.Id(kind.value)))(Wording.approvalKind)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stateButtons: HtmlElement =
     def count(l: ListPaging.Listing[ApprovalInfo], s: Approval.State.Wire) =
       ListPaging.count(l, Option.when(s.value != "all")(s.value), a => a.state.value)
@@ -362,6 +403,8 @@ object ApprovalsView:
       }
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def bulkBar: HtmlElement =
     val targets = selected.signal.combineWith(shownSignal).map((sel, l, _) => bulkTargets(sel, l.rows))
     val openShown = shownSignal.map(_._1.rows.filter(isOpen))
@@ -397,6 +440,8 @@ object ApprovalsView:
     )
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def digestLine(g: ApprovalDigest.KindGroup): String =
     s"${kindLabel(g.kind)} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest
       .fold("")(o => s" (oldest $o)") +
@@ -408,6 +453,8 @@ object ApprovalsView:
   /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the list below
     * (its kind filter), where the bulk bar decides them all at once.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def digestBar: HtmlElement =
     val d = Var(Option.empty[ApprovalDigest.Digest])
     def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
@@ -446,6 +493,7 @@ object ApprovalsView:
       })
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tool-pane approvals-pane",
@@ -539,6 +587,8 @@ object ApprovalsView:
   /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal window, which shows
     * the open plan of its goal.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def row(a: ApprovalInfo, pick: Option[Pick] = None): HtmlElement =
     // the note being typed is this row's own until a decision sends it
     val note = Var("")

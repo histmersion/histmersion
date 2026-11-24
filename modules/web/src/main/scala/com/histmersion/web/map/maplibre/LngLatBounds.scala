@@ -5,7 +5,9 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @js.native
 trait LngLatBounds extends js.Object:
   def getWest(): Double = js.native

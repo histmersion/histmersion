@@ -26,10 +26,13 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `agent compare` (#992), the pure half: what can be compared, the step union, the verifier's quote check read back
   * from accepted AND rejected answers, the claims only one run made, and the major findings two review runs share.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class CompareRunsSuite extends munit.FunSuite:
 
   private def step(
@@ -59,6 +62,7 @@ class CompareRunsSuite extends munit.FunSuite:
   ): Run =
     Run(RunHead(id, pipeline, target, status, dry, None, overrides), steps)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val billing: Step.Model => Option[CompareRuns.StepSide.Billing] = model =>
     model.value match
       case "claude-code:haiku" => Some(CompareRuns.StepSide.Billing("plan pool: claude-plan"))
@@ -66,6 +70,7 @@ class CompareRunsSuite extends munit.FunSuite:
       case _                   => None
 
   /** The runs compared as `agent compare` does: enrich-source's outputs by the library's comparison. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def compare(runs: List[Run]) =
     CompareRuns.compare(
       runs,
@@ -186,6 +191,7 @@ class CompareRunsSuite extends munit.FunSuite:
 
   // ── enrich-source ──────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vf(claim: VerifiedFinding.Claim) = VerifiedFinding(
     claim,
     VerifiedFinding.Quote(s"quote of ${claim.value}"),
@@ -469,6 +475,7 @@ class CompareRunsSuite extends munit.FunSuite:
 
   // ── review-article ─────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def f(
       id: Finding.Id,
       sev: Severity,

@@ -30,6 +30,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
@@ -37,6 +38,7 @@ import com.histmersion.api.exchange.Bundle.uidEquality
   * numbered after its last; a source renamed takes its findings along; a finding added under an id another finding has
   * here arrives under the next free one.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   import FindingPlan.*
 
@@ -53,6 +55,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     if kind == Bundle.Kind.Finding then findingSource.get(foreign) else None
 
   // rows of the bundle that already have their own uid here are not matched again inside a pair
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   override def pairFirst(
       right: Bundle.Source,
       left: Bundle.Source,
@@ -147,6 +151,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
   // the same claim folds, a near duplicate folds when decided `merge`, the rest arrive under the survivor's citekey,
   // numbered after its last
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   override def foldSources(
       right: Bundle.Source,
       left: Bundle.Source,
@@ -183,6 +189,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     }
     false
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def renamed(source: UUID, citekey: Citekey): Unit =
     in.foreign.findings
       .filter(_.sourceUid == source)
@@ -195,6 +202,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
   // a finding id a different finding has here: the bundle's is renumbered (a source whose citekey collides is renamed
   // as a whole, its findings with it)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   override def relabelFirst(fates: Map[UUID, SourceFate], relabels: PlanRelabels): Unit =
     val colliding: Set[UUID] = in.foreign.sources
       .filter(s =>
@@ -241,7 +250,8 @@ object FindingPlan:
   /** A great-circle distance in km. */
   type Distance = Distance.T
   object Distance extends Newtype[Double, Pure]:
-    extension (d: Distance) def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
+    extension (d: Distance) @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+                            def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
   enum Match:
@@ -263,18 +273,22 @@ object FindingPlan:
       type Jaccard = Jaccard.T
       object Jaccard extends Newtype[Double, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def text(o: Option[Bundle.Finding.Region]): Option[Bundle.Finding.Region] =
     o.map(r => Bundle.Finding.Region(r.value.trim)).filter(_.value.nonEmpty)
 
   /** The claim as compared: folded, stopwords out, de-duplicated, sorted. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claimKey(claim: Bundle.Finding.Claim): ClaimKey = ClaimKey(
     MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).distinct.sorted.mkString(" ")
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claimWords(claim: Bundle.Finding.Claim): Set[String] =
     MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).toSet
 
   /** Great-circle distance in km. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def km(lon1: Longitude, lat1: Latitude, lon2: Longitude, lat2: Latitude): Distance =
     val (p1, p2) = (math.toRadians(lat1.value), math.toRadians(lat2.value))
     val dp = p2 - p1
@@ -285,6 +299,7 @@ object FindingPlan:
   /** The same place, as far as two findings say: points within `withinKm`, or the same region name (fingerprint), or
     * one of them says nothing about where.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def samePlace(
       a: Bundle.Finding,
       b: Bundle.Finding,
@@ -306,6 +321,7 @@ object FindingPlan:
   /** Pair each bundle finding with at most one finding here, one-to-one: the same claim first, then the nearest
     * near-duplicate (token Jaccard ≥ `nearAtLeast` and overlapping periods).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(
       lefts: List[Bundle.Finding],
       rights: List[Bundle.Finding],
@@ -358,6 +374,7 @@ object FindingPlan:
   /** One finding out of two (§5.4): left's identity and claim, tags unioned, the more specific period and the point
     * where only one has it, the more cautious confidence.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fold(
       l: Bundle.Finding,
       r: Bundle.Finding
@@ -387,6 +404,8 @@ object FindingPlan:
       .setTo(Bundle.Finding.Rev(""))
 
   /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def nextIds(
       citekey: com.histmersion.api.library.Citekey,
       taken: Set[Bundle.Finding.Id],

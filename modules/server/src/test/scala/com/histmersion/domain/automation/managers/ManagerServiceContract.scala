@@ -15,18 +15,25 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the managers keep: made once, their settings; items added once and brought back, held and released (for
   * a person, for the focus), settled and dispatched; events; the reads over every manager at once.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class ManagerServiceContract extends EngineStoreSuite:
   private object Feeds:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val Ingested = ManagerEvent.Kind(Feed.Ingested)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val Evaluated = ManagerEvent.Kind(Feed.Evaluated)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val Started = ManagerEvent.Kind(Feed.Started)
 
   private def m(s: EngineStores) = s.managers
   private val t = Instant.parse("2026-11-03T06:00:00Z")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goal(s: EngineStores, slug: Goal.Slug) = assert(
     s.goals
       .put(slug, api.automation.Goal.Put(api.automation.Goal.Title(slug.value)))

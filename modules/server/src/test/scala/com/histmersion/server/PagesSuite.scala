@@ -24,10 +24,12 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.instance.BuildId
 import com.histmersion.api.Html.html
 import com.histmersion.server.instance.WebBundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
   * — the link resolver is a Map.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PagesSuite extends munit.FunSuite:
 
   private val cline = Source.Ref(

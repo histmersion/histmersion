@@ -2,6 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How much each comparison of two sources counts when a merge asks whether they are one work (`merge.weights`). */
 final case class MatchWeights(
@@ -39,10 +40,12 @@ object MatchWeights:
   type TitleSimilar = TitleSimilar.T
   object TitleSimilar extends Newtype[Double, Pure]
   type TitleSimilarAtLeast = TitleSimilarAtLeast.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TitleSimilarAtLeast extends Newtype[Double, Pure]
   type TitleTokens = TitleTokens.T
   object TitleTokens extends Newtype[Double, Pure]
   type TitleTokensAtLeast = TitleTokensAtLeast.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TitleTokensAtLeast extends Newtype[Double, Pure]
   type TitleDiffers = TitleDiffers.T
   object TitleDiffers extends Newtype[Double, Pure]
@@ -69,14 +72,17 @@ object MatchWeights:
   type BodySame = BodySame.T
   object BodySame extends Newtype[Double, Pure]
   type BodySameAtLeast = BodySameAtLeast.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object BodySameAtLeast extends Newtype[Double, Pure]
   type BodyEdition = BodyEdition.T
   object BodyEdition extends Newtype[Double, Pure]
   type BodyEditionAtLeast = BodyEditionAtLeast.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object BodyEditionAtLeast extends Newtype[Double, Pure]
   type BodyDiffers = BodyDiffers.T
   object BodyDiffers extends Newtype[Double, Pure]
   type BodyDiffersBelow = BodyDiffersBelow.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object BodyDiffersBelow extends Newtype[Double, Pure]
   type Alias = Alias.T
   object Alias extends Newtype[Double, Pure]

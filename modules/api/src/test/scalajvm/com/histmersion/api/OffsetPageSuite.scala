@@ -16,10 +16,12 @@ import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.media.AssetLink
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[OffsetPage]] (#1798 item 8): one page shape — total, offset, next — and one Markdown header and footer for every
   * offset-paged list, so a list that is cut says how to get the rest.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class OffsetPageSuite extends munit.FunSuite:
 
   test("next: the offset after this page, none on the last page or past the end"):
@@ -66,6 +68,7 @@ class OffsetPageSuite extends munit.FunSuite:
     )
 
   private val g = Goal(Goal.Slug("g1"), Goal.Title("A goal"), Goal.StatusValue("planned"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ev(i: Int) = EventSummary(
     Event.Id(s"e$i"),
     EventSummary.Label(s"Event $i"),

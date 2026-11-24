@@ -7,6 +7,7 @@ import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.{Offset, PageSize}
 
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Implemented by a domain whose records a person marks read (sources, articles): what of them is not read yet. The
   * person's marks stay personal's; the owner is told only which records they name.
@@ -33,6 +34,7 @@ object Readable:
 
     def remove(key: ItemKey): Unit = items.updateAndGet(_.filterNot(_._2.key == key)): Unit
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
       val keys = read.map(_.key)
       val uids = read.flatMap(_.uid)

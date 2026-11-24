@@ -15,6 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The bounded OCR worker pool (plan §1.8).
   *
@@ -29,6 +30,7 @@ import com.histmersion.util.database.WritePermit
   * Structured concurrency is Ox's: the workers are `forkUser`s inside one `supervised` scope, which lives on a single
   * daemon thread so that binding the HTTP port is not blocked by it.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 final class JobPool(
     ds: DataSource,
     parallelism: JobPool.Parallelism,
@@ -117,6 +119,7 @@ final class JobPool(
     )
 
   /** One job, its unexpected failure recorded — both on the job's own generation. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runOne(id: Job.Id)(using WritePermit): Unit =
     try TraceScope.resumed(Transactor(ds).read(JobRepo.traceOf(id)))(run(id))
     catch
@@ -141,8 +144,10 @@ final class JobPool(
     scope.foreach(_.interrupt())
     scope = None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def queued: JobPool.QueueDepth = JobPool.QueueDepth(queue.size)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pool(): Unit =
     try
       ox.supervised {
@@ -155,6 +160,7 @@ final class JobPool(
       case _: InterruptedException => () // stop() — expected
       case NonFatal(e)             => scribe.error(s"job pool died: ${e.getMessage}", e)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def worker(): Unit =
     var running = true // the loop's exit flag; interruption clears it
     while running do

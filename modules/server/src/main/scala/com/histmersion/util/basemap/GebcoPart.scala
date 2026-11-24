@@ -6,6 +6,7 @@ package util.basemap
   */
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class GebcoPart(
     name: GebcoPart.Name,
     url: GebcoPart.Url,
@@ -13,9 +14,11 @@ final case class GebcoPart(
     window: GridWindow,
     runs: List[RowRun]
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bytes: ByteCount = ByteCount.applyUnsafe(runs.map(_.length.value).sum)
 
   /** The file `run` is kept in, in the fetch's work store. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(run: RowRun): Store.Key = Store.Key.applyUnsafe(s"gebco-$name-${run.firstRow}.bin")
 
 object GebcoPart:

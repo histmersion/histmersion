@@ -19,11 +19,13 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure rules of an acquisition sweep (docs/research-embedded-agents.md §14): what a sweep may offer the ranking
   * model (never a work already in the corpus or the queue), the model's answer and its check, which open-access picks
   * are ingested within an allowance, and the acquisition item a pick becomes.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object AcquisitionSweepRules:
 
   /** Why a candidate belongs to the goal, in the ranking model's words: what it said, not a failure. */
@@ -75,6 +77,8 @@ object AcquisitionSweepRules:
     * (open or done), each once (the first query that found it). Returns the candidates and how many were left out for
     * each reason.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def candidates(
       found: List[(Candidate.Query, WorkRef)],
       queued: Set[Doi],
@@ -111,6 +115,8 @@ object AcquisitionSweepRules:
     type DoiText = DoiText.T
     object DoiText extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Pick]
       .schema
@@ -118,6 +124,8 @@ object AcquisitionSweepRules:
       .modify(_.why)(_.description("Why it belongs to the goal, in one sentence"))
   final case class Ranking(picks: List[Pick] = Nil) derives JsonCodec
   object Ranking:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given sttp.tapir.Schema[Ranking] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Ranking]
       .schema
@@ -128,6 +136,9 @@ object AcquisitionSweepRules:
   /** A pick must name a listed candidate; a DOI that was not offered is a problem (a model inventing a work), a
     * repeated one is ignored. On the last attempt the valid picks are kept.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def checkRanking(
       r: Ranking,
       offered: List[Candidate],
@@ -151,6 +162,7 @@ object AcquisitionSweepRules:
     * every closed pick, every failed one and the open ones past the cap stay for the acquisition list. Returns what was
     * ingested, in order. Nothing is offered past the cap.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingestPicks[A, B](picks: List[A], isOa: A => Boolean, allowed: Allowance)(ingest: A => Option[B]): List[(A, B)] =
     picks
       .filter(isOa)
@@ -163,6 +175,7 @@ object AcquisitionSweepRules:
     * offered and FAILED, with why — a work with no legal file goes to the acquisition list, any other failure back to
     * the backlog. The open-access picks never offered are the caller's: they wait in the backlog.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Allowance)(
       ingest: A => Either[Problems, B]
   ): (List[(A, B)], List[(A, Problems)]) =
@@ -182,6 +195,8 @@ object AcquisitionSweepRules:
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so
     * [[com.histmersion.domain.Scheduling.dois]] finds it).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def acquireText(c: Candidate, goal: Goal.Slug, why: Rationale): AcquireText =
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")

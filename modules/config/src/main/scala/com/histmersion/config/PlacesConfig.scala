@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place (a Pleiades site has
   * no extent) to count as inside it; polygons use exact containment. The limits bound what `/api/places` and the
@@ -17,6 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * -3000..2000), each a stored simplified outline (V090). `fetchTimeoutSeconds` and `fetchConnectTimeoutSeconds` bound
   * a network gazetteer's download (the answer, the connection).
   */
+@movesTo(FeaturePlace.CataloguePlaces)
 final case class PlacesConfig(
     pointToleranceKm: PlacesConfig.PointToleranceKm,
     searchLimit: PlacesConfig.SearchLimit,

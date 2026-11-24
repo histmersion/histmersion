@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A Wikidata site as the in-memory catalogue keeps it for the refinement of its type: whether it is on the map (a
   * finding or a picture is placed there), the class its import kept, the type refined and when it was asked (epoch ms).
@@ -24,4 +25,5 @@ object HeldSite:
   type SiteType = SiteType.T
   object SiteType extends Newtype[String, Pure]
   type CheckedAt = CheckedAt.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CheckedAt extends Newtype[Long, Pure]

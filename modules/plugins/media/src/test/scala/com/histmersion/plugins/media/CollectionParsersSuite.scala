@@ -10,12 +10,14 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostLicences
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The collections' parsers (#1446): each API's answer read into a [[MediaItem]] — the licence as the record itself
   * states it, the place fields most specific first, the dates as signed years. Fixtures are trimmed real answers (Met,
   * Cleveland, Chicago, Commons, 2026-10-17); loc.gov answered with a bot challenge, so its fixtures follow the
   * documented JSON shape. The host reads every stated licence ([[HostLicences]]): what it reads is checked too.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CollectionParsersSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =

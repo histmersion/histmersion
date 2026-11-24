@@ -21,10 +21,14 @@ import com.histmersion.chimneyiron.domain.Excerpt
 import com.histmersion.chimneyiron.domain.Note
 import com.histmersion.chimneyiron.api.ExcerptView
 import com.histmersion.chimneyiron.api.NoteView
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class IronNewtypeToNewtypeSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def citekey(raw: String): Citekey = Citekey.applyUnsafe(raw)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apiCitekey(raw: String): api.Citekey = api.Citekey.applyUnsafe(raw)
 
   private val source = Source(

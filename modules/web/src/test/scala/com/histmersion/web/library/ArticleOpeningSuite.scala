@@ -3,7 +3,9 @@ package web.library
 
 import com.histmersion.api.research.Article
 import com.histmersion.web.ui.Layout
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleOpeningSuite extends munit.FunSuite:
 
   test("the first paragraph of prose, past the title, lists and quotations"):

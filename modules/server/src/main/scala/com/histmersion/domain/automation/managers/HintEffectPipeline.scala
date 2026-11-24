@@ -40,6 +40,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as
@@ -50,6 +51,8 @@ import com.histmersion.domain.Creator
   *
   * Steps: load · propose · record · close. A DRY run records the approval it would open.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class HintEffectPipeline(
     workLists: WorkListControllers,
     store: ApprovalService,
@@ -59,6 +62,7 @@ final class HintEffectPipeline(
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val mid = ManagerInfo.Id(ctx.run.target.value)
     for
@@ -102,6 +106,7 @@ final class HintEffectPipeline(
       )
     yield PipelineDef.Summary(closed)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(mid: ManagerInfo.Id, hint: Option[ManagerHint.Id]): Either[Problems, Loaded] =
     for
       m <- connect(ds)(ManagerRepo.get(mid))
@@ -130,6 +135,8 @@ final class HintEffectPipeline(
         Loaded.Settings(ManagersMarkdown.configLine(m.config))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def input(l: Loaded): String =
     val manager =
       s"id: ${l.managerId.value}\nkind: ${l.kind.value}\nresearch area: ${l.goal.fold("none (library-wide)")(_.value)}\n" +
@@ -144,6 +151,7 @@ final class HintEffectPipeline(
   /** The proposal, through the write gate: an open `hint-effect` approval about the manager (and the manager's event).
     * Nothing passed or asked for: nothing is recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(ctx: RunCtx, l: Loaded, p: Proposed)(using
       WritePermit
   )(using Creator.New): Either[Problems, String] =

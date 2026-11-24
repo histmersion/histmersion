@@ -12,6 +12,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The lists' notices ([[UiNotices]]), shown in Research's side navigation: each watched list's count (open approvals,
   * things to acquire, the open backlog) and whether it has something NEW since it was last opened — its button is bold
@@ -32,24 +33,31 @@ object Notices:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The board a window watches: its wire key is the window's own; other windows watch none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def boardOf(key: WindowKey): Option[Board] = Board.parse(Board.Wire(key.wire.value))
 
   /** The boards to mark seen now: those whose window is open and that have news, at their `latest`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toMark(open: List[WindowKey], cs: Map[Board.Wire, Counter]): List[(Board, Counter.Latest)] =
     open.flatMap(boardOf).distinct.flatMap { b =>
       cs.get(b.wire).filter(_.fresh.value).flatMap(_.latest).map(b -> _)
     }
 
   /** A counter once its window showed the items up to `at`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seenAt(c: Counter, at: Counter.Seen): Counter =
     val s = UiNotices.advance(c.seen, at)
     c.modify(_.seen).setTo(Some(s)).modify(_.fresh).setTo(Counter.Fresh(UiNotices.fresh(c.latest, Some(s))))
 
   /** Is any board among `shown` new? (What the phone's tools button marks.) */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def anyFresh(cs: Map[Board.Wire, Counter], shown: Board => Boolean): Boolean =
     cs.values.exists(c => c.fresh.value && Board.parse(c.key).exists(shown))
 
   /** What a board's button says to a screen reader beside its label. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spoken(c: Option[Counter]): Spoken =
     val count = c.flatMap(x => UiNotices.badge(x.count)).map(n => s"$n open")
     val news = Option.when(c.exists(_.fresh.value))("something new")
@@ -63,6 +71,7 @@ object Notices:
   /** What the research agents are doing (none where the server runs no agents). */
   def agents: Signal[Option[UiNotices.AgentsGlance]] = glance.signal.distinct
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def counter(b: Board): Signal[Option[Counter]] = boards.signal.map(_.get(b.wire)).distinct
 
   /** Is a board among those shown new? */
@@ -74,11 +83,13 @@ object Notices:
   private val sending = mutable.Map.empty[Board, Counter.Latest]
   private var installed = false
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def apply(cs: Counters): Unit =
     boards.set(cs.boards.map(c => c.key -> c).toMap)
     glance.set(cs.agents)
 
   /** Re-read the counters; `after` sees them once they are in. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   def refresh(after: Map[Board.Wire, Counter] => Unit = _ => ()): Unit =
     generation += 1
     val mine = generation
@@ -89,6 +100,7 @@ object Notices:
     }
 
   /** Re-read the counters shortly — after a change the page made (several in a row read once). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refreshSoon(): Unit =
     dom.window.clearTimeout(soon)
     soon = dom.window.setTimeout(() => refresh(), Layout.countersRefreshMs.value)
@@ -97,6 +109,8 @@ object Notices:
     * approval decided in a goal's): when `b` had no news before, the only change since is this one, which is not news
     * to the reader who made it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ownWrite(b: Board): Unit =
     val had = boards.now().get(b.wire).exists(_.fresh.value)
     dom.window.clearTimeout(soon)
@@ -109,6 +123,9 @@ object Notices:
     )
 
   /** Mark `b` seen at `at`: on the page now, then on the server. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mark(b: Board, at: Counter.Latest): Unit =
     boards.update(m => m.get(b.wire).fold(m)(c => m.updated(b.wire, seenAt(c, Counter.Seen(at.value)))))
     if !sending.get(b).exists(_.value >= at.value) then
@@ -120,6 +137,8 @@ object Notices:
       }
 
   /** Once, when the page starts: the first read, the poll, and the open windows' marks. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(ui: UiConfig): Unit =
     if !installed then
       installed = true

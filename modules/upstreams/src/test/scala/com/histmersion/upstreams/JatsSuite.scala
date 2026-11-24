@@ -5,9 +5,12 @@ package upstreams
 
 import com.histmersion.upstreams.jats.Jats
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class JatsSuite extends munit.FunSuite:
 
   private val article = scala.io.Source.fromResource("jats/article.xml").mkString
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val md = Jats.toMarkdown(Jats.Xml(article)).value
 
   test("a JATS article is recognised through its prolog, comments and DOCTYPE"):

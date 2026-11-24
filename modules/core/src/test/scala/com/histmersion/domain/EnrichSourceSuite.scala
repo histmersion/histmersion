@@ -20,7 +20,11 @@ import com.histmersion.api.library.Finding
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class EnrichSourceSuite extends munit.FunSuite:
 
   /** No guard fires: every place resolves, no phrase, a gap no source reaches (#1424 has its own suite). */
@@ -286,6 +290,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     assert(checkNotes(Notes(EnrichSource.Notes.Value("See [[nope]].")), Set("zz2020_x"), _ => false).isLeft)
     assert(checkNotes(Notes(EnrichSource.Notes.Value("  ")), _ => true, _ => true).isLeft)
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val loaded = Loaded(
     Citekey("zz2020_x"),
     EnrichSource.Loaded.Title("T"),

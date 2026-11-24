@@ -8,7 +8,9 @@ import com.histmersion.util.storage.LineFiles
 
 import java.nio.file.{Files, Path}
 import java.time.Instant
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LogFilesSuite extends munit.FunSuite:
   private val dir = FunFixture[Path](_ => Files.createTempDirectory("hm-log-files"), d => deleteTree(d))
 

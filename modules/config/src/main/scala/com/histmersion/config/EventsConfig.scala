@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Events from catalogues (#1449): `events` in reference.conf. The HTTP politeness (User-Agent, retries, Retry-After
   * cap) is `media`'s; each catalogue has its own pace.
   */
+@movesTo(FeaturePlace.CatalogueEvents)
 final case class EventsConfig(
     timeoutSeconds: EventsConfig.TimeoutSeconds,
     minYear: EventsConfig.MinYear,

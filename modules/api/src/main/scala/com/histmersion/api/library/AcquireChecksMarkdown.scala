@@ -4,10 +4,14 @@ package api.library
 import com.histmersion.api.Plural
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AcquireChecksMarkdown:
 
   import com.histmersion.api.library.Acquire.Checks.*
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line(s: RecheckStatus): String =
     val job = s.job.fold("")(j => s" — $j")
     if !((s.enabled) == RecheckStatus.Enabled(true)) then
@@ -17,14 +21,19 @@ object AcquireChecksMarkdown:
         s"${s.closedWeek} closed and ${s.fetchedWeek} found this week, ${s.triedToday} of ${s.perDay} tried today" +
         s.nextPass.fold("")(n => s" — next pass $n") + s.note.fold("")(n => s" ($n)") + job
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def result(r: RecheckResult): String = r.job.fold(pass(r))(j => started(r, j))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def started(r: RecheckResult, j: JobInfo): String =
     s"# Acquisition list re-check\n\n" +
       s"- ${Plural.count(Plural.CountN(r.open.value.toLong), Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.allowance} to try\n" +
       s"- started as job `${j.id}`: ${j.detail.flatMap(RecheckJob.Detail.of).fold("the acquisition list's legal re-check")(RecheckJob.describe)} " +
       s"— `histmersion jobs ${j.id}` follows it" + r.note.fold("")(n => s"\n- _${n}_")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pass(r: RecheckResult): String =
     val verb = if (r.dryRun) == RecheckResult.DryRun(true) then "would " else ""
     val head =

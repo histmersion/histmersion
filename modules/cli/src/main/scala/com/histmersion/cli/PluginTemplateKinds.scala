@@ -1,6 +1,7 @@
 package com.histmersion
 package cli
 
+import com.histmersion.lint.{LintRule, tolerated}
 /** The sources of each kind's new plugin, with the placeholders `PluginTemplate` fills in (`@Name@`, `@id@`,
   * `@Plugin@`, `@Contribution@`). Each one works as written: it compiles, its tests pass, and the server registers it
   * with its defaults alone.
@@ -14,6 +15,7 @@ private[cli] object KindSources:
     case PluginKind.AiProvider      => AiProviderMain
     case PluginKind.SecretVault     => SecretVaultMain
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def test(kind: PluginKind): String = TestImports + (kind match
     case PluginKind.SourceFetcher   => SourceFetcherTest + SourceFetcherLive
     case PluginKind.MediaCollection => MediaCollectionTest + MediaCollectionLive
@@ -21,6 +23,7 @@ private[cli] object KindSources:
     case PluginKind.AiProvider      => AiProviderTest
     case PluginKind.SecretVault     => SecretVaultTest)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def defaults(kind: PluginKind): String = kind match
     case PluginKind.SourceFetcher   => SourceFetcherDefaults
     case PluginKind.MediaCollection => MediaCollectionDefaults
@@ -29,6 +32,7 @@ private[cli] object KindSources:
     case PluginKind.SecretVault     => SecretVaultDefaults
 
   /** The case classes that `derives ConfigReader` in the kind's sources, in the order they are written. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def configTypes(kind: PluginKind): List[String] = kind match
     case PluginKind.MediaCollection => List("ListedPicture", "@Name@Config")
     case PluginKind.EventCatalogue  => List("ListedEvent", "@Name@Config")

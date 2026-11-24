@@ -14,11 +14,14 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the agent runs and approvals windows: what is live, the poll schedule, the filter, the actions a
   * state allows, why a run paused, the typed budget, an approval in words, and the state filters' round trip through
   * the URL hash.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class RunsViewSuite extends munit.FunSuite:
 
   override def beforeEach(context: BeforeEach): Unit =

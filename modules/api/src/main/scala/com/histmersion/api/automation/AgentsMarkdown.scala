@@ -7,7 +7,10 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.given
 import com.histmersion.api.research.Article
 import com.histmersion.api.Markdown
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AgentsMarkdown:
 
   import Agents.*
@@ -21,12 +24,16 @@ object AgentsMarkdown:
       Plural.count(Plural.CountN(t.toLong), Plural.Noun.Singular("turn"))
     )).mkString(" · ")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tokens(u: Usage): String =
     val cache = if (u.cacheRead).value + (u.cacheWrite).value > 0 then
       s", cache ${u.cacheRead} read / ${u.cacheWrite} written"
     else ""
     (s"${u.input} in / ${u.output} out$cache")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def models(m: ModelsInfo): String =
     val head = s"# Embedded agents — ${if (m.enabled) == ModelsInfo.Enabled(true) then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
@@ -53,6 +60,8 @@ object AgentsMarkdown:
       (head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
         allowances + problems)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chainEntry(e: ModelChains.ChainEntry): String =
     val mark =
       if (e.usable) == ModelChains.ChainEntry.Usable(true) then ""
@@ -62,6 +71,8 @@ object AgentsMarkdown:
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     (s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roleChain(c: ModelChains.RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
       val state = if (e.usable) == ModelChains.ChainEntry.Usable(true) then "usable"
@@ -85,6 +96,8 @@ object AgentsMarkdown:
       ModelChains.Limit.compact(BigDecimal((v)).setScale(0, BigDecimal.RoundingMode.HALF_UP))
     case ModelChains.Measure.Usd => ((usd(((v)))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
     val state = if (a.usable) == ModelChains.AllowanceStatus.Usable(true) then "has headroom"
     else s"**below its reserve**${a.freesAt.fold(" (does not free by itself)")(t => s" until $t")}"
@@ -98,6 +111,7 @@ object AgentsMarkdown:
       }) — $state" +
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def allowance(a: ModelChains.AllowanceStatus): String = ((allowanceBlock(a)))
 
   private def pct(d: Double): String =
@@ -109,6 +123,8 @@ object AgentsMarkdown:
     else if (s) < 172800 then (s"${(s) / 3600} h")
     else (s"${(s) / 86400} d")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
       if !((p.available) == PlanQuota.PoolStatus.Available(true)) then
@@ -140,6 +156,8 @@ object AgentsMarkdown:
       s" · ${p.maxCallsInFlight} call(s) at once${p.planType.fold("")(t => s" · plan $t")}" +
       p.note.fold("")(n => s"\n\n_${n}_") + windows + refreshLine(p)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refreshLine(p: PlanQuota.PoolStatus): String =
     val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
     val times =
@@ -151,6 +169,8 @@ object AgentsMarkdown:
     )
     (s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refreshed(q: PlanQuota.QuotaRefreshed): String =
     (q.pools
       .map(r =>
@@ -163,6 +183,8 @@ object AgentsMarkdown:
        else
          s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def quota(q: PlanQuota.QuotaInfo): String =
     val metered =
       if q.metered.isEmpty then "_No metered allowance: API keys are capped only by the run's and the day's budgets._"
@@ -183,10 +205,14 @@ object AgentsMarkdown:
     (s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
       s"\n\n## Metered\n\n$metered\n\n$fall")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def generated(r: GenerateResult): String =
     s"Generated ${r.runtimes.mkString(", ")} in ${r.dir}: ${r.files} file(s), ${r.written} written, ${r.removed} removed " +
       s"(definitions ${r.definitions.value.take(12)})."
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doctor(d: DoctorReport): String =
     def mark(l: CheckLevel) = l match
       case CheckLevel.Ok   => "ok"
@@ -205,6 +231,9 @@ object AgentsMarkdown:
     (s"# Agent doctor${if (d.online) == DoctorReport.Online(true) then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs
       .mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def probe(p: ProbeResult): String =
     val verdict =
       if p.answer.isEmpty then
@@ -219,6 +248,8 @@ object AgentsMarkdown:
        else p.toolCalls.map(c => s"- tool: `$c`").mkString("", "\n", "\n\n")) +
       s"```json\n${p.rawAnswer}\n```"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def options(r: RunInfo): String =
     List(
       Option.when(((r.dryRun) == RunInfo.DryRun(true)))("dry run, writes nothing"),
@@ -235,6 +266,9 @@ object AgentsMarkdown:
 
   val DryRunNote = "dry run: not written"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def runLine(r: RunInfo): String =
     val budget = s"${usd(r.costUsd.value)}/${usd(r.budgetUsd.value)} USD"
     val opts = Option(options(r)).filter((_).nonEmpty).fold("")(o => s" ($o)")
@@ -244,6 +278,7 @@ object AgentsMarkdown:
         .filter(_.sentence.nonEmpty)
         .fold("")(e => s" · ${e.sentence}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runs(
       rs: List[RunInfo],
       page: Paging.Page = Paging.Page.empty,
@@ -266,6 +301,8 @@ object AgentsMarkdown:
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pageLine(
       shown: Paging.ShownCount,
       page: Paging.Page,
@@ -289,6 +326,8 @@ object AgentsMarkdown:
     { val refactorTuple21 = "decidedBy" -> "Decided by"; ((refactorTuple21._1), (refactorTuple21._2)) }
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facetLines(page: Paging.Page, facets: List[(String, String)]): String =
     val lines = facets
       .map((name, label) =>
@@ -300,6 +339,10 @@ object AgentsMarkdown:
       .filter(_.value.nonEmpty)
     if lines.isEmpty then ("") else (lines.mkString("  \n") + "\n\n")
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
     val head = s"# Agent run ${r.id}${if (r.dryRun) == RunInfo.DryRun(true) then " (dry run)" else ""}\n\n" +
@@ -348,6 +391,8 @@ object AgentsMarkdown:
           .mkString("\n\n")
     head + warnings + steps + writes + msgs
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def change(a: ApprovalInfo): String =
     ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
@@ -376,12 +421,15 @@ object AgentsMarkdown:
           )
       case None => (s"${a.kind} on ${a.subject.getOrElse(a.citekey)}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approvalLine(a: ApprovalInfo): String =
     val run = a.runId.fold("")(r => s" · run ${r.value.take(8)}")
     val res = a.result.filter(_.value.nonEmpty).fold("")(r => s" · $r")
     val created = Creation.line(a.creator, None).fold("")(l => s" · $l")
     (s"#${a.id} · ${a.state} · ${change(a)}$run$res$created")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approvals(
       as: List[ApprovalInfo],
       page: Paging.Page = Paging.Page.empty,
@@ -419,6 +467,8 @@ object AgentsMarkdown:
 
   private def indent(b: String): String = ((b).linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def planBlock(p: Goal.Plans.Plan): String =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
@@ -436,6 +486,8 @@ object AgentsMarkdown:
       .filter(_.nonEmpty)
       .mkString("\n\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def draftBlock(d: Goal.Plans.ArticleDraft, chars: Markdown.CharLimit): String =
     val head = s"${d.mode.wire} · ${d.kind} · \"${d.title}\"${d.section.fold("")(s => s" · under '$s'")} · " +
       s"cites ${d.cited.size} source(s) · ${d.filter}"
@@ -446,6 +498,9 @@ object AgentsMarkdown:
     else d.text.value
     (s"$head\n\n$problems\n\n```markdown\n$text\n```")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def scheduleLine(s: Goal.Plans.GoalSchedule): String =
     val state = if (s.enabled) == Goal.Plans.GoalSchedule.Enabled(true) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${usd(b.value)} USD")
@@ -457,6 +512,8 @@ object AgentsMarkdown:
     if ss.isEmpty then ("_No schedules._")
     else ("# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linkLine(l: Goal.Plans.GoalLink): String =
     val ref = l.kind match
       case Goal.Plans.LinkKind.Source | Goal.Plans.LinkKind.Article => s"[[${l.ref}]]"
@@ -465,6 +522,9 @@ object AgentsMarkdown:
     val title = l.title.fold(if l.kind == Goal.Plans.LinkKind.Query then "" else " (missing)")(t => s" — $t")
     s"${l.kind.wire}: $ref$title${l.note.filter(_.value.nonEmpty).fold("")(n => s" · $n")}"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def goalView(v: Goal.Plans.GoalView): String =
     val children = if v.children.isEmpty then ""
     else
@@ -502,6 +562,9 @@ object AgentsMarkdown:
   private def ratio(n: Int, of: Int): String =
     if of == (0) then ("—") else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def compare(c: RunCompare.Comparison): String =
     import RunCompare.*
     val ids = c.runs.map(_.id.value.take(8))

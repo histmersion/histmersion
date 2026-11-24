@@ -2,12 +2,14 @@ package com.histmersion
 package util.data.mirror
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the Markdown mirror puts the notes of one kind of record, under the directory `histmersion export <dir>` is
   * given (and `histmersion seed <dir>` reads back): the source notes in `<dir>/sources/<citekey>.md`, each article in
   * `<dir>/<kind>/<slug>.md`, the bookkeeping in `<dir>/meta/`. Paths are relative names; the client resolves them under
   * the directories it was given.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 enum MirrorPlacement:
   /** `<dir>/<directory>/<id>.md`: one directory of their own. */
   case InDirectory(name: MirrorPlacement.Directory)
@@ -40,4 +42,5 @@ object MirrorPlacement:
   val MetaFiles: MirrorPlacement = Named(MetaDirectory)
 
   /** The file name of the note of the record `id`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def noteFile(id: RecordId): NoteFile = NoteFile(s"$id.md")

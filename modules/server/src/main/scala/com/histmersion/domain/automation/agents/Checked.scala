@@ -9,10 +9,12 @@ import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An LLM answer after code validation: the value to checkpoint, and what was dropped or doubted on the way (run
   * warnings, not failures).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Checked[O](value: O, warnings: List[Checked.Warnings] = Nil)
 
 object Checked:

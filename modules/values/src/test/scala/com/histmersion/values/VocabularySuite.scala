@@ -20,8 +20,11 @@ import com.histmersion.domain.library.Edge
 import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.data.exchange.Issue
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class VocabularySuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def roundTrips[E](using w: WireEnumValues[E]): Unit =
     val wires = w.all.toList.map(w.wire)
     assertEquals(wires.distinct, wires, "two values share a wire spelling")

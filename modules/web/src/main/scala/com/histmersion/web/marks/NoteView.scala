@@ -9,9 +9,12 @@ import com.histmersion.web.{:=, given}
   */
 object NoteView:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def apply(text: NoteMarkdown.Markdown): HtmlElement =
     div(cls := "note-text reading", NoteMarkdown.blocks(text).map(block))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def block(b: NoteMarkdown.Block): HtmlElement = b match
     case NoteMarkdown.Block.Heading(n, t) =>
       htmlTag(s"h${math.min(6, n.value + 2)}")(cls := "note-heading", t.map(inline))
@@ -21,6 +24,8 @@ object NoteView:
     case NoteMarkdown.Block.Quote(t)     => blockQuote(t.map(inline))
     case NoteMarkdown.Block.CodeBlock(c) => pre(code(c))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inline(i: NoteMarkdown.Inline): Node = i match
     case NoteMarkdown.Inline.Text(s)     => textToTextNode(s)
     case NoteMarkdown.Inline.Strong(s)   => strong(s)

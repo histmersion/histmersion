@@ -22,11 +22,13 @@ import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaImportRepo
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) — on the fixture the
   * converter produced from a generated journal paper (converter/tests/test_figures.py) and on hand-made cases — and the
   * reports' arithmetic and Markdown.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourcePicturesSuite extends munit.FunSuite:
 
   private val rules = FigurePick.Rules()

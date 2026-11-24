@@ -3,12 +3,16 @@ package config
 
 import org.ekrich.config.Config
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process environment, read once by the entry point and passed to whatever needs a variable. */
+@movesTo(FeaturePlace.Config)
 final case class Environment(variables: Map[Environment.VariablesKey, Environment.VariablesValue]):
   def get(name: Environment.VariablesKey): Option[Environment.VariablesValue] = variables.get(name)
 
   /** A non-blank value, trimmed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nonBlank(name: Environment.VariablesKey): Option[Environment.VariablesValue] =
     get(name).map(v => Environment.VariablesValue(v.value.trim)).filter(_.value.nonEmpty)
 
@@ -24,6 +28,7 @@ object Environment:
   val empty: Environment = Environment(Map.empty)
 
   /** The environment as the settings were loaded with it ([[LoadedConfig.env]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(env: Config): Environment =
     val read = AppConfig.lookup(env)
     Environment(

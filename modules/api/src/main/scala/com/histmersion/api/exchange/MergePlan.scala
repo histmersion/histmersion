@@ -9,6 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MergePlan(
     bundleId: UUID,
@@ -37,6 +38,7 @@ object MergePlan:
   type FormatVersion = FormatVersion.T
   object FormatVersion extends Newtype[Int, Pure]
   type SchemaVersion = SchemaVersion.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SchemaVersion extends Newtype[String, Pure]
   type AsOf = AsOf.T
   object AsOf extends Newtype[String, Pure]

@@ -6,8 +6,10 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.data.DataOwner
 import com.histmersion.server.Deps
 import com.histmersion.util.storage.Location
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What today's owners register for backup, maintenance and the storage figures. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MaintenanceRegistrySuite extends munit.FunSuite:
 
   test("the reindex is the library's, found by name; nothing else is"):

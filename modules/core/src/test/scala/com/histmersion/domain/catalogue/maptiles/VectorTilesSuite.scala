@@ -2,10 +2,12 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's vector tiles, pure: the grid (which tiles exist, their bounds, where a point falls), the grouping rule,
   * and the writer read back as MapLibre reads it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class VectorTilesSuite extends munit.FunSuite:
 
   private def tile(z: TileCoord.Z, x: TileCoord.X, y: TileCoord.Y) = TileCoord.of(z, x, y, TileCoord.Z(22)).toOption.get

@@ -48,6 +48,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -71,6 +72,8 @@ import com.histmersion.domain.Creator
   * it would append (and the tasks, link and log lines) on their steps, and starts NO review run: there is no written
   * text for one to review.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class CompileArticlePipeline(
     site: ResearchSite,
     goals: GoalService,
@@ -82,6 +85,7 @@ final class CompileArticlePipeline(
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     for
       snap <- ctx.code[Snap](StepRecord.Name("snapshot"))(snapshot(ctx, ctx.run.target))
@@ -98,6 +102,8 @@ final class CompileArticlePipeline(
         else compile(ctx, snap, found)
     yield PipelineDef.Summary(line)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def compile(ctx: RunCtx, snap: Snap, found: Found)(using
       WritePermit
   )(using Creator.New): Either[Halt, String] =
@@ -136,6 +142,8 @@ final class CompileArticlePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def snapshot(ctx: RunCtx, target: RunInfo.Target): Either[Problems, Snap] =
     val p = ctx.run.params
     Slug.parse(target.value).flatMap { slug =>
@@ -190,6 +198,8 @@ final class CompileArticlePipeline(
   private def isCitekey(ck: Citekey): Boolean =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filter(ctx: RunCtx, s: Snap)(using WritePermit): Either[Problems, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
     val f = af.toFilter.copy(limit = Filter.Limit(research.compile.maxSources.value))
@@ -224,6 +234,7 @@ final class CompileArticlePipeline(
   /** A source's record, as an extraction reads it: summary, findings, notes, then the body, cut at
     * `agents.compile.record-chars`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(ck: Citekey): Option[String] =
     site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(Api.Error(_)).toOption.map { s =>
       val parts = List(
@@ -235,6 +246,7 @@ final class CompileArticlePipeline(
       parts.mkString("\n\n").take(research.compile.recordChars.value)
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def extractAll(ctx: RunCtx, s: Snap, found: Found)(using WritePermit): Either[Halt, List[Extracted]] =
     locally {
       found.toExtract.zipWithIndex.foldLeft[Either[Halt, List[Extracted]]](Right(Nil)) { case (acc, (ck, i)) =>
@@ -270,6 +282,8 @@ final class CompileArticlePipeline(
   /** The evidence model: statuses from the filter, the disagreement edges among its sources (from `neighbors`, only
     * citekey targets), due weight and Not used.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def evidenceOf(found: Found, extracted: List[Extracted]): Evidence =
     val edges = found.sources.flatMap { s =>
       site.citations
@@ -285,6 +299,8 @@ final class CompileArticlePipeline(
     }
     CompileArticle.evidence(found.filter, found.total, found.sources, extracted, edges)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def draft(
       ctx: RunCtx,
       s: Snap,
@@ -349,6 +365,7 @@ final class CompileArticlePipeline(
   /** The one write, only after approval: a new article only while its slug is still free (never an overwrite), an
     * extension appended with the snapshot's token (a 412 drops it, never overwrites).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided)(using
       WritePermit,
       Creator.New
@@ -450,6 +467,7 @@ final class CompileArticlePipeline(
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def review(ctx: RunCtx, s: Snap, w: Written)(using WritePermit, Creator.New): Option[String] =
     if !w.written.value || !ctx.run.params.chainReview.map(_.value).getOrElse(research.compile.review.value) then None
     else
@@ -472,6 +490,7 @@ final class CompileArticlePipeline(
           ctx.warn(s"review: no review-article run started — ${e.problems.sentences.mkString("; ")}; run it by hand")
           None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String])(using
       WritePermit
   )(using Creator.New): Either[Problems, String] =
@@ -504,11 +523,13 @@ final class CompileArticlePipeline(
         .value
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(ctx: RunCtx, line: String): Either[Problems, String] =
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
 object CompileArticlePipeline:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def written(c: ManagerContext, run: Run.Id): Option[Written] =
     c.stepOutput(run, StepRecord.Name("write")).flatMap(o => RawJson.decode[Written](o.value).toOption)
 

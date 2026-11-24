@@ -15,8 +15,12 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.{Latitude, Longitude, UserId, Year}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A bookmark as the person sees it: its target as it shows now and what that is called. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Bookmark(
     id: com.histmersion.api.personal.Bookmark.Id,
     target: MarkTarget,
@@ -26,9 +30,12 @@ final case class Bookmark(
     updatedAt: MarkTime
 ):
   /** Its name, its item's title and its item's key hold every word. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(words: SearchWords): Boolean =
     words.matches(label.fold("")(_.value), title.value, target.itemRef.fold("")(_.key.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def wire: WireBookmark = WireBookmark(
     id,
     target.wire,
@@ -42,6 +49,7 @@ object Bookmark:
 
   /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def idOf(raw: WireBookmark.Id): Either[Problem, WireBookmark.Id] =
     val id = Option(raw).fold("")(_.value.trim.toLowerCase)
     Either.cond(
@@ -59,6 +67,7 @@ object Bookmark:
     Bookmark(stored.id, target, title, stored.label, stored.createdAt, stored.updatedAt)
 
   /** A live bookmark as the table answers it. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final private[bookmarks] case class Row(
       id: com.histmersion.api.personal.Bookmark.Id,
       kind: ItemKind.Wire,

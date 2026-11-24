@@ -27,6 +27,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A config reload against a running server (docs/research-plugins.md §3.5, §3.6): the database swapped between two
   * test databases on the same Postgres, with a request and an OCR job that started on the old one finishing there and
@@ -156,6 +157,7 @@ class HotReloadSuite extends DbSuite:
     val entered = java.util.concurrent.Semaphore(0)
     val gate = CountDownLatch(1)
     def health = Right(ConverterClient.HealthSummary("ok"))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       entered.release()
       gate.await(60, TimeUnit.SECONDS)
@@ -173,6 +175,7 @@ class HotReloadSuite extends DbSuite:
     Files.write(p, s"%PDF-1.4 $marker".getBytes("UTF-8"))
 
   /** One query on database `db` over a connection of its own (no pool left behind on it). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def on(db: String, q: String): Long =
     val c = java.sql.DriverManager.getConnection(urlOf(db), base.db.user.value, base.db.password.value)
     try

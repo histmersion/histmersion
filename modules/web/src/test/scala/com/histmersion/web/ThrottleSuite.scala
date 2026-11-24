@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import scala.collection.mutable
+import com.histmersion.lint.{LintRule, tolerated}
 
 class ThrottleSuite extends munit.FunSuite:
 
@@ -10,6 +11,7 @@ class ThrottleSuite extends munit.FunSuite:
     var t: Double = 0
     private val queue = mutable.ListBuffer.empty[(Double, Throttle.TimerId, () => Unit)]
     private var ids = 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def later(ms: Throttle.DelayMs, g: () => Unit): Throttle.TimerId =
       ids += 1
       val id = Throttle.TimerId(ids)
@@ -22,6 +24,7 @@ class ThrottleSuite extends munit.FunSuite:
       queue --= due
       due.foreach(_._3())
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def throttled(clock: Clock, out: mutable.ListBuffer[Int]) =
     Throttle[Int](
       Throttle.IntervalMs(100),
@@ -113,6 +116,7 @@ class DebounceSuite extends munit.FunSuite:
     var t: Double = 0
     private val queue = mutable.ListBuffer.empty[(Double, Debounce.TimerId, () => Unit)]
     private var ids = 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def later(ms: Debounce.Delay, g: () => Unit): Debounce.TimerId =
       ids += 1
       val id = Debounce.TimerId(ids)

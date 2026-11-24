@@ -8,6 +8,7 @@ import com.histmersion.util.storage.{ByteSource, Store}
 import java.io.IOException
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A store of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a file
   * `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty `<z>/<x>/<y>.none`, so it is not asked for again.
@@ -26,12 +27,14 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
   private var total = 0L
   private var loaded = false
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def file(key: String, absent: Boolean): Store.Key =
     Store.Key.applyUnsafe(key + (if absent then ".none" else s".$ext"))
 
   private def done(written: Either[Store.Error, ?]): Unit =
     written.left.foreach(e => throw IOException(e.message.sentence))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(): Unit = if !loaded then
     loaded = true
     if store.isDirectory(Store.Key.Root) then
@@ -43,6 +46,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
       found.sortBy(_._3).foreach { (k, n, _) => index.put(k, n); total += n }
       evict()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def evict(): Unit =
     val it = index.entrySet().iterator()
     while total > maxBytes().value && it.hasNext do
@@ -53,6 +57,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
       val _ = store.delete(file(e.getKey, absent = true))
 
   /** `Some(Some(bytes))` a cached tile, `Some(None)` one known to be missing, `None` not cached. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(key: DiskLru.Key): Option[Option[ByteSource.Content]] = synchronized {
     load()
     if !index.containsKey(key.value) then None
@@ -70,6 +75,8 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
   /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used until the cache
     * is within its ceiling.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def put(key: DiskLru.Key, bytes: Option[ByteSource.Content]): Unit = synchronized {
     load()
     done(store.put(file(key.value, bytes.isEmpty), bytes.getOrElse(ByteSource.Content(Array.emptyByteArray))))
@@ -78,10 +85,13 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
     evict()
   }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entries: DiskLru.EntryCount = synchronized { load(); DiskLru.EntryCount(index.size.toLong) }
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bytes: ByteCount = synchronized { load(); ByteCount.applyUnsafe(total) }
 
   /** Everything removed; answers the bytes it held. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def clear(): ByteCount = synchronized {
     val was = store.deleteTree(Store.Key.Root).fold(0L)(_.value)
     index.clear(); total = 0; loaded = false

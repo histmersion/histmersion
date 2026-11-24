@@ -3,10 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media from outside providers (#1446): the polite-client settings, the stored sizes and, per provider, its API and
   * the licence families it may be stored under ([[com.histmersion.domain.Licence]]).
   */
+@movesTo(FeaturePlace.Media)
 final case class MediaConfig(
     userAgent: MediaConfig.UserAgent,
     timeoutSeconds: MediaConfig.TimeoutSeconds,
@@ -38,6 +41,7 @@ final case class MediaConfig(
     samples: MediaConfig.Samples
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limit(asked: Option[MediaConfig.Limit]): MediaConfig.Limit =
     MediaConfig.Limit(asked.filter(_.value > 0).getOrElse(defaultLimit).value.max(1).min(maxLimit.value.max(1)))
 

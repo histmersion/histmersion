@@ -8,8 +8,11 @@ import com.histmersion.util.database.Timestamps
 import com.augustnagro.magnum.*
 
 import java.time.Instant
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `ui_seen` table: one mark per board. Takes the connection it runs on. */
+@atBoundary(BoundaryKind.Sql, "reads and writes the seen tables and their row codecs")
 private[seen] object SeenRepo:
 
   def all(using DbCon): Map[SeenBoard, MarkTime] =
@@ -20,6 +23,7 @@ private[seen] object SeenRepo:
       .toMap
 
   /** The mark moved forward to `at` (the database's now when none); the mark kept. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def mark(board: SeenBoard, at: Option[Instant])(using DbCon): MarkTime =
     val asked = at.map(_.toString)
     MarkTime.parse(

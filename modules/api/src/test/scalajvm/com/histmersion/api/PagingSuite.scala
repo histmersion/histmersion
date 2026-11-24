@@ -16,10 +16,12 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Approval
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The paged lists' pure parts: the heading's wording, the counts header, the page from the counts, and how the jobs /
   * runs / approvals listings say there is more.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PagingSuite extends munit.FunSuite:
 
   test("the heading says what is shown, and of how many, only when the page is not the whole list"):

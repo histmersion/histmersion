@@ -11,12 +11,16 @@ object ArticleMarkdown:
 
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def article(v: Article.View, parts: List[Article.Part] = Nil): String =
     if parts.isEmpty then ((articleFull(v)))
     else
       ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => Article.Part((refactorValue).value))))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def articleFull(v: Article.View): String =
     val a = v.article
     val body = a.body.value.trim
@@ -35,8 +39,10 @@ object ArticleMarkdown:
     val created = Creation.line(a.creator, a.createdAt).map(l => s"\n\n_${l}_").getOrElse("")
     trimmed + created + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def coverage(v: Article.View): String = (v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def metaLine(kind: String, regions: List[String], period: String, tags: List[String]): String =
     val parts = List(
       Label.display(Label.Text(kind.trim)).value,
@@ -47,6 +53,7 @@ object ArticleMarkdown:
       .filter(_.nonEmpty)
     if parts.isEmpty then ("") else s"_${parts.mkString(" · ")}_"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chipLinksList(values: List[String], hashKey: String): String =
     values
       .filter((_).nonEmpty)
@@ -55,6 +62,8 @@ object ArticleMarkdown:
       )
       .mkString(", ")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stripSourcesSection(body: Article.Body): Article.Body =
     val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
     val lines = (body).value.linesIterator.toList
@@ -66,6 +75,9 @@ object ArticleMarkdown:
         then Article.Body(lines.take(i).mkString("\n").stripTrailing)
         else Article.Body((body).value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   private def articleParts(v: Article.View, show: List[Article.Part]): String =
     val a = v.article
     val out = List.newBuilder[String]
@@ -113,6 +125,8 @@ object ArticleMarkdown:
       .replaceAll("""[*_]{1,2}""", "")
       .replaceAll("""`""", ""))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def backlinks(rows: List[Backlink], truncate: Boolean = (false)): String =
     if rows.isEmpty then ("")
     else
@@ -123,6 +137,8 @@ object ArticleMarkdown:
       }
       (s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}")
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourcesCited(rows: List[CitedSource], truncate: Boolean = (false)): String =
     if rows.isEmpty then ("")
     else
@@ -141,6 +157,8 @@ object ArticleMarkdown:
       }
       (s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def versions(slug: Article.Slug, vs: List[Article.Version]): String =
     if vs.isEmpty then (s"_No versions recorded for **$slug**._")
     else
@@ -150,10 +168,14 @@ object ArticleMarkdown:
       }
       (s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def version(v: Article.VersionFull): String =
     val sum = v.summary.map(s => s"\n\n_${s.value.take(200)}_").getOrElse("")
     (s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(r: Article.List): String =
     OffsetPage
       .markdown(r.page, ("article(s)"), ("_No matching articles._"), r.articles) { a =>

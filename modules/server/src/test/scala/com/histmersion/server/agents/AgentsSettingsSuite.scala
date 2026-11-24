@@ -23,10 +23,12 @@ import com.histmersion.domain.automation.AgentRole
 import com.histmersion.domain.automation.Approval
 import com.histmersion.config.AgentApprovalsConfig
 import com.histmersion.config.Minutes
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agents' settings as the server reads them from config: approval modes, roles, providers and their defaults, the
   * enrichment guards, a plan pool's read schedule.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AgentsSettingsSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk

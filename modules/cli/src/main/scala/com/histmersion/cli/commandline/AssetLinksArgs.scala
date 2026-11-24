@@ -16,8 +16,10 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** The command line of [[AssetLinksCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion assetlinks`: declares its options, parses them into typed commands")
 object AssetLinksArgs:
   object AssetLinksEntry extends CommandLine.Entry:
     val name = "asset-links"

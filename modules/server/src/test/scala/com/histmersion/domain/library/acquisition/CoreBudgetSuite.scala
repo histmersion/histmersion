@@ -28,12 +28,14 @@ import com.histmersion.util.plugins.Plugins
 import com.histmersion.plugin.Access
 import com.histmersion.domain.library.search.Search
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** CORE's two uses — the acquisition chain's `core` step and the new-source search's `core` index — over ONE key and
   * ONE budget, against a stub CORE on a loopback port (never the real one): a 429 with its retry time,
   * `X-RateLimit-Remaining: 0`, the per-minute pace, the daily budget and the searches' share, the budget kept across a
   * restart, and the key resolved from a (fake) vault reference.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CoreBudgetSuite extends munit.FunSuite:
 
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
@@ -112,6 +114,7 @@ class CoreBudgetSuite extends munit.FunSuite:
     val now = AtomicReference(t0)
     val slept = ConcurrentLinkedQueue[CoreQuota.Grant.WaitMs]()
     def advance(seconds: Long): Unit = now.updateAndGet(_.plusSeconds(seconds))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def budget(): CoreBudget =
       CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms.value)) })
 
@@ -139,6 +142,7 @@ class CoreBudgetSuite extends munit.FunSuite:
   private def lookup(g: Generation): Fetch =
     g.registries.sourceFetchers(Registries.SourceFetchersKey("core")).fetch(work, Ctx)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     val cfg = loaded.config.acquire
     Indexes
@@ -151,6 +155,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       ._1
       .find(_.name.value == "core")
 
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
   private def missWhy(f: Fetch): String = f match
     case Fetch.Miss(_, why) => why.sentence
     case other              => fail(s"not a miss: $other")
@@ -174,6 +179,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       )
       val next = new SourceFetcher:
         val access = Access.Open
+        @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
         def fetch(w: WorkKey, ctx: Fetch.Context) =
           Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("nothing here either")))
       val chain = FetchChain(

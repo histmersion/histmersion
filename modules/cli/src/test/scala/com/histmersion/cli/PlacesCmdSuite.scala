@@ -5,8 +5,10 @@ import com.histmersion.api.catalogue.Place
 
 import java.nio.file.{Files, Path}
 import com.histmersion.config.PlacesConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion places seed`'s file walk is a pure function of a directory, so it is tested as one. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlacesCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

@@ -5,6 +5,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
 import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings derivation. Defaults + env
   * overrides live in `reference.conf`; nothing is hardcoded elsewhere.
@@ -21,6 +22,7 @@ import com.histmersion.util.nonempty.NonEmptyVector
   * the LAN), or one text of them comma-separated (`"127.0.0.1"`, `"127.0.0.1,100.101.102.103"`), as `HISTMERSION_BIND`
   * gives them ([[EnvOverrides.textAsLists]]).
   */
+@movesTo(FeaturePlace.Config)
 final case class ServerConfig(
     host: NonEmptyVector[ServerConfig.Host],
     port: ServerConfig.Port,

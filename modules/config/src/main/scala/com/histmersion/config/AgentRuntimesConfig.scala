@@ -3,11 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The generated per-runtime trees (docs/research-agent-runtimes.md §2.2): written under `dir` ("" =
   * `<data dir>/agents`) when the server starts if `generate`; `claudeMod` puts the quota-guard mod in the headless
   * Claude Code plugin, `interactiveMod` the reporting mod in the interactive one.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentRuntimesConfig(
     dir: AgentRuntimesConfig.Dir,
     generate: AgentRuntimesConfig.Generate,

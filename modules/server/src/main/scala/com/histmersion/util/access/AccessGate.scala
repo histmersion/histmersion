@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.*
 import io.netty.util.ReferenceCountUtil
 
 import com.histmersion.config.AuthConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The netty gate every request passes first, whatever its method ([[Admission.decide]] says how a request is let in).
   * A request it lets in carries the admission in [[Admission.Header]] (any value the client sent is removed first); a
@@ -28,6 +29,7 @@ final class AccessGate(
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef): Unit =
     msg match
       case req: HttpRequest =>
@@ -46,6 +48,7 @@ final class AccessGate(
         val _ = ReferenceCountUtil.release(c)
       case _ => super.channelRead(ctx, msg)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def request(ctx: ChannelHandlerContext, req: HttpRequest): Admission.Request =
     val headers = req.headers()
     def header(name: CharSequence): Option[Admission.HeaderText] =

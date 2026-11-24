@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import UpstreamQuota.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class UpstreamQuota(
     upstream: Upstream,
@@ -34,10 +35,12 @@ object UpstreamQuota:
   type LookupTokens = LookupTokens.T
   object LookupTokens extends Newtype[Int, Pure]
   type SearchTokens = SearchTokens.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SearchTokens extends Newtype[Int, Pure]
   type DailyTokens = DailyTokens.T
   object DailyTokens extends Newtype[Int, Pure]
   type SearchDailyTokens = SearchDailyTokens.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SearchDailyTokens extends Newtype[Int, Pure]
   type PerMinute = PerMinute.T
   object PerMinute extends Newtype[Int, Pure]

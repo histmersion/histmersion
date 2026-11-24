@@ -15,12 +15,15 @@ import com.histmersion.plugin.MediaCollection
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A provider that never opens a socket (#1446): answers come from `route`, every request is recorded with its headers,
   * and the waits a polite client would sleep are recorded instead.
   */
 final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends HttpTransport:
   val requests = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -30,6 +33,7 @@ final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends H
 
 object FakeMediaHttp:
   /** The answer a fake server gives: its status, its headers and body as they go over the wire. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def answer(code: Int, headers: Map[String, String], body: Array[Byte]): Either[String, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -55,6 +59,7 @@ object FakeMediaHttp:
       .copy(requestIntervalMs = MediaConfig.RequestIntervalMs(0))
 
   /** A [[Polite]] over `http` whose sleeps are recorded, not slept, on a clock that sleeping advances. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def polite(
       http: HttpTransport,
       c: MediaConfig = cfg,
@@ -78,6 +83,7 @@ object FakeMediaHttp:
     * and supplied the host's settings `settings` (a `histmersion.conf` text: `histmersion.media.*`, and a keyed one's
     * `histmersion.plugins.<id>` block), its secret references read from `env`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def collection(
       name: Registries.MediaCollectionsKey,
       settings: String = "",
@@ -92,6 +98,7 @@ object FakeMediaHttp:
   /** [[collection]] as the host's collection import runs one searched by a place's name: stored under its provider,
     * judged by its own allowlist in `c`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def builtin(
       name: BuiltinMedia.EntryName,
       settings: String = "",

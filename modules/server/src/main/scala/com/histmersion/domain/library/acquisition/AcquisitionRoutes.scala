@@ -30,6 +30,9 @@ final class AcquisitionRoutes(
 
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
     AcquireApi.discover.serverLogic[Identity]((q, since, sort, limit, notInDb) =>
       h.discover(q, since, sort, limit, notInDb)

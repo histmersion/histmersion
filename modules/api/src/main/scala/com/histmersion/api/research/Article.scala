@@ -69,6 +69,7 @@ object Article:
   type Section = Section.T
   object Section extends Newtype[String, Pure]
   type VersionId = VersionId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object VersionId extends Newtype[Long, Pure]
 
   type Slug = Slug.T
@@ -80,6 +81,7 @@ object Article:
   type Body = Body.T
   object Body extends Newtype[String, Pure]
   type SummaryText = SummaryText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SummaryText extends Newtype[String, Pure]
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
@@ -103,6 +105,7 @@ object Article:
     object Sections extends Newtype[String, Pure]
 
     type DisagreementKinds = DisagreementKindsValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type DisagreementKindsValue = DisagreementKind
     val DisagreementKindsValue: DisagreementKind.type = DisagreementKind
     export Article.Slug as ComputeSlug
@@ -126,6 +129,10 @@ object Article:
     private val Disputed: scala.List[Source.Status] =
       scala.List(Source.Status.Contested, Source.Status.Superseded, Source.Status.Debunked, Source.Status.Retracted)
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
     def compute(
         slug: Coverage.ComputeSlug,
         filter: Filter,
@@ -182,6 +189,7 @@ object Article:
         drift
       )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def unplacedAfter(
         c: Coverage,
         cited: Set[Citekey],
@@ -195,11 +203,17 @@ object Article:
 
     val NotUsedHeading = "Not used"
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sections(c: Coverage): Sections = Sections(s"${notUsed(c)}\n\n${method(c)}")
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def exported(c: Coverage): Export =
       Export(s"$GeneratedStart\n\n${sections(c)}\n\n$GeneratedEnd")
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def notUsed(c: Coverage): NotUsed =
       val src = Plural.noun(Plural.Count((c.total).value.toLong), Plural.Noun.Singular("source"))
       val citedN = c.cited.size
@@ -237,12 +251,18 @@ object Article:
       }
       NotUsed(s"## $NotUsedHeading\n\n$lead" + (if lines.isEmpty then "" else "\n\n" + lines.mkString("\n")))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def endSentence(s: Rationale): String =
       val t = s"$s"
       if t.endsWith(".") || t.endsWith("?") || t.endsWith("!") then t else s"$t."
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def method(c: Coverage): Method =
       val statuses =
         if c.statuses.isEmpty then Nil
@@ -282,6 +302,8 @@ object Article:
     private def isHeading(l: String) = (l).trim.startsWith("#")
     private def level(l: String) = (l).trim.takeWhile(_ == '#').length
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def withoutNotUsed(text: Body): Body =
       val lines = (text).value.split("\n", -1).toList
       lines.indexWhere(l =>
@@ -296,6 +318,8 @@ object Article:
 
     def hasMethodLine(text: String): Boolean = ((text).linesIterator.exists(_.trim.startsWith("_Method")))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def stripGenerated(body: Body): Body =
       val s = (body).value.indexOf(GeneratedStart)
       if s < 0 then Body((body).value)
@@ -305,6 +329,8 @@ object Article:
         Body(((body).value.substring(0, s).stripTrailing + (if tail.trim.isEmpty then ""
                                                             else "\n\n" + tail.dropWhile(_.isWhitespace))).trim)
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(c: Coverage): Markdown =
       val drift =
         if c.drift.isEmpty then "No drift: every source the filter returns is cited or has a reason."
@@ -358,23 +384,30 @@ object Article:
 
       case Delete extends Op(Op.Wire("delete"))
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     object Op:
       type Wire = Wire.T
       object Wire extends Newtype[String, Pure]
 
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def parse(s: Wire): Option[Op] = values.find(_.wire.value.equalsIgnoreCase(s.value.trim))
       given WireEnumValues[Op]:
         def all: Array[Op] = values
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def wire(e: Op): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def fromWire(s: WireEnumValues.Wire): Option[Op] = parse(Wire((s).value))
       given JsonValueCodec[Op] = WireEnum.codec
       given Schema[Op] = WireEnum.schema
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None)
         derives JsonCodec
     object EditAnswer:
       export Edits.{Anchor, NewText as Text}
 
+      @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+      @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
       given Schema[EditAnswer] = KindlingsSchema
         .derived[EditAnswer]
         .schema
@@ -416,6 +449,8 @@ object Article:
     /** A replace whose text is empty or null is not read as a delete: a strict-schema provider sends `null` (or `""`)
       * for a field it left out.
       */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(a: EditAnswer): Either[Problem, Edit] =
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
@@ -430,6 +465,7 @@ object Article:
           case Op.InsertAfter               => Right(Edit.InsertAfter(anchor, text))
           case Op.InsertBefore              => Right(Edit.InsertBefore(anchor, text))
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class EditResult(
         index: EditResult.Index,
         op: Op,
@@ -440,6 +476,7 @@ object Article:
           KindlingsSchema,
           api.json.Schema:
       def applied: Boolean = (problem.isEmpty)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def label: String = (s"edit $index (${op.wire} \"$anchor\")")
 
     object EditResult:
@@ -449,8 +486,10 @@ object Article:
       export Edits.{Anchor, NewText as Text}
 
     final case class Applied(body: Body, results: scala.List[EditResult]):
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def problems: scala.List[Applied.Issue] =
         results.flatMap(r => r.problem.map(p => Applied.Issue(s"${r.label}: ${p.sentence}")))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def appliedCount: Applied.Count =
         Applied.Count(results.count((refactorCallback => ((refactorCallback.applied) == (true)))))
 
@@ -460,6 +499,8 @@ object Article:
       type Issue = Issue.T
       object Issue extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def head(anchor: Anchor, max: HeadLimit = HeadLimit(48)): String =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
       if one.length <= (max).value then (one) else (one.take((max).value).trim + "…")
@@ -477,6 +518,9 @@ object Article:
           out.append(s(i)); pos += i; i += 1
       ((out.toString), (pos.result()))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     private def occurrences(text: Edits.OccurrencesText, needle: String): scala.List[Offset] =
       (Iterator
         .iterate((text).value.indexOf(needle))(i => (text).value.indexOf(needle, i + 1))
@@ -484,6 +528,9 @@ object Article:
         .toList)
         .map(refactorValue14 => Offset(refactorValue14))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def locate(text: Edits.LocateText, anchor: Anchor): Either[Problem, (Offset, Offset)] =
       val a = (anchor).value.trim
       occurrences(text, (a)) match
@@ -511,6 +558,8 @@ object Article:
                   .here(Problem.TypeName.of(Anchor), Problem.Raw(s"$a"), Problem.Count(more.size.toLong))
               )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def cut(text: Body, s: Offset, e: Offset): Body =
       val before = (text).value.substring(0, (s).value)
       val after = (text).value.substring((e).value)
@@ -527,6 +576,9 @@ object Article:
         else ""
       Body(head + joint + tail + (if tail.isEmpty then post.filter(_ == '\n').take(1) else ""))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def applyOne(text: Edits.ApplyOneText, e: Edit): Either[Problem, Body] =
       locate(text, e.anchor).map { (s, end) =>
         e match
@@ -538,6 +590,9 @@ object Article:
           case Edit.Delete(_) => cut(text, s, end)
       }
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def applyAll(
         body: Body,
         edits: scala.List[EditAnswer],
@@ -566,11 +621,13 @@ object Article:
       object Body:
         export Article.Body as Text
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class ArticleCheckRequest(
         edits: scala.List[EditAnswer] = Nil,
         body: Option[Body] = None,
         kind: Option[Kind.Wire] = None
     ) derives JsonCodec:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def draft: Either[Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
           case (Nil, None) =>
@@ -586,6 +643,8 @@ object Article:
           case (es, None)     => Right(Draft.Edits(es))
           case (Nil, Some(b)) => Right(Draft.Body(b))
     object ArticleCheckRequest:
+      @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+      @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
       given Schema[ArticleCheckRequest] = KindlingsSchema
         .derived[ArticleCheckRequest]
         .schema
@@ -595,6 +654,7 @@ object Article:
           _.description("Check the section set of this kind instead of the article's (index = none, for a fragment)")
         )
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class ArticleCheck(
         slug: Slug,
         kind: Kind.Wire,
@@ -618,6 +678,8 @@ object Article:
       type WordsAfter = WordsAfter.T
       object WordsAfter extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(c: ArticleCheck): Markdown =
       val edits =
         if c.edits.isEmpty then ""
@@ -646,6 +708,7 @@ object Article:
       to: Option[Filter.To] = None,
       extraQueries: scala.List[Filter.ExtraQueries] = Nil
   ) derives StrictJson:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def isEmpty: Boolean =
       (query.forall((_).value.trim.isEmpty) && topics.isEmpty && tags.isEmpty && status.isEmpty && places.isEmpty &&
         authors.isEmpty && from.isEmpty && to.isEmpty)
@@ -663,8 +726,10 @@ object Article:
       )
 
     /** The filter's one line, as a coverage report and a refused filter show it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shownLine: FilterLine = FilterLine(line)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String =
       def list(xs: scala.List[String]) = xs.map(Filter.quoted).mkString("[", ", ", "]")
       val parts = query.map(q => s"query: ${Filter.quoted(((q).value))}").toList ++
@@ -683,6 +748,8 @@ object Article:
     type ExtraQueries = ExtraQueries.T
     object ExtraQueries extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[Filter] = KindlingsSchema
       .derived[Filter]
       .schema
@@ -703,6 +770,7 @@ object Article:
 
     private[api] def quoted(s: String): String = ("\"" + (s).replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def normalise(f: Filter): Either[Problem, Option[Filter]] =
       def clean(xs: scala.List[String]) = xs.flatMap((_).split(",")).map(_.trim).filter(_.nonEmpty).distinct
       val status = clean(f.status.map(_.value)).map(_.toLowerCase(java.util.Locale.ROOT))
@@ -772,24 +840,30 @@ object Article:
   enum Kind:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Kind:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type FromStringS = Wire
     val FromStringS: Wire.type = Wire
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromString(s: Wire): Option[Kind] =
       values.find(_.toString.equalsIgnoreCase((s).value))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase)).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] =
         values.find(_.toString.equalsIgnoreCase((s).value))
 
     given JsonValueCodec[Kind] = WireEnum.codec
     given Schema[Kind] = WireEnum.schema
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class KindCount(kind: Kind.Wire, count: KindCount.Count)
       derives JsonCodec,
         KindlingsSchema,
@@ -803,6 +877,7 @@ object Article:
 
   object Link:
     type TargetKind = TargetKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetKind extends Newtype[String, Pure]
     export api.text.WikiLinks.Occurrence.Target
 
@@ -817,15 +892,21 @@ object Article:
 
     export api.text.WikiLinks.{isCitekeyShaped, normalize, occurrences, targets, Occurrence}
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def classify(targets: scala.List[Link.Target], isSource: Link.Target => Boolean): scala.List[Link] =
       targets.map { t =>
         if isCitekeyShaped(t.value) && isSource(t) then Link(Link.TargetKind(TargetSource), t)
         else Link(Link.TargetKind(TargetArticle), t)
       }
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def links(body: Body, isSource: Link.Target => Boolean): scala.List[Link] =
       classify(targets(WikiLinks.Body((body).value)), isSource)
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def hrefFor(
         target: Link.Target,
         citekeyOf: Link.Target => Option[Citekey],
@@ -836,6 +917,8 @@ object Article:
         .orElse(Option.when(((isArticle(Link.Target((target).value))) == (true)))(s"/article/$target")))
         .map(refactorValue28 => (refactorValue28))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def linkMarkdown(
         md: Body,
         href: String => Option[String],
@@ -853,6 +936,9 @@ object Article:
 
     export WikiLinks.{retarget, rewriteLinks}
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def resolveMarkdown(md: Links.ResolveMarkdownMd, isSource: Link.Target => Boolean): Markdown =
       Markdown(
         linkMarkdown(
@@ -867,6 +953,7 @@ object Article:
     object FillerPhrasesText extends Newtype[String, Pure]
 
     type FillerPhrases = FillerPhrasesValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type FillerPhrasesValue = FillerPhrasesText
     val FillerPhrasesValue: FillerPhrasesText.type = FillerPhrasesText
 
@@ -898,9 +985,11 @@ object Article:
       FillerPhrasesText("further research is needed")
     )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] val FillerPattern: scala.util.matching.Regex =
       FillerPhrases.map(p => java.util.regex.Pattern.quote((p).value)).mkString("(?i)(?:", "|", ")").r
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def articleThinSummary(rows: scala.List[(Slug, SummaryText)]): scala.List[LintItem] =
       rows
         .flatMap { (slug, summary) =>
@@ -923,6 +1012,7 @@ object Article:
         }
         .sortBy(_.citekey.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def articleFiller(articles: scala.List[(Slug, Body)]): scala.List[LintItem] =
       articles
         .flatMap { (slug, body) =>
@@ -941,6 +1031,7 @@ object Article:
     private[api] val WikilinkCitekey =
       """\[\[((?=[a-z0-9_]*(?:_|\d{4}))[a-z][a-z0-9_]*)""".r
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def articleUncitedParagraphs(articles: scala.List[(Slug, Body)]): scala.List[LintItem] =
       articles
         .flatMap { (slug, body) =>
@@ -958,6 +1049,7 @@ object Article:
         }
         .sortBy(_.citekey.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def articleCritiquePairing(
         articles: scala.List[(Slug, Body)],
         resolve: CritiquePairing.Mention.Key => Option[Citekey],
@@ -986,11 +1078,13 @@ object Article:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page: OffsetPage = OffsetPage(total, offset, RowCount(articles.size))
   object List:
     type Total = Total.T
     object Total extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(
         total: Total,
         rows: scala.List[Summary],
@@ -1009,6 +1103,7 @@ object Article:
         kinds
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def byKind(counts: scala.List[KindCount]): scala.List[KindCount] =
       counts.filter(_.count.value > 0).sortBy(k => (-(k.count).value, k.kind.value))
 
@@ -1047,6 +1142,7 @@ object Article:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class FilterProposal(
         slug: Slug,
         filter: Filter,
@@ -1059,6 +1155,7 @@ object Article:
     ) derives JsonCodec,
           KindlingsSchema,
           api.json.Schema:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def recall: FilterProposal.Recall = if cited == FilterProposal.Cited(0) then FilterProposal.Recall(1.0)
       else FilterProposal.Recall((citedIn).value.toDouble / (cited).value)
 
@@ -1073,6 +1170,7 @@ object Article:
       type Cited = Cited.T
       object Cited extends Newtype[Int, Pure]
       type CitedIn = CitedIn.T
+      @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
       object CitedIn extends Newtype[Int, Pure]
       type Missed = Missed.T
       object Missed extends Newtype[String, Pure]
@@ -1098,8 +1196,10 @@ object Article:
       type Overlap = Overlap.T
       object Overlap extends Newtype[Double, Pure]
       type OverlapWith = OverlapWith.T
+      @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
       object OverlapWith extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class ArticlePlan(
         goal: ArticlePlan.Goal,
         rationale: ArticlePlan.Rationale = ArticlePlan.Rationale(""),
@@ -1116,8 +1216,11 @@ object Article:
       type Rationale = Rationale.T
       object Rationale extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def filterLine(f: Filter): String = f.line
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def filterBlock(p: FilterProposal): Markdown =
       val missed =
         if p.missed.isEmpty then "" else s"\n- cited but not returned: ${p.missed.map(c => s"[[$c]]").mkString(", ")}"
@@ -1128,6 +1231,8 @@ object Article:
           missed + sample
       )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def planBlock(p: ArticlePlan): Markdown =
       val as = p.articles.map { a =>
         val ov = a.overlapWith.fold("")(o => f" · overlaps [[$o]] ${(a.overlap).value * 100}%.0f%%")
@@ -1194,6 +1299,7 @@ object Article:
     object Outcome extends Newtype[String, Pure]
     export Article.UpdatedAt
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reviewerName(reviewer: ReviewFinding.Reviewer): String = named(reviewer.value)
 
     private def named(wire: String): String = wire match
@@ -1203,6 +1309,8 @@ object Article:
       case "mechanical"  => "mechanical check"
       case other         => other
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G5TextBranch, "renders a review finding's outcome, a String vocabulary of the ledger (open, fixed, wont-fix, set-aside)")
     def outcomeLine(f: ReviewFinding): String =
       val base = f.outcome.value match
         case "wont-fix"                                               => "won't fix"
@@ -1217,6 +1325,7 @@ object Article:
       else ""
       (s"$base$by$when$back$note")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(r: ReviewView): Markdown =
       val head = s"## Review of [[${r.slug}]]\n\n**${r.badge.label}** — ${r.badge.detail}" +
         r.outcome
@@ -1312,6 +1421,7 @@ object Article:
     type WordCount = WordCount.T
     object WordCount extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class VersionFull(
       id: VersionFull.Id,
       slug: Slug,

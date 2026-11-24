@@ -9,6 +9,7 @@ import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(
@@ -22,11 +23,14 @@ final case class SitePoint(
     period: Option[(PlaybackAreas.FractionalYear, PlaybackAreas.FractionalYear)],
     undated: SitePoint.Undated = SitePoint.Undated(false)
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def name: UiLabels.Text = UiLabels.Text(if label.value.nonEmpty then label.value else id.fold("site")(_.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mid: Option[PlaybackAreas.FractionalYear] =
     period.map((a, b) => PlaybackAreas.FractionalYear((a.value + b.value) / 2))
 
   /** Its type, when it is one the map knows. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def known: Option[SiteTypes.SiteType] = siteType.flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
 
 object SitePoint:
@@ -47,6 +51,7 @@ object SitePoint:
   private def str(v: js.Dynamic): Option[String] = if js.isUndefined(v) || v == null then None else Some(v.toString)
 
   /** A GeoJSON point feature of the places feed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(f: js.Dynamic): SitePoint =
     val p = f.properties
     val c = f.geometry.coordinates

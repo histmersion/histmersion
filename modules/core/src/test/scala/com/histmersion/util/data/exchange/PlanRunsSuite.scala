@@ -19,13 +19,16 @@ import com.histmersion.domain.MergePlanner
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Source
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Several kinds' runs of a plan as one: each stage in the given order; the first answer wins where one is asked for.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlanRunsSuite extends munit.FunSuite:
 
   private def uid(s: String) = UUID.nameUUIDFromBytes(s.getBytes)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private class Named(name: String, answers: Boolean) extends PlanRun:
     override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
       es.modify(_.aliases)
@@ -36,14 +39,17 @@ class PlanRunsSuite extends munit.FunSuite:
             api.exchange.Bundle.Alias.CreatedAt("2026-01-01T00:00:00.000000Z")
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def notices: List[PairQuestions.InfoLine] = List(PairQuestions.InfoLine(s"$name notice"))
     override def ownerSource(foreign: UUID, kind: api.exchange.Bundle.Kind): Option[UUID] =
       Option.when(answers)(uid(name))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def bodiesWanted(
         pairs: List[(api.exchange.Bundle.Source, api.exchange.Bundle.Source)]
     ): Set[api.exchange.Bundle.Source.BodySha256] = Set(
       api.exchange.Bundle.Source.BodySha256(name)
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def argument(
         issue: MergeIssue,
         decision: MergeDecision
@@ -51,7 +57,9 @@ class PlanRunsSuite extends munit.FunSuite:
       Option.when(answers)(Left(Problem.Invalid.Missing.here(Problem.Field(name))))
     override def pairIssue(kind: MergeIssue.Kind): Boolean = answers && kind == MergeIssue.Kind.AttestationUnanchored
     override def dropped: Set[UUID] = Set(uid(name))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def bodyIssue(right: UUID): Option[MergeIssue.Id] = Option.when(answers)(MergeIssue.Id(name))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def citekeyArgument(
         issue: MergeIssue,
         decision: MergeDecision
@@ -65,7 +73,9 @@ class PlanRunsSuite extends munit.FunSuite:
     ): Boolean =
       seen += s"$name fold"
       answers && name == "c"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def renamed(source: UUID, citekey: Citekey): Unit = seen += s"$name renamed $citekey"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def planned(plan: MergePlan): MergePlan = plan.modify(_.info).setTo(plan.info :+ MergePlan.Info(name))
 
   private val seen = scala.collection.mutable.ListBuffer.empty[String]
@@ -78,6 +88,7 @@ class PlanRunsSuite extends munit.FunSuite:
     def foldedTo(foreign: UUID): Option[UUID] = None
     def here(u: UUID): Boolean = false
     def toLocal(u: UUID): UUID = u
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def decisionIn(issue: MergeIssue.Id): Option[MergeDecision] = None
     def count(f: MergeTally => MergeTally): Unit = ()
     def keepLocal(foreign: UUID): Unit = ()

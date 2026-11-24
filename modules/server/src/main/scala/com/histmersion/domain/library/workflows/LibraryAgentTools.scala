@@ -29,6 +29,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agent tools the library offers the engine: a source, its passages, the search, the facets, a source's edges, the
   * read-only query and a source's follow-ups — each a thin, typed wrapper over the same controller REST and MCP call,
@@ -49,6 +50,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
   private def max: ToolResultCap.CapMax = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
   /** The body slice an agent reads: what it asked for, or `body-chars`, and never past the result cap. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bodyChars(asked: Option[SourcesControllers.Chars]): Option[SourcesControllers.Chars] =
     val limit = max.value
     val want = asked.map(_.value).filter(_ > 0).orElse(Option.when(caps.bodyChars.value > 0)(caps.bodyChars.value))
@@ -61,6 +63,8 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       def agentTool(using Creator.New): AgentTool[Identity, ?] = t
 
   /** Every tool of the library, by name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def contributions: List[ToolContribution] = List(
     contribution(LibraryAgentTools.GetSource) {
       AgentTool.fromFunction[AgentGetSourceInput](
@@ -197,6 +201,8 @@ object LibraryAgentTools:
     * [[cap]]ped like any result.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def queryResult(
       r: com.histmersion.api.library.Query.QueryResult,
       maxRows: AgentToolsConfig.QueryMaxRows,

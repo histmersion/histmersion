@@ -11,8 +11,10 @@ import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a person decided on a blocking approval step — the step's checkpoint. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Decided(approved: Decided.Approved, approval: Decided.Approval, note: Option[Decided.Note] = None)
     derives JsonCodec
 

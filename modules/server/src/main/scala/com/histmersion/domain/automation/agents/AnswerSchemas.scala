@@ -7,6 +7,7 @@ import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The typed answer of every LLM step the engine's own workflows run, one value each (the domains' are their
   * contributions' — today `domain.library.workflows.LibraryAnswers` and `ResearchAnswers`). A step names its schema
@@ -14,12 +15,16 @@ import io.github.iltotore.iron.constraint.any.Pure
   * (AnswerSchemasSuite: the strict form Codex needs, a `null` decoding as an absent field) — and that suite fails when
   * a `ResponseSchema.derived` appears anywhere else.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object AnswerSchemas:
   type SchemaName = SchemaName.T
   object SchemaName extends Newtype[String, Pure]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val probe: ResponseSchema[ProbeAnswer] = ResponseSchema.derived[ProbeAnswer]()
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val plan: ResponseSchema[PlanGoal.PlanAnswer] = ResponseSchema.derived[PlanGoal.PlanAnswer]()
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val hintEffect: ResponseSchema[HintProposals.HintAnswer] = ResponseSchema.derived[HintProposals.HintAnswer]()
 
   /** The engine's step schemas, by name. */

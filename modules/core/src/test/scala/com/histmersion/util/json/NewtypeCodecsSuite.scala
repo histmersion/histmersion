@@ -30,7 +30,9 @@ import com.histmersion.domain.library.Source
 import com.histmersion.domain.media.Asset
 import com.histmersion.domain.research.Article
 import com.histmersion.util.plugins.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NewtypeCodecsSuite extends munit.FunSuite:
 
   /** The newtype's JSON is its base value's, it decodes back to itself, and its schema is the base type's. */

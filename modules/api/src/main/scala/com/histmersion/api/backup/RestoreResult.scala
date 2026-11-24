@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `pg_restore` exits 0 with "errors ignored on restore" when the dump came from a newer `pg_dump` than the server, so
   * the lines it complained about are reported.
@@ -24,6 +25,7 @@ final case class RestoreResult(
 object RestoreResult:
   export Backup.Result.File
   type SchemaVersion = SchemaVersion.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SchemaVersion extends Newtype[String, Pure]
   type SourcesBefore = SourcesBefore.T
   object SourcesBefore extends Newtype[Int, Pure]

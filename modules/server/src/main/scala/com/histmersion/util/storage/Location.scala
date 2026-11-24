@@ -1,10 +1,12 @@
 package com.histmersion
 package util.storage
 
+import com.histmersion.lint.{LintRule, tolerated}
 /** The server's named places on disk. Configuration decides where each lives; the composition root works the
   * directories out from today's settings, so no install changes. The pictures, their thumbnails and the figures are
   * rows of the database, not files, and have no location.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 enum Location derives CanEqual:
   /** The originals stored at ingest, content-addressed (`converter.spool-dir`). */
   case IngestOriginals

@@ -2,12 +2,15 @@ package com.histmersion
 package upstreams.dating
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object CatalogDating:
   type AstronomicalYear = AstronomicalYear.T
   object AstronomicalYear extends Newtype[Long, Pure]:
     extension (a: T)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def +(d: YearShift): T = apply(a.value + d.value)
       def midpoint(o: T): T = apply(Math.floorDiv(a.value + o.value, 2L))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def halfWidth(o: T): YearMargin = YearMargin((o.value - a.value) / 2)
   type HistoricalYear = HistoricalYear.T
   object HistoricalYear extends Newtype[Long, Pure]:
@@ -39,6 +42,8 @@ object CatalogDating:
   )
 
   /** Pure: a year with a ± uncertainty in years (negative or absent = none). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def year(y: HistoricalYear, plusMinus: Option[YearMargin] = None): Bound =
     val u = plusMinus.filter((_).value > 0).fold(YearShift(0L))(_.forward)
     Bound(shift(y, -u), shift(y, u))
@@ -62,6 +67,7 @@ object CatalogDating:
   final case class Limits(present: HistoricalYear, floor: Option[HistoricalYear] = None)
 
   /** Pure: each of the four points held inside `l` — monotone, so the order of the points is kept. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def clamp(ts: Span, l: Limits): Span =
     def c(y: HistoricalYear): HistoricalYear = l.floor.fold(y)(y.max(_)).min(l.present)
     Span(ts.notBefore.map(c), ts.beginBy.map(c), ts.endFrom.map(c), ts.notAfter.map(c))
@@ -71,6 +77,7 @@ object CatalogDating:
     * importer built it); a cored one is centred on its start window. `None` when the record is undated. Astronomical
     * arithmetic: no year 0.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def centralOf(ts: Span): Option[(HistoricalYear, YearMargin)] =
     val start = (ts.notBefore, ts.beginBy, ts.endFrom, ts.notAfter) match
       case (Some(a), None, None, Some(b)) => Some((a, b))
@@ -88,6 +95,8 @@ object CatalogDating:
     * year inside it), widened by one unit each way, because editors do not agree on which year inside the unit they
     * store.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wikidata(isoYear: AstronomicalYear, precision: WikidataPrecision): Bound =
     if (precision).value >= 9 then { val h = fromAstronomical(isoYear); Bound(h, h) }
     else
@@ -96,6 +105,8 @@ object CatalogDating:
       Bound(fromAstronomical(AstronomicalYear(lo - unit)), fromAstronomical(AstronomicalYear(lo + 2 * unit - 1)))
 
   /** Pure: the astronomical year of an XSD dateTime (`-0051-07-01T00:00:00Z` → -51). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isoYear(xsd: XsdYearText): Option[AstronomicalYear] =
     val s = (xsd).value.trim
     val neg = s.startsWith("-")
@@ -103,13 +114,18 @@ object CatalogDating:
     digits.toLongOption.map(v => if neg then AstronomicalYear(-v) else AstronomicalYear(v))
 
   /** Pure: a historical year as an astronomical one (−1, 1 BCE, is 0). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toAstronomical(h: HistoricalYear): AstronomicalYear = if (h).value < 0 then AstronomicalYear((h).value + 1)
   else if (h).value == 0 then AstronomicalYear((0).toLong)
   else AstronomicalYear((h).value)
 
   /** Pure: an astronomical year as a historical one (0 is −1, 1 BCE). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromAstronomical(a: AstronomicalYear): HistoricalYear =
     if (a).value <= 0 then HistoricalYear((a).value - 1) else HistoricalYear((a).value)
 
   /** Pure: a historical year `d` years later (earlier when negative), across the missing year 0. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def shift(h: HistoricalYear, d: YearShift): HistoricalYear = fromAstronomical(toAstronomical(h) + d)

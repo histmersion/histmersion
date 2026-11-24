@@ -2,11 +2,18 @@ package com.histmersion
 package api
 
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.UtilCommon)
 object YearFmt:
 
   export com.histmersion.api.catalogue.{Year as OpenPeriodEnd, Year as OpenPeriodStart}
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(v: Year): String =
     if (v).value < 0 then (s"${-(v).value} BCE")
     else if (v).value == 0 then ("1 BCE") // no year zero in historical reckoning
@@ -19,6 +26,7 @@ object YearFmt:
       case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
       case _                  => ("")
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def openPeriod(
       start: Option[YearFmt.OpenPeriodStart],
       end: Option[YearFmt.OpenPeriodEnd],
@@ -30,9 +38,12 @@ object YearFmt:
       case (None, Some(b))    => s"until ${apply(b)}"
       case (None, None)       => ((none))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def span(ts: TimeSpan): String =
     ts.outer.fold("undated")((a, b) => period(Some(Year(a.value)), Some(Year(b.value))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def spanLong(ts: TimeSpan): String =
     val parts = List(
       ts.notBefore.map(y => s"not before ${apply(y)}"),

@@ -10,10 +10,12 @@ import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.domain.library.acquisition.Endpoint
 
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** archive.org as a read-only source collection: its search and items as collection items (lending-only kept as
   * `restricted`), the file an import takes, and no writing at all. Answers are canned; nothing reaches the network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArchiveOrgCollectionSuite extends munit.FunSuite:
 
   private val answers = Map(
@@ -27,6 +29,8 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
   private val asked = scala.collection.mutable.ListBuffer.empty[String]
 
   private object Canned extends Plugin.Http:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(
         url: Plugin.Http.Url,
         headers: Map[Header.Name, Header.Value]

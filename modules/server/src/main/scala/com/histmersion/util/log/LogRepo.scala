@@ -10,6 +10,7 @@ import com.histmersion.util.database.Timestamps
 
 import java.time.Instant
 import scala.util.Try
+import com.histmersion.lint.{LintRule, tolerated}
 
 private[log] object LogRepo:
 
@@ -55,6 +56,7 @@ private[log] object LogRepo:
       .run()
       .toVector
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def page(where: Frag, limit: LogPage.Limit, oldestFirst: Boolean = false)(using DbCon): Vector[LogEvent] =
     val query =
       if oldestFirst then sql"SELECT event::text FROM log_events WHERE TRUE $where ORDER BY at, id LIMIT $limit"

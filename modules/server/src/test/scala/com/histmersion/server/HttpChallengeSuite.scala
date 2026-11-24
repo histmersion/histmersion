@@ -17,11 +17,13 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.config.AcquireConfig
 import com.histmersion.pluginhost.PolicyHttp
 import com.histmersion.domain.HttpPolicy
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition HTTP client against a FAKE upstream on a loopback port (#1523): a bot-protection challenge is "no
   * copy" at once — never retried, never worked around — and a caller's own User-Agent (the PMC hosts get the project's
   * public one) replaces the polite-pool identity.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class HttpChallengeSuite extends munit.FunSuite:
 
   private val JustAMoment =

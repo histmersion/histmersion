@@ -30,6 +30,7 @@ import com.histmersion.domain.library.collections.CollectionsService
 import com.histmersion.domain.library.collections.RefusingCollectionLibrary
 import com.histmersion.server.agents.ClaudeCode
 import com.histmersion.domain.library.acquisition.CoreBudget
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The surfaces clients and agents depend on, written to `src/test/resources/contract/` and compared byte for byte: the
   * OpenAPI document of every REST endpoint, the MCP `tools/list`, every agent role's tools and answer schemas, the
@@ -40,6 +41,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
   * description falls back to when the schema cannot be read. The environment is empty, so no setting of the machine
   * running the suite reaches a snapshot.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ContractSnapshotSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk

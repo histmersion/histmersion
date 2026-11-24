@@ -7,6 +7,7 @@ import com.histmersion.pluginhost.HttpTransport
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the server's own HTTP
   * policy first — its User-Agent, its timeouts and TLS trust, `Retry-After`, bot challenges ending the request — so a
@@ -72,9 +73,11 @@ object HttpMode:
     *   - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the network was not
     *     asked for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[Problems, HttpMode] =
     choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty).map(ProjectPaths.ProjectDir(_))), env)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def choose(dir: Path, env: Map[String, String]): Either[Problems, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case Some("live")   => Right(Live)

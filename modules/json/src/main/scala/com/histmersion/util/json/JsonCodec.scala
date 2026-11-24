@@ -8,6 +8,7 @@ import scala.collection.immutable.ListMap
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import hearth.kindlings.jsoniterderivation.{JsoniterConfig, KindlingsJsonValueCodec}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** A record's JSON codec, derived by Kindlings (`derives JsonCodec`): every field written, `None` as `null`, an enum
   * whose cases all lack fields as its case's name (`"Case"`), any other sum type wrapped in its case's name
@@ -18,6 +19,7 @@ import hearth.kindlings.jsoniterderivation.{JsoniterConfig, KindlingsJsonValueCo
   * takes it. Any other absent field fails as missing (`missing required field "name"`), a collection without a default
   * too.
   */
+@atBoundary(BoundaryKind.Json, "derives the records' JSON codecs and gives the base types' and containers'")
 trait JsonCodec[A] extends JsonValueCodec[A]
 
 object JsonCodec:

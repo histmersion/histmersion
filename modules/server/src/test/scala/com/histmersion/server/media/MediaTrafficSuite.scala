@@ -25,6 +25,7 @@ import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The recorded traffic of the media imports: every request each of the ten first-party collections sends through
   * `media import` (dry runs over every place and event the map holds, single-target imports, a refresh, a job), on the
@@ -43,6 +44,7 @@ class MediaTrafficSuite extends DbSuite:
   private def load(more: String): LoadedConfig =
     MediaWire.load(more).fold(e => fail(e.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("mediatraffic", load("").config.db.copy(url = DbConfig.Url(testDb.get)))
   private lazy val ds = scratch("media")
 
@@ -52,6 +54,7 @@ class MediaTrafficSuite extends DbSuite:
 
   private def stored: String = MediaWire.stored(ds)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def transcript: String =
     val sb = StringBuilder()
     val loaded = load("")

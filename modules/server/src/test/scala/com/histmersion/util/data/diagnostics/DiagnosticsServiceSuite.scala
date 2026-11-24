@@ -7,10 +7,13 @@ import com.histmersion.api.TableSize
 import com.histmersion.server.Deps
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The figures read from the registry: only registered tables are sized, in the order the database gives them. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DiagnosticsServiceSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bytes(n: Long) = ByteCount.applyUnsafe(n)
 
   private val service = DiagnosticsService.InMemory(

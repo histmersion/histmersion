@@ -11,10 +11,12 @@ import com.histmersion.domain.DeepTime
 import java.util.Locale
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A place as the in-memory catalogue holds it: the row an import or a person wrote, the dataset it came in with, its
   * names (a name a person added is `manual`, which no import deletes), the edges to its parents and its links.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class HeldPlace(
     place: Place,
     dataset: Dataset,
@@ -28,11 +30,13 @@ final case class HeldPlace(
   def validAt(asOf: Option[DeepTime.SignedYear]): Boolean = HeldPlace.covers(place.period, asOf)
 
   /** Its names valid at `asOf`, distinct and by name, comma-joined — the `names` column of a summary. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def namesAt(asOf: Option[DeepTime.SignedYear]): Place.Summary.Names =
     Place.Summary.Names(
       names.filter(n => HeldPlace.covers(n.period, asOf)).map(_.name.value).distinct.sorted.mkString(", ")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contested: Boolean =
     place.properties.exists(p =>
       RawJson
@@ -42,6 +46,7 @@ final case class HeldPlace(
         .contains(true)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary: Place.Summary =
     Place.Summary(
       id,
@@ -72,6 +77,7 @@ object HeldPlace:
     def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Manual(false))
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def covers(period: Option[Period], asOf: Option[DeepTime.SignedYear]): Boolean =
     asOf.forall(y => period.forall(p => p.start.value <= y.value && y.value <= p.end.value))
 

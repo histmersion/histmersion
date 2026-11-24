@@ -14,6 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Correction
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The corrections by hand of catalogue events, for agents. The import and the re-derivation are not tools, on purpose:
   * an import is an operator's decision that sends traffic to a third party (`histmersion events import`), a
@@ -35,6 +36,8 @@ object CorrectionsTools:
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[EventCorrectionsInput] = KindlingsSchema
       .derived[EventCorrectionsInput]
       .schema
@@ -43,6 +46,8 @@ object CorrectionsTools:
       )
       .modify(_.id)(_.description("Only this event's corrections"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(imports: EventImportsControllers) =
     val corrections =
       tool("event_corrections")

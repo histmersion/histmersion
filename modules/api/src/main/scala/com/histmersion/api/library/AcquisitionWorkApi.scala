@@ -4,10 +4,13 @@ import com.histmersion.api.automation.ManagersApi
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.Api
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's work the managers' endpoints sit beside: the repair of its ingest backlog and its legal
   * re-check. Their errors are the managers'.
   */
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the acquisition work routes with their request and response bodies")
 object AcquisitionWorkApi:
 
   lazy val repairAcquire: PublicEndpoint[RepairAcquire.RepairRequest, Api.Error, RepairAcquire.RepairResult, Any] =

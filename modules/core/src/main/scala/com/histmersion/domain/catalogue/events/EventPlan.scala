@@ -15,12 +15,14 @@ import java.util.UUID
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats events: one changed on both sides, or added under an id an event here has, is one when its
   * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two
   * ids is one when its label, dates and place agree. A rename decided gives the bundle's event another id, which must
   * be one; an event whose place this gazetteer lacks cannot be written.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   import EventPlan.*
 
@@ -33,6 +35,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   /** The same dating and place on both sides: one event. */
   private val SameEvent: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
       PlanMerge.InfoText(
         s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
@@ -41,9 +44,11 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   /** Under another id here, with the same label, dates and place: one event. */
   private val AcrossIds: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
       PlanMerge.InfoText(s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def merged(f: UUID, o: UUID, folds: PlanFolds): Unit =
     if f != o then folds.fold(f, o, Bundle.Kind.Event)
     eventLine(o) = es => foldEvent(localEvent(o), eventIn(es, o))
@@ -59,6 +64,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
         localEvent.get(row.uid).zip(localized.events.find(_.uid == row.uid)).exists((a, b) => sameCore(a, b))
     )(SameEvent)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def labelsTaken(q: PlanQuestions): Unit =
     q.labelTaken(
       Bundle.Kind.Event,
@@ -73,6 +79,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
     )
 
   // an event under another id here that is the same event: the same label, dates and place
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def addedOnBoth(q: PlanQuestions): Unit =
     val claimed = scala.collection.mutable.Set.empty[UUID]
     q.localized.events
@@ -91,6 +98,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
           }
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[Problem, Unit]] =
     Option.when(
       issue.entity == Bundle.Kind.Event && (decision.kind == km.RenameRight || decision.kind == km.RenameLeft)
@@ -110,6 +118,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       else Right(())
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
       case (MergeIssue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), Some(o))
@@ -132,6 +141,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       )
 
   // gazetteer places: an event written must point at a place that is here or coming
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def problems(
       finalEs: BundleEntities,
       live: UUID => Boolean,
@@ -162,6 +172,7 @@ object EventPlan:
   /** Two events under DIFFERENT ids that are one (§5.4): the same label (fingerprint), outer spans that share a year,
     * and the same place — the same gazetteer id, or the same geometry, or neither side placing it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sameEventAcrossIds(
       l: Bundle.Event,
       r: Bundle.Event
@@ -186,6 +197,8 @@ object EventPlan:
   /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing edges of both — the
     * winner's where both have one.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def foldEvent(
       winner: Bundle.Event,
       other: Bundle.Event

@@ -2,6 +2,8 @@ package com.histmersion
 package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How long the Codex home of the agent runs keeps what each run leaves behind (#2582): every `codex exec` writes a
   * session transcript (`sessions/YYYY/MM/DD/rollout-*.jsonl`) and adds to its SQLite state (`state_*.sqlite`,
@@ -11,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * [[SessionDirs]] are candidates. Pure; the server applies it while no run uses the home (the server's
   * `agents.CodexHome`).
   */
+@movesTo(FeaturePlace.AutomationAgents)
 object CodexRetention:
   type EveryHours = EveryHours.T
   object EveryHours extends Newtype[Int, Pure]
@@ -44,6 +47,8 @@ object CodexRetention:
   private val DayMs = 24L * 60 * 60 * 1000
 
   /** Pure: is `rel` a file inside a transcript directory (never a file at the home's top level)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inSessions(rel: FileInfo.Rel): Boolean =
     val segs = rel.value.replace('\\', '/').split('/').toList.filter(_.nonEmpty)
     segs.size >= 2 && SessionDirs.exists(_.value == segs.head) && !segs.contains("..")
@@ -51,6 +56,7 @@ object CodexRetention:
   /** Pure: the transcripts last changed more than `keepDays` before `nowMs` — oldest first. A run in flight appends to
     * its own transcript, so its file is never this old. `keepDays` ≤ 0 keeps all.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stale(files: List[FileInfo], nowMs: NowMs, keepDays: KeepDays): List[FileInfo] =
     if keepDays.value <= 0 then Nil
     else
@@ -58,11 +64,13 @@ object CodexRetention:
       files.filter(f => inSessions(f.rel) && f.modifiedMs.value < cutoff).sortBy(f => f.modifiedMs.value: Long)
 
   /** Pure: the SQLite databases at the home's top level (`state_5.sqlite`), not their `-wal`/`-shm`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sqliteFiles(names: List[FileName]): List[FileName] =
     names.filter(n => !n.value.contains('/') && n.value.endsWith(".sqlite")).sorted
 
   /** Pure: is a retention pass due — none yet, or the last one `everyHours` or more ago? `everyHours` ≤ 0 turns the
     * automatic pass off.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def due(lastMs: Option[LastMs], nowMs: NowMs, everyHours: EveryHours): Boolean =
     everyHours.value > 0 && lastMs.forall(l => nowMs.value - l.value >= everyHours.value.toLong * 60 * 60 * 1000)

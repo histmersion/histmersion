@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database
   * (`histmersion agent autopilot on|off`), that makes the managers carry every research goal from planned to reviewed.
@@ -24,6 +25,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *     goal is active and its unfinished sub-goals plus the plan's new ones stay within `maxOpenSubGoals`; the status
   *     lists the next `focusQueueShown` waiting goals.
   */
+@movesTo(FeaturePlace.AutomationAutopilot)
 final case class AgentAutopilotConfig(
     ensureMinutes: AgentAutopilotConfig.EnsureMinutes = AgentAutopilotConfig.EnsureMinutes(5),
     ingestPerDay: AgentAutopilotConfig.IngestPerDay = AgentAutopilotConfig.IngestPerDay(20),

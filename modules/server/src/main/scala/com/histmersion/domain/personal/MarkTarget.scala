@@ -16,10 +16,13 @@ import com.histmersion.domain.ItemUid
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
   * reference), a point on the map, a saved view of Explore, or a span of years.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 enum MarkTarget:
   case Item(ref: ItemRef)
   case Point(lat: Latitude, lon: Longitude, zoom: Option[MapZoom], from: Option[Year], to: Option[Year])
@@ -33,6 +36,7 @@ enum MarkTarget:
   )
   case Span(from: Year, to: Year)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kind: MarkKind = this match
     case Item(ref) => MarkTarget.markKind(ref.kind).getOrElse(throw IllegalStateException(s"kind ${ref.kind.value}"))
     case _: Point  => MarkKind.Point
@@ -49,6 +53,7 @@ enum MarkTarget:
     case other   => other
 
   /** As a note keeps it: a note on a point does not keep the map's zoom. */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   def withoutZoom: MarkTarget = this match
     case p: Point => p.copy(zoom = None)
     case other    => other
@@ -56,6 +61,8 @@ enum MarkTarget:
   /** The target as it shows now, and what it is called: the item's key and title as its owner describes them, else the
     * name it had when it was marked, else its key or what its kind is.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shown(described: Map[ItemRef, Described], stored: Option[TargetLabel]): (MarkTarget, Title) = this match
     case Item(r) =>
       val d = described.get(r)
@@ -64,6 +71,8 @@ enum MarkTarget:
       (Item(now), Title(live.orElse(stored).fold(now.key.value)(_.value)))
     case other => (other, Title(stored.fold(other.kind.label.value)(_.value)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def wire: Target = this match
     case Item(r)                         => Target(kind, Some(WireKey(r.key.value)))
     case Point(lat, lon, zoom, from, to) =>
@@ -99,6 +108,7 @@ object MarkTarget:
   val MaxZoom = 24.0
 
   /** The target, when its zoom (if any) is one the map has. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoomChecked(t: Target): Either[Problem, Target] =
     t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
       case Some(z) =>
@@ -113,11 +123,14 @@ object MarkTarget:
       case None => Right(t)
 
   /** The kind of record an item kind of the wire names. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemKind(k: MarkKind): ItemKind = ItemKind.applyUnsafe(k.wire.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markKind(k: ItemKind): Option[MarkKind] = MarkKind.values.find(m => m.isItem && m.wire.value == k.value)
 
   /** A target the wire sent, once [[Target.check]] passed it: an item's uid is not known yet. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromWire(t: Target): Option[MarkTarget] =
     for
       lat <- t.lat.transformIntoPartial[Option[Latitude]].asOption

@@ -3,9 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion maintenance vacuum` (#1445): the tables it vacuums when none is named. */
+@movesTo(FeaturePlace.UtilDataMaintenance)
 final case class MaintenanceConfig(vacuumTables: MaintenanceConfig.VacuumTables) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tables: List[MaintenanceConfig.Table] =
     Option(vacuumTables).toList
       .flatMap(_.value.split(",").toList)

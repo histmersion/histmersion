@@ -20,15 +20,21 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Json, "reads gazetteer download files into place records")
 object Gazetteer:
   type DatasetField = DatasetField.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object DatasetField extends Newtype[String, Pure]
   type DatasetName = DatasetName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object DatasetName extends Newtype[String, Pure]
   type OpenStartWindowYears = OpenStartWindowYears.T
   object OpenStartWindowYears extends Newtype[Int, Pure]
   type PlaceRef = PlaceRef.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PlaceRef extends Newtype[String, Pure]
   type PointAreaKinds = PointAreaKinds.T
   object PointAreaKinds extends Newtype[String, Pure]
@@ -38,25 +44,34 @@ object Gazetteer:
   type ImportedSources = ImportedSourcesValue
   export SourceInfo.Key as ImportedSourcesValue
   type DefaultOpenStartWindowYears = DefaultOpenStartWindowYearsValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type DefaultOpenStartWindowYearsValue = OpenStartWindowYears
   val DefaultOpenStartWindowYearsValue: OpenStartWindowYears.type = OpenStartWindowYears
   export SourceInfo.Key as ValiditySourceKey
   type ValidityWindowYears = ValidityWindowYears.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ValidityWindowYears extends Newtype[Int, Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKindsValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type DefaultPointAreaKindsValue = PointAreaKinds
   val DefaultPointAreaKindsValue: PointAreaKinds.type = PointAreaKinds
   type PointAreaSources = PointAreaSourcesValue
   export SourceInfo.Key as PointAreaSourcesValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type FromFeatureDataset = DatasetName
   val FromFeatureDataset: DatasetName.type = DatasetName
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type FromTsvRowDataset = DatasetName
   val FromTsvRowDataset: DatasetName.type = DatasetName
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sourceKey(kind: Kind, dataset: Option[DatasetName] = None): SourceInfo.Key = kind match
     case Kind.Lpf => SourceInfo.Key(s"lpf:${dataset.getOrElse("")}")
     case k        => SourceInfo.Key(k.wire.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def datasetSlug(fileName: SourceInfo.File): DatasetName =
     val base = fileName.value
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
@@ -66,6 +81,8 @@ object Gazetteer:
   private def slug(s: String): String =
     ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def rank(m: Place.Match): Rank = m.importSource.flatMap(s => Kind.ofKey(SourceInfo.Key(s.value))) match
     case None                => if m.importSource.isEmpty then Rank(0) else Rank(5)
     case Some(Kind.Lpf)      => Rank(1)
@@ -73,6 +90,7 @@ object Gazetteer:
     case Some(Kind.Tgn)      => Rank(3)
     case Some(Kind.Geonames) => Rank(4)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val ImportedSources: List[ImportedSources] =
     List(
       Kind.Wikidata,
@@ -80,6 +98,7 @@ object Gazetteer:
       Kind.Tgn
     ).map(k => SourceInfo.Key((sourceKey(k)).value))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[Place.Id] =
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
@@ -97,11 +116,15 @@ object Gazetteer:
   /** GeoNames, Wikidata and TGN leave most items undated, and their silence means unknown: an item with no inception
     * was not there since forever.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def unknownWhenSilent(sourceKey: SourceInfo.Key): Boolean =
     Kind
       .ofKey(sourceKey)
       .exists(k => k != Kind.Lpf)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def validity(sourceKey: Gazetteer.ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity =
     span match
       case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == (true)) =>
@@ -119,9 +142,11 @@ object Gazetteer:
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val PointAreaSources: List[PointAreaSources] =
     (ImportedSources).map(refactorValue16 => SourceInfo.Key((refactorValue16).value))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
     case None                     => (true)
     case Some(GazGeometry.Wkt(t)) =>
@@ -136,12 +161,16 @@ object Gazetteer:
         .flatMap(_.asString)
         .exists(k => k == "Point" || k == "MultiPoint")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def dropsPointArea(source: SourceInfo.Key, r: GazRecord, kinds: Set[PointAreaKinds]): Boolean =
     PointAreaSources.contains(source) && kinds.map(_.value).contains(r.kind.value) && pointOnly(r.geometry)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
     if ((r.span.isEmpty) == (true)) && !((ds.span.isEmpty) == (true)) then r.modify(_.span).setTo(ds.span) else r
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def mergeNames(ns: List[GazName]): List[GazName] =
     ns.map(n =>
       n.modify(_.name)
@@ -212,6 +241,7 @@ object Gazetteer:
         })
     }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def readDescriptions(f: JsonObject): List[GazDescription] =
     f("descriptions")
       .flatMap(_.asArray)
@@ -252,6 +282,7 @@ object Gazetteer:
       }
       .distinctBy(_.id)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def placeIdFor(own: Option[ExternalId], ref: PlaceRef, dataset: DatasetName): Place.Id =
     own.map(o => Place.Id(o.placeId.value)).getOrElse {
       val tail = slug((ref).value.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref.value))
@@ -260,6 +291,7 @@ object Gazetteer:
       )
     }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def fromFeature(
       j: Json,
       dataset: FromFeatureDataset,
@@ -312,6 +344,7 @@ object Gazetteer:
     * variants types lon lat geowkt start end`. `matches` and `variants` are `;`-separated; a variant may end in
     * `@lang`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def fromTsvRow(
       header: List[String],
       cells: List[String],
@@ -436,17 +469,22 @@ object Gazetteer:
 
     def wire: Kind.Wire = Kind.Wire(toString.toLowerCase(java.util.Locale.ROOT))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Kind:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def ofKey(key: SourceInfo.Key): Option[Kind] = parse(Wire((key).value.takeWhile(_ != ':')))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = parse(Wire((s).value))
     given JsonValueCodec[Kind] = WireEnum.codec
     given Schema[Kind] = WireEnum.schema
@@ -473,6 +511,7 @@ object Gazetteer:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def +(o: LoadCounts): LoadCounts =
       copy(
         records = LoadCounts.Records(records.value + o.records.value),
@@ -493,11 +532,13 @@ object Gazetteer:
         pointAreasSkipped = LoadCounts.PointAreasSkipped(pointAreasSkipped.value + o.pointAreasSkipped.value)
       )
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def unchanged: Boolean =
       created.value == 0L && placesChanged.value == 0L && namesAdded.value == 0L && namesRemoved.value == 0L && namesChanged.value == 0L &&
         linksAdded.value == 0L && linksRemoved.value == 0L && linksChanged.value == 0L && placesRemoved.value == 0L &&
         descriptionsAdded.value == 0L && descriptionsRemoved.value == 0L && descriptionsChanged.value == 0L
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def describe: String =
       s"$source $version: ${Plural.count(Plural.CountN(records.value), Plural.CountSingular("record"))}, $created new place(s), $joined joined an existing place, " +
         s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
@@ -548,6 +589,7 @@ object Gazetteer:
 
   final case class Manifest(extracts: List[Extract]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SourceInfo(
       key: SourceInfo.Key,
       kind: Kind,

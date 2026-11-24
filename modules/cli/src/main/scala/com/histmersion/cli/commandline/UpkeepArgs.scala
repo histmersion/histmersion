@@ -22,8 +22,11 @@ import org.rogach.scallop.*
 import scala.util.chaining.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[Ops]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion ops`: declares its options, parses them into typed commands")
 object UpkeepArgs:
   object LintEntry extends CommandLine.Entry:
     val name = "lint"
@@ -66,6 +69,7 @@ object UpkeepArgs:
       value[String]("file", "Check a local Markdown file's formatting before it is stored (--fix rewrites the file)")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Ops.Command.Lint(
         rules_.getOrElse(Nil),
@@ -103,6 +107,7 @@ object UpkeepArgs:
     )
 
   /** `queue <list> [--all]` shows it; `queue <list> add …` and `queue acquire recheck …` are its subcommands. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   final private class LeafList(list: Queue.Kind.Label)
       extends Leaf(QueueParent, list.value, s"Show the ${list.value} list (add: put an item on it)"):
     private val all_ = flag(
@@ -114,8 +119,10 @@ object UpkeepArgs:
       LeafAdd(list) :: (if list == Queue.Kind.Acquire.label then List(LeafRecheck(), LeafWhy()) else Nil)*
     )
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Show(list, all_.getOrElse(false), json_()))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   final private class LeafAdd(list: Queue.Kind.Label)
       extends Leaf(s"$QueueParent ${list.value}", "add", s"Add an item to the ${list.value} list"):
     private val text_ = arg[String]("text")

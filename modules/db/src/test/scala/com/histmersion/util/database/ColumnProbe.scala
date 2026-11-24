@@ -4,6 +4,7 @@ package util.database
 import com.augustnagro.magnum.DbCodec
 import java.lang.reflect.Proxy
 import java.sql.{PreparedStatement, ResultSet}
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ColumnProbe:
   def read[A](raw: String)(using codec: DbCodec[A]): A =
@@ -20,6 +21,7 @@ object ColumnProbe:
       .asInstanceOf[ResultSet]
     codec.readSingle(result, 1)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def write[A](value: A)(using codec: DbCodec[A]): Option[String] =
     var recorded: Option[Option[String]] = None
     val statement = Proxy

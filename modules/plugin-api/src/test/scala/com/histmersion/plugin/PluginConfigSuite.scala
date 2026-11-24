@@ -5,6 +5,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigFactory, ConfigValueFactory}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object PluginConfigSuite:
   final case class Settings(
@@ -25,6 +26,7 @@ object PluginConfigSuite:
     type Weight = Weight.T
     object Weight extends Newtype[Double, Pure]
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginConfigSuite extends munit.FunSuite:
   import PluginConfigSuite.Settings
 

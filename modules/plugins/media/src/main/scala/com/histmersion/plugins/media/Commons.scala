@@ -13,10 +13,13 @@ import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, Wikid
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.
   * Pure.
   */
+@atBoundary(BoundaryKind.Json, "reads the commons collection's JSON answers into media records")
 object Commons:
 
   /** Who answers for Wikimedia Commons in a problem. */
@@ -55,6 +58,8 @@ object Commons:
   /** Pure: the canonical title of a file name as Wikidata gives it (`Lions-Gate-Mycenae.jpg` →
     * `File:Lions-Gate-Mycenae.jpg`): underscores are spaces, and the first letter is upper case.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def fileTitle(name: File.Title): File.Title =
     val n = name.value.trim.stripPrefix("File:").stripPrefix("file:").replace('_', ' ').replaceAll("\\s+", " ").trim
     if n.isEmpty then File.Title("") else File.Title("File:" + n.head.toUpper + n.tail)
@@ -62,6 +67,8 @@ object Commons:
   /** Pure: the `imageinfo` URL for a batch of titles, with the rendition `width`; `meta` adds the licence fields (the
     * thumbnail call needs only the URL). `maxlag` 0 = not sent.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def imageInfoUrl(
       api: Settings.ApiUrl,
       titles: List[File.Title],
@@ -79,6 +86,7 @@ object Commons:
         s"$ext&titles=${titles.map(_.value).mkString("|").enc}$lag"
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def untracked(url: String): String =
     MediaText.stripTracking(RepositoryLanding.Candidate.Url(url)).value
 
@@ -167,8 +175,10 @@ object Commons:
     val role = MediaCollection.Depiction
     override def matchRule = MediaMatchRule.Own
     override def asks = Set(MediaTarget.Events)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def entitiesUrl(ids: List[WikidataId], wikidata: WikidataSettings): Plugin.Http.Url =
       Plugin.Http.Url(
         WikidataEntities
@@ -184,6 +194,7 @@ object Commons:
       MediaPlugin.said(DepictsName, Problem.Plugin.Claim.Unavailable, "the depictions are about events")
     )
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
       val asked = events.flatMap(e => e.wikidata.map(q => (e, q)))
       val wikidata = media.wikidata
@@ -271,6 +282,7 @@ object Commons:
           } ++ judged
       )
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def eventTarget(e: MediaEvent): MediaTarget.Id =
       MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value(e.id.value))
 
@@ -286,6 +298,8 @@ object Commons:
     val Depicts = "P180"
     val DepictedBy = "P1299"
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def searchUrl(
         api: Settings.ApiUrl,
         qid: WikidataId,
@@ -396,6 +410,8 @@ object Commons:
   final class Files(http: Plugin.Http, media: MediaSettings, licences: LicenceReader):
 
     /** `imageinfo` for the titles, in batches; a failed batch is a line in `failed`, and its titles get no answer. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def imageInfo(
         titles: List[File.Title],
         width: File.Width,
@@ -418,10 +434,13 @@ object Commons:
       * Commons marks non-free, whose licence is unreadable or all rights reserved, or whose licence requires an author
       * it does not name, is withheld with that reason.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def items(titles: List[File.Title]): (Map[File.Title, MediaItem], List[MediaFound.Failed]) =
       val (infos, failed) = imageInfo(titles, File.Width(media.displayPx.value), ImageInfoUrlMeta(true))
       (titles.map(t => t -> item(t, infos.get(t))).toMap, failed)
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def item(title: File.Title, answer: Option[Either[Problem, File]]): MediaItem =
       val bare = MediaItem(
         MediaItem.Key(title.value),
@@ -486,6 +505,8 @@ object Commons:
           )
 
     /** The items to store with their thumbnails — Commons' own `thumb-px` renditions, asked in batches. */
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def thumbnails(items: List[MediaItem]): MediaCompleted =
       val (infos, failed) =
         imageInfo(items.map(i => File.Title(i.key.value)), File.Width(media.thumbPx.value), ImageInfoUrlMeta(false))

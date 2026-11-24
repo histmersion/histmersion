@@ -6,9 +6,11 @@ import com.histmersion.api.Write
 import com.histmersion.api.automation.{AgentStateDeleted, AgentStateEntry, AgentStatePut}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agents' scratch state as REST, MCP and the CLI reach it; every write holds the maintenance guard. */
 final class AgentStateControllers(store: AgentStateService, maintenance: WriteGate):
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def notFound(key: AgentStateRecord.Key) =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(AgentStateRecord.Key), Problem.Raw.of(key)),
@@ -19,11 +21,13 @@ final class AgentStateControllers(store: AgentStateService, maintenance: WriteGa
 
   def get(key: AgentStateRecord.Key): Either[Api.Error, AgentStateEntry] = store.get(key).toRight(notFound(key))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def set(key: AgentStateRecord.Key, in: AgentStatePut): Either[Api.Error, AgentStateEntry] =
     maintenance.guard(WriteGate.OperationName("agent_state_set")):
       store.set(key, AgentStateService.SetValue(in.value.value))
       get(key)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def delete(key: AgentStateRecord.Key): Either[Api.Error, AgentStateDeleted] =
     maintenance.guard(WriteGate.OperationName("agent_state_delete")):
       if store.delete(key) then Right(AgentStateDeleted(Api.AgentState.Key(key.value), AgentStateDeleted.Deleted(true)))

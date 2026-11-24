@@ -12,6 +12,7 @@ import com.histmersion.api.automation.{Creation, Goal}
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
@@ -29,6 +30,7 @@ final private[histmersion] case class GoalRow(
     creator: Option[Creation] = None,
     createdAt: Option[Creation.At] = None
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toDto: Goal =
     Goal(
       Goal.Slug(slug.value),

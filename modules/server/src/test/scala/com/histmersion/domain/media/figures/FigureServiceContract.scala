@@ -4,10 +4,12 @@ package domain.media.figures
 import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The figures' licence fill, on a collection whose figures' sources record no licence: nothing to fill, on the
   * database and in memory.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class FigureServiceContract extends MediaStoreSuite:
 
   stest("no source records a licence: nothing counted, nothing written") { s =>

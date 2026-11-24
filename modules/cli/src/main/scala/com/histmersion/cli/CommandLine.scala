@@ -47,6 +47,8 @@ import com.histmersion.cli.commandline.NoteArgs
 import com.histmersion.cli.commandline.ConfigArgs
 import com.histmersion.cli.commandline.BasemapArgs
 import com.histmersion.cli.commandline.PluginArgs
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line as scallop parses it. Scallop's configuration is mutable — options are declared on an object and
   * read back after `verify()` — so it stays in this file, the core every command group shares, and in the groups'
@@ -54,6 +56,7 @@ import com.histmersion.cli.commandline.PluginArgs
   * the rest of the CLI a typed [[Cli.Command]] (or the help, or a [[Problem]]). Every argument is parsed once, there,
   * into its newtype; scallop's exit and output go through its per-instance hooks, so the parser never ends the process.
   */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter: the one file that declares scallop options and parses a command line into a typed command")
 object CommandLine:
   type HelpText = HelpText.T
   object HelpText extends Newtype[String, Pure]:
@@ -288,6 +291,8 @@ object CommandLine:
   private[cli] def typeName[T](using n: Named[T]): Problem.TypeName = Problem.TypeName.of(Newtype.TypeName.of(n))
 
   /** Scallop's error, typed; `types` are those of the subcommand the command line names, innermost first. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def problem(e: ScallopException, types: List[Types]): Problem = e match
     case RequiredOptionNotFound(name) => Problem.Invalid.Missing.here(Problem.Field(name))
     case UnknownOption(name)          =>
@@ -315,6 +320,7 @@ object CommandLine:
     val types: Types = Types()
 
     /** An option with a value, given at most once. */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def value[T](name: String, descr: String, required: Boolean = false)(using
         c: ValueConverter[T],
         n: Named[T],
@@ -324,6 +330,7 @@ object CommandLine:
       opt[T](name = name, descr = descr, argName = m.name, required = required)(using c)
 
     /** An option given any number of times. */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def values[T](name: String, descr: String, required: Boolean = false)(using
         c: ValueConverter[T],
         n: Named[T],
@@ -353,6 +360,7 @@ object CommandLine:
       else opt[Boolean](name = name, descr = descr, short = short, noshort = false)(using flagConverter)
 
     /** `--json`, as every command that offers it spells it. */
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def json(): () => Cli.JsonOutput =
       val f = flag("json", Output.JsonHelp)
       () => jsonOutput(f.getOrElse(false))
@@ -370,6 +378,7 @@ object CommandLine:
       () => if f.getOrElse(false) then Cli.Writes.Apply else Cli.Writes.DryRun
 
     /** A positional argument. */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def arg[T](name: String, required: Boolean = true)(using
         c: ValueConverter[T],
         n: Named[T]
@@ -378,6 +387,7 @@ object CommandLine:
       trailArg[T](name = name, required = required)(using c)
 
     /** Positional arguments, any number (at least one when `required`). */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def args[T](name: String, required: Boolean = false)(using
         c: ValueConverter[T],
         n: Named[T]
@@ -388,6 +398,7 @@ object CommandLine:
     /** The shared [[Filter]] flags (`search`, `facets`, `histogram`, `geo-when`, `article list`, `events search`), in
       * their one order; the filter is read after the command line is verified.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def filterFlags(): () => Filter =
       def many(p: Filter.Docs.Param) = values[String](p.rest.value, s"${p.doc} (repeatable)")
       def year(name: String, doc: String) = value[Year](name, doc)
@@ -443,6 +454,7 @@ object CommandLine:
 
     private var output: Option[ScallopOption[Boolean]] = None
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     override def json(): () => Cli.JsonOutput =
       val f = flag("json", Output.JsonHelp)
       output = Some(f)
@@ -451,6 +463,7 @@ object CommandLine:
     private[cli] def declareJson(): Unit =
       if output.isEmpty && types.of("json").isEmpty then output = Some(flag("json", Output.FailureJsonHelp))
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def jsonRequested: Cli.JsonOutput = jsonOutput(output.exists(_.getOrElse(false)))
 
   /** A subcommand that only holds others: `histmersion article`. */
@@ -460,6 +473,7 @@ object CommandLine:
     descr(help)
     helpFormatter = Layout(s"$parent $name")
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   final private class Root(args: Seq[String]) extends ScallopConf(args) with Declares:
     private var printed = Vector.empty[String]
     private var exited: Option[Int] = None

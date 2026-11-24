@@ -55,21 +55,26 @@ import com.histmersion.domain.HttpPolicy
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.util.plugins.Plugins
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
   * builds a server with [[server]].
   */
+@movesTo(FeaturePlace.Server)
 object Composition:
 
   /** Build a configured (not yet started) server. `port = 0` → ephemeral port (tests use
     * `supervised { server(...).start() }`; `main` binds it in its own scope). Its components — the pools above all —
     * belong to the enclosing Ox scope and close with it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def server(cfg: AppConfig, host: ServerConfig.Host, port: ServerConfig.Port)(using Ox): NettySyncServer =
     build(HotConfig.fixed(cfg), None, NonEmptyVector.of(host), port, None).server
 
   /** A configured server on every address of `binds` (not yet started: [[Listener.start]] binds them all). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def listener(cfg: AppConfig, binds: NonEmptyVector[ServerConfig.Host], port: ServerConfig.Port)(using Ox): Listener =
     build(HotConfig.fixed(cfg), None, binds, port, None)
 
@@ -77,6 +82,7 @@ object Composition:
     * converter (plan §1.8). With `source`, the server can reload its config: the load it was started from, and how to
     * read it again.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def server(
       cfg: AppConfig,
       host: ServerConfig.Host,
@@ -103,6 +109,8 @@ object Composition:
       system = system
     ).server
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def hotConfig(cfg: AppConfig, configFile: ConfigFileInfo, loaded: Option[LoadedConfig]): HotConfig =
     loaded match
       case Some(l) => HotConfig(cfg, l.modify(_.config).setTo(cfg))
@@ -132,6 +140,7 @@ object Composition:
   private[server] def timeouts(nc: NettyConfig, request: FiniteDuration): NettyConfig =
     nc.requestTimeout(request).idleTimeout(request)
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def closeAtOnce(nc: NettyConfig)(using Ox): NettyConfig =
     val loops = nc.eventLoopConfig.initEventLoopGroup()
     releaseAfterScope {
@@ -144,6 +153,8 @@ object Composition:
   /** The composition root proper: the hot component graph first, then the wiring over it, then the listener.
     * `converter` `None` = the sidecar client from the config, read at each call (a reload may move it).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def build(
       hc: HotConfig,
       source: Option[ConfigSource],
@@ -291,6 +302,7 @@ object Composition:
     * (and released on the old one when its generation closes); once published, the new database's interrupted jobs are
     * failed and its runs reconciled, as a start does.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def leases(sg: ServerGraph, h: ServerWiring): Either[Problem, Hot[Boolean]] =
     given Creator.New = InTreeWorkflow.AdoptDatabase.creator
     val lease = h.agents.lease
@@ -316,6 +328,7 @@ object Composition:
   /** The library's acquisition: the clients (a hot node: rebuilt when `acquire.*` or the plugins change) and the ingest
     * the fetched copy is handed to, which writes the metadata straight away and hands the file to the OCR queue.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def acquisition(sg: ServerGraph, deps: Deps, h: ServerWiring): AcquisitionWiring =
     val clients = sg.graph
       .node[AcquireClients](
@@ -334,6 +347,8 @@ object Composition:
   /** The library's source collections (the Calibre library, archive.org): the service over the plugin generation's
     * collections, read at each call, and the library it writes through — the same handlers the endpoints run.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def collectionsControllers(
       sg: ServerGraph,
       deps: Deps,
@@ -349,8 +364,11 @@ object Composition:
       def patch(citekey: Citekey, patch: Source.Patch)(using Creator.New) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: Citekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def gaps(limit: Option[CollectionLibrary.Limit]) =
         h.calibreGaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def original(citekey: Citekey) =
         h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
@@ -362,6 +380,7 @@ object Composition:
             )
             .map(b => StoredOriginal(StoredOriginal.Bytes(b.value), StoredOriginal.Disposition(disposition.value)))
         }
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def queueItem(id: CollectionLibrary.QueueItemId) =
         h.workListView
           .list(
@@ -369,6 +388,7 @@ object Composition:
             all = WorkListView.IncludeAll(true)
           )
           .map(_.items.find(_.id.value == id.value))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes)(using Creator.New) =
         h.ingest.controllers.ingest(
           params,
@@ -377,6 +397,7 @@ object Composition:
             Upload.Bytes(bytes.value)
           )
         )
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def putCover(params: SourceCoverParams, bytes: CollectionLibrary.Bytes)(using Creator.New) =
         h.media.covers.putCover(params, AssetService.Bytes(bytes.value))
       def openLibraryCover(req: MediaCoversRequest)(using Creator.New) = h.media.covers.covers(req)
@@ -396,6 +417,9 @@ object Composition:
     * upstream clients built over it, and the chain of the generation's source fetchers (the built-in archive-org,
     * oa-unpaywall, oa-core, oa-openalex, oa-landing, pmc and arxiv unless switched off) in `acquire.chain` order.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def acquireClients(app: AppConfig, plugins: Generation, core: CoreBudget)(using
       clock: java.time.Clock
   ): AcquireClients =

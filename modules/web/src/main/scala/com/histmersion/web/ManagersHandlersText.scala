@@ -6,9 +6,12 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings line a manager window shows (the server's own wording). */
 object ManagersHandlersText:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(c: ManagerConfig): String =
     List(
       c.maxRuns.map(n => s"$n at once"),

@@ -29,6 +29,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What every turn of an agent step re-sends before the model reads the user message: the role's system prompt, its MCP
   * tool definitions (as `/mcp/agent/<role>` lists them) and the typed answer's schema (Claude Code's `StructuredOutput`
@@ -48,6 +49,7 @@ import com.histmersion.util.system.JvmHome
   */
 @main def promptBudgetReport(args: String*): Unit = PromptBudget.run(args.toList)
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object PromptBudget:
 
   private given Stores = Stores.disk
@@ -91,6 +93,8 @@ object PromptBudget:
 
     def toolChars: Int = t.toolJson.noSpaces.length
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rows(d: AgentGenerator.Defs): List[Row] =
     d.agents.sortBy(_.name.value).map { a =>
       Row(
@@ -101,6 +105,7 @@ object PromptBudget:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def table(rows: List[Row]): String =
     val head =
       "| agent | system | ~tok | tools | ~tok | answer | ~tok | total | ~tok |\n|---|---:|---:|---:|---:|---:|---:|---:|---:|"
@@ -109,11 +114,14 @@ object PromptBudget:
         s"${tokens(r.answer)} | ${r.total} | ${tokens(r.total)} |"
     )).mkString("\n")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toolTable: String =
     "| tool | chars | ~tok |\n|---|---:|---:|\n" +
       ToolboxOrder.names.map(t => s"| ${t.value} | ${t.toolChars} | ${tokens(t.toolChars)} |").mkString("\n")
 
   /** The files `export` writes, relative to its directory. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def exportTree(d: AgentGenerator.Defs): Map[String, String] =
     val settings = GenSettings(
       GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
@@ -130,6 +138,7 @@ object PromptBudget:
         answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(args: List[String]): Unit =
     val d = Generated.defs()
     args match

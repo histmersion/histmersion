@@ -35,12 +35,14 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats the sources themselves (docs/research-merge-import.md §5.2–§5.3): the bundle's sources
   * matched with the ones here ([[SourceMatcher]]), the question whether a pair is one work, the fields of a pair that
   * is (or may be) one — conditional under an open question —, a citekey taken here, the arguments that name a citekey,
   * a pair folded field by field, a source renamed, how each was matched, and the final lines.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   import SourcePlan.*
 
@@ -69,6 +71,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       }
     }.toSet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def matchSources(
       sketches: Map[Bundle.Source.BodySha256, MinHash],
       cfg: MergeSettings,
@@ -108,6 +111,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     leftRev(p.left.uid)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def sourceQuestions(
       fates: Map[UUID, SourceFate],
       sketches: Map[Bundle.Source.BodySha256, MinHash],
@@ -157,6 +161,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     }
 
   /** The questions about the fields of a pair; their ids are kept by pair, for the fold. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fieldIssues(
       p: Pair,
       cond: Option[IssueCondition],
@@ -286,6 +291,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     ds
 
   /** A bundle source that would be new: is its citekey taken here? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def collision(
       s: Bundle.Source,
       cond: Option[IssueCondition],
@@ -344,6 +350,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         .zip(localized.sources.find(_.uid == u))
         .map((l, r) => IssueDetail(MergeIssue.Detail.sourceFields(l, r)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def labelsTakenFirst(questions: PlanQuestions): Unit =
     questions.labelTaken(
       Bundle.Kind.Source,
@@ -357,6 +364,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       (s: Bundle.Source, o: UUID) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[Problem, Unit]] =
     dec.kind match
       case km.Map =>
@@ -402,6 +410,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 
   override def pairIssue(kind: MergeIssue.Kind): Boolean = PairKinds(kind)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def foldSources(
       right: Bundle.Source,
       left: Bundle.Source,
@@ -417,6 +426,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     sourceLine(left.uid) = _ => merged
     merged.bodySha256 != left.bodySha256
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def renamed(source: UUID, citekey: Citekey): Unit =
     sourceLine(source) = es => es.sources.find(_.uid == source).get.modify(_.citekey).setTo(wire(citekey.value))
 
@@ -431,6 +441,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     plan.modify(_.sources).setTo(Source.Match.Matches.matches(matches))
 
   /** How each of the bundle's sources was matched, by citekey; one known by its uid or the ledger is not listed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def matches: List[Source.Match] = fes.sources.sortBy(_.citekey.value).flatMap { s =>
     fatesSeen.get(s.uid).flatMap {
       case SourceFate.Same(_, _) => None
@@ -477,6 +488,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   }
 
 object SourcePlan:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def wire(ck: String): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck)
 
   private val PairKinds: Set[MergeIssue.Kind] = Set(
@@ -511,9 +524,12 @@ object SourcePlan:
       .map(s => Side(s, citekeysOf(localAliases.getOrElse(s.uid, Nil))))
     (rights, lefts)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def citekeysOf(aliases: List[com.histmersion.api.library.Citekey]): Set[Citekey] =
     aliases.flatMap(a => Citekey.option(a.value)).toSet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def signedScore(score: SourceMatcher.Evidence.Score): SourceMatcher.Written =
     SourceMatcher.signed(SourceMatcher.Evidence.Weight(score.value))
 
@@ -527,6 +543,8 @@ object SourcePlan:
     * (`smith2019_ritual` → `smith2019_ritualkingship`), else a letter (`smith2019_ritualb`). Never one in use here or
     * in the bundle. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def renameSuggestion(
       s: Bundle.Source,
       in: MergePlanner.Input,
@@ -543,6 +561,7 @@ object SourcePlan:
     byWord.getOrElse(Iterator.from(0).map(i => wire(s.citekey.value + ('b' + i).toChar)).find(c => !usedHere(c)).get)
 
   /** The richer author list: as many names, then the longer written-out names (`Hans G.` over `H. G.`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def richerAuthors(l: List[AuthorName], r: List[AuthorName]): List[AuthorName] =
     def score(as: List[AuthorName]) =
       (
@@ -558,6 +577,8 @@ object SourcePlan:
     * (doi, year, status, title, authors, summary, notes, period, body); a field with no issue follows §5.3's automatic
     * rule. `citekey` is the label the survivor keeps (`map:<citekey>`). The survivor is this collection's (left).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def fold(
       l: Bundle.Source,
       r: Bundle.Source,

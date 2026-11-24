@@ -4,9 +4,11 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Data management's upkeep jobs, as it registers them: the database's clean-up. */
 object MaintenanceJobKinds:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Vacuum: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("vacuum"),
     JobKinds.Wire("Clean up the database"),

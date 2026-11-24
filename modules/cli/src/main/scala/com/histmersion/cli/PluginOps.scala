@@ -17,6 +17,7 @@ import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.Sha256
 import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet, PluginsMarkdown, PluginsReport}
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion plugin …` — the plugins of the LOCAL install (docs/research-plugins.md §7). These commands manage files
   * in the data directory and run the bundle's `histmersion-relink`; they never touch the database, and they refuse when
@@ -29,6 +30,8 @@ final class PluginOps(using console: Console)(
     confirm: Cli.Question => Boolean = PluginOps.ask
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def err(msg: String) = Cli.Error(Problem.Unclassified(Legacy.Text(msg)))
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
@@ -64,6 +67,7 @@ final class PluginOps(using console: Console)(
     finally in.close()
     md.digest().map(b => f"$b%02x").mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha256(p: Path): Sha256 = Sha256(digestOf(p, "SHA-256"))
 
   private def installedSha256(p: Path): PluginKit.Installed.Sha256 = PluginKit.sha256Hex(Files.readAllBytes(p))
@@ -108,6 +112,7 @@ final class PluginOps(using console: Console)(
 
   // ── fetching ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def curl(url: String, to: Path): Either[String, Unit] =
     run.capture(List(cfg.curl.value, "-fsSL", "--retry", "2", "-o", to.toString, url)) match
       case Right(_)                        => Right(())
@@ -120,6 +125,9 @@ final class PluginOps(using console: Console)(
   /** The jar at `to`, its signature beside it when there is one (`<to>.asc`), and the POM published with it (`<to minus
     * .jar>.pom`, which lists the plugin's dependencies) when there is one.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def fetch(origin: Origin, to: Path, wantAsc: Boolean, repos: List[String]): Either[Cli.Error, String] =
     origin match
       case Origin.File(path) =>
@@ -182,6 +190,7 @@ final class PluginOps(using console: Console)(
   // ── commands ──────────────────────────────────────────────────────────────────────────────────
 
   /** The repositories an `add` looks in: the ones named for it first, then the configured ones. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def repositories(o: AddOptions): List[String] = (o.repos.map(_.value) ++ cfg.repos.map(_.value)).distinct
 
   private def repoArgs(repos: List[String]): List[String] = repos.flatMap(r => List("--repo", r))
@@ -190,6 +199,7 @@ final class PluginOps(using console: Console)(
     * reports, or why the plugin is refused (a library the server ships at an older version than the plugin needs) or
     * could not be resolved.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dependencies(jar: Path, lib: Path, repos: List[String]): Either[Cli.Error, List[String]] =
     run.capture(
       install.relink.toString :: "--resolve" :: "--lib" :: lib.toString :: repoArgs(repos) ::: List(jar.toString),
@@ -227,6 +237,7 @@ final class PluginOps(using console: Console)(
 
   /** The name the plugin is staged under: the one it is published with, which the resolver's report and refusals name.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stagedName(origin: Origin): String =
     val raw = origin match
       case Origin.File(path) => Option(Path.of(path.value).getFileName).map(_.toString).getOrElse("plugin.jar")
@@ -234,6 +245,9 @@ final class PluginOps(using console: Console)(
       case Origin.Maven(c)   => s"${c.artifact}-${c.version}.jar"
     raw.replaceAll("[^A-Za-z0-9._+\\-]", "_")
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def addFrom(origin: Origin, o: AddOptions): Either[Cli.Error, PluginJar] =
     val work = install.staging.resolve(s"add-${ProcessHandle.current().pid()}")
     deleteTree(work)
@@ -320,6 +334,7 @@ final class PluginOps(using console: Console)(
       finally s.close()
 
   /** The signer's fingerprint when the jar was verified; refused when verification is required and fails. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def signature(
       jar: Path,
       asc: Path,
@@ -344,6 +359,8 @@ final class PluginOps(using console: Console)(
           Cli.out.println(s"warning: signature not verified ($e) — installed anyway (--unsigned)"); Right(None)
         case Left((_, e)) => Left(err(s"signature not verified: $e"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   private def show(
       jar: PluginJar,
       sha: Sha256,
@@ -385,6 +402,7 @@ final class PluginOps(using console: Console)(
         case Left((_, e)) => Cli.out.println(s"warning: the plugins manifest was not re-signed: $e")
 
   /** `plugin rm`: by plugin id or file name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rm(what: String): Either[Cli.Error, List[PluginJar.File]] =
     val idx = index
     val hits = jars
@@ -403,6 +421,7 @@ final class PluginOps(using console: Console)(
       Right(hits)
 
   /** `plugin list`: every jar of the directory, what it holds, whether the installed binary has it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(running: Option[PluginsReport]): List[String] =
     val idx = index
     val linked = installedSet.map(_.jars.map(j => j.file -> j.sha256).toMap).getOrElse(Map.empty)
@@ -442,6 +461,9 @@ final class PluginOps(using console: Console)(
       (if firstParty.isEmpty then Nil else "" :: "## Built into every binary" :: "" :: firstParty)
 
   /** `plugin status`: the directory, the installed binary and the running server compared. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def status(running: Option[PluginsReport], serverAnswered: Boolean): (PluginKit.SetStatus, List[String]) =
     val st = PluginKit.status(dirEntries, installedSet, running.flatMap(_.set), serverAnswered, dependencyEntries)
     val kit = PluginKit.parseKit(scala.util.Try(Files.readString(install.kitJson)).getOrElse("")).toOption
@@ -457,6 +479,8 @@ final class PluginOps(using console: Console)(
         PluginKit.statusLines(st, serverAnswered)) ++ signing
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def rebuild(args: List[String]): Either[Cli.Error, Unit] =
     run.interactive(install.relink.toString :: args, install.env) match
       case rc if rc.value == 0 => Right(())
@@ -475,6 +499,7 @@ final class PluginOps(using console: Console)(
 
 object PluginOps:
   /** Ask on the terminal; no terminal = no. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ask(question: Cli.Question)(using console: Console): Boolean =
     console
       .readTerminalLine(Console.Prompt(s"$question [y/N] "))

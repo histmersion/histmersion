@@ -22,6 +22,8 @@ import java.nio.file.Files
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `claude-code` provider: ONE `claude -p` process per LLM step attempt, run as the step's agent from the GENERATED
   * headless plugin (docs/research-agent-runtimes.md §2.4, §3a):
@@ -47,8 +49,13 @@ import com.histmersion.util.database.WritePermit
   * It never touches a credential: a key in the server's environment is REMOVED from the CLI's unless `use-api-key` (a
   * present key always wins in `-p`).
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.AutomationAgents)
 final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: CliRuntime) extends LlmClient:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
       val grant = Option

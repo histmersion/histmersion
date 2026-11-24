@@ -10,6 +10,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostLicences
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The parsers of the two key-gated collections: Smithsonian Open Access and Europeana. The Smithsonian fixture's rows
   * are three real records of the Smithsonian's open-data dump (National Museum of Asian Art, read 2026-10-26;
@@ -18,6 +19,7 @@ import com.histmersion.pluginhost.HostLicences
   * read a real answer); every value in them is made up. Each item states its licence as the record does (Europeana: its
   * edm:rights URL); the host reads it ([[HostLicences]]).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class KeyedParsersSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =

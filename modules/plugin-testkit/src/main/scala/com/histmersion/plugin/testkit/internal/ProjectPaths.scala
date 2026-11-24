@@ -3,6 +3,7 @@ package plugin.testkit.internal
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Paths a test names relative to its project. A build tool starts the test JVM in the directory it was itself started
   * in, which need not be the project's (`scala-cli test /path/to/plugin`); a path relative to the working directory
@@ -16,6 +17,7 @@ object ProjectPaths:
     * working directory.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(dir: Path, projectDir: Option[ProjectDir]): Path =
     if dir.isAbsolute then dir
     else

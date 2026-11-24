@@ -31,6 +31,8 @@ import com.histmersion.config.UserPaths
 import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.plugin.AiCheck
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `agent doctor`: every provider, checked WITHOUT spending anything (docs/research-embedded-agents.md §15). Per
   * provider: whether a role's chain uses it, its key (never shown), its base URL, the free model listing (`GET
@@ -40,6 +42,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   *
   * `listModels` and `runCommand` are seams a test fills (a stub server, a fake executable).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Process, "pending G39 (processes only through util.process)")
+@movesTo(FeaturePlace.AutomationAgents)
 final class AgentDoctor(
     app: AppConfig,
     picker: ModelPicker,
@@ -66,12 +72,15 @@ final class AgentDoctor(
 
   private val cfg = app.agents
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def check(level: CheckLevel, n: String, d: String) =
     DoctorCheck(DoctorCheck.Name(n), level, DoctorCheck.Detail(d))
   private def ok(n: String, d: String) = check(CheckLevel.Ok, n, d)
   private def warn(n: String, d: String) = check(CheckLevel.Warn, n, d)
   private def fail(n: String, d: String) = check(CheckLevel.Fail, n, d)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def report(online: DoctorReport.Online): DoctorReport =
     val chains = Role.values.toList.map(r => r -> picker.chain(r))
     val chained = chains.flatMap(_._2.toOption.toList.flatMap(_._1)).distinct
@@ -133,6 +142,7 @@ final class AgentDoctor(
   /** One section per PLUGIN provider: what it is, its own checks, its free model listing (online only), and every
     * chained model priced and buildable. Nothing it does is allowed to throw the report away.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plugins(chained: List[ModelRef], online: Boolean): List[ProviderDoctor] =
     registry.toList.flatMap(_.toList).collect {
       case (name, p) if !BuiltinAi.reserved(BuiltinAi.Reserved(name.value)) =>
@@ -194,6 +204,7 @@ final class AgentDoctor(
 
   // ── the HTTP providers ─────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def http(
       k: ProviderKind,
       models: List[ModelRef],
@@ -265,6 +276,7 @@ final class AgentDoctor(
 
   // ── claude-code ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claudeCode(models: List[ModelRef], allowances: List[picker.Effective]): List[DoctorCheck] =
     val cc = app.agents.providers.claudeCode
     val loopback = app.server.host.forall(ClaudeCode.Env.isLoopback)
@@ -376,6 +388,7 @@ final class AgentDoctor(
         )
     List(bind, versionCheck) ++ auth ++ keyInEnv ++ plan ++ List(agentTools, generated("claude-code"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def agentTools =
     ok(
       "tools",
@@ -390,6 +403,7 @@ final class AgentDoctor(
       case None    => warn("generated", "no runtimes directory — set agents.runtimes.dir")
 
   /** A CLI provider without a login check of its own: the executable answers `--version`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def version(
       command: ProcessLaunch.Command,
       env: Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],
@@ -405,6 +419,7 @@ final class AgentDoctor(
 
   // ── codex, opencode ────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def codex(models: List[ModelRef]): List[DoctorCheck] =
     val cc = cfg.providers.codex
     val level = if models.nonEmpty then fail else warn
@@ -432,6 +447,7 @@ final class AgentDoctor(
         else warn("plan pool", "app-server reads are off: the ChatGPT plan's windows are not known")
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def opencode(models: List[ModelRef]): List[DoctorCheck] =
     val oc = cfg.providers.opencode
     val level = if models.nonEmpty then fail else warn
@@ -463,6 +479,7 @@ object AgentDoctor:
   /** `claude auth status` (JSON) → the login, without the account: logged in, how, which plan. Left = not usable as
     * configured.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def login(json: Output, useApiKey: ClaudeCodeConfig.UseApiKey): Either[Problem, DoctorCheck.Detail] =
     RawJson.parse(json.value.trim).toOption.map(_.cursor) match
       case None =>
@@ -486,6 +503,7 @@ object AgentDoctor:
     HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build()
 
   /** `GET <url>` with `headers`; `data[].id` of an OpenAI- or Anthropic-style model listing. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def listModels(
       url: HttpDownload.Url,
       headers: List[(HeaderName, HeaderText)],
@@ -519,6 +537,7 @@ object AgentDoctor:
         Left(ProblemLog.unexpected(e, Problem.Where("the agent doctor's probe")))
 
   /** `{"data":[{"id":…},…]}` → the ids. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def modelIds(body: Output): Either[Problem, List[ModelRef.Model]] =
     val listing = Problem.Where("the model listing")
     RawJson
@@ -545,6 +564,7 @@ object AgentDoctor:
   /** Run a local command (no network of ours) with `env` changes (None = removed): its exit code and output, or why it
     * could not be run.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runCommand(
       argv: List[ProcessLaunch.Command],
       env: Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],

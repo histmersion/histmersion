@@ -8,10 +8,13 @@ import com.histmersion.api.plugins.PluginState
 import com.histmersion.plugin.Access
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.api.plugins.PluginDescription
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The legal chain's generation, which makes the acquisition list due for a re-check again: a legal fetcher or a
   * fetcher plugin's setting changes it; a fetcher the config marks unauthorised never does. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class FetcherGenerationSuite extends munit.FunSuite:
 
   private val plan = List(FetchChain.Step.Id("unpaywall") -> Access.Open, FetchChain.Step.Id("core") -> Access.Open)
@@ -42,6 +45,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
       PluginState.Wire("registered"),
       provides = List(PluginDescription.Provides("secret-vault:keepassxc"))
     )
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def gen(
       p: List[(FetchChain.Step.Id, Access)] = plan,
       ps: List[PluginStatus] = List(unpaywall, core(PluginSetting.Value("null")), vault),

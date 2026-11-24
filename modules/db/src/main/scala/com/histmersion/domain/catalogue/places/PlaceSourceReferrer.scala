@@ -14,6 +14,9 @@ import com.histmersion.domain.{CreatedAt, Creator}
 /** The gazetteer's provenance that names a source (a person's place types and footprints, a place's `source`), which a
   * delete keeps as history, and the places its findings were assigned to, which go with them.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the place rows that point at a deleted source")
 final class PlaceSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =

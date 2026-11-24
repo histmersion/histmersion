@@ -38,6 +38,7 @@ import com.histmersion.domain.automation.managers.ManagerContext
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
   * linked queries (its title when it has none) and drops every work the corpus or the acquisition queue already has;
@@ -58,6 +59,8 @@ import com.histmersion.domain.Creator
   * ([[OaBacklog.add]]) for a later day; the acquisition list gets only the closed picks and the ones with no legal
   * file.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class AcquisitionSweepPipeline(
     protected val site: LibrarySite,
     agents: AgentsControllers,
@@ -70,6 +73,7 @@ final class AcquisitionSweepPipeline(
   protected def goals: GoalService = agents.goals
   import AcquisitionSweepPipeline.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
@@ -111,6 +115,7 @@ final class AcquisitionSweepPipeline(
   /** The steps after the ranking as they always were: the open-access picks within the allowance ingested, every other
     * pick queued for acquisition.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withoutBacklog(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -143,6 +148,7 @@ final class AcquisitionSweepPipeline(
     * ingested; the rest of them — and the ones whose ingest failed for another reason than a missing legal file —
     * parked in the backlog; the closed picks and the ones with no legal file queued for acquisition.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withBacklog(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -176,6 +182,7 @@ final class AcquisitionSweepPipeline(
       )
     yield line
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def skippedText(m: Map[CandidateSweep.SkippedKey, AcquisitionSweepRules.SkipCount]): String =
     if m.isEmpty then "none left out"
     else m.toList.map((k, n) => (s"$k", n)).sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
@@ -183,6 +190,8 @@ final class AcquisitionSweepPipeline(
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
     * so it is offered to this goal's ranking too).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def backlogged(goal: Goal.Slug): Set[Doi] =
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     val watcher = Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
@@ -195,6 +204,7 @@ final class AcquisitionSweepPipeline(
   /** The candidates the deterministic search stored for the goal (#3761): its watches read now from their watermarks
     * (no model), then the unseen ones; the live search below only when that search is not connected (a fixture).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def discover(ctx: RunCtx, goal: Goal.Slug)(using WritePermit)(using Creator.New): Either[Problems, Found] =
     upstream().sweepCandidates(goal, AgentUpstream.SweepCandidatesDryRun(ctx.dryRun)) match
       case Left(_)   => liveDiscover(ctx, goal)
@@ -243,6 +253,7 @@ final class AcquisitionSweepPipeline(
           )
 
   /** The stored candidates shown to the ranking: the picks marked queued, the rest seen. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def markSeen(ctx: RunCtx, found: Found, picks: List[Picked]): Int =
     val picked = picks.map(_.candidate.doi).toSet
     val (q, s) = found.stored.toList.partition((doi, _) => picked.contains(doi))
@@ -255,6 +266,7 @@ final class AcquisitionSweepPipeline(
     )(q.size + s.size)
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def liveDiscover(ctx: RunCtx, goal: Goal.Slug)(using WritePermit): Either[Problems, Found] =
     agents.host.goal(goal).left.map(_.problems).map { g =>
       val linked = goals.refs(goal, Goal.LinkKind.Query).map(r => Search.Query(r.value))
@@ -279,6 +291,7 @@ final class AcquisitionSweepPipeline(
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rankInput(goal: Goal.Slug, f: Found): String =
     val list = f.candidates
       .map { c =>
@@ -295,6 +308,7 @@ final class AcquisitionSweepPipeline(
     * through the LEGAL chain only. One that has no legal file (or fails) is left for the queue step, and the next
     * open-access pick is tried.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ingest(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -314,6 +328,7 @@ final class AcquisitionSweepPipeline(
   /** One open-access pick through the legal chain: linked to the goal and recorded as an `ingested` event of the
     * watcher (what its daily cap counts). Left = why not.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ingestOne(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -347,6 +362,8 @@ final class AcquisitionSweepPipeline(
   /** [[ingest]] for a watcher with a backlog: what failed is kept too (a missing legal file → the acquisition list;
     * anything else → the backlog, tried again on a later day).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ingestOa(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -370,6 +387,8 @@ final class AcquisitionSweepPipeline(
   /** The open-access picks not ingested now, into the watcher's ingest backlog (deduplicated against the corpus, the
     * acquisition list and every watcher's backlog).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def park(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit)(using Creator.New): Parked =
     val mid = ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value)))
     val placed = picks.map { p =>
@@ -400,6 +419,7 @@ final class AcquisitionSweepPipeline(
       })
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def queue(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit)(using Creator.New): Int =
     val queued = queuedDois()
     picks.count { p =>
@@ -410,15 +430,19 @@ final class AcquisitionSweepPipeline(
     }
 
 object AcquisitionSweepPipeline:
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given JsonKeyCodec[Doi] = JsonCodec.key[Doi](_.value, k => Right((Doi.assume(_))(k)))
 
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def picked(c: ManagerContext, run: Run.Id): List[Picked] =
     c.stepOutput(run, StepRecord.Name("rank"))
       .flatMap(o => RawJson.decode[List[Picked]](o.value).toOption)
       .getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Found(
       title: com.histmersion.api.automation.Goal.Title,
       notes: Option[com.histmersion.api.automation.Goal.Notes],
@@ -434,6 +458,7 @@ object AcquisitionSweepPipeline:
   final case class Ingested(doi: Doi, citekey: Citekey) derives JsonCodec
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives JsonCodec
 
   /** What the ingest step of a run with a backlog did. */

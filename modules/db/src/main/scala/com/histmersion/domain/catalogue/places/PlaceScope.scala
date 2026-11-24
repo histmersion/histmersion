@@ -9,6 +9,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How the gazetteer resolved a [[Filter]]'s `places` values. Computing it needs the database, so it is done ONCE per
   * query by the handler ([[PlaceRepo.scopeFor]]) and passed into the pure `Filter → SQL` builders; an empty scope means
@@ -27,6 +28,7 @@ final case class PlaceScope(
   /** What to CALL a filter value when explaining a match: the gazetteer label for an id, and the value itself for a
     * free-text name. "place: pleiades_589831" names nothing a reader knows (item 15); "place: Kairatos (river)" does.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelFor(value: PlaceScope.Value): PlaceRepo.Label =
     labels.getOrElse(value, PlaceRepo.Label(value.value))
   def isEmpty: Boolean = byValue.isEmpty
@@ -37,12 +39,16 @@ object PlaceScope:
   type Value = Value.T
   object Value extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type IdsForValue = Value
   val IdsForValue: Value.type = Value
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type LabelForValue = Value
   val LabelForValue: Value.type = Value
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ByValueKey = Value
   val ByValueKey: Value.type = Value
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type LabelsKey = Value
   val LabelsKey: Value.type = Value
   export Place.Id as ByValueValue

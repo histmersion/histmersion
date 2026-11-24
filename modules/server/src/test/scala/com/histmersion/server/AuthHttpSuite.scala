@@ -14,6 +14,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Who the server lets in, over real HTTP on loopback. The peer of every request here is 127.0.0.1, so the two sides of
   * the trust decision are two settings: the default (loopback trusted as the owner) and [[KeyedLoopback]] (loopback
@@ -21,6 +22,7 @@ import com.histmersion.util.database.TestCreators.given
   * foreign `Host`, 403 for another site's change, 401 for a missing key — and is answered as every endpoint answers a
   * problem. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AuthHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -73,6 +75,7 @@ class AuthHttpSuite extends munit.FunSuite:
   private val converter = OfflineConverter()
 
   /** A server on loopback over the test database, with `auth` as its access settings, and one backup archive. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(auth: AuthConfig => AuthConfig)(body: (String, Int) => Unit): Unit =
     val backups = Files.createTempDirectory("zz-access-backups")
     val _ = Files.writeString(backups.resolve(Dump), "DUMP")
@@ -91,6 +94,7 @@ class AuthHttpSuite extends munit.FunSuite:
     }
 
   private def keyed(auth: AuthConfig): AuthConfig = KeyedLoopback(auth, Key)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def trustedWithKey(auth: AuthConfig): AuthConfig = auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key))
 
   test("from a network the server does not trust: a read needs the key like a write, and the backups above all"):
@@ -184,6 +188,7 @@ class AuthHttpSuite extends munit.FunSuite:
       }
 
   /** A server over the test database listening on every address of `binds` (each on an ephemeral port of its own). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withListener(auth: AuthConfig => AuthConfig, binds: NonEmptyVector[ServerConfig.Host])(
       body: Vector[String] => Unit
   ): Unit =

@@ -7,9 +7,11 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema
+import com.histmersion.lint.{LintRule, tolerated}
 
 type ItemKey = ItemKey.T
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ItemKey extends Newtype[String, Pure]:
   given JsonValueCodec[ItemKey] = JsonCodec.mapped[ItemKey, String](_.value, s => Right(ItemKey(s.trim)))
   given Schema[ItemKey] = Schema.string[ItemKey]

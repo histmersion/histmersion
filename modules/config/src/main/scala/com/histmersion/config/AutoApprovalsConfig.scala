@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at most
   * `articlesPerGoalPerDay` planned articles of one research area, `publishPerDay` article drafts and `goalPlansPerDay`
@@ -10,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * published only when its filter returns at least `publishMinSources` sources; a goal plan may propose sub-goals only
   * for a goal less than `maxGoalDepth` levels below a root goal (0 = a root).
   */
+@movesTo(FeaturePlace.AutomationApprovals)
 final case class AutoApprovalsConfig(
     articlesPerGoalPerDay: AutoApprovalsConfig.ArticlesPerGoalPerDay = AutoApprovalsConfig.ArticlesPerGoalPerDay(6),
     publishPerDay: AutoApprovalsConfig.PublishPerDay = AutoApprovalsConfig.PublishPerDay(10),

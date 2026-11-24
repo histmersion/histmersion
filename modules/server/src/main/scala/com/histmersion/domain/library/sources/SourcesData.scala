@@ -14,12 +14,15 @@ import com.histmersion.util.ocr.Chunker
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources' share of the library's data contribution: their counts, the rebuild of their full-text chunks, and
   * their checks with the repairs safe to make without a person — the short edge targets unified, the stale chunks
   * rebuilt, the old geocoder's points moved and the unplaced findings given a point when named.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object SourcesData:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def figures(using DbCon): List[DataCount] =
     val (sources, findings) = SourceRepo.counts()
     List(
@@ -30,9 +33,11 @@ object SourcesData:
   /** The rebuild of every source's full-text chunks from its OCR'd body: at most `limit` sources after `after` (and at
     * most `limits.reindex-chars` characters) per slice.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def reindex(of: DataOwner): MaintenanceTask = new MaintenanceTask:
     val owner: DataOwner = of
     val name: MaintenanceTask.Name = MaintenanceTask.Name("reindex")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def run(slice: MaintenanceSlice, site: MaintenanceSite)(using WritePermit): ReindexResult =
       SourceRepairs(Transactor(site.dataSource)).reindexChunks(
         Chunker.ChunkMaxChars(site.settings.limits.chunkChars.value),
@@ -42,8 +47,10 @@ object SourcesData:
       )
 
   final private class Check(val owner: DataOwner, name: Rule.Name, override val fix: Option[SafeFix]) extends CheckRule:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val rule: Rule = Lint.rule(name).getOrElse(Rule(name, Rule.Description(name.value)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       val stored = SourceCheckRepo.storedCitekey
       SourceCheckRepo.report(
@@ -55,15 +62,20 @@ object SourcesData:
         Lint.ItemLimit(maxItems.value)
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def listed(owner: DataOwner, names: String*): List[CheckRule] =
     names.toList.map(n => Check(owner, Rule.Name(n), None))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
       run: CheckContext => WritePermit ?=> LintFixResult
   ): CheckRule =
     Check(owner, Rule.Name(name), Some(SafeFix(when, FixRank(rank), run)))
 
   /** The library's rules, in the order the report has always listed them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def checks(owner: DataOwner)(using Creator.New): List[CheckRule] =
     listed(owner, DanglingEdges) ++
       List(

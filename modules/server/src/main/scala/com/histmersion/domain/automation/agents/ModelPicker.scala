@@ -24,6 +24,7 @@ import com.histmersion.domain.automation.AgentRole
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.ModelChains
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):
@@ -37,6 +38,7 @@ import com.histmersion.util.database.WritePermit
   * model back; `agent quota refresh <pool>` takes such a reading). In memory on purpose — a restart is a fair moment to
   * try again.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class ModelPicker(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -52,11 +54,14 @@ final class ModelPicker(
   /** model wire → (skipped until, when its plan reported the limit) */
   private val cooldown = ConcurrentHashMap[ModelRef.Wire, (Long, Long)]()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def poolInstant(now: PlanQuotaRepo.EpochMillis): PlanQuota.Now = PlanQuota.Now(now.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def poolModel(m: ModelRef): ChainEntry.Model = ChainEntry.Model(m.model.value)
 
   /** The model hit its plan's limit: skip it until `until` (else the configured cool-down). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cool(
       model: ModelRef,
       until: Option[Instant],
@@ -89,6 +94,7 @@ final class ModelPicker(
   /** Until when `model` is skipped, if it is: a cool-down whose time has passed, or that a later reading of its plan
     * pool (asked through `read`) lifts ([[ModelPicker.lifts]]), is dropped here.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cooling(
       model: ModelRef,
       now: PlanQuotaRepo.EpochMillis,
@@ -114,6 +120,7 @@ final class ModelPicker(
   /** The models skipped now because their plan reported its usage limit, with until when — after lifting those a later
     * reading of their pool clears (`agent quota`, `agent quota refresh`). Reads the pools as stored.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cooldowns(
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
   ): List[(ModelRef.Wire, Instant)] =
@@ -131,6 +138,7 @@ final class ModelPicker(
   /** A role's chain and where it comes from: saved, else `agents.roles.<role>`. Every model that does not read is a
     * problem of its own.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chain(role: Role): Either[Problems, (List[ModelRef], SettingSource)] =
     Transactor(ds).read(ModelSettingsRepo.chains).get(ModelSettingsRepo.ChainRole(role.wire.value)) match
       case Some(ms) =>
@@ -145,6 +153,7 @@ final class ModelPicker(
           .map(_.at(Problem.Field(s"agents.roles.${role.wire}")))
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chainFor(
       role: Role,
       overrideRef: Option[AgentsControllers.ModelName]
@@ -167,6 +176,7 @@ final class ModelPicker(
   /** Whether `role`'s chain may fall from a plan pool below its floor to a PAID key: saved, else
     * `agents.quota.fallthrough`. Off, the run pauses until the plan's reset instead.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fallthrough(role: Role): Boolean =
     Transactor(ds)
       .read(PlanQuotaRepo.fallthrough)
@@ -187,6 +197,7 @@ final class ModelPicker(
   /** Config's allowances with the saved ones over them (a saved target replaces config's). A config string that does
     * not parse caps nothing it could not read; its problems are listed, each in `agents.allowances`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allowances: (List[Effective], List[Problem]) =
     val (fromConfig, problems) = parseAllowances(Allowance.Spec(cfg.allowances.value), known()) match
       case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
@@ -208,6 +219,7 @@ final class ModelPicker(
   // ── the state of one model ─────────────────────────────────────────────────────────────────────
 
   /** Every allowance covering `m` with its limits' states at `now`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def covering(
       m: ModelRef,
       effective: List[Effective],
@@ -222,6 +234,7 @@ final class ModelPicker(
       )
       .map(e => e -> e.allowance.map(a => states(a, spendsOf(a), LimitState.Now(now.value))))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spendsOf(a: Allowance): Vector[Spend] =
     if a.limits.isEmpty then Vector.empty
     else
@@ -264,6 +277,7 @@ final class ModelPicker(
     * it ([[working]]: when the caller WANTS the model, a pool that would wait only on a stale reading, or was never
     * read, takes a fresh one first).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def state(
       m: ModelRef,
       effective: List[Effective],
@@ -351,6 +365,7 @@ final class ModelPicker(
     * them, which may record a reading. `refresh` is why the pick may take a fresh reading of a plan pool (None: none is
     * taken — the scheduler's pass); `onRefresh` hears what each one read (the run's trace).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pick(
       role: Role,
       overrideRef: Option[AgentsControllers.ModelName],
@@ -371,6 +386,7 @@ final class ModelPicker(
     choose(role, overrideRef, now, stored, _ => ())
 
   /** The first usable model of `role`'s chain, each one's pool read through `read`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def choose(
       role: Role,
       overrideRef: Option[AgentsControllers.ModelName],
@@ -468,6 +484,7 @@ final class ModelPicker(
 
   private def iso(ms: Long): String = Instant.ofEpochMilli(ms).toString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roleChains(now: PlanQuotaRepo.EpochMillis): List[RoleChain] =
     val (effective, _) = allowances
     Role.values.toList.map { r =>
@@ -519,6 +536,7 @@ final class ModelPicker(
           )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allowanceStatuses(now: PlanQuotaRepo.EpochMillis): List[AllowanceStatus] =
     allowances._1.map {
       case Effective(t, Left(why), src) =>
@@ -597,6 +615,7 @@ object ModelPicker:
     * was reported (`observed`, the pool's newest reading) — the reading the limit came with, or an older one, says
     * nothing about a reset — and only when that pool's verdict for the model is usable (#1827).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lifts(
       since: PlanQuotaRepo.EpochMillis,
       observed: Option[PlanQuotaRepo.EpochMillis],
@@ -609,6 +628,7 @@ object ModelPicker:
     * large as its limit) does not keep the others' resets from counting — plus the pools a person holds, which free
     * only when released. None = nothing frees by itself.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def whenFrees(
       models: List[(ModelRef, Option[PlanQuotaRepo.EpochMillis], Option[PlanQuota.PoolId])]
   ): (Option[PlanQuotaRepo.EpochMillis], Problem.Run.Frees) =

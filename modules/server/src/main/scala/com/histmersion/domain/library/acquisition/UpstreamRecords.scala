@@ -15,25 +15,38 @@ import com.histmersion.api.library.Refs
 import com.histmersion.api.library.Title
 import com.histmersion.upstreams.archiveorg.ArchiveItem
 import com.histmersion.upstreams.archiveorg.ArchiveFile
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given pluginYearToWire: Transformer[Year, api.catalogue.Year] = y => api.catalogue.Year(y.value.toLong)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given wireYearToPlugin: Transformer[api.catalogue.Year, Year] = y => Year(y.value.toInt)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given pluginAuthorToWire: Transformer[WorkKey.Authors, AuthorName] = a => AuthorName(a.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given wireAuthorToPlugin: Transformer[AuthorName, WorkKey.Authors] = a => WorkKey.Authors(a.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given pluginLicenceToWire: Transformer[Licence, api.library.WorkRef.OaLicence] = l =>
   api.library.WorkRef.OaLicence(l.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given wireLicenceToPlugin: Transformer[api.library.WorkRef.OaLicence, Licence] = l => Licence(l.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given arxivToWire: Transformer[ArxivId, api.library.FollowupRow.Arxiv] = a =>
   api.library.FollowupRow.Arxiv(a.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given citedByToWire: Transformer[FollowupRow.CitedBy, Acquire.CitedByCount] =
   c => Acquire.CitedByCount(c.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given refAuthorToWire: Transformer[RefRow.Authors, AuthorName] =
   a => AuthorName(a.value)
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given refRawToWire: Transformer[RefRow.Raw, Refs.ReferenceText] =
   r => Refs.ReferenceText(r.value)
 
 extension (w: WorkRef)
   /** The work as the wire shows it, keyed by the citekey the corpus gives a work (not in the corpus yet). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire: api.library.WorkRef =
     w.into[api.library.WorkRef]
       .withFieldComputed(

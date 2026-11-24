@@ -10,11 +10,15 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.{Duration, Instant}
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The real client: java.net.http over `client` (the composition root's: HTTP/1.1, one stream per request — the
   * providers are CDNs — following redirects), as the product's `userAgent`, a slow-down answer asked again when
   * `policy` says so, at most `retries` times.
   */
+@tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+@atBoundary(BoundaryKind.Http, "fetches byte ranges over java.net.http for basemap downloads")
 final class JavaRangeHttp(
     client: HttpClient,
     timeoutSeconds: JavaRangeHttp.TimeoutSeconds,
@@ -25,6 +29,7 @@ final class JavaRangeHttp(
 )(using clock: java.time.Clock)
     extends RangeHttp:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def request(url: RangeHttp.Url, range: Option[(ByteOffset, ByteCount)]): HttpRequest =
     val b = HttpRequest
       .newBuilder(URI.create(url.value))
@@ -44,6 +49,7 @@ final class JavaRangeHttp(
       Problem.Upstream.Http.here(url.upstream, url.address, Problem.Upstream.Status(status), External.ReplyExcerpt(""))
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def send(url: RangeHttp.Url, req: HttpRequest): Either[Problem, HttpResponse[InputStream]] =
     def attempt(n: Int): Either[Problem, HttpResponse[InputStream]] =
       scala.util.Try(client.send(req, HttpResponse.BodyHandlers.ofInputStream())) match
@@ -68,6 +74,7 @@ final class JavaRangeHttp(
             case None => Right(resp)
     attempt(0)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def meta[T](r: HttpResponse[T], total: ByteCount): RemoteFile =
     RemoteFile(
       RemoteFile.Size(total.value),
@@ -112,6 +119,7 @@ final class JavaRangeHttp(
       }
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def bytes(
       url: RangeHttp.Url,
       offset: ByteOffset,
@@ -134,6 +142,7 @@ final class JavaRangeHttp(
       }
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def download(
       url: RangeHttp.Url,
       offset: ByteOffset,

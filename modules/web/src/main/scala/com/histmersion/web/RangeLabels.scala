@@ -3,6 +3,7 @@ package web
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the timeline overview's two years go — the selection's "from" and "to" under its handles — so they never
   * overlap and never leave the bar. Pure, so the placement is a unit test and [[TimelineView]] only applies the answer.
@@ -24,10 +25,13 @@ object RangeLabels:
   val Gap = 6.0
 
   /** The width of `text` at the overview's 8 px label font (tabular digits; a rough upper bound). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def width(text: UiLabels.Text): ElementSize = ElementSize(text.value.length * 5.0)
 
   /** One label: its left edge `x` and width `w` (drawn with `text-anchor: start` at `x`). */
   final case class Label(text: UiLabels.Text, x: ScreenPixels, w: ElementSize):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def end: ScreenPixels = ScreenPixels(x.value + w.value)
 
   enum Placement:
@@ -36,6 +40,8 @@ object RangeLabels:
     case Joined(label: Label)
 
   /** The placement for a selection from `x0` to `x1` (px, `x0 ≤ x1`) in a bar `barW` wide. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def place(
       fromText: UiLabels.Text,
       toText: UiLabels.Text,

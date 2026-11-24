@@ -5,7 +5,9 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.Years
 import com.histmersion.api.library.TimeBucket
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TimelineViewSuite extends munit.FunSuite:
 
   // ── bucketSizeFor ─────────────────────────────────────────────────────────────
@@ -111,6 +113,7 @@ class TimelineViewSuite extends munit.FunSuite:
 
   // ── underlayBuckets: the overview slice drawn beneath a stale detail curve ─────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ov = (0 until 10).toList.map(i =>
     TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100L + 99), TimeBucket.Count(i))
   )

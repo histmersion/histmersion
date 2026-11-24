@@ -15,6 +15,9 @@ import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.server.HttpDownload
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object NaturalEarthLand:
   val name = "land"
   val description = "Natural Earth 1:10 m land + minor islands (public domain) — clips polities to the coastline"
@@ -24,6 +27,7 @@ object NaturalEarthLand:
   )
 
   /** The polygon geometries of a GeoJSON FeatureCollection, each as its own GeoJSON text. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geometries(rawJson: String): Either[Problem, List[PlaceDetailRow.Geometry]] =
     RawJson
       .parse(rawJson)
@@ -61,6 +65,7 @@ object NaturalEarthLand:
   /** Download both layers (`download`: a url's text), replace the land, re-clip every polity. The result's `places` is
     * the number of polities now drawn clipped; `failed` carries the piece count as a note.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(
       download: HttpDownload.Url => Either[Problem, HttpDownload.Text],
       geometry: PlaceGeometry,

@@ -9,6 +9,8 @@ import java.time.zone.ZoneRulesProvider
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.TimeEquality.offsetEquality
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The binary's time zones come from the JDK's own tzdb (`lib/tzdb.dat`, which native-image embeds). The build excludes
   * `scala-java-time-tzdb` — a time-zone database for Scala.js that scribe's perfolation drags onto the JVM class path,
@@ -17,6 +19,7 @@ import com.histmersion.util.time.TimeEquality.offsetEquality
   * the zone rules. So `--self-check` resolves a few zones with a known offset, on both sides of a DST change, and a
   * binary linked without the data fails the check instead of the first query.
   */
+@movesTo(FeaturePlace.ServerInstance)
 object TimeZoneCheck:
   type Report = Report.T
   object Report extends Newtype[String, Pure]
@@ -53,6 +56,7 @@ object TimeZoneCheck:
   /** Pure over the lookups: (ok, the self-check line). `offset` resolves a zone at an instant, `zones` is how many
     * region ids there are, `version` the tzdb version, `default` the default zone's id.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(
       probes: List[Probe],
       offset: (Probe.Zone, Instant) => Either[Problem, ZoneOffset],
@@ -78,6 +82,7 @@ object TimeZoneCheck:
     else (false, Report(s"time zones: BROKEN — ${problems.mkString("; ")}"))
 
   /** The check against this JDK (or binary). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jdk(): (Boolean, Report) =
     def err(t: Throwable) = ProblemLog.unexpected(t, Problem.Where("the time-zone check"))
     val ids = Try(ZoneId.getAvailableZoneIds.size).getOrElse(0)

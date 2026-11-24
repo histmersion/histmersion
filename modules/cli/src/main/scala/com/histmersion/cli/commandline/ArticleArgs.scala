@@ -13,8 +13,11 @@ import org.rogach.scallop.*
 
 import java.nio.file.Path
 import com.histmersion.api.research.CritiqueReason
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion article …` on the command line: the compiled wiki's commands, parsed into [[ArticleCommand]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion article`: declares its options, parses them into typed commands")
 object ArticleArgs extends CommandLine.Entry:
   val name = "article"
   val help = "The compiled wiki: list/get/put/patch/lint/check/coverage/review/rename/export/import/versions articles"
@@ -266,6 +269,7 @@ object ArticleArgs extends CommandLine.Entry:
     private val to = arg[LabelRenames.Label]("new")
     private val asJson = json()
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def command: Either[Problems, Cli.Command] =
       LabelRenames
         .validate(Bundle.Kind.Article, from(), to())

@@ -31,6 +31,8 @@ import com.histmersion.api.library.Doi
 import com.histmersion.domain.Highlight
 import com.histmersion.api.library.Hit
 import com.augustnagro.magnum.{sql, Frag}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -39,6 +41,8 @@ import com.augustnagro.magnum.{sql, Frag}
   * correlated `EXISTS`, because **the source is the unit of the result** — a source matches `period`/`bbox`/`places`
   * when its own value matches OR any of its findings do, and `tags` matches `sources.tags ∪ findings.tags`.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "turns a search filter into SQL fragments")
 object FilterSql:
 
   type FacetPrefix = FacetPrefix.T
@@ -93,12 +97,16 @@ object FilterSql:
     * nothing and, since GeoNames and Wikidata brought 8 M names in (#1064), made a place's hover counts take 3–20 s
     * (2026-10-09).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def placeSource(p: Filter.Places, scope: PlaceScope): Frag =
     scope.idsFor(PlaceScope.IdsForValue(p.value)) match
       case Some(ids) => placeIdsSource(ids)
       case None      => placeNameSource(p.value)
 
   /** `finding_places` membership for ONE finding row (alias `fa`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def placeFinding(p: Filter.Places, scope: PlaceScope, fa: Frag): Frag =
     val byName = sql"$fa.region_name ILIKE ${contains(p.value)}$Esc"
     scope.idsFor(PlaceScope.IdsForValue(p.value)) match
@@ -111,6 +119,8 @@ object FilterSql:
   /** The boolean expression selecting the sources this filter matches. Always a valid expression: an empty filter
     * yields `TRUE`. Predicates appear in `Filter` field order, which is what the unit tests pin down.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def where(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     val ps = List.newBuilder[Frag]
 
@@ -164,6 +174,8 @@ object FilterSql:
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
 
   /** The filter's title quick-filter, trimmed; `None` when there is nothing to match. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def titleLike(f: Filter): Option[Title] =
     f.title.map(_.value.trim).filter(_.nonEmpty).map(Title(_))
 
@@ -173,6 +185,7 @@ object FilterSql:
   // semantics. `title` is not part of the source set: on those lists it names the item's own title.
 
   /** The citekeys of the sources `f` selects — `/api/sources`' predicate as a sub-select. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sourceKeys(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     sql"SELECT s.citekey FROM sources s WHERE ${where(f, scope)}"
 
@@ -182,6 +195,7 @@ object FilterSql:
     * a free-text place chip's article list took 240 ms, a polity's 15 s (2026-10-09). The set is at most the corpus'
     * citekeys, small by construction.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def sourceKeySet(f: Filter, scope: PlaceScope): Frag =
     sql"ARRAY(${sourceKeys(f, scope)})"
 
@@ -189,6 +203,8 @@ object FilterSql:
     * maintained at write time from the body's `[[citekey]]`s), and whose title contains `f.title`. A filter without
     * source criteria restricts nothing.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def articleWhere(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     val set = f.sourceSet
     val ps = List.newBuilder[Frag]
@@ -203,6 +219,9 @@ object FilterSql:
     * and not to its source because an event carries its own dating — the period a source covers is not the event's. No
     * source criteria besides the period ⇒ no condition on the source (an event without one stays listed).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def eventWhere(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     val set = f.sourceSet.copy(period = None)
     val ps = List.newBuilder[Frag]
@@ -229,21 +248,25 @@ object FilterSql:
   /** The filter with every finding-level criterion removed — what is left is what a SOURCE must satisfy on its own:
     * `q`, authors, topics, status, publication years.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sourceOnly(f: Filter): Filter =
     f.modify(_.tags).setTo(Nil).modify(_.places).setTo(Nil).modify(_.period).setTo(None).modify(_.bbox).setTo(None)
 
   /** Source-level predicate for a query whose row is a FINDING (its source joined in as `s`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sourceWhere(f: Filter): Frag = where(sourceOnly(f))
 
   /** True when a finding must satisfy something besides the period — so a source with no findings at all cannot match
     * (the place filters have always been finding-level).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hasFindingPlaceCriteria(f: Filter): Boolean =
     f.tags.nonEmpty || f.places.nonEmpty || f.bbox.isDefined
 
   /** The non-temporal criteria for ONE finding: tags (over `findings.tags ∪ sources.tags`, AND semantics), places
     * (any-of, ILIKE on `region_name`) and the viewport (antimeridian-split). `TRUE` when the filter sets none of them.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def findingPlaceWhere(f: Filter, fa: Frag = sql"f", sa: Frag = sql"s", scope: PlaceScope = PlaceScope.empty): Frag =
     val ps = List.newBuilder[Frag]
 
@@ -259,10 +282,12 @@ object FilterSql:
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
 
   /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def findingPeriodWhere(f: Filter, fa: Frag = sql"f"): Frag =
     f.period.fold(sql"TRUE")(p => RangeSql.overlaps(sql"$fa.period", p))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def findingWhere(f: Filter, fa: Frag = sql"f", sa: Frag = sql"s", scope: PlaceScope = PlaceScope.empty): Frag =
     val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa, scope)).filter(_.sqlString != "TRUE")
     if parts.isEmpty then sql"TRUE" else parts.joined(And)
@@ -271,6 +296,8 @@ object FilterSql:
     * rank by, so it falls back to citations; with one it is `ts_rank_cd` — see [[orderBySql]], which is what the
     * queries actually use.
     */
+  @tolerated(LintRule.TotalOrder, "s is sources: citekey is its key")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def orderBy(sort: Sort): Frag = sort match
     case Sort.Relevance | Sort.Cited => sql"ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
     case Sort.PeriodStart            => sql"ORDER BY ${RangeSql.start(sql"s.period")} ASC NULLS LAST, s.citekey"
@@ -286,6 +313,9 @@ object FilterSql:
     * per-source correlated subquery. The CTE path is the default for [[sourcesQuery]]; the legacy correlated-subquery
     * path is kept for callers that do not prepend the CTE.
     */
+  @tolerated(LintRule.TotalOrder, "the relevance rank, then cited_by_count, then s.citekey, the sources' key")
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def orderBySql(f: Filter, useCte: Boolean = false): Frag = (f.sort, text(f)) match
     case (Sort.Relevance, Some(q)) =>
       val rank = if useCte then Search.rankExprCte(q) else Search.rankExpr(q)
@@ -293,6 +323,8 @@ object FilterSql:
     case _ => orderBy(f.sort)
 
   /** The filter's text query, trimmed; `None` when there is nothing to search for. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def text(f: Filter): Option[Search.Query] =
     f.q.map(_.value.trim).filter(_.nonEmpty).map(Search.Query(_))
 
@@ -315,6 +347,8 @@ object FilterSql:
     *
     * Parameter order is textual: CTE, then SELECT, then WHERE, then ORDER BY, then limit/offset.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sourcesQuery(f: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty): Frag =
     val (cte, cols, join) = text(f) match
       case Some(q) =>
@@ -328,6 +362,7 @@ object FilterSql:
     sql"${cte}SELECT $rowCols, $cols FROM sources s$join WHERE ${where(f, scope)} ${orderBySql(f, useCte = text(f).isDefined)} LIMIT ${f.limit.value.max(0)} OFFSET ${f.offset.value.max(0)}"
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def countQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     sql"SELECT count(*)::int FROM sources s WHERE ${where(f, scope)}"
 
@@ -335,6 +370,7 @@ object FilterSql:
     * `(citekey, heading, snippet)` rows, one per citekey, with `ts_headline` wrapping hits in `**`. An empty `citekeys`
     * list is a no-op (the caller should skip the query).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def snippetsQuery(q: Search.Query, snippetWords: Search.SnippetWords, citekeys: List[Citekey]): Frag =
     Search.snippetsQuery(q, snippetWords, citekeys)
 
@@ -351,6 +387,7 @@ object FilterSql:
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by [[findingWhy]], so the
     * explanation is unit-testable without a database.
     */
+  @tolerated(LintRule.TotalOrder, "finding_places of one finding (fp.finding_id = f.id): place_id completes the key")
   def findingsQuery(citekeys: List[Citekey]): Frag =
     // the gazetteer places each finding was materialised into (plan §1.6a) — labels for the reader, ids so
     // `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not joined strings: a place label routinely
@@ -369,12 +406,15 @@ object FilterSql:
     * ([[findingWhere]]), belonging to a source that satisfies the source-level ones ([[sourceWhere]]). Ordered
     * oldest-first, with a deterministic tiebreak so paging is stable.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def findingsFeedQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     sql"SELECT $geoCols FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${sourceWhere(f)} AND ${findingWhere(f, scope = scope)} ORDER BY ${RangeSql.start(sql"f.period")} NULLS LAST, f.citekey, f.id LIMIT ${f.limit.value.max(0)} OFFSET ${f.offset.value.max(0)}"
 
   /** How many findings [[findingsFeedQuery]] would return without its `LIMIT` — the same WHERE, so a count and the map
     * feed can never disagree about which findings a filter selects.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def findingsCountQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     sql"SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${sourceWhere(f)} AND ${findingWhere(f, scope = scope)}"
 
@@ -383,10 +423,12 @@ object FilterSql:
     * trip on one connection. A map place's hover card asks for exactly this; as four repository calls it was four
     * checkouts and four statements, one of them a page of articles fetched only for its total.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def selectionCountsQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     sql"SELECT (${countQuery(f, scope)}), (${findingsCountQuery(f, scope)}), (SELECT count(*)::int FROM articles a WHERE ${articleWhere(f, scope)}), (SELECT count(*)::int FROM events e WHERE ${eventWhere(f, scope)})"
 
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def facetValues(field: Facet.Field): Frag = field match
     case Facet.Field.Tags =>
       sql"SELECT x FROM unnest(s.tags) x UNION SELECT y FROM findings f, unnest(f.tags) y WHERE f.citekey = s.citekey"
@@ -406,6 +448,10 @@ object FilterSql:
     * Matching (`Filter.tags/topics/status` on `lower()`, `places` on `ILIKE`) is case-insensitive too, so either
     * spelling finds the whole bucket.
     */
+  @tolerated(LintRule.TotalOrder, "GROUP BY lower(v): one row per lower(v)")
+  @tolerated(LintRule.TotalOrder, "mode() WITHIN GROUP (ORDER BY v): rows tied on v hold the same value")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def facetsQuery(
       field: Facet.Field,
       prefix: Option[FacetPrefix],
@@ -437,6 +483,8 @@ object FilterSql:
   object SourceDoi extends Newtype[String, Pure]
 
   /** One row of [[sourcesQuery]]: a `SearchHit` plus the extra columns `why` needs. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class SourceRow(
       citekey: Citekey,
       title: com.histmersion.api.library.Title,
@@ -455,6 +503,8 @@ object FilterSql:
       matchedHeading: Option[SearchHit.MatchedHeading] = None
   ) derives DbCodec:
     /** The WIRE shape: arrays as proper lists. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def toHit: SearchHit =
       SearchHit(
         com.histmersion.api.library.Citekey(citekey.value),
@@ -480,6 +530,8 @@ object FilterSql:
     * connectives dropped. The SQL side is a tsquery, so the explanation cannot just look for the raw string —
     * `"sea peoples"` never occurs verbatim in a title.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def queryTerms(q: Search.Query): List[Highlight.Term] =
     q.value
       .split("\\s+")
@@ -497,6 +549,8 @@ object FilterSql:
   /** Source-level reasons this source is in the result — "title matches 'collapse'", "tag: sea-peoples", … Pure:
     * everything comes from the row the SQL returned.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sourceWhy(f: Filter, r: SourceRow): List[Hit.Rationale] =
     val b = List.newBuilder[String]
     text(f).foreach { q =>
@@ -521,6 +575,8 @@ object FilterSql:
   /** Which of the filter's finding-level criteria this finding satisfies. Empty ⇒ it is NOT part of the evidence and is
     * dropped from `Hit.matched`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def findingWhy(
       f: Filter,
       m: Finding.Match,

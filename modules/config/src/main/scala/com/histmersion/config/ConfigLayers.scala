@@ -24,6 +24,8 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.edit.SettingKind.valueTypeEquality
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with the precedence
   * ENVIRONMENT > USER FILE > reference.conf.
@@ -39,6 +41,8 @@ import com.histmersion.config.edit.SettingKind.valueTypeEquality
   * only the public sconfig API (no internal value classes) and needs no list of variables kept in step with
   * reference.conf.
   */
+@atBoundary(BoundaryKind.Config, "layers reference.conf, the user file and the environment as HOCON")
+@movesTo(FeaturePlace.Config)
 private[config] object ConfigLayers:
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
@@ -93,6 +97,7 @@ private[config] object ConfigLayers:
   private def inOpenBlock(keys: List[SettingKey.Segment]): Boolean =
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def check(user: Config, known: Config): Either[Problem, Keys] =
     @tailrec def loop(
         rest: List[(List[SettingKey.Segment], Boolean)],
@@ -116,6 +121,7 @@ private[config] object ConfigLayers:
     * accept it (that is how env values arrive). Finer mismatches (a fraction for a whole number) are left to the
     * readers.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def typeCheck(settings: List[Keys.Settings], merged: Config, known: Config): Either[Problems, Unit] =
     NonEmptyVector
       .from(
@@ -127,6 +133,7 @@ private[config] object ConfigLayers:
       )
       .toLeft(())
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def mismatch(path: Keys.Settings, k: ConfigValue, v: ConfigValue): Option[Problem] =
     import ConfigValueType.*
     def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")

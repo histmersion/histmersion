@@ -12,7 +12,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Note(
     id: Note.Id,
     target: Target,
@@ -34,6 +36,7 @@ object Note:
 
   type Id = Id.T
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Id extends Newtype[String, Pure]:
     given JsonValueCodec[Id] = JsonCodec.mapped[Id, String](_.value, b => Right(Id(b)))
     given Schema[Id] = Schema.string[Id]
@@ -45,6 +48,7 @@ object Note:
 
   type Text = Text.T
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Text extends Newtype[String, Pure]:
 
     val MaxChars = 50000

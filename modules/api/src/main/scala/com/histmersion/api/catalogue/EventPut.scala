@@ -9,6 +9,9 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventPut(
     label: EventSummary.Label,
     kind: EventSummary.Kind = EventSummary.Kind("event"),

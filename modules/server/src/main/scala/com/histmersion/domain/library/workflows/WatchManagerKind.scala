@@ -37,12 +37,15 @@ import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until
   * the library contributes it. Its housework at every tick: the goals with no source gather candidates (no model), the
   * ingest backlog drains, and the acquisition list's legal re-check runs.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: => LibraryAgentsConfig)
     extends ManagerKindDefinition:
   val kind: Kind = Kind.Watch
@@ -50,21 +53,25 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     domain.Creator.code(InTreeWorkflow.Library, domain.Creator.Workflow.Name("watch-manager"))
 
   private def watch = lib.managers.watch
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def watchDefaults = WatchManagerDefaults(
     WatchManagerDefaults.MaxRuns(watch.maxRuns.value),
     WatchManagerDefaults.AutoIngestPerDay(watch.autoIngestPerDay.value)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def cron: Option[ManagerLight.Cron] = Some(ManagerLight.Cron(watch.cron.value))
 
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = watchDefaults.managerDefaults(m)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = itemKind.value match
     case AcquisitionSweep => Pipeline.AcquisitionSweep
     case CurrencyCheck    => Pipeline.CurrencyCheck
     case _                => Pipeline.Fallback
 
   /** A firing re-opens each of the goal's sweeps that has settled (one still open is left to finish). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using WritePermit): List[ManagerKindDefinition.FirePhrase] =
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { sw =>
@@ -90,6 +97,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       }
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def housework(
       now: Instant,
       draining: => Boolean
@@ -105,6 +113,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       ManagerLight.Id("acquire-recheck") -> lines(work.acquireRecheck.tick(now).map(_.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
@@ -114,6 +123,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       case _ => StepFacts.Finished(Item.Outcome("enriched"))
 
   /** What the sweep found, as the watcher's own event (the run's worklog line, and the works it picked). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
@@ -145,9 +155,13 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       }
 
   /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def closeLine(c: ManagerContext, run: Run.Id): Option[String] =
     c.stepOutput(run, AgentRepo.StepRecord.Name("close")).flatMap(o => RawJson.decode[String](o.value).toOption)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def target(
       m: ManagerInfo,
       itemKind: ManagerContext.ItemKind,
@@ -189,6 +203,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     work.oaBacklog.snapshot().perManager
 
   /** The ingest backlog's size (the page adds the upstreams' quotas and the acquisition list's re-check). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def status(st: Autopilot.EngineStatus, now: Instant): Autopilot.EngineStatus =
     val backlog = work.oaBacklog.snapshot(now)
     st.modify(_.backlog)
@@ -205,6 +220,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
 
   override def busy: Boolean = work.acquireRecheck.jobRunning
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dispatch(
       c: ManagerContext,
       m: ManagerInfo,
@@ -303,4 +319,5 @@ object WatchManagerKind:
   /** Pure: does a candidate sweep say there is nothing for a ranking (#3761)? Only an answered sweep with no unseen
     * candidate does; a search that is not connected (or failed) lets the run start as before.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nothingNew(sweep: Either[Problems, CandidateSweep]): Boolean = sweep.exists(_.unseen.value == 0)

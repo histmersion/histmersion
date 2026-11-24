@@ -25,11 +25,13 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The attestations' operations as REST, MCP and the CLI reach them. A reference to a record of a renamed kind (an
   * event, a place, a source, an article) names it by its identifier now — `current` resolves an old one; a finding id
   * or an edge is kept as given. `page` is the page size a request's limit makes.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class AttestationsControllers(
     attestations: AttestationService,
     sources: Passage.Source,
@@ -38,16 +40,22 @@ final class AttestationsControllers(
     maintenance: WriteGate
 ):
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def invalid(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def notFound(id: Attestation.Id) =
     Api.Error(Problem.Unclassified(Legacy.Text(s"No attestation $id")), Some(Api.Error.Code(Write.CodeNotFound)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def refId(targetType: Attestation.TargetType, id: Attestation.TargetId): Attestation.TargetId =
     AliasKinds
       .ofTarget(Activity.Entry.TargetKind(targetType.value))
       .fold(id)(k => Attestation.TargetId(current(k, AttestationsControllers.Alias(id.value)).value))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def list(
       citekey: Option[com.histmersion.api.library.Citekey],
       targetType: Option[Attestation.TargetType],
@@ -69,6 +77,9 @@ final class AttestationsControllers(
   /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints would answer
     * both with a 500.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def create(caller: Caller, in: Attestation.Put)(using Creator.New): Either[Api.Error, Attestation] =
     maintenance.guard(WriteGate.OperationName("create_attestation")):
       val ck = current(AliasKinds.SourceRecords, AttestationsControllers.Alias(in.citekey.value)).value

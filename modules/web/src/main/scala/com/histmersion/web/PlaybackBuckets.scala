@@ -8,6 +8,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The span the tiled layers are drawn for in playback: the playhead's window widened to whole buckets of the years
   * `ui.map-tiles.playback-bucket-seconds` of playback cover (a round number of years), so the tiles' URL — and the
@@ -23,6 +24,8 @@ object PlaybackBuckets:
 
   /** Pure: the bucket of `yearsPerSecond` × `seconds`, up to a round 1, 2 or 5 × 10ⁿ years (at least 1). */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def years(yearsPerSecond: YearsPerSecond, seconds: Seconds): BucketYears =
     val raw = math.max(1.0, math.abs(yearsPerSecond.value) * seconds.value)
     val p = math.pow(10, math.floor(math.log10(raw)))
@@ -30,6 +33,7 @@ object PlaybackBuckets:
     BucketYears(math.max(1L, math.round(step)))
 
   /** Pure: `span` widened outwards to whole buckets of `bucket` years. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def widen(
       span: (Years.Astronomical, Years.Astronomical),
       bucket: BucketYears

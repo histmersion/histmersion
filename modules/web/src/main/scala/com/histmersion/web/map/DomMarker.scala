@@ -8,11 +8,13 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.web.HtmlSink
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box centred on it.
   * `.hd-marker` is the stylesheet's hook for every marker (and the map's sign that a pointer event is the marker's,
   * [[MapEvent.overMarker]]); the element answers the pointer and the keyboard itself (its kind binds them).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class DomMarker(
     private var latV: LatLon.Lat,
     private var lonV: LatLon.Lon,
@@ -53,8 +55,10 @@ final class DomMarker(
   private[map] def removed(): Unit = onRemove.foreach(_())
 
   /** Where it is drawn now, container pixels (NaN before it was drawn). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def screen: (ScreenPt.X, ScreenPt.Y) = (ScreenPt.X(lastX), ScreenPt.Y(lastY))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[map] def place(v: View): Unit =
     // the copy of the world nearest the view's centre (the map draws the world's copies side by side)
     val lon = lonV.value + 360 * math.round((v.centreLon.value - lonV.value) / 360).toDouble
@@ -82,6 +86,7 @@ final class DomMarker(
   private[map] def offscreen: Boolean = hidden
 
   /** Draw it at screen point (`x`, `y`) now (an animation's start), whatever the map says. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def moveTo(x: ScreenPt.X, y: ScreenPt.Y): Unit =
     el.style.setProperty("--tx", s"${x.value}px")
     el.style.setProperty("--ty", s"${y.value}px")

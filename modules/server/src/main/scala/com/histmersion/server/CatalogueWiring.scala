@@ -42,11 +42,15 @@ import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.storage.Location
 import com.histmersion.PageSize
 import com.histmersion.api.catalogue.CatalogRecord
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The catalogue's places, events, their catalogues and their links to the corpus, and the refinement of site types,
   * built over one server's `deps`: `http` fetches the event catalogues and Wikidata, `presentYear` is the year datings
   * are held inside, `resolve` gives a list's filter its page size, `scope` the gazetteer's reading of its places.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@movesTo(FeaturePlace.Server)
 final class CatalogueWiring(
     deps: Deps,
     http: HttpTransport,
@@ -87,6 +91,7 @@ final class CatalogueWiring(
 
   lazy val eventStore: EventService = EventService(deps.transactor, deps.eventSources, deps.clock)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val eventImporter: EventImports =
     EventImports(
       EventImportService(deps.transactor, deps.clock),
@@ -131,6 +136,7 @@ final class CatalogueWiring(
   /** The gazetteer's geometry: findings matched to places, the hierarchy, the land. */
   lazy val placeGeometry: PlaceGeometry = PlaceGeometry(deps.transactor)(using deps.timer)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val places: PlacesControllers =
     new PlacesControllers(
       placeStore,
@@ -159,6 +165,7 @@ object CatalogueWiring:
   /** How the gazetteer comes in, over `deps`' stores and plugins: `download` fetches a pinned extract into its file,
     * `text` a url's text (the land).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gazetteer(
       deps: Deps,
       places: PlaceService,

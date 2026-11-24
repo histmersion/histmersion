@@ -12,6 +12,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): the [[SourceFetcher]]s the plugins registered, run
   * as ONE chain until one finds a copy. The fetchers know how to ask their upstream; everything around them is decided
@@ -44,12 +45,14 @@ final class FetchChain(
   override def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[Problems, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(true))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def workOf(doi: Option[Doi], arxiv: Option[ArxivId]): WorkKey =
     WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv.map(a => WorkKey.Arxiv(a.value)))
 
   override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problems, FetchedFile] =
     fetchWorkExplained(work, legalOnly).file
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def fetchWorkExplained(work: WorkKey, legalOnly: FetchChain.LegalOnly): FetchChain.Outcome =
     val memo = FetchChain.Memo()
     val tried = LazyList
@@ -72,6 +75,7 @@ final class FetchChain(
 
   /** One fetcher, one work: its answer, with an exception read as a miss and a "PDF" that is not one read as no copy.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def attempt(s: FetchChain.Step, work: WorkKey, shared: FetchChain.Memo): Fetch =
     if s.fetcher.access == Access.Unauthorised then
       log.warn(
@@ -83,8 +87,10 @@ final class FetchChain(
     val ctx = new Fetch.Context:
       def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = shared.get(key)(compute)
       val log: Plugin.Log = new Plugin.Log:
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def info(message: Plugin.Log.Line) =
           FetchChain.this.log.info(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def warn(message: Plugin.Log.Line) =
           FetchChain.this.log.warn(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
       override def registered(pluginId: Fetch.Context.RegisteredPluginId): Boolean =
@@ -145,6 +151,7 @@ object FetchChain:
   /** What one fetcher that ran answered, when it had no copy. */
   final case class Answer(fetcher: Answer.Fetcher, said: Problem.NotFound.Said, why: Problem):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${said.label} — ${why.sentence}")
 
     def refused: Boolean = said match
@@ -201,6 +208,7 @@ object FetchChain:
     * run (a chain entry no enabled plugin registered, an unauthorised fetcher that stays off). `plugins`: the plugins
     * registered in that generation, which each fetch is told of ([[Fetch.Context.registered]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       registered: ListMap[util.plugins.Plugin.Id, SourceFetcher],
       chain: List[util.plugins.Plugin.Id],
@@ -233,6 +241,7 @@ object FetchChain:
   /** Pure: the run order — the ids `acquire.chain` names that are registered, as listed, then the other registered ids
     * in registration order; with a note naming the listed ids nothing registered (a disabled plugin's, or a typo).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def order(
       registered: List[util.plugins.Plugin.Id],
       chain: List[util.plugins.Plugin.Id]
@@ -248,6 +257,7 @@ object FetchChain:
   /** Pure: the legal gate. Open and subscription fetchers always run; an unauthorised one only when the deployment
     * allows it AND the caller did not ask for the legal chain.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runs(access: Access, legalOnly: LegalOnly, allowUnauthorised: AllowUnauthorised): Boolean = access match
     case Access.Open | Access.Subscription => true
     case Access.Unauthorised               => allowUnauthorised.value && !legalOnly.value
@@ -255,10 +265,12 @@ object FetchChain:
   /** Pure: a PDF that is really a PDF. Without a PDF library this is the cheap structural check: the magic bytes within
     * the first KiB and a plausible size. A publisher's "you do not have access" interstitial is HTML and fails it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def looksLikePdf(b: FetchedFile.Bytes): Boolean =
     b.value.length > 1024 && new String(b.value.take(1024), "ISO-8859-1").contains("%PDF")
 
   /** Pure: the work as a log line names it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(w: WorkKey): Description =
     List(
       "doi" -> w.doi.map(_.value),

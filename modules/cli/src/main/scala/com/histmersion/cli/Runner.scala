@@ -6,7 +6,10 @@ import com.histmersion.util.problem.Problem.Io
 
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Process, "runs the install's scripts and curl as child processes and captures their output")
 trait Runner:
   /** stdout on success; on failure the exit code and stderr. */
   def capture(
@@ -24,6 +27,7 @@ object Runner:
 
   object System extends Runner:
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def capture(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting]) =
       scala.util
         .Try {
@@ -42,6 +46,7 @@ object Runner:
           identity
         )
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def interactive(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting]) =
       scala.util
         .Try {

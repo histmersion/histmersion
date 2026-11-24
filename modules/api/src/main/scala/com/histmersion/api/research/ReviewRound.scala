@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class ReviewRound(
     run: ReviewRound.Run,
@@ -21,6 +22,7 @@ object ReviewRound:
   type Run = Run.T
   object Run extends Newtype[String, Pure]
   type RunNumber = RunNumber.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RunNumber extends Newtype[Int, Pure]
   type Round = Round.T
   object Round extends Newtype[Int, Pure]

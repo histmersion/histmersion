@@ -15,14 +15,19 @@ import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The background jobs as `job_status` and `GET /api/jobs` list them: one job, or a page newest first under a query,
   * with the per-state and per-kind counts under the same query.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 final class JobListing(ds: DataSource, cfg: () => AppConfig):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def searchPage(c: AppConfig): PageSize = PageSize.applyUnsafe(math.max(1, c.limits.search.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def job(id: Job.Id): Either[Api.Error, JobInfo] =
     Transactor(ds)
       .read(JobRepo.get(id))
@@ -40,6 +45,7 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
   /** One page under `q`: `before` = only jobs older than that one, `upTo` = only jobs down to it; at most `facetMax`
     * kinds counted.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(
       q: JobQuery,
       limit: Option[PageSize],
@@ -67,11 +73,13 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
       }
 
   /** The newest job of `kind`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def newest(kind: Job.Kind): Option[JobInfo] =
     Transactor(ds)
       .read(JobRepo.page(JobQuery(kinds = List(JobQuery.Kinds(kind.value))), PageSize(1), None, None))
       .toOption
       .flatMap(_._1.headOption)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def clean(cursor: Option[Paging.Cursor]): Option[JobRepo.PageCursor] =
     cursor.map(_.value.trim).filter(_.nonEmpty).map(JobRepo.PageCursor(_))

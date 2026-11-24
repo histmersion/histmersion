@@ -15,14 +15,19 @@ import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the figures' links answer, the same on the database and in memory: a link needs its figure, follows its rename
   * and goes with it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class AssetLinkServiceContract extends MediaStoreSuite:
 
   private val Ck = Citekey("zqal2001_x")
   private val ApiCk = api.library.Citekey("zqal2001_x")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fig(name: NewFigure.Name, tag: String) =
     NewFigure(
       name,

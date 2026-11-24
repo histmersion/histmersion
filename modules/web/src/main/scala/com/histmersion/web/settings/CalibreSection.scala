@@ -2,11 +2,13 @@ package com.histmersion
 package web.settings
 
 import com.raquo.laminar.api.L.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › Calibre and files: the Calibre library the command line reads and fills, and where the server keeps
   * uploads and backups.
   */
 object CalibreSection:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "settings-section",

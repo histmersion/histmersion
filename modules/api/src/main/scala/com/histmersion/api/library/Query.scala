@@ -9,6 +9,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Read-only is enforced in three layers, because no single one of them holds:
   *
@@ -24,6 +25,7 @@ object Query:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
   type SchemaMarkdown = SchemaMarkdown.T
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   object SchemaMarkdown extends Newtype[String, Pure]
   type Statement = Statement.T
   object Statement extends Newtype[String, Pure]
@@ -33,11 +35,13 @@ object Query:
   type StatementsSql = String
   export QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueryRequest(sql: QueryRequest.Sql) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object QueryRequest:
     export Query.Statement as Sql
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueryResult(
       columns: List[QueryResult.Columns],
       rows: List[List[Option[QueryResult.Rows]]],
@@ -60,6 +64,7 @@ object Query:
     type ElapsedMs = ElapsedMs.T
     object ElapsedMs extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SchemaColumn(
       name: SchemaColumn.Name,
       dataType: SchemaColumn.DataType,
@@ -76,6 +81,7 @@ object Query:
     type Nullable = Nullable.T
     object Nullable extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
       derives JsonCodec,
         KindlingsSchema,
@@ -87,6 +93,7 @@ object Query:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SchemaTables(tables: List[SchemaTable]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   private val Forbidden = Set(
@@ -108,6 +115,8 @@ object Query:
   /** Honours everything that may hold a `;` in Postgres: `'…'` strings (with `''` escapes), `"…"` identifiers,
     * `$tag$…$tag$` dollar quoting, `--` line comments and block comments, which Postgres nests.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statements(sql: StatementsSql): List[Statement] =
     val out = List.newBuilder[String]
     val cur = StringBuilder()
@@ -153,6 +162,8 @@ object Query:
       then Some(((sql).substring((i), close + 1)))
       else None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def leadingKeyword(statement: Statement): String =
     def afterBlockComment(text: String): String =
       var at = 2
@@ -174,6 +185,8 @@ object Query:
       else go = false
     (s.takeWhile(c => c.isLetter).toUpperCase)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(sql: Statement): Either[Problem, Statement] =
     val text = (sql).value.trim
     if text.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("sql")))
@@ -194,9 +207,13 @@ object Query:
         case _ =>
           Left(Problem.Refused.Policy(Problem.Refused.Rule.OneStatement))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def cell(v: Option[Query.MarkdownTableRows]): String =
     v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def markdownTable(
       columns: List[Query.MarkdownTableColumns],
       rows: List[List[Option[Query.MarkdownTableRows]]]
@@ -209,6 +226,8 @@ object Query:
       // No stripMargin: every row starts with '|', which stripMargin would eat.
       ((List(header, rule) ++ body).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(r: QueryResult): Markdown =
     val head =
       s"### ${r.rowCount} row(s)${
@@ -245,6 +264,8 @@ object Query:
     "label"
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def schemaMarkdown(s: SchemaTables): SchemaMarkdown =
     if s.tables.isEmpty then SchemaMarkdown("_(no tables)_")
     else
@@ -254,6 +275,8 @@ object Query:
       }
       SchemaMarkdown(s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toolDescription(s: SchemaTables): ToolDescription =
     val tables =
       if s.tables.isEmpty then "(schema unavailable — call the schema endpoint)"

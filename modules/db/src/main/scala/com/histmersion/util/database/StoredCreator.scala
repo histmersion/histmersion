@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.augustnagro.magnum.{sql, Frag}
 import hearth.kindlings.jsoniterjson.Json
 import StoredCreator.Agent
+import com.histmersion.lint.{LintRule, tolerated}
 
 final private[histmersion] case class StoredCreator(
     kind: String,
@@ -28,6 +29,7 @@ object StoredCreator:
   ) derives JsonCodec
 
   object Agent:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(agent: Creator.Agent): Agent = agent match
       case Creator.Agent.Code                               => Agent("code")
       case Creator.Agent.Model(definition, provider, model) =>
@@ -42,6 +44,7 @@ object StoredCreator:
 
   private def surfaceText(surface: Creator.Surface): String = surface.toString.toLowerCase
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(creator: Creator): StoredCreator = creator match
     case Creator.Manual(surface)                             => StoredCreator("manual", known(surface).map(surfaceText))
     case Creator.Automated(plugin, workflow, agent, surface) =>

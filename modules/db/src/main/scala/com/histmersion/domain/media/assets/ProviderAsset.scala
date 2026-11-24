@@ -4,8 +4,10 @@ package domain.media.assets
 import com.histmersion.api.media.AssetKind
 import com.histmersion.domain.media.MediaRole
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A provider's picture to store. `bytes` are the capped rendition, `thumb` the card's thumbnail. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class ProviderAsset(
     provider: ProviderAsset.Provider,
     key: ProviderAsset.Key,
@@ -49,14 +51,18 @@ object ProviderAsset:
   type Height = Height.T
   object Height extends Newtype[Int, Pure]
   type ThumbMime = ThumbMime.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ThumbMime extends Newtype[String, Pure]
   type ThumbWidth = ThumbWidth.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ThumbWidth extends Newtype[Int, Pure]
   type ThumbHeight = ThumbHeight.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ThumbHeight extends Newtype[Int, Pure]
   type License = License.T
   object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
   object Author extends Newtype[String, Pure]
@@ -69,6 +75,7 @@ object ProviderAsset:
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindOf(role: MediaRole.Wire): Kind = role.value match
     case MediaRole.LocatorMap | MediaRole.RouteMap | MediaRole.Map => Kind(AssetKind.Map)
     case MediaRole.Plan                                            => Kind(AssetKind.Plan)

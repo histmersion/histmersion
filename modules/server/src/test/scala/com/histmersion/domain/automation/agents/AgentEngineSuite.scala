@@ -72,6 +72,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes
@@ -86,6 +87,7 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
   val steps: mutable.ArrayBuffer[Seq[RecordedRequest]] = mutable.ArrayBuffer.empty
   @volatile var fail: Boolean = false
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     if fail then throw java.net.ConnectException("scripted provider is down")
     val script = ScriptedAgent.synchronous(scripts.dequeue()*)
@@ -98,6 +100,9 @@ final class ScriptedClient(val model: ModelRef) extends LlmClient:
   * quotes, gazetteer geocoding, the single patch, budgets, prompt injection, cancellation and restart reconciliation.
   * Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class AgentEngineSuite extends DbSuite with RunTranscripts:
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
@@ -109,12 +114,16 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = Citekey("zzagent2019_tin")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ApiCk = api.library.Citekey(Ck.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ApiTarget = RunRequest.Target(Ck.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val RunTarget = AgentsControllers.Target(Ck.value)
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Source.OcrMarkdown(
     """# Introduction
       |
@@ -123,10 +132,14 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       |""".stripMargin
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runId(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(id: RunInfo.Id): Job.Id = Job.Id.assume(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def overrideModel(m: ModelRef): ModelOverride.Model = ModelOverride.Model(m.wire.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -159,6 +172,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   private val inventedFinding =
     """{"claim":"Tin came from Cornwall.","quote":"Cornish tin was shipped east by Phoenician traders every summer.",
       |"place":null,"start":null,"end":null,"periodName":null,"tags":[],"confidence":"medium"}""".stripMargin
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notesJson = s"""{"notes":"The source traces tin by sea [[$Ck]]."}"""
 
   /** classify (one facets lookup, then the answer) · findings-1 (an invented quote, rejected; then a verified one) ·
@@ -504,7 +518,9 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
     /** Whether each refs/assess call asked to apply (a dry run never does). */
     val applies = java.util.concurrent.ConcurrentLinkedQueue[Boolean]()
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def meta(doi: Doi) = { calls.add(s"meta $doi"); Right(work) }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) =
       calls.add(s"refs $citekey"); applies.add(apply.value)
       Right(
@@ -518,6 +534,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           Nil
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) =
       calls.add(s"assess $citekey"); applies.add(apply.value)
       Right(
@@ -539,11 +556,14 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           None
         )
       )
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def followups(
         id: AgentUpstream.FollowupsId,
         since: Option[com.histmersion.Year],
         limit: Option[FollowupsInput.Limit]
     )(using Creator.New) = Left(Problem.Unclassified(Legacy.Text("not in this test")))
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
       Problem.Unclassified(Legacy.Text("not in this test"))
     )
@@ -801,6 +821,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx.approval(
           AgentRepo.StepRecord.Name("publish"),
@@ -872,6 +893,8 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
 
   /** A client per configured model, so a step's recorded model is the one its role asked for. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
     (_, ref) =>
       cs.find(_.model == ref).toRight(Problem.Unclassified(Legacy.Text(s"no scripted client for ${ref.wire}")))
@@ -1068,6 +1091,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx
           .llm[EnrichSource.Notes, String](
@@ -1128,6 +1152,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx
           .llm[EnrichSource.Notes, String](
@@ -1282,6 +1307,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   /** One `notes` step of the pipeline's own agent, its output cap overridden when `cap` says so. */
   private def notesOnly(cap: Option[RunCtx.MaxTokens] = None): PipelineDef = new PipelineDef:
     def pipeline: Pipeline = Pipeline.EnrichSource
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
         .llm[EnrichSource.Notes, String](
@@ -1294,6 +1320,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .map(PipelineDef.Summary(_))
 
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claudeRun(
       fake: FakeCli.Fake,
       stepCap: AgentStepConfig.MaxTokens,
@@ -1381,6 +1408,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     c.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
     val twoNotes = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         for
           a <- ctx.llm[EnrichSource.Notes, String](
@@ -1489,6 +1517,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   /** A pipeline whose one step starts a CLI that never answers (and a child of its own). */
   final private class Hang(dir: java.nio.file.Path) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
         .code[String](AgentRepo.StepRecord.Name("hang")) {
@@ -1566,9 +1595,11 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assertEquals(third.status, "failed")
     assert(third.error.exists(_.sentence.contains("stalled 3 times")), third.error)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stallLimit: Long =
     baseCfg.agents.watchdog.stallMinutesFor(baseCfg.agents.providers).value.toLong * 60000L
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def later(ms: Long): PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + ms)
 
   private def withholdInterrupt(): Unit =
@@ -1577,6 +1608,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   final private class ReturnsAfterStallMarkBeforeInterrupt(engine: () => Engine, limit: Long) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
     val bodies = java.util.concurrent.atomic.AtomicInteger()
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
         .code[String](AgentRepo.StepRecord.Name("killed")) {

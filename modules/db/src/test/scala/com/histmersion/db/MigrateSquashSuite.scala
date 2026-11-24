@@ -24,6 +24,7 @@ import com.histmersion.api.automation.Managers.ManagerInfo
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The migration chain since its squash ([[Migrate.squashHistory]]): a fresh database gets the squash, then each later
   * migration; a database the chain before it built keeps every row and has its history replaced by a baseline at 109,
@@ -37,11 +38,14 @@ import com.histmersion.util.database.TestPermits.given
   *
   * In databases of their own beside HISTMERSION_TEST_DB_URL's, dropped afterwards; skipped without it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MigrateSquashSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 

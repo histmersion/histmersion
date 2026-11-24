@@ -15,7 +15,12 @@ import com.histmersion.api.automation.PlanQuota
 import java.nio.file.Path
 import sttp.ai.core.agent.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@atBoundary(BoundaryKind.Process, "builds the opencode CLI arguments and reads its output")
+@movesTo(FeaturePlace.AutomationAgents)
 object Opencode:
   type SchemaNote = SchemaNote.T
   object SchemaNote extends Newtype[String, Pure]
@@ -23,6 +28,8 @@ object Opencode:
   /** Who reports a failed run in its own words. */
   private val Said = Problem.Upstream.Name("opencode run")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def argv(cfg: OpencodeConfig, model: ModelRef.Model, agent: AgentDef.Name, dir: Path): List[ClaudeCode.Argument] =
     List(cfg.command.value, "run", "--agent", agent.value, "--format", "json", "-m", model.value, "--dir", dir.toString)
       .map(ClaudeCode.Argument(_))
@@ -30,6 +37,7 @@ object Opencode:
   /** Isolation (docs/research-agent-runtimes.md §1.3): a global config of its own, the generated config dir, no
     * `.claude` skills, no autoupdate; the run token for the MCP header.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def environment(xdg: Path, configDir: Path, token: Option[RunGrant.Token], env: java.util.Map[String, String]): Unit =
     val _ = env.put("XDG_CONFIG_HOME", xdg.toString)
     val _ = env.put("OPENCODE_CONFIG_DIR", configDir.toString)
@@ -37,12 +45,14 @@ object Opencode:
     val _ = env.put("OPENCODE_DISABLE_AUTOUPDATE", "1")
     val _ = env.put(AgentGenerator.TokenEnv, token.fold("none")(_.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def schemaNote(schema: Codex.SchemaJson): SchemaNote =
     SchemaNote(s"\n\nReply with ONE JSON object that matches this JSON Schema, and nothing else:\n$schema")
 
   /** `--format json` events: `text` parts (the last is the answer), `tool_use` (a tool part with its state: input,
     * output or error), `step_finish` (tokens, cost), `error`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parse(lines: List[CliProcess.Run.Lines]): CliOutcome =
     val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => RawJson.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
@@ -97,6 +107,8 @@ object Opencode:
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Opencode then
       Left(

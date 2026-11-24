@@ -5,10 +5,13 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The counts and sizes the diagnostics read: rows of a table, the database's size and its tables'. Plain `count(*)`s
   * over whole tables — the About panel is opened by hand, not polled.
   */
+@atBoundary(BoundaryKind.Sql, "counts rows and measures table sizes for the diagnostics")
 object StatsRepo:
   type ColumnName = ColumnName.T
   object ColumnName extends Newtype[String, Pure]
@@ -17,10 +20,16 @@ object StatsRepo:
 
   /** The rows of `table`. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   def rows(table: TableName)(using DbCon): Count =
     Count(sql"SELECT count(*)::int FROM ${SqlLiteral(quoted(table.value))}".query[Int].run().head.toLong)
 
   /** The rows of `table` whose `column` is set. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   def rowsWith(table: TableName, column: ColumnName)(using DbCon): Count =
     Count(
       sql"SELECT count(*)::int FROM ${SqlLiteral(quoted(table.value))} WHERE ${SqlLiteral(quoted(column.value))} IS NOT NULL"
@@ -37,6 +46,7 @@ object StatsRepo:
     sql"SELECT current_database()::text, pg_database_size(current_database())".query[(TableName, ByteCount)].run().head
 
   /** Every table of the database by `pg_total_relation_size` (indexes and TOAST included), largest first. */
+  @tolerated(LintRule.TotalOrder, "pg_class of the user schemas, grouped by relation: column 1 is unique")
   def tableBytes(using DbCon): List[(TableName, ByteCount)] =
     sql"""SELECT c.relname::text, pg_total_relation_size(c.oid)
             FROM pg_class c JOIN pg_namespace ns ON ns.oid = c.relnamespace

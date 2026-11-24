@@ -16,6 +16,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.library.{CalibreGap, CalibreGaps, CalibrePushRequest, CalibrePushResult}
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources not in Calibre yet, what a push names one by, and the Calibre id written back after a push — what the
   * Calibre collection and the CLI's host-side push read and write.
@@ -27,6 +28,9 @@ final class CalibreGapControllers(
     maintenance: WriteGate
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def gaps(limit: Option[CalibreGapControllers.Limit]): CalibreGaps =
     // capped like every other listing: `calibreGaps(None)` used to mean LIMIT Int.MaxValue
     val limits = cfg().limits
@@ -44,9 +48,13 @@ final class CalibreGapControllers(
     )
     CalibreGaps(CalibreGaps.Count(marked.size), marked)
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def pushMeta(citekey: Citekey): Either[Api.Error, CalibreGap] =
     sources.calibrePushMeta(citekey).toRight(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult] =
     maintenance.guard(WriteGate.OperationName("calibre/pushed")):
       Citekey

@@ -2,10 +2,12 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Tokens of one call. `input` counts ALL prompt tokens, cached ones included; `cacheRead` and `cacheWrite` are parts
   * of it. `reasoning` is the part of `output` the model spent thinking, where the provider says.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final case class AiUsage(
     input: AiUsage.Input,
     output: AiUsage.Output,
@@ -22,12 +24,16 @@ final case class AiUsage(
   )
 
 object AiUsage:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ApplyInput = Input
   val ApplyInput: Input.type = Input
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ApplyOutput = Output
   val ApplyOutput: Output.type = Output
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ApplyCacheRead = CacheRead
   val ApplyCacheRead: CacheRead.type = CacheRead
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ApplyCacheWrite = CacheWrite
   val ApplyCacheWrite: CacheWrite.type = CacheWrite
 
@@ -42,5 +48,6 @@ object AiUsage:
   type Reasoning = Reasoning.T
   object Reasoning extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(input: ApplyInput, output: ApplyOutput, cacheRead: ApplyCacheRead, cacheWrite: ApplyCacheWrite): AiUsage =
     new AiUsage(input, output, cacheRead, cacheWrite, Reasoning((0).toLong))

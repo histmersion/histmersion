@@ -6,6 +6,7 @@ import com.histmersion.plugin.Year
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Licence
+import com.histmersion.lint.{LintRule, tolerated}
 final case class WorkRef(
     doi: Option[Doi] = None,
     openalexId: Option[WorkRef.OpenalexId] = None,
@@ -51,5 +52,6 @@ object WorkRef:
   object ReferencedWorks extends Newtype[String, Pure]
   type OaLocations = OaLocations.T
   object OaLocations extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OaLicence = Licence
   val OaLicence: Licence.type = Licence

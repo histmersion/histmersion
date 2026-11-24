@@ -3,6 +3,7 @@ package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What one tool call of an agent step may return (`agents.tools`). Every later turn of a step re-sends every earlier
   * result, so a step that reads ten records pays for them on each of its turns: a Codex review step averaged ~8 turns
@@ -17,11 +18,13 @@ object ToolResultCap:
   /** A chip link of the web UI (`[pie religion](/#topic=pie_religion)`): an agent reads the label and never follows the
     * link, so the target is dropped. Article links (`/article/<slug>`) stay.
     */
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CompactSourceMd = Markdown
   val CompactSourceMd: Markdown.type = Markdown
   type CapMax = CapMax.T
   object CapMax extends Newtype[Int, Pure]
   type CapHint = String
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SourceMax = CapMax
   val SourceMax: CapMax.type = CapMax
   type NotesExcerptHint = String
@@ -31,10 +34,13 @@ object ToolResultCap:
   /** Header lines of a source an agent does not act on (the bundle identity, how the file came). */
   private val IdentityLine = """(?m)^\*\*(?:Uid|Provenance):\*\* [^\n]*\n?""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plainLinks(md: Markdown): String =
     ChipLink.replaceAllIn(md.value, m => java.util.regex.Matcher.quoteReplacement(m.group(1)))
 
   /** A source record as an agent reads it: chip labels without their links, no identity lines. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def compactSource(md: CompactSourceMd): String =
     IdentityLine.replaceAllIn(plainLinks(md), "").replace("  \n\n", "\n\n")
 
@@ -45,6 +51,7 @@ object ToolResultCap:
   /** `text` within `max` characters: cut at the last line break that keeps at least half of what fits (else mid-line),
     * and closed with a [[trailer]] carrying `hint`. Shorter text is returned as is.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cap(text: String, max: CapMax, hint: CapHint): String =
     if max.value <= 0 || text.length <= max.value then text
     else
@@ -61,6 +68,8 @@ object ToolResultCap:
     * header, the summary and the findings — what a reviewer checks a sentence against — arrive whole; then the list of
     * articles mentioning it; anything still over is cut like any result.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def source(md: Markdown, max: SourceMax): String =
     val text = md.value
     val limit = max.value

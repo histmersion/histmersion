@@ -51,6 +51,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The goal sweeps and the goal schedules, against a `*_test` database: a currency check (assess and followups over a
   * goal's sources; a disagreeing paper in the corpus becomes ONE edge proposal, one outside it ONE acquisition item,
@@ -59,6 +60,8 @@ import com.histmersion.util.database.TestCreators.given
   * paused watcher; the `goal_schedules` rows migrated into it once, logged; a scheduled run that pauses still leaves a
   * backlog item). The watcher's own runs and crons: [[ManagerPhase3Suite]]. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -74,6 +77,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -322,21 +326,27 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     // `var`: the stored candidates, changed by the marks
     @volatile var stored: List[Source.Candidate] = Nil
     val sweeps = java.util.concurrent.atomic.AtomicInteger(0)
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using
         Creator.New
     ) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
       Problem.Unclassified(Legacy.Text("the live search must not run when the candidate search is connected"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun)(using
         Creator.New
     ) =
@@ -360,9 +370,11 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
           CandidateSweep.DryRun(dryRun.value)
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def candidates(goal: DomainGoal.Slug, state: Candidates.State.Wire, limit: AgentUpstream.Limit) = Right(
       stored.filter(_.state == Source.Candidate.State(state.value)).take(limit.value)
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
       stored =
         stored.map(c => if ids.contains(c.id) then c.modify(_.state).setTo(Source.Candidate.State(state.value)) else c)

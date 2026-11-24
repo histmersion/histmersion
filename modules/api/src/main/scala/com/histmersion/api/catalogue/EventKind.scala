@@ -1,6 +1,9 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventKind:
 
   val Event = "event"
@@ -12,6 +15,7 @@ object EventKind:
   val Treaty = "treaty"
   val Reign = "reign"
   val EventPeriod = "period"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[CatalogRecord.Kind] =
     List(
       CatalogRecord.Kind(Event),

@@ -2,7 +2,10 @@ package com.histmersion
 package api
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.ApiUi)
 object MapStack:
 
   enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
@@ -18,6 +21,7 @@ object MapStack:
 
     case Events extends Pane(Pane.Name("events"), point = Pane.Point(true), canvas = Pane.Canvas(false))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def cssClass: String = (s"hd-pane--$name")
 
   object Pane:

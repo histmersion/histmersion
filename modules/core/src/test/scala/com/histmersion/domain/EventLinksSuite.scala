@@ -37,10 +37,12 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.catalogue.events.EventProviders
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1449: the deterministic matcher (time/space overlap, name matches, no attestation without a passage), the leads, an
   * article's catalogue leads, and the site types from each gazetteer.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventLinksSuite extends munit.FunSuite:
 
   private val w = EventMatcher.Weights(

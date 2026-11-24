@@ -7,12 +7,14 @@ import org.scalajs.dom
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Wcag
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The stylesheet's colour tokens, for the code that must COMPUTE with a colour rather than name it: the period ramp a
   * marker's colour is interpolated on, and the graph's canvas, which cannot see CSS. Values are read from `:root`'s
   * computed style once and cached; [[refresh]] drops the cache (a theme switch). Markup never comes here: it writes
   * `var(--token)`.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object ThemeTokens:
   type CssText = CssText.T
   object CssText extends Newtype[String, Pure]
@@ -25,6 +27,8 @@ object ThemeTokens:
 
   private[web] var lookup: Name => Option[CssText] = fromDocument
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fromDocument(name: Name): Option[CssText] =
     Try(dom.window.getComputedStyle(dom.document.documentElement).getPropertyValue(name.value).trim).toOption
       .filter(_.nonEmpty)
@@ -39,6 +43,7 @@ object ThemeTokens:
     rampCache = None
 
   /** A token's value, `""` when the stylesheet does not define it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def apply(name: Name): CssText =
     cache.getOrElse(
       name, {
@@ -49,6 +54,8 @@ object ThemeTokens:
     )
 
   /** `rgb(r,g,b)` / `#rrggbb` / `#rgb` → components; anything else is `None`. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rgb(value: Wcag.Hex): Option[(Wcag.Channel, Wcag.Channel, Wcag.Channel)] =
     val v = value.value.trim
     val hex = if v.startsWith("#") then v.drop(1) else ""
@@ -70,6 +77,7 @@ object ThemeTokens:
         case _ => None
 
   /** The period ramp's stops, in order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ramp: Vector[(Wcag.Channel, Wcag.Channel, Wcag.Channel)] =
     rampCache.getOrElse {
       val stops =

@@ -3,6 +3,7 @@ package web.marks
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The little Markdown a note is written in, read for its preview: headings (`#`), paragraphs, lists (`-`, `*`, `1.`),
   * quotes (`>`), code blocks (```), and in a line `**strong**`, `*emphasis*`, `` `code` ``, `[text](https://…)` and
@@ -43,6 +44,8 @@ object NoteMarkdown:
   private val QuoteL = """^\s*>\s?(.*)$""".r
 
   /** Only addresses a person can follow safely: the web, mail, or a page of this server. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def safeHref(h: Href): Option[Href] =
     val t = h.value.trim
     Option.when(
@@ -50,6 +53,8 @@ object NoteMarkdown:
         (t.startsWith("/") && !t.startsWith("//"))
     )(Href(t))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blocks(text: Markdown): List[Block] =
     @annotation.tailrec
     def loop(lines: List[String], out: List[Block]): List[Block] = lines match
@@ -87,8 +92,11 @@ object NoteMarkdown:
   private val Token =
     """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inlines(s: Markdown): List[Inline] = inlinesOf(s.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inlinesOf(s: String): List[Inline] =
     val out = List.newBuilder[Inline]
     // `var`: where the text not yet taken by a token starts

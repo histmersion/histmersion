@@ -23,6 +23,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.ItemKind
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Managers:
   /** Why a manager proposes, holds or changes an item: the narration of a decision, not a failure. */
   type Rationale = Rationale.T
@@ -58,6 +59,7 @@ object Managers:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[ItemOrigin] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   object Feed:
@@ -98,6 +100,8 @@ object Managers:
 
   val OaIngest = "oa-ingest"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemKinds(k: Kind): List[ManagerItem.Kind] = k match
     case Kind.Review =>
       List(ManagerItem.Kind(ArticleReview), ManagerItem.Kind(InferFilter), ManagerItem.Kind(ArticleExtend))
@@ -107,6 +111,8 @@ object Managers:
     case Kind.Watch =>
       List(ManagerItem.Kind(AcquisitionSweep), ManagerItem.Kind(CurrencyCheck), ManagerItem.Kind(OaIngest))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemKindOf(k: Kind, word: ItemKind.Word): Option[ManagerItem.Kind] =
     val w = (word).value.trim.toLowerCase
     val kinds = itemKinds(k)
@@ -130,18 +136,25 @@ object Managers:
 
   val EnrichId = "enrich"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seedId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"seed:${(goal).value.trim}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def watchId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"watch:${(goal).value.trim}")
 
   enum Sweep(val wire: Sweep.Wire, val itemKind: ManagerItem.Kind) derives CanEqual:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     case Acquisition extends Sweep(Sweep.Wire("acquisition"), ManagerItem.Kind(AcquisitionSweep))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     case Currency extends Sweep(Sweep.Wire("currency"), ManagerItem.Kind(CurrencyCheck))
 
   object Sweep:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Sweep] =
       values.find(x =>
         x.wire == Wire((s).value.trim.toLowerCase) || x.itemKind == ManagerItem.Kind((s).value.trim.toLowerCase)
@@ -161,6 +174,7 @@ object Managers:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[EnqueueKind] = (s).value.trim.toLowerCase match
       case "" | "article" | ArticleReview       => Some(Review)
       case ArticleExtend                        => Some(Extend)
@@ -168,6 +182,7 @@ object Managers:
       case ProposeArticles | "propose" | "plan" => Some(Seed)
       case other                                => values.find(_.wire == Wire(other))
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class ArticleSpec(
       title: Article.Title,
       kind: Article.Kind.Wire,
@@ -177,6 +192,7 @@ object Managers:
         KindlingsSchema,
         api.json.Schema
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class ManagerConfig(
       maxRuns: Option[ManagerConfig.MaxRuns] = None,
       maxOpen: Option[ManagerConfig.MaxOpen] = None,
@@ -242,6 +258,7 @@ object Managers:
     type Rounds = Rounds.T
     object Rounds extends Newtype[Int, Pure]
     type MaxRunsPerArticle = MaxRunsPerArticle.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object MaxRunsPerArticle extends Newtype[Int, Pure]
     type NoProgressRuns = NoProgressRuns.T
     object NoProgressRuns extends Newtype[Int, Pure]
@@ -272,6 +289,7 @@ object Managers:
     type AutoIngest = AutoIngest.T
     object AutoIngest extends Newtype[Boolean, Pure]
     type AutoIngestPerDay = AutoIngestPerDay.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AutoIngestPerDay extends Newtype[Int, Pure]
     type DailyUsd = DailyUsd.T
     object DailyUsd extends Newtype[Double, Pure]
@@ -308,6 +326,8 @@ object Managers:
       "models"
     )
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(kvs: List[Spec]): Either[Problems, ManagerConfig] =
       kvs.foldLeft[Either[Problems, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
         acc.flatMap { c =>
@@ -419,6 +439,7 @@ object Managers:
         }
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def bool(k: String, v: String): Either[Problem, Boolean] = (v).toLowerCase match
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
@@ -438,6 +459,7 @@ object Managers:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def open: ItemCounts.Open = ItemCounts.Open((pending).value + (held).value + (active).value)
   object ItemCounts:
     type Count = Count.T
@@ -460,6 +482,7 @@ object Managers:
     type Cancelled = Cancelled.T
     object Cancelled extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(rows: List[(api.automation.ItemStatus.Wire, Count)]): ItemCounts =
       @tailrec def loop(
           rest: List[(api.automation.ItemStatus.Wire, Count)],
@@ -492,6 +515,7 @@ object Managers:
               case None => loop(tail, pending, held, active, done, stopped, failed, cancelled)
       loop(rows, Pending(0), Held(0), Active(0), Done(0), Stopped(0), Failed(0), Cancelled(0))
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerEvent(
       id: ManagerEvent.Id,
       managerId: ManagerInfo.Id,
@@ -516,6 +540,8 @@ object Managers:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerInfo(
       id: ManagerInfo.Id,
       kind: ManagerInfo.Kind,
@@ -564,6 +590,7 @@ object Managers:
     type Backlog = Backlog.T
     object Backlog extends Newtype[Int, Pure]
     type BacklogDays = BacklogDays.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object BacklogDays extends Newtype[Int, Pure]
 
   final case class Hold(
@@ -581,14 +608,17 @@ object Managers:
     type Until = Until.T
     object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object UntilSource extends Newtype[String, Pure]
     type Hint = Hint.T
     object Hint extends Newtype[Long, Pure]
     type UntilApproval = UntilApproval.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object UntilApproval extends Newtype[Long, Pure]
     type Focus = Focus.T
     object Focus extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunMark(
       run: Agents.RunInfo.Id,
       before: Option[RunMark.Before] = None,
@@ -638,6 +668,7 @@ object Managers:
     type PairsBefore = PairsBefore.T
     object PairsBefore extends Newtype[Int, Pure]
     type FilterHits = FilterHits.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object FilterHits extends Newtype[Int, Pure]
 
   final case class OaWork(
@@ -658,8 +689,10 @@ object Managers:
     type FoundBy = FoundBy.T
     object FoundBy extends Newtype[String, Pure]
     type AcquireText = AcquireText.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AcquireText extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerItem(
       id: ManagerItem.Id,
       managerId: ManagerInfo.Id,
@@ -795,6 +828,7 @@ object Managers:
     type By = By.T
     object By extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerHint(
       id: ManagerHint.Id,
       managerId: ManagerInfo.Id,
@@ -832,6 +866,7 @@ object Managers:
     type Proposal = Proposal.T
     object Proposal extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerDetail(
       manager: ManagerInfo,
       current: List[ManagerItem] = Nil,
@@ -858,6 +893,7 @@ object Managers:
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class EventPage(events: List[ManagerEvent], before: Option[EventPage.Before] = None)
       derives JsonCodec,
         KindlingsSchema,
@@ -869,6 +905,7 @@ object Managers:
     type Before = Before.T
     object Before extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerCreate(
       kind: ManagerCreate.Kind,
       goal: Option[Goal.Slug] = None,
@@ -886,6 +923,7 @@ object Managers:
     type Cron = Cron.T
     object Cron extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[ManagerUpdate.Cron] = None)
       derives JsonCodec,
         KindlingsSchema,

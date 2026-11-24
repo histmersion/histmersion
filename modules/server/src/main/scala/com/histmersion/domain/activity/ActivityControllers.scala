@@ -6,8 +6,10 @@ import com.histmersion.api.automation.{Activity, ListFilters}
 import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `GET /api/activity`, the `activity` tool and `histmersion activity`: the filters checked, then a page. */
+@movesTo(FeaturePlace.AutomationActivity)
 final class ActivityControllers(activity: ActivityService, now: () => Instant):
 
   def page(

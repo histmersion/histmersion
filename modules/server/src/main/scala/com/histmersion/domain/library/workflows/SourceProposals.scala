@@ -26,11 +26,13 @@ import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
   * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or
   * skipped. `status` reads a source's status now; `apply` applies a proposal as a person's patch would.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
@@ -50,11 +52,13 @@ final class SourceProposals(
   /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and neither applies
     * nor records it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def propose(ctx: RunCtx, p: Proposal)(using WritePermit)(using Creator.New): Outcome =
     ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(Run.Id.assume(ctx.run.id.value)), p))(
       Outcome.NotProposed(Outcome.NotProposed.What(p.describe.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(
       runId: Option[Run.Id],
       p: Proposal,
@@ -76,6 +80,8 @@ final class SourceProposals(
     )
 
   /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def propose(runId: Option[Run.Id], p: Proposal)(using WritePermit)(using Creator.New): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
@@ -113,8 +119,10 @@ final class SourceProposals(
 
 object SourceProposals:
   type ApprovalRecordId = ApprovalRecordId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ApprovalRecordId extends Newtype[Long, Pure]
   type OutcomeWhat = OutcomeWhat.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object OutcomeWhat extends Newtype[String, Pure]
 
   /** What became of one proposal, for the run's log and warnings. */
@@ -128,6 +136,7 @@ object SourceProposals:
     /** A dry run's proposal: neither recorded nor applied (#992). */
     case NotProposed(what: Outcome.NotProposed.What)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String = this match
       case Applied(w)     => s"applied: $w"
       case Recorded(i, w) => s"approval $i waits for a person: $w"

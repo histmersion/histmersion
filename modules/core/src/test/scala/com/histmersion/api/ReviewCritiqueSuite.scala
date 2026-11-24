@@ -25,15 +25,18 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.automation.Run
 import com.histmersion.api.research.Coverage
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The critique checklist in the review (docs/research-review-convergence.md §6.8), pure: what a missing-critique MAJOR
   * is held to in each kind of pass, the skeptic's rulings on the open pairs, the fixer's set-asides and how the ledger
   * records them.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReviewCritiqueSuite extends munit.FunSuite:
 
   private val minRatio = CritiqueRule.MinRatio(0.9)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def side(ck: Citekey, cited: CritiqueSide.Cited) =
     CritiqueSide(ck, cited = cited, mentions = CritiqueSide.Mentions(if cited.value then 1 else 0))
   private def pair(
@@ -63,6 +66,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   private val pairs = List(open1, open2, done, aside)
 
   /** A missing-critique finding quoting the article's sentence `the dying god is a universal type (<id>)`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mc(id: Finding.Id, pair: Option[CritiqueRef.Wire], sev: Severity = Severity.Major) =
     Finding(
       id,

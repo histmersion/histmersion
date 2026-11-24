@@ -6,6 +6,7 @@ import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's overlays that fold away on a phone: its foot (the past-landscape notice and the credits) and its legend
   * (the colour ramp and the key). In the narrow layout each is a small button until the reader opens it; opened, it
@@ -30,16 +31,19 @@ object MapFold:
   /** Pure: an overlay's button, which opens and closes the part `controls` (an element id); `label` names the overlay
     * to a screen reader, `inner` is what it shows.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toggleHtml(cls: ClassName, controls: ControlsId, label: Label, inner: Html, open: Open): Html =
     html"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ ++
       html"""aria-expanded="$open" aria-label="$label" title="$label">$inner</button>"""
 
   /** Open or close `box`, its button saying which. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def set(box: dom.Element, open: Open): Unit =
     box.classList.toggle(OpenClass, open.value)
     Option(box.querySelector("button[aria-expanded]")).foreach(_.setAttribute("aria-expanded", open.toString))
 
   /** `box`'s button opens and closes it, Escape inside it closes it; `changed` hears the new state. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire(box: dom.Element, changed: Changed => Unit = _ => ()): Unit =
     Option(box.querySelector("button[aria-expanded]")).foreach { b =>
       b.addEventListener(
@@ -64,6 +68,8 @@ object MapFold:
   /** The map's size as the overlays read it (`--map-w`/`--map-h`): an opened one fits inside the map, whatever the
     * layout around it (a short desktop window's map is a small part of the page).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def followSize(surface: MapSurface): Unit =
     def write(): Unit =
       val (w, h) = surface.size

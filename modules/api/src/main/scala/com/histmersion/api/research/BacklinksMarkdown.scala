@@ -1,8 +1,10 @@
 package com.histmersion
 package api.research
 
+import com.histmersion.lint.{LintRule, tolerated}
 object BacklinksMarkdown:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourceArticles(rows: Vector[Backlink]): String =
     if rows.isEmpty then ("")
     else

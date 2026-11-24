@@ -6,6 +6,7 @@ import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.domain.automation.AgentRole
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The engine's registry of contributed workflows, tools and manager kinds, in the order they were registered. Built
   * once by [[Workflows.of]], which refuses two workflows with one identifier, two tools with one name, a workflow whose
@@ -20,6 +21,7 @@ final class Workflows private (
   private val byId: Map[WorkflowId, WorkflowDefinition] = definitions.map(d => d.id -> d).toMap
 
   /** The workflow a run names (trimmed, any case), if registered. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: String): Option[WorkflowDefinition] = WorkflowId.option(raw.trim.toLowerCase).flatMap(byId.get)
 
   def definition(id: WorkflowId): Option[WorkflowDefinition] = byId.get(id)
@@ -46,6 +48,7 @@ final class Workflows private (
     )
 
 object Workflows:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(contributions: Contributions): Either[String, Workflows] =
     val Contributions(definitions, tools, kinds, objectives) = contributions
     val twice = definitions.groupBy(_.id.value).collect { case (id, ds) if ds.size > 1 => id }.toList.sorted

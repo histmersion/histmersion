@@ -12,6 +12,7 @@ import com.histmersion.util.database.WritePermit
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `merge apply` in the background (docs/research-merge-import.md §7.7, open question 3): the apply takes a `pg_dump`
   * before it writes, which on a large collection outlasts an HTTP request. One apply at a time — a second is refused
@@ -34,6 +35,8 @@ final class MergeApplyJobs(
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. The row is written under the caller's permit;
     * `run` holds the worker unit's.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
       run: () => WritePermit ?=> Either[Problems, MergeApplyResult]
   )(using WritePermit)(using Creator.New): Either[Api.Error, MergeApplyJob] =

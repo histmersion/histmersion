@@ -19,15 +19,22 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
   * import.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the evidence rows for bundle export and import")
 private[evidence] object EvidenceBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def attestations(scope: BundleScope)(using DbCon): Vector[Bundle.Attestation] =
     sql"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
                        ${targetUid(sql"t.target_type", sql"t.target_id")}, t.quote, t.prefix, t.suffix,
@@ -69,6 +76,8 @@ private[evidence] object EvidenceBundleRepo:
     * those recomputed after `since` and every DECISION (a status change does not move `computed_at`, and the decisions
     * are few).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def eventCandidates(scope: BundleScope)(using DbCon): Vector[Bundle.EventCandidate] =
     val w = scope match
       case BundleScope.Since(_) =>
@@ -95,6 +104,7 @@ private[evidence] object EvidenceBundleRepo:
       }
 
   /** When the candidates of the events in scope were last computed (`event_link_checks`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def eventChecks(scope: BundleScope)(using DbCon): Vector[Bundle.EventCheck] =
     sql"""SELECT e.uid, ${Timestamps.iso(sql"k.checked_at")}
                 FROM event_link_checks k JOIN events e ON e.id = k.event_id WHERE ${where(
@@ -118,6 +128,8 @@ private[evidence] object EvidenceBundleRepo:
       )
 
   /** The candidates: the newer evidence, a decision kept over a proposal (BundleEventSets). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def candidatesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
@@ -150,6 +162,8 @@ private[evidence] object EvidenceBundleRepo:
       }
 
   /** When the candidates were last computed: the newer check. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def checksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val eventIds = eventIdsOf()
@@ -171,6 +185,8 @@ private[evidence] object EvidenceBundleRepo:
   /** This collection's own attestations a merge moved into the body it kept, or dropped: written as this collection's
     * own rows, so their clocks move and a drop leaves a tombstone.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def attestationFixes(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     if w.merged.attestations.nonEmpty then
@@ -188,6 +204,8 @@ private[evidence] object EvidenceBundleRepo:
       }
 
   /** The attestations, once their sources and what they attest are in: a target by its label here. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def attestationsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.attestations.filter(t => w.writes(t.uid)).foreach { t =>

@@ -3,6 +3,7 @@ package values.testsupport
 
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ComparedByValue:
   given comparedByValue: [A, B] => (byValue: ByValue[A, B]) => Compare[A, B] = Compare.defaultCompare[A, B]
@@ -44,6 +45,7 @@ object ComparedByValue:
 
   final class Related[X, Y]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   trait RelatedSupertype:
     given relatedSupertype: [X, Y] => (Y <:< X) => Related[X, Y] = Related()
 

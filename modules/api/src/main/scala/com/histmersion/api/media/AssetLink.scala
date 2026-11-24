@@ -14,6 +14,7 @@ import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class AssetLink(
     id: AssetLink.Id,
     citekey: Citekey,
@@ -56,10 +57,12 @@ object AssetLink:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page: OffsetPage = OffsetPage(total, offset, RowCount(links.size))
 
   object List:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(total: RowCount, rows: scala.List[AssetLink], offset: UnreadPage.Offset): List =
       List(
         total,

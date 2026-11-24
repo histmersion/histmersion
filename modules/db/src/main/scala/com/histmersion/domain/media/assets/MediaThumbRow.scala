@@ -4,6 +4,7 @@ package domain.media.assets
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final private[assets] case class MediaThumbRow(
     uid: MediaThumbRow.Uid,
@@ -26,6 +27,7 @@ object MediaThumbRow:
   type License = License.T
   object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenseUrl extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
   object SourceUrl extends Newtype[String, Pure]

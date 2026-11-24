@@ -9,7 +9,9 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaItem(
     uid: MediaItem.Uid,
     name: Bundle.Asset.FileName,
@@ -42,6 +44,7 @@ object MediaItem:
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
   type ProviderKey = ProviderKey.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ProviderKey extends Newtype[String, Pure]
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
@@ -50,6 +53,7 @@ object MediaItem:
   type License = License.T
   object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
   object Author extends Newtype[String, Pure]
@@ -57,6 +61,7 @@ object MediaItem:
   object Credit extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type SourceUrl = SourceUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SourceUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
   object OriginalUrl extends Newtype[String, Pure]

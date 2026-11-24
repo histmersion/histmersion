@@ -16,10 +16,12 @@ import com.histmersion.api.exchange.{Bundle, BundleMarkdown}
 import com.histmersion.domain.library.Source
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Sha256
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id, manifest checks, the
   * bundle's kinds and the import report.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleFormatSuite extends munit.FunSuite:
 
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
@@ -56,6 +58,7 @@ class BundleFormatSuite extends munit.FunSuite:
     w.finish()
     out.toByteArray
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def untar(b: Array[Byte]): List[(String, String)] =
     val r = BundleTar.Reader(ByteArrayInputStream(b))
     Iterator

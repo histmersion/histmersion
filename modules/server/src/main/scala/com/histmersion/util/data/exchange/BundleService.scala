@@ -35,6 +35,7 @@ import com.histmersion.api.ByteCount
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The portable bundle and the merge (docs/research-merge-import.md, milestones M0–M7): this instance's identity, the
   * export, verify and import of a `.hmx` bundle, the bundles kept to be planned, the plan, the apply, the review
@@ -44,6 +45,7 @@ import com.histmersion.domain.Creator
   * upload removes finished ones older than `bundles.stale-minutes`. An upload is kept there under its sha256 so it can
   * be planned and imported by name; an import reads it twice (rows, then blobs).
   */
+@tolerated(LintRule.Service, "pending G16 (a service is a trait with Implementation and InMemory)")
 trait BundleService:
   def instance: InstanceInfo
   def setLabel(label: Option[InstanceInfo.Label])(using WritePermit): InstanceInfo
@@ -97,6 +99,7 @@ object BundleService:
     /** The server's stored originals: the converter's spool, `<sha256>.<ext>`. */
     private def originals: Store.Contents = Store.Contents(w.storage.store(Location.IngestOriginals))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def options(dryRun: ImportOptions.DryRun): ImportOptions =
       ImportOptions(
         dryRun,
@@ -109,6 +112,8 @@ object BundleService:
     def setLabel(label: Option[InstanceInfo.Label])(using WritePermit): InstanceInfo =
       Transactor(w.ds).write(BundleRepo.setLabel(label))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
       val store = bundles
       for
@@ -134,6 +139,8 @@ object BundleService:
           )
       yield file -> m
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def usable(store: Store): Either[Problems, Unit] =
       store
         .makeDirectory()
@@ -143,6 +150,8 @@ object BundleService:
             .Unclassified(Legacy.Text(s"bundles directory ${store.where()} is not usable: ${e.message.sentence}"))
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def write(part: Reservation, since: Option[BundleScope.Since.At]) =
       val written =
         try
@@ -158,6 +167,7 @@ object BundleService:
     /** Finished exports past their download window, uploads nobody planned or imported for as long, and parts a crash
       * left behind. Best effort.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def pruneStale(store: Store): Unit =
       val cutoff = w.clock.instant().minusSeconds(60L * math.max(0, cfg.bundles.staleMinutes.value))
       scala.util
@@ -171,6 +181,7 @@ object BundleService:
         .failed
         .foreach(e => scribe.warn(s"bundle: could not prune ${store.where()}: ${e.getMessage}"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def verify(upload: ByteSource): Bundle.VerifyResult =
       upload.read(in => BundleReader.verify(in, Migrate.current(w.ds).map(v => Bundle.Manifest.SchemaVersion(v.value))))
 
@@ -182,6 +193,8 @@ object BundleService:
         .flatMap(importFrom(upload, _, MergeResolutions(), dryRun).left.map(Api.Error(_)))
 
     /** The sha256 of an uploaded file, as the server computes it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def shaOf(upload: ByteSource): Either[Problems, Sha256] =
       Sha256
         .either(upload.read(BundleReader.sha256Of).value)
@@ -209,9 +222,12 @@ object BundleService:
         )
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def keyOf(sha: Sha256): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
 
     /** A kept bundle, touched: a planned bundle stays as long as it is being worked on. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def kept(sha: Sha256): Either[Api.Error, ByteSource] =
       val store = bundles
       store.get(keyOf(sha)) match
@@ -231,6 +247,9 @@ object BundleService:
           store.touch(blob.key, w.clock.instant())
           Right(blob.asSource)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload] =
       val store = bundles
       for
@@ -271,6 +290,7 @@ object BundleService:
         finally part.close()
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def plan(bundle: Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
       kept(bundle).flatMap { source =>
         MergePlans
@@ -295,6 +315,7 @@ object BundleService:
     )(using WritePermit): Either[Api.Error, Bundle.ImportResult] =
       kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun).left.map(Api.Error(_)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def applyKept(
         bundle: Sha256,
         planHash: MergeRow.PlanHash,
@@ -328,9 +349,11 @@ object BundleService:
 
     def applyStatus(job: Job.Id): Option[MergeApplyJob] = w.applyJobs.status(job)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def session(bundle: Sha256): MergeSession =
       Transactor(w.ds).read(MergeRepo.session(MergeRepo.BundleName(bundle.value)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def putSession(bundle: Sha256, resolutions: MergeResolutions)(using WritePermit): MergeSession =
       Transactor(w.ds).write(MergeRepo.putSession(MergeRepo.BundleName(bundle.value), resolutions))
 

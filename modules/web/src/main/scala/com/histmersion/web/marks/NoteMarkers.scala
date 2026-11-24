@@ -59,6 +59,8 @@ object NoteMarkers:
         pane.add(m)
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def marker(n: Note): DomMarker =
     val el = DomMarker.element("hd-note-marker", Icon.html(Icon.Note))
     el.setAttribute("tabindex", "0")
@@ -80,6 +82,8 @@ object NoteMarkers:
     m
 
   /** The note at its place, in the map's popup. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def show(n: Note): Unit =
     for la <- n.target.lat; lo <- n.target.lon do
       shown.foreach(_.unmount())

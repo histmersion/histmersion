@@ -19,10 +19,12 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Offset paging over real HTTP and MCP (#1798 item 8): a cut list's JSON carries `offset` and `next`, its Markdown
   * says `next: offset=N`, and `geo_when` pages (`GET /api/findings/page`). Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PagingHttpSuite extends munit.FunSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -46,6 +48,7 @@ class PagingHttpSuite extends munit.FunSuite with db.Bounded:
     )
   private def decode[A: JsonValueCodec](s: String): A = RawJson.decode[A](s).fold(e => fail(s"$e in $s"), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))

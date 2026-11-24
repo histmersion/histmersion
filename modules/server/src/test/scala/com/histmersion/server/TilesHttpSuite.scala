@@ -19,6 +19,7 @@ import com.histmersion.util.database.Db
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` through the wire: a vector tile of the layer, its ETag and the browser's
   * revalidation (304), a write that makes the kept tile stale, a filter that changes the tile, and a bad layer or tile
@@ -39,6 +40,7 @@ class TilesHttpSuite extends munit.FunSuite:
   private val lon = Longitude(100.0)
   private val lat = Latitude(-70.0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))

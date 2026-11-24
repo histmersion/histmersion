@@ -2,6 +2,7 @@ package com.histmersion
 package api.aliases
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Aliases:
   type Id = Id.T
@@ -12,15 +13,19 @@ object Aliases:
   object RuleText extends Newtype[String, Pure]
 
   type Rule = RuleValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RuleValue = RuleText
   val RuleValue: RuleText.type = RuleText
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Rule: Rule =
     RuleText(
       "The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
         "reference) goes to the record under its new one, and the answer names the new one."
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rule(k: AliasKind): RuleText =
     RuleText(
       (Rule).value
@@ -28,11 +33,15 @@ object Aliases:
         .replace("new one", s"new ${k.idWord.value}")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def followed(k: AliasKind, asked: Id, now: Id): Option[Note] =
     val a = (asked).value.trim
     Option.when(a.nonEmpty && a != (now).value)(
       Note(s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def note(k: AliasKind, asked: Id, now: Id)(md: Note): Note =
     followed(k, asked, now).fold(md)(n => Note(s"$n\n\n$md"))

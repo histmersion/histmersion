@@ -7,8 +7,10 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.domain.media.MediaState
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pictures' layer of the map: how a drawn picture reads. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaMapLayerSuite extends munit.FunSuite:
 
   test(

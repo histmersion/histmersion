@@ -8,16 +8,20 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobActions
 import com.histmersion.api.RegisteredJobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which background jobs a person may pause and cancel, and what an action on a job in a given state does. Pure.
   */
 object JobControlRules:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def stoppable(kind: JobKinds.Wire): Boolean = JobActions.Stoppable.contains(kind)
 
   /** The step that answers `action` on `job` (a kind whose runner controls its own jobs is handed the action); `Left`
     * says why it cannot be done. `resumable`: this server holds the paused job's way to go on (a restart loses it).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def decide(job: JobInfo, action: JobAction, resumable: Boolean): Either[Problem, JobControlStep] =
     def refused(control: Conflict.Control): Either[Problem, JobControlStep] =
       Left(Conflict.Job(Raw.of(job.id), Conflict.State.of(job.status), control))
@@ -38,6 +42,8 @@ object JobControlRules:
         case (JobAction.Resume, Some(_)) => refused(Conflict.Control.NotPaused)
 
   /** The progress line a stopped job keeps: what it had done, and that it was paused or cancelled. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stoppedLine(stop: JobStop, last: Option[JobInfo.Progress]): JobInfo.Progress =
     val what = stop match
       case JobStop.Pause  => "paused"

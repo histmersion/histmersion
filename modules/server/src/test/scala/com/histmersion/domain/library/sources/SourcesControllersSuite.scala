@@ -25,15 +25,18 @@ import com.histmersion.util.time.SystemTimer
 import com.histmersion.api.library.Title
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source's controllers over the in-memory services: a citekey that is not one, a strict write refused by the
   * formatting check, an old citekey followed, a section that is not one, passages of a source not there, a delete's dry
   * run naming the stored originals and its apply removing them, and every write refused while the maintenance lock is
   * held.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourcesControllersSuite extends munit.FunSuite:
 
   private val formatting = new SourceFormatting:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def issues(
         summary: Option[domain.library.Source.Summary],
         notes: Option[SourceNote.Text]
@@ -51,6 +54,7 @@ class SourcesControllersSuite extends munit.FunSuite:
             FormatIssue.Message("never closed")
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fix(
         text: domain.library.Source.Text,
         field: FormatField
@@ -61,26 +65,32 @@ class SourcesControllersSuite extends munit.FunSuite:
           List(domain.library.Source.Text("double space"))
         )
       else (text, Nil)
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def refusal(issues: List[FormatIssue]): Option[Problem] =
       Option.when(issues.nonEmpty)(Problem.Unclassified(Legacy.Text("refused (strict)")))
 
   private val removed = AtomicReference(List.empty[SourceOriginals.RemoveFiles])
   private val originals = new SourceOriginals:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile] =
       List(SourceOriginals.FoundFile(s"/spool/${plan.deletion.citekey}.pdf"))
     def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile] = {
       removed.set(files); Nil
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def controllers(gate: WriteGate = WriteGate()) =
     val state = AtomicReference(LibraryState.empty)
     val sources = SourceService.InMemory(state, LibraryStoreSuite.Ticking(), () => LibraryStoreSuite.Settings)
     val media = new MediaSources:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def current(citekey: Citekey): Option[MediaSources.Current] =
         sources.current(citekey).map(c => MediaSources.Current(c.value))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def lookup(citekey: Citekey): Either[MediaSources.Error, MediaSources.Key] =
         if sources.load(citekey).isDefined then Right(MediaSources.Key(citekey.value))
         else Left(MediaSources.Error.NotFound)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def markdown(citekey: Citekey): MediaSources.Markdown = MediaSources.Markdown(sources.markdown(citekey).value)
     val figures = AssetsControllers(
       AssetService.InMemory(AtomicReference(MediaState.empty), MediaStoreSuite.Ticking()),

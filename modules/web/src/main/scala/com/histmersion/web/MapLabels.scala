@@ -18,6 +18,7 @@ import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.Geo
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that would collide are
   * thinned out, events first, then larger shapes ([[LabelPlacement]] decides where and which, [[LabelMotion]] how they
@@ -113,9 +114,11 @@ object MapLabels:
 
   /** Shapes already placed, by id and outline — a year's slider drag re-reads the same shapes. */
   private val ShapeCacheSize = 2000
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val shapes = BoundedCache[String, Option[LabelPlacement.Shape]](BoundedCache.MaxEntries(ShapeCacheSize))
 
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stats: List[(Key, BoundedCache.Stats)] =
     List(
       Key("labels.entries") -> BoundedCache.Stats(
@@ -141,6 +144,8 @@ object MapLabels:
   private var moving = false
   private var lastFrame = 0.0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(m: MapSurface, ui: UiConfig)(using Owner): Unit =
     map = m
     // a pan or a zoom: the frames ease the names along (every frame reads the map's own view); its END
@@ -225,6 +230,7 @@ object MapLabels:
   private var generation = 0
 
   /** The names of `named` (the areas whose place is known), the others' names gone (fading out). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyAreas(
       named: Seq[(js.Dynamic, LabelPlacement.Shape)],
       key: js.Dynamic => Key,
@@ -278,6 +284,8 @@ object MapLabels:
       schedule()
 
   /** A point-only label ([[PlaceGlyph.labelMarker]]) takes part in the pass while it is on the map. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def trackPoint(marker: DomMarker, key: Key): Unit =
     val k = PointKey + key.value
     marker.onAdded(() =>
@@ -294,6 +302,8 @@ object MapLabels:
     * cull hides), `marker` its marker. Added hidden (`is-culled`, so it never flashes over another name); without a map
     * pass it is simply shown.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def trackEvent(key: Event.Id, marker: DomMarker, rank: Entry.Rank, label: () => Option[dom.HTMLElement]): Unit =
     if map == null then label().foreach(_.classList.remove(Culled))
     else
@@ -302,6 +312,8 @@ object MapLabels:
       schedule()
 
   /** The event's name is gone from the map: the names it hid come back at the next pass. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def untrackEvent(key: Event.Id): Unit =
     state.remove(EventKey + key.value)
     if entries.remove(EventKey + key.value).isDefined then schedule()
@@ -313,12 +325,17 @@ object MapLabels:
     state.filterInPlace((k, _) => !k.startsWith(EventKey))
     if entries.size != before then schedule()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def register(k: String, m: DomMarker, s: LabelPlacement.Shape): Unit =
     entries(k) = Entry(m.at, Entry.Rank(s.size0), Some(s), () => inner(m), marker = Some(m))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def inner(m: DomMarker): Option[dom.HTMLElement] =
     Option(m.el.firstElementChild).map(_.asInstanceOf[dom.HTMLElement])
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def areaMarker(s: LabelPlacement.Shape, label: Label, wrapClass: WrapClass): DomMarker =
     // hidden until the first pass has sized and placed it; it then fades and grows in
     new DomMarker(
@@ -380,6 +397,7 @@ object MapLabels:
   /** One polygon's rings as (lat, lon), thinned on the way in to at most [[LabelPlacement.MaxRingPoints]] each — the
     * label needs the shape's room, not its coastline.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def polyRings(p: js.Dynamic): Seq[Seq[(Geo.Latitude, Geo.Longitude)]] =
     p.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].toSeq.map { ring =>
       val step = math.max(1, math.ceil(ring.length.toDouble / LabelPlacement.MaxRingPoints).toInt)
@@ -398,12 +416,14 @@ object MapLabels:
   private val TierClasses = LabelPlacement.Tier.values.map(_.css)
 
   /** The map's zoom now (the raster grid's) — fractional in a zoom. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def zoomNow(): Double = map.zoom.value
 
   /** The names snap instead of easing when the map does not animate (the reader's "Map motion", #4718). */
   private def reducedMotion(): Boolean = !MotionPref.animate()
 
   /** The settled viewport in the zoom-0 plane. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def viewNow(zoom: Double): Rect =
     val scale = math.pow(2, zoom)
     val c = map.center
@@ -414,6 +434,7 @@ object MapLabels:
   /** Size every name for the zoom (writes), measure them (one layout), place the area names exactly in the settled
     * viewport (pure), then draw the first frame of the result.
     */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def run(): Unit =
     val t0 = now()
     val z = zoomNow()
@@ -480,6 +501,7 @@ object MapLabels:
       lastFrame = now()
       dom.window.requestAnimationFrame(tick)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val tick: js.Function1[Double, Unit] = (_: Double) =>
     val t = now()
     val busy = frame(t, reducedMotion())
@@ -490,6 +512,8 @@ object MapLabels:
   /** One frame: every name's target (cheap), the cull, the easing, and the writes of what changed. `true` while some
     * name is still on its way.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def frame(t: Double, reduced: Boolean): Boolean =
     if map == null then false
     else
@@ -558,6 +582,8 @@ object MapLabels:
       busy
 
   /** Write a name's offset from its home, its size and its opacity — only what changed. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def render(
       st: Live,
       el: dom.HTMLElement,
@@ -571,8 +597,10 @@ object MapLabels:
     write(st, el, 2, "--s", st.s * LabelMotion.appearScale(st.a, reduced), 0.002, "")
     writeO(st, el, st.a)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def writeO(st: Live, el: dom.HTMLElement, a: Double): Unit = write(st, el, 3, "--o", a, 0.005, "")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def write(st: Live, el: dom.HTMLElement, i: Int, name: String, v: Double, eps: Double, unit: String): Unit =
     val last = st.wrote(i)
     // past the threshold, or arriving exactly at an end (fully hidden, fully shown, at home)

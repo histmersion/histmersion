@@ -6,6 +6,7 @@ import com.histmersion.pluginhost.FetchChain
 import com.histmersion.util.plugins.Plugins
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition chain over the first-party fetchers (archive.org, Unpaywall, CORE, OpenAlex, PMC, arXiv, landing
   * pages, PMC's JATS text) — discovered and registered through the plugin host exactly as the server registers them,
@@ -18,6 +19,8 @@ object OaFetch:
   type Md5 = Md5.T
   object Md5 extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(loaded: LoadedConfig, http: Http, core: CoreBudget): FetchChain =
     val g = Plugins.fetchers(
       loaded,
@@ -39,6 +42,8 @@ object OaFetch:
   /** Hex MD5 of a download, to compare with the one a PMC dataset record or a Zenodo record states; `None` when the
     * runtime offers no MD5 (the check is then skipped, never failed).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def md5(b: Bytes): Option[Md5] =
     scala.util
       .Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString)

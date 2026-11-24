@@ -8,8 +8,12 @@ package api.aliases
   */
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.Activity
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object AliasKinds:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun((noun)), KeyWord((idWord)))
 
   val SourceRecords: AliasKind = kind(("source"), ("citekey"))
@@ -21,6 +25,7 @@ object AliasKinds:
   /** Every kind, in the order the alias tables are listed. */
   val all: List[AliasKind] = List(SourceRecords, ArticleRecords, EventRecords, GoalRecords, PlaceRecords)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def of(b: Bundle.Kind): Option[AliasKind] = b match
     case Bundle.Kind.Article => Some(ArticleRecords)
     case Bundle.Kind.Event   => Some(EventRecords)
@@ -31,6 +36,8 @@ object AliasKinds:
   /** The kind a reference's target type names (`event`, `place`, `source`, `article`; any case, surrounding space
     * ignored), when it is one whose old identifiers are followed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofTarget(targetType: Activity.Entry.TargetKind): Option[AliasKind] =
     (targetType).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "event"   => Some(EventRecords)

@@ -18,11 +18,13 @@ import java.net.InetSocketAddress
 import java.nio.file.{Files, Path}
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `calibre push`/`sync` take the original the SERVER stored when no file is given and no host-side `originals-dir`
   * holds one: it is downloaded over HTTP into a temporary directory, handed to `calibredb add`, and removed. A stand-in
   * server and a recording shell — no Calibre, no database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CalibrePushSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard
@@ -53,6 +55,7 @@ class CalibrePushSuite extends munit.FunSuite:
   /** The server: the push metadata of any citekey, the stored original of `zz_ck` only (404 with the server's own
     * message for any other), and the push receipt — every request recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final private class Stub(listed: List[CalibreGap] = Nil):
     val requests = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val pushed = java.util.concurrent.ConcurrentLinkedQueue[String]()

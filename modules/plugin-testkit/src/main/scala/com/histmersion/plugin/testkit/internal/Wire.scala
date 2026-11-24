@@ -13,10 +13,13 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One recorded exchange: the request's method and URL, and the answer — its status, the headers kept and the file its
   * body is in — or the error the request ended with.
   */
+@atBoundary(BoundaryKind.Json, "writes and reads the recorded HTTP exchanges of a plugin test")
 final private[testkit] case class RecordedExchange(
     method: String,
     url: HttpTransport.Url,
@@ -45,6 +48,7 @@ private[testkit] object RecordedExchange:
   ).map(CoreQuota.HeaderName(_))
 
   /** Pure: the exchange as its file holds it. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def render(e: RecordedExchange): String =
     (List(s"${e.method} ${e.url.value}") ++ e.status.map(s => s"status: ${s.value}") ++
       e.headers.map((k, v) => s"${k.value}: ${v.value}") ++
@@ -85,6 +89,7 @@ private[testkit] object RecordedExchange:
           case _ => Left(s"'$request' is not '<METHOD> <URL>'")
 
   /** Pure: the extension a body file gets from its content type. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def extension(contentType: Option[CoreQuota.HeaderValue]): String =
     val t = contentType.map(_.value).getOrElse("").toLowerCase(Locale.ROOT)
     if t.contains("json") then "json"
@@ -97,6 +102,7 @@ private[testkit] object RecordedExchange:
     else "bin"
 
   /** Pure: whether a body of this type is text, so a secret in it can be replaced. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def isText(contentType: Option[CoreQuota.HeaderValue]): Boolean =
     contentType
       .map(_.value.toLowerCase(Locale.ROOT))
@@ -155,6 +161,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
   /** The transport of one channel: `live` is built only when a request goes to the network. */
   def transport(live: => HttpTransport): HttpTransport = new HttpTransport:
     private lazy val network = live
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -187,6 +194,7 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
               )
           )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def record(dir: Path, url: String, answer: Either[Problem, HttpAnswer]): Unit = synchronized {
     if !cleared then
       Wire.clear(dir)

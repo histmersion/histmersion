@@ -15,6 +15,7 @@ import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.pluginhost.{HostLicences, PluginMedia}
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.media.imports.MediaRecord
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The keyless portals' parsers (#1446): gazetteer ids in their URI forms, Open Context's search records and media
   * items (the licence stated as the record's own Creative Commons URL, read by the host), and the picture links of a
@@ -22,6 +23,7 @@ import com.histmersion.domain.media.imports.MediaRecord
   * Domuztepe records (2026-10-23), and a Pleiades place record from the 2026-10-17 dump with three real references of
   * other records appended.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PortalParsersSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
@@ -238,6 +240,7 @@ class PortalParsersSuite extends munit.FunSuite:
         ExternalIds.ExternalId("310858")
       ) -> Set(MediaMatch.PlaceInfo.Id("ne_city_1159127453"))
     ).withDefaultValue(Set.empty)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val deeper = Set(MediaRecord.Geography.Field(OpenContext.Context.value))
 
   test("a context naming the site ties the record although its ids name only its province (#2571)"):

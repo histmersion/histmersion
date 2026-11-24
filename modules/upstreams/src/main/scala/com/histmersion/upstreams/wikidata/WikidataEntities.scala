@@ -11,10 +11,13 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Wikidata's `wbgetentities` (props=claims): the URL of a batch of items and their picture statements. Read by the
   * media collections and by the host's label lookup alike. Pure.
   */
+@atBoundary(BoundaryKind.Json, "reads Wikidata entity JSON")
 object WikidataEntities:
   type Api = Api.T
   object Api extends Newtype[String, Pure]
@@ -27,6 +30,8 @@ object WikidataEntities:
   private def enc(s: String): String = (URLEncoder.encode((s), UTF_8))
 
   /** Pure: the `wbgetentities` URL for up to the API's batch of ids. `maxlag` 0 = not sent. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def url(api: Api, ids: List[WikidataItem.Id], maxlag: Maxlag): RepositoryLanding.Candidate.Url =
     val lag = if (maxlag).value > 0 then s"&maxlag=$maxlag" else ""
     RepositoryLanding.Candidate.Url(
@@ -37,6 +42,7 @@ object WikidataEntities:
     * that was asked, with the statements of its target). `props` are the picture properties to keep; P373 is always
     * read. An API error is a [[Problem.Upstream.BadReply]] at `asked`, the URL `json` answered, reporting `code: info`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def items(
       json: Json,
       props: Set[WikidataStatement.Property],

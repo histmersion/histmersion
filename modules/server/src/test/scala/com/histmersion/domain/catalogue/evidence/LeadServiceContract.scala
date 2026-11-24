@@ -14,11 +14,14 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract of the facts the leads and an event's card are computed from: the sources attesting an event (its own
   * first), and each event's lead — its tier, its catalogue's size, the sources proposed and confirmed — the catalogue's
   * events first, the largest first; with no finding stored, none is near.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class LeadServiceContract extends CatalogueStoreSuite:
   private def span(a: Year, b: Year) = TimeSpan(Some(a), None, None, Some(b))
 

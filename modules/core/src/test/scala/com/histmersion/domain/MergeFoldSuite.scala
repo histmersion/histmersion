@@ -23,10 +23,12 @@ import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Issue
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Folding two records that are one into one (docs/research-merge-import.md §5.4): goals, queue items, events and
   * articles (a source's and a finding's folds are the library's: `SourcePlanSuite`, `FindingPlanSuite`).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergeFoldSuite extends munit.FunSuite:
 
   private val At = "2026-10-01T09:00:00.000000Z"

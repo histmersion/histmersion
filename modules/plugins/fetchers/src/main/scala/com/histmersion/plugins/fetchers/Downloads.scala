@@ -9,10 +9,12 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 import Downloads.NotPdf
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One download the fetchers make, checked: a copy only when it is a PDF. Any other answer is logged and is no copy. */
 final class Downloads(http: Plugin.Http):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pdf(
       log: Plugin.Log,
       source: FetchedFile.Source,
@@ -44,12 +46,14 @@ object Downloads:
 
   /** A PDF that is really a PDF: the magic bytes within the first KiB and a plausible size (the host checks the same).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def looksLikePdf(b: FetchedFile.Bytes): Boolean =
     b.value.length > 1024 && String(b.value.take(1024), "ISO-8859-1").contains("%PDF")
 
   /** Hex MD5 of a download, to compare with the one a record states; `None` when the runtime offers no MD5 (the check
     * is then skipped, never failed).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def md5(b: FetchedFile.Bytes): Option[Md5] =
     scala.util
       .Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString)

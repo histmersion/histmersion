@@ -30,17 +30,20 @@ import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.db.DbSuite
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.catalogue.events.BEventRow
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's tiles (`TileRepo`, V105) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): which sites,
   * events and pictures a tile holds for a span (a RANGE: every item whose dates overlap it), the grouping that keeps a
   * tile small and its counts honest, the site-type filter, the SQL Mercator against the Scala one, and the versions a
   * write moves. Fixtures sit around 100°W 70°S, where no other suite has any; ids carry `zztile`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TileRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -60,6 +63,7 @@ class TileRepoSuite extends DbSuite:
     TileGrid.of(maxZoom = TileGrid.MaxZoom(11), maxPoints = TileGrid.MaxPoints(600), cellPx = TileGrid.CellPx(32))
 
   /** The tile of zoom `z` that holds (`lat`, `lon`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tileAt(z: TileCoord.Z, lat: Latitude = Lat, lon: Longitude = Lon): TileCoord =
     val (mx, my) = TileCoord.mercator(lat, lon)
     TileCoord
@@ -72,6 +76,8 @@ class TileRepoSuite extends DbSuite:
       .toOption
       .get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def site(
       id: DPlace.Id,
       label: Place.Label,
@@ -90,6 +96,7 @@ class TileRepoSuite extends DbSuite:
       sql"UPDATE places SET import_source = $importSource, properties = $props::jsonb, site_type = $siteType WHERE id = $id".update
         .run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def keysIn(cells: List[TileCell]): Set[String] = cells.filter(_.isItem).map(_.key.value).toSet
 
   test("the sites' partial-index predicates name Place.Kind.Site and the imported sources word for word"):

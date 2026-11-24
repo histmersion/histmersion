@@ -8,8 +8,11 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.{PageSize, UserId}
 
 import com.augustnagro.magnum.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `read_marks` table. Takes the connection it runs on. */
+@atBoundary(BoundaryKind.Sql, "reads and writes the reading tables and their row codecs")
 private[reading] object ReadingRepo:
 
   private val Projection =
@@ -19,6 +22,7 @@ private[reading] object ReadingRepo:
                ${Timestamps.iso(sql"m.created_at")}, ${Timestamps.iso(sql"m.updated_at")}
           FROM read_marks m"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def list(user: UserId, kind: Option[ItemKind], show: ReadingShow, size: PageSize)(using DbCon): List[MarkRow] =
     val (where, order) = show match
       case ReadingShow.Read   => (sql" AND m.read_at IS NOT NULL", sql" ORDER BY m.read_at DESC, m.id DESC")
@@ -29,6 +33,7 @@ private[reading] object ReadingRepo:
       .run()
       .toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(user: UserId, ref: ItemRef)(using DbCon): Option[MarkRow] =
     sql"$Projection WHERE m.user_id = $user AND m.target_kind = ${ref.kind} AND m.target_id = ${ref.key}"
       .query[MarkRow]
@@ -36,6 +41,7 @@ private[reading] object ReadingRepo:
       .headOption
 
   /** The records of `kind` the person marked read. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def read(user: UserId, kind: ItemKind)(using DbCon): List[ItemRef] =
     sql"""SELECT target_kind, target_id, target_uid FROM read_marks
           WHERE user_id = $user AND target_kind = $kind AND read_at IS NOT NULL"""
@@ -45,6 +51,8 @@ private[reading] object ReadingRepo:
       .toList
 
   /** Mark read (keeping when it was first marked) or not read yet. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def setRead(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], read: ReadingService.Read, at: MarkTime)(
       using DbCon
   ): Unit =
@@ -59,6 +67,7 @@ private[reading] object ReadingRepo:
             target_label = coalesce(EXCLUDED.target_label, read_marks.target_label),
             updated_at = EXCLUDED.updated_at""".update.run(): Unit
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setOpened(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], at: MarkTime)(using DbCon): Unit =
     val stamp = at.iso
     sql"""INSERT INTO read_marks (user_id, target_kind, target_id, target_uid, target_label, opened_at, created_at, updated_at)

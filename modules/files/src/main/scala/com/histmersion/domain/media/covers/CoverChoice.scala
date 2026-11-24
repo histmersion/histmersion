@@ -3,6 +3,7 @@ package domain.media.covers
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where a book's cover comes from (#1446), in order: the cover the local Calibre library keeps for the entry (the
   * user's own copy's cover — it is the edition they hold), else Open Library's by the first usable ISBN (the record's,
@@ -24,6 +25,7 @@ object CoverChoice:
       type Id = Id.T
       object Id extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def choose(
       calibreCover: Option[Pick.Calibre.Path],
       exists: Pick.Calibre.Path => Boolean,

@@ -41,6 +41,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every
@@ -62,6 +63,7 @@ import com.histmersion.domain.Creator
   * goes, stopped by the drain and resumed by a later tick, like a restart's `interrupted` one; the scheduled passes
   * wait while it runs.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class AcquireRecheckService(
     ds: DataSource,
     checks: AcquireCheckService,
@@ -73,6 +75,7 @@ final class AcquireRecheckService(
 
   import AcquireRecheckService.{By, Judged, Line}
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings: Settings =
     val c = rcfg
     Settings(
@@ -100,17 +103,23 @@ final class AcquireRecheckService(
   /** One re-check job at a time. */
   private val jobSlot = BackgroundJob.Slot()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val jobKind: Job.Kind = Job.Kind.assume(RecheckJob.JobKind)
 
   /** Is a re-check job running? The scheduled passes wait, and the drain is not drained until it stops. */
   def jobRunning: Boolean = jobSlot.isRunning
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiCk(c: Citekey): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(c.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiDoi(d: Doi): com.histmersion.api.library.Doi =
     com.histmersion.api.library.Doi(d.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobIdOf(job: JobInfo): Job.Id = Job.Id.assume(job.id.value)
 
   private def stopReason(j: JobInfo): String = j.problems.fold("stopped")(_.sentences.mkString("; "))
@@ -118,9 +127,12 @@ final class AcquireRecheckService(
   private def resumable(j: JobInfo): Boolean =
     j.status == JobState.Failed.wire && j.problems.exists(e => Stopped.of(e).resumable)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def countOf(counts: Map[AcquireRecheck.Outcome.Wire, RowCount], o: Outcome): Int =
     counts.get(o.wire).fold(0)(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def error(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
@@ -130,6 +142,7 @@ final class AcquireRecheckService(
   final private case class Facts(item: Queue.QueueItem, action: Action, attempts: List[AcquireAttempt]):
     def last: Option[AcquireAttempt] = attempts.headOption
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def facts(only: Option[RecheckRequest.Id]): List[Facts] =
     val items =
       site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_.value == i.id.value))
@@ -144,6 +157,8 @@ final class AcquireRecheckService(
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def orderedDois(text: Queue.QueueItem.Text): List[Doi] =
     val lower = text.value.toLowerCase
     Scheduling
@@ -160,6 +175,7 @@ final class AcquireRecheckService(
     )
 
   /** The shared daily legal ingest allowance as the re-check sees it (None: the autopilot is off or has no cap). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shared(now: Instant, fetchedToday: Int): Option[Shared] =
     agents.autopilot
       .sharedIngestLeft(now)
@@ -172,6 +188,7 @@ final class AcquireRecheckService(
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def candidate(f: Facts): Candidate =
     Candidate(Candidate.Item(f.item.id.value), f.last.map(AcquireRecheck.LastCheck.of))
 
@@ -180,6 +197,7 @@ final class AcquireRecheckService(
     AcquireRecheck.isDue(c.last, generation, s.everyDays, s.retryHours, now)
 
   /** The items with a DOI to look up, in [[AcquireRecheck.order]]. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fetchable(fs: List[Facts]): List[Facts] =
     val byId = fs.map(f => f.item.id.value -> f).toMap
     AcquireRecheck
@@ -204,6 +222,7 @@ final class AcquireRecheckService(
         case Some(line) => List(line)
         case None       => scheduledPass(s, now)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scheduledPass(s: Settings, now: Instant)(using WritePermit): List[Line] =
     if !s.enabled.value || !AcquireRecheck.passDue(
         Option(lastPass.get).filter(_ > 0).map(Instant.ofEpochMilli),
@@ -222,6 +241,8 @@ final class AcquireRecheckService(
     * answers at once; any other is started as a job ([[startJob]]), and `all` resumes the `all` job a restart or the
     * drain stopped.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def run(in: RecheckRequest, now: Instant = Instant.now(agents.clock))(using
       WritePermit
   )(using Creator.New): Either[Api.Error, RecheckResult] =
@@ -270,6 +291,7 @@ final class AcquireRecheckService(
         else if in.dryRun.value || in.id.isDefined then pass(in, now).toRight(passBusy)
         else site.maintenance.guard(WriteGate.OperationName("queue/acquire/recheck"))(byHand(in, now))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def busy: Api.Error =
     BackgroundJob.busy(
       BackgroundJob.Work("an acquisition list re-check job"),
@@ -283,6 +305,7 @@ final class AcquireRecheckService(
   /** A pass by hand, not a dry run, not one item: a job over every item (`all`, resuming the `all` job that was
     * stopped) or over the due ones the caps allow — or, when that is at most one, the pass at once.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def byHand(in: RecheckRequest, now: Instant)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, RecheckResult] =
@@ -358,6 +381,7 @@ final class AcquireRecheckService(
   private def latestJob(): Option[JobInfo] =
     site.jobs.newest(jobKind)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def planOf(d: RecheckJob): Option[JobPlan] =
     scala.util
       .Try(Instant.parse(d.since.value))
@@ -367,6 +391,7 @@ final class AcquireRecheckService(
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resumeStopped()(using WritePermit)(using Creator.New): Option[Line] =
     latestJob().filter(resumable).flatMap { j =>
       j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
@@ -381,6 +406,7 @@ final class AcquireRecheckService(
 
   /** Start `plan` as a `jobs` row (`histmersion jobs <id>` follows it); `resumes` = the stopped job it takes up.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def startJob(plan: JobPlan, by: By, resumes: Option[Job.Id])(using
       WritePermit
   )(using Creator.New): Either[Api.Error, JobInfo] =
@@ -408,6 +434,8 @@ final class AcquireRecheckService(
     * come (a rate limit) is a `failed` check and the job goes on. It stops between two items when the autopilot drains
     * (resumable) or a restore starts.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def runJob(jobId: Job.Id, plan: JobPlan, by: By, progress: JobInfo.Progress => Unit)(using
       WritePermit
   ): BackgroundJob.Outcome =
@@ -495,6 +523,7 @@ final class AcquireRecheckService(
       try Some(passNow(in, now))
       finally passing.unlock()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def passNow(in: RecheckRequest, now: Instant)(using WritePermit): RecheckResult =
     val s = settings
     val up = upstream()
@@ -598,6 +627,7 @@ final class AcquireRecheckService(
       r
 
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def close(
       f: Facts,
       citekey: Citekey,
@@ -639,6 +669,7 @@ final class AcquireRecheckService(
   final private case class Tried(row: RecheckRow, outcome: Outcome, detail: String)
 
   /** One item through the legal chain, recorded. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def attempt(f: Facts, generation: AcquireRecheck.LastCheck.Generation, now: Instant)(using
       WritePermit
   ): Tried =
@@ -693,6 +724,7 @@ final class AcquireRecheckService(
       tried.lastProblem.fold(why.said)(_.sentences.mkString("; "))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def summary(r: RecheckResult): String =
     def ids(a: String) =
       r.rows.filter(_.action.value == a).map(row => s"#${row.item}${row.citekey.fold("")(c => s" [[$c]]")}")
@@ -709,6 +741,7 @@ final class AcquireRecheckService(
   // ── the status ─────────────────────────────────────────────────────────────────────────────────
 
   /** The status line's facts (`agent autopilot status`, `about`); readable with agents off. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(now: Instant = Instant.now(agents.clock)): RecheckStatus =
     val s = settings
     if !s.enabled.value then
@@ -761,6 +794,7 @@ final class AcquireRecheckService(
   /** The re-check job as the status line names it: the one running and its progress, or the newest when a restart or
     * the drain stopped it (a tick resumes it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobLine(): Option[String] =
     latestJob().flatMap { j =>
       if !JobState.parse(j.status).exists(_.isTerminal) then
@@ -778,6 +812,7 @@ final class AcquireRecheckService(
     }
 
   /** What the re-check fetched today: what the shared legal ingest allowance counts besides the watchers'. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fetchedToday(now: Instant): RowCount = RowCount(triedToday(now)._2)
 
   private def verdictSettings: AcquireVerdict.Settings =

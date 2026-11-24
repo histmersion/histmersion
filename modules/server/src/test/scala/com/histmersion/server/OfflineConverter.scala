@@ -11,6 +11,7 @@ import com.histmersion.util.storage.Blob
 import com.histmersion.util.storage.Storage
 import com.histmersion.util.storage.Location
 import com.histmersion.util.storage.Store
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A converter for HTTP tests that never leaves the process. `Composition.server(cfg, host, port)` builds the REAL
   * client from `converter.url` — `http://localhost:8100`, the live sidecar on this machine — so a test that accepted an
@@ -29,6 +30,7 @@ final class OfflineConverter extends ConverterClient:
   def health: Either[Problem, ConverterClient.HealthSummary] = Right(
     ConverterClient.HealthSummary("ok")
   )
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def convert(
       file: Blob,
       filename: ConverterClient.Filename,
@@ -39,6 +41,7 @@ final class OfflineConverter extends ConverterClient:
 
 object OfflineConverter:
   /** The file `p` as a converter is handed it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blob(p: Path): Blob =
     Storage
       .at(Location.Scratch, p.toAbsolutePath.getParent)

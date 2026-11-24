@@ -72,22 +72,28 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned
   * in home must give EXACTLY the expected issue list in one run. Then the import's refusal, the id map (`uid_aliases`)
   * and the ISBN key. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergeSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private lazy val chunkChars = cfg.limits.chunkChars
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val importChunkChars = ImportOptions.ChunkChars(chunkChars.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val importToleranceKm = ImportOptions.ToleranceKm(cfg.places.pointToleranceKm.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha256Of(bundle: Path): Sha256 =
     Sha256.assume(BundleFormat.sha256Hex(Files.readAllBytes(bundle)).value)
   private val tmp = Files.createTempDirectory("histmersion-merge-suite")
@@ -105,6 +111,7 @@ class MergeSuite extends DbSuite with Bounded:
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_merge", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -161,10 +168,12 @@ class MergeSuite extends DbSuite with Bounded:
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def count(ds: DataSource, q: String): Int = connect(ds)(sql"${SqlLiteral(q)}".query[Int].run().head)
 
   // ── the crafted pair ───────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def src(
       ck: String,
       title: String,
@@ -215,8 +224,10 @@ class MergeSuite extends DbSuite with Bounded:
     )
 
   private def png(n: Byte): Array[Byte] = Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def asset(name: NewFigure.Name, n: Byte) =
     NewFigure(name, NewFigure.Mime("image/png"), NewFigure.Bytes(png(n)), None, None)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def attest(
       ds: DataSource,
       ck: Citekey,
@@ -242,10 +253,12 @@ class MergeSuite extends DbSuite with Bounded:
     (1 to 3000).map(_ => rnd.alphanumeric.take(3 + rnd.nextInt(7)).mkString).mkString(" ")
   private val olsenAgain: String =
     olsen.split(" ").zipWithIndex.map((w, i) => if i % 50 == 0 then w.toUpperCase.reverse else w).mkString(" ")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val kuhrtSha = Sha256.assume("9f2e" + "0" * 60)
   private val Isbn = "9780198150428"
 
   /** work, home and its spool; home has already imported work once (the shared history). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def craft(tag: String): (DataSource, DataSource, Path, Path) =
     val (work, home) = (fresh(s"${tag}w"), fresh(s"${tag}h"))
     val (sw, sh) = (spool(s"${tag}w"), spool(s"${tag}h"))
@@ -632,6 +645,7 @@ class MergeSuite extends DbSuite with Bounded:
   /** kind, id letter, left label, right label, severity, conditional on. */
   private type Shape = (Issue.Kind, String, Option[String], Option[String], Issue.Severity, Option[DecisionKind])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shape(p: MergePlan): Set[Shape] =
     p.issues
       .map(i =>
@@ -846,6 +860,7 @@ class MergeSuite extends DbSuite with Bounded:
   private val backupsTaken = java.util.concurrent.atomic.AtomicInteger(0)
 
   /** `merge apply` with a stub backup (a test takes no `pg_dump`); it counts the backups asked for. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyIn(
       ds: DataSource,
       bundle: Path,
@@ -877,6 +892,7 @@ class MergeSuite extends DbSuite with Bounded:
   /** A decision for every kind of issue the crafted pair raises — each one exercising a decision `merge apply` carries
     * out.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decide(i: MergeIssue): MergeResolution =
     val d = i.kind match
       case SameWork                                            => s"map:${i.left.get.label}"
@@ -911,8 +927,10 @@ class MergeSuite extends DbSuite with Bounded:
       else loop(res.copy(resolve = res.resolve ++ p.open.map(decide)), n - 1)
     loop(MergeResolutions(), 5)
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def one[A](ds: DataSource, q: String)(using DbCodec[A]): A =
     connect(ds)(sql"${SqlLiteral(q)}".query[A].run().head)
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def uidOf(ds: DataSource, table: String, col: String, label: String): UUID =
     connect(ds)(
       sql"SELECT uid FROM ${SqlLiteral(table)} WHERE ${SqlLiteral(col)} = $label".query[UUID].run().head

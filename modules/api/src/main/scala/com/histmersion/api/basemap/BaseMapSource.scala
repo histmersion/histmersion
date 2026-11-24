@@ -2,6 +2,7 @@ package com.histmersion
 package api.basemap
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object BaseMapSource:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
@@ -12,6 +13,7 @@ object BaseMapSource:
   val Auto = "auto"
   val Local = "local"
   val Online = "online"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val All: List[All] = List(AllValue(Auto), AllValue(Local), AllValue(Online))
 
   /** The "Muted" online base map's tiles (Humanitarian OSM, OSM France): the one tile server besides `ui.tiles` the
@@ -23,6 +25,8 @@ object BaseMapSource:
   /** The subdomains a tile template's `{s}` stands for: the page asks each, so the policy lists each. */
   val Subdomains: List[String] = List("a", "b", "c")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(setting: Wire, status: Basemap.Status): Wire =
     (setting).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case Local  => Wire(Local)

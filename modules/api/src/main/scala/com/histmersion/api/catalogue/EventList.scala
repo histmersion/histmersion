@@ -10,7 +10,11 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventList(
     total: RowCount,
     events: List[EventSummary],
@@ -19,6 +23,7 @@ final case class EventList(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page: OffsetPage = OffsetPage(total, offset, RowCount(events.size))
 object EventList:
   type Limit = Limit.T
@@ -26,6 +31,7 @@ object EventList:
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(total: Total, rows: List[EventSummary], offset: UnreadPage.Offset): EventList =
     EventList(
       RowCount((total).value),

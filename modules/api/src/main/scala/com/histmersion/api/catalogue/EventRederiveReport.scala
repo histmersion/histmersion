@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventRederiveReport(
     dryRun: EventRederiveReport.DryRun,
     providers: List[EventRederiveReport.Providers],
@@ -46,9 +49,11 @@ object EventRederiveReport:
   type Examples = Examples.T
   object Examples extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val Detail: JobDetail.Field[Option[EventRederiveReport]] =
     new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("eventRederive"), None)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(r: EventRederiveReport): String =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
     (List(
@@ -63,6 +68,7 @@ object EventRederiveReport:
       r.corrections.summary
     ).flatten.mkString(" · "))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(r: EventRederiveReport): Report =
     val head =
       s"## Event re-derivation — ${r.providers.mkString(", ")}${

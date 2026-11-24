@@ -5,12 +5,15 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A content-addressed directory: found by digest, stored only when the content is its name, an unsafe extension
   * replaced; and the bytes of a file or an array read again from the start.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ContentDirectorySuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha(b: ByteSource.Content) =
     ContentStore.hex(ContentStore.Digest(java.security.MessageDigest.getInstance("SHA-256").digest(b.value)))
 

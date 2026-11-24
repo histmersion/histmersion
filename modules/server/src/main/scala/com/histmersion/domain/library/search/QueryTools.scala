@@ -11,6 +11,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The read-only query's MCP tools: `query` (its description generated from the live schema) and `schema`. */
 object QueryTools:
@@ -21,13 +22,18 @@ object QueryTools:
     type Sql = Sql.T
     object Sql extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[QueryInput] = KindlingsSchema
       .derived[QueryInput]
       .schema
       .modify(_.sql)(_.description("One read-only SQL statement (Postgres refuses writes)"))
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class SchemaInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(queries: QueryControllers) =
     val query =
       tool("query")

@@ -15,9 +15,11 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the bundle endpoints, and the stored-originals directory a bundle reads and fills. No database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleControllersSuite extends munit.FunSuite:
 
   test("since: an ISO-8601 moment with its offset, or nothing; anything else is a readable 400"):

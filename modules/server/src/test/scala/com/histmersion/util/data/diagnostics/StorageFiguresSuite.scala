@@ -7,10 +7,12 @@ import com.histmersion.config.AppConfig
 import com.histmersion.server.Deps
 import com.histmersion.util.storage.{ByteSource, Location, MeasureBudget, Storage}
 import com.histmersion.util.storage.Store
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** About › Storage over stores in memory: an entry per registered store (the install's only when named), in About's
   * order, the base map's files and its registered caches in its detail.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StorageFiguresSuite extends munit.FunSuite:
 
   private val figures = StorageFigures(Deps.data)

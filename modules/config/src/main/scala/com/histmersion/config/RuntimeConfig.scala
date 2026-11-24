@@ -3,12 +3,14 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and OCR converter as child
   * processes (`com.histmersion.server.Supervisor`). `home` is the bundle root holding `pg/` and `converter/` (empty =
   * the directory above the running executable's `bin/`); `dataDir` holds the cluster, logs and backups (empty = the
   * platform's per-user data directory).
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class RuntimeConfig(
     enabled: RuntimeConfig.Enabled,
     home: RuntimeConfig.Home,

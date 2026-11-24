@@ -11,11 +11,14 @@ import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The work lists' kernel: one table of items, a list per owner — ACQUIRE (the library's), TASKS and LOG (the
   * engine's). Each owner adds its own rules on top (a log item's dated topic, an acquisition item's DOI); the kernel
   * keeps the items, their statuses and their stamps.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait QueueService:
   def list(list: Kind, scope: QueueScope): List[QueueItem]
   def get(id: QueueItemId): Option[QueueItem]
@@ -58,13 +61,16 @@ object QueueService:
           ))
       .toList
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(QueueRepo.QueueItemId(id.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def byIds(ids: List[QueueItemId]): List[QueueItem] =
       db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
     def naming(list: Kind, doi: Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd, creator: Creator.New)(using WritePermit): QueueItem =
       db.write(QueueRepo.insert(list, item, creator, CreatedAt.now(clock)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
       // a row removed between the read and the write is not found, never a success over nothing
@@ -73,12 +79,14 @@ object QueueService:
         else Left(QueueError.NotFound(id))
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
       QueueRepo.get(rid).toRight(QueueError.NotFound(id)).flatMap { item =>
         Either.cond(QueueRepo.delete(rid), item, QueueError.NotFound(id))
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def replace(list: Kind, items: List[QueueAdd], mode: ImportMode, creator: Creator.New)(using
         WritePermit
     ): ImportCounts = db.write:
@@ -96,6 +104,7 @@ object QueueService:
     def list(list: Kind, scope: QueueScope): List[QueueItem] = state.get.listed(list, scope).toList
     def get(id: QueueItemId): Option[QueueItem] = state.get.get(id)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def byIds(ids: List[QueueItemId]): List[QueueItem] =
       val wanted = ids.map(_.value: Int).toSet
       state.get.items.filter(i => wanted(i.id.value)).toList
@@ -112,6 +121,7 @@ object QueueService:
       val before = state.getAndUpdate(_.removed(id))
       before.get(id).toRight(QueueError.NotFound(id))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def replace(list: Kind, items: List[QueueAdd], mode: ImportMode, creator: Creator.New)(using
         WritePermit
     ): ImportCounts =

@@ -22,11 +22,14 @@ import com.histmersion.util.time.Timer
 import com.histmersion.util.time.Pause
 import com.histmersion.config.UserPaths
 import com.histmersion.util.plugins.Plugin
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The engine's [[EngineSite]] over the composition: the `Deps` of the server, the domains' contributions
   * ([[EngineContributions]]), the approval effects they contribute (the library's source proposals, research's article
   * filter) and the host over the wiring ([[ServerAutomationHost]]).
   */
+@movesTo(FeaturePlace.Server)
 final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.time.Clock] = None) extends EngineSite:
   def stores: Stores = deps.stores
   def resources: Resources = deps.resources
@@ -43,6 +46,7 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def pause: Pause = deps.pause
   override def userPaths: UserPaths = deps.userPaths
   def digestClock: Option[java.time.Clock] = digestOn
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def aiProviders: () => ListMap[Plugin.Id, AiProvider] = () =>
     deps.plugins.registries.aiProviders.map((k, p) => Plugin.Id.assume(k.value) -> p)
   def roster: AgentRoster = EngineContributions.roster

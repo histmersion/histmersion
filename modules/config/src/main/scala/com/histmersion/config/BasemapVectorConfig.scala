@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is kept and the
   * style decides what is drawn. `onDemand`: the map outside the extract (or deeper), read as a page needs it (#3760).
   */
+@movesTo(FeaturePlace.UtilBasemap)
 final case class BasemapVectorConfig(
     buildsUrl: BasemapVectorConfig.BuildsUrl,
     url: BasemapVectorConfig.Url,

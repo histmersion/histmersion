@@ -13,11 +13,15 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PreviewSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def has(facts: List[Preview.Card.Facts], line: String): Boolean = facts.exists(_.value == line)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val detail = Source.Detail(
     Citekey("cline2014_year"),
     Title("1177 BC"),
@@ -72,6 +76,7 @@ class PreviewSuite extends munit.FunSuite:
 
   // ── a place's card says what the place is (2026-10-09) ─────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val patones = PlaceDetail(
     Place.Summary(
       Place.Id("wikidata_q131839713"),

@@ -7,12 +7,14 @@ import com.histmersion.domain.automation.agents.{AgentsControllers, StepAgent}
 import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.automation.workflows.{ToolContribution, WorkflowDefinition}
 import com.histmersion.domain.library.workflows.SourceProposals
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What research contributes to the workflow engine: its four pipelines as workflows (review-article with its review
   * comparison, compile-article, infer-filter, propose-articles), the review manager kind, its measure of a goal's
   * progress, the seeding manager kind and its agent tools. The review proposes source statuses and edges through the
   * library's `proposals`.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class ResearchWorkflows(
     cfg: () => AppConfig,
     site: ResearchSite,

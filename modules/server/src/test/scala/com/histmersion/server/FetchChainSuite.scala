@@ -12,13 +12,18 @@ import com.histmersion.plugin.*
 import scala.collection.immutable.ListMap
 import com.histmersion.config.CommaList
 import com.histmersion.domain.library.ArxivId
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): order, the legal gate, the PDF check, the memo and
   * how answers combine — over fake fetchers, no network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class FetchChainSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Pdf = FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2048).getBytes("ISO-8859-1"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Html = FetchedFile.Bytes(("<!DOCTYPE html><html>" + "x" * 2048 + "</html>").getBytes("UTF-8"))
   private val FetchedDoi = domain.library.Doi("10.1234/x")
   private val doi = WorkKey(doi = Some(Doi("10.1234/x")))
@@ -29,6 +34,7 @@ class FetchChainSuite extends munit.FunSuite:
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       calls.incrementAndGet(); answer(work, ctx)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def found(
       source: FetchedFile.Source,
       bytes: FetchedFile.Bytes = Pdf,
@@ -38,6 +44,7 @@ class FetchChainSuite extends munit.FunSuite:
       Access.Open,
       (_, _) => Fetch.Found(FetchedFile(source, Some(FetchedFile.Url(s"https://$source.example/f")), bytes, ext))
     )
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def miss(access: Access = Access.Open) =
     Fake(access, (_, _) => Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("none"))))
 

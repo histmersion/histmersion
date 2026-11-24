@@ -13,11 +13,13 @@ import com.histmersion.api.Api
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media's runs — an import, the sources' pictures, as one request or as a job — one at a time: the polite pace is per
   * run, and two runs would ask twice as fast. A job is a `jobs` row a person may pause, resume or cancel between its
   * batches; a write takes the maintenance guard.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier, stops: JobStops):
 
   /** What runs now, when something does. */
@@ -27,6 +29,8 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
   private val jobSlot = BackgroundJob.Slot(busy)
 
   /** `body` run now as `what`, unless another media run holds the slot. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def exclusive[A](what: BackgroundJob.Work)(body: => Either[Api.Error, A]): Either[Api.Error, A] =
     if busy.compareAndSet(None, Some(what)) then
       try body
@@ -53,6 +57,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     * as `interrupted` like every other unfinished job, and a person may pause, resume or cancel it between its batches.
     * `body` returns the summary the finished job shows, or why it failed.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(kind: Job.Kind, describe: JobKinds.Subject)(
       body: (JobInfo.Progress => Unit) => WritePermit ?=> Either[Problems, BackgroundJob.Outcome.Summary]
   )(using Creator.New): Either[Api.Error, JobInfo] =

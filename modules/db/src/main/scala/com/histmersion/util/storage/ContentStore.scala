@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import java.io.InputStream
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A content-addressed set of files, each kept as `<sha256>.<ext>`: found by its digest, and stored only when its
   * content hashes to its name.
@@ -31,9 +32,11 @@ object ContentStore:
       Left(Problem.Config.Unavailable(Problem.Config.Capability.Originals))
 
   /** An extension safe in a file name: short and alphanumeric, else `bin`. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def safeExt(ext: Ext): Ext =
     val e = ext.value.trim.toLowerCase(java.util.Locale.ROOT)
     if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then Ext(e) else Ext("bin")
 
   /** The lower-case hex of a digest. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hex(digest: Digest): Sha256 = Sha256.applyUnsafe(java.util.HexFormat.of().formatHex(digest.value))

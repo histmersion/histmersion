@@ -7,6 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** THE answer to "should the map animate now?" (#4718). Every motion of the map reads it: the clusters' regroup on a
   * zoom ([[ClusterMotion]]), the names' easing (`MapLabels`), the camera's zoom and pan easing (`MapLibreSurface`:
@@ -33,6 +34,7 @@ object MotionPref:
   private val state: Var[(MapMotion, SystemReduced)] = Var((MapMotion.System, SystemReduced(false)))
 
   /** Read the system's setting and follow its changes (once; also done by the first read). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(): Unit =
     if !installed then
       installed = true
@@ -52,6 +54,7 @@ object MotionPref:
       changed()
 
   /** The reader's choice (from `UiState.mapMotion`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def choose(m: MapMotion): Unit =
     install()
     choiceNow = m
@@ -60,6 +63,7 @@ object MotionPref:
   def choice: MapMotion = choiceNow
 
   /** Does the system ask for reduced motion? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def systemReduced: Boolean = { install(); systemNow.value }
 
   /** Should the map animate now? */
@@ -72,11 +76,13 @@ object MotionPref:
   val heldBySystem: Signal[HeldBySystem] = state.signal.map((m, r) => HeldBySystem(MapMotion.heldBySystem(m, r)))
 
   /** For a test: the system's setting as if the browser had reported it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[web] def systemChanged(reduced: SystemReduced): Unit =
     installed = true
     systemNow = reduced
     changed()
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def changed(): Unit =
     state.set((choiceNow, systemNow))
     if js.typeOf(js.Dynamic.global.document) != "undefined" then

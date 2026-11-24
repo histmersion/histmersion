@@ -15,10 +15,13 @@ import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, Period, Year}
 import com.histmersion.api.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's gazetteer edits (#987): what a name, a language tag and a hand-added place may be. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceEditsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def add(
       label: Place.Add.Label = Place.Add.Label("Gornji Grad"),
       kind: Place.Add.Kind = Place.Add.Kind(Place.Kind.Site),

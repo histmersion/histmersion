@@ -8,10 +8,12 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.{Period, TileLayer, TilesApi}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The tile service's pure half: what a request's key reads (and what it leaves out), its ETag and the browser's
   * revalidation, and the cache's bound.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MapTilesSuite extends munit.FunSuite:
 
   private val c = TileCoord.of(TileCoord.Z(4), TileCoord.X(9), TileCoord.Y(5), TileCoord.Z(11)).toOption.get

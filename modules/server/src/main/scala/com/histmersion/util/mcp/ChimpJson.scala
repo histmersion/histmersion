@@ -9,11 +9,13 @@ import sttp.shared.Identity
 
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** Chimp, the MCP server library, reads a tool's arguments with circe; our records have jsoniter codecs. This is the
   * one place the two meet: a tool's input is read through its record's own codec, and a tool that takes raw JSON gets
   * Kindlings' AST.
   */
+@atBoundary(BoundaryKind.Json, "the one place Chimp's circe decoders meet our codecs")
 object ChimpJson:
   /** A record's arguments, read by its own codec; a refusal names where in the arguments it is (`.article`). */
   given decoder: [A] => (codec: JsonValueCodec[A]) => circe.Decoder[A] = circe.Decoder.instance { cursor =>

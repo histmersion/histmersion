@@ -11,6 +11,7 @@ import com.histmersion.api.instance.UiConfig
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The results on Explore's right: "On the map" (what the map's view holds) or "Everywhere", the tabs — sources,
   * articles, events, places, pictures, each with its count —, the sort, and the rows, every one a real link (a plain
@@ -24,13 +25,17 @@ object ResultsPanel:
 
   /** The width, px: the one this browser kept, else the default. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val width: Var[ResultsWidth.Width] = Var(
     ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value)), viewport)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def viewport: ResultsWidth.ViewportWidth =
     ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resizeTo(w: ResultsWidth.Width, keep: KeepWidth): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
     if keep.value then ResultsWidth.keep(width.now())
@@ -38,6 +43,7 @@ object ResultsPanel:
   /** The item whose detail replaces the results. */
   val selected: Var[Option[Preview.Target]] = Var(None)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def show(t: Preview.Target): Unit =
     selected.set(Some(t))
     // on a phone the list is a sheet at the bottom: the detail must be where the reader looks
@@ -45,9 +51,13 @@ object ResultsPanel:
 
   def back(): Unit = selected.set(None)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def activeTab: SidebarTab = SidebarTab.of(UiState.tab.now().map(SidebarTab.Key(_)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def activeTabSignal: Signal[SidebarTab] = UiState.tab.signal.map(k => SidebarTab.of(k.map(SidebarTab.Key(_))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setActiveTab(t: SidebarTab): Unit =
     selected.set(None)
     UiState.set(UiState.tab := Some(t.key.value))(push = UiState.SetPush(true))
@@ -55,9 +65,13 @@ object ResultsPanel:
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
   /** Pure: a tab's label with its count, when known. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tabLabel(label: UiLabels.Text, count: Option[RowCount]): UiLabels.Text =
     count.fold(label)(n => UiLabels.Text(s"$label $n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counts(t: SidebarTab): Signal[Option[RowCount]] = t match
     case SidebarTab.Sources  => ResultsList.total.signal
     case SidebarTab.Articles => ArticlesTab.total
@@ -65,6 +79,7 @@ object ResultsPanel:
     case SidebarTab.Places   => MapLists.places.signal.map(s => Some(RowCount(s.total.value)))
     case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(RowCount(s.total.value)))
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def scope: HtmlElement =
     div(
       cls := "btn-group results-scope",
@@ -106,6 +121,8 @@ object ResultsPanel:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def element(ui: UiConfig): HtmlElement =
     val detail = selected.signal.map(_.isDefined)
     div(
@@ -198,6 +215,7 @@ object ResultsPanel:
   /** The bottom sheet's grab handle (shown only in the narrow layout): a tap moves the sheet one step up (from full
     * back to the strip); a vertical drag lets go at the nearest of the three.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sheetHandle: HtmlElement =
     // `var`s: the drag in progress — where it started, and whether it moved enough to be a drag
     var startY = 0.0

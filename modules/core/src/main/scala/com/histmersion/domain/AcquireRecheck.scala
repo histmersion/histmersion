@@ -12,6 +12,8 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"). An item on the acquisition list — the person's buy/borrow list — was put there because no legal copy was
@@ -20,6 +22,8 @@ import com.histmersion.domain.library.Doi
   * same fetcher generation is left alone; the others (a few a pass, a cap a day, within the shared legal ingest
   * allowance) are tried through the LEGAL chain only. The pure rules; the server reads the facts and writes the result.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryAcquisition)
 object AcquireRecheck:
   type Allowance = Allowance.T
   object Allowance extends Newtype[Int, Pure]
@@ -91,6 +95,7 @@ object AcquireRecheck:
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dueAt(
       last: Option[LastCheck],
       generation: LastCheck.Generation,
@@ -104,6 +109,7 @@ object AcquireRecheck:
         else l.at.plusSeconds(math.max(1, everyDays.value).toLong * 86400L)
       )
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def isDue(
       last: Option[LastCheck],
       generation: AcquireRecheck.IsDueGeneration,
@@ -134,6 +140,7 @@ object AcquireRecheck:
     case Fetch(doi: Doi, into: Option[Citekey])
 
   /** The first DOI an item names decides (an item is one work). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def action(dois: List[Doi], held: Doi => Option[Held]): Action =
     dois.headOption match
       case None      => Action.NoDoi
@@ -160,6 +167,7 @@ object AcquireRecheck:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
 
     def of(o: library.acquisition.AcquireAttempt.Outcome): Option[Outcome] = o match
@@ -170,10 +178,12 @@ object AcquireRecheck:
       case library.acquisition.AcquireAttempt.Outcome.Legacy(_, _) => None
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def failure(message: Problems): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
   /** What each fetcher answered when a legal ingest found no copy ([[Problem.NotFound.Copy]]'s answers). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def answers(message: Problems): Vector[Problem.NotFound.Answer] =
     message.toVector.collectFirst { case Problem.NotFound.Copy(_, said) => said }.getOrElse(Vector.empty)
 
@@ -188,6 +198,7 @@ object AcquireRecheck:
     /** The short reason an item carries, at most 500 characters: `checked 2026-10-27: no legal copy (unpaywall: no copy
       * — none; …)`.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String =
       val text = this match
         case Closed(day, citekey) =>
@@ -240,6 +251,8 @@ object AcquireRecheck:
     * allowance, within what the watchers' backlog leaves of it (the backlog and the watchers' new finds come first) and
     * within the re-check's share of the cap — each try may fetch one work.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allowance(s: Settings, checkedToday: CheckedToday, shared: Option[Shared]): Allowance =
     val own = math.min(math.max(0, s.perDay.value) - math.max(0, checkedToday.value), math.max(0, s.perPass.value))
     val room = shared.fold(Int.MaxValue) { sh =>
@@ -249,12 +262,14 @@ object AcquireRecheck:
     Allowance(math.max(0, math.min(own, room)))
 
   /** Is a pass due: never run (since the start), or `passMinutes` passed since the last. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def passDue(last: Option[Instant], passMinutes: Settings.PassMinutes, now: Instant): Boolean =
     last.forall(l => !l.plusSeconds(math.max(1, passMinutes.value).toLong * 60L).isAfter(now))
 
   /** The fetcher generation: one short digest of what the legal chain is — its fetchers in order, and each one's plugin
     * and settings (secrets as references) — so a fetcher or a key added changes it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def generation(parts: List[GenerationPart]): LastCheck.Generation =
     val md = java.security.MessageDigest.getInstance("SHA-256")
     LastCheck.Generation(
@@ -262,6 +277,7 @@ object AcquireRecheck:
     )
 
   /** The earliest time one of the checked items falls due again (None: none waits). */
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def nextDue(
       checks: List[LastCheck],
       generation: AcquireRecheck.NextDueGeneration,
@@ -302,6 +318,8 @@ object AcquireRecheck:
   /** What a job — or its resumption — still tries, in [[order]]: the items not checked since it started; for a capped
     * job only the `due` ones, and no more than its `upTo` less the `triedByJob` already.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jobPicks(
       plan: JobPlan,
       candidates: List[Candidate],
@@ -323,6 +341,7 @@ object AcquireRecheck:
       failed: Tally.Failed = Tally.Failed(0),
       lastFailure: Option[Detail] = None
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def add(outcome: Outcome, detail: Detail): Tally = outcome match
       case Outcome.Closed  => this.modify(_.closed).setTo(Tally.Closed(closed.value + 1))
       case Outcome.Fetched =>
@@ -358,6 +377,8 @@ object AcquireRecheck:
     object Failed extends Newtype[Int, Pure]
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def progressLine(t: Tally): ProgressLine =
     val why =
       t.lastFailure.map(_.value.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)

@@ -9,8 +9,10 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One row of `FilterSql.findingsQuery`. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[search] case class FindingHitRow(
     citekey: Citekey,
     id: FindingHitRow.Id,
@@ -26,6 +28,8 @@ final private[search] case class FindingHitRow(
     places: List[FindingHitRow.Places] = Nil,
     placeIds: List[FindingHitRow.PlaceIds] = Nil
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toMatch: Finding.Match =
     Finding.Match(
       Finding.Id(id.value),
@@ -40,6 +44,7 @@ final private[search] case class FindingHitRow(
       Nil,
       places.map(p => Finding.Match.Places(p.value))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assignedPlaceIds: List[domain.catalogue.Place.Id] =
     placeIds.map(id => domain.catalogue.Place.Id.applyUnsafe(id.value))
 

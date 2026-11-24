@@ -11,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final private[events] case class BEventRow(
     uid: UUID,
     origin: UUID,

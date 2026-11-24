@@ -7,10 +7,13 @@ import com.histmersion.api.exchange.MergeResolutions
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.cli.CommandLine.{given, *}
 import org.rogach.scallop.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The flags several command groups share, declared once: the merge resolutions, a bookmark's or a note's target, the
   * filters of the three listings. Each returns the value to read after the command line is verified.
   */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of the flags several command groups share: declares its options, parses them into typed commands")
 private[cli] trait SharedFlags extends CommandLine.Declares:
 
   /** `--resolutions`, `--resolve ID=decision`…, `--editions` (`merge plan|apply`, `bundle import`). */
@@ -29,6 +32,7 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
       )
 
   /** `<kind> [<id>]` and the flags of a point on the map, a view (with `views`) or a period. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   protected def targetFlags(kinds: Set[ItemKind], views: TargetFlags.Views): () => TargetFlags.Raw =
     val kind = arg[String](s"kind (${ItemKind.values.filter(kinds).map(_.wire).mkString(" | ")})")
     val id = arg[String]("id", required = false)

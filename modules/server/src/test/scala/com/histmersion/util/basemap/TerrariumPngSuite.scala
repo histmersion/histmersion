@@ -3,13 +3,16 @@ package util.basemap
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Terrarium PNGs: what the encoder writes is a PNG any reader takes, with the elevation in its pixels, and the decoder
   * reads it back.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TerrariumPngSuite extends munit.FunSuite:
 
   private val size = TerrariumPng.TileSize(16)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val side = size.value
   private val metres = Array.tabulate(side * side)(i => (i % side) * 37.5f - (i / side) * 600.25f)
 

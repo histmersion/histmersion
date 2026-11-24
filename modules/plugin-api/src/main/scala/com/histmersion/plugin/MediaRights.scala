@@ -2,6 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a record says about reuse, as the provider states it — never judged by the plugin.
   *
@@ -24,6 +25,7 @@ final case class MediaRights(
 
 object MediaRights:
   type LicenceUrl = LicenceUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenceUrl extends Newtype[String, Pure]
   type Author = Author.T
   object Author extends Newtype[String, Pure]

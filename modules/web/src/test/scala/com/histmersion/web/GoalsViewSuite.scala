@@ -9,12 +9,15 @@ import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the goals windows: the tree, the open plan of a goal, the schedule editor's defaults, and a link
   * to add.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GoalsViewSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def g(slug: Goal.Slug, parent: Option[Goal.Slug] = None) =
     Goal(slug, Goal.Title(slug.value.capitalize), Goal.StatusValue("planned"), parentSlug = parent)
 

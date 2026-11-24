@@ -12,13 +12,16 @@ import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.jobs.JobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion maintenance vacuum` (#1445): which tables a request names, the statement for each, and how a job says
   * what it does.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class VacuumSuite extends munit.FunSuite:
 
   private val defaults = List(Vacuum.Table("places"), Vacuum.Table("place_names"), Vacuum.Table("finding_places"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val existing = Set("places", "place_names", "finding_places", "findings", "events").map(Vacuum.Table(_))
 
   test("no table named: the configured ones; named ones are trimmed, lower-cased, de-duplicated, comma lists split"):

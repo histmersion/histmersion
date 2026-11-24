@@ -6,6 +6,8 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.values.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CitekeySuite extends munit.FunSuite:
 
   test("the shapes the corpus actually uses are accepted"):

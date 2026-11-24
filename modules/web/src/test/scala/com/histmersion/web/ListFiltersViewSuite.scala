@@ -13,11 +13,13 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure halves of the list windows' filters (ListFilterBar, and the approvals, runs and jobs windows): the chips, a
   * typed or picked value, the query each window sends, the rows a filter shows before the server's page lands, and the
   * bulk decision's targets and confirmation.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ListFiltersViewSuite extends munit.FunSuite:
 
   override def beforeEach(context: BeforeEach): Unit =

@@ -15,10 +15,12 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
   * into an empty list that wipes the stored value.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PatchesSuite extends munit.FunSuite:
 
   private def build(

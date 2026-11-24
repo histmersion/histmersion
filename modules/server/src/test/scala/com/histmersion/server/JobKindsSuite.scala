@@ -14,10 +14,12 @@ import com.histmersion.domain.catalogue.places.SiteTypesControllers
 import com.histmersion.domain.media.imports.ImportsControllers
 import com.histmersion.domain.media.covers.CoversControllers
 import com.histmersion.api.RegisteredJobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every kind of background job the server starts is a registered one (`com.histmersion.api.RegisteredJobKinds.all`),
   * so the web UI has a name for it ([[Wording.jobKind]]) and never shows `basemap-fetch` to a reader.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class JobKindsSuite extends munit.FunSuite:
 
   test("the server's job kinds are the dictionary's"):

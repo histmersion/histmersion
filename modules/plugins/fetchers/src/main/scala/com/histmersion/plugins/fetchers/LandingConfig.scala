@@ -3,6 +3,7 @@ package plugins.fetchers
 
 import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `oa-landing`'s settings: the host's `histmersion.acquire` (its landing-page rules among them), and the contact
   * `oa-unpaywall` asks Unpaywall with — the landing step reads Unpaywall's record with the very same contact, so the
@@ -10,6 +11,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class LandingConfig(acquire: UpstreamSettings, plugins: LandingPeers = LandingPeers()) derives ConfigReader:
   /** The contact Unpaywall is asked with on `oa-unpaywall`'s behalf: its own, else Histmersion's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unpaywallEmail: Option[UnpaywallConfig.ContactEmail] =
     UnpaywallConfig
       .own(plugins.oaUnpaywall.contactEmail)

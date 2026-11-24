@@ -25,12 +25,15 @@ import com.histmersion.util.text.MinHash
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.api.exchange.IssueSide
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a bundle, "home" plans
   * it. One case per row of the scenario catalogue the pure planner can see. The database twin of this fixture is
   * `db.MergeSuite`.
   */
 object MergeFixture:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings(c: MergeConfig): MergeSettings =
     MergeSettings(
       MergeSettings.AutoMerge(c.autoMerge.value),
@@ -77,6 +80,7 @@ object MergeFixture:
 
   private val At = "2026-10-01T09:00:00.000000Z"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def src(
       id: String,
       ck: String,
@@ -118,6 +122,7 @@ object MergeFixture:
       Bundle.Source.UpdatedAt(At)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def article(id: String, slug: String, body: String, origin: UUID = work): Bundle.Article =
     Bundle.Article(
       uid(id),
@@ -133,6 +138,7 @@ object MergeFixture:
       Bundle.Article.UpdatedAt(At)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def event(
       id: String,
       eventId: String,
@@ -164,6 +170,7 @@ object MergeFixture:
       Bundle.Event.UpdatedAt(At)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): Bundle.Goal =
     Bundle.Goal(
       uid(id),
@@ -180,6 +187,8 @@ object MergeFixture:
       Bundle.Goal.UpdatedAt(At)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manifest(es: BundleEntities): Bundle.Manifest =
     Bundle.Manifest(
       Bundle.Manifest.Format(Bundle.Format),
@@ -217,6 +226,7 @@ object MergeFixture:
   val goalHere: Bundle.Goal = goalOriginal.modify(_.notes).setTo(Some(Bundle.Goal.Notes("edited at home")))
 
   /** The bundle from work. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val foreign: BundleEntities = BundleEntities(
     sources = List(
       // same work, other citekey: author order and name forms, title case vs sentence case, a subtitle,
@@ -386,6 +396,7 @@ object MergeFixture:
     article("h-same", "zz_same_text", "Identical on both sides.", home)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sketches: Map[Bundle.Source.BodySha256, MinHash] =
     (foreign.sources ++ here).flatMap(s => s.bodySha256.map(_ -> s)).toMap.flatMap { (sha, s) =>
       val text = if s.uid == uid("w-olsen") then bodyOlsen
@@ -402,6 +413,7 @@ object MergeFixture:
   val localGoal: Bundle.Goal = goal("h-goal", "zz_goal_both", "Goal created at home", home)
 
   /** Home as the database gathers it: every row (`MergeState` reads them all). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def input(es: BundleEntities = foreign, local: List[Bundle.Source] = here): Input =
     val localLines = BundleEntities(
       sources = local,
@@ -459,6 +471,8 @@ object MergeFixture:
       when: Option[DecisionKind] = None
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summarize(p: MergePlan): Set[Expect] =
     p.issues
       .map(i =>

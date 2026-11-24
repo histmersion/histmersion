@@ -26,6 +26,8 @@ import com.histmersion.util.json.StoredIdCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
@@ -34,6 +36,8 @@ import com.histmersion.domain.automation.Run
   * statuses stated inline, the section set, filler, no Sources cited heading). The server runs the steps; everything
   * here is pure and table-tested.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.ResearchWorkflows)
 object CompileArticle:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
@@ -52,11 +56,14 @@ object CompileArticle:
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given citekeyKey: JsonKeyCodec[Citekey] =
     JsonCodec.key[Citekey](_.value, k => Citekey.option(k).toRight(s"not a citekey: '$k'"))
 
   // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ClaimAnswer(
       claim: ClaimAnswer.Claim,
       quote: AgentProposals.Proposal.Quote,
@@ -72,6 +79,8 @@ object CompileArticle:
     type Place = Place.T
     object Place extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ClaimAnswer] = KindlingsSchema
       .derived[ClaimAnswer]
       .schema
@@ -92,6 +101,8 @@ object CompileArticle:
     type Relevant = Relevant.T
     object Relevant extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ExtractAnswer] = KindlingsSchema
       .derived[ExtractAnswer]
       .schema
@@ -120,6 +131,8 @@ object CompileArticle:
     * in the vocabulary; a source judged irrelevant must say why. Unverifiable claims send the answer back; on the last
     * attempt they are dropped and the rest kept.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkExtract(
       a: ExtractAnswer,
       citekey: Citekey,
@@ -223,6 +236,8 @@ object CompileArticle:
 
   val DisagreementKinds: Set[Article.Coverage.DisagreementKind] = Article.Coverage.DisagreementKinds.toSet
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidence(
       filter: ArticleDraft.Filter,
       total: RowCount,
@@ -248,6 +263,8 @@ object CompileArticle:
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
   /** The claim table and evidence model as the writer reads them (data, not instructions). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidenceText(ev: Evidence, extracted: List[Extracted]): Description =
     val bySource = extracted.map(e => e.citekey -> e).toMap
     val sources = ev.sources.filter(s => ev.claims.getOrElse(s.citekey, Evidence.ClaimCount(0)).hasClaims).map { s =>
@@ -290,6 +307,8 @@ object CompileArticle:
       reasons: List[Coverage.Reason] = Nil
   ) derives JsonCodec
   object DraftAnswer:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[DraftAnswer] = KindlingsSchema
       .derived[DraftAnswer]
       .schema
@@ -310,12 +329,16 @@ object CompileArticle:
 
   // ── phase 4: the self-check (code) ──────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def blocks(body: Article.Body): List[String] =
     body.value.split("\\n\\s*\\n").toList.map(_.trim).filter(_.nonEmpty)
 
   /** Writing guide rule 2: the FIRST block citing a source whose status is not current or foundational must state that
     * status (the word itself, e.g. "contested").
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusesSilent(body: Article.Body, statusOf: Citekey => Option[Source.Status]): List[Problem] =
     val bs = blocks(body)
     AgentVerify.wikilinks(AgentVerify.Text(body.value)).flatMap { ck =>
@@ -329,6 +352,8 @@ object CompileArticle:
   /** The citekeys a text cites as EVIDENCE (links that are sources), leaving out its Not used section — the sources
     * listed there are named, not cited.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cited(text: Article.Body, isCitekey: Citekey => Boolean): List[Citekey] =
     AgentVerify
       .wikilinks(AgentVerify.Text(withoutNotUsed(text).value))
@@ -336,11 +361,14 @@ object CompileArticle:
       .filter(isCitekey)
 
   /** `text` without its "Not used" section (heading to the next heading of the same or higher level). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def withoutNotUsed(text: Article.Body): Article.Body = Article.Coverage.withoutNotUsed(text)
 
   /** What the article would read after the draft is applied: the whole body (create), or the current body with the text
     * appended (under `section`, else at the end).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def combined(
       mode: DraftMode,
       current: Article.Body,
@@ -373,6 +401,10 @@ object CompileArticle:
     * reasons to store: the extraction's for the sources judged irrelevant, the writer's for the others it leaves out —
     * only for sources the article does not cite.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def checkDraft(
       a: DraftAnswer,
       slug: Slug,
@@ -513,6 +545,7 @@ object CompileArticle:
     * records (#958); else, for an existing article, its title as the query. It is what the article records afterwards.
     * `None` only when nothing at all selects a source.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runFilter(
       query: Option[Article.Filter.Query],
       topics: List[Article.Filter.Topics],
@@ -533,6 +566,8 @@ object CompileArticle:
       )
 
   /** The log line of a compile run. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logLine(d: ArticleDraft, written: Written, why: Rationale, review: Option[Run.Id], runId: Run.Id): LogLine =
     val what = d.mode match
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"

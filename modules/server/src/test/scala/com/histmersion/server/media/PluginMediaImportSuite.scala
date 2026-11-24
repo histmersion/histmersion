@@ -57,6 +57,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import` through the
   * registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the plugin states each record's
@@ -66,6 +67,7 @@ import com.histmersion.util.database.TestCreators.given
   * carries the plugin's requests (the host's User-Agent, never the plugin's), and the provider list shows the
   * collection. No socket: the plugin's search and the pictures are answered by a fake. Fixtures `zqpl_*`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginMediaImportSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -92,6 +94,9 @@ class PluginMediaImportSuite extends DbSuite:
     override val description = MediaCollection.Description("A test fixture's collection")
     val role = MediaCollection.Object
     override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def search(place: MediaPlace, http: Plugin.Http) =
       // the plugin asks with its own User-Agent: the host's replaces it
       http
@@ -153,6 +158,7 @@ class PluginMediaImportSuite extends DbSuite:
       ConfigFactory.parseString("histmersion.plugins.zq-plugin.enabled = true")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val base =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -165,6 +171,7 @@ class PluginMediaImportSuite extends DbSuite:
     d
 
   /** The config with `allow` as this collection's own allowlist. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowing(allow: String): AppConfig =
     base
       .modify(_.media)
@@ -187,6 +194,7 @@ class PluginMediaImportSuite extends DbSuite:
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqpl%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqpl%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()

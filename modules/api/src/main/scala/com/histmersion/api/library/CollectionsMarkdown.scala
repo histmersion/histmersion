@@ -3,6 +3,7 @@ package api.library
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.Plural
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The collections' answers as Markdown, for the CLI and the MCP tools alike. */
 object CollectionsMarkdown:
@@ -15,6 +16,8 @@ object CollectionsMarkdown:
     if cs.isEmpty then ("_No source collection is registered._")
     else (cs.map(collection).mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def collection(c: CollectionInfo): String =
     (s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
       s"- can: ${c.capabilities.mkString(", ")}\n" +
@@ -27,6 +30,7 @@ object CollectionsMarkdown:
     (authors.take(3).mkString(", ") + (if authors.sizeIs > 3 then " et al." else ""))
 
   /** A search as a table: one row per entry, with the formats of its files. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(entries: List[CollectionEntry]): String =
     if entries.isEmpty then ("_No matching books in the Calibre library._")
     else
@@ -39,6 +43,7 @@ object CollectionsMarkdown:
         ++ rows ++ List("", "_Import one with `histmersion calibre import <id> --citekey <k>`._")).mkString("\n"))
 
   /** The entries no source links, newest first, with the path of each file. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unlinked(entries: List[CollectionEntry], total: Total): String =
     if entries.isEmpty then ("_Every Calibre entry is linked to a source._")
     else
@@ -60,11 +65,14 @@ object CollectionsMarkdown:
         )).mkString("\n")
 
   /** The line for the records with no fetched file — never a gap. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uncountedLine(n: Missing): String =
     s"$n ${Plural.noun(Plural.Count(n.value.toLong), Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
       "(`histmersion queue acquire`); `--json` lists them."
 
   /** The counted gaps as a table, then one line for the records with no fetched file. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gaps(rows: List[CollectionGapRow]): String =
     def esc(s: String) = (s).replace("|", "\\|").replace("\n", " ").trim
     val counted = rows.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted(true))))
@@ -91,6 +99,8 @@ object CollectionsMarkdown:
     if missing == 0 then (head) else (s"$head\n\n${uncountedLine(Missing(missing))}")
 
   /** A sync: the gaps pushed (or that would be), each push, and the summary line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sync(s: CollectionSync): String =
     val ready = s.gaps.gaps.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted(true))))
     val missing = s.gaps.gaps.count(_.original == CollectionGapRow.Original("none"))
@@ -109,6 +119,8 @@ object CollectionsMarkdown:
       (table + lines.map(_ + "\n").mkString + s"pushed ${s.pushes.size - failed} source(s), $failed failed$note")
 
   /** An update of every linked item: what changes (or changed), then what was left alone and why. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(rows: List[CollectionUpdateRow], applied: Boolean): String =
     def cell(s: String) = (s).replace("|", "\\|").replace("\n", " ").take(80)
     val changing = rows.collect {
@@ -147,6 +159,8 @@ object CollectionsMarkdown:
     (head + tail + hint)
 
   /** An audit: the linked items that disagree with their records. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def audit(a: CollectionAudit): String =
     def cell(s: String) = (s).replace("|", "\\|").replace("\n", " ").take(90)
     def view(v: CollectionRecordView) = s"${v.title} — ${v.authors.mkString("; ")}${v.year.fold("")(y => s" ($y)")}"
@@ -165,6 +179,8 @@ object CollectionsMarkdown:
       (s"### ${a.findings.size} of ${a.checked} linked Calibre entries disagree with the corpus\n\n$table\n\n" +
         "_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def imported(i: CollectionImported): String =
     ((List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
       i.relinkedFrom.map(prev => s"Re-linked `${i.citekey}` from Calibre id $prev to ${i.id}") ++
@@ -175,15 +191,23 @@ object CollectionsMarkdown:
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
       i.jobProblems.map(e => s"not converted: ${e.sentences.mkString("; ")}")).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linked(l: CollectionLinked): String = (s"linked `${l.citekey}` to Calibre id ${l.id} — ${l.title}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pushed(p: CollectionPushed): String =
     p.replaced.fold(s"added `${p.citekey}` to Calibre as id ${p.id} — ${p.title}")(fmt =>
       s"replaced the ${fmt.value.toUpperCase} of Calibre id ${p.id} with `${p.citekey}`'s original"
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updatedOne(u: CollectionUpdatedOne): String =
     if u.changed.isEmpty then (s"Calibre id ${u.id} already agrees with `${u.citekey}` — nothing written")
     else (s"updated Calibre id ${u.id} from `${u.citekey}` (${u.changed.mkString(", ")}) — ${u.title}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def set(s: CollectionSetDone): String = (s"set ${s.fields.mkString(", ")} on Calibre id ${s.id}")

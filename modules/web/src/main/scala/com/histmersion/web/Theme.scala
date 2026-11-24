@@ -7,6 +7,8 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.Try
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** THE theme (the stylesheet's two token sets). The choice is kept per browser in `localStorage` under [[StorageKey]]
   * and written to `<html data-theme>`, which the stylesheet reads; "system" leaves the choice to its
@@ -15,6 +17,7 @@ import scala.util.Try
   * choosing (a `storage` event), the system switching (a `matchMedia` listener) — and tells [[changes]] so that what
   * draws with a token's VALUE (the graph's canvas: [[ThemeTokens]]) draws again.
   */
+@atBoundary(BoundaryKind.Dom, "keeps the theme choice in localStorage and on the html element")
 object Theme:
   /** The `localStorage` key; the pages' inline `<head>` script reads the same one. */
   val StorageKey = "histmersion.theme"
@@ -54,10 +57,14 @@ object Theme:
         }
 
   /** Choose `c`: remembered, applied, announced. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def choose(c: ThemeChoice): Unit =
     if c == ThemeChoice.System then Store.Browser.remove(StorageKey) else Store.Browser.put(StorageKey, c.wire.value)
     apply(c)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def apply(c: ThemeChoice): Unit =
     Try(dom.document.documentElement.setAttribute(Attribute, c.wire.value))
     chosen.set(c)
@@ -68,6 +75,7 @@ object Theme:
     tick.update(_ + 1)
 
   /** The button: its icon says the current choice, a press moves to the next. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def toggle: HtmlElement =
     button(
       typ := "button",

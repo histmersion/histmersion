@@ -525,7 +525,7 @@ object Contracts:
         val outside = Named
           .findAllMatchIn(s.code)
           .filterNot(n =>
-            n.group(1) == "api" || n.group(1) == "web" || s.code.startsWith(SharedProblem, n.start) ||
+            n.group(1) == "api" || n.group(1) == "web" || n.group(1) == "lint" || s.code.startsWith(SharedProblem, n.start) ||
               s.code.startsWith(SharedJson, n.start) || s.code.startsWith(SharedNonEmpty, n.start)
           )
         val own = if m == "api" && !s.pkg.startsWith("com.histmersion.api") then List(0) else Nil

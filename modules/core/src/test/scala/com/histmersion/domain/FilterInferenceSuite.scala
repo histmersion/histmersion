@@ -14,10 +14,12 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** infer-filter's code checks: the answer's shape, then what the filter returns against the article's citations and the
   * hit bounds; a failing filter goes back, and on the last attempt nothing is proposed.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FilterInferenceSuite extends munit.FunSuite:
 
   private val lim =

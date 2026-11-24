@@ -8,10 +8,13 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the named periods: this collection's own, after the places and before the events. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object PeriodsCarried:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val periods: CarriedKind = CarriedKind.records[Bundle.Period](
     DataOwner("catalogue"),
     Bundle.Kind.Period,

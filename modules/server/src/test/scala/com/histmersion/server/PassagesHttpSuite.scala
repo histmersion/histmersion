@@ -28,11 +28,13 @@ import com.histmersion.config.AuthConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `passages` (#954) over real HTTP and MCP against a seeded multi-heading body: hits, the offset round trip through
   * `get_source`'s body slice, headings, limit, errors, and an old (renamed) citekey resolving. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PassagesHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -75,6 +77,7 @@ class PassagesHttpSuite extends DbSuite:
     )
   private def enc(s: String) = URLEncoder.encode(s, UTF_8)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base
@@ -99,6 +102,7 @@ class PassagesHttpSuite extends DbSuite:
       finally b.stop()
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(url: String): Unit =
     val put = json(
       "PUT",
@@ -109,6 +113,7 @@ class PassagesHttpSuite extends DbSuite:
     )
     assertEquals(put.statusCode, 200, put.body)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def passages(url: String, ck: Citekey, q: String, extra: String = ""): PassageResult =
     val r = get(s"$url/api/sources/$ck/passages?q=${enc(q)}$extra")
     assertEquals(r.statusCode, 200, r.body)

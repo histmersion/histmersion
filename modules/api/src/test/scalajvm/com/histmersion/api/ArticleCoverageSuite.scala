@@ -17,13 +17,16 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Filter
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #958 — an article's coverage is computed and rendered by code from its recorded filter: the uncited remainder, the
   * status breakdown, the counts sentence, the reasons (present or missing), the Method note, the drift, and Markdown
   * that passes the article lints. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleCoverageSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def src(ck: Citekey, st: Source.Status = Source.Status.Current) =
     Coverage.Source(ck, Title(s"Title of $ck"), Some(Year(2000)), st, List(AuthorName("Ann Author")))
 

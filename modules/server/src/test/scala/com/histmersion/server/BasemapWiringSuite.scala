@@ -11,10 +11,12 @@ import java.time.Instant
 import com.histmersion.util.basemap.RangeHttp
 import com.histmersion.util.basemap.RetryPolicy
 import com.histmersion.config.RuntimeConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The base map's wiring: the outbound policy its client is given, the sea-floor grid of each setting, and where
   * `basemap.dir` resolves. No network, no database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BasemapWiringSuite extends munit.FunSuite:
   private val now = Instant.parse("2026-10-31T12:00:00Z")
 

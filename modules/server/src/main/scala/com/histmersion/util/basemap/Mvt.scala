@@ -5,6 +5,7 @@ import com.histmersion.util.problem.{External, Problem}
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Just enough of the Mapbox Vector Tile protobuf (https://github.com/mapbox/vector-tile-spec) to thin a tile WITHOUT
   * decoding its geometry: keep the named layers, and inside them drop the features whose `kind` is listed. Everything
@@ -93,6 +94,8 @@ object Mvt:
     String(b, f.payloadStart, f.end - f.payloadStart, StandardCharsets.UTF_8)
 
   /** The names of a tile's layers, in order. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def layerNames(tile: TileBytes): Either[Problem, List[LayerName]] =
     val bytes = tile.value
     attempt(
@@ -124,11 +127,15 @@ object Mvt:
       geoms: Set[Rule.Geoms] = Set.empty,
       props: Option[Set[Rule.Props]] = scala.None
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val keepKinds: Set[String] = keep.map(_.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val dropKinds: Set[String] = drop.map(_.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def keeps(kind: Option[Kind]): Boolean = kind match
       case scala.None => keep.isEmpty
       case Some(k)    => (keep.isEmpty || keepKinds(k.value)) && !dropKinds(k.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def all: Boolean = keep.isEmpty && drop.isEmpty && !none.value && geoms.isEmpty && props.isEmpty
 
   object Rule:
@@ -147,6 +154,8 @@ object Mvt:
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer) and the others
     * kept when `others`, dropped otherwise. A layer left with no feature is dropped too.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def filter(tile: TileBytes, rules: Map[LayerName, Rule], others: Others = Others(false)): Either[Problem, TileBytes] =
     val bytes = tile.value
     attempt {
@@ -166,6 +175,7 @@ object Mvt:
     }
 
   /** One layer with only the features `rule` keeps; `None` when none is left. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def thinLayer(b: Array[Byte], layer: Field, rule: Rule): Option[Array[Byte]] =
     val fs = fields(b, layer.payloadStart, layer.end)
     val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(b, _))
@@ -272,12 +282,16 @@ object Mvt:
   /** A layer of `features` (each: its geometry type 1–3, its command-encoded geometry, its string properties). Extent
     * 4096, version 2.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def layer(name: LayerName, features: List[(GeomType, Vector[GeometryCommand], Map[PropKey, PropText])]): LayerBytes =
     typedLayer(name, features.map((g, c, p) => (g, c, p.toList.map((k, v) => (k, v.value: String | Long)))))
 
   /** The same with text or whole-number properties (a number as `sint_value`, as the Protomaps builds store
     * `min_zoom`), in the order given.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def typedLayer(
       name: LayerName,
       features: List[(GeomType, Vector[GeometryCommand], List[(PropKey, String | Long)])]
@@ -310,17 +324,22 @@ object Mvt:
     LayerBytes(out.toByteArray)
 
   /** Protobuf's zig-zag encoding of a signed number (geometry deltas, `sint_value`). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zigzag(n: SignedNumber): Varint = Varint(zig(n.value))
 
   private def zig(n: Long): Long = (n << 1) ^ (n >> 63)
 
   /** A point's geometry commands: MoveTo(1) and its zig-zagged position. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointGeometry(x: PointX, y: PointY): Vector[GeometryCommand] =
     Vector(GeometryCommand(9), GeometryCommand(zig(x.value.toLong).toInt), GeometryCommand(zig(y.value.toLong).toInt))
 
   /** A (multi)line's geometry commands: per part MoveTo its first point, LineTo the rest — positions as deltas from the
     * previous point, parts of fewer than two points skipped. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lineGeometry(parts: Seq[Seq[(PointX, PointY)]]): Vector[GeometryCommand] =
     val out = Vector.newBuilder[Int]
     // `var`s: the cursor the deltas are taken from, carried across parts as the spec requires
@@ -342,6 +361,7 @@ object Mvt:
     out.result().map(GeometryCommand(_))
 
   /** A tile of encoded layers. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tile(layers: List[LayerBytes]): TileBytes =
     val out = ByteArrayOutputStream()
     layers.foreach(l => writeField(out, 3, l.value))
@@ -350,6 +370,8 @@ object Mvt:
   /** Every feature of every layer: its layer, geometry type (1 point, 2 line, 3 polygon) and properties as text
     * (numbers and booleans written out) — what the measuring tools and the tests read. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def features(tile: TileBytes): Either[Problem, List[(LayerName, GeomType, Map[PropKey, PropText])]] =
     val bytes = tile.value
     attempt {
@@ -400,6 +422,8 @@ object Mvt:
     }
 
   /** The kinds (string `kind` values) of one layer's features — what a test or a size report reads. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kinds(tile: TileBytes, layerName: LayerName): Either[Problem, List[Kind]] =
     val bytes = tile.value
     attempt {

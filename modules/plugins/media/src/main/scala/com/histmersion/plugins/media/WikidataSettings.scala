@@ -5,6 +5,7 @@ import com.histmersion.plugin.{MediaCollection, MediaItem}
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion.media.wikidata`: the API, ids per call, `maxlag`, and the picture properties of a place and an event
   * with the role each plays (`P18:image,P242:locator-map`).
@@ -16,8 +17,10 @@ final case class WikidataSettings(
     placeProperties: WikidataSettings.PlaceProperties,
     eventProperties: WikidataSettings.EventProperties
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeRoles: List[(WikidataSettings.Property, MediaItem.Role)] =
     WikidataSettings.roles(WikidataSettings.Spec(placeProperties.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventRoles: List[(WikidataSettings.Property, MediaItem.Role)] =
     WikidataSettings.roles(WikidataSettings.Spec(eventProperties.value))
 
@@ -51,6 +54,7 @@ object WikidataSettings:
   /** Pure: `P18:image,P242:locator-map` as (property, role), in order, one per property; an entry that is not a
     * property and a picture role is dropped.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roles(spec: Spec): List[(Property, MediaItem.Role)] =
     spec.value
       .split(",")

@@ -11,7 +11,11 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the source approval tables and their row codecs")
 private[workflows] object SourceApprovalRepo:
 
   def record(
@@ -39,6 +43,8 @@ private[workflows] object SourceApprovalRepo:
       .headOption
       .map(ManagerPolicy.ApprovalId(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def proposedBefore(
       kind: ApprovalKind,
       citekey: Citekey,

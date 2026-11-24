@@ -11,6 +11,7 @@ import com.histmersion.api.instance.{About, AboutMarkdown}
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.plugins.{PluginsReport, PluginState}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The About window: `GET /api/about` — the server's build, its health, the job queue, the newest backup and how big
   * the store is. Read once when the window opens, and again on "refresh".
@@ -34,6 +35,7 @@ object AboutView:
   final case class Section(title: String, rows: List[Row])
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def check(label: String, text: Option[String]): Row =
     val st = ServiceState.of(text.map(ServiceState.Wire(_)))
     Row(
@@ -44,6 +46,8 @@ object AboutView:
     )
 
   /** The panel's content, as data — so what it says is a unit test. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sections(a: About): List[Section] =
     val b = a.build
     val build = Section(
@@ -122,6 +126,8 @@ object AboutView:
     * to delete when it runs low). Nothing from an older server; "measuring…" while the first measurement runs (the
     * window asks again).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def storage(r: Storage.Report): List[Section] =
     if r.entries.isEmpty && !r.measuring.value && r.problems.isEmpty then Nil
     else
@@ -162,6 +168,9 @@ object AboutView:
     * reference there (`env:NAME`, `vault:ref`, `value:***`): the server never puts a value into the report. None when
     * the report lists no plugin (an older server).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[web] def plugins(r: PluginsReport): Option[Section] =
     Option.when(r.plugins.nonEmpty || r.warnings.nonEmpty)(
       Section(
@@ -204,6 +213,8 @@ object AboutView:
     polls = 0
     load()
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(): Unit =
     ApiClient
       .about()
@@ -236,6 +247,8 @@ object AboutView:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def section(s: Section): HtmlElement =
     div(
       cls := "about-section",

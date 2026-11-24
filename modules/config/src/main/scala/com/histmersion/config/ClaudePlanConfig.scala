@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants the pool and its
   * last one is too old to decide on (docs/research-plan-quotas.md §8). `refresh` is `auto` (a zero-cost read if the CLI
@@ -10,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * is one `claude -p` turn on `probeModel` with at most `probeMaxTokens` output tokens, given up after
   * `probeTimeoutSeconds`. `refreshEveryMinutes` also reads it on a schedule while the autopilot has queued work for it.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class ClaudePlanConfig(
     floors: ClaudePlanConfig.Floors,
     maxCallsInFlight: ClaudePlanConfig.MaxCallsInFlight,

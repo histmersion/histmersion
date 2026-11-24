@@ -48,6 +48,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes nothing; an article
   * citing the source (by its citekey, an old citekey or a short form), an event sourced to it, or a job still writing
@@ -55,6 +56,8 @@ import com.histmersion.util.database.TestCreators.given
   * it, drops its old citekeys, leaves a tombstone, logs itself, keeps Calibre's id in the answer and removes the stored
   * originals after the commit. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class SourceDeleteSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -64,9 +67,13 @@ class SourceDeleteSuite extends DbSuite:
   private val DelCk = Citekey("zzdel2020_book")
   private val OtherCk = Citekey("zzdelb2021_other")
   private val TwinCk = Citekey("zzdelc2022_twin") // holds the same file as Del in one test
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Old: String = OldCk.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Del: String = DelCk.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Other: String = OtherCk.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Twin: String = TwinCk.value
   private val Slug = "zzdel_article"
   private val Event = "zzdel_event"
@@ -77,6 +84,7 @@ class SourceDeleteSuite extends DbSuite:
   private lazy val spool = Files.createTempDirectory("histmersion-del-spool")
   private lazy val acquire = Files.createTempDirectory("histmersion-del-acquire")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -96,12 +104,15 @@ class SourceDeleteSuite extends DbSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
         quality: ConverterClient.HighQuality
     ): Either[Problem, ConvertedDoc] = Left(Problem.Unclassified(Legacy.Text("not used")))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: Citekey,
       edges: List[Edge] = Nil,
@@ -165,6 +176,7 @@ class SourceDeleteSuite extends DbSuite:
     * link, a coverage reason, a queue mention and both stored originals; Other citing it with an edge, attesting its
     * finding and that edge, and linking a figure to its finding.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(): Unit =
     put(
       source(

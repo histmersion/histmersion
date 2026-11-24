@@ -6,6 +6,7 @@ import com.histmersion.util.database.{Transactor, WritePermit}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.annotation.tailrec
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sites with no known date in a map tile: counted by the squares of its grid, or listed one by one. */
 trait UndatedSites:
@@ -35,6 +36,7 @@ object UndatedSites:
   ) extends UndatedSites:
     private val rebuilding = AtomicBoolean(false)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def counted(c: TileCoord, grid: TileGrid, siteType: Option[TileRepo.SiteType]): List[GridCell] =
       val perSide = perSideOf(grid)
       val wanted = keptZoom()
@@ -66,11 +68,13 @@ object UndatedSites:
         }
 
   /** The squares a tile side of `grid`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def perSideOf(grid: TileGrid): UndatedBuild.PerSide =
     UndatedBuild.PerSide((TileCoord.Extent.value / grid.cellUnits.value.max(1)).max(1))
 
   /** The same answers over sites held in memory (tests). */
   final class InMemory(sites: AtomicReference[List[UndatedSite]]) extends UndatedSites:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def inTile(c: TileCoord, siteType: Option[TileRepo.SiteType]): List[(UndatedSite, Double, Double)] =
       val wanted = siteType.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
       sites.get.flatMap { s =>
@@ -81,6 +85,7 @@ object UndatedSites:
         )((s, px, py))
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def counted(c: TileCoord, grid: TileGrid, siteType: Option[TileRepo.SiteType]): List[GridCell] =
       val perSide = perSideOf(grid)
       val cu = grid.cellUnits.value.max(1)
@@ -95,6 +100,7 @@ object UndatedSites:
         .sortBy(_._1)
         .map { case ((gx, gy), in) => square(gx, gy, in) }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def square(gx: Long, gy: Long, in: List[(UndatedSite, Double, Double)]): GridCell =
       @tailrec def loop(
           rest: List[(UndatedSite, Double, Double)],
@@ -137,6 +143,7 @@ object UndatedSites:
           )
       loop(in, 0.0, 0.0, Double.MaxValue, Double.MaxValue, -Double.MaxValue, -Double.MaxValue, "")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def items(c: TileCoord, siteType: Option[TileRepo.SiteType], except: List[TileRepo.SiteId]): List[TileCell] =
       inTile(c, siteType).filterNot((s, _, _) => except.exists(_.value == s.id.value)).map { (s, px, py) =>
         TileCell(

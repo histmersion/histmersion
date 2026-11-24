@@ -16,10 +16,13 @@ import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.Attribution
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plugin's gazetteer source as the host reads it: the client its download goes through, its answer guarded, and each
   * of its places checked and turned into the host's [[PlaceInput]]. Pure but for [[http]].
   */
+@atBoundary(BoundaryKind.Spi, "turns a plugin's gazetteer places into the host's place inputs")
 object PluginGazetteers:
   type FieldName = FieldName.T
   object FieldName extends Newtype[String, Pure]
@@ -33,6 +36,8 @@ object PluginGazetteers:
     * waited for `places.fetch-timeout-seconds` and the connection `places.fetch-connect-timeout-seconds`; the body read
     * whole (a dataset is one file).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def transport(places: PlacesConfig): HttpTransport =
     JavaHttpTransport(
       HttpTransport.TimeoutSeconds(places.fetchTimeoutSeconds.value),
@@ -43,6 +48,7 @@ object PluginGazetteers:
     * import's User-Agent over `transport`. Its `fetch` asks once and answers as it came; its `get` asks again after a
     * slow-down, as every plugin's.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def http(transport: HttpTransport, log: HostLog = HostLog.scribe): Plugin.Http =
     PolicyHttp(UserAgent, transport, log = log).plugin
 
@@ -53,6 +59,8 @@ object PluginGazetteers:
   /** Every place `source` answers, each checked and converted, in its order, and the ones refused with the reason.
     * `Left` when the source answered no dataset at all (its download failed, its body was not one).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def places(source: GazetteerSource, http: Plugin.Http): Either[Problem, (List[Place.Input], List[Warning])] =
     guard(source.fetch(http)).map { got =>
       val credit = guard(Right(source.rights)).toOption.flatMap(r => Option(r).flatMap(r => Option(r.credit)))
@@ -63,6 +71,8 @@ object PluginGazetteers:
   /** Pure: the host's place of a plugin's, or why it is refused — no id or kind, a shape or properties that are not
     * JSON, a period the host cannot read. Its source is its own, else the dataset's credit; nothing else is changed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def input(p: GazetteerPlace, credit: Attribution.Credit): Either[Problem, Place.Input] =
     try
       if p == null then Left(Problem.Invalid.Missing.here(Problem.Field("place")))
@@ -100,6 +110,8 @@ object PluginGazetteers:
     catch
       case NonFatal(e) => Left(Problem.from(e, Problem.Where("reading a plugin's place"), Problem.Internal.Id.mint()))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def name(n: GazetteerName): Either[Problem, Place.Name] =
     if n == null || Option(n.name).isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("name")))
     else
@@ -112,6 +124,8 @@ object PluginGazetteers:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def relation(r: GazetteerRelation): Either[Problem, Place.Relation] =
     if r == null then Left(Problem.Invalid.Missing.here(Problem.Field("relation")))
     else if Option(r.childId).forall(_.value.trim.isEmpty) then
@@ -137,6 +151,8 @@ object PluginGazetteers:
   /** A plugin's period and open side as the host's: the period's ends checked again ([[SpiValues.periodOf]]); an open
     * side without a period is refused (it would say nothing).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def span(
       period: Option[Period],
       open: Option[GazetteerOpenSide]
@@ -156,6 +172,7 @@ object PluginGazetteers:
       side
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def openSide(o: GazetteerOpenSide): OpenSide = o match
     case GazetteerOpenSide.Start => OpenSide.Start
     case GazetteerOpenSide.End   => OpenSide.End

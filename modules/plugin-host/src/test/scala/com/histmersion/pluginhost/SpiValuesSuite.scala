@@ -19,10 +19,13 @@ import com.histmersion.plugin.CatalogueEvent
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.plugin.MediaItem
 import com.histmersion.plugin.MediaRights
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The conversions between plugin-api's newtypes and the model's: plugin-api's judge nothing, so every value a plugin
   * hands over is checked by the model's type here, and a plain value the host still holds is parsed by it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 class SpiValuesSuite extends munit.FunSuite:
 
   test("towards a plugin: the host's values as the SPI's, a plain value that does not parse left out"):

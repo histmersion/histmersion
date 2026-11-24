@@ -9,6 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import java.time.Instant
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The five-field cron of a goal's schedules: parsing, the next firing in UTC, the day-of-month / day-of-week rule,
   * shortcuts, and what is refused.
@@ -16,6 +17,7 @@ import java.time.Instant
 class CronSuite extends munit.FunSuite:
 
   private def at(s: String) = Instant.parse(s)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def next(expr: String, after: String): Option[Instant] =
     Cron.parse(Cron.Text(expr)).toOption.get.next(at(after))
 

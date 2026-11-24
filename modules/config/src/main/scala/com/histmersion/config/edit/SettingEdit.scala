@@ -2,8 +2,10 @@ package com.histmersion
 package config.edit
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** One change to the config file: a setting written, or taken out (back to its default). */
+@movesTo(FeaturePlace.UtilSettings)
 enum SettingEdit(val key: SettingKey):
   case Set(setting: SettingKey, value: SettingValue) extends SettingEdit(setting)
   case Unset(setting: SettingKey) extends SettingEdit(setting)

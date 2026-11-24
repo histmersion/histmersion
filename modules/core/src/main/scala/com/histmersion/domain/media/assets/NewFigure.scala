@@ -7,10 +7,12 @@ import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One figure of a source as the caller supplies it — decoded bytes, not base64 — to be stored with the source's
   * Markdown (plan §1.8): keyed by `(citekey, name)`, which is exactly the `assets/<name>` link the body carries.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class NewFigure(
     name: NewFigure.Name,
     mime: NewFigure.Mime,
@@ -37,6 +39,8 @@ object NewFigure:
   object Height extends Newtype[Int, Pure]
 
   /** Decode a wire [[AssetInput]]; `Left` with a readable reason when the payload is unusable. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def of(in: AssetInput, maxBytes: ByteCount): Either[Problem, NewFigure] =
     val name = AssetLinks.safeName(in.name.value)
     scala.util
@@ -64,6 +68,7 @@ object NewFigure:
           )
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha256(bytes: Bytes): Sha256 =
     Sha256.assume(
       java.security.MessageDigest

@@ -7,7 +7,9 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[places] case class FootprintRow(
     id: FootprintRow.Id,
     placeId: domain.catalogue.Place.Id,
@@ -18,6 +20,8 @@ final private[places] case class FootprintRow(
     accuracyM: Option[FootprintRow.AccuracyM],
     citekey: Option[FootprintRow.Citekey]
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toDto: Place.Footprint =
     Place.Footprint(
       Place.Footprint.Id(id.value),

@@ -22,10 +22,12 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `/api/about` and `/api/config` report the plugins the server started with — their state and their settings, a secret
   * as its REFERENCE and never its value. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginsHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -47,6 +49,7 @@ class PluginsHttpSuite extends munit.FunSuite:
     val services = HostServices(
       () =>
         new Plugin.Http {
+          @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
           def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
             Left(Problem.Unclassified(Legacy.Text("offline")))
         },

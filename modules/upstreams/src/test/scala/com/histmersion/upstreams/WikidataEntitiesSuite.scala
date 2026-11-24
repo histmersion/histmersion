@@ -8,10 +8,12 @@ import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.upstreams.wikidata.WikidataItem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Wikidata's `wbgetentities` as the media collections and the host's label lookup read it: the URL of a batch of
   * items, their picture statements and Commons category, the best statements of a property. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WikidataEntitiesSuite extends munit.FunSuite:
   private val Asked = Problem.Upstream.Url("https://wd/w/api.php?action=wbgetentities")
 

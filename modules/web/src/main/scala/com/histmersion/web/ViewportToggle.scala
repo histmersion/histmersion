@@ -10,12 +10,14 @@ import scala.scalajs.js
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.media.MediaProvider
 import com.histmersion.web.map.MapSurface
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** "Only sources in view" toggle: mirrors the map's viewport into UiState.bbox so the server-side filter and the
   * shareable URL hash always agree with what the user is looking at.
   *
   * Ported from viewport.js.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object ViewportToggle:
   private def r5(x: Double): Double = Math.round(x * 1e5) / 1e5
 
@@ -28,6 +30,8 @@ object ViewportToggle:
     * comes back with minLon > maxLon; the server splits it into two envelopes. A viewport wider than the world becomes
     * the whole world.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bboxOf(map: MapSurface): String =
     val b = map.bounds
     val w = b.west.value
@@ -39,6 +43,7 @@ object ViewportToggle:
     s"${r5(lons._1)},${r5(s)},${r5(lons._2)},${r5(n)}"
 
   /** What the map shows now, if it is up: the preset menu puts that region's presets first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def viewBox: Option[BBox] =
     Option
       .when(TheMap.isUp)(TheMap.surface)
@@ -63,6 +68,7 @@ object ViewportToggle:
     UiState.sources.signal.combineWith(UiState.layers.signal).map((src, ls) => (if src then 1 else 0) + ls.size)
 
   /** The undated sites' or events' switch, under their layer. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def undatedBox(field: Field[Boolean], what: String): HtmlElement =
     label(
       cls := "layer-check",
@@ -75,6 +81,10 @@ object ViewportToggle:
     )
 
   /** One layer's row: its switch and — only while it is on — its own options (#1446, #1449). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def layerGroup(l: MapLayer): HtmlElement =
     def opts: List[HtmlElement] = l match
       case MapLayer.Boundaries => List(areaPickSelect)
@@ -115,6 +125,7 @@ object ViewportToggle:
     )
 
   /** The boundaries layer's "States shown" menu: how it reads the period ([[GeoPick]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def areaPickSelect: HtmlElement =
     label(
       cls := "layer-field",
@@ -139,6 +150,7 @@ object ViewportToggle:
   /** "On the map" (only the sources in the map's view) or "Everywhere": the results follow the map's view while it is
     * on.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def setInView(on: Boolean): Unit =
     dom.window.clearTimeout(timer)
     if on && TheMap.isUp then UiState.set(UiState.inView := true, UiState.bbox := Some(bboxOf(TheMap.surface)))()
@@ -148,6 +160,8 @@ object ViewportToggle:
     * options only while it is on, the background map and a link to the map's settings. On a phone the panel is the map
     * & tools drawer.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def init(config: UiConfig): HtmlElement =
     val initialInView = UiState.inView.now()
     div(

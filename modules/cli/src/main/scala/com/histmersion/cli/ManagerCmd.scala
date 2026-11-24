@@ -27,10 +27,13 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Stalls
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion manager` arguments")
 object ManagerCmd:
 
   private def config(kvs: List[String]): Either[Problems, ManagerConfig] =
@@ -63,6 +66,7 @@ object ManagerCmd:
   /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request (None: just show
     * it); a malformed one is a usage error before anything is sent.
     */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
     def usage(m: String) = Left(Cli.Error(Problem.Unclassified(Legacy.Text(m))))
     def num(s: String) =
@@ -101,6 +105,7 @@ object ManagerCmd:
           s"focus ${other.mkString(" ")}: use focus [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>]"
         )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def itemPatch(c: Client, id: ManagerInfo.Id, t: ManagerItem.Ref, p: ItemPatch)(using console: Console) =
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => Cli.out.println(ManagersMarkdown.item(i)))
 
@@ -121,9 +126,11 @@ object ManagerCmd:
     case Status(json: Cli.JsonOutput)
     case Items(status: Option[String], offset: Option[Int], limit: Option[Int], json: Cli.JsonOutput)
     case Events(before: Option[Long], limit: Option[Int])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Pause(runs: Boolean)
     case Resume
     case Stop
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Hint(text: String, item: Option[String], once: Boolean, suggest: Boolean)
     case Enqueue(kind: String, target: String, priority: Option[Int])
     case Hold(target: String, until: Option[String], untilSource: Option[String], reason: Option[String])
@@ -140,6 +147,7 @@ object ManagerCmd:
     case Enqueue(kind: String, t: String, p: Option[Int], json: Cli.JsonOutput)
     case Stalls(days: Option[Int], json: Cli.JsonOutput)
     case Digest(json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Create(
         kind: String,
         goal: Option[String],
@@ -169,6 +177,7 @@ object ManagerCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Managers(json) =>

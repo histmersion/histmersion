@@ -12,6 +12,7 @@ import com.histmersion.util.data.maintenance.{CacheEvent, CacheHolding, CacheNam
 import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.storage.Store
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the catalogue says about the data it owns: its tables, the gazetteer's stores and the base map's, the caches of
   * the map, what a bundle carries of it and how a merge treats it, its counts and its checks.
@@ -62,6 +63,7 @@ object CatalogueData extends DataContribution:
   override val mergeRules: List[MergeRules] = CatalogueExchange.mergeRules
 
   /** The base map's tiles read on demand: the relief deeper, the map and the sea floor outside the focus region. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def onDemand(directory: String): CacheHolding =
     CacheHolding.InStore(Location.Basemap, Store.Key.applyUnsafe(directory))
 

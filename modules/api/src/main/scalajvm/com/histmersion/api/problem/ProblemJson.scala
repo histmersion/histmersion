@@ -3,6 +3,7 @@ package api
 package problem
 
 import util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bare string is on the JVM, where a problem is otherwise read from its typed entry by the one codec both
   * platforms share (`NewtypeCodecs.problemCodec`, [[Answer.asProblem]]). A bare string is how a master version kept a
@@ -17,4 +18,5 @@ private[api] object ProblemJson:
   /** An entry whose case this build does not know, after [[Answer.translations]]: the sentence it was stored with, kept
     * whole (owner decision 7 of row 18, 2026-11-23).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def unknown(sentence: Problem.Sentence): Option[Problem] = Some(sentence.kept)

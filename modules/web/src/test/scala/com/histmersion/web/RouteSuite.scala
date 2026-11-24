@@ -4,11 +4,13 @@ package web
 import com.histmersion.api.WebPaths
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The web UI's addresses: every page has a path that reads back as the same page, sits under one of the four places,
   * and is one the server serves the app for; the old toolbar's windows each have exactly one page now; old addresses
   * land on their new pages.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RouteSuite extends munit.FunSuite:
 
   private val pages: List[Route] =

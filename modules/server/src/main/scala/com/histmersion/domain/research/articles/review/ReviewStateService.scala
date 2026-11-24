@@ -8,10 +8,13 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.ArticleReviewStatus
 import com.histmersion.api.research.ReviewRound
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the review manager, the review ledgers, the runs and the goals record about articles, read for their review
   * state. A mechanism over the engine's tables and the ledgers' JSON, counted in SQL, so it has no in-memory twin.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Service, "pending G16 (a service is a trait with Implementation and InMemory)")
 trait ReviewStateService:
 
   /** The review facts of each of `slugs` and the time of its item's last change; a slug nothing records maps to none.
@@ -30,6 +33,7 @@ object ReviewStateService:
   final private class Implementation(db: Transactor) extends ReviewStateService:
     def facts(slugs: List[Slug]): Map[Slug, (Facts, Option[ArticleReviewRepo.FactsRow.UpdatedAt])] =
       if slugs.isEmpty then Map.empty else db.read(ArticleReviewRepo.facts(slugs))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def runStarts(runs: List[Run.Id]): Map[Run.Id, ArticleReviewStatus.RunStart] =
       if runs.isEmpty then Map.empty
       else db.read(ArticleReviewRepo.runStarts(runs)).map((id, at) => id -> ReviewRound.StartedAt(at))

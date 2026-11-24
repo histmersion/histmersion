@@ -13,10 +13,12 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.{HistoricalPeriod, Lpf, Period, PeriodsMarkdown}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one year module (#1798 item 4): parsing what a person types, the astronomical conversion, and every formatter
   * agreeing on BCE/CE and on year 0 (shown as 1 BCE, never "0 CE").
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class YearsSuite extends munit.FunSuite:
 
   // ── parse: a table of what a person types ─────────────────────────────────────────────────────

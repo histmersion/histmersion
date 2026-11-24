@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.maintenance.Storage
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The last [[StorageFigures]] measurement, reused for `ttl` and measured again in the background after it — ONE
   * measurement at a time, however many Abouts ask. A request that finds nothing measured yet waits up to `wait` for the
@@ -20,6 +21,9 @@ import scala.util.control.NonFatal
   * @param spawn
   *   runs it (a virtual thread; a test runs it inline or holds it)
   */
+@tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class StorageCache(
     prepare: () => () => Storage.Report,
     ttlMillis: () => StorageCache.TimeToLive,
@@ -30,6 +34,7 @@ final class StorageCache(
   private val last = AtomicReference[Option[(Long, Storage.Report)]](None)
   private val running = AtomicReference[Option[CompletableFuture[Storage.Report]]](None)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(waitMillis: StorageCache.WaitMillis): Storage.Report =
     last.get match
       case Some((at, r)) if clock().value - at < ttlMillis().value => r
@@ -48,6 +53,7 @@ final class StorageCache(
           case _: InterruptedException => Storage.Report(measuring = Storage.Report.Measuring(true))
 
   /** The measurement under way, or a new one. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kick(): CompletableFuture[Storage.Report] =
     running.get match
       case Some(f) => f

@@ -60,6 +60,7 @@ import com.histmersion.api.research.CritiqueRef
 import com.histmersion.api.research.CritiqueState
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an
@@ -78,6 +79,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   def served(who: String): Int = Option(requests.get(who)).fold(0)(_.size)
 
   /** Which reviewer a call is for, from the shared agent definition its system prompt starts with. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def who(system: LlmCall.System): String =
     // the fixer's definition names the other three, so it is recognised first
     if system.value.contains("You are the **fixer**") then "fixer"
@@ -98,6 +100,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
       modelsUsed.computeIfAbsent(who(call.system), _ => ConcurrentLinkedQueue()).add(ref.wire)
       PanelClient.this.run(call)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val w = who(call.system)
     turns.put(w, call.maxIterations)
@@ -117,6 +120,7 @@ final class PanelClient(val model: ModelRef) extends LlmClient:
   * for an open MAJOR, a 412 from a concurrent writer, and a resume that replays the finished parallel steps. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -133,6 +137,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Article.Body(
     s"""Tin reached the Aegean by sea [[$Ck]].
        |
@@ -150,6 +155,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
        |""".stripMargin
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Revised =
     Article.Body(
       Body.value.replace("Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea")
@@ -183,6 +189,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .toList
       .flatMap(_.split("\nEverything else").head.linesIterator.map(_.stripPrefix("- ")).toList)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -234,6 +241,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     """{"citekey":"zzagent2019_tin","claim":"reached the Aegean by sea","verdict":"attributable","recordQuote":"The Uluburun ship carried ten tons of copper and one ton of tin."}"""
 
   /** A full-pass rules answer after the lookup its spot-check rests on. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def looked(json: String): Seq[AgentResponse] = Seq(tool("get_source", s"""{"citekey":"$Ck"}"""), text(json))
   private val coldPass =
     """{"verdict":"PASS","explainBack":"It asks how tin reached the Aegean. By sea. The date is argued. The mines are open.","emptySlots":[],"findings":[],"termsUndefined":0,"opaqueSentences":0,"lostAt":null}"""
@@ -258,6 +266,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   ) =
     s"""{"severity":"$sev","kind":"missing-critique","where":"$where","quote":"$quote","problem":"the article omits a critique of its source","fix":"cite the critic","evidence":[],"pair":${pair
         .fold("null")(p => s"\"$p\"")}}"""
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val edgeProposal =
     s"""{"kind":"edge","citekey":"$Ck","status":null,"edgeKind":"refutes","target":"$Ck2","evidence":"the newer study reassigns the tin","quote":"the tin of the Uluburun cargo came from Central Asia"}"""
   private val dateMajor =
@@ -1515,8 +1524,11 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   // ── #992: dry runs, a role's own model, compare ──────────────────────────────────────────────────
 
   private val Haiku = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("haiku-sim"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val HaikuOverride = ModelOverride.Model(Haiku.wire.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ScriptedOverride = ModelOverride.Model(Model.wire.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val HaikuRequest = RunRequest.Model(Haiku.wire.value)
   private lazy val evalCfg = baseCfg
     .modify(_.agents)
@@ -2147,6 +2159,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .isRight
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def logOf(h: ServerWiring) =
     h.workListView
       .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
@@ -2155,6 +2168,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .items
       .filter(_.text.value.contains(Slug.value))
       .map(_.text)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tasksOf(h: ServerWiring) =
     h.workListView
       .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
@@ -2163,6 +2177,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .items
       .filter(_.text.value.contains(Slug.value))
       .map(_.text)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val coCite = edit(
     "replace",
     s"Tin reached the Aegean by sea [[$Ck]].",

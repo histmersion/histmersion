@@ -34,6 +34,9 @@ import com.histmersion.api.automation.Creation
   * has, see [[replace]]). Within a source the same picture (a logo on every page) is stored ONCE: writes are
   * deduplicated by sha256, and the later names are dropped. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the asset tables and their row codecs")
 private[assets] object AssetRepo:
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
@@ -80,6 +83,7 @@ private[assets] object AssetRepo:
     * could patch against a token that no longer described what it had, and a reseed could overwrite freshly-attached
     * figures.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def touch(citekey: Citekey)(using DbCon): Unit =
     Unused(sql"UPDATE sources SET updated_at = now() WHERE citekey = $citekey".update.run(), Unused.Why.Idempotent)
 
@@ -87,6 +91,8 @@ private[assets] object AssetRepo:
     * and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's figures overwrote the (better) ones a
     * conversion had produced. For [[replace]] the clause is what updates a kept row in place.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def insert(citekey: Citekey, assets: List[NewFigure], replaceExisting: ReplaceExisting)(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): RowCount =
@@ -118,6 +124,9 @@ private[assets] object AssetRepo:
     }
     RowCount(assets.size)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def list(citekey: Citekey)(using DbCon): Vector[AssetInfo] =
     sql"""SELECT name, mime, length(bytes), sha256, width, height
           FROM assets WHERE citekey = $citekey ORDER BY name"""
@@ -135,6 +144,7 @@ private[assets] object AssetRepo:
       )
 
   /** The bytes to stream, with the mime type to serve them as. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def read(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Option[(AssetBytesRow.Mime, AssetBytesRow.Bytes)] =
     sql"SELECT mime, bytes FROM assets WHERE citekey = $citekey AND name = $name"
       .query[AssetBytesRow]
@@ -142,6 +152,7 @@ private[assets] object AssetRepo:
       .headOption
       .map(r => (r.mime, r.bytes))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def count(citekey: Citekey)(using DbCon): RowCount =
     sql"SELECT count(*) FROM assets WHERE citekey = $citekey"
       .query[Int]
@@ -150,9 +161,13 @@ private[assets] object AssetRepo:
       .map(RowCount(_))
       .getOrElse(RowCount(0))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def exists(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def detail(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Option[AssetDetail] =
     sql"""SELECT name, mime, length(bytes), sha256, width, height,
                  kind, caption, license,
@@ -185,6 +200,9 @@ private[assets] object AssetRepo:
   /** A figure's description changed: each field given, its point when both coordinates are, a bound of its period given
     * alone replacing that bound ([[RangeSql.merge]]). The figure must exist.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def patch(citekey: Citekey, name: AssetInfoRow.Name, p: AssetPatch)(using DbCon): Either[Api.Error, Unit] =
     if !exists(citekey, name) then
       Left(

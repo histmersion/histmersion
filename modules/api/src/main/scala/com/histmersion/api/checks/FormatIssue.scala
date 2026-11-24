@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class FormatIssue(
     rule: FormatRule,
@@ -30,6 +31,7 @@ object FormatIssue:
     type Length = Length.T
     object Length extends Newtype[Int, Pure]
   type Message = Message.T
+  @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
   object Message extends Newtype[String, Pure]
   type Fix = Fix.T
   object Fix extends Newtype[String, Pure]

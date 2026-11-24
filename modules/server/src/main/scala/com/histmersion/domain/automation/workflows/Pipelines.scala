@@ -15,11 +15,14 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.TargetKind
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What every agent pipeline does the same way (#1946) — each had its own copy:
   *   - [[log]]: a run ends with one line in the worklog (`queue log`), written through the run's write gate, so a dry
   *     run records the write it would have made instead.
   */
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[histmersion] object Pipelines:
 
   export Queue.QueueItem.{Text as EntryText, Topic as EntryTopic}
@@ -27,6 +30,8 @@ private[histmersion] object Pipelines:
   object LogLine extends Newtype[String, Pure]
 
   /** The goal a run works for: its own, else the goal it targets (the run record is our own). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalOf(run: Agents.RunInfo): Option[Goal.Slug] =
     run.goal
       .map(_.value)
@@ -35,6 +40,9 @@ private[histmersion] object Pipelines:
       .map(Goal.Slug.assume(_))
 
   /** A bookkeeping item a run writes: it names the run and the goal the run works for. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def entry(ctx: RunCtx, text: EntryText, topic: Option[EntryTopic] = None): QueueAdd =
     QueueAdd(
       text,
@@ -44,6 +52,9 @@ private[histmersion] object Pipelines:
     )
 
   /** Add `line` to the worklog; answers the line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Problems, LogLine] =
     val entry = Pipelines.entry(ctx, EntryText(line.value))
     ctx.write("log line", entry.asJson)(

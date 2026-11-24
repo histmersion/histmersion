@@ -13,11 +13,15 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobState
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Run
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a field's value crosses a string boundary — the URL hash (repeated keys for a list) or the browser's storage.
   * `decode` of nothing, or of garbage, is `None`: the field falls back to its default rather than to a half-parsed
   * value.
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Dom, "encodes a UI field to and from the URL hash and browser storage strings")
 trait FieldCodec[A]:
   def encode(a: A): List[FieldCodec.Token]
   def decode(vs: List[FieldCodec.Token]): Option[A]
@@ -29,6 +33,7 @@ object FieldCodec:
   type Token = Token.T
   object Token extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def clean(vs: List[Token]): List[String] = vs.map(_.value.trim).filter(_.nonEmpty)
 
   given optString: FieldCodec[Option[String]]:
@@ -45,39 +50,48 @@ object FieldCodec:
     override def multi = true
 
   given bool: FieldCodec[Boolean]:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def encode(a: Boolean) = if a then List(Token("true")) else Nil
     def decode(vs: List[Token]) = Some(clean(vs).headOption.contains("true"))
 
   given mapLayers: FieldCodec[Set[MapLayer]]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: Set[MapLayer]) = MapLayer.values.toList.filter(a).map(l => Token(l.wire.value))
     def decode(vs: List[Token]) = Some(clean(vs).flatMap(t => MapLayer.fromWire(MapLayer.Wire(t))).toSet)
     override def multi = true
 
   given windowKeys: FieldCodec[List[WindowKey]]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: List[WindowKey]) = a.map(k => Token(k.wire.value))
     def decode(vs: List[Token]) = Some(clean(vs).flatMap(t => WindowKey.parse(WindowKey.Wire(t))).distinct)
     override def multi = true
 
   given optJobState: FieldCodec[Option[JobState]]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: Option[JobState]) = a.toList.map(j => Token(j.wire.value))
     def decode(vs: List[Token]) = Some(clean(vs).headOption.flatMap(t => JobState.parse(JobState.Wire(t))))
 
   given optRunState: FieldCodec[Option[Agents.RunState]]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: Option[Agents.RunState]) = a.toList.map(r => Token(r.wire.value))
     def decode(vs: List[Token]) = Some(clean(vs).headOption.flatMap(t => Agents.RunState.parse(Run.State.Wire(t))))
 
   given sheet: FieldCodec[Sheet]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: Sheet) = List(Token(a.wire.value))
     def decode(vs: List[Token]) = clean(vs).headOption.flatMap(Sheet.fromWire)
 
   given baseMap: FieldCodec[BaseMap]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: BaseMap) = List(Token(a.wire.value))
     def decode(vs: List[Token]) = clean(vs).headOption.flatMap(t => BaseMap.fromWire(BaseMap.Wire(t)))
 
   given mapMotion: FieldCodec[MapMotion]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: MapMotion) = List(Token(a.wire.value))
     def decode(vs: List[Token]) = clean(vs).headOption.flatMap(t => MapMotion.fromWire(MapMotion.Wire(t)))
 
   given geoPick: FieldCodec[GeoPick]:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def encode(a: GeoPick) = List(Token(a.wire.value))
     def decode(vs: List[Token]) = clean(vs).headOption.flatMap(t => GeoPick.parse(GeoPick.Wire(t)))

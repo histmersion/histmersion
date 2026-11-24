@@ -28,6 +28,8 @@ import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.research.Articles
 import com.histmersion.api.research.ReviewGoal
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -35,6 +37,7 @@ import com.histmersion.api.research.ReviewGoal
   * `/api/articles/import`, exactly as `histmersion seed` does for source notes, because the containerised server cannot
   * see the host filesystem.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion article` arguments and reads the body and filter files they name")
 object ArticleCli:
   type Exported = Exported.T
   object Exported extends Newtype[Int, Pure]
@@ -54,6 +57,7 @@ object ArticleCli:
   object WikiLayout:
     val SourcesDir: MirrorPlacement.Directory = MirrorPlacement.SourcesDirectory
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def of(dir: Path): WikiLayout =
       val here = Option(dir.getFileName).map(_.toString).getOrElse("")
       if Files.isDirectory(dir.resolve(SourcesDir.value)) then WikiLayout(dir.resolve(SourcesDir.value), Some(dir))
@@ -98,6 +102,7 @@ object ArticleCli:
   /** Package one article note for the server: text, fallback slug/kind, and the mtime that drives the "stored row is
     * newer than the file" skip.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def toImport(file: Path, kind: Article.Kind.Wire, force: Api.Overwrite): Article.Import =
     Article.Import(
       text = Article.Import.Text(Files.readString(file)),
@@ -110,6 +115,8 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def importAll(c: Client, root: Path, force: Api.Overwrite, skip: Set[MirrorPlacement.Directory])(using
       console: Console
   ): SeedResult =
@@ -148,6 +155,9 @@ object ArticleCli:
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, Exported] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
@@ -179,6 +189,8 @@ object ArticleCli:
     * the fallback only guards a hand-edited file.
     */
   private val TypeKey = """(?m)^type:\s*["']?([^"'\r\n]+)["']?\s*$""".r
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def kindOfNote(text: Article.Export): Article.Kind.Wire =
     Article.Kind.Wire(
       TypeKey
@@ -191,19 +203,25 @@ object ArticleCli:
   // ── the `histmersion article …` subcommands ──────────────────────────────────────────────────────
 
   /** Progress report of an article import (also used by `histmersion seed`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def report(r: SeedResult)(using console: Console): Unit =
     Cli.out.println(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), failed ${r.failed.size}")
     r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
     r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def usage(problem: Problem): Cli.Error = Cli.Error(problem)
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def readFile(p: Path): Either[Cli.Error, String] =
     if Files.isRegularFile(p) then Right(Files.readString(p))
     else Left(usage(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
 
   /** Carries out ArticleCommand commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def apply(cmd: ArticleCommand): Either[Cli.Error, Unit] =
       cmd match
         case ArticleCommand.Listing(text, kind, f, json) =>

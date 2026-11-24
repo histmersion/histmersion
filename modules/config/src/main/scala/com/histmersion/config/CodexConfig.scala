@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login of a
   * `CODEX_HOME` of its own (the generated `<runtimes>/codex/home`, or `home`), never a copied `auth.json`
@@ -17,6 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *     `agents/_shared/codex-base-instructions.md`) in place of Codex's built-in one (~21k characters of collaboration,
   *     PR, skills and plugin guidance, re-sent on every request); `builtin` keeps Codex's.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class CodexConfig(
     command: CodexConfig.Command,
     home: CodexConfig.Home,
@@ -35,6 +38,7 @@ final case class CodexConfig(
     sqlite: CodexConfig.Sqlite = CodexConfig.Sqlite("sqlite3")
 ) derives ConfigReader:
   /** `builtin` (any case) keeps Codex's own base prompt; anything else is `lean`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def leanBase: Boolean = !baseInstructions.value.trim.equalsIgnoreCase("builtin")
 
 object CodexConfig:

@@ -11,15 +11,21 @@ import com.histmersion.upstreams.core.CoreApi
 import java.time.LocalDate
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved `api-key`, else
   * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, limits: CoreQuota.Limits)
     extends ScholarlyIndex:
   val name = ScholarlyIndex.Name("core")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def unavailable: Option[Problem] =
     budget.unavailable(limits, CoreQuota.Purpose.Search).map(r => Problem.Unclassified(Legacy.Text(r.describe.value)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     key match
       case None =>

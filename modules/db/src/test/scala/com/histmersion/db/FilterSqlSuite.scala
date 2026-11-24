@@ -27,10 +27,12 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.Frag
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FilterSqlSuite extends munit.FunSuite:
 
   private def where(f: Filter, scope: PlaceScope = PlaceScope.empty): Frag = FilterSql.where(f, scope)

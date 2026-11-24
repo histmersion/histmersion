@@ -13,6 +13,7 @@ import java.io.{BufferedOutputStream, IOException, OutputStream}
 import java.security.MessageDigest
 import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Writes a clustered PMTiles v3 archive: tiles are [[add]]ed in ascending tile-id order, identical contents are stored
   * once (a sea of identical ocean tiles costs one tile), consecutive ids that share a content become one run, and
@@ -23,6 +24,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * those sections lie anywhere. So a multi-gigabyte extract never needs twice its size on disk, and memory holds only
   * the entries and one digest per content.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class PmTilesWriter(out: Reservation):
 
   private val data: OutputStream = BufferedOutputStream(out.output(), 1 << 16)
@@ -34,9 +36,11 @@ final class PmTilesWriter(out: Reservation):
   private var lastId = -1L
   private var addressed = 0L
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tileCount: PmTiles.Header.AddressedTiles = PmTiles.Header.AddressedTiles(addressed)
 
   /** Add tile `id` (strictly greater than the last one added) with its stored bytes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def add(id: PmTiles.Entry.TileId, bytes: PmTiles.TileBytes): Unit =
     val raw: Array[Byte] = bytes.value
     require(id.value > lastId, s"tiles must be added in ascending id order (${id.value} after $lastId)")
@@ -59,6 +63,7 @@ final class PmTilesWriter(out: Reservation):
   /** Complete the archive and return its size. `template` supplies the tile type, compression, zooms, bounds and
     * centre; the offsets and counts are this writer's.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finish(template: PmTiles.Header, metadata: Json): ByteCount =
     val ic = PmTiles.Compression.Gzip
     val (root, leaves) = PmTilesWriter.directories(entries.toVector, ic)
@@ -119,6 +124,7 @@ object PmTilesWriter:
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def directories(
       entries: Vector[PmTiles.Entry],
       c: PmTiles.Compression

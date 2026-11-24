@@ -4,6 +4,7 @@ package web.settings
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The changes a Settings form holds before they are saved: each key's text to write, or `None` to take the setting out
   * of the file (back to its default).
@@ -16,7 +17,9 @@ final class Draft:
   def forget(key: ConfigEdit.Field.Key): Unit = held.update(_ - key)
   def clear(): Unit = held.set(Map.empty)
   def isEmpty: Signal[Boolean] = held.signal.map(_.isEmpty)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def count: Signal[Draft.Count] = held.signal.map(m => Draft.Count(m.size))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def changes: List[ConfigEdit.Change] = held
     .now()
     .toList
@@ -24,6 +27,7 @@ final class Draft:
     .map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), v.map(t => ConfigEdit.Change.Value(t.value))))
 
   /** What the form shows for `f`: the change held, else what the file says, else what applies. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shown(f: ConfigEdit.Field): Signal[Draft.Text] =
     held.signal.map(_.get(f.key) match
       case Some(Some(v)) => v
@@ -44,6 +48,7 @@ object Draft:
 
   /** A value as HOCON writes it, as a person types it: a string without its quotes. Pure. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plain(v: Option[Text]): Text =
     v.fold(Text("")) { s =>
       val t = s.value.trim
@@ -55,4 +60,5 @@ object Draft:
     }
 
   /** Is a flag's value on? Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isOn(text: Text): Boolean = Set("true", "yes", "on")(text.value.trim.toLowerCase)

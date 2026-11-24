@@ -14,6 +14,8 @@ import com.histmersion.domain.{CreatedAt, Creator}
 /** The jobs that wrote or write a source: their records follow a rename and stay as history, and a job not finished yet
   * refuses a delete (it would write the source back).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the job rows that point at a deleted source")
 final class JobSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =

@@ -37,6 +37,8 @@ import com.histmersion.api.text.WikiLinks
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.articles.ArticleSummaryRow
 import com.histmersion.domain.library.sources.SourceNote
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The FORMATTING lint: what in an agent's Markdown will not display as it was meant (pure).
   *
@@ -49,6 +51,7 @@ import com.histmersion.domain.library.sources.SourceNote
   * Each problem carries the edits that repair it when the repair never touches wording (insert a blank line, unescape
   * `\[\[`, strip a pasted frontmatter block); [[fix]] applies them.
   */
+@movesTo(FeaturePlace.ResearchArticlesLint)
 object MarkdownLint:
 
   /** What the check knows beyond the text.
@@ -81,6 +84,7 @@ object MarkdownLint:
   /** An issue and the edits that repair it (empty = not mechanically fixable). */
   final case class Finding(issue: FormatIssue, edits: List[Edit])
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def issues(text: Scan.Text, field: FormatField, ctx: Context = Context()): List[FormatIssue] =
     check(text, field, ctx).map(_.issue)
 
@@ -89,6 +93,7 @@ object MarkdownLint:
   /** What to look up before checking `texts`: every `[[target]]`, and every token shaped like a citekey (a bare one is
     * only a problem when a source by that name exists). One `pageLinks` call answers both.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lookups(texts: List[Scan.Text]): List[WikiLinks.Occurrence.Target] =
     texts
       .flatMap(t =>
@@ -99,6 +104,7 @@ object MarkdownLint:
       .distinct
       .map(WikiLinks.Occurrence.Target(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolving(links: WikiLinks.Occurrence.Target => Option[LinkTarget], article: Boolean): Context =
     Context(
       article = Context.Article(article),
@@ -109,6 +115,8 @@ object MarkdownLint:
   /** An article's body (checked as an article: its `# Title` is expected, a `Sources cited` heading is not) and its
     * summary.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofArticle(
       body: Scan.Text,
       summary: Option[ArticleSummaryRow.Summary],
@@ -118,6 +126,7 @@ object MarkdownLint:
       summary.toList.flatMap(s => issues(Scan.Text(s.value), FormatField.Summary, resolving(links, article = false)))
 
   /** A source's summary and notes — the two texts an agent writes about one source. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofSource(
       summary: Option[domain.library.Source.Summary],
       notes: Option[SourceNote.Text],
@@ -127,6 +136,8 @@ object MarkdownLint:
       notes.toList.flatMap(n => issues(Scan.Text(n.value), FormatField.Notes, resolving(links, article = false)))
 
   /** The `--strict` gate: the ERRORS among `issues`, as the refusal message, or `None` to write. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def refusal(issues: List[FormatIssue]): Option[Problem] =
     val errs = issues.filter(_.severity == FormatSeverity.Error)
     Option.when(errs.nonEmpty)(
@@ -143,6 +154,8 @@ object MarkdownLint:
     * fence exposes the body inside it). At most three rounds; returns the new text and one line per applied repair.
     * Wording is never changed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fix(text: Scan.Text, field: FormatField, ctx: Context = Context()): (Scan.Text, List[Repair]) =
     @annotation.tailrec
     def loop(t: String, round: Int, done: List[String]): (String, List[String]) =
@@ -170,9 +183,12 @@ object MarkdownLint:
 
   // ── the check ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(text: Scan.Text, field: FormatField, ctx: Context = Context()): List[Finding] =
     checkPlain(text.value, field, ctx)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def checkPlain(text: String, field: FormatField, ctx: Context): List[Finding] =
     if text.trim.isEmpty then Nil
     else
@@ -358,6 +374,7 @@ object MarkdownLint:
       val show = if cut.length > 80 then cut.take(79) + "…" else cut
       (if from > 0 then "…" else "") + show + (if to < ln.length && cut.length <= 80 then "…" else "")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def add(
         rule: FormatRule,
         off: Int,
@@ -386,6 +403,7 @@ object MarkdownLint:
     // ── the masked text and its AST ──────────────────────────────────────────────────────────────
     // every wikilink the renderer rewrites is replaced by `W`s of the same length (as the page puts
     // an anchor there before flexmark runs), so `**[[ck]]**` is bold and `[[a_b|c]]` no table cell
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     final private case class Wikilink(
         start: Int,
         end: Int,
@@ -394,6 +412,8 @@ object MarkdownLint:
         escaped: Boolean,
         target: Option[String]
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     private val links = Article.Links
       .occurrences(WikiLinks.Body(text))
       .map(o =>
@@ -857,6 +877,7 @@ object MarkdownLint:
 
     // ── links and images ───────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def linkNodes(): Unit = nodes.foreach {
       case r: LinkRef if !insideCode(r) =>
         val ref = r.getReference.toString
@@ -1002,6 +1023,7 @@ object MarkdownLint:
 
     // ── headings ───────────────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def headings(): Unit =
       val hs = nodes.collect { case h: Heading => h }
       // `##Heading`: a paragraph line that wanted to be a heading
@@ -1195,6 +1217,7 @@ object MarkdownLint:
 
     // ── line checks: chatter, placeholders, math, entities, bare URLs and citekeys ──────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def lineChecks(): Unit =
       var dollars = List.empty[Int]
       (0 until nLines).foreach { l =>
@@ -1307,6 +1330,7 @@ object MarkdownLint:
 
     // ── wikilinks ──────────────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def wikilinks(): Unit =
       val unresolved = mutable.Set.empty[String]
       links.filterNot(o => code.get(o.start)).foreach { o =>

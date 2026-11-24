@@ -8,7 +8,9 @@ import com.histmersion.api.maintenance.StorageMarkdown
 import com.histmersion.api.plugins.PluginsMarkdown
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AboutMarkdown:
   def age(seconds: Long): String =
     val s = math.max(0L, seconds)
@@ -17,6 +19,9 @@ object AboutMarkdown:
     else if s < 86400 then (s"${s / 3600} h")
     else (s"${s / 86400} d")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def render(a: About): String =
     val b = a.build
     val commit = b.gitCommit.fold("unknown")(c =>

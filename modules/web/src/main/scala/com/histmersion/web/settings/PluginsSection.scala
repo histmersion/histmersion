@@ -19,6 +19,8 @@ object PluginsSection:
 
   /** What became of a plugin, in words. Pure. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def state(p: PluginStatus): State = PluginState.parse(p.state) match
     case Some(PluginState.Registered) => State("Working")
     case Some(PluginState.Disabled)   => State("Turned off")
@@ -27,6 +29,8 @@ object PluginsSection:
     case None                         => State(Wording.humanize(Wording.Id(p.state.value)))
 
   /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def provides(p: PluginStatus): List[Capability] =
     p.provides.map(_.value.takeWhile(_ != ':')).distinct.map {
       case "source-fetcher"   => Capability("Finds papers")
@@ -37,6 +41,8 @@ object PluginsSection:
       case other              => Capability(Wording.humanize(Wording.Id(other)))
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig): HtmlElement =
     val r = ui.plugins
     div(

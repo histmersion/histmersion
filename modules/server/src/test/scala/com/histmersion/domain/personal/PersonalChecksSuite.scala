@@ -7,8 +7,10 @@ import com.histmersion.api.ItemKind
 import com.histmersion.api.personal.{MapZoom, Target}
 import com.histmersion.domain.personal.bookmarks.Bookmark
 import com.histmersion.domain.personal.notes.Note
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the server checks of a personal mark a client sent, once, where the api value becomes the domain's. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PersonalChecksSuite extends munit.FunSuite:
 
   test("a bookmark's or a note's id is a lower-case UUID; any case is read, anything else refused"):

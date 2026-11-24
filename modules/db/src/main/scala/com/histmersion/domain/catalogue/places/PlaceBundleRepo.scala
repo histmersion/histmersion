@@ -20,11 +20,16 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
   * deterministic order, and written in by an import.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the place rows for bundle export and import")
 private[places] object PlaceBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
@@ -40,6 +45,9 @@ private[places] object PlaceBundleRepo:
     * of those ids as well (what a merge compares the bundle's against).
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def places(scope: BundleScope, alsoIds: List[BPlaceRow.Id] = Nil)(using DbCon): Vector[Bundle.Place] =
     val own = sql"p.dataset = 'local' AND ${where(scope, sql"p.uid", sql"p.updated_at")}"
     val sel = if alsoIds.isEmpty then own
@@ -128,6 +136,7 @@ private[places] object PlaceBundleRepo:
   /** Old place ids (V055) of the places a bundle carries — this collection's own (as [[places]]): a gazetteer seed
     * place travels as the reference fingerprint, not as a row.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def placeAliases(scope: BundleScope)(using DbCon): Vector[Bundle.PlaceAlias] =
     sql"""SELECT x.alias, p.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM place_aliases x JOIN places p ON p.id = x.place_id WHERE p.dataset = 'local' AND ${where(
@@ -142,6 +151,7 @@ private[places] object PlaceBundleRepo:
   /** The site types refined from outside (`places.site_type`, V085) — of ANY place, the gazetteer's seeds included —
     * and the places asked about with no answer (so the other side does not ask again).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def siteTypes(scope: BundleScope)(using DbCon): Vector[Bundle.SiteType] =
     sql"""SELECT p.id, p.site_type, ${Timestamps.iso(sql"p.site_type_checked_at")} FROM places p
                 WHERE (p.site_type IS NOT NULL OR p.site_type_checked_at IS NOT NULL) AND ${where(
@@ -190,6 +200,7 @@ private[places] object PlaceBundleRepo:
     * geometry match on the label alone. The nearest (most overlapping) place wins; a local place is preferred to a seed
     * one.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def matchPlaces(ps: List[Bundle.Place], cfg: MergeSettings)(using DbCon): Map[UUID, BPlaceRow.Id] =
     val norm = PlaceSql.normLabel(sql"p.label")
     ps.flatMap { b =>
@@ -218,6 +229,8 @@ private[places] object PlaceBundleRepo:
   /** A place the other side renamed whose line is not written here (this collection's version was kept) keeps its id:
     * the bundle's events and child places that name the new id point at it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def placeHere(w: BundleImport.Writer): BPlaceRow.Id => BPlaceRow.Id =
     val ours = w.local.places.map(p => p.uid -> p.id.value).toMap
     val kept =
@@ -230,6 +243,8 @@ private[places] object PlaceBundleRepo:
   /** A place renamed over there (#888): the rename here first — its names, parents, footprints, events and finding
     * assignments follow by key, and the old id stays an alias — then the row.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def placeRenames(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.followRenames(
@@ -248,6 +263,8 @@ private[places] object PlaceBundleRepo:
   /** Places of the other collection's own (V052): before the events that point at them. Their sets (names, parents,
     * links, types) are replaced; a parent that is neither here nor in the bundle is left out.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def placesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val placeHere = this.placeHere(w)
@@ -311,6 +328,7 @@ private[places] object PlaceBundleRepo:
     }
 
   /** Old place ids (V055), as old slugs: never one that is a place id here, never one another place has. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def placeAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.placeAliases.foreach { a =>
@@ -325,6 +343,8 @@ private[places] object PlaceBundleRepo:
     }
 
   /** The site types the other side refined: the newer answer wins, as for the event-catalogue sets. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def siteTypesIn(w: BundleImport.Writer): Unit =
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     given DbCon = w.transaction

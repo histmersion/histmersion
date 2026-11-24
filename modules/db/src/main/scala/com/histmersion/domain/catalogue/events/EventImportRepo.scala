@@ -24,10 +24,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the event import tables and their row codecs")
 private[events] object EventImportRepo:
   type PartName = PartName.T
   object PartName extends Newtype[String, Pure]
@@ -36,6 +40,7 @@ private[events] object EventImportRepo:
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
     */
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def stored(using DbCon): List[StoredEvent] =
     sql"""SELECT e.id, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
                  ST_Y(a.pt), ST_X(a.pt), e.wikidata,
@@ -127,6 +132,8 @@ private[events] object EventImportRepo:
   /** Refresh an import's own event from its owner record `r`, its applied corrections over `r`'s values; a span kept by
     * hand drops the catalogue's stated year and ± (they do not explain it).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def refresh(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using
       DbCon
   ): Correction.Counts =
@@ -160,9 +167,13 @@ private[events] object EventImportRepo:
     )
     Corrections.counts(outcomes)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def pointSql(r: CatalogRecord): Option[String] =
     for la <- r.lat; lo <- r.lon yield s"SRID=4326;POINT($lo $la)"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def insertEvent(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): Unit =
@@ -179,6 +190,7 @@ private[events] object EventImportRepo:
                   ${r.datingMethod}, ${StoredCreator.column(creator)}::jsonb, $at::timestamptz)""".update.run()
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def fill(id: Event.Id, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =
     Unused(
       sql"""UPDATE events SET wikidata = coalesce(wikidata, $wd),
@@ -191,6 +203,8 @@ private[events] object EventImportRepo:
   /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what the event's fields
     * are compared with when a person corrects them. `None`: not an import's event.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def upstreamOf(id: Event.Id)(using DbCon): Option[(CatalogRecord.Provider, CatalogRecord)] =
     sql"SELECT catalogue FROM events WHERE id = $id"
       .query[Option[CatalogRecord.Provider]]
@@ -214,6 +228,7 @@ private[events] object EventImportRepo:
     * event's kind, in key order — what `events rederive` computes again. A row whose record no longer decodes is
     * counted in the second value and left alone.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def records(provider: Option[CatalogRecord.Provider])(using
       DbCon
   ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
@@ -230,6 +245,7 @@ private[events] object EventImportRepo:
   /** The kind each stored record of `provider` has, by key — what an item read again in another class is compared with
     * ([[EventProviders.WikidataEvents.moreSpecific]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def storedKinds(
       provider: CatalogRecord.Provider
   )(using DbCon): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
@@ -239,6 +255,8 @@ private[events] object EventImportRepo:
       .map((p, i, k) => (p, i) -> k)
       .toMap
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def upsertRecord(eventId: Event.Id, r: CatalogRecord)(using DbCon): Unit =
     val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
@@ -257,18 +275,23 @@ private[events] object EventImportRepo:
 
   // ── the parts of a catalogue read ───────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def partsDone(provider: CatalogRecord.Provider)(using DbCon): Set[PartName] =
     sql"SELECT part FROM event_import_parts WHERE provider = $provider".query[PartName].run().toSet
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def markPart(provider: CatalogRecord.Provider, part: PartName, records: RowCount)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO event_import_parts (provider, part, records) VALUES ($provider, $part, $records)
             ON CONFLICT (provider, part) DO UPDATE SET records = EXCLUDED.records, done_at = now()""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def clearParts(provider: CatalogRecord.Provider)(using DbCon): Unit =
     Unused(sql"DELETE FROM event_import_parts WHERE provider = $provider".update.run(), Unused.Why.Idempotent)
 
   /** The catalogue rows of one event, with each provider's licence and citation. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def catalogueRefs(id: Event.Id)(using DbCon): List[EventCatalogueRef] =
     sql"""SELECT provider, provider_id, url, vei, magnitude, deaths, retrieved_at::text
           FROM event_catalogue WHERE event_id = $id ORDER BY provider, provider_id"""

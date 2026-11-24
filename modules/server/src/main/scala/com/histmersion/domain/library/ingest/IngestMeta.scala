@@ -4,8 +4,10 @@ package domain.library.ingest
 import com.histmersion.api.library.Edge
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The metadata an ingest carries, whatever the acquisition channel was. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class IngestMeta(
     title: IngestMeta.Title,
     authors: List[IngestMeta.Authors] = Nil,
@@ -21,6 +23,7 @@ final case class IngestMeta(
 )
 
 object IngestMeta:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   type Authors = Authors.T

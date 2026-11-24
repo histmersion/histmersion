@@ -15,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The research goals (docs/research-embedded-agents.md §14): the goals window (the goals as a tree) and one window per
   * goal — its sub-goals and links (sources, articles, search queries, queue items), the plan waiting for approval with
@@ -53,6 +54,7 @@ object GoalsView:
   /** Goals as a tree, depth first: each root (no parent, or a parent that is not listed) then its sub-goals, by slug,
     * with their depth. A cycle cannot loop: a goal is listed once.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tree(goals: List[Goal]): List[(Goal, Depth)] =
     val slugs = goals.map(_.slug).toSet
     val byParent = goals.groupBy(g => g.parentSlug.filter(slugs))
@@ -67,9 +69,11 @@ object GoalsView:
     */
   val stages: List[(Goal.Stage, Goal.StageMeaning)] = Goal.Stages.all
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def meaning(status: Goal.Stage): Option[Goal.StageMeaning] = Goal.Stages.meaning(status)
 
   /** The open plan approval of a goal, if a plan run is waiting on one. */
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def pendingPlan(as: List[ApprovalInfo], slug: Goal.Slug): Option[ApprovalInfo] =
     as.find(a =>
       a.approvalKind.contains(ApprovalKind.GoalPlan) && a.subject.contains(slug) &&
@@ -77,6 +81,7 @@ object GoalsView:
     )
 
   /** What the schedule editor starts from: the schedule's own cron, else a sensible default. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def defaultCron(k: ScheduleKind): Goal.Plans.GoalSchedule.Cron = k match
     case ScheduleKind.Currency    => Goal.Plans.GoalSchedule.Cron("@weekly")
     case ScheduleKind.Acquisition => Goal.Plans.GoalSchedule.Cron("@monthly")
@@ -85,6 +90,8 @@ object GoalsView:
   def linksOf(ls: List[GoalLink], k: LinkKind): List[GoalLink] = ls.filter(_.kind == k)
 
   /** A link to add, from the editor's kind and text: `None` when the text is blank. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linkToAdd(kind: LinkKind, raw: Goal.Plans.LinkAdd.Ref, note: Goal.Plans.LinkAdd.Note): Option[LinkAdd] =
     Option(raw.value)
       .map(_.trim)
@@ -92,6 +99,8 @@ object GoalsView:
       .map(r => LinkAdd(kind, LinkAdd.Ref(r), Option(note.value).map(_.trim).filter(_.nonEmpty).map(LinkAdd.Note(_))))
 
   /** A slug from a title: lower case, runs of anything but letters and digits as one '-'. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def slugify(title: Goal.Title): Goal.Slug =
     Goal.Slug(
       title.value.trim.toLowerCase.replaceAll("[^a-z0-9]+", "-").stripPrefix("-").stripSuffix("-")
@@ -118,6 +127,10 @@ object GoalsView:
   /** The form → what to create. A blank slug comes from the title; tags are comma-separated. Watching: auto-ingest is
     * OFF unless ticked; its cap (blank = the server's default) a whole number.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def newArea(
       title: Goal.Title,
       slug: Goal.Slug,
@@ -160,6 +173,8 @@ object GoalsView:
       )
 
   /** What the form did, in one line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def createdNote(
       a: NewArea,
       planned: Planned,
@@ -180,6 +195,8 @@ object GoalsView:
     )
 
   /** What the server's one operation made, in one line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def madeNote(a: NewArea, made: Goal.AreaCreated): CreatedNote =
     val managers = made.seed.toList ++ made.watch.toList
     createdNote(
@@ -196,11 +213,14 @@ object GoalsView:
   private val loaded = Var(false)
   private val failure = Var(Option.empty[String])
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refresh(): Unit =
     ApiClient.goals(Some(Paging.Limit(Limit))).onComplete { r =>
       r.fold(e => failure.set(Some(e.getMessage)), gs => { failure.set(None); goals.set(gs.goals); loaded.set(true) })
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tool-pane goals-pane",
@@ -231,6 +251,10 @@ object GoalsView:
     )
 
   /** A goal's status as a coloured badge, its meaning on hover. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def badge(status: GoalsView.BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
     span(
       cls := s"job-state goal-status state-${status.value}",
@@ -239,6 +263,7 @@ object GoalsView:
     )
 
   /** The stages, left to right, each badge with what it means. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def legend: HtmlElement =
     ul(
       cls := "goal-legend",
@@ -250,6 +275,8 @@ object GoalsView:
     * paused; the watcher's auto-ingest of legal open-access finds is off unless ticked, with its daily cap). The slug
     * must be free: an existing goal is never replaced.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def newAreaForm(refresh: () => Unit): HtmlElement =
     val name = Var(""); val slug = Var(""); val notes = Var(""); val tags = Var("")
     val plan = Var(true); val seed = Var(true); val watch = Var(false); val ingest = Var(false); val perDay = Var("")
@@ -363,6 +390,10 @@ object GoalsView:
   // ── one goal ────────────────────────────────────────────────────────────────────────────────────
 
   /** One goal's window; its state is its own (several goals can be open at once). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def goalPane(slug: Goal.Slug): HtmlElement =
     val view = Var(Option.empty[GoalView])
     val runs = Var(List.empty[RunInfo])
@@ -478,6 +509,9 @@ object GoalsView:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def planSection(
       slug: GoalsView.PlanSectionSlug,
       approvals: Signal[List[ApprovalInfo]],
@@ -516,6 +550,9 @@ object GoalsView:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def linksSection(
       slug: Goal.Slug,
       links: List[GoalLink],
@@ -611,6 +648,10 @@ object GoalsView:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def schedulesSection(
       slug: Goal.Slug,
       ss: List[GoalSchedule],
@@ -713,6 +754,7 @@ object GoalsView:
       ul(cls := "goal-schedules", ScheduleKind.values.toList.map(editor))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runsSection(runs: Signal[List[RunInfo]]): HtmlElement =
     div(
       cls := "goal-section",

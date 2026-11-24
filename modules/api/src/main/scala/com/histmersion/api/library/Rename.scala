@@ -15,6 +15,8 @@ object Rename:
   type ShortForm = ShortForm.T
   object ShortForm extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shortForms(ck: Citekey): List[ShortForm] =
     ((ck).value.indices
       .filter(i => i > 0 && (ck).value.charAt(i) == '_')
@@ -22,11 +24,14 @@ object Rename:
       .toList)
       .map(refactorValue => ShortForm(refactorValue))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def findingId(id: Finding.Id, oldCk: Citekey, newCk: Citekey): Option[Finding.Id] =
     Option.when((id).value.startsWith((oldCk).value + "#"))(
       Finding.Id((newCk).value + (id).value.drop((oldCk).value.length))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def replaceToken(text: String, oldCk: Citekey, newCk: Citekey): String =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote((oldCk).value)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement((newCk).value))

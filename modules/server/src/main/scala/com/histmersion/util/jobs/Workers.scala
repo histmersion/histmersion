@@ -11,6 +11,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every long-running worker of one server, as a restore holds them ([[Quiescent]]): the pools and loops register
   * themselves when the composition builds them, and work that runs once on a thread of its own is started through
@@ -46,6 +47,7 @@ final class Workers(gate: WritePermit.Gate):
   /** Run `work` once, on a daemon thread of its own named `histmersion-<name>`, as one unit: a restore waits for it
     * (bounded) and fences it off when it is still running then. `work` holds the unit's permit.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def detached(name: Quiescent.Name)(work: () => WritePermit ?=> Unit): Unit =
     val ticket = Workers.Ticket(tickets.incrementAndGet())
     val _ = running.put(ticket, Quiescent.Busy(s"$name"))
@@ -79,6 +81,7 @@ final class Workers(gate: WritePermit.Gate):
   /** The restore has ended: every worker takes work again. */
   def resumeAll(): Unit = each(Problem.Where("resuming"))(_.resume())
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def each(step: Problem.Where)(f: Quiescent => Unit): List[Problem] =
     registered.asScala.toList.flatMap { w =>
       try

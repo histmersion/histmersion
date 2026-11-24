@@ -7,6 +7,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** @param dependencies
   *   `None` in a record written before dependencies were recorded
@@ -42,6 +43,7 @@ object PluginSet:
   /** SHA-256 of no bytes. */
   val EmptyDigest = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(s: Option[PluginSet]): Description = s match
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       Description(s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest.value).take(12)}…)")

@@ -19,6 +19,8 @@ import com.histmersion.domain.{CreatedAt, Creator}
   * their links through the article write path (each rewrite a recorded version), a citing article refuses a delete, and
   * a delete drops the reasons.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the article rows that point at a deleted source")
 final class ArticleSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
@@ -40,6 +42,7 @@ final class ArticleSourceReferrer extends SourceReferrer:
         .map((slug, n) => (RenamedReferences.Text.Owner(slug.value), RenamedReferences.Text.Links(n.value)))
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val coverage = coverageOf(source.keys)
     DeleteReport(
@@ -64,6 +67,7 @@ final class ArticleSourceReferrer extends SourceReferrer:
     * write time), and a scan of the text for the short forms the renderer resolves to it (`[[beckman2025]]` for
     * `beckman2025_ahhiyawa` while that is unambiguous).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def citing(source: SourceKeys)(using DbCon): List[(Slug, String)] =
     val ck = source.citekey
     val linked = sql"""SELECT a.slug, a.title FROM article_links l JOIN articles a ON a.slug = l.src_slug

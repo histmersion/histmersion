@@ -7,6 +7,7 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.ReadMark
 import com.histmersion.api.personal.Target
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An item's own actions where it is read — Library's reading pane, Explore's detail: Bookmark (pressed while it is),
   * Add note, Mark as read / unread (a source or an article), and "⋯" with the copies. A change that needs the API key
@@ -20,8 +21,11 @@ object ItemActions:
   private def writing(act: => Unit): Unit =
     if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bookmark(ref: ItemRef): Unit = writing(MyItems.toggle(ref))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bookmarkButton(ref: ItemRef, compact: BookmarkButtonCompact = BookmarkButtonCompact(false)): HtmlElement =
     val on = MyItems.bookmarked(ref)
     button(
@@ -40,6 +44,8 @@ object ItemActions:
       onClick --> { ev => ev.stopPropagation(); bookmark(ref) }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(ref: ItemRef, byline: String = ""): HtmlElement =
     val read = MyItems.isRead(ref)
     div(

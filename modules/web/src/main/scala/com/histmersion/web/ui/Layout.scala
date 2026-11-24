@@ -2,6 +2,7 @@ package com.histmersion
 package web.ui
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The UI's behavioural numbers: drag limits, fetch limits, timings, layout maths. Colours and looks are the
   * stylesheet's (`web/style.css`), not these.
@@ -185,6 +186,7 @@ object Layout:
     * [[geoCacheChars]] characters of them together: a year's polities are 0.1–2 MB, a whole range's ~7 MB (#1949).
     */
   val geoCacheSize: GeoCacheSize = GeoCacheSize(48)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val geoCacheChars: GeoCacheChars = GeoCacheChars(24L * 1024 * 1024)
 
   /** Hover cards kept per kind (sources, articles, places, events), the least recently hovered going first.

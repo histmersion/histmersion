@@ -8,6 +8,7 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Fanning a bubble's points out around it (the "spiderfy" of the marker-cluster plugins): a ring for a few, a spiral
   * for more, each point on a thin leg back to the spot. Pure but for the legs' markup.
@@ -37,6 +38,8 @@ object Spiderfy:
   /** Pure: each point's offset from the spot (px, y down) for `n` points `separation` px apart: on a ring (the first a
     * little past twelve o'clock) or an outward spiral, never on the spot itself.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def offsets(n: Count, separation: Separation): Vector[(OffsetCoordinate, OffsetCoordinate)] =
     offsetsOf(n.value, separation.value).map((x, y) => (OffsetCoordinate(x), OffsetCoordinate(y)))
 
@@ -62,6 +65,7 @@ object Spiderfy:
       }
 
   /** The legs: an SVG `side` px square, centred on the spot, a line to each offset. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def legsSvg(offsets: Seq[(OffsetCoordinate, OffsetCoordinate)], side: Side): Html =
     val px = side.value
     val c = px / 2.0

@@ -5,6 +5,7 @@ import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One setting in a form: its name and what it does, the control for its kind, and where its value comes from — the
   * default, the settings file, or an environment variable that wins over the file. A setting the file writes with a
@@ -16,9 +17,14 @@ object SettingControl:
 
   /** The name a setting is shown by: its last word, as words (`contact-email` → "Contact email"). Pure. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nameOf(key: ConfigEdit.Field.Key): SettingsForm.Item.Name =
     SettingsForm.Item.Name(Wording.humanize(Wording.Id(key.value.split('.').lastOption.getOrElse(key.value))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def apply(
       f: ConfigEdit.Field,
       draft: Draft,
@@ -49,6 +55,8 @@ object SettingControl:
       status(f, draft)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def control(f: ConfigEdit.Field, draft: Draft, id: String, locked: Boolean): HtmlElement =
     f.kind.value match
       case "flag" =>
@@ -89,11 +97,15 @@ object SettingControl:
 
   /** Where the value comes from, and the way back to the default. */
   /** The default, in words: "On by default" for a flag, else "Default: …". Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultText(kind: ConfigEdit.Field.Kind, default: Draft.Text): Text =
     if kind.value == "flag" then Text(s"${if Draft.isOn(default) then "On" else "Off"} by default.")
     else if default.value.isEmpty then Text("Default: (empty).")
     else Text(s"Default: $default.")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(f: ConfigEdit.Field, draft: Draft): HtmlElement =
     val dflt = Draft.plain(f.default.map(d => Draft.Text(d.value)))
     div(

@@ -9,6 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
 /** Link source `citekey` to item `id` of a collection (the collection itself is not changed). */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionLinkRequest(
     citekey: Citekey,
     id: CollectionLinkRequest.Id,

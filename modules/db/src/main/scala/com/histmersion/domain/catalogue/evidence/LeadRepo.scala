@@ -21,15 +21,21 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.DeepTime
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the events' leads and cards are computed from: the sources attesting an event, the findings near it, the facts
   * of its lead, the catalogue events an article's region and period hold. Every method runs on the connection it is
   * given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the lead tables and their row codecs")
 private[evidence] object LeadRepo:
 
   /** The sources attesting one event: its own citekey, then the attestations naming it. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def attestingSources(id: Event.Id)(using DbCon): List[EventSourceRef] =
     val own = sql"""SELECT s.citekey, s.title, s.year FROM events e JOIN sources s ON s.citekey = e.citekey
                       WHERE e.id = $id"""
@@ -49,6 +55,8 @@ private[evidence] object LeadRepo:
   /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest in time then
     * space first: their distance and the years between (0 = overlapping).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def nearFindings(id: Event.Id, km: CatalogMerge.Tolerance.Km, years: CatalogMerge.Tolerance.Years, limit: PageSize)(
       using DbCon
   ): List[EventFindingRef] =
@@ -88,6 +96,7 @@ private[evidence] object LeadRepo:
   /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier, size, findings near
     * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def leadRows(
       where: Frag,
       km: CatalogMerge.Tolerance.Km,
@@ -122,6 +131,7 @@ private[evidence] object LeadRepo:
     * dated findings of that period, and large enough (`minVei`, `minMagnitude`, or a war) — with how many of those
     * findings are near each.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def articleCandidates(
       citekeys: List[domain.library.Citekey],
       period: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],

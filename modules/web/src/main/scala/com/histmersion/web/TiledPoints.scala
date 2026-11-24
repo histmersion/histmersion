@@ -12,6 +12,7 @@ import com.histmersion.api.Years
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.Geo
 import com.histmersion.api.RowCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 object TiledPoints:
   /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown
@@ -45,9 +46,11 @@ final class TiledPoints[A](
   // the tiles' URL and the zoom what is shown was read at
   private var readAt: Option[(Option[ApiClient.Url], Int)] = None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tileTemplate: Option[BasemapApi.TileTemplate] =
     template.map(u => BasemapApi.TileTemplate(u.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source: Option[PointTiles] =
     if tiles.isEmpty && TheMap.isUp then
       val t = TheMap.surface.pointTiles(
@@ -69,6 +72,7 @@ final class TiledPoints[A](
       cells.attach()
       source.foreach(_.setTiles(tileTemplate))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def detach(): Unit =
     if on then
       on = false
@@ -96,6 +100,7 @@ final class TiledPoints[A](
     * and is no longer in a tile the map holds stays ([[TiledPoints.merge]]): the map lets go of the tiles a narrower
     * view leaves, and their points went and came back, regrouping the bubbles near them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def read(): Unit =
     tiles.filter(_.loaded).foreach { t =>
       val (cs, is) = t.features.partition(TileDecode.isCell)
@@ -130,6 +135,7 @@ final class TiledPoints[A](
   /** What is shown in the map's view now: the items drawn as themselves, and how many more its cells there count.
     * Nothing while the layer is off.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inViewNow(): (Seq[A], RowCount) =
     if !on || !TheMap.isUp then (Nil, RowCount(0))
     else
@@ -146,5 +152,6 @@ final class TiledPoints[A](
       )
 
   /** How many items and cells are shown, and the items the cells count (diagnostics). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counts: (RowCount, RowCount, RowCount) =
     (RowCount(shown._1.size), RowCount(shown._2.size), RowCount(shown._2.map(_.n.value).sum))

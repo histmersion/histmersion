@@ -4,16 +4,23 @@ package api.automation
 import com.histmersion.util.problem.Text.sentences
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ApprovalDigestMarkdown:
   export Approval.DecidedBy.Wire as DeciderDecidedBy
 
   import ApprovalDigest.*
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def decider(decidedBy: ApprovalDigestMarkdown.DeciderDecidedBy): String = (decidedBy.value: String) match
     case "checked" => ("the autopilot's checks (within the day's cap); a person may decide them first")
     case Waits     => ("nobody now: they wait (see above); a person may still decide one")
     case _         => ("a person")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def digest(d: Digest): String =
     val head = s"# Waiting for a person (${d.at.value.take(16).replace('T', ' ')} UTC)\n\n" +
       s"- ${Plural.count(Plural.CountN(d.total.value.toLong), Plural.CountSingular("open approval"))}" +
@@ -32,6 +39,8 @@ object ApprovalDigestMarkdown:
     }
     ((head :: kinds).mkString("\n\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bulk(r: BulkResult): String =
     val verb = if r.dryRun.value then s"would ${r.decision}"
     else if r.decision.value == "approve" then "approved"

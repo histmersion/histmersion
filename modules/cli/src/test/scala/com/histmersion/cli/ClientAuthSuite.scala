@@ -7,6 +7,7 @@ import java.net.InetSocketAddress
 import java.nio.file.Files
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #767: the file downloads (`backups download`, `original`) are built outside the typed `call`, and `downloadBackup`
   * sent no bearer token. A stand-in server that wants the key on EVERY request — as one behind an authenticating proxy
@@ -17,6 +18,7 @@ class ClientAuthSuite extends munit.FunSuite:
   private val key = Client.Token("s3cret")
 
   /** Serves `/api/backups/<file>` and `/api/sources/<ck>/original`, both only to `Bearer s3cret`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer[A](body: Client.ServerUrl => A): A =
     val srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0)
     srv.createContext(

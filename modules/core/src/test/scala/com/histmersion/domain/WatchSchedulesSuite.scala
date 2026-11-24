@@ -17,10 +17,12 @@ import java.time.Instant
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Agents
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Goal schedules into watchers (phase 3): what a goal's `goal_schedules` rows become, and how a watcher reads as the
   * schedules the goal surfaces still show.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WatchSchedulesSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-17T12:00:00Z")

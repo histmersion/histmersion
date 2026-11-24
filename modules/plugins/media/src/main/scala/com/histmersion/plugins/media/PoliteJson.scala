@@ -11,11 +11,15 @@ import com.histmersion.plugin.Header
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.plugin.Plugin
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 extension (http: Plugin.Http)
   /** One GET through the host's polite client answered as JSON; an answer that is not JSON names its host. `headers` as
     * the client sends them — a key-gated API's key travels in one, never in the URL.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @atBoundary(BoundaryKind.Json, "fetches one URL and reads the answer as JSON")
   def askJson(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value] = Map.empty

@@ -12,11 +12,13 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The rules the host's event import runs every catalogue's records through (#1449) — the thresholds, the parts read
   * under them — and Wikidata's `wbgetentities`, which the host asks for the labels and aliases of Wikidata's events and
   * the classes of the sites on the map. The catalogues themselves are plugins. Pure.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object EventProviders:
   type WikidataProperty = WikidataProperty.T
   object WikidataProperty extends Newtype[String, Pure]
@@ -72,6 +74,7 @@ object EventProviders:
     /** Pure: the P31 classes of each item of a `wbgetentities` (props=claims) answer — what a site's type is refined
       * from ([[SiteTypes.wikidata]]); P279 likewise for a class.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def claims(json: Json, property: WikidataProperty): Option[Map[String, List[String]]] =
       val c = json.cursor
       c.downField("error").focus match
@@ -114,6 +117,8 @@ object EventProviders:
     * records, so widening the region (or lowering a VEI or magnitude floor) makes every part due again instead of
     * skipping it as read — its records were judged by the old rule.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scope(t: Thresholds): String =
     def box(b: BBox) = s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}"
     s"region=${t.region.fold("world")(box)};vei=${t.regionVei}/${t.outsideVei};" +
@@ -154,6 +159,7 @@ object EventProviders:
     case Before(from: SignedYear)
 
     /** The reason as the import's report counts it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String = this match
       case OutsideArea                => "outside --bbox"
       case VeiBelowRegion(min)        => s"VEI below $min"
@@ -164,6 +170,8 @@ object EventProviders:
       case After(to)                  => s"after $to"
       case Before(from)               => s"before $from"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keep(r: CatalogRecord, t: Thresholds): Either[Rationale, Unit] =
     (r.lat, r.lon) match
       case (Some(la), Some(lo)) =>

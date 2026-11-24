@@ -6,6 +6,7 @@ import com.histmersion.plugin.{Access, FetchedFile, WorkKey}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Resolve a legal copy of a work: the acquisition chain ([[FetchChain]]) — the source fetchers the plugins registered,
   * in `acquire.chain` order. Built in: archive.org, Unpaywall → CORE → OpenAlex OA locations → Europe PMC / PMC → arXiv
@@ -24,6 +25,7 @@ trait OaFetcher:
   /** A work by every identifier the caller has ([[WorkKey]]). An implementation that reads only a DOI and an arXiv id
     * (a test's fixture) has no copy of anything else.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[Problems, FetchedFile] =
     val doi = work.doi.map(d => Doi.assume(d.value))
     val arxiv = work.arxiv.map(a => ArxivId(a.value))

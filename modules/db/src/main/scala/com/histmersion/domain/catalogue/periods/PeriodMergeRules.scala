@@ -12,10 +12,12 @@ import com.histmersion.util.data.exchange.{BundleScope, MergeRules}
 
 import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge treats named periods: the ledger names one by its id; a plan knows which of the bundle's periods with no
   * uid here are one here — by id, or by label and an overlapping span.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object PeriodMergeRules extends MergeRules:
 
   override val planning: Option[PlanRules] = Some(CataloguePlan)
@@ -23,6 +25,7 @@ object PeriodMergeRules extends MergeRules:
   val kind: Bundle.Kind = Bundle.Kind.Period
   override val ledgerLabel: Option[Frag] = Some(sql"SELECT id FROM periods WHERE uid = l.local_uid")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def gather(
       bundle: BundleEntities,
       localized: BundleEntities,

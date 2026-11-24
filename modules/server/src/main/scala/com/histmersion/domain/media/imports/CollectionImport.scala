@@ -31,6 +31,7 @@ import com.histmersion.util.ocr.Pixels
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[SearchedCollection.matches]]) — and
@@ -40,6 +41,8 @@ import com.histmersion.domain.Creator
   * ([[ConverterClient.thumbnail]]), and stored with the licence, credit line, page and original URL; the link keeps the
   * match's reason.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaConfig, converter: ConverterClient):
 
   final private case class Judged(
@@ -49,12 +52,16 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   )
 
   /** The role a record's picture plays: its own, else the collection's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def roleOf(rec: MediaRecord): MediaRole.Wire = rec.role.map(r => MediaRole.Wire(r.value)).getOrElse(col.role)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def providerTitle: String = MediaProvider.title(MediaProvider.Id(col.provider.value)).value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeId(t: Target): Place.Id = Place.Id.assume(t.id.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(
       targets: List[Target],
       dryRun: CollectionImport.DryRun,
@@ -176,6 +183,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     if dryRun.value then base.modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
     else persist(base, kept, judged, answered.map(_._1), refresh, store, failed)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def persist(
       base: MediaImportReport,
       kept: List[Judged],
@@ -301,6 +309,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   /** The record's rendition (at most `max-bytes`) and its thumbnail — the collection's own small rendition, else one
     * made here; without either the card shows no picture for it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def download(
       rec: MediaRecord
   ): Either[

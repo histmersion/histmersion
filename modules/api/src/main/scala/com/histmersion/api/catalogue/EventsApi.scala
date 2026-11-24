@@ -8,8 +8,12 @@ import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Appended to [[Api.all]] before the event routes: otherwise `events/leads` would be read as the event `leads`. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the events routes with their request and response bodies")
 object EventsApi:
 
   private lazy val eventQuery: EndpointInput[Api.EventQuery] =
@@ -39,6 +43,7 @@ object EventsApi:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val corrections: PublicEndpoint[
     (Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit]),
     Api.Error,
@@ -97,6 +102,8 @@ object EventsApi:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Database Frag.update")
   lazy val links: PublicEndpoint[Event.Id, Api.Error, EventLinkList, Any] =
     (endpoint.get
       .in("api" / "events" / path[String]("id") / "links")
@@ -106,6 +113,7 @@ object EventsApi:
         (refactorEncoded2).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val applyLinks: PublicEndpoint[(Event.Id, EventLinksRequest), Api.Error, EventLinksResult, Any] =
     (endpoint.post
       .in("api" / "events" / path[String]("id") / "links")

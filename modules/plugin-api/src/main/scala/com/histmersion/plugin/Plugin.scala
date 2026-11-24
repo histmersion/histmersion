@@ -8,6 +8,7 @@ import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import java.util.Locale
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE ServiceLoader service (`META-INF/services/com.histmersion.plugin.Plugin`). A plugin may add to several parts
   * of the app at once; it does so in [[register]], through the context's registries.
@@ -25,6 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   def register(c: PortalConfig, ctx: Plugin.Context) = …
   * }}}
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 trait Plugin:
   /** The plugin's own settings, decoded by [[configReader]] from its block. */
   type Config
@@ -44,6 +46,7 @@ trait Plugin:
     * key the plugin reads has a default in it (`null` for an optional value such as an optional [[Secret]]), and a key
     * the user sets that it lacks is reported as unknown. `enabled` is the host's key; absent, the plugin is disabled.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultsResource: Plugin.DefaultsResource =
     Plugin.DefaultsResource(s"META-INF/histmersion/plugins/${info.id}.conf")
 
@@ -63,12 +66,14 @@ object Plugin:
     type LenientText = LenientText.T
     object LenientText extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     private def lenient[A](
         name: LenientName,
         strict: ConfigReader[A],
         parse: LenientText => Option[A]
     ): ConfigReader[A] =
       new ConfigReader[A]:
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def from(v: org.ekrich.config.ConfigValue) =
           strict
             .from(v)
@@ -81,9 +86,17 @@ object Plugin:
                 )
             )
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given ConfigReader[Int] = lenient(LenientName("int"), ConfigReader.intReader, (_).value.toIntOption)
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given ConfigReader[Long] = lenient(LenientName("long"), ConfigReader.longReader, (_).value.toLongOption)
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given ConfigReader[Double] = lenient(LenientName("double"), ConfigReader.doubleReader, (_).value.toDoubleOption)
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given ConfigReader[Boolean] = lenient(LenientName("boolean"), ConfigReader.booleanReader, (_).value.toBooleanOption)
 
     given newtypeReader
@@ -206,12 +219,14 @@ object Plugin:
     * @param body
     *   the answer's bytes
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class HttpResponse(
       status: Problem.Upstream.Status,
       headers: Map[Header.Name, Header.Value],
       body: HttpResponse.Body
   ):
     /** A header by name, in any case. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def header(name: Header.Name): Option[Header.Value] =
       headers.get(Header.Name(name.value.toLowerCase(Locale.ROOT)))
 
@@ -234,6 +249,7 @@ object Plugin:
     type Version = Version.T
     object Version extends Newtype[String, Pure]
     type SpiVersion = SpiVersion.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SpiVersion extends Newtype[Int, Pure]
 
   /** The host's log, with the plugin's id on every line. */

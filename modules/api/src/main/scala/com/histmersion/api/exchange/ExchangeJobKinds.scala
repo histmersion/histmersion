@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */
@@ -14,6 +15,7 @@ object ExchangeJobKinds:
   type PlanHash = PlanHashValue
   export MergePlan.PlanHash as PlanHashValue
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Init: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("init"),
     JobKinds.Wire("Import reference data"),
@@ -24,6 +26,7 @@ object ExchangeJobKinds:
     subject = InitPlan.Detail.of(_).map(p => JobKinds.Subject(InitPlan.describe(p)))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val MergeApply: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("merge-apply"),
     JobKinds.Wire("Merge another collection"),

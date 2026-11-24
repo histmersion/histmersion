@@ -21,8 +21,10 @@ final private[articles] case class BVersionRow(
 ) derives DbCodec
 
 object BVersionRow:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BodySha = Sha256
   val BodySha: Sha256.type = Sha256
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BodyBytes = ByteCount
   val BodyBytes: ByteCount.type = ByteCount
   type Summary = Summary.T

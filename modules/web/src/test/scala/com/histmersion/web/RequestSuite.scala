@@ -7,11 +7,14 @@ import com.histmersion.api.Api
 
 import scala.concurrent.{ExecutionContext, Promise}
 import scala.util.{Failure, Success}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The views' one request type (G107, review finding W4): answers delivered in any order leave the newest one's state,
   * a server's problems stay typed with their status, no answer at all is "unreachable" keeping what was shown, and a
   * page's own exception is a typed internal problem. No browser, no server: promises complete by hand.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class RequestSuite extends munit.FunSuite:
 
   // answers are applied the moment a promise completes

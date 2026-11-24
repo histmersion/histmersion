@@ -27,15 +27,24 @@ import com.histmersion.domain.CreatorControllers
   * writes citekey ALIASES (`[[allentoft2015]]` for `allentoft2015_population`), which never appear in `article_links`
   * verbatim.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object ArticleRoutes:
   /** A slug that names an article to read: one that is no slug names no article. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def read(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(_ => Articles.notFound(Article.Slug(slug.value)))
 
   /** A slug a write names: one that is no slug is refused. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def apply(
       articles: ArticlesControllers,
       pages: PageBuilder,

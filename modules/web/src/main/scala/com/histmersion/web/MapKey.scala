@@ -10,6 +10,7 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and — while their
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
@@ -22,6 +23,7 @@ object MapKey:
   type Undated = Undated.T
   object Undated extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventsHtml: Html =
     Html.concat(EventTaxonomy.groups.map { g =>
       val items = Html.concat(
@@ -39,6 +41,7 @@ object MapKey:
       markup"""<li><span class="hd-badge hd-ev hd-ev--attested hd-key-swatch"></span><span>attested by a source</span></li>""" ++
       markup"""<li><span class="hd-badge hd-ev hd-ev--catalogue hd-key-swatch"></span><span>catalogue only (a lead)</span></li></ul></div>"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sitesHtml: Html =
     val items = Html.concat(
       (SiteTypes.all.map(t => t.icon.value -> t.label.value) :+ (CardIcons.Unknown -> "site of unknown type"))
@@ -54,6 +57,7 @@ object MapKey:
     * type, the fill its date, the outline its tier — and the findings' icons, by what their source is. Shown whatever
     * layers are on: the findings always are.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shapesHtml: Html =
     def badge(shape: String, inner: Html) =
       markup"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
@@ -89,6 +93,8 @@ object MapKey:
         )}</ul></div>"""
 
   /** The key's markup: the shapes, then the icons of the layers on. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def html(events: Events, sites: Sites, undated: Undated = Undated(false)): Html =
     val body =
       shapesHtml ++ (if events.value then eventsHtml else Html.empty) ++ (if sites.value then sitesHtml else Html.empty)

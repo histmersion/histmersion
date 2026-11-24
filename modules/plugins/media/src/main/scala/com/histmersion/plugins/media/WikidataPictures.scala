@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `wikidata`: the pictures of places and events from their Wikidata items, licensed on Wikimedia Commons.
   *
@@ -15,6 +16,7 @@ import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, Wikid
   */
 final class WikidataPictures(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
   val title = MediaCollection.Title("Wikidata pictures")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override val description = MediaCollection.Description(
     "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, route map), " +
       "licensed on Wikimedia Commons; a job asks about every place on the map not asked yet (one per Wikidata item, " +
@@ -24,6 +26,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
   override def roles = (media.wikidata.placeRoles ++ media.wikidata.eventRoles).map(_._2).toSet + role
   override def matchRule = MediaMatchRule.Own
   override def asks = Set(MediaTarget.Places, MediaTarget.Events)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)
 
   def search(place: MediaPlace, http: Plugin.Http) =
@@ -42,6 +45,8 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
       roles: List[(WikidataSettings.Property, MediaItem.Role)]
   )
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // the events first, then the places: the order the host lists them in
     val targets =

@@ -3,10 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `ui` block. The page reads it through `/api/config`, where the server adds what is no setting of this block:
   * whether writes need a key, whether agents run, the plugins and the base map's language.
   */
+@movesTo(FeaturePlace.ServerInstance)
 final case class UiSettings(
     tiles: UiSettings.Tiles,
     tilesMaxZoom: UiSettings.TilesMaxZoom,
@@ -42,12 +45,16 @@ object UiSettings:
   type Tiles = Tiles.T
   object Tiles extends Newtype[String, Pure]
   type TilesMaxZoom = TilesMaxZoom.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TilesMaxZoom extends Newtype[Int, Pure]
   type MarkerRadius = MarkerRadius.T
   object MarkerRadius extends Newtype[Int, Pure]
   type ViewportDebounceMs = ViewportDebounceMs.T
   object ViewportDebounceMs extends Newtype[Int, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   type PageSize = com.histmersion.PageSize
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val PageSize: com.histmersion.PageSize.type = com.histmersion.PageSize
   type FacetSuggestions = FacetSuggestions.T
   object FacetSuggestions extends Newtype[Int, Pure]
@@ -68,6 +75,7 @@ object UiSettings:
   type JobPollMs = JobPollMs.T
   object JobPollMs extends Newtype[Int, Pure]
   type TilesTone = TilesTone.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends Newtype[String, Pure]

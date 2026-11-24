@@ -3,7 +3,10 @@ package api
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.Kernel)
 enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label) derives CanEqual:
   case Source extends ItemKind(ItemKind.Wire("source"), ItemKind.Label("Source"))
   case Article extends ItemKind(ItemKind.Wire("article"), ItemKind.Label("Article"))
@@ -17,6 +20,7 @@ enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label) derives CanEqu
 
   def isItem: Boolean = (ItemKind.Items.contains(this))
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ItemKind:
   type Word = Word.T
   object Word extends Newtype[String, Pure]
@@ -35,13 +39,16 @@ object ItemKind:
 
   val Readable: Set[ItemKind] = Set(Source, Article)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[ItemKind] =
     val t = Option(s).fold("")((_).value.trim.toLowerCase)
     values.find(k => k.wire == Wire(t) || (t.endsWith("s") && k.wire == Wire(t.dropRight(1))))
 
   given WireEnumValues[ItemKind]:
     def all: Array[ItemKind] = values
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire(e: ItemKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: WireEnumValues.Wire): Option[ItemKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given JsonValueCodec[ItemKind] = WireEnum.codec
   given Schema[ItemKind] = WireEnum.schema

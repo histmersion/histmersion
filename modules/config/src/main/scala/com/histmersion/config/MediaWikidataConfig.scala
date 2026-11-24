@@ -3,7 +3,9 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
+@movesTo(FeaturePlace.Media)
 final case class MediaWikidataConfig(
     apiUrl: MediaWikidataConfig.ApiUrl,
     batch: MediaWikidataConfig.Batch,

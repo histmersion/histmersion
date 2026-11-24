@@ -19,8 +19,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[PlacesCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion places`: declares its options, parses them into typed commands")
 object PlacesArgs:
   object PlacesEntry extends CommandLine.Entry:
     val name = "places"
@@ -49,6 +52,7 @@ object PlacesArgs:
     private val depth_ = value[Int]("depth", "How deep the subtree goes")
     private val noTree_ = flag("no-tree", "Skip the hierarchy walk")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PlacesCmd.Command.Show(id_(), asOf_.toOption, depth_.toOption, noTree_.getOrElse(false))
     )
@@ -116,6 +120,7 @@ object PlacesArgs:
     private val place_ = value[String]("place", "Only this place's (an id)")
     private val csv_ = flag("csv", "Print CSV (place_id,name,lang,why) instead of Markdown")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PlacesCmd.Command.NameListing(place_.toOption, csv_.getOrElse(false))
     )
@@ -145,6 +150,7 @@ object PlacesArgs:
     private val reason_ = value[String]("reason", "Why: the evidence the decision rests on")
     private val reset_ = flag("reset", "Drop the override: the kind, period and point its source states come back")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] =
       point_.toOption
         .map(p => Place.Overrides.parsePoint(Place.Overrides.PointText(p)).map(Some(_)))
@@ -258,6 +264,7 @@ object PlacesArgs:
     private val batch_ = value[Int]("batch", "Features per request")
     private val noRebuild_ = flag("no-rebuild", "Do not re-materialise finding_places afterwards")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       PlacesCmd.Command.Seed(dir_.toOption, batch_.toOption, noRebuild_.getOrElse(false))
     )

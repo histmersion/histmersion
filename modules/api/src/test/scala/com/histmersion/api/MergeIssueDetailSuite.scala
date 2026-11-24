@@ -16,13 +16,16 @@ import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergeIssueDetailSuite extends munit.FunSuite:
 
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
   private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(authors: List[AuthorName], doi: Option[Doi] = None) =
     Bundle.Source(
       U1,

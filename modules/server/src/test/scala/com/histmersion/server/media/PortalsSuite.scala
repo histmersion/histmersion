@@ -38,6 +38,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The store as a few maps, with the gazetteer facts and ids the keyless portals read. */
 final class PortalStore(
@@ -61,6 +62,7 @@ final class PortalStore(
     ]
   val checks = scala.collection.mutable.LinkedHashMap
     .empty[(ImportService.Provider, ImportService.TargetId), ImportService.FoundCount]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
     val wanted = keys.map(_.value).toSet
     saved.collect {
@@ -85,6 +87,7 @@ final class PortalStore(
       rank: AssetService.LinkRank
   )(using WritePermit) =
     linkBasis(uid, tt, ti, role, p, q, rank, None)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def linkBasis(
       uid: AssetService.AssetUid,
       tt: ImportService.TargetType,
@@ -120,6 +123,7 @@ final class PortalStore(
   * its targets' own pictures), judged by their licence on Commons, the rest counted — and no request leaving this
   * machine.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PortalsSuite extends munit.FunSuite:
 
   private val jpeg = Array[Byte](-1, -40, -1)
@@ -128,6 +132,7 @@ class PortalsSuite extends munit.FunSuite:
 
   final private class ThumbConverter extends ConverterClient:
     val calls = scala.collection.mutable.ListBuffer.empty[ConverterClient.Filename]
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -138,6 +143,7 @@ class PortalsSuite extends munit.FunSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def thumbnail(
         bytes: ConverterClient.DocumentBytes,
         filename: ConverterClient.Filename,
@@ -175,10 +181,12 @@ class PortalsSuite extends munit.FunSuite:
       Some(Latitude(31.0)),
       Some(Longitude(36.0))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val facts = List(petra, jordan).map(f => Place.Id.assume(f.id.value) -> f).toMap
   private val named =
     Map(ImportService.PlaceKey("jordan") -> List(jordan), ImportService.PlaceKey("petra") -> List(petra))
   private val byId = Map((ExternalIds.Scheme("pleiades"), ExternalIds.ExternalId("697725")) -> List(petra))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def target(f: PlaceFacts) =
     Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
@@ -200,6 +208,7 @@ class PortalsSuite extends munit.FunSuite:
     else Left(s"unexpected $url")
   }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runOc(
       http: FakeMediaHttp,
       t: PlaceFacts,

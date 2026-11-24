@@ -15,6 +15,7 @@ import com.histmersion.api.text.WikiLinks
 import com.histmersion.util.time.Timer
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The registered checks as REST, MCP and the CLI reach them: the lint report (an unknown rule name is a 400: a typo
   * must never read as a clean corpus), the safe fixes (a write, under the maintenance guard) and the report after them.
@@ -35,6 +36,7 @@ final class CheckControllers(
   private def context: CheckContext = CheckContext(config(), ds, format, write, timer)
 
   /** `GET /api/lint` — read-only. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def lint(rules: List[CheckRule.Name]): Either[Problems, LintReport] =
     checks
       .select(rules)
@@ -58,6 +60,8 @@ final class CheckControllers(
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do, so the report
     * the caller sees is the state AFTER the repair.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def lintWithFix(rules: List[CheckRule.Name], fix: CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
     if !fix.value then lint(rules).left.map(Api.Error(_))
     else

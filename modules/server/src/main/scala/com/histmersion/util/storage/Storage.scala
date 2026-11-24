@@ -4,6 +4,8 @@ package util.storage
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server's files: a [[Store]] for each named [[Location]], and scratch stores that are removed when they close.
   * Where each location lives is the composition root's to say (from the configuration, read again at each call, so a
@@ -16,16 +18,19 @@ trait Storage:
   /** The store of a location the configuration always places (originals, spool, base map, backups, bundles, the
     * gazetteer extracts, the settings file's directory, scratch).
     */
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
   def store(location: Location): Store =
     find(location).getOrElse(throw IllegalStateException(s"no directory is configured for $location"))
 
   /** A new temporary store, its directory named after `purpose`. */
   def scratch(purpose: Storage.ScratchPurpose): Scratch
 
+@atBoundary(BoundaryKind.Process, "gives each storage location its file store")
 object Storage:
 
   /** Stores on disk: `roots` says where each location is now, `temp` where scratch stores are made. */
   type ScratchPurpose = ScratchPurpose.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ScratchPurpose extends Newtype[String, Pure]
 
   def apply(roots: Location => Option[Path], temp: () => Path): Storage = Implementation(roots, temp)
@@ -38,6 +43,7 @@ object Storage:
   final private class Implementation(roots: Location => Option[Path], temp: () => Path) extends Storage:
     def find(location: Location): Option[Store] = roots(location).map(DiskStore(location, _))
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def scratch(purpose: ScratchPurpose): Scratch =
       val base = temp()
       Files.createDirectories(base)
@@ -52,9 +58,11 @@ object Storage:
   final class InMemory extends Storage:
     private val stores = ConcurrentHashMap[Location, MemoryStore]()
 
+    @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
     def find(location: Location): Option[Store] =
       Some(stores.computeIfAbsent(location, l => MemoryStore(l, s"memory:$l")))
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def scratch(purpose: ScratchPurpose): Scratch =
       val s = MemoryStore(Location.Scratch, s"memory:scratch:$purpose")
       new Scratch:

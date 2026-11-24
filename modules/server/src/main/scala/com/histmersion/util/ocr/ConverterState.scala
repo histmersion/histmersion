@@ -9,6 +9,7 @@ import com.histmersion.domain.*
 import scala.jdk.OptionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What `/api/health` says about the OCR sidecar (#692). */
 enum ConverterState:
@@ -19,6 +20,7 @@ enum ConverterState:
   case Down(reason: Problem)
 
   /** The `converter` line of [[Health]]. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render: ConverterState.Summary = this match
     case Ok           => ConverterState.Summary("ok")
     case Busy(id)     => ConverterState.Summary(s"converter busy: job $id")
@@ -39,5 +41,7 @@ object ConverterState:
   object Busy:
     export Job.Id as JobId
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =
     if probe.value == "ok" then Ok else busyJob.fold(Down(Problem.Unclassified(Legacy.Text(probe.value))))(Busy(_))

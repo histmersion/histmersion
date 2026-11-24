@@ -9,12 +9,15 @@ import com.histmersion.util.problem.{Legacy, Problem}
   */
 import com.histmersion.api.library.Ingest
 import com.histmersion.web.ErrorLine
+import com.histmersion.lint.{LintRule, tolerated}
 object DoiIngest:
   private val DoiLink = "(?i)^(https?://)?(dx\\.)?doi\\.org/"
   private val Doi = "(?i)^10\\.\\d{4,9}/\\S+$"
   private val Arxiv = "(?i)^(arxiv:)?(\\d{4}\\.\\d{4,5}(v\\d+)?|[a-z-]+(\\.[a-z]{2})?/\\d{7}(v\\d+)?)$"
 
   /** The request for `typed`, or what is wrong with it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def request(typed: String): Either[Problem, Ingest.Request] =
     val t = typed.trim.replaceFirst(DoiLink, "").replaceFirst("(?i)^doi:\\s*", "")
     if t.isEmpty then

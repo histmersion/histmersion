@@ -18,10 +18,12 @@ import com.histmersion.domain.ReviewLedger.*
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The review ledger's pure half: matching, every status transition, the lessons, what a prompt shows, the edited
   * passages and the one backlog line.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReviewLedgerSuite extends munit.FunSuite:
 
   private def f(

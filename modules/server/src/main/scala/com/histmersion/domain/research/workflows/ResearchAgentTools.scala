@@ -19,6 +19,7 @@ import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.research.Articles
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agent tools research offers the engine: an article, a dry run of edits to it, its coverage — each a thin, typed
   * wrapper over the same controller method REST and MCP call, returning the same Markdown. Only READ tools:
@@ -27,6 +28,7 @@ import com.histmersion.api.research.Articles
 final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentToolsConfig):
   import ToolResultCap.cap
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def max = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
   private def contribution(n: ToolName)(t: Creator.New ?=> AgentTool[Identity, ?]): ToolContribution =
@@ -35,6 +37,8 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
       def agentTool(using Creator.New): AgentTool[Identity, ?] = t
 
   /** Every tool of research, by name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def contributions: List[ToolContribution] = List(
     contribution(ResearchAgentTools.GetArticle) {
       AgentTool.fromFunction[GetArticleInput](

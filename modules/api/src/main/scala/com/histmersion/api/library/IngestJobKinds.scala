@@ -4,8 +4,10 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's ingest jobs, as it registers them: bringing a source in, and reading its text again. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object IngestJobKinds:
   val Ingest: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("ingest"),

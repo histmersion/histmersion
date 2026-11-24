@@ -5,7 +5,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import util.problem.{Problem, Problems}
 import util.problem.Problem.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
+@atBoundary(BoundaryKind.Render, "maps the problems a command failed with, and where it met them, to the CLI's exit code")
 type ExitCode = ExitCode.T
 
 object ExitCode extends Newtype[Int, Pure]:

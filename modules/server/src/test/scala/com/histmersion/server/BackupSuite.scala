@@ -20,12 +20,15 @@ import com.histmersion.api.Api
 import com.histmersion.config.BackupsConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The parts of the server-side backup machinery that need no database and no `pg_dump`: the maintenance lock, and the
   * listing/resolution that keeps a client-supplied name inside `backups.dir`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BackupSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfgWith(dir: Path): AppConfig =
     val base = AppConfig.load()
     base.modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(dir.toString)))
@@ -207,6 +210,7 @@ class BackupSuite extends munit.FunSuite:
     val _ = fake.toFile.setExecutable(true)
     bin
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobs(d: Path, bin: Path, waitS: Int): BackupJobs =
     val base = cfgWith(d)
     BackupJobs(

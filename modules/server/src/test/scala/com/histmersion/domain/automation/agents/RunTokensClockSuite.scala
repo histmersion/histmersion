@@ -5,7 +5,9 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.time.{Clock, Instant, ZoneOffset}
 import com.histmersion.api.automation.AgentRole
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RunTokensClockSuite extends munit.FunSuite:
   private val epoch = Instant.parse("2001-01-01T00:00:00Z")
   private val agent = AgentDef(

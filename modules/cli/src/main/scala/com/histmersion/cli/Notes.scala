@@ -11,6 +11,7 @@ import com.histmersion.api.media.{AssetInput, AssetLinks}
 import com.histmersion.api.Api
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Host-side note handling for `histmersion seed` / `put` / `export` (plan §1.9a, §2.5).
   *
@@ -19,6 +20,7 @@ import com.histmersion.api.Paging
   * to `POST /api/sources/import`, which parses and stores them. Seeding a path the server CAN see (a bind-mounted
   * corpus) still goes through `POST /api/seed`.
   */
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object Notes:
 
   def markdownFiles(dir: Path): List[Path] =
@@ -29,6 +31,7 @@ object Notes:
   /** Package one note for the server: its text, the converted body it points at, and its mtime (so the server can apply
     * the same "stored row is newer than the file" guard as a server-side seed).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toImport(file: Path, force: Api.Overwrite): NoteImport =
     val text = Files.readString(file)
     NoteImport(
@@ -57,6 +60,7 @@ object Notes:
     * are sent in bounded batches through `POST /api/sources/{ck}/assets` rather than inside the note, which keeps
     * request sizes sane. Sorted and capped, so one pathological directory cannot stall a seed.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def figures(file: Path, citekey: Citekey, maxBytes: ByteCount, maxCount: Paging.Limit): List[AssetInput] =
     val text = scala.util.Try(Files.readString(file)).getOrElse("")
     val root = Option(file.toAbsolutePath.getParent)

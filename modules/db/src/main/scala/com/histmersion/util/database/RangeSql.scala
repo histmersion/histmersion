@@ -9,6 +9,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
   * optional bounds are written, and how a PATCH that names one bound merges with the stored other one.
@@ -17,6 +18,7 @@ import com.histmersion.util.database.NewtypeColumns.given
   * one-year-too-long trap). A bound may be open: `[a,)` is "from a", `(,b+1)` is "until b"; the open side reads back as
   * NULL. Pure, apart from the SQL text it returns.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object RangeSql:
 
   export DeepTime.{SignedYear as LiteralEnd, SignedYear as LiteralStart}
@@ -52,30 +54,37 @@ object RangeSql:
   /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and `(,)` (every
     * year) when neither is given. Bind it as `${lit}::int8range`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bounds(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): String =
     s"${start.fold("(")(v => s"[${v.value}")},${end.fold(")")(v => s"${v.value + 1})")}"
 
   /** [[bounds]] of an optional closed period: `(,)` when there is none — a place, name or relation without a dating
     * holds at every year.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def always(p: Option[Period]): String =
     bounds(p.map(x => DeepTime.SignedYear(x.start.value)), p.map(x => DeepTime.SignedYear(x.end.value)))
 
   /** [[bounds]], or `None` (SQL NULL: no period) when neither bound is given. */
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def literal(start: Option[RangeSql.LiteralStart], end: Option[RangeSql.LiteralEnd]): Option[String] =
     Option.when(start.isDefined || end.isDefined)(bounds(start, end))
 
   /** [[literal]] of an optional closed period. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def literal(p: Option[Period]): Option[String] =
     p.flatMap(x => literal(Some(DeepTime.SignedYear(x.start.value)), Some(DeepTime.SignedYear(x.end.value))))
 
   /** The model's period (`values.Period`) as the same literal. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def literalOf(p: Option[com.histmersion.Period]): Option[String] =
     p.flatMap(x =>
       literal(Some(DeepTime.SignedYear(x.start.value.toLong)), Some(DeepTime.SignedYear(x.end.value.toLong)))
     )
 
   /** A closed [[Period]] from two inclusive bounds read back with [[cols]]: `None` unless both are known. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def period(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): Option[Period] =
     for a <- start; b <- end yield Period(Year(a.value), Year(b.value))
 
@@ -83,6 +92,7 @@ object RangeSql:
     * it is (#1798: a goal patch that named one bound was silently ignored). `None` when the patch names neither
     * (nothing to write); `Left` when the result would start after it ends (Postgres refuses an inverted range).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def merge(
       stored: (Option[DeepTime.SignedYear], Option[DeepTime.SignedYear]),
       start: Option[DeepTime.SignedYear],

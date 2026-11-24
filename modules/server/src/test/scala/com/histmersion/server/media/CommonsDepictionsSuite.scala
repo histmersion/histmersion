@@ -20,12 +20,14 @@ import com.histmersion.domain.media.imports.MediaImporter
 import com.histmersion.domain.media.imports.ImportService
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pictures that depict events (#1446) against a FAKE Wikidata and Commons — the `media-depicts` plugin's collection,
   * as the host builds it, run by the host's import of a collection of its targets' own pictures: P1299 works' images
   * first, then the P180 search's files, capped per event, judged by the Commons licence like every Commons picture,
   * linked as `depiction`, and the checks recorded under the depictions' own name.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CommonsDepictionsSuite extends munit.FunSuite:
 
   private val kadesh = Target(

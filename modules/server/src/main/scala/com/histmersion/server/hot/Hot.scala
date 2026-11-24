@@ -19,11 +19,14 @@ import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A stable handle on a component a config reload may rebuild (docs/research-plugins.md §3.6). Its holder never
   * reloads: [[use]] gives the value of the generation the calling thread is pinned to — or pins the current generation
   * for the duration of the call — so a value is never closed under the code using it.
   */
+@movesTo(FeaturePlace.Server)
 trait Hot[+A]:
   def name: Hot.Graph.Def.Name
 
@@ -71,6 +74,7 @@ object Hot:
       if iface.isInstance(this) then iface.cast(this) else now.unwrap(iface)
     def isWrapperFor(iface: Class[?]): Boolean = iface.isInstance(this) || now.isWrapperFor(iface)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def toString = s"HotDataSource(${pool.name})"
 
   /** The hot component graph (docs/research-plugins.md §3.6): Ox has no `Hotswap`, so this is one.
@@ -183,6 +187,7 @@ object Hot:
       * `idle` says whether a retired value may be closed (a pool: no connection out); `onPublish` runs after a reload
       * published a new value of this node.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def node[A](
         name: Def.Name,
         deps: List[Hot[?]] = Nil,
@@ -228,6 +233,7 @@ object Hot:
         val s = pinnedTL.get()
         (if s != null && s.nodes.contains(name) then s else current.get()).nodes(name).value.asInstanceOf[A]
       def latest: A = current.get().nodes(name).value.asInstanceOf[A]
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def toString = s"Hot($name)"
 
     // ── reload ─────────────────────────────────────────────────────────────────────────────────────
@@ -237,6 +243,7 @@ object Hot:
       * that concerns no node still publishes the new config. `Left`: nothing was published; the running generation
       * stays.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reload(
         next: C,
         changed: List[Def.Name],
@@ -306,6 +313,7 @@ object Hot:
       * still in use then — it keeps draining in the background. A pin the calling thread holds itself (a reload asked
       * for over HTTP) does not count: it is released when the request returns.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def retire(old: List[Instance], bound: FiniteDuration): List[Instance.Description] =
       if old.isEmpty then Nil
       else
@@ -376,6 +384,7 @@ object Hot:
     /** Build one node's value in a scope of its own, on a thread of its own that holds the scope open until the value
       * is retired.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: Generation): Either[Problem, Instance] =
       val built = CompletableFuture[Either[Problem, Any]]()
       val release = CountDownLatch(1)
@@ -422,7 +431,9 @@ object Hot:
     object Log:
 
       val scribe: Log = new Log:
+        @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
         def info(m: Problem) = _root_.scribe.info(m.sentence)
+        @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
         def warn(m: Problem) = _root_.scribe.warn(m.sentence)
 
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
@@ -466,9 +477,12 @@ object Hot:
       def free: Boolean = users.get() == 0 && idleNow
 
       /** Free but for `own` pins the asking thread holds itself. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def freeBut(own: Instance.PinCount): Boolean = users.get() <= own.value && idleNow
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def describe: Instance.Description =
         Instance.Description(s"$name (generation $generation, ${users.get()} pinned)")
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def close(log: Log): Unit =
         if closedFlag.compareAndSet(false, true) then
           release.countDown()
@@ -484,6 +498,7 @@ object Hot:
       type Description = Description.T
       object Description extends Newtype[String, Pure]
       type PinCount = PinCount.T
+      @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
       object PinCount extends Newtype[Int, Pure]
 
     private val CloseWaitSeconds = 60L

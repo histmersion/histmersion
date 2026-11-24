@@ -8,10 +8,12 @@ import com.histmersion.domain.automation.workflows.ToolName
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One canonical agent definition, `agents/<name>.md`: a runtime-neutral manifest in the YAML header and the prompt
   * body, which speaks of tools by `{{tool:<name>}}` placeholder.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class AgentDef(
     name: AgentDef.Name,
     description: AgentDef.Description,
@@ -34,6 +36,7 @@ final case class AgentDef(
     * called (`Search`) — the fingerprint installed trees and their manifests were generated under, so a tree generated
     * from the same definitions is not rewritten.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fingerprint: AgentDef.Fingerprint =
     AgentDef.Fingerprint(
       productIterator.zipWithIndex
@@ -66,6 +69,7 @@ object AgentDef:
   type Body = Body.T
   object Body extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enumerated(t: ToolName): String = t.value.split('_').map(_.capitalize).mkString
 
   /** A web access as its enumeration printed it when the fingerprint was first taken (`search` as `Search`). */

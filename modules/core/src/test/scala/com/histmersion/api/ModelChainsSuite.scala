@@ -16,7 +16,10 @@ import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.api.automation.{Agents, AgentsMarkdown}
 import com.histmersion.api.automation.ModelChains
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ModelChainsSuite extends munit.FunSuite:
   /** Does any of the problems match `p`? */
   private def has(problems: Problems)(p: PartialFunction[Problem, Boolean]): Boolean =

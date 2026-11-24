@@ -11,6 +11,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.web.marks.MyItems
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.marks.ItemMenu
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A page of a Library list as a table: a source's title and authors, year, status and period; an article's title and
   * kind, and period. Every title is a real link to the item's page: a plain click chooses the row (the reading pane
@@ -23,6 +24,8 @@ object LibraryTable:
   /** Choose `key` in `section`'s list: a step in the history (`push`), or the arrow keys' quiet move. */
   type Choose = (TableRow.Key, Router.Push) => Unit
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def element(
       section: LibrarySection,
       rows: Signal[List[TableRow]],
@@ -78,12 +81,15 @@ object LibraryTable:
           .map(el => TableRow.Key(el.getAttribute("data-key")))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusRow(wrap: dom.Element, key: TableRow.Key): Unit =
     val rows = wrap.querySelectorAll("tbody tr[data-key]")
     (0 until rows.length).map(rows(_)).find(_.getAttribute("data-key") == key.value).foreach { tr =>
       Option(tr.querySelector("a.lib-title")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[TableRow.Key]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
     val ref =

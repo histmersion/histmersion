@@ -18,15 +18,18 @@ import com.histmersion.util.database.TestCreators
 /** The library's acquisition as the server wires it, over one test's `deps` and its own upstream fakes. */
 object AcquisitionTesting:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sources(deps: Deps): SourceService =
     SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg), TestCreators.clock)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def skeleton(deps: Deps): SkeletonIngest = SkeletonIngest(sources(deps))
 
   def assessments(ds: DataSource): AssessmentService = AssessmentService(Transactor(ds))
   def candidates(ds: DataSource): CandidateService = CandidateService(Transactor(ds))
   def attempts(ds: DataSource): AcquireCheckService = AcquireCheckService(Transactor(ds))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def controllers(
       deps: Deps,
       discovery: => DiscoveryClient,

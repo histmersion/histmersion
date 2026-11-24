@@ -23,6 +23,8 @@ object PeriodMarks:
   val mine: Signal[List[Bookmark]] = MyItems.bookmarks.signal.map(_.filter(_.target.kind == ItemKind.Period))
 
   /** A period's target. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def target(from: Year, to: Year): Target =
     Target(
       ItemKind.Period,
@@ -31,12 +33,16 @@ object PeriodMarks:
     )
 
   /** The settings the timeline opens on, for these years. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def startChanges(from: Year, to: Year): List[(ConfigEdit.Change.Key, ConfigEdit.Change.Value)] =
     List(
       ConfigEdit.Change.Key("ui.time.default-from") -> ConfigEdit.Change.Value(math.min(from.value, to.value).toString),
       ConfigEdit.Change.Key("ui.time.default-to") -> ConfigEdit.Change.Value(math.max(from.value, to.value).toString)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def startAt(from: Year, to: Year): Unit =
     if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
     else
@@ -51,6 +57,8 @@ object PeriodMarks:
           )
         )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def add(name: Bookmark.Label, from: Year, to: Year): Unit =
     if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
     else
@@ -65,6 +73,7 @@ object PeriodMarks:
   /** "My periods" at the head of the presets menu: each a button that shows its years, × to remove it; and, while
     * `naming` holds a name, the form that keeps the years shown under it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def section(
       naming: Var[Option[Bookmark.Label]],
       current: () => (Year, Year),

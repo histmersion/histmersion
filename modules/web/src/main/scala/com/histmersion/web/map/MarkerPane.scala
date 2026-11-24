@@ -6,6 +6,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
   * per marker in view; one far outside the view is hidden, not moved).
@@ -79,6 +80,7 @@ final class MarkerPane(
   /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its element
     * drawn for `ms` more — a marker merging into a bubble flies into it first.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def retire(m: DomMarker, ms: MarkerPane.RetireMs): Unit =
     if markers.contains(m) then
       markers.remove(m)
@@ -102,6 +104,7 @@ final class MarkerPane(
   def shown: List[(DomMarker, Boolean)] =
     (live.map(_ -> false) ++ leaving.map(_ -> true)).filterNot(_._1.el.classList.contains(ClusterMotion.Pending))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size: MarkerPane.MarkerCount = MarkerPane.MarkerCount(markers.size)
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))

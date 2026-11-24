@@ -5,11 +5,15 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import java.nio.file.Path
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ResolutionSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def c(s: String): ModuleCoordinates =
     ModuleCoordinates.parse(ModuleCoordinates.Text(s)).fold(e => fail(e.sentences.mkString("; ")), identity)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def k(s: String): ModuleKey =
     ModuleKey.parse(ModuleKey.Text(s)).fold(e => fail(e.sentences.mkString("; ")), identity)
 

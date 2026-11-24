@@ -19,10 +19,13 @@ import com.histmersion.domain.CompareRuns
 import com.histmersion.domain.ReviewArticle.{Finding, Merged, Report, Reviewer, Severity, Verdict}
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 import com.histmersion.api.automation.Agents
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `agent compare` at the server's edge: recorded runs as the store reads them, compared by the domain, shown on the
   * wire and in Markdown as before the domain had records of its own.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class CompareRunsViewsSuite extends munit.FunSuite:
 
   private val EnrichSource = RunInfo.Pipeline("enrich-source")

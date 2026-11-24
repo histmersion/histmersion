@@ -16,11 +16,13 @@ import com.histmersion.config.ConverterConfig
 import com.histmersion.config.CorpusConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The hardening fixes, asserted through the wire because that is where they have to hold: citekey/slug validation, the
   * unbounded aggregation window, the inverted half-open range, and the page-size cap. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class HardeningHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -54,6 +56,7 @@ class HardeningHttpSuite extends munit.FunSuite:
         .build()
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withServer(f: (String, AppConfig) => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -67,6 +70,7 @@ class HardeningHttpSuite extends munit.FunSuite:
     * bound clamped onto `Filter.Earliest`/`Latest` reads back as "no bound given", so an absurd range falls through to
     * the configured DEFAULT window — which is inside the span, and is the point.)
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def assertWindowIsSane(body: String, cfg: AppConfig): Unit =
     val from = """"from":(-?\d+)""".r.findFirstMatchIn(body).map(_.group(1).toLong)
     val to = """"to":(-?\d+)""".r.findFirstMatchIn(body).map(_.group(1).toLong)

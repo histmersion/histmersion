@@ -3,8 +3,11 @@ package cli
 
 import com.histmersion.config.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pure helpers for `lint --file`. */
+@atBoundary(BoundaryKind.CliArgs, "splits a note file into frontmatter and body for `histmersion lint --file`")
 object FileFormat:
   type Body = Body.T
   object Body extends Newtype[String, Pure]
@@ -17,6 +20,8 @@ object FileFormat:
     * that is not pasted frontmatter, so only the body is checked. A file without one is all body.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def splitFrontmatter(text: Text): (Frontmatter, Body) =
     val raw = text.value
     val lines = raw.split("\n", -1).toList

@@ -15,10 +15,12 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An acquisition sweep's pure rules: what it may offer the ranking, how a ranking is checked, which picks are
   * ingested.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AcquisitionSweepRulesSuite extends munit.FunSuite:
 
   test("a sweep never offers what the corpus or the queue has; each work once; capped"):

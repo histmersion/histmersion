@@ -10,10 +10,12 @@ import com.histmersion.api.library.{AcquireChecksMarkdown, UpstreamQuota, Upstre
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Acquire
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot as `GET /api/agents/autopilot` shows it: the automation's [[Autopilot.EngineStatus]], then the
   * library's upstreams' quotas and the acquisition list's re-check.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class AutopilotStatus(
     on: AutopilotStatus.On,
     since: Option[AutopilotStatus.Since] = None,
@@ -67,6 +69,7 @@ final case class AutopilotStatus(
   )
 
   /** The page in Markdown: the automation's status with the library's lines in their places. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown: String =
     AutopilotMarkdown.status(
       engine,

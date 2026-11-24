@@ -13,31 +13,43 @@ import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.Paging
 import com.histmersion.api.Offset
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A shelf of My library in place of the table: the person's bookmarks, notes, what they have not marked read (the
   * tab's sources or articles, a page at a time) or what they opened lately. A row opens back where it was left — a
   * source or an article in the reading pane beside it, anything else where it lives — and a dot marks a source or an
   * article not marked read.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object ShelfList:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def isRead(i: Target.Identity): Boolean = MyItems.readNow(i)
 
   /** The section a source's or an article's row is read in. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def sectionOf(k: ItemKind): Option[LibrarySection] = k match
     case ItemKind.Source  => Some(LibrarySection.Sources)
     case ItemKind.Article => Some(LibrarySection.Articles)
     case _                => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def open(r: ShelfRow, shelf: Shelf, section: LibrarySection): Unit =
     (sectionOf(r.target.kind), r.target.itemKey) match
       case (Some(s), Some(k)) => Router.go(Route.Library(s), search = LibraryAddress.search(Some(k), shelf))
       case _                  => OpenBack(r.target)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def hrefOf(r: ShelfRow, shelf: Shelf): String =
     (sectionOf(r.target.kind), r.target.itemKey) match
       case (Some(s), Some(k)) => LibraryAddress.href(s, Some(k), shelf)
       case _                  => ItemRef.back(r.target).value
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def element(shelf: Shelf, section: LibrarySection, chosen: Signal[Option[ItemKey]]): HtmlElement =
     val unread = Var(Option.empty[Either[String, UnreadPage]])
     val offset = Var(0)
@@ -134,6 +146,8 @@ object ShelfList:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def row(r: ShelfRow, shelf: Shelf, section: LibrarySection, chosen: Signal[Option[ItemKey]]): HtmlElement =
     val on =
       chosen.map(c => r.target.itemKey.isDefined && c == r.target.itemKey && sectionOf(r.target.kind).contains(section))

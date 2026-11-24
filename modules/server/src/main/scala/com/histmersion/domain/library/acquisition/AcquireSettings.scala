@@ -4,12 +4,15 @@ package domain.library.acquisition
 import com.histmersion.config.{AcquireConfig, LandingConfig}
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.lint.{LintRule, tolerated}
 
 extension (c: AcquireConfig)
   /** The identifier every acquisition upstream sees: the product, never the contact. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def agent: String = HttpPolicy.userAgent(HttpPolicy.UserAgent(c.userAgent.value)).value
 
 extension (c: LandingConfig)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(
       c.allowHosts.entries.map(e => RepositoryLanding.HostPattern(e.value)),
