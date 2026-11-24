@@ -37,7 +37,7 @@ class CasesSuite extends munit.FunSuite:
 
   test("there are eleven groups and three cases outside them"):
     assertEquals(Group.values.length, 14)
-    assertEquals(examples.size, 151)
+    assertEquals(examples.size, 147)
 
   test("damage, a flaw or an unread variant placed in a format's data is the corrupt problem of those three"):
     val at = Where("the header")
@@ -155,7 +155,7 @@ class CasesSuite extends munit.FunSuite:
     assertEquals(year.sentence, "from: 'x' is not a year (e.g. 1300 BCE)")
     assertEquals(year.reason, "'x' is not a year (e.g. 1300 BCE)")
     assertEquals(NotFound.Entity(TypeName("x.Commons.File"), Raw("File:A.jpg")).reason, "no such commons file")
-    val other: Problem = Conflict.Busy(Conflict.Activity.Backup)
+    val other: Problem = Conflict.Busy(Conflict.Activity.Restore)
     assertEquals(other.reason, other.sentence)
 
   test("a busy Calibre GUI says to quit it; a key a plugin needs says which setting and what key"):

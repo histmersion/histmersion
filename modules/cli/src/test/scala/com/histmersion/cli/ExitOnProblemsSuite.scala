@@ -45,7 +45,6 @@ class ExitOnProblemsSuite extends munit.FunSuite:
       (one[Conflict.Stale], Server, ExitCode.Conflict),
       (one[Conflict.AlreadyExists], Server, ExitCode.Conflict),
       (one[Conflict.Busy], Server, ExitCode.Unavailable),
-      (one[Refused.Quota], Server, ExitCode.Unavailable),
       (one[Internal], Local, ExitCode.Fault),
       (one[Internal], Server, ExitCode.Fault),
       (one[Stored], Server, ExitCode.Fault),

@@ -112,11 +112,7 @@ class SpiBackingSuite extends munit.FunSuite:
     val core = new UpstreamQuota:
       def take(purpose: UpstreamQuota.TakePurpose) = {
         taken += purpose.value
-        if taken.size > 1 then
-          Left(
-            Problem.Refused
-              .Quota(Problem.Refused.Limit.ProviderQuota, Problem.Refused.Amount(1), Problem.Refused.Amount(1), None)
-          )
+        if taken.size > 1 then Left(Problem.Upstream.Limited(Problem.Upstream.Name("core"), None))
         else Right(())
       }
       def observe(
@@ -133,7 +129,7 @@ class SpiBackingSuite extends munit.FunSuite:
     assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup"))), Some(Right(())))
     assertEquals(
       p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup")).left.map(_.sentence)),
-      Some(Left("the provider's quota is spent: 1.0 of 1.0"))
+      Some(Left("core's usage limit is reached"))
     )
     assertEquals(taken.toList, List("lookup", "lookup"))
     val other = Metered(Plugin.Context.QuotaUpstream("elsewhere"))

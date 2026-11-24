@@ -60,7 +60,6 @@ object ExitCode extends Newtype[Int, Pure]:
       case _: Problem.Conflict.Undrained  => Unavailable
       case _: Problem.Conflict.ServerHeld => Unavailable
       case _: Conflict                    => Conflict
-      case _: Problem.Refused.Quota       => Unavailable
       case _: Refused                     => Refused
       case _: Upstream.Unanswered         => if local then OutcomeUnknown else Unavailable
       case _: Upstream                    => if local then Unreachable else Unavailable

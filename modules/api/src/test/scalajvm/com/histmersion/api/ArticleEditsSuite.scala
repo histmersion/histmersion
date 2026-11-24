@@ -139,13 +139,13 @@ class ArticleEditsSuite extends munit.FunSuite:
       es,
       a =>
         Option.when(a.text.exists(_.value.contains("ghost")))(
-          Problem.Content.Proposal(Problem.Content.Requirement.UnknownCitekey, Problem.Where("text"))
+          Problem.Content.Proposal(Problem.Content.Requirement.CitesNoSource, Problem.Where("text"))
         )
     )
     assertEquals(r.body, BodyText.replace("Two dates", "Three dates"))
     assertEquals(
       r.problems,
-      List("edit 1 (insertAfter \"by sea\"): text: it names a source that is not in the corpus")
+      List("edit 1 (insertAfter \"by sea\"): text: the text cites no source")
     )
 
   test("a check request is edits or a body, not both and not neither"):

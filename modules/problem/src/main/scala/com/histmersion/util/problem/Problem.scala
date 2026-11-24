@@ -827,7 +827,7 @@ object Problem:
 
     /** The work that holds the store or a resource while it runs. */
     enum Activity:
-      case Backup, Restore, Vacuum, Reindex, MergeApply, BundleImport, Seed, Migration, CalibreGui, TileRequests
+      case Restore, MergeApply, CalibreGui, TileRequests
 
       /** A Codex run, which uses the runs' Codex home. */
       case CodexRun
@@ -839,9 +839,6 @@ object Problem:
 
     /** A rule of the service forbids it. */
     final case class Policy(rule: Rule) extends Refused
-
-    /** `limit` is spent: `used` of `cap`, until `until` when that is known. */
-    final case class Quota(limit: Limit, used: Amount, cap: Amount, until: Option[EpochMs]) extends Refused
 
     /** `feature` is switched off: `setting` is `false`. `variable`: the environment variable that switches it on, when
       * the refusal names one; `effect`: what switching it on does, when the refusal says it.
@@ -899,23 +896,8 @@ object Problem:
 
     /** The rules a request can break. */
     enum Rule:
-      /** The request needs a live run token. */
-      case RunTokenRequired
-
-      /** The request needs the API key. */
-      case ApiKeyRequired
-
-      /** The command may not write in the working directory it was given. */
-      case WorkingDirDenied
-
-      /** The read-only query holds a statement that writes. */
-      case ReadOnlyQuery
-
       /** The query holds several statements; it runs exactly one. */
       case OneStatement
-
-      /** The runtime refuses this login while the server listens beyond the local machine. */
-      case LoginOutsideLocal
 
       /** Only legal open-access sources may be fetched. */
       case LegalOnly
@@ -973,16 +955,6 @@ object Problem:
         * (`auth.proxy-networks`; empty, the default, declares none).
         */
       case UndeclaredProxy
-
-    /** The allowances a request can spend. */
-    enum Limit:
-      case DailySpend, MonthlySpend, RunSpend, ProviderQuota, RateLimit, PlanAllowance
-
-    /** An amount of an allowance: money, calls or tokens, as its limit counts them. */
-    type Amount = Amount.T
-    object Amount extends Newtype[Double, Pure]:
-      /** An amount written as a decimal number. */
-      def read(number: String): Option[Amount] = number.toDoubleOption.map(Amount(_))
 
     /** A feature a setting switches on and off, by its name. */
     type Feature = Feature.T
@@ -1127,7 +1099,7 @@ object Problem:
 
     /** What a reply was expected to be. */
     enum Shape:
-      case Json, Xml, Html, Text, Image, Document, Archive, Problems, Range
+      case Json, Document, Range
 
   /** A file, a process or the database failed under the operation. */
   sealed trait Io extends Problem
@@ -1258,11 +1230,11 @@ object Problem:
       def read(digits: String): Option[ExitCode] = digits.toIntOption.map(ExitCode(_))
 
     enum Access:
-      case Read, Write, Create, Delete, Move, List
+      case Read, Write, Create, Delete, Move
 
     /** What a path should be. `Listed`: named by the manifest it is checked against. `OnPath`: found on the `PATH`. */
     enum Kind:
-      case File, Directory, Present, Absent, Executable, Listed, OnPath
+      case File, Directory, Present, Executable, Listed, OnPath
 
       /** On disk: a file another program can be handed (an in-memory store has none). */
       case OnDisk
@@ -1483,7 +1455,7 @@ object Problem:
       case Unanswered(request: Raw)
 
     enum DbOp:
-      case Connect, Query, Migrate, Backup, Restore
+      case Connect, Query, Migrate
 
   /** The service's settings do not allow the operation. */
   sealed trait Config extends Problem
@@ -1495,9 +1467,6 @@ object Problem:
 
     /** This server has no `capability`. */
     final case class Unavailable(capability: Capability) extends Config
-
-    /** Reloading the settings failed at `stage`, in `scope`. */
-    final case class Reload(stage: Stage, scope: Scope) extends Config
 
     /** The part `scope` of the running service cannot be built: `why`, each problem. */
     final case class Unbuilt(scope: Scope, why: NonEmptyVector[Problem]) extends Config
@@ -1706,9 +1675,6 @@ object Problem:
       /** It contradicts `other`. */
       case Conflicts(other: SettingKey)
 
-      /** It names a secret no vault holds. */
-      case NoSecret
-
       /** It is a block of settings, not one setting. */
       case Block
 
@@ -1756,8 +1722,8 @@ object Problem:
 
     /** What a server (or the host a plugin runs in) may lack. */
     enum Capability:
-      case Originals, AcquisitionChain, Runtimes, Converter, Gazetteer, Basemap, Agents, Calibre, Processes, LocalFiles,
-        MediaImport, EventCatalogues, AiProviders, GazetteerImport, SourceCollections, Network, CitationAlerts
+      case Originals, AcquisitionChain, Converter, Agents, Processes, LocalFiles, MediaImport, EventCatalogues,
+        AiProviders, GazetteerImport, SourceCollections, Network, CitationAlerts
 
       /** A service that starts the server again when it stops: without one, the server cannot restart itself. */
       case Supervisor
@@ -1779,10 +1745,6 @@ object Problem:
 
       /** A check of a plan's login: none where nothing is started. */
       case LoginCheck
-
-    /** The stages of a settings reload. */
-    enum Stage:
-      case Parse, Plan, Close, Start
 
     /** The part of the running service a reload rebuilds, by its name. */
     type Scope = Scope.T
@@ -1820,7 +1782,7 @@ object Problem:
 
     /** Why a plugin did not load. */
     enum Fault:
-      case Missing, NullComponent, BadDescriptor, VersionMismatch, Duplicate
+      case Missing, NullComponent, BadDescriptor, Duplicate
 
       /** Loading it threw. */
       case Threw(reported: External.Reported)
@@ -1845,7 +1807,7 @@ object Problem:
 
     /** Why a plugin did not take an item. */
     enum Refusal:
-      case NoLicence, NoImage, NoName, NoLocation, NoDate, Duplicate, Restricted
+      case NoLicence, NoImage, NoDate
 
       /** Its licence is of the family `family`, which the collection's allowlist does not hold. */
       case LicenceNotAllowed(family: Raw)
@@ -1858,10 +1820,7 @@ object Problem:
 
     /** How a vault failed. */
     enum Retrieval:
-      case NoVault, NoEntry, EmptyValue, Locked
-
-      /** It did not answer within `after`. */
-      case TimedOut(after: Millis)
+      case NoVault, NoEntry, Locked
 
       /** Its tool failed; `stderr` is the end of what it wrote. */
       case Failed(stderr: External.Stderr)
@@ -2032,9 +1991,6 @@ object Problem:
     /** The plan probe printed no rate-limit event: it exited with `exit`; `said`, what it printed, if anything. */
     final case class ProbeUnread(exit: Io.ExitCode, said: Option[External.Reported]) extends Run
 
-    /** The scheduler holds it back: `block`. */
-    final case class Blocked(block: Block) extends Run
-
     /** A restart cut it short. */
     case object Interrupted extends Run
 
@@ -2055,11 +2011,8 @@ object Problem:
     /** The autopilot drains (since `since`, when it is known); it resumes once the drain is lifted. */
     final case class Draining(since: Option[EpochMs]) extends Run
 
-    /** It cannot go on at `step`: `cause`. */
-    final case class Aborted(step: Step, cause: AbortCause) extends Run
-
     enum PauseReason:
-      case Requested, Allowance, Budget, Provider, Approval, Schedule
+      case Requested
 
     /** What a run stopped for (the agents' pause reasons): the word a stopped run's sentence starts with. */
     enum PauseCause derives CanEqual:
@@ -2083,22 +2036,8 @@ object Problem:
       /** The step a value of any newtype names (`Step.of(name)`): unwrapped here, like [[Raw.of]]. */
       def of[T](value: T)(using RefinedType.Mirror[T]): Step = Step(s"$value")
 
-    /** A pool of runs, by its name. */
-    type Pool = Pool.T
-    object Pool extends Newtype[String, Pure]
-
-    /** Why the scheduler holds a run back. */
-    enum Block:
-      /** `pool` runs as many as it may. */
-      case PoolFull(pool: Pool)
-
-      case SpendCap, Draining, OutsideWindow, Waiting
-
     enum Actor:
-      case Person, Automation, Server
-
-    enum AbortCause:
-      case Disappeared, CheckpointMismatch, VersionChanged
+      case Person
 
     /** The agents' spend caps: a day's and a month's. */
     enum Cap derives CanEqual:
@@ -2194,10 +2133,10 @@ object Problem:
     final case class Unplaced(place: Raw, finding: Count)
 
     enum Flaw:
-      case HandWrittenSourcesCited, UncitedParagraph, UnknownCitekey, FormattingIntroduced, MissingSection
+      case HandWrittenSourcesCited
 
     enum Requirement:
-      case NoYearZero, CitesNoSource, UnknownCitekey, OutsidePeriod
+      case CitesNoSource
 
       /** A stand-in (placeholder, TODO, lorem ipsum) where the text belongs. */
       case StandIn
@@ -2919,7 +2858,7 @@ object Problem:
         Conflict.State("running"),
         Vector(Conflict.State("paused"), Conflict.State("failed"))
       ),
-      Conflict.Busy(Conflict.Activity.Backup),
+      Conflict.Busy(Conflict.Activity.Restore),
       Conflict.ServerHeld(Raw("histmersion-server mac.local:4242, connected since 2026-11-19T08:00:00Z")),
       Conflict.Undrained(NonEmptyVector.of(Raw("2 writes in flight"), Raw("agent runs: 1 running")), Count(60L)),
       Conflict.Referenced(
@@ -2938,10 +2877,9 @@ object Problem:
         )
       ),
       Conflict.Job(Raw("0193f1c4"), Conflict.State("queued"), Conflict.Control.NotStarted),
-      Refused.Policy(Refused.Rule.RunTokenRequired),
+      Refused.Policy(Refused.Rule.OneStatement),
       Refused.Unauthenticated(Refused.Credential.ApiKey),
       Refused.Misdirected(Raw("rebound.example")),
-      Refused.Quota(Refused.Limit.DailySpend, Refused.Amount(5.25), Refused.Amount(4.5), Some(EpochMs(1762732800000L))),
       Refused.Disabled(Refused.Feature("events-gvp"), SettingKey("histmersion.events.gvp.enabled"), None, None),
       Refused.Space(
         Refused.Work.Gebco,
@@ -3017,7 +2955,6 @@ object Problem:
       ),
       Config.Setting(SettingKey("histmersion.agents.providers.codex.command"), Config.Fault.Empty),
       Config.Unavailable(Config.Capability.Originals),
-      Config.Reload(Config.Stage.Close, Config.Scope("plugins")),
       Config.Cycle(NonEmptyVector.of(Config.Scope("db"), Config.Scope("lease"), Config.Scope("db"))),
       Config.Unbuilt(Config.Scope("pool"), NonEmptyVector.of(Config.Unavailable(Config.Capability.HotGraph))),
       Config.Unchanged(
@@ -3049,7 +2986,7 @@ object Problem:
         Raw("248284"),
         Plugin.Refusal.NotOpen(Field("isPublicDomain"), Vector(Raw("false")))
       ),
-      Plugin.Vault(Plugin.Id("keepassxc"), Plugin.Retrieval.TimedOut(Millis(20000L))),
+      Plugin.Vault(Plugin.Id("keepassxc"), Plugin.Retrieval.Locked),
       Plugin.Dependency(
         Plugin.Id("doi-mirror-0.1.0.jar"),
         Raw("com.github.plokhotnyuk.jsoniter-scala:jsoniter-scala-core_3"),
@@ -3061,7 +2998,7 @@ object Problem:
         Plugin.Claim.Unavailable,
         External.PluginSaid("the AWMC server is in maintenance")
       ),
-      Run.Paused(Run.PauseReason.Allowance, Some(EpochMs(1762732800000L))),
+      Run.Paused(Run.PauseReason.Requested, Some(EpochMs(1762732800000L))),
       Run.Halted(Run.PauseCause.PlanQuota, Run.Cooling(EpochMs(1762732800000L))),
       Run.Unstarted,
       Run.UploadUnheld,
@@ -3168,15 +3105,13 @@ object Problem:
       Run.GuardStopped(Raw("the quota-guard mod ended the turn")),
       Run.NoLogin(Raw("'claude auth status' says not logged in")),
       Run.ProbeUnread(Io.ExitCode(1), Some(External.Reported("Invalid API key"))),
-      Run.Blocked(Run.Block.PoolFull(Run.Pool("review"))),
       Run.Interrupted,
       Run.Restored,
       Run.CutShort(Conflict.Activity.MergeApply),
       Run.Unrecorded(Conflict.Activity.MergeApply),
       Run.Cancelled(Run.Actor.Person),
       Run.Draining(Some(EpochMs(1762732800000L))),
-      Run.Aborted(Run.Step("draft"), Run.AbortCause.CheckpointMismatch),
-      Content.Finding(Content.Flaw.UncitedParagraph),
+      Content.Finding(Content.Flaw.HandWrittenSourcesCited),
       Content.Proposal(Content.Requirement.TooManyClaims(Count(12L), Count(15L)), Where("claims")),
       Content.Answer(Content.Requirement.SummaryGiven),
       Content.NotProposed(Content.Answer(Content.Requirement.ProposedOnce(Raw("tin-trade")))),
