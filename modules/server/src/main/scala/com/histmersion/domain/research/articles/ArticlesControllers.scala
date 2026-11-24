@@ -51,6 +51,7 @@ import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -130,7 +131,7 @@ final class ArticlesControllers(
   /** `POST /api/articles/{slug}/lint/fix`: the safe repairs of the body and summary, written guarded by the article's
     * token, then the lint again.
     */
-  def fix(slug: Slug): Either[Api.Error, FormatReport] =
+  def fix(slug: Slug)(using Creator.New): Either[Api.Error, FormatReport] =
     maintenance.guard(WriteGate.OperationName("fix_article_format")):
       store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
         val (body, fb) = MarkdownLint.fix(
@@ -165,7 +166,7 @@ final class ArticlesControllers(
     */
   def writeRepairedBody(slug: Slug, body: Article.Body, token: Option[BArticleRow.UpdatedAt])(using
       WritePermit
-  ): Boolean =
+  )(using Creator.New): Boolean =
     store
       .patch(
         slug,
@@ -549,7 +550,7 @@ final class ArticlesControllers(
       slug: Slug,
       in: Article.Put,
       strict: domain.research.Article.StrictMode = domain.research.Article.StrictMode(false)
-  ): Either[Api.Error, Article.View] =
+  )(using Creator.New): Either[Api.Error, Article.View] =
     maintenance.guard(WriteGate.OperationName("put_article")):
       // an OLD slug follows the alias: the put replaces the renamed article
       Articles
@@ -571,7 +572,7 @@ final class ArticlesControllers(
       slug: Slug,
       p: Article.Patch,
       strict: domain.research.Article.StrictMode = domain.research.Article.StrictMode(false)
-  ): Either[Api.Error, Article.View] =
+  )(using Creator.New): Either[Api.Error, Article.View] =
     maintenance.guard(WriteGate.OperationName("patch_article")):
       Right(currentSlug(slug))
         .flatMap { s =>
@@ -606,7 +607,7 @@ final class ArticlesControllers(
   /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving and every `[[old]]` in other articles
     * is rewritten (each a new version).
     */
-  def rename(slug: Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
+  def rename(slug: Slug, req: LabelRename)(using Creator.New): Either[Api.Error, LabelRenamed] =
     maintenance.guard(WriteGate.OperationName("rename_article")):
       val from = currentSlug(slug)
       for
@@ -666,10 +667,10 @@ final class ArticlesControllers(
     * newer than the file" guard as the source seed whenever the client sends the file's mtime, so a reseed cannot wipe
     * an agent's compiled prose.
     */
-  def importNote(req: Article.Import): Either[Api.Error, SeedResult] =
+  def importNote(req: Article.Import)(using Creator.New): Either[Api.Error, SeedResult] =
     maintenance.guard(WriteGate.OperationName("import_article"))(importNow(req))
 
-  private def importNow(req: Article.Import)(using WritePermit): Either[Api.Error, SeedResult] =
+  private def importNow(req: Article.Import)(using WritePermit)(using Creator.New): Either[Api.Error, SeedResult] =
     val fallbackSlug = Article.Slug(req.slug.map(_.value.trim).filter(_.nonEmpty).getOrElse(""))
     val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head))
     ArticleNote.parse(req.text.value, fallbackSlug, fallbackKind) match

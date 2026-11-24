@@ -18,6 +18,7 @@ import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.media.CoversJobKinds
+import com.histmersion.domain.Creator
 
 /** The sources' pictures (#1446): their covers and illustrations as one run (a dry run from the database alone, or one
   * source at once) or as a job over every source; a cover the CLI read from the local Calibre library; the picture a
@@ -28,7 +29,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   /** The sources' pictures, one run: a dry run (from the database alone), or — for one `citekey` — done at once. A run
     * over every source is [[coversJob]].
     */
-  def covers(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport] =
+  def covers(req: MediaCoversRequest)(using Creator.New): Either[Api.Error, MediaCoversReport] =
     // a dry run writes nothing, but runs the one path that may: under the gate too
     if req.dryRun.value then jobs.guarded(WriteGate.OperationName("media_covers"))(Right(pictures.run(req)))
     else if req.citekey.forall(_.value.trim.isEmpty) then
@@ -43,7 +44,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
         jobs.exclusive(BackgroundJob.Work("media covers"))(Right(pictures.run(req)))
       )
 
-  def coversJob(req: MediaCoversRequest): Either[Api.Error, JobInfo] =
+  def coversJob(req: MediaCoversRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     val what =
       List(
         Option.when(req.covers.value)("Open Library covers"),
@@ -62,11 +63,11 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     }
 
   /** A cover the CLI read from the local Calibre library. */
-  def putCover(p: SourceCoverParams, bytes: AssetService.Bytes): Either[Api.Error, MediaItem] =
+  def putCover(p: SourceCoverParams, bytes: AssetService.Bytes)(using Creator.New): Either[Api.Error, MediaItem] =
     jobs.guarded(WriteGate.OperationName("media_cover"))(pictures.storeCover(p, bytes))
 
   /** After a conversion stored a source's figures (the OCR job's hook). */
-  def afterIngest(citekey: Citekey)(using WritePermit): Option[SourcePictures.AfterIngestText] =
+  def afterIngest(citekey: Citekey)(using WritePermit)(using Creator.New): Option[SourcePictures.AfterIngestText] =
     pictures.afterIngest(citekey)
 
 object CoversControllers:

@@ -9,11 +9,14 @@ import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}
 import com.histmersion.config.AgentAutopilotConfig
 import com.histmersion.{Offset, PageSize}
 import com.histmersion.domain.automation.ItemStatus
+import com.histmersion.domain.Creator
 
 /** REST wiring of the process managers — every route delegates to [[ManagersControllers]]. The fixed paths come before
   * `{id}/{action}`.
   */
 object ManagersRoutes:
+
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
   private def light(id: ManagerInfo.Id): ManagerLight.Id = id.transformInto[ManagerLight.Id]
 

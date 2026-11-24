@@ -21,6 +21,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to
@@ -76,7 +77,7 @@ final class SeedService(
   private val seeded = java.util.concurrent.ConcurrentHashMap[String, Instant]()
 
   /** One tick's seeding; one line per goal seeded. */
-  def tick(now: Instant)(using WritePermit): List[String] =
+  def tick(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val n = cfg.scheduler.seedGoalsPerTick.value
     if n <= 0 || !agents.autopilot.on || agents.drain.draining then Nil
     else
@@ -111,7 +112,7 @@ final class SeedService(
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
-  def seed(goal: Goal.Slug)(using WritePermit): Option[String] =
+  def seed(goal: Goal.Slug)(using WritePermit)(using Creator.New): Option[String] =
     acquisition().sweepCandidates(goal, dryRun = AgentUpstream.SweepCandidatesDryRun(false)) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: ${why.sentences.mkString("; ")}")

@@ -5,6 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The person's requests to stop running background jobs, and how each paused job goes on. Held in memory by the server
   * for its lifetime: a stop is asked of a job running in this process, and a restart loses every paused job's way to go
@@ -47,7 +48,7 @@ final class JobStops:
     val name: Quiescent.Name = Quiescent.Name("the paused background jobs")
     def quiesce(): Unit = ()
     def busy: Vector[Quiescent.Busy] = Vector.empty
-    def restored()(using WritePermit): Unit =
+    def restored()(using WritePermit)(using Creator.New): Unit =
       resumers.clear()
       requested.clear()
     def resume(): Unit = ()

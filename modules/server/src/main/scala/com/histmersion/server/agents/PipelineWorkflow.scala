@@ -48,7 +48,7 @@ final class PipelineWorkflow(
       .flatMap(_.tools)
       .toSet
 
-  def run(run: RunCtx)(using WritePermit): Either[Halt, WorkflowDefinition.Summary] =
+  def run(run: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, WorkflowDefinition.Summary] =
     impl.run(run).map(summary => WorkflowDefinition.Summary(summary.value))
 
 object PipelineWorkflow:

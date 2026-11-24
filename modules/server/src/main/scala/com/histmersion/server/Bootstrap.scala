@@ -30,6 +30,8 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.catalogue.places.GazetteerControllers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -99,6 +101,7 @@ final class Bootstrap(
     * is logged with why.
     */
   def autoStart()(using WritePermit): Unit =
+    given Creator.New = InTreeWorkflow.Init.creator
     val p = plan(fetch = false, onlyEmpty = true)
     if !p.isEmpty then
       scribe.info(
@@ -109,7 +112,7 @@ final class Bootstrap(
   /** `POST /api/init` — the bundled gazetteer and period presets (re-imported: every write is an upsert) and, with
     * `fetch`, the network sources in `init.fetch-sources`.
     */
-  def init(fetch: Boolean): Either[Api.Error, JobInfo] =
+  def init(fetch: Boolean)(using Creator.New): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = false)))
 
   // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
@@ -121,7 +124,9 @@ final class Bootstrap(
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
     * do (the default), or the import itself.
     */
-  def loadGazetteer(source: Gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply): Either[Api.Error, JobInfo] =
+  def loadGazetteer(source: Gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply)(using
+      Creator.New
+  ): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName("places/load")):
       Gazetteer.Kind
         .parse(source)
@@ -145,7 +150,7 @@ final class Bootstrap(
       fetch = if fetch then cfg.init.sources.map(s => InitPlan.Fetch(s.value)) else Nil
     )
 
-  private def start(p: InitPlan)(using WritePermit): Either[Api.Error, JobInfo] =
+  private def start(p: InitPlan)(using WritePermit)(using Creator.New): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
       maintenance.workers,
@@ -157,7 +162,9 @@ final class Bootstrap(
       stops = Some(deps.jobStops)
     )((job, note) => run(Job.Id.assume(job.id.value), p, note))
 
-  private def run(id: Job.Id, p: InitPlan, note: JobInfo.Progress => Unit)(using WritePermit): BackgroundJob.Outcome =
+  private def run(id: Job.Id, p: InitPlan, note: JobInfo.Progress => Unit)(using
+      WritePermit
+  )(using Creator.New): BackgroundJob.Outcome =
     // the definitions a period import left out go on the job (#771), not just into the log
     def withSkipped(r: Period.ImportResult)(using WritePermit): Period.ImportResult =
       if r.skippedCount.value > 0 then
@@ -208,7 +215,7 @@ final class Bootstrap(
     )
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
-  private def seedPlaces(note: JobInfo.Progress => Unit)(using WritePermit): Either[String, String] =
+  private def seedPlaces(note: JobInfo.Progress => Unit)(using WritePermit)(using Creator.New): Either[String, String] =
     gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note).left.map(_.sentence).map(_.value)
 
   private def skippedNote(r: Period.ImportResult): String =
@@ -219,7 +226,7 @@ final class Bootstrap(
       periods: Period.ImportResult => Period.ImportResult,
       check: Boolean = false,
       note: JobInfo.Progress => Unit = _ => ()
-  )(using WritePermit): Either[String, String] =
+  )(using WritePermit)(using Creator.New): Either[String, String] =
     val gazetteer = Gazetteer.Kind.parse(Gazetteer.Kind.Wire(name))
     if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
     else
@@ -234,7 +241,7 @@ final class Bootstrap(
 
   private def fetchNetwork(name: String, periods: Period.ImportResult => Period.ImportResult)(using
       WritePermit
-  ): Either[String, String] =
+  )(using Creator.New): Either[String, String] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
         periodImports

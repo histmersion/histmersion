@@ -15,6 +15,7 @@ import com.histmersion.domain.media.covers.CoversControllers
 import com.histmersion.domain.media.figures.FiguresControllers
 import com.histmersion.domain.media.imports.ImportsControllers
 import com.histmersion.domain.media.links.AssetLinksControllers
+import com.histmersion.domain.Creator
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
@@ -22,6 +23,7 @@ import sttp.tapir.server.ServerEndpoint
   * before `sources/{ck}`, the media paths that are fixed before `media/{uid}`.
   */
 object MediaRoutes:
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
   private def missing(raw: String): Api.Error = Write.notFound(ApiCitekey(raw))
 
   private def citekey[A](raw: String)(use: Citekey => Either[Api.Error, A]): Either[Api.Error, A] =

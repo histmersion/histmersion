@@ -21,8 +21,8 @@
 { "authors" : [ ], "body" : 149, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_ledger", "doi" : null, "has_original" : true, "license" : null, "source" : "ocr", "status" : "unassessed", "summary" : null, "title" : "zqa_ledger", "venue" : null, "year" : null }
 { "authors" : [ ], "body" : 149, "calibre_id" : null, "cited_by_count" : null, "citekey" : "zqa_mcp", "doi" : null, "has_original" : true, "license" : null, "source" : "ocr", "status" : "unassessed", "summary" : null, "title" : "Sent by a model", "venue" : null, "year" : null }
 ## edges 2 rows
-{ "dst" : "zqa_cited", "kind" : "cites", "src" : "zqa_later" }
-{ "dst" : "zqa_ref", "kind" : "references", "src" : "zqauthor2019_roads" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqa_cited", "kind" : "cites", "src" : "zqa_later" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqa_ref", "kind" : "references", "src" : "zqauthor2019_roads" }
 ## unresolved_edges 0 rows
 ## assessments 14 rows
 { "cited_by" : 1, "citekey" : "zqa_later", "influential" : null, "notices" : { "crossrefUpdates" : [ ], "retractionWatch" : [ ] }, "retracted" : false, "verdict" : "current" }

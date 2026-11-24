@@ -12,6 +12,7 @@ import java.nio.file.Files
 import com.histmersion.api.Api
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.library.ingest.SeedFolder
+import com.histmersion.domain.Creator
 
 /** `histmersion seed <dir>`: an exported tree of notes on this server's disk read back into the library. The directory
   * is a SERVER-side path the caller chooses, so it is confined to `corpus.dir` when that is configured; when it is not,
@@ -24,31 +25,34 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
   private def corpusRoot: Option[SafePath.Base] =
     Option(cfg.corpus.dir.value).map(_.trim).filter(_.nonEmpty).map(SafePath.Base(_))
 
-  def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard(WriteGate.OperationName("seed")):
-    val asked = Option(req.dir).map(_.value.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir.value)
-    if asked.isEmpty then
-      Left(
-        Api.Error(Problem.Unclassified(Legacy.Text("no directory given and histmersion.corpus.dir is not configured")))
-      )
-    else
-      if !SafePath.configured(corpusRoot) then
-        scribe.warn(
-          "histmersion.corpus.dir is not configured — `seed` will read any path the caller " +
-            "names; set it (HISTMERSION_CORPUS_DIR) to confine server-side reads"
+  def seed(req: SeedRequest)(using Creator.New): Either[Api.Error, SeedResult] =
+    deps.maintenance.guard(WriteGate.OperationName("seed")):
+      val asked = Option(req.dir).map(_.value.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir.value)
+      if asked.isEmpty then
+        Left(
+          Api.Error(
+            Problem.Unclassified(Legacy.Text("no directory given and histmersion.corpus.dir is not configured"))
+          )
         )
-      SafePath
-        .confine(corpusRoot, SafePath.Candidate(asked))
-        .left
-        .map(p => Api.Error(p))
-        .flatMap { dir =>
-          if !Files.isDirectory(dir) then
-            Left(Api.Error(Problem.Unclassified(Legacy.Text(s"not a directory on the server: $dir"))))
-          else
-            Right(
-              importer.run(
-                SeedNoteFiles(dir, corpusRoot)(using deps.textFiles),
-                SeedImport.RunForce(req.force.value),
-                SeedFolder.MaxBytes(cfg.limits.assetBytes.value)
+      else
+        if !SafePath.configured(corpusRoot) then
+          scribe.warn(
+            "histmersion.corpus.dir is not configured — `seed` will read any path the caller " +
+              "names; set it (HISTMERSION_CORPUS_DIR) to confine server-side reads"
+          )
+        SafePath
+          .confine(corpusRoot, SafePath.Candidate(asked))
+          .left
+          .map(p => Api.Error(p))
+          .flatMap { dir =>
+            if !Files.isDirectory(dir) then
+              Left(Api.Error(Problem.Unclassified(Legacy.Text(s"not a directory on the server: $dir"))))
+            else
+              Right(
+                importer.run(
+                  SeedNoteFiles(dir, corpusRoot)(using deps.textFiles),
+                  SeedImport.RunForce(req.force.value),
+                  SeedFolder.MaxBytes(cfg.limits.assetBytes.value)
+                )
               )
-            )
-        }
+          }

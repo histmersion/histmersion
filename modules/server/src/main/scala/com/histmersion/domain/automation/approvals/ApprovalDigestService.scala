@@ -22,6 +22,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
@@ -82,7 +83,7 @@ final class ApprovalDigestService(
   /** Decide every open approval `b` matches (a kind, a subject, ids), oldest first; a refused one does not stop the
     * rest.
     */
-  def decideAll(b: BulkDecide): Either[Api.Error, BulkResult] =
+  def decideAll(b: BulkDecide)(using Creator.New): Either[Api.Error, BulkResult] =
     for
       d <- Decision
         .parse(Decision.Wire(b.decision.value))

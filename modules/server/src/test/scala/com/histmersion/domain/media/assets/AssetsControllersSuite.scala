@@ -20,6 +20,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.media.MediaItem
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The pictures' controllers over the in-memory service: a figure's URL under an old citekey, an upload to a source
   * that is not there or that does not decode, a picture's uid that is not one, and every write refused while the

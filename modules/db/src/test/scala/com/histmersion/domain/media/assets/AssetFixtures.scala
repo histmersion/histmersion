@@ -22,6 +22,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.TestCreators.given
 
 /** The pictures' repositories as the db suites reach them from outside the feature: each call on a connection or in a
   * transaction of its own, as the service runs it.

@@ -51,5 +51,5 @@ final class ResearchWorkflow(
       .flatMap(_.tools)
       .toSet
 
-  def run(run: RunCtx)(using WritePermit): Either[Halt, WorkflowDefinition.Summary] =
+  def run(run: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, WorkflowDefinition.Summary] =
     impl.run(run).map(r => WorkflowDefinition.Summary(r.value))

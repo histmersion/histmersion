@@ -12,6 +12,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.checks.Lint
 import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
@@ -40,7 +42,7 @@ private[events] object CorrectionRepo:
       upstream: Option[BCatalogueRow.Provider]
   )(using
       DbCon
-  ): Unit =
+  )(using creator: Creator.New): Unit =
     if value == upstreamValue then
       Unused(
         sql"DELETE FROM corrections WHERE target_kind = $kind AND target_id = $id AND field = $field".update.run(),
@@ -48,8 +50,8 @@ private[events] object CorrectionRepo:
       )
     else
       val (v, u) = (value.noSpaces, upstreamValue.noSpaces)
-      val _ = sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value)
-            VALUES ($kind, $id, $field, $v::jsonb, $upstream, $u::jsonb)
+      val _ = sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, creator)
+            VALUES ($kind, $id, $field, $v::jsonb, $upstream, $u::jsonb, ${StoredCreator.column(creator)}::jsonb)
             ON CONFLICT (target_kind, target_id, field) DO UPDATE SET value = EXCLUDED.value,
               upstream = EXCLUDED.upstream, upstream_value = EXCLUDED.upstream_value, upstream_now = NULL,
               status = 'active', updated_at = now(), checked_at = NULL""".update.run()

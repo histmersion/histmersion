@@ -13,6 +13,7 @@ import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.Html
 import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
+import com.histmersion.util.database.TestCreators.given
 
 /** The HTML pages are the only place this service emits markup, and both places it interpolated a caller- or
   * agent-supplied string into it were unescaped. These are the regression tests.

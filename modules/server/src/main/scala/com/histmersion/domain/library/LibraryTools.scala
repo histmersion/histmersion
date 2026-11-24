@@ -33,6 +33,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Sort
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`
@@ -63,6 +64,7 @@ object LibraryTools:
       citations: CitationsControllers,
       exportNote: Citekey => Either[Api.Error, Frontmatter.NoteBody]
   ) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val sourceError: Api.Error => ToolResult[NoStructuredOutput] =
       e => if e.isNotFound then McpOut.error(e, FindCitekey) else McpOut.error(e)
     val searchTool =

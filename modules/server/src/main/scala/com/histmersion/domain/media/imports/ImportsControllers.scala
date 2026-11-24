@@ -25,6 +25,7 @@ import com.histmersion.api.media.MediaItem
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a
@@ -99,8 +100,8 @@ final class ImportsControllers(
     * A real run over many is a job ([[importJob]], #1491): asked here it outlived the CLI's request while the server
     * kept going.
     */
-  def importMedia(req: MediaImportRequest): Either[Api.Error, MediaImportReport] =
-    def go(using WritePermit): Either[Api.Error, MediaImportReport] =
+  def importMedia(req: MediaImportRequest)(using Creator.New): Either[Api.Error, MediaImportReport] =
+    def go(using WritePermit)(using Creator.New): Either[Api.Error, MediaImportReport] =
       providerOf(req.provider).flatMap { imp =>
         targetsOf(req).flatMap { (place, event) =>
           jobs.exclusive(BackgroundJob.Work("media import")) {
@@ -147,7 +148,7 @@ final class ImportsControllers(
     * next (so a stopped job resumes after the last one), until none is left, `limit` targets are done, or a batch gets
     * no answer at all.
     */
-  def importJob(req: MediaImportRequest): Either[Api.Error, JobInfo] =
+  def importJob(req: MediaImportRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     providerOf(req.provider).flatMap { imp =>
       if req.dryRun.value then
         Left(
@@ -198,7 +199,7 @@ final class ImportsControllers(
       limit: Option[ImportsControllers.ImportLimit],
       since: Option[ImportService.Since],
       progress: JobInfo.Progress => Unit
-  )(using WritePermit): MediaImportReport =
+  )(using WritePermit)(using Creator.New): MediaImportReport =
     val run = imp.start()
     val batch = imp.batch.value.max(1)
     val cap = limit.fold(Int.MaxValue)(_.value)

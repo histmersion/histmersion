@@ -27,6 +27,7 @@ import hearth.kindlings.optics.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.augustnagro.magnum.sql
+import com.histmersion.domain.Creator
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.
@@ -54,7 +55,7 @@ object SourcesCarried:
 
   /** The sources: the lines without their blobs are what a merge compares, the lines with them what an export writes.
     */
-  def sources(referrers: SourceReferrers): CarriedKind = new CarriedKind:
+  def sources(referrers: SourceReferrers)(using Creator.New): CarriedKind = new CarriedKind:
     val owner: DataOwner = Library
     val entry: BundleEntry = BundleEntry(Bundle.Kind.Source.file)
     override val record: Option[Bundle.Kind] = Some(Bundle.Kind.Source)
@@ -149,5 +150,5 @@ object SourcesCarried:
     )
 
   /** Every kind of the library, in the order the registry has always listed them. */
-  def all(referrers: SourceReferrers): List[CarriedKind] =
+  def all(referrers: SourceReferrers)(using Creator.New): List[CarriedKind] =
     List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)

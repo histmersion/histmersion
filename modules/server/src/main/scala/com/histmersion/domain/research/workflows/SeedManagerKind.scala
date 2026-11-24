@@ -40,6 +40,7 @@ import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
   * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its
@@ -127,7 +128,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     item.kind.value match
       case ArticleCompile if Slug.option(item.target.value).exists(site.articles.get(_).isRight) =>
         m.goal.foreach(g =>
@@ -286,7 +287,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id] =
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     val goalOf = domain.automation.Goal.Slug.option(item.target.value).flatMap(site.goal(_).toOption)
     def budget = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
     item.kind.value match

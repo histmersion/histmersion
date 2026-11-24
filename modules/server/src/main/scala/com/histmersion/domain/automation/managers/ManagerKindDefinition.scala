@@ -79,7 +79,7 @@ trait ManagerKindDefinition:
       error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Unit = c.evaluateStep(m, s, item, st, error, now, out, this)
+  )(using WritePermit)(using Creator.New): Unit = c.evaluateStep(m, s, item, st, error, now, out, this)
 
   /** What a DONE run of one of its items left. */
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts
@@ -91,7 +91,7 @@ trait ManagerKindDefinition:
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Unit = ()
+  )(using WritePermit)(using Creator.New): Unit = ()
 
   /** Start the next run of one of its items (`Some(manager id)` when it started), or settle it without one. */
   def dispatch(
@@ -101,14 +101,14 @@ trait ManagerKindDefinition:
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id]
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id]
 
   /** The work its domain does at every tick besides the items, after the holds and before the crons: each with the name
     * a failure is logged under. `draining` = nothing new may start.
     */
   def housework(now: Instant, draining: => Boolean)(using
       WritePermit
-  ): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] = Nil
+  )(using Creator.New): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] = Nil
 
   // ── what a person adds, and what the kind's domain adds to the engine's figures ──────────────
 

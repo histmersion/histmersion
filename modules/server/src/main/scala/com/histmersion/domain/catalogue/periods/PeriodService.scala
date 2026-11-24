@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The named periods: the timeline's presets and the PeriodO definitions behind them, searched, read one by one and
   * written by the seed and the imports.
@@ -37,7 +38,7 @@ trait PeriodService:
   def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]]
 
   /** Upsert in the order given, parents first, in one transaction; a row with no preset keeps a stored one. */
-  def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit): RowCount
+  def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount
 
   /** Take every preset not among `ids` off the menu (the rows stay); how many lost their heading. */
   def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount
@@ -74,7 +75,7 @@ object PeriodService:
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value))))
         .map((k, v) => HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value)))
-    def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit): RowCount =
+    def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount =
       db.write(PeriodRepo.upsert(rows, dataset))
     def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       db.write(PeriodRepo.retainPresets(ids))
@@ -115,7 +116,7 @@ object PeriodService:
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId.map(x => HistoricalPeriod.Id(x.value))).toMap
 
-    def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit): RowCount =
+    def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount =
       @tailrec def upsert(rest: List[HistoricalPeriod], held: Vector[StoredPeriod]): Vector[StoredPeriod] =
         rest match
           case Nil       => held

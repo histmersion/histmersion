@@ -9,6 +9,7 @@ import com.histmersion.domain.Caller
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Period
+import com.histmersion.domain.Creator
 
 /** The periods' operations as REST, MCP and the CLI reach them: one period with what it is part of and how it is
   * divided, the search, and the seed, a sent dataset and the live dump written in.
@@ -38,7 +39,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
     periods.search(PeriodSearch(q, region, from, to))
 
   /** `POST /api/periods/seed?replace=` — the presets bundled with this server. */
-  def seed(caller: Caller, replace: PeriodImports.Replace): Either[Api.Error, Period.ImportResult] =
+  def seed(caller: Caller, replace: PeriodImports.Replace)(using Creator.New): Either[Api.Error, Period.ImportResult] =
     maintenance.guard(WriteGate.OperationName("periods/seed"))(
       imports.applySeed(replace).left.map(e => Api.Error(e))
     )
@@ -49,7 +50,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
       collections: List[PeriodSources.Collections],
       dataset: Option[PeriodImports.Dataset],
       body: PeriodImports.DatasetBody
-  ): Either[Api.Error, Period.ImportResult] =
+  )(using Creator.New): Either[Api.Error, Period.ImportResult] =
     maintenance.guard(WriteGate.OperationName("periods/import")):
       for
         set <- Dataset.ofParam(dataset.map(d => Dataset.Wire(d.value)))
@@ -61,7 +62,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
       caller: Caller,
       source: PeriodSources.PeriodoUrl,
       collections: List[PeriodSources.Collections]
-  ): Either[Api.Error, Period.ImportResult] =
+  )(using Creator.New): Either[Api.Error, Period.ImportResult] =
     maintenance.guard(WriteGate.OperationName("periods/fetch")):
       if source.value.trim.toLowerCase != PeriodImports.PeriodOSource then
         Left(

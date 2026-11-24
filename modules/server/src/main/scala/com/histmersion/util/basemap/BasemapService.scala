@@ -29,6 +29,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.basemap.BasemapJobKinds
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The terrain base map on this machine (docs/research-terrain-basemap.md): where its two extracts are, the fetch job
   * that downloads them, their removal, and the tiles served to the web page.
@@ -696,7 +697,7 @@ final class BasemapService(
       focus
     )
 
-  def fetch(q: Basemap.FetchQuery): Either[Api.Error, JobInfo] =
+  def fetch(q: Basemap.FetchQuery)(using Creator.New): Either[Api.Error, JobInfo] =
     jobs.guarded(BasemapJobs.Operation("basemap/fetch")):
       ask(q).left.map(e => BasemapService.invalid(e)).flatMap { a =>
         val dry = if a.dryRun then "dry run: " else ""

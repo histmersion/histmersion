@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.ocr.Chunker
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The sources' share of the library's data contribution: their counts, the rebuild of their full-text chunks, and
   * their checks with the repairs safe to make without a person — the short edge targets unified, the stale chunks
@@ -63,7 +64,7 @@ object SourcesData:
     Check(owner, Rule.Name(name), Some(SafeFix(when, FixRank(rank), run)))
 
   /** The library's rules, in the order the report has always listed them. */
-  def checks(owner: DataOwner): List[CheckRule] =
+  def checks(owner: DataOwner)(using Creator.New): List[CheckRule] =
     listed(owner, DanglingEdges) ++
       List(
         fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, 10)(c =>

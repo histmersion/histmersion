@@ -29,6 +29,7 @@ import com.histmersion.server.views.WorkListView
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.api.automation.Creation
+import com.histmersion.domain.Creator
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
@@ -40,6 +41,7 @@ object OpsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   def apply(h: ServerWiring) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val lint =
       tool("lint")
         .description(
@@ -133,7 +135,7 @@ object OpsTools:
     List(lint, queue) ++ QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
-  private def runQueue(h: ServerWiring, in: QueueInput): ToolResult[NoStructuredOutput] =
+  private def runQueue(h: ServerWiring, in: QueueInput)(using Creator.New): ToolResult[NoStructuredOutput] =
     def render(list: String) =
       h.workListView.list(
         WorkListControllers.KindOfList(list),

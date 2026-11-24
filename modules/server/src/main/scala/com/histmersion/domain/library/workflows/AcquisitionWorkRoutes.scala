@@ -3,6 +3,7 @@ package domain.library.workflows
 
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.domain.Creator
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
@@ -10,6 +11,8 @@ import sttp.tapir.server.ServerEndpoint
   * bound to the library's acquisition work, in their place among the managers' routes.
   */
 object AcquisitionWorkRoutes:
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
+
   def apply(work: => AcquisitionWork): List[ServerEndpoint[Any, Identity]] = List(
     // the repair writes (a dry run runs the same path): under the maintenance gate
     AcquisitionWorkApi.repairAcquire.serverLogic[Identity](in =>

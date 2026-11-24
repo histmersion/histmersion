@@ -23,6 +23,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The event links' controllers over the in-memory services and a fake library: a source is confirmed only from a
   * passage of its text naming the event — the attestation carries its quote and offsets — refused with why when none

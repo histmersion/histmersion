@@ -69,6 +69,8 @@ import com.histmersion.config.AgentCompileConfig
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:
@@ -80,8 +82,10 @@ final class StubUpstream extends AgentUpstream:
     calls.add(s"meta $doi");
     metas.get(doi.value).toRight(Problem.Unclassified(Legacy.Text(s"$doi: not found upstream")))
   }
-  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
-  def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) =
+  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) = Left(
+    Problem.Unclassified(Legacy.Text("not stubbed"))
+  )
+  def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) =
     calls.add(s"assess $citekey")
     Right(
       Assessment(
@@ -99,7 +103,9 @@ final class StubUpstream extends AgentUpstream:
         Assessment.Recommendation("fine")
       )
     )
-  def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) =
+  def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using
+      Creator.New
+  ) =
     calls.add(s"followups $id")
     val rows = citing.getOrElse(id.value, Nil)
     Right(
@@ -127,7 +133,7 @@ final class StubUpstream extends AgentUpstream:
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
   @volatile var sweepFinds: Map[String, List[Source.Candidate]] = Map.empty
   private val marked = java.util.concurrent.ConcurrentHashMap[Source.Candidate.Id, Candidates.State.Wire]()
-  override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun) =
+  override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun)(using Creator.New) =
     calls.add(s"sweep $goal")
     sweepFinds
       .get(goal.value)

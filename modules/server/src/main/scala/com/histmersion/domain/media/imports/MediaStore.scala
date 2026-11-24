@@ -6,6 +6,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** Where an import writes and what it reads of the map: media's own services in the server ([[MediaStore.apply]]); a
   * map in a test.
@@ -18,7 +19,7 @@ trait MediaStore:
   def save(
       a: ProviderAsset,
       firstTarget: (ImportService.TargetType, ImportService.TargetId)
-  )(using WritePermit): (AssetService.AssetUid, Boolean)
+  )(using WritePermit)(using Creator.New): (AssetService.AssetUid, Boolean)
   def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit): Unit
   def link(
       uid: AssetService.AssetUid,
@@ -77,7 +78,9 @@ object MediaStore:
   def apply(assets: AssetService, imports: ImportService): MediaStore = new MediaStore:
     def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
       assets.known(AssetService.Provider(provider.value), keys)
-    def save(a: ProviderAsset, firstTarget: (ImportService.TargetType, ImportService.TargetId))(using WritePermit) =
+    def save(a: ProviderAsset, firstTarget: (ImportService.TargetType, ImportService.TargetId))(using
+        WritePermit
+    )(using Creator.New) =
       assets.save(a, (AssetService.TargetType(firstTarget._1.value), AssetService.TargetId(firstTarget._2.value)))
     def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit) = assets.refreshRights(uid, r)
     def link(

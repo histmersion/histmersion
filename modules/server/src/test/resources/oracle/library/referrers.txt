@@ -36,15 +36,15 @@
 { "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
 { "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
 ## edges 6 rows
-{ "dst" : "zqalpha1990_tell", "kind" : "cites", "src" : "zqdelta2010_gone" }
-{ "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
-{ "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_cove" }
-{ "dst" : "zqbeta2001_cove", "kind" : "references", "src" : "zqalpha1990_tell" }
-{ "dst" : "zqbeta2001_cove", "kind" : "updates", "src" : "zqgamma1975_kings" }
-{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqbeta2001_cove", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "cites", "src" : "zqdelta2010_gone" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_cove" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqbeta2001_cove", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
 ## unresolved_edges 2 rows
-{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
-{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
 ## source_chunks 8 rows
 { "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > References", "ord" : 2 }
 { "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The harbour", "ord" : 1 }
@@ -458,15 +458,15 @@
 { "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
 { "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
 ## edges 6 rows
-{ "dst" : "zqalpha1991_walls", "kind" : "cites", "src" : "zqdelta2010_gone" }
-{ "dst" : "zqalpha1991_walls", "kind" : "references", "src" : "zqeta2020_note" }
-{ "dst" : "zqalpha1991_walls", "kind" : "refutes", "src" : "zqbeta2001_cove" }
-{ "dst" : "zqbeta2001_cove", "kind" : "references", "src" : "zqalpha1991_walls" }
-{ "dst" : "zqbeta2001_cove", "kind" : "updates", "src" : "zqgamma1975_kings" }
-{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1991_walls" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqbeta2001_cove", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1991_walls", "kind" : "cites", "src" : "zqdelta2010_gone" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1991_walls", "kind" : "references", "src" : "zqeta2020_note" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1991_walls", "kind" : "refutes", "src" : "zqbeta2001_cove" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqbeta2001_cove", "kind" : "references", "src" : "zqalpha1991_walls" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1991_walls" }
 ## unresolved_edges 2 rows
-{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1991_walls" }
-{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1991_walls" }
 ## source_chunks 8 rows
 { "citekey" : "zqalpha1991_walls", "heading" : "Zqtell > References", "ord" : 2 }
 { "citekey" : "zqalpha1991_walls", "heading" : "Zqtell > The harbour", "ord" : 1 }
@@ -999,15 +999,15 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
 { "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
 { "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
 ## edges 6 rows
-{ "dst" : "zqalpha1990_tell", "kind" : "cites", "src" : "zqdelta2010_gone" }
-{ "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
-{ "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_harbour" }
-{ "dst" : "zqbeta2001_harbour", "kind" : "references", "src" : "zqalpha1990_tell" }
-{ "dst" : "zqbeta2001_harbour", "kind" : "updates", "src" : "zqgamma1975_kings" }
-{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqbeta2001_harbour", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "cites", "src" : "zqdelta2010_gone" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_harbour" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqbeta2001_harbour", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
 ## unresolved_edges 2 rows
-{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
-{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
 ## source_chunks 8 rows
 { "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > References", "ord" : 2 }
 { "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The harbour", "ord" : 1 }
@@ -1412,14 +1412,14 @@ Mirror: the next full `histmersion export` removes `sources/zqbeta2001_cove.md`.
 { "finding_id" : "zqgamma1975_kings#1", "place_id" : "zq_land" }
 { "finding_id" : "zqzeta2015_mcp#0", "place_id" : "zq_land" }
 ## edges 5 rows
-{ "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
-{ "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_harbour" }
-{ "dst" : "zqbeta2001_harbour", "kind" : "references", "src" : "zqalpha1990_tell" }
-{ "dst" : "zqbeta2001_harbour", "kind" : "updates", "src" : "zqgamma1975_kings" }
-{ "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqbeta2001_harbour", "kind" : "updates", "src" : "zqgamma1975_kings" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "references", "src" : "zqeta2020_note" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqalpha1990_tell", "kind" : "refutes", "src" : "zqbeta2001_harbour" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqbeta2001_harbour", "kind" : "references", "src" : "zqalpha1990_tell" }
+{ "created_at" : "TS", "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zqgamma1975_kings", "kind" : "challenges", "src" : "zqalpha1990_tell" }
 ## unresolved_edges 2 rows
-{ "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
-{ "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "mcp" }, "dst" : "zqnot2020_yet", "kind" : "references", "src" : "zqgamma1975_kings" }
+{ "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zq_article", "kind" : "references", "src" : "zqalpha1990_tell" }
 ## source_chunks 7 rows
 { "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > References", "ord" : 2 }
 { "citekey" : "zqalpha1990_tell", "heading" : "Zqtell > The harbour", "ord" : 1 }

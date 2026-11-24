@@ -26,6 +26,7 @@ import java.time.{Duration, Instant}
 import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The base map wired into the server: its store, the configuration read at each use, its fetch run as a background
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.
@@ -113,7 +114,7 @@ object BasemapWiring:
         busyCode: Option[Api.Error.Code]
     )(
         body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
-    )(using WritePermit): Either[Api.Error, JobInfo] =
+    )(using WritePermit)(using Creator.New): Either[Api.Error, JobInfo] =
       BackgroundJob.start(
         deps.ds,
         deps.maintenance.workers,

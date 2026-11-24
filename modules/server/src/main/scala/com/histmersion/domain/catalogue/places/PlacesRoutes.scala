@@ -11,6 +11,7 @@ import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.domain.Creator
 
 /** The gazetteer's endpoints bound to their controllers, in the order route matching needs: the `/{id}` route is a
   * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page (`GET
@@ -39,6 +40,7 @@ object PlacesRoutes:
       sources: () => List[Gazetteer.SourceInfo],
       load: (Api.ExternalPlaces.Source, Api.Apply) => Either[Api.Error, JobInfo]
   ): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     List(
       Api.places.serverLogicSuccess[Identity]((q, asOf, limit) =>

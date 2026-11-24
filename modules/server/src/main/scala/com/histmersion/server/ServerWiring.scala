@@ -26,6 +26,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.library.workflows.LibrarySite
 import com.histmersion.domain.research.workflows.ResearchSite
 import com.histmersion.domain.automation.worklists.QueueService
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Queue
 import com.histmersion.server.agents.EngineContributions
@@ -108,6 +109,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.domain.research.ResearchData
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP
@@ -241,7 +243,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
-    def run(id: Job.Id, a: JobAction)(using WritePermit): Either[Api.Error, Unit] =
+    def run(id: Job.Id, a: JobAction)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       Run.Id
         .either(id.value)
         .left
@@ -566,6 +568,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             )
           ),
       new GuardedWrite((record, text, token) =>
+        given Creator.New = InTreeWorkflow.CheckFix.creator
         Slug
           .either(record.value)
           .exists(slug =>

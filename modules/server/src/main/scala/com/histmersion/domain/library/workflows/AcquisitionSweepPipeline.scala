@@ -37,6 +37,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.managers.ManagerContext
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
   * linked queries (its title when it has none) and drops every work the corpus or the acquisition queue already has;
@@ -69,7 +70,7 @@ final class AcquisitionSweepPipeline(
   protected def goals: GoalService = agents.goals
   import AcquisitionSweepPipeline.*
 
-  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
       found <- ctx.code[Found](StepRecord.Name("discover"))(discover(ctx, goal))
@@ -115,7 +116,7 @@ final class AcquisitionSweepPipeline(
       found: Found,
       picks: List[Picked],
       allowed: AcquisitionSweepRules.Allowance
-  )(using WritePermit): Either[Halt, String] =
+  )(using WritePermit)(using Creator.New): Either[Halt, String] =
     for
       took <-
         if allowed.value > 0 then
@@ -147,7 +148,7 @@ final class AcquisitionSweepPipeline(
       found: Found,
       picks: List[Picked],
       allowed: AcquisitionSweepRules.Allowance
-  )(using WritePermit): Either[Halt, String] =
+  )(using WritePermit)(using Creator.New): Either[Halt, String] =
     for
       tried <-
         if allowed.value > 0 then ctx.code[Tried](StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed)))
@@ -193,7 +194,7 @@ final class AcquisitionSweepPipeline(
   /** The candidates the deterministic search stored for the goal (#3761): its watches read now from their watermarks
     * (no model), then the unseen ones; the live search below only when that search is not connected (a fixture).
     */
-  private def discover(ctx: RunCtx, goal: Goal.Slug)(using WritePermit): Either[Problems, Found] =
+  private def discover(ctx: RunCtx, goal: Goal.Slug)(using WritePermit)(using Creator.New): Either[Problems, Found] =
     upstream().sweepCandidates(goal, AgentUpstream.SweepCandidatesDryRun(ctx.dryRun)) match
       case Left(_)   => liveDiscover(ctx, goal)
       case Right(sw) =>
@@ -298,7 +299,7 @@ final class AcquisitionSweepPipeline(
       goal: Goal.Slug,
       picks: List[Picked],
       allowed: AcquisitionSweepRules.Allowance
-  )(using WritePermit): List[Ingested] =
+  )(using WritePermit)(using Creator.New): List[Ingested] =
     AcquisitionSweepRules
       .ingestPicks(picks, (p: Picked) => p.candidate.isOa.value, allowed) { p =>
         ingestOne(ctx, goal, p) match
@@ -316,7 +317,7 @@ final class AcquisitionSweepPipeline(
       ctx: RunCtx,
       goal: Goal.Slug,
       p: Picked
-  )(using WritePermit): Either[Problems, Ingested] =
+  )(using WritePermit)(using Creator.New): Either[Problems, Ingested] =
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
@@ -350,7 +351,7 @@ final class AcquisitionSweepPipeline(
       goal: Goal.Slug,
       picks: List[Picked],
       allowed: AcquisitionSweepRules.Allowance
-  )(using WritePermit): Tried =
+  )(using WritePermit)(using Creator.New): Tried =
     val (ok, ko) =
       AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.value, allowed)(ingestOne(ctx, goal, _))
     ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — ${why.sentences.mkString("; ")}"))
@@ -368,7 +369,7 @@ final class AcquisitionSweepPipeline(
   /** The open-access picks not ingested now, into the watcher's ingest backlog (deduplicated against the corpus, the
     * acquisition list and every watcher's backlog).
     */
-  private def park(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit): Parked =
+  private def park(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit)(using Creator.New): Parked =
     val mid = ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value)))
     val placed = picks.map { p =>
       val c = p.candidate
@@ -398,7 +399,7 @@ final class AcquisitionSweepPipeline(
       })
     )
 
-  private def queue(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit): Int =
+  private def queue(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit)(using Creator.New): Int =
     val queued = queuedDois()
     picks.count { p =>
       val text = Queue.QueueItem.Text(AcquisitionSweepRules.acquireText(p.candidate, goal, p.why).value)

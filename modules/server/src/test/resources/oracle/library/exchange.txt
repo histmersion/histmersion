@@ -972,7 +972,7 @@
     "places" : 0,
     "placesDigest" : ""
   },
-  "schemaVersion" : "113"
+  "schemaVersion" : "115"
 }
 == entities/sources.ndjson (5 lines)
 {   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
@@ -1169,7 +1169,7 @@
     "places" : 0,
     "placesDigest" : ""
   },
-  "schemaVersion" : "113",
+  "schemaVersion" : "115",
   "since" : "TS"
 }
 == entities/sources.ndjson (5 lines)
@@ -1293,10 +1293,10 @@
 { "citekey" : "zxtwo2005_hittites", "claim" : "a kingdom ruled Zxland", "confidence" : "high", "geom" : "POINT(35 39.5)", "id" : "zxtwo2005_hittites#0", "period" : "[-1450,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
 ## finding_places 0 rows
 ## edges 1 rows
-{ "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
+{ "created_at" : "TS", "creator" : { "kind" : "unknown" }, "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
 ## unresolved_edges 2 rows
-{ "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
-{ "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
+{ "creator" : { "kind" : "unknown" }, "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
+{ "creator" : { "kind" : "unknown" }, "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
 ## assessments 0 rows
 ## tombstones 1 rows
 { "kind" : "source", "uid" : "tombstone:source" }
@@ -1381,10 +1381,10 @@
 { "citekey" : "zxtwo2005_hittites", "claim" : "a kingdom ruled Zxland", "confidence" : "high", "geom" : "POINT(35 39.5)", "id" : "zxtwo2005_hittites#0", "period" : "[-1450,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
 ## finding_places 0 rows
 ## edges 1 rows
-{ "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
+{ "created_at" : "TS", "creator" : { "kind" : "unknown" }, "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
 ## unresolved_edges 2 rows
-{ "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
-{ "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
+{ "creator" : { "kind" : "unknown" }, "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
+{ "creator" : { "kind" : "unknown" }, "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
 ## assessments 0 rows
 ## tombstones 1 rows
 { "kind" : "source", "uid" : "tombstone:source" }
@@ -2115,7 +2115,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 0,
-  "schemaVersion" : "113",
+  "schemaVersion" : "115",
   "sources" : [
     {
       "issue" : null,
@@ -2889,7 +2889,7 @@
   "resolutionErrors" : [
   ],
   "resolved" : 6,
-  "schemaVersion" : "113",
+  "schemaVersion" : "115",
   "sources" : [
     {
       "issue" : null,
@@ -3431,10 +3431,10 @@ resolve:
 { "citekey" : "zxtwo2005_hittites", "claim" : "a kingdom ruled Zxland", "confidence" : "high", "geom" : "POINT(35 39.5)", "id" : "zxtwo2005_hittites#0", "period" : "[-1450,-1249)", "period_name" : "Zx", "region_name" : "Zxland", "tags" : [ "zx-claim" ] }
 ## finding_places 0 rows
 ## edges 1 rows
-{ "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
+{ "created_at" : "TS", "creator" : { "kind" : "unknown" }, "dst" : "zxtwo2005_hittites", "kind" : "references", "src" : "zxone2001_storm" }
 ## unresolved_edges 2 rows
-{ "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
-{ "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
+{ "creator" : { "kind" : "unknown" }, "dst" : "zxlost1900_gone", "kind" : "references", "src" : "zxone2001_storm" }
+{ "creator" : { "kind" : "unknown" }, "dst" : "zxthree1903_prolegomena", "kind" : "challenges", "src" : "zxone2001_storm" }
 ## assessments 0 rows
 ## tombstones 1 rows
 { "kind" : "source", "uid" : "tombstone:source" }

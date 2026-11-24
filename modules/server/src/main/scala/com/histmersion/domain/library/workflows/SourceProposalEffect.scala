@@ -7,11 +7,15 @@ import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.approvals.ProposalEffect
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.automation.approvals.ApprovalEffects
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
+import com.histmersion.domain.Creator
 
 /** What approving a source's proposal (a status or an edge an agent proposed) does: the patch it carries, through the
   * sources' own controllers, exactly as a person would send it.
   */
 final class SourceProposalEffect(sources: => SourcesControllers) extends ProposalEffect:
+  private given Creator.New = InTreeWorkflow.ApprovalEffects.creator
+
   def proposal(payload: ApprovalEffects.Payload): Option[() => Either[Problems, String]] =
     Jsonb
       .read[Proposal](Jsonb.JsonText(payload.value))

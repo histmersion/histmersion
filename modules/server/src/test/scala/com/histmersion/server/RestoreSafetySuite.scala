@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicLong
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** G90, G89 and G123 on the `*_test` database: one server per database, enforced at start; a restore that waits for the
   * writes in flight, refuses the writes and connections asked while it runs, holds every registered worker and has each
@@ -254,7 +256,7 @@ class RestoreSafetySuite extends DbSuite:
       }
       def busy: Vector[Quiescent.Busy] =
         if busyUntil.getCount > 0 then Vector(Quiescent.Busy("a unit of work")) else Vector.empty
-      def restored()(using WritePermit): Unit = { val _ = events.add("restored") }
+      def restored()(using WritePermit)(using Creator.New): Unit = { val _ = events.add("restored") }
       def resume(): Unit = { val _ = events.add("resume") })
     assertEquals(
       gate.workers.names.map(n => s"$n"),

@@ -25,6 +25,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The pictures over REST and MCP: a source's figures listed, read, uploaded, described and patched (plan §1.8, §1.6);
   * the media list, its facets, one picture, its file and thumbnail, the map feed (#1446); the cards' pictures of a
@@ -70,7 +71,7 @@ final class AssetsControllers(
   def putFiguresAsked(
       citekey: com.histmersion.api.library.Citekey,
       in: List[AssetInput]
-  ): Either[Api.Error, AssetsStored] =
+  )(using Creator.New): Either[Api.Error, AssetsStored] =
     maintenance.guard(WriteGate.OperationName("put_assets"))(
       Citekey
         .parse(citekey.value)
@@ -80,7 +81,7 @@ final class AssetsControllers(
     )
 
   /** Add figures to an existing source (the host-side seed path). */
-  def putFigures(citekey: Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
+  def putFigures(citekey: Citekey, in: List[AssetInput])(using Creator.New): Either[Api.Error, AssetsStored] =
     maintenance.guard(WriteGate.OperationName("put_assets"))(
       storeFigures(citekey, com.histmersion.api.library.Citekey(citekey.value), in)
     )
@@ -89,7 +90,7 @@ final class AssetsControllers(
       citekey: Citekey,
       asked: com.histmersion.api.library.Citekey,
       in: List[AssetInput]
-  )(using WritePermit): Either[Api.Error, AssetsStored] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, AssetsStored] =
     sources
       .lookup(citekey)
       .left

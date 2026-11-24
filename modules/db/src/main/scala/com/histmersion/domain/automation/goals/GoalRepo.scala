@@ -19,6 +19,8 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 object GoalRepo:
 
@@ -67,13 +69,15 @@ object GoalRepo:
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
     */
-  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon)(using Creator.New): Either[Api.Error, Unit] =
     periodOf(slug, in).map(putIn(slug, in, _))
 
   /** Create a goal, never replace one, in the caller's transaction: a slug in use, or an old slug of another goal
     * (V053), is a conflict, and so is a period that starts after it ends refused. Nothing is written then.
     */
-  def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+  def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+      DbCon
+  )(using creator: Creator.New): Either[Api.Error, Unit] =
     periodOf(slug, in).flatMap { period =>
       val conflict = Api.Error(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug)))
       renamedTo(slug) match
@@ -85,10 +89,10 @@ object GoalRepo:
           )
         case None =>
           val made =
-            sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
+            sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at, creator)
                   VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                           ${in.tags}::text[], ${in.regions}::text[],
-                          $period::int8range, ${in.parentSlug}, now())
+                          $period::int8range, ${in.parentSlug}, now(), ${StoredCreator.column(creator)}::jsonb)
                   ON CONFLICT (slug) DO NOTHING""".update.run()
           Either.cond(made > 0, (), conflict)
     }
@@ -109,11 +113,11 @@ object GoalRepo:
 
   private def putIn(slug: domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using
       DbCon
-  ): Unit =
-    sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
+  )(using creator: Creator.New): Unit =
+    sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at, creator)
           VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                   ${in.tags}::text[], ${in.regions}::text[],
-                  $period::int8range, ${in.parentSlug}, now())
+                  $period::int8range, ${in.parentSlug}, now(), ${StoredCreator.column(creator)}::jsonb)
           ON CONFLICT (slug) DO UPDATE SET
             title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
             tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,

@@ -17,6 +17,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
 

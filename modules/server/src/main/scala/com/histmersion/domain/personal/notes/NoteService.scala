@@ -13,6 +13,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** A person's notes, each left on an item or a point on the map, which it opens back to. A target and a text reach here
   * checked; a removed note is kept as its tombstone. An item's key and title are its owner's as they are when the notes
@@ -36,7 +37,7 @@ trait NoteService:
       text: com.histmersion.api.personal.Note.Text,
       title: Option[TargetLabel],
       at: MarkTime
-  )(using WritePermit): Note
+  )(using WritePermit)(using Creator.New): Note
 
   /** The note's new text, unless it is gone or changed since `unchangedSince`. */
   def edit(
@@ -91,7 +92,7 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         title: Option[TargetLabel],
         at: MarkTime
-    )(using WritePermit): Note =
+    )(using WritePermit)(using Creator.New): Note =
       val t = resolved(target, items)
       val stored = db.write:
         val id = NoteRepo.insert(user, TargetColumns.of(t), text, title, at)
@@ -166,7 +167,7 @@ object NoteService:
         text: com.histmersion.api.personal.Note.Text,
         title: Option[TargetLabel],
         at: MarkTime
-    )(using WritePermit): Note =
+    )(using WritePermit)(using Creator.New): Note =
       val id =
         com.histmersion.api.personal.Note.Id(newId().toString)
       val note = StoredNote(user, id, resolved(target, items), text, title, at, at)

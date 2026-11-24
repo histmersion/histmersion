@@ -40,6 +40,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.Creator
 
 /** The pictures (`assets`) and where they are shown (`media_links`): a source's figures stored, read, described and
   * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown
@@ -57,12 +58,16 @@ trait AssetService:
   def figureCount(citekey: Citekey): AssetService.FigureCount
 
   /** Figures added, any stored under the same name left alone; how many were written (after deduplication). */
-  def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AssetService.AddedFigureCount
+  def addFigures(citekey: Citekey, figures: List[NewFigure])(using
+      WritePermit
+  )(using Creator.New): AssetService.AddedFigureCount
 
   /** The whole set replaced (a re-conversion): the rows of the pictures it still has kept, renamed when only their name
     * moved; how many were kept.
     */
-  def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AssetService.ReplacedFigureCount
+  def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using
+      WritePermit
+  )(using Creator.New): AssetService.ReplacedFigureCount
 
   def detail(citekey: Citekey, name: AssetService.AssetName): Option[AssetDetail]
 
@@ -82,7 +87,7 @@ trait AssetService:
   def save(
       a: ProviderAsset,
       firstTarget: (AssetService.TargetType, AssetService.TargetId)
-  )(using WritePermit): (AssetService.AssetUid, Boolean)
+  )(using WritePermit)(using Creator.New): (AssetService.AssetUid, Boolean)
 
   def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit): Unit
 
@@ -179,9 +184,11 @@ object AssetService:
     def figure(citekey: Citekey, name: AssetName): Option[(Mime, Bytes)] =
       db.read(AssetRepo.read(citekey, name)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def figureCount(citekey: Citekey): FigureCount = db.read(AssetRepo.count(citekey))
-    def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AddedFigureCount =
+    def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit)(using Creator.New): AddedFigureCount =
       db.write(AssetRepo.add(citekey, figures))
-    def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): ReplacedFigureCount =
+    def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using
+        WritePermit
+    )(using Creator.New): ReplacedFigureCount =
       db.write(AssetRepo.replace(citekey, figures))
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
     def patch(citekey: Citekey, name: AssetName, p: AssetPatch)(using WritePermit): Either[Api.Error, AssetDetail] =
@@ -197,7 +204,9 @@ object AssetService:
     def sourceFigures(citekey: Citekey): List[SourceFigure] = db.read(MediaRepo.sourceFigures(citekey))
     def known(provider: Provider, keys: List[ProviderKey]): Map[ProviderKey, Known] =
       db.read(MediaRepo.known(provider, keys))
-    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using WritePermit): (AssetUid, Boolean) =
+    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using
+        WritePermit
+    )(using Creator.New): (AssetUid, Boolean) =
       db.write(MediaRepo.save(a, firstTarget))
     def refreshRights(uid: AssetUid, r: Rights)(using WritePermit): Unit = db.write(MediaRepo.refreshRights(uid, r))
     def setThumb(
@@ -314,7 +323,7 @@ object AssetService:
         f.height.map(h => HeldAsset.Height(h.value))
       )
 
-    def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): AddedFigureCount =
+    def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit)(using Creator.New): AddedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val taken = s.assets.filter(_.citekey.contains(citekey)).map(_.name).toSet
@@ -323,7 +332,9 @@ object AssetService:
       }
       RowCount(incoming.size)
 
-    def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit): ReplacedFigureCount =
+    def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using
+        WritePermit
+    )(using Creator.New): ReplacedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val mine = s.assets.filter(_.citekey.contains(citekey)).sortBy(_.name.value)
@@ -460,7 +471,9 @@ object AssetService:
         .flatMap(a => a.providerKey.map(_ -> Known(Known.Uid(a.uid.value), a.license.map(l => Known.License(l.value)))))
         .toMap
 
-    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using WritePermit): (AssetUid, Boolean) =
+    def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using
+        WritePermit
+    )(using Creator.New): (AssetUid, Boolean) =
       val t = now
       val license = Option(a.license.value).filter(_.nonEmpty).map(HeldAsset.License(_))
       val kind = a.kind.map(k => HeldAsset.Kind(k.value))

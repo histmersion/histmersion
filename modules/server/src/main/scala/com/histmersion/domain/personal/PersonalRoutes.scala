@@ -6,12 +6,14 @@ import com.histmersion.api.personal.PersonalApi
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.Creator
 
 /** The person's endpoints bound to their controllers, in the order route matching needs: `reading/unread` and
   * `reading/opened` before `reading`. Every request is the local person's until there are accounts.
   */
 object PersonalRoutes:
   def apply(personal: PersonalControllers): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     List(
       PersonalApi.bookmarks.serverLogic[Identity]((kind, q, limit) =>

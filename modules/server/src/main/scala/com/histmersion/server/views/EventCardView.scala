@@ -12,6 +12,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.Creator
 
 /** An event's page as the catalogue, the pictures and the articles show it together: the catalogue's event with its
   * evidence and context (the events' controllers, whose card [[EventCardView.cited]] gives the articles citing the
@@ -26,10 +27,10 @@ final class EventCardView(events: EventsControllers, pictures: Event.Id => List[
 
   def get(id: Event.Id): Either[Api.Error, EventDetail] = events.get(id).map(page)
 
-  def put(caller: Caller, id: Event.Id, in: EventPut): Either[Api.Error, EventDetail] =
+  def put(caller: Caller, id: Event.Id, in: EventPut)(using Creator.New): Either[Api.Error, EventDetail] =
     events.put(caller, id, in).map(page)
 
-  def patch(caller: Caller, id: Event.Id, p: EventPatch): Either[Api.Error, EventDetail] =
+  def patch(caller: Caller, id: Event.Id, p: EventPatch)(using Creator.New): Either[Api.Error, EventDetail] =
     events.patch(caller, id, p).map(page)
 
 object EventCardView:

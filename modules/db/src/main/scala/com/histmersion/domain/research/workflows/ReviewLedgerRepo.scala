@@ -10,6 +10,8 @@ import com.histmersion.domain.ReviewLedger.Ledger
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The store of the review ledgers (V073): one JSON value per article, read at the start of a `review-article` run and
   * written after each of its passes.
@@ -39,9 +41,10 @@ private[workflows] object ReviewLedgerRepo:
           .map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */
-  def put(l: Ledger)(using DbCon): Unit =
+  def put(l: Ledger)(using DbCon)(using creator: Creator.New): Unit =
     val json = Jsonb.write(l)
-    sql"""INSERT INTO review_ledgers (slug, ledger, updated_at) VALUES (${l.slug}, $json::jsonb, now())
+    sql"""INSERT INTO review_ledgers (slug, ledger, updated_at, creator) VALUES (${l.slug}, $json::jsonb, now(), ${StoredCreator
+        .column(creator)}::jsonb)
           ON CONFLICT (slug) DO UPDATE SET ledger = EXCLUDED.ledger, updated_at = now()""".update.run()
 
   /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of review manager

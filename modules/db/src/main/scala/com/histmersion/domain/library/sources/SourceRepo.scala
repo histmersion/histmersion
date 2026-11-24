@@ -34,6 +34,8 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.domain.Licence
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -91,7 +93,7 @@ private[sources] object SourceRepo:
   /** [[put]] inside the caller's transaction. */
   def putIn(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(
       using DbCon
-  ): Source.UpdatedAt =
+  )(using Creator.New): Source.UpdatedAt =
     write(s, chunkChars, toleranceKm)
     Source.UpdatedAt(domainCitekey(s.citekey).flatMap(token(_)).getOrElse(""))
 
@@ -103,7 +105,7 @@ private[sources] object SourceRepo:
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
   )(using
       DbCon
-  ): Either[Api.Error, Source.UpdatedAt] =
+  )(using Creator.New): Either[Api.Error, Source.UpdatedAt] =
     // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
     val citekey = canonical(requested).getOrElse(requested)
     // FOR UPDATE, not a plain read: `ifUpdatedAt` is a compare-and-swap, and two patches that both
@@ -136,7 +138,7 @@ private[sources] object SourceRepo:
       s: Source,
       chunkChars: Chunker.ChunkMaxChars,
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
-  )(using DbCon): Unit =
+  )(using DbCon)(using creator: Creator.New): Unit =
     // Creating a source under an OLD citekey would make the alias and a new row answer to the same
     // name. The handlers refuse it with a readable 400 first; this is the net under every other
     // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
@@ -149,13 +151,13 @@ private[sources] object SourceRepo:
     sql"""INSERT INTO sources
             (citekey, title, authors, year, venue, status, topics, regions, tags,
              period, summary, ocr_markdown, notes, source, calibre_id, doi,
-             cited_by_count, influential_citations)
+             cited_by_count, influential_citations, creator)
           VALUES
             (${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.year}, ${s.venue}, $status,
              ${s.topics}::text[], ${s.regions}::text[], ${s.tags}::text[],
              $periodLit::int8range, ${s.summary}, ${s.ocrMarkdown}, ${s.notes},
              ${s.provenance}, ${s.calibreId}, ${s.doi},
-             ${s.citedByCount}, ${s.influentialCitations})
+             ${s.citedByCount}, ${s.influentialCitations}, ${StoredCreator.column(creator)}::jsonb)
           ON CONFLICT (citekey) DO UPDATE SET
             title=EXCLUDED.title, authors=EXCLUDED.authors, year=EXCLUDED.year, venue=EXCLUDED.venue,
             status=EXCLUDED.status, topics=EXCLUDED.topics, regions=EXCLUDED.regions, tags=EXCLUDED.tags,
@@ -181,12 +183,12 @@ private[sources] object SourceRepo:
       val fperiod = RangeSql.literal(f.period)
       val lon = f.geo.map(_.lon)
       val lat = f.geo.map(_.lat)
-      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance)
+      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance, creator)
             VALUES (${f.id}, ${s.citekey}, ${f.claim}, ${f.region},
                     ST_SetSRID(ST_MakePoint($lon, $lat), 4326),
                     $fperiod::int8range, ${f.periodName},
                     ${f.tags}::text[],
-                    ${f.confidence}, ${f.significance})
+                    ${f.confidence}, ${f.significance}, ${StoredCreator.column(creator)}::jsonb)
             ON CONFLICT (id) DO UPDATE SET
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim,
               region_name = EXCLUDED.region_name, geom = EXCLUDED.geom, period = EXCLUDED.period,
@@ -211,7 +213,7 @@ private[sources] object SourceRepo:
     * finds its source. The routing lives HERE only; every writer (`put`/`patch`, `refs --apply`, `followups --apply`)
     * comes through it. Returns how many rows were new.
     */
-  private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): RowCount =
+  private[histmersion] def insertEdges(edges: List[Edge])(using DbCon)(using creator: Creator.New): RowCount =
     val es = edges.distinct
     if es.isEmpty then RowCount(0)
     else
@@ -220,10 +222,14 @@ private[sources] object SourceRepo:
         canonicalAll(es.flatMap(e => domainCitekey(e.dst)).distinct).map((key, value) => apiCitekey(key) -> value)
       es.map { e =>
         if known.contains(e.dst) then
-          sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${Edge.Kind.wireOf(e.kind)})
+          sql"""INSERT INTO edges (src, dst, kind, creator) VALUES (${e.src}, ${known(e.dst)}, ${Edge.Kind.wireOf(
+              e.kind
+            )}, ${StoredCreator.column(creator)}::jsonb)
                 ON CONFLICT DO NOTHING""".update.run()
         else
-          sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${Edge.Kind.wireOf(e.kind)})
+          sql"""INSERT INTO unresolved_edges (src, dst, kind, creator) VALUES (${e.src}, ${e.dst}, ${Edge.Kind.wireOf(
+              e.kind
+            )}, ${StoredCreator.column(creator)}::jsonb)
                 ON CONFLICT DO NOTHING""".update.run()
       }.sum
         .pipe(RowCount(_))
@@ -231,8 +237,8 @@ private[sources] object SourceRepo:
   /** A source just arrived: every parked edge that named it exactly becomes a real edge. */
   private[histmersion] def promote(citekey: Citekey)(using DbCon): Unit =
     Unused(
-      sql"""INSERT INTO edges (src, dst, kind)
-          SELECT src, dst, kind FROM unresolved_edges WHERE dst = $citekey
+      sql"""INSERT INTO edges (src, dst, kind, creator)
+          SELECT src, dst, kind, creator FROM unresolved_edges WHERE dst = $citekey
           ON CONFLICT DO NOTHING""".update.run(),
       Unused.Why.Idempotent
     )
@@ -352,7 +358,7 @@ private[sources] object SourceRepo:
     val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $citekey".query[Option[String]].run()
     replaceChunks(citekey, md.headOption.flatten.map(Chunker.ChunkMarkdown(_)), chunkChars)
 
-  def resolveEdges()(using DbCon): RowCount =
+  def resolveEdges()(using DbCon)(using creator: Creator.New): RowCount =
     val parked = sql"SELECT src, dst, kind FROM unresolved_edges".query[EdgeRow].run().toList
     val aliases = resolveAliases(parked.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
     val moves =
@@ -364,7 +370,9 @@ private[sources] object SourceRepo:
       )
     moves.foreach { (e, ck) =>
       Unused(
-        sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, $ck, ${e.kind})
+        sql"""INSERT INTO edges (src, dst, kind, creator) VALUES (${e.src}, $ck, ${e.kind}, ${StoredCreator.column(
+            creator
+          )}::jsonb)
               ON CONFLICT DO NOTHING""".update.run(),
         Unused.Why.Idempotent
       )
@@ -478,7 +486,7 @@ private[sources] object SourceRepo:
     */
   def rename(oldCk: Citekey, newRaw: Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using
       DbCon
-  ): Either[Api.Error, Rename.Counts] =
+  )(using Creator.New): Either[Api.Error, Rename.Counts] =
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
@@ -490,7 +498,7 @@ private[sources] object SourceRepo:
     */
   private[histmersion] def renameIn(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
       DbCon
-  ): Either[Api.Error, Rename.Counts] =
+  )(using Creator.New): Either[Api.Error, Rename.Counts] =
     lockRow(oldCk)
     def taken(ck: Citekey) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
     val findingIdsTaken =
@@ -551,7 +559,9 @@ private[sources] object SourceRepo:
                 )
               Right(renameNow(oldCk, newCk, referrers))
 
-  private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using DbCon): Rename.Counts =
+  private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
+      DbCon
+  )(using Creator.New): Rename.Counts =
     // the short forms that pointed at the old key — decided BEFORE it moves
     val forms = Rename.shortForms(apiCitekey(oldCk))
     val shorts = resolveAliases(forms.map(f => WikiLinks.Occurrence.Target(f.value))).collect {
@@ -601,8 +611,8 @@ private[sources] object SourceRepo:
 
   /** Promote the parked edges whose target is `dst` as edges to `ck` (never a self-edge). */
   private def promoteAs(dst: WikiLinks.Occurrence.Target, ck: Citekey)(using DbCon): RowCount =
-    val n = sql"""INSERT INTO edges (src, dst, kind)
-                  SELECT src, $ck, kind FROM unresolved_edges WHERE dst = $dst AND src <> $ck
+    val n = sql"""INSERT INTO edges (src, dst, kind, creator)
+                  SELECT src, $ck, kind, creator FROM unresolved_edges WHERE dst = $dst AND src <> $ck
                   ON CONFLICT DO NOTHING""".update.run()
     Unused(sql"DELETE FROM unresolved_edges WHERE dst = $dst AND src <> $ck".update.run(), Unused.Why.Idempotent)
     RowCount(n)

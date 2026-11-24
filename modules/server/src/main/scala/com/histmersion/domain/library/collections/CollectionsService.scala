@@ -71,6 +71,7 @@ import com.histmersion.domain.media.covers.OpenLibrary
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.plugin.CollectionUpdateEntry
 import com.histmersion.plugin.CollectionChange
+import com.histmersion.domain.Creator
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
@@ -90,12 +91,12 @@ trait CollectionsService:
       caller: Caller,
       name: CollectionsService.CollectionName,
       req: CollectionImportRequest
-  ): Either[Api.Error, CollectionImported]
+  )(using Creator.New): Either[Api.Error, CollectionImported]
   def link(
       caller: Caller,
       name: CollectionsService.CollectionName,
       req: CollectionLinkRequest
-  ): Either[Api.Error, CollectionLinked]
+  )(using Creator.New): Either[Api.Error, CollectionLinked]
   def push(
       caller: Caller,
       name: CollectionsService.CollectionName,
@@ -131,7 +132,7 @@ trait CollectionsService:
       rows: Option[CollectionsService.Limit]
   ): Either[Api.Error, ArchiveSearchResult]
   def archiveInfo(id: domain.library.ArchiveId): Either[Api.Error, ArchiveItem]
-  def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
+  def archiveImport(caller: Caller, req: ArchiveImportRequest)(using Creator.New): Either[Api.Error, Ingest.Report]
 
 object CollectionsService:
   type Limit = Limit.T
@@ -293,7 +294,7 @@ object CollectionsService:
         caller: Caller,
         name: CollectionName,
         req: CollectionImportRequest
-    ): Either[Api.Error, CollectionImported] =
+    )(using Creator.New): Either[Api.Error, CollectionImported] =
       for
         c <- linking(name)
         _ <- req.acquireItem.fold(Right(()))(i =>
@@ -346,7 +347,7 @@ object CollectionsService:
         ck: domain.library.Citekey,
         item: CollectionItem,
         target: ImportTarget
-    ): Either[Api.Error, Source.WithFindings] =
+    )(using Creator.New): Either[Api.Error, Source.WithFindings] =
       val summary = item.description
         .map(d => stripHtml(d.value))
         .filter(_.nonEmpty)
@@ -400,7 +401,7 @@ object CollectionsService:
         c: HostCollection,
         ck: domain.library.Citekey,
         item: CollectionItem
-    ): CollectionCover =
+    )(using Creator.New): CollectionCover =
       c.cover(item) match
         case Left(why) =>
           CollectionCover(
@@ -453,7 +454,7 @@ object CollectionsService:
         file: CollectionFile,
         ck: domain.library.Citekey,
         acquireItem: Option[CollectionImportRequest.AcquireItem]
-    ): Either[Api.Error, Ingest.Accepted] =
+    )(using Creator.New): Either[Api.Error, Ingest.Accepted] =
       val fileName = file.name.value.reverse.takeWhile(_ != '/').reverse
       c.original(item, file) match
         case Right(f) if f.bytes.value.nonEmpty =>
@@ -470,7 +471,9 @@ object CollectionsService:
 
     // ── link, push, update, set ───────────────────────────────────────────────────────────────
 
-    def link(caller: Caller, name: CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
+    def link(caller: Caller, name: CollectionName, req: CollectionLinkRequest)(using
+        Creator.New
+    ): Either[Api.Error, CollectionLinked] =
       for
         c <- linking(name)
         item <- c
@@ -759,7 +762,7 @@ object CollectionsService:
     /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
       * archive.org, and circumventing that is not something this pipeline does.
       */
-    def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
+    def archiveImport(caller: Caller, req: ArchiveImportRequest)(using Creator.New): Either[Api.Error, Ingest.Report] =
       for
         c <- lookup(ArchiveOrg)
         item <- archiveFound(c, domain.library.ArchiveId(req.id.value))

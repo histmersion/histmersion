@@ -12,6 +12,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The catalogue's background runs — an event catalogue's import, a re-derivation, the event links' candidates, the
   * refinement of site types — one at a time (a run's pace is per run; two would ask twice as fast). Starting one takes
@@ -32,7 +33,7 @@ final class CatalogueJobs(
     */
   def start(kind: Job.Kind, describe: JobKinds.Subject)(
       body: (JobInfo, JobInfo.Progress => Unit) => WritePermit ?=> Either[Problems, BackgroundJob.Outcome.Summary]
-  ): Either[Api.Error, JobInfo] =
+  )(using Creator.New): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName(kind.value)):
       BackgroundJob.start(
         ds,

@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 trait SourceApprovalService:
   def record(
@@ -26,7 +27,7 @@ trait SourceApprovalService:
       payload: Jsonb.JsonText,
       state: ApprovalState,
       result: Option[ApprovalRecord.Result]
-  )(using WritePermit): Option[ApprovalInfo]
+  )(using WritePermit)(using Creator.New): Option[ApprovalInfo]
 
   def proposedBefore(
       kind: ApprovalKind,
@@ -54,7 +55,7 @@ object SourceApprovalService:
         payload: Jsonb.JsonText,
         state: ApprovalState,
         result: Option[ApprovalRecord.Result]
-    )(using WritePermit): Option[ApprovalInfo] =
+    )(using WritePermit)(using Creator.New): Option[ApprovalInfo] =
       db.write(
         SourceApprovalRepo
           .record(
@@ -98,7 +99,7 @@ object SourceApprovalService:
         payload: Jsonb.JsonText,
         state: ApprovalState,
         result: Option[ApprovalRecord.Result]
-    )(using WritePermit): Option[ApprovalInfo] =
+    )(using WritePermit)(using Creator.New): Option[ApprovalInfo] =
       val (st, ek) = (
         status.map(s => ApprovalRecord.Status(s.wire.value)),
         edgeKind.map(k => ApprovalRecord.EdgeKind(Edge.Kind.wireOf(k).value))

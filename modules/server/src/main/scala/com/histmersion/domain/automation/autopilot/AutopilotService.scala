@@ -41,6 +41,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the
@@ -111,7 +112,9 @@ final class AutopilotService(
   /** Turn it on (ensure and advance at once) or off (pause the seeding managers and watchers it runs). Idempotent; the
     * answer is the status with what it did.
     */
-  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock))(using WritePermit): EngineStatus =
+  def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock))(using
+      WritePermit
+  )(using Creator.New): EngineStatus =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val changedBy = AutopilotRepo.Row.ChangedBy(by)
     val row = agents.autopilotRow.row()
@@ -155,7 +158,7 @@ final class AutopilotService(
   /** One pass, from the managers' tick: nothing while off; on, ensure and advance when due, and the housekeeping when
     * due.
     */
-  def tick(now: Instant)(using WritePermit): List[String] =
+  def tick(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val row = agents.autopilotRow.row()
     if !row.enabled.value then Nil
     else
@@ -193,7 +196,7 @@ final class AutopilotService(
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
-  def ensureNow(now: Instant)(using WritePermit): List[String] =
+  def ensureNow(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val goals = agents.goals.all()
     val planned = agents.goals.planned()
     val links = agents.goals.linkCounts()
@@ -231,7 +234,7 @@ final class AutopilotService(
 
   private def itemOf(goal: DomainGoal.Slug): ManagerItem.Target = ManagerItem.Target(goal.value)
 
-  private def applyStep(s: Step, now: Instant)(using WritePermit): Option[String] =
+  private def applyStep(s: Step, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
     s match
       case Step.CreateSeed(goal, cron, planFirst) =>
         val id = seedId(Goal.Ref(goal.value))

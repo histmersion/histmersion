@@ -12,6 +12,8 @@ import scala.util.chaining.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.given
 import com.histmersion.util.database.Timestamps
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 private[notes] object NoteRepo:
@@ -52,12 +54,12 @@ private[notes] object NoteRepo:
       at: MarkTime
   )(using
       DbCon
-  ): com.histmersion.api.personal.Note.Id =
+  )(using creator: Creator.New): com.histmersion.api.personal.Note.Id =
     val stamp = at.iso
     sql"""INSERT INTO notes (user_id, target_kind, target_id, target_uid, target_label, lat, lon, period_start,
-                             period_end, body, created_at, updated_at)
+                             period_end, body, created_at, updated_at, creator)
           VALUES ($user, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.from},
-                  ${c.to}, $text, $stamp::timestamptz, $stamp::timestamptz)
+                  ${c.to}, $text, $stamp::timestamptz, $stamp::timestamptz, ${StoredCreator.column(creator)}::jsonb)
           RETURNING id::text""".query[com.histmersion.api.personal.Note.Id].run().head
 
   def rewrite(

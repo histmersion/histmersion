@@ -24,6 +24,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
+import com.histmersion.util.database.TestCreators.given
 
 /** The recorded traffic of the media imports: every request each of the ten first-party collections sends through
   * `media import` (dry runs over every place and event the map holds, single-target imports, a refresh, a job), on the

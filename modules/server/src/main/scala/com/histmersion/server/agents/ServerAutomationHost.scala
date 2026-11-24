@@ -27,6 +27,7 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.Title
+import com.histmersion.domain.Creator
 
 /** The engine's [[AutomationHost]] over the composition: the goals through the automation's own controllers, a run's
   * target, options and links checked against the library's sources and research's articles, the plan's works looked up
@@ -35,7 +36,7 @@ import com.histmersion.domain.Title
 final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream) extends AutomationHost:
   def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
   def goal(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
-  def putGoal(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
+  def putGoal(slug: domain.automation.Goal.Slug, in: Goal.Put)(using Creator.New): Either[Api.Error, Goal] =
     h.goals.put(slug, in)
   def patchGoal(slug: domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] =
     h.goals.patch(slug, patch)

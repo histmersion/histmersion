@@ -10,6 +10,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The figures' links as a bundle carries them: each with its figure's uid and its target's uid when the target is a
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label
@@ -54,9 +56,9 @@ private[links] object AssetLinkBundleRepo:
         BundleImport.Writer.TargetId(l.targetId.value),
         l.targetUid
       )
-      sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at)
+      sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at, creator)
             VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
-              ${l.notes}, ${l.updatedAt}::timestamptz)
+              ${l.notes}, ${l.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
               asset_name = EXCLUDED.asset_name, relation = EXCLUDED.relation,
               target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, xywh = EXCLUDED.xywh,

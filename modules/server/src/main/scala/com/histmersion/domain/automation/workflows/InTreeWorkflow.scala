@@ -16,6 +16,13 @@ enum InTreeWorkflow(val plugin: Plugin.Name, val workflow: Workflow.Name) derive
   case AcquireRecheck extends InTreeWorkflow(Plugin.Name("library"), Workflow.Name("acquire-recheck"))
   case IngestBacklog extends InTreeWorkflow(Plugin.Name("library"), Workflow.Name("ingest-backlog"))
   case Seed extends InTreeWorkflow(Plugin.Name("library"), Workflow.Name("seed"))
+  case AdoptDatabase extends InTreeWorkflow(Plugin.Name("engine"), Workflow.Name("adopt-database"))
+  case Ingest extends InTreeWorkflow(Plugin.Name("library"), Workflow.Name("ingest"))
+  case CheckFix extends InTreeWorkflow(Plugin.Name("library"), Workflow.Name("check-fix"))
+  case Init extends InTreeWorkflow(Plugin.Name("catalogue"), Workflow.Name("init"))
+  case AgentTools extends InTreeWorkflow(Plugin.Name("library"), Workflow.Name("agent-tools"))
+  case EngineStart extends InTreeWorkflow(Plugin.Name("engine"), Workflow.Name("engine-start"))
+  case ApprovalEffects extends InTreeWorkflow(Plugin.Name("engine"), Workflow.Name("approval-effects"))
 
   def creator: Creator.New = Creator.code(plugin, workflow)
 

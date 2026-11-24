@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** What an assessment rests on and what it leaves: the local Retraction Watch mirror, and the verdict recorded against
   * a stored source.
@@ -26,7 +27,7 @@ trait AssessmentService:
   def retractionsFor(doi: Doi): List[RetractionNotice]
 
   /** Record a verdict; its `checked_at` stamp. */
-  def record(assessment: AssessmentRecord)(using WritePermit): AssessmentService.CheckedAt
+  def record(assessment: AssessmentRecord)(using WritePermit)(using Creator.New): AssessmentService.CheckedAt
 
   /** `(verdict, checkedAt)` of the source's last assessment. */
   def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, AssessmentService.CheckedAt)]
@@ -42,7 +43,7 @@ object AssessmentService:
       db.write(AssessmentRepo.replaceRetractionWatch(rows))
     def retractionCount: RowCount = db.read(AssessmentRepo.retractionCount())
     def retractionsFor(doi: Doi): List[RetractionNotice] = db.read(AssessmentRepo.retractionsFor(doi))
-    def record(assessment: AssessmentRecord)(using WritePermit): CheckedAt = CheckedAt(
+    def record(assessment: AssessmentRecord)(using WritePermit)(using Creator.New): CheckedAt = CheckedAt(
       db.write(AssessmentRepo.putAssessment(assessment))
     )
     def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, CheckedAt)] =
@@ -63,7 +64,7 @@ object AssessmentService:
         .get(AcquisitionState.RetractionsKey(doi.value.toLowerCase))
         .toList
         .map(r => RetractionNotice(r.nature, r.reason, Acquire.rwDate(r.date)))
-    def record(assessment: AssessmentRecord)(using WritePermit): CheckedAt =
+    def record(assessment: AssessmentRecord)(using WritePermit)(using Creator.New): CheckedAt =
       val at = Stamp.format(clock.instant())
       val _ = state.updateAndGet(
         _.modify(_.assessments).using(

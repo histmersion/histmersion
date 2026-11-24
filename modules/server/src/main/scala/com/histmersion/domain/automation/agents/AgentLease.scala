@@ -6,6 +6,7 @@ import com.histmersion.util.database.{Transactor, WritePermit}
 import com.histmersion.util.jobs.{Quiescent, Workers}
 
 import javax.sql.DataSource
+import com.histmersion.domain.Creator
 
 /** One agent server per database (docs/research-process-managers.md §2): the server that holds the lease `agents` runs
   * the engine, the scheduler and the managers; another one pointed at the same database runs none of them, and takes
@@ -123,7 +124,7 @@ final class AgentLease(
     val name: Quiescent.Name = Quiescent.Name("the agent lease's renewal")
     def quiesce(): Unit = hold.synchronized { holding = true }
     def busy: Vector[Quiescent.Busy] = Vector.empty
-    def restored()(using WritePermit): Unit =
+    def restored()(using WritePermit)(using Creator.New): Unit =
       if started then
         Transactor(ds).write(LeaseRepo.takeOver(AgentLease.Name, owner, ttlSeconds))
         held = true

@@ -11,6 +11,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** Bookmarks, notes and read marks over REST, and the read-only MCP tools: a bookmark and a note made, listed, changed
   * and removed; a stale note edit answered 412; the tools read them and no tool writes them. Skipped without

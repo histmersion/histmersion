@@ -23,6 +23,7 @@ import com.histmersion.api.library.{
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
+import com.histmersion.domain.Creator
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
@@ -69,6 +70,7 @@ object CollectionsTools:
     object Fields extends Newtype[String, Pure]
 
   def apply(c: CollectionsControllers) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val me = Caller.Local
     def answer[A](r: Either[Api.Error, A])(f: A => String) = McpOut.of(r)(f)
     val noId = McpOut.missing(Problem.Field("id"))

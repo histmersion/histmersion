@@ -80,6 +80,7 @@ import com.histmersion.util.storage.ContentDirectory
 import com.histmersion.util.data.exchange.BundleImporter
 import com.histmersion.util.storage.ByteSource
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —

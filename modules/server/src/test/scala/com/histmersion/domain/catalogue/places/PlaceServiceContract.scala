@@ -10,6 +10,7 @@ import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.api.catalogue.{Period, Place}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The contract the gazetteer's records keep, alike in memory and in the database: an import's places, names and edges
   * read back (a dangling parent reported, never fatal); the search's order; a person's names (an imported one is kept);

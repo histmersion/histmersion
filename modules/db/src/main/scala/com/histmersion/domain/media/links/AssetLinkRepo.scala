@@ -9,6 +9,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.domain.media.assets.AssetInfoRow
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.
@@ -35,10 +37,10 @@ private[links] object AssetLinkRepo:
   def figureExists(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
-  def insert(in: AssetLink.Put)(using DbCon): AssetLink =
-    val id = sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, xywh, notes)
+  def insert(in: AssetLink.Put)(using DbCon)(using creator: Creator.New): AssetLink =
+    val id = sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, xywh, notes, creator)
           VALUES (${in.citekey}, ${in.assetName}, ${in.relation}, ${in.targetType}, ${in.targetId},
-                  ${in.xywh}, ${in.notes})
+                  ${in.xywh}, ${in.notes}, ${StoredCreator.column(creator)}::jsonb)
           RETURNING id""".query[AssetLink.Id].run().head
     AssetLink(id, in.citekey, in.assetName, in.relation, in.targetType, in.targetId, in.xywh, in.notes)
 

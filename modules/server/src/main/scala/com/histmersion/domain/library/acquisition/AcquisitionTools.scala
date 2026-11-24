@@ -52,6 +52,8 @@ final class AcquisitionTools(
 ):
   import AcquisitionTools.*
 
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
+
   private def render[A](r: Either[Api.Error, A])(f: A => String) = McpOut.of(r)(f)
 
   /** A call that gave none of the arguments `fields`, of which it needs one. */

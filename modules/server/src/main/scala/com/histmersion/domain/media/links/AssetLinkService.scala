@@ -20,6 +20,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.media.assets.AssetInfoRow
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
@@ -33,7 +34,7 @@ trait AssetLinkService:
   ): AssetLink.List
 
   /** A link made; refused when the figure it names is not stored. */
-  def create(in: AssetLink.Put)(using WritePermit): Either[Api.Error, AssetLink]
+  def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink]
 
   /** Whether there was a link `id` to remove. */
   def delete(id: AssetLinkService.LinkId)(using WritePermit): Boolean
@@ -69,7 +70,7 @@ object AssetLinkService:
       )
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
-    def create(in: AssetLink.Put)(using WritePermit): Either[Api.Error, AssetLink] =
+    def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink] =
       db.write:
         val exists = Citekey
           .option(in.citekey.value)
@@ -103,7 +104,7 @@ object AssetLinkService:
         .toList
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
-    def create(in: AssetLink.Put)(using WritePermit): Either[Api.Error, AssetLink] =
+    def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink] =
       if !state.get.assets.exists(a =>
           a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value
         )

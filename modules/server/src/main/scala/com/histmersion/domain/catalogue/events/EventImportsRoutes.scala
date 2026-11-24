@@ -9,12 +9,14 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.{Offset, PageSize}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.Creator
 
 /** The event catalogues' endpoints bound to their controllers, in their old order: matched before `events/{id}`, which
   * would read `events/import` as an event id.
   */
 object EventImportsRoutes:
   def apply(imports: EventImportsControllers): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     List(
       EventsApi.importEvents.serverLogic[Identity](req => imports.importJob(me, req)),

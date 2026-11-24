@@ -35,6 +35,7 @@ import com.histmersion.api.personal.ReadMark
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
   * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
@@ -109,7 +110,7 @@ final class PersonalControllers(
       k <- kindOf(kind, MarkKind.Bookmarkable)
     yield bookmarks.list(user, k, search(q), size(max)).map(_.wire)
 
-  def addBookmark(caller: Caller, in: Bookmark.New): Either[Api.Error, WireBookmark] =
+  def addBookmark(caller: Caller, in: Bookmark.New)(using Creator.New): Either[Api.Error, WireBookmark] =
     maintenance.guard(WriteGate.OperationName("add_bookmark")):
       for
         user <- person(caller)
@@ -165,7 +166,9 @@ final class PersonalControllers(
       n <- notes.get(user, nid).toRight(missing(Problem.TypeName.of(WireNote.Id), Problem.Raw.of(id)))
     yield n.wire
 
-  def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New): Either[Api.Error, WireNote] =
+  def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New)(using
+      Creator.New
+  ): Either[Api.Error, WireNote] =
     maintenance.guard(WriteGate.OperationName("add_note")):
       for
         user <- person(caller)

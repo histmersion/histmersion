@@ -197,7 +197,7 @@ final class AcquisitionControllers(
       )
 
   /** Read a goal's watches from their watermarks and store what is new (no model). */
-  def sweepCandidates(r: CandidateSweep.Request): Either[Api.Error, CandidateSweep] =
+  def sweepCandidates(r: CandidateSweep.Request)(using Creator.New): Either[Api.Error, CandidateSweep] =
     goalSlug(r.goal.value.trim).flatMap { g =>
       // a dry run runs the same sweep (it stores nothing): under the gate too
       maintenance.guard(WriteGate.OperationName("candidates/sweep"))(
@@ -318,7 +318,7 @@ final class AcquisitionControllers(
   /** The deposited reference list, with each entry resolved to a stored source where possible. `apply` writes those as
     * `references` edges out of the target.
     */
-  def refs(req: RefsRequest): Either[Api.Error, RefsResult] =
+  def refs(req: RefsRequest)(using Creator.New): Either[Api.Error, RefsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
         .toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.References)))
@@ -381,7 +381,9 @@ final class AcquisitionControllers(
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
-  private def assessNow(req: AssessRequest, store: Boolean = true)(using WritePermit): Either[Api.Error, Assessment] =
+  private def assessNow(req: AssessRequest, store: Boolean = true)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, Assessment] =
     target(req.id.value).flatMap { t =>
       t.doi.toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.Assessment))).map { doi =>
         val rw = assessments.retractionsFor(doi)
@@ -500,7 +502,9 @@ final class AcquisitionControllers(
 
   // ── followups ───────────────────────────────────────────────────────────────────────────────
 
-  private def followupsNow(req: FollowupsRequest)(using WritePermit): Either[Api.Error, FollowupsResult] =
+  private def followupsNow(
+      req: FollowupsRequest
+  )(using WritePermit)(using Creator.New): Either[Api.Error, FollowupsResult] =
     target(req.id.value).flatMap { t =>
       t.doi
         .toRight(err(noDoi(Problem.Field(s"'${req.id}'"), Problem.Invalid.Purpose.Citations)))
@@ -686,6 +690,7 @@ final class AcquisitionControllers(
       path: IngestPath,
       by: Creator.New
   )(using WritePermit): Either[Api.Error, Ingest.Report] = {
+    given Creator.New = by
     // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
     // without (metadata only, e.g. created when no OA copy was found) is fetched and converted
     val original =
@@ -925,7 +930,7 @@ final class AcquisitionControllers(
       item: ArchiveItem,
       file: ArchiveFile,
       req: ArchiveImportRequest
-  )(using WritePermit): Either[Api.Error, Ingest.Report] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Ingest.Report] =
     val steps = List.newBuilder[Ingest.Step]
     val authors = item.creator.map(c => com.histmersion.api.library.AuthorName(c.value))
     val title = item.title.map(t => com.histmersion.api.library.Title(t.value))
@@ -1015,7 +1020,7 @@ final class AcquisitionControllers(
   private def setStatus(
       citekey: Citekey,
       status: domain.library.Source.Status
-  )(using WritePermit): Either[Api.Error, Source.UpdatedAt] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Source.UpdatedAt] =
     sources.patch(
       citekey,
       Source.Patch(metadata = Some(MetadataPatch(status = Some(status.transformInto[Source.Status])))),
@@ -1024,14 +1029,14 @@ final class AcquisitionControllers(
 
   // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────
 
-  def assess(req: AssessRequest): Either[Api.Error, Assessment] =
+  def assess(req: AssessRequest)(using Creator.New): Either[Api.Error, Assessment] =
     maintenance.guard(WriteGate.OperationName("assess"))(assessNow(req))
 
   /** The verdict alone: nothing applied, nothing recorded (what an agent's dry run reads). */
-  def assessReadOnly(id: AssessRequest.Id): Either[Api.Error, Assessment] =
+  def assessReadOnly(id: AssessRequest.Id)(using Creator.New): Either[Api.Error, Assessment] =
     maintenance.guard(WriteGate.OperationName("assess"))(assessNow(AssessRequest(id), store = false))
 
-  def followups(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
+  def followups(req: FollowupsRequest)(using Creator.New): Either[Api.Error, FollowupsResult] =
     maintenance.guard(WriteGate.OperationName("followups"))(followupsNow(req))
 
   /** A person's ingest; `legalOnly` (on unless the person turns it off) asks the legal chain alone, and is otherwise
@@ -1074,7 +1079,9 @@ final class AcquisitionControllers(
     */
   def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation(generation)
 
-  def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
+  def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest)(using
+      Creator.New
+  ): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("archive/import"))(archiveImportNow(item, file, req))
 
   def updateRetractions(): Either[Api.Error, RetractionsUpdate] =

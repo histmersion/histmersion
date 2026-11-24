@@ -6,12 +6,14 @@ import com.histmersion.api.catalogue.HistoricalPeriod
 import com.histmersion.domain.Caller
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.Creator
 
 /** The periods' endpoints bound to their controllers, in the order route matching needs: `periods/{id}` after the
   * search, the writes after both.
   */
 object PeriodsRoutes:
   def apply(periods: PeriodsControllers): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     List(
       Api.periods.serverLogicSuccess[Identity]((q, region, from, to) =>

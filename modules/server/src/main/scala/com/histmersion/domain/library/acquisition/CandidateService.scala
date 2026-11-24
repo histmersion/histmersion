@@ -16,6 +16,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The new-source search's records: each goal's watches with their watermarks, and the candidates found, one per goal
   * and DOI.
@@ -31,10 +32,10 @@ trait CandidateService:
       watermark: Option[CandidateWatch.Watermark],
       error: Option[Problem],
       found: CandidateWatch.LastFound
-  )(using WritePermit): Unit
+  )(using WritePermit)(using Creator.New): Unit
 
   /** Store a candidate: a new one (`true`), or one found again. */
-  def upsert(candidate: Source.Candidate)(using WritePermit): Boolean
+  def upsert(candidate: Source.Candidate)(using WritePermit)(using Creator.New): Boolean
 
   /** The DOIs a goal has candidates for, in any state. */
   def dois(goal: Goal.Slug): Set[Doi]
@@ -69,9 +70,10 @@ object CandidateService:
         watermark: Option[CandidateWatch.Watermark],
         error: Option[Problem],
         found: CandidateWatch.LastFound
-    )(using WritePermit): Unit =
+    )(using WritePermit)(using Creator.New): Unit =
       db.write(CandidateRepo.recordWatch(watch, watermark, error, found))
-    def upsert(candidate: Source.Candidate)(using WritePermit): Boolean = db.write(CandidateRepo.upsert(candidate))
+    def upsert(candidate: Source.Candidate)(using WritePermit)(using Creator.New): Boolean =
+      db.write(CandidateRepo.upsert(candidate))
     def dois(goal: Goal.Slug): Set[Doi] = db.read(CandidateRepo.dois(goal))
     def list(
         goal: Option[Goal.Slug],
@@ -105,7 +107,7 @@ object CandidateService:
         watermark: Option[CandidateWatch.Watermark],
         error: Option[Problem],
         found: CandidateWatch.LastFound
-    )(using WritePermit): Unit =
+    )(using WritePermit)(using Creator.New): Unit =
       val key = (watch.goal, watch.kind, watch.subject, watch.index)
       val at = now
       val _ = state.updateAndGet(
@@ -127,7 +129,7 @@ object CandidateService:
         }
       )
 
-    def upsert(candidate: Source.Candidate)(using WritePermit): Boolean =
+    def upsert(candidate: Source.Candidate)(using WritePermit)(using Creator.New): Boolean =
       val at = now
       var created = false
       val _ = state.updateAndGet { st =>

@@ -21,6 +21,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
+import com.histmersion.domain.Creator
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -146,6 +147,7 @@ object PlacesTools:
   private def year(y: com.histmersion.Year): Year = Year(y.value.toLong)
 
   def apply(places: PlacesControllers) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val me = Caller.Local
     List(
       /** The gazetteer (plan §1.6a). One tool with two modes so a model does not have to pick between four

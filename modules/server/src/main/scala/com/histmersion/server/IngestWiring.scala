@@ -10,6 +10,7 @@ import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Store}
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The library's ingest over one server's `deps`: the job queue over the converter and the originals' store, the ingest
   * surface, the hand-over an acquisition's fetched copy takes, and the seed. The figures are media's.
@@ -19,7 +20,7 @@ final class IngestWiring(
     converter: ConverterClient,
     sources: SourceService,
     figures: AssetService,
-    afterStore: Citekey => WritePermit ?=> Option[IngestQueue.Note]
+    afterStore: Citekey => (WritePermit, Creator.New) ?=> Option[IngestQueue.Note]
 ):
   private def originals: Store = deps.storage.store(Location.IngestOriginals)
 

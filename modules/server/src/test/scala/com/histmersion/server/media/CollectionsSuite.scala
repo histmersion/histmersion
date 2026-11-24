@@ -33,6 +33,8 @@ import com.histmersion.util.ocr.Pixels
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
 final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]])
@@ -57,7 +59,9 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
       case (k, (uid, a)) if wanted(k.value) =>
         AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
     }.toMap
-  def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using WritePermit) =
+  def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using
+      WritePermit
+  )(using Creator.New) =
     val existing = saved.get(a.key).map(_._1)
     val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
     saved(a.key) = (uid, a)

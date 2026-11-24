@@ -70,6 +70,8 @@ import com.histmersion.server.agents.CliProcess
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes
@@ -502,7 +504,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     /** Whether each refs/assess call asked to apply (a dry run never does). */
     val applies = java.util.concurrent.ConcurrentLinkedQueue[Boolean]()
     def meta(doi: Doi) = { calls.add(s"meta $doi"); Right(work) }
-    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) =
+    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) =
       calls.add(s"refs $citekey"); applies.add(apply.value)
       Right(
         RefsResult(
@@ -515,7 +517,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           Nil
         )
       )
-    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) =
+    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) =
       calls.add(s"assess $citekey"); applies.add(apply.value)
       Right(
         Assessment(
@@ -540,7 +542,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         id: AgentUpstream.FollowupsId,
         since: Option[com.histmersion.Year],
         limit: Option[FollowupsInput.Limit]
-    ) = Left(Problem.Unclassified(Legacy.Text("not in this test")))
+    )(using Creator.New) = Left(Problem.Unclassified(Legacy.Text("not in this test")))
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
       Problem.Unclassified(Legacy.Text("not in this test"))
     )
@@ -798,7 +800,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx.approval(
           AgentRepo.StepRecord.Name("publish"),
           ApprovalKind.ArticlePublish,
@@ -838,7 +840,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         entered.countDown()
         Thread.sleep(60_000) // interrupted by stop()
         Right(PipelineDef.Summary("unreachable"))
@@ -1065,7 +1067,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx
           .llm[EnrichSource.Notes, String](
             AgentRepo.StepRecord.Name("notes"),
@@ -1125,7 +1127,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx
           .llm[EnrichSource.Notes, String](
             AgentRepo.StepRecord.Name("notes"),
@@ -1279,7 +1281,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   /** One `notes` step of the pipeline's own agent, its output cap overridden when `cap` says so. */
   private def notesOnly(cap: Option[RunCtx.MaxTokens] = None): PipelineDef = new PipelineDef:
     def pipeline: Pipeline = Pipeline.EnrichSource
-    def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+    def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
         .llm[EnrichSource.Notes, String](
           AgentRepo.StepRecord.Name("notes"),
@@ -1378,7 +1380,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     c.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
     val twoNotes = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+      def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         for
           a <- ctx.llm[EnrichSource.Notes, String](
             AgentRepo.StepRecord.Name("notes-1"),
@@ -1486,7 +1488,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   /** A pipeline whose one step starts a CLI that never answers (and a child of its own). */
   final private class Hang(dir: java.nio.file.Path) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
-    def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+    def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
         .code[String](AgentRepo.StepRecord.Name("hang")) {
           val f = dir.resolve("cli")
@@ -1574,7 +1576,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   final private class ReturnsAfterStallMarkBeforeInterrupt(engine: () => Engine, limit: Long) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
     val bodies = java.util.concurrent.atomic.AtomicInteger()
-    def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+    def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
         .code[String](AgentRepo.StepRecord.Name("killed")) {
           val _ = bodies.incrementAndGet()

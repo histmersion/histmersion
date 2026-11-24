@@ -21,6 +21,8 @@ import com.histmersion.domain.media.imports.Target
 import com.histmersion.api.media.{AssetKind, MediaCount, MediaImportReport, MediaProvider}
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** The Wikidata → Commons provider (#1446) end to end against a FAKE provider (captured answers, trimmed) and an
   * in-memory store — the `media-wikidata` plugin's collection, as the host builds it, run by the host's import of a
@@ -57,7 +59,9 @@ class WikidataCommonsSuite extends munit.FunSuite:
         case (k, (uid, a, _)) if wanted(k.value) =>
           AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
       }.toMap
-    def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using WritePermit) =
+    def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using
+        WritePermit
+    )(using Creator.New) =
       val existing = saved.get(a.key).map(_._1)
       val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
       saved(a.key) = (uid, a, first)
@@ -304,7 +308,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
     val store = new MemStore:
       override def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using
           WritePermit
-      ) =
+      )(using Creator.New) =
         if a.key == ProviderAsset.Key("File:Mycenae plan NC.png") then throw IllegalStateException("disk full")
         else super.save(a, first)
     val r = run(provider(), dryRun = DryOff, store, cfg = withNc)

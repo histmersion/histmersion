@@ -29,6 +29,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The terrain base map over HTTP, on a server whose `basemap.dir` holds a fixture extract: the status, a tile as
   * stored (gzip-encoded vector, image terrain), 204 outside the extract, 404 for an unknown layer, the fetch's

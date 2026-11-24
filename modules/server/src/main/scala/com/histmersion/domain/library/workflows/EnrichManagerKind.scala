@@ -34,6 +34,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
@@ -156,7 +157,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     * already is or one is on its way) — an item of the enrich manager while the managers are on, else a run of its own.
     * Answers the ingest job's progress note (None: not asked for).
     */
-  def autoEnrich(citekey: Citekey)(using WritePermit): Option[AutoEnrich.Note] =
+  def autoEnrich(citekey: Citekey)(using WritePermit)(using Creator.New): Option[AutoEnrich.Note] =
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
@@ -197,7 +198,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** With the managers on: the ingested source becomes an item of the enrich manager (created paused if missing).
     * Answers the ingest job's progress note.
     */
-  private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit): AutoEnrich.Note =
+  private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit)(using Creator.New): AutoEnrich.Note =
     val enrichId = ManagerLight.Id(EnrichId)
     Unused(c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
     Unused(c.ensure(Kind.Enrich, enrichId, None), Unused.Why.Idempotent)
@@ -229,7 +230,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id] =
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     def settle(status: ItemStatus, why: String)(using WritePermit) =
       c.settleNow(m, item, status, ManagerContext.SettleNowWhy(why))
     item.kind.value match

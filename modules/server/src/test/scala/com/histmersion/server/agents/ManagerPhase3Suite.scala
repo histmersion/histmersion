@@ -55,6 +55,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.agents.RunService
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes

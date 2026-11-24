@@ -70,6 +70,7 @@ import com.histmersion.domain.automation.worklists.QueueRows
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20 goals under the
   * autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then a person's priority,

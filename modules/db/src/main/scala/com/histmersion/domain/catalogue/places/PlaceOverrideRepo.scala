@@ -19,6 +19,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -74,7 +76,7 @@ private[places] object PlaceOverrideRepo:
       id: BPlaceRow.Id,
       edit: Place.OverrideEdit,
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
-  )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
+  )(using DbCon)(using creator: Creator.New): Either[Api.Error, Place.OverrideChanged] =
     rowOf(id)
       .toRight(
         Api
@@ -134,13 +136,15 @@ private[places] object PlaceOverrideRepo:
             // and the source's geometry is remembered the first time a point is set
             Unused(
               sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
-                                                     source_start_unknown, point, source_geom)
+                                                     source_start_unknown, point, source_geom, creator)
                         SELECT p.id, $kind::text,
                                $range::int8range,
                                $reason::text, p.kind, p.period, p.start_unknown,
                                CASE WHEN $lon::float8 IS NULL THEN NULL
                                     ELSE ST_SetSRID(ST_MakePoint($lon::float8, $lat::float8), 4326) END,
-                               CASE WHEN $lon::float8 IS NULL THEN NULL ELSE p.geom END
+                               CASE WHEN $lon::float8 IS NULL THEN NULL ELSE p.geom END, ${StoredCreator.column(
+                  creator
+                )}::jsonb
                         FROM places p WHERE p.id = $id
                         ON CONFLICT (place_id) DO UPDATE SET
                           kind = coalesce(EXCLUDED.kind, place_overrides.kind),

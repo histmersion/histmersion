@@ -3,12 +3,13 @@ package domain.library.sources.referrers
 
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** Every domain that names sources, in the order their rewrites are reported (a rename's columns follow it). */
 final class SourceReferrers(val all: List[SourceReferrer]):
 
   /** Every referrer's rewrite of a rename, in order. */
-  def renamed(rename: SourceRename)(using DbCon): RenamedReferences =
+  def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences =
     val each = all.map(_.renamed(rename))
     RenamedReferences(each.flatMap(_.columns), each.flatMap(_.texts))
 

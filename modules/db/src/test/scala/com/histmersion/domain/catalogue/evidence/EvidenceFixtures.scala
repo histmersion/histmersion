@@ -18,6 +18,7 @@ import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.{connect, transact}
 import javax.sql.DataSource
 import com.augustnagro.magnum.Frag
+import com.histmersion.util.database.TestCreators.given
 
 /** The events' links and leads as a db suite writes and reads them: each call on a connection of its own. */
 object EvidenceFixtures:

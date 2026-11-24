@@ -17,6 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import scala.annotation.{nowarn, tailrec}
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at
@@ -120,7 +121,7 @@ object BackgroundJob:
       stops: Option[JobStops] = None
   )(
       body: (JobInfo, JobInfo.Progress => Unit) => WritePermit ?=> Outcome
-  )(using WritePermit): Either[Api.Error, JobInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, JobInfo] =
     if !slot.claim(Work("starting")) then Left(busy(what, slot.current, busyCode))
     else
       val job =

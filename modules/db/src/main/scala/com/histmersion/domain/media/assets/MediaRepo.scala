@@ -35,6 +35,8 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
   * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every
@@ -81,15 +83,18 @@ private[assets] object MediaRepo:
   /** Store a provider's picture (or replace the bytes and rights of the one stored under its key); its point and period
     * come from the place or event it is first stored for. Returns its uid and whether it is new.
     */
-  def save(a: ProviderAsset, firstTarget: (Target.TargetType, Target.Id))(using DbCon): (MediaItemRow.Uid, Boolean) =
+  def save(a: ProviderAsset, firstTarget: (Target.TargetType, Target.Id))(using
+      DbCon
+  )(using creator: Creator.New): (MediaItemRow.Uid, Boolean) =
     val sha = NewFigure.sha256(NewFigure.Bytes(a.bytes.value))
     val (uid, inserted) =
       sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, kind, license, provider,
               provider_key, source_url, original_url, author, credit, license_url, retrieved_at,
-              thumb, thumb_mime, thumb_width, thumb_height)
+              thumb, thumb_mime, thumb_width, thumb_height, creator)
             VALUES (NULL, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${a.kind},
               nullif(${a.license}, ''), ${a.provider}, ${a.key}, ${a.sourceUrl}, ${a.originalUrl}, ${a.author},
-              ${a.credit}, ${a.licenseUrl}, now(), ${a.thumb}, ${a.thumbMime}, ${a.thumbWidth}, ${a.thumbHeight})
+              ${a.credit}, ${a.licenseUrl}, now(), ${a.thumb}, ${a.thumbMime}, ${a.thumbWidth}, ${a.thumbHeight}, ${StoredCreator
+          .column(creator)}::jsonb)
             ON CONFLICT (provider, provider_key) WHERE provider IS NOT NULL DO UPDATE SET
               name = EXCLUDED.name, mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
               width = EXCLUDED.width, height = EXCLUDED.height, license = EXCLUDED.license,

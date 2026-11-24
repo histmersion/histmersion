@@ -27,6 +27,7 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
+import com.histmersion.domain.Creator
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
@@ -43,7 +44,7 @@ trait AgentUpstream:
   def refs(
       citekey: Citekey,
       apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply(true)
-  ): Either[Problems, RefsResult]
+  )(using Creator.New): Either[Problems, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
     * the verdict only — neither applied nor recorded).
@@ -51,14 +52,14 @@ trait AgentUpstream:
   def assess(
       citekey: Citekey,
       apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply(true)
-  ): Either[Problems, Assessment]
+  )(using Creator.New): Either[Problems, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
   def followups(
       id: AgentUpstream.FollowupsId,
       since: Option[Year],
       limit: Option[FollowupsInput.Limit]
-  ): Either[Problems, FollowupsResult]
+  )(using Creator.New): Either[Problems, FollowupsResult]
 
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
   def discover(query: Search.Query, limit: AgentUpstream.Limit): Either[Problems, DiscoverResult]
@@ -90,7 +91,7 @@ trait AgentUpstream:
   def sweepCandidates(
       goal: Goal.Slug,
       dryRun: AgentUpstream.SweepCandidatesDryRun
-  ): Either[Problems, CandidateSweep] = Left(
+  )(using Creator.New): Either[Problems, CandidateSweep] = Left(
     Problem.Unclassified(Legacy.Text("the candidate search is not connected"))
   )
 
@@ -132,21 +133,21 @@ object AgentUpstream:
   object Offline extends AgentUpstream:
     private val off = Left(Problem.Unclassified(Legacy.Text("the acquisition toolset is not connected")))
     def meta(doi: Doi) = off
-    def refs(citekey: Citekey, apply: RefsApply) = off
-    def assess(citekey: Citekey, apply: AssessApply) = off
-    def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = off
+    def refs(citekey: Citekey, apply: RefsApply)(using Creator.New) = off
+    def assess(citekey: Citekey, apply: AssessApply)(using Creator.New) = off
+    def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using Creator.New) = off
     def discover(query: Search.Query, limit: Limit) = off
     override def connected = false
 
   /** The server's own acquisition handlers — the same calls `histmersion refs/assess/followups` make. */
   def of(a: AcquisitionControllers): AgentUpstream = new AgentUpstream:
     def meta(doi: Doi) = a.meta(AcquireApi.Identifier(doi.value)).left.map(problem)
-    def refs(citekey: Citekey, apply: RefsApply) =
+    def refs(citekey: Citekey, apply: RefsApply)(using Creator.New) =
       a.refs(RefsRequest(RefsRequest.Id(citekey.value), apply = RefsRequest.Apply(apply.value))).left.map(problem)
-    def assess(citekey: Citekey, apply: AssessApply) =
+    def assess(citekey: Citekey, apply: AssessApply)(using Creator.New) =
       (if apply.value then a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply(true)))
        else a.assessReadOnly(AssessRequest.Id(citekey.value))).left.map(problem)
-    def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) =
+    def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using Creator.New) =
       a.followups(
         FollowupsRequest(
           FollowupsRequest.Id(id.value),
@@ -170,7 +171,7 @@ object AgentUpstream:
       ).left
         .map(problem)
     override def fetcherGeneration = a.fetcherGeneration
-    override def sweepCandidates(goal: Goal.Slug, dryRun: SweepCandidatesDryRun) =
+    override def sweepCandidates(goal: Goal.Slug, dryRun: SweepCandidatesDryRun)(using Creator.New) =
       a.sweepCandidates(
         CandidateSweep.Request(CandidateSweep.Request.Goal(goal.value), CandidateSweep.Request.DryRun(dryRun.value))
       ).left

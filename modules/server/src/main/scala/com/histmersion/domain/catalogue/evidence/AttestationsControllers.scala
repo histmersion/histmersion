@@ -24,6 +24,7 @@ import com.histmersion.domain.catalogue.evidence.passages.Passage
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** The attestations' operations as REST, MCP and the CLI reach them. A reference to a record of a renamed kind (an
   * event, a place, a source, an article) names it by its identifier now — `current` resolves an old one; a finding id
@@ -68,7 +69,7 @@ final class AttestationsControllers(
   /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints would answer
     * both with a 500.
     */
-  def create(caller: Caller, in: Attestation.Put): Either[Api.Error, Attestation] =
+  def create(caller: Caller, in: Attestation.Put)(using Creator.New): Either[Api.Error, Attestation] =
     maintenance.guard(WriteGate.OperationName("create_attestation")):
       val ck = current(AliasKinds.SourceRecords, AttestationsControllers.Alias(in.citekey.value)).value
       for

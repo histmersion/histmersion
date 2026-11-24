@@ -25,6 +25,7 @@ import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).
@@ -303,7 +304,7 @@ object GazetteerLoad:
       apply: LoadApply,
       note: JobInfo.Progress => Unit,
       download: Download
-  )(using WritePermit): Either[Problem, List[Gazetteer.LoadCounts]] =
+  )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
     val result: Either[Problem, List[Gazetteer.LoadCounts]] = kind match
       case Gazetteer.Kind.Lpf => loadLpf(db, s, apply.value, note)
       case k                  =>
@@ -377,7 +378,7 @@ object GazetteerLoad:
       apply: Boolean,
       note: JobInfo.Progress => Unit,
       label: String
-  )(feed: Batcher => Unit)(using WritePermit): (Gazetteer.LoadCounts, Span) =
+  )(feed: Batcher => Unit)(using WritePermit)(using Creator.New): (Gazetteer.LoadCounts, Span) =
     db.read:
       val session = GazetteerImport.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
       val pruned = session.prune(s.batch.value)
@@ -429,7 +430,7 @@ object GazetteerLoad:
       s: Settings,
       apply: Boolean,
       note: JobInfo.Progress => Unit
-  )(using WritePermit): Either[Problem, List[Gazetteer.LoadCounts]] =
+  )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
     val files = lpfFiles(s.stores.lpf)
     if files.isEmpty then
       Left(Problem.Io.Absent(Problem.Io.Held.LpfFiles, Problem.Io.Path.of(s.stores.lpf.where()), None))
@@ -444,7 +445,7 @@ object GazetteerLoad:
       f: Blob,
       apply: Boolean,
       note: JobInfo.Progress => Unit
-  )(using WritePermit): Either[Problem, Gazetteer.LoadCounts] =
+  )(using WritePermit)(using Creator.New): Either[Problem, Gazetteer.LoadCounts] =
     val name = f.key.name.value
     val slug = Gazetteer.datasetSlug(Gazetteer.SourceInfo.File(name))
     val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(slug))

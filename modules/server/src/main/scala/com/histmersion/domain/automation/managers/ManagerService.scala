@@ -17,6 +17,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
   * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,
@@ -48,7 +49,7 @@ trait ManagerService:
       config: ManagerConfig,
       cron: Option[ManagerInfo.Cron] = None,
       nextTick: Option[Instant] = None
-  )(using WritePermit): Boolean
+  )(using WritePermit)(using Creator.New): Boolean
   def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns)(using WritePermit): Boolean
 
   /** Its settings and cron; `next` = when the cron fires next. */
@@ -206,7 +207,7 @@ object ManagerService:
         config: ManagerConfig,
         cron: Option[ManagerInfo.Cron],
         nextTick: Option[Instant]
-    )(using WritePermit): Boolean = db.write(
+    )(using WritePermit)(using Creator.New): Boolean = db.write(
       ManagerRepo.create(
         id,
         kind,
@@ -452,7 +453,7 @@ object ManagerService:
         config: ManagerConfig,
         cron: Option[ManagerInfo.Cron],
         nextTick: Option[Instant]
-    )(using WritePermit): Boolean =
+    )(using WritePermit)(using Creator.New): Boolean =
       val at = now
       !this.state
         .getAndUpdate(s =>

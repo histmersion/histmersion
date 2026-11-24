@@ -20,6 +20,7 @@ import com.histmersion.api.library.Finding
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.library.Citekey
+import com.histmersion.util.database.TestCreators.given
 
 /** The places' repository as the db suites seed and read it: each call on a connection (a write in a transaction) of
   * the suite's own `ds`, and the SQL the suites assert on.

@@ -3,6 +3,7 @@ package domain.library.acquisition
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.util.database.TestCreators.given
 
 /** The db suites' writes of the acquisition's records on a database of their own, each in a transaction of its own as
   * the service runs them.

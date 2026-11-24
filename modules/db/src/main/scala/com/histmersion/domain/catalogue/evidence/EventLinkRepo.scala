@@ -14,6 +14,8 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed
   * (`event_link_checks`). Every method runs on the connection it is given.
@@ -50,15 +52,16 @@ private[evidence] object EventLinkRepo:
   /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps its status
     * (its evidence is refreshed). Records the check.
     */
-  def saveCandidates(id: BEventRow.Id, cs: List[EventLinkCandidate])(using DbCon): Unit =
+  def saveCandidates(id: BEventRow.Id, cs: List[EventLinkCandidate])(using DbCon)(using creator: Creator.New): Unit =
     Unused(
       sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run(),
       Unused.Why.Idempotent
     )
     cs.foreach { c =>
       val ps = Jsonb.write(c.passages)
-      sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons)
-            VALUES ($id, ${c.citekey}, ${c.score}, ${c.findings}::text[], $ps::jsonb, ${c.reasons}::text[])
+      sql"""INSERT INTO event_link_candidates (event_id, citekey, score, findings, passages, reasons, creator)
+            VALUES ($id, ${c.citekey}, ${c.score}, ${c.findings}::text[], $ps::jsonb, ${c.reasons}::text[], ${StoredCreator
+          .column(creator)}::jsonb)
             ON CONFLICT (event_id, citekey) DO UPDATE SET score = EXCLUDED.score, findings = EXCLUDED.findings,
               passages = EXCLUDED.passages, reasons = EXCLUDED.reasons, computed_at = now()""".update.run()
     }

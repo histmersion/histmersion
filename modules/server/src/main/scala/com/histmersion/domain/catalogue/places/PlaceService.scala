@@ -24,6 +24,7 @@ import com.histmersion.domain.catalogue.Place as DPlace
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
@@ -33,7 +34,7 @@ trait PlaceService:
   def count(): RowCount
 
   /** A batch upserted in one transaction: rows, then names, then the edges whose parent exists by then. */
-  def importPlaces(batch: List[Place.Input], dataset: Dataset)(using WritePermit): Place.ImportResult
+  def importPlaces(batch: List[Place.Input], dataset: Dataset)(using WritePermit)(using Creator.New): Place.ImportResult
 
   /** The places a name search finds, valid at `asOf`: exact labels first, then prefixes. */
   def search(
@@ -91,7 +92,7 @@ trait PlaceService:
   def manualNames(id: Option[DPlace.Id]): List[ManualPlaceName]
 
   /** A person's own point place (`local`); refused when its id is taken, removed or an old id. */
-  def add(in: Place.Input)(using WritePermit): Either[Api.Error, Place.Summary]
+  def add(in: Place.Input)(using WritePermit)(using Creator.New): Either[Api.Error, Place.Summary]
 
   def overrides(id: Option[DPlace.Id]): List[Place.Override]
 
@@ -100,7 +101,7 @@ trait PlaceService:
       id: DPlace.Id,
       edit: Place.OverrideEdit,
       toleranceKm: GeocodeSettings.ToleranceKm
-  )(using WritePermit): Either[Api.Error, Place.OverrideChanged]
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Place.OverrideChanged]
 
   /** `from` merged into `into`: what refers to it moves, its id resolves there. */
   def merge(from: DPlace.Id, into: DPlace.Id, toleranceKm: GeocodeSettings.ToleranceKm)(using
@@ -122,7 +123,9 @@ object PlaceService:
 
   final private class Implementation(db: Transactor) extends PlaceService:
     def count(): RowCount = db.read(PlaceRepo.count())
-    def importPlaces(batch: List[Place.Input], dataset: Dataset)(using WritePermit): Place.ImportResult =
+    def importPlaces(batch: List[Place.Input], dataset: Dataset)(using
+        WritePermit
+    )(using Creator.New): Place.ImportResult =
       if batch.isEmpty then
         Place.ImportResult(
           Place.ImportResult.Places(0),
@@ -185,14 +188,15 @@ object PlaceService:
     ): Either[Api.Error, Place.NameChanged] =
       db.write(PlaceRepo.removeName(id, PlaceRepo.Name(name.value), PlaceRepo.Lang(lang.value)))
     def manualNames(id: Option[DPlace.Id]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
-    def add(in: Place.Input)(using WritePermit): Either[Api.Error, Place.Summary] = db.write(PlaceRepo.addPlace(in))
+    def add(in: Place.Input)(using WritePermit)(using Creator.New): Either[Api.Error, Place.Summary] =
+      db.write(PlaceRepo.addPlace(in))
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       db.read(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
     def setOverride(
         id: DPlace.Id,
         edit: Place.OverrideEdit,
         toleranceKm: GeocodeSettings.ToleranceKm
-    )(using WritePermit): Either[Api.Error, Place.OverrideChanged] =
+    )(using WritePermit)(using Creator.New): Either[Api.Error, Place.OverrideChanged] =
       db.write(PlaceOverrideRepo.set(BPlaceRow.Id(id.value), edit, toleranceKm))
     def merge(
         from: DPlace.Id,
@@ -226,7 +230,9 @@ object PlaceService:
 
     def count(): RowCount = RowCount(places.size)
 
-    def importPlaces(batch: List[Place.Input], dataset: Dataset)(using WritePermit): Place.ImportResult =
+    def importPlaces(batch: List[Place.Input], dataset: Dataset)(using
+        WritePermit
+    )(using Creator.New): Place.ImportResult =
       if batch.isEmpty then
         Place.ImportResult(
           Place.ImportResult.Places(0),
@@ -600,7 +606,7 @@ object PlaceService:
         .sortBy(m => (m.placeId.value, m.name.value, m.lang.value))
         .toList
 
-    def add(in: Place.Input)(using WritePermit): Either[Api.Error, Place.Summary] =
+    def add(in: Place.Input)(using WritePermit)(using Creator.New): Either[Api.Error, Place.Summary] =
       val id = in.place.id
       val s = state.get
       def claimed(clash: Problem.Conflict.Clash) =
@@ -647,7 +653,7 @@ object PlaceService:
         id: DPlace.Id,
         edit: Place.OverrideEdit,
         toleranceKm: GeocodeSettings.ToleranceKm
-    )(using WritePermit): Either[Api.Error, Place.OverrideChanged] =
+    )(using WritePermit)(using Creator.New): Either[Api.Error, Place.OverrideChanged] =
       find(apiId(id)).toRight(notFound(id.value)).flatMap { before =>
         val s = state.get
         val had = s.placeOverrides.find(_.placeId == id)

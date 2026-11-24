@@ -17,6 +17,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The rows of the jobs that run as one piece (an OCR, a re-OCR): created `queued`, moved from state to state by
   * compare-and-set, annotated with their progress. The jobs area owns the `jobs` table; a domain that runs such jobs
@@ -29,7 +30,7 @@ trait JobRecords:
       citekey: Option[Citekey],
       sha256: Option[Sha256],
       acquireItem: Option[JobRow.AcquireItem]
-  )(using WritePermit): JobInfo
+  )(using WritePermit)(using Creator.New): JobInfo
 
   def get(id: Job.Id): Option[JobInfo]
 
@@ -58,7 +59,7 @@ object JobRecords:
         citekey: Option[Citekey],
         sha256: Option[Sha256],
         acquireItem: Option[JobRow.AcquireItem]
-    )(using WritePermit): JobInfo =
+    )(using WritePermit)(using Creator.New): JobInfo =
       Transactor(ds()).write(JobRepo.create(kind, citekey, sha256, acquireItem))
     def get(id: Job.Id): Option[JobInfo] = Transactor(ds()).read(JobRepo.get(id))
     def transition(
@@ -79,7 +80,7 @@ object JobRecords:
         citekey: Option[Citekey],
         sha256: Option[Sha256],
         acquireItem: Option[JobRow.AcquireItem]
-    )(using WritePermit): JobInfo =
+    )(using WritePermit)(using Creator.New): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
         SpatialHierarchyResult.Job.Id(UUID.randomUUID().toString),

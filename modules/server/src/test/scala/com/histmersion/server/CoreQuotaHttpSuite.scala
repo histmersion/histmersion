@@ -20,6 +20,7 @@ import com.histmersion.util.database.Db
 import com.histmersion.util.database.Migrate
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The CORE budget through a running server: kept in the database it opens (a restart reads it back), and shown by
   * `/api/about` once CORE was asked. Skipped without HISTMERSION_TEST_DB_URL.

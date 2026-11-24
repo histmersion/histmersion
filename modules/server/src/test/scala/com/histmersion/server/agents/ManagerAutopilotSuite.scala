@@ -68,6 +68,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The autopilot against a `*_test` database (docs/research-process-managers.md "As built: the autopilot"): one switch
   * carries a planned goal through plan → sources → articles → review to `reviewed` with the checked auto approvals on —

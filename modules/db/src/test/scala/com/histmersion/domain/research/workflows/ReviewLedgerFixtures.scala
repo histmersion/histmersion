@@ -7,6 +7,7 @@ import com.histmersion.domain.research.Slug
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
+import com.histmersion.util.database.TestCreators.given
 
 /** The suites' reads and writes of the review ledgers on a database of their own, as the service runs them: a read on a
   * connection of its own, a write in a transaction of its own.

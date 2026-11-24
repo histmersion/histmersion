@@ -33,6 +33,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.server.hot.Pin
 import com.histmersion.util.log.{RequestFailure, RequestLog}
 import com.histmersion.domain.automation.workflows.ToolName
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.plugins.Plugin
 import scala.collection.immutable.ListMap
 import com.histmersion.config.ServerConfig
@@ -53,6 +54,7 @@ import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.util.plugins.Plugins
+import com.histmersion.domain.Creator
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test
@@ -204,7 +206,7 @@ object Composition:
     h.agents.attachTools(
       mcp.toolNames.flatMap(n => ToolName.option(n))
     ) // what the generated definitions' placeholders may name
-    val paused = h.agents.start()
+    val paused = h.agents.start()(using InTreeWorkflow.EngineStart.creator)
     if paused > 0 then
       scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
     // the worker pools stop with the server, before its pools close (released in reverse order)
@@ -290,6 +292,7 @@ object Composition:
     * failed and its runs reconciled, as a start does.
     */
   private def leases(sg: ServerGraph, h: ServerWiring): Either[Problem, Hot[Boolean]] =
+    given Creator.New = InTreeWorkflow.AdoptDatabase.creator
     val lease = h.agents.lease
     sg.graph.node[Boolean](
       Hot.Graph.Def.Name(ServerGraph.Leases),
@@ -342,8 +345,8 @@ object Composition:
     val library = new CollectionLibrary:
       def source(citekey: Citekey) =
         h.library.sources.get(citekey, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_))
-      def create(citekey: Citekey, put: Source.Put) = h.library.sources.put(citekey, put)
-      def patch(citekey: Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
+      def create(citekey: Citekey, put: Source.Put)(using Creator.New) = h.library.sources.put(citekey, put)
+      def patch(citekey: Citekey, patch: Source.Patch)(using Creator.New) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: Citekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
       def gaps(limit: Option[CollectionLibrary.Limit]) =
@@ -366,7 +369,7 @@ object Composition:
             all = WorkListView.IncludeAll(true)
           )
           .map(_.items.find(_.id.value == id.value))
-      def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes) =
+      def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes)(using Creator.New) =
         h.ingest.controllers.ingest(
           params,
           Upload.inline(
@@ -374,10 +377,10 @@ object Composition:
             Upload.Bytes(bytes.value)
           )
         )
-      def putCover(params: SourceCoverParams, bytes: CollectionLibrary.Bytes) =
+      def putCover(params: SourceCoverParams, bytes: CollectionLibrary.Bytes)(using Creator.New) =
         h.media.covers.putCover(params, AssetService.Bytes(bytes.value))
-      def openLibraryCover(req: MediaCoversRequest) = h.media.covers.covers(req)
-      def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
+      def openLibraryCover(req: MediaCoversRequest)(using Creator.New) = h.media.covers.covers(req)
+      def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest)(using Creator.New) =
         acq.archiveImport(item, file, req)
     CollectionsControllers(
       CollectionsService(

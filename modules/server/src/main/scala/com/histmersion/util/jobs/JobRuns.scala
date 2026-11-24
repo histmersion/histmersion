@@ -13,6 +13,7 @@ import hearth.kindlings.optics.syntax.*
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
   * `jobs` table: created, moved from state to state by compare-and-set, marked alive, annotated, reconciled at a start.
@@ -20,10 +21,10 @@ import com.histmersion.util.database.WritePermit
   */
 trait JobRuns:
   /** A new run; its id. */
-  def create(run: RunRow)(using WritePermit): Run.Id
+  def create(run: RunRow)(using WritePermit)(using Creator.New): Run.Id
 
   /** [[create]] inside the caller's transaction (a manager's dispatch commits the run with its item). */
-  def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id
+  def createIn(run: RunRow)(using DbCon)(using WritePermit)(using Creator.New): Run.Id
 
   def pipelineVersion(id: Run.Id): Option[Pipeline.Version]
 
@@ -81,8 +82,8 @@ object JobRuns:
   def apply(db: Transactor): JobRuns = Implementation(db)
 
   final private class Implementation(db: Transactor) extends JobRuns:
-    def create(run: RunRow)(using WritePermit): Run.Id = db.write(JobRepo.insertRun(run))
-    def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = JobRepo.insertRun(run)
+    def create(run: RunRow)(using WritePermit)(using Creator.New): Run.Id = db.write(JobRepo.insertRun(run))
+    def createIn(run: RunRow)(using DbCon)(using WritePermit)(using Creator.New): Run.Id = JobRepo.insertRun(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = db.read(JobRepo.runPipelineVersion(id))
     def trace(id: Run.Id): Option[LogEvent.Trace] = db.read(JobRepo.traceOf(id))
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit = db.write(JobRepo.runHeartbeat(kind, id))
@@ -151,7 +152,7 @@ object JobRuns:
       */
     def stamped(id: Run.Id): Unit = changeIf(id, _ => true)(touched): Unit
 
-    def create(run: RunRow)(using WritePermit): Run.Id =
+    def create(run: RunRow)(using WritePermit)(using Creator.New): Run.Id =
       val id = Run.Id.applyUnsafe(java.util.UUID.randomUUID().toString)
       val n = stamp.incrementAndGet()
       val _ = state.updateAndGet(
@@ -175,7 +176,7 @@ object JobRuns:
         )
       )
       id
-    def createIn(run: RunRow)(using DbCon)(using WritePermit): Run.Id = create(run)
+    def createIn(run: RunRow)(using DbCon)(using WritePermit)(using Creator.New): Run.Id = create(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = get(id).map(_.row.pipelineVersion)
     def trace(id: Run.Id): Option[LogEvent.Trace] = None
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit =

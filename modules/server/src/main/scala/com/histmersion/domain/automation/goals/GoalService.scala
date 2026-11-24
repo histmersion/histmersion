@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
@@ -37,7 +38,9 @@ trait GoalService:
   def children(slug: domain.automation.Goal.Slug): List[Goal]
 
   /** Create or replace a goal; a period that starts after it ends is refused. */
-  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using WritePermit): Either[Api.Error, Unit]
+  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, Unit]
 
   /** One page of the goals (of one status, when given), by slug, with the total. */
   def page(
@@ -76,7 +79,7 @@ trait GoalService:
       kind: domain.automation.Goal.LinkKind,
       ref: GoalLink.Ref,
       note: Option[GoalLink.Note]
-  )(using WritePermit): Boolean
+  )(using WritePermit)(using Creator.New): Boolean
   def unlink(
       goal: domain.automation.Goal.Slug,
       kind: domain.automation.Goal.LinkKind,
@@ -114,7 +117,7 @@ trait GoalService:
       enabled: GoalSchedule.Enabled,
       budgetUsd: Option[BigDecimal],
       next: Option[Instant]
-  )(using WritePermit): Unit
+  )(using WritePermit)(using Creator.New): Unit
   def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using WritePermit): Boolean
 
   /** The goals that still have schedules here. */
@@ -126,7 +129,10 @@ trait GoalService:
   /** A goal created, never replaced, in the caller's transaction (a new research area): a slug in use, or an old slug
     * of another goal, is a conflict and nothing is written.
     */
-  def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon, WritePermit): Either[Api.Error, Unit]
+  def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+      DbCon,
+      WritePermit
+  )(using Creator.New): Either[Api.Error, Unit]
 
 object GoalService:
 
@@ -141,14 +147,16 @@ object GoalService:
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note]
-    )(using WritePermit): Unit =
+    )(using WritePermit)(using Creator.New): Unit =
       if !goals.link(goal, kind, ref, note) then scribe.warn(s"goal $goal is gone: a link to it was not written")
 
   final private class Implementation(db: Transactor) extends GoalService:
     def get(slug: domain.automation.Goal.Slug): Option[Goal] = db.read(GoalRepo.get(slug))
     def all(): List[Goal] = db.read(GoalRepo.all())
     def children(slug: domain.automation.Goal.Slug): List[Goal] = db.read(GoalRepo.children(slug))
-    def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using WritePermit): Either[Api.Error, Unit] =
+    def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+        WritePermit
+    )(using Creator.New): Either[Api.Error, Unit] =
       db.write(GoalRepo.put(slug, in))
     def page(
         status: Option[domain.automation.Goal.Status.Wire],
@@ -173,7 +181,7 @@ object GoalService:
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note]
-    )(using WritePermit): Boolean =
+    )(using WritePermit)(using Creator.New): Boolean =
       db.write(
         GoalLinkRepo.link(goal, kind.transformInto[Goal.Plans.LinkKind], ref, note)
       )
@@ -212,7 +220,7 @@ object GoalService:
         enabled: GoalSchedule.Enabled,
         budgetUsd: Option[BigDecimal],
         next: Option[Instant]
-    )(using WritePermit): Unit = db.write(
+    )(using WritePermit)(using Creator.New): Unit = db.write(
       GoalLinkRepo.setSchedule(
         goal,
         kind.transformInto[Goal.Plans.ScheduleKind],
@@ -229,7 +237,10 @@ object GoalService:
     def scheduleGoals(): List[domain.automation.Goal.Slug] = db.read(GoalLinkRepo.scheduleGoals())
     def takeSchedulesIn(goal: domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
       GoalLinkRepo.takeSchedulesIn(goal)
-    def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon, WritePermit): Either[Api.Error, Unit] =
+    def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+        DbCon,
+        WritePermit
+    )(using Creator.New): Either[Api.Error, Unit] =
       GoalRepo.createIn(slug, in)
 
   /** The goals in memory; `clock` stands in for the database's `now()`, `targets` for the other domains' rows a link
@@ -269,7 +280,9 @@ object GoalService:
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug.value).map(shown)
     def children(slug: domain.automation.Goal.Slug): List[Goal] =
       all().filter(_.parentSlug.exists(_.value == slug.value))
-    def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using WritePermit): Either[Api.Error, Unit] =
+    def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+        WritePermit
+    )(using Creator.New): Either[Api.Error, Unit] =
       (in.periodStart, in.periodEnd) match
         case (Some(a), Some(b)) if a > b =>
           Left(
@@ -462,7 +475,7 @@ object GoalService:
         kind: domain.automation.Goal.LinkKind,
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note]
-    )(using WritePermit): Boolean =
+    )(using WritePermit)(using Creator.New): Boolean =
       goals.contains(key(goal)) && {
         val at = now
         val newNote = note.map(n => GoalLinkRecord.Note(n.value))
@@ -558,7 +571,7 @@ object GoalService:
         enabled: GoalSchedule.Enabled,
         budgetUsd: Option[BigDecimal],
         next: Option[Instant]
-    )(using WritePermit): Unit =
+    )(using WritePermit)(using Creator.New): Unit =
       val row = GoalScheduleRecord(
         GoalScheduleRecord.Goal(goal.value),
         kind,
@@ -586,7 +599,10 @@ object GoalService:
         .filter(_.goal.value == goal.value)
         .toList
         .map(view)
-    def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using DbCon, WritePermit): Either[Api.Error, Unit] =
+    def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
+        DbCon,
+        WritePermit
+    )(using Creator.New): Either[Api.Error, Unit] =
       val aliasOf = state.get.goalAliases.get(AutomationState.GoalAliasesKey(slug.value)).map(_.value)
       if goals.contains(key(slug)) then
         Left(Api.Error(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug))))

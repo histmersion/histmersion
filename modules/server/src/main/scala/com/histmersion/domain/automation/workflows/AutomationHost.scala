@@ -13,6 +13,7 @@ import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
   * link's reference and the probe's subject in the domains' terms, the plan's works and vocabulary, and the
@@ -26,7 +27,7 @@ trait AutomationHost:
   def goal(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal]
 
   /** A goal written as a person would (`PUT`), an old slug writing to the goal it was renamed to. */
-  def putGoal(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal]
+  def putGoal(slug: domain.automation.Goal.Slug, in: Goal.Put)(using Creator.New): Either[Api.Error, Goal]
 
   /** A goal changed as a person would (`PATCH`). */
   def patchGoal(slug: domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal]

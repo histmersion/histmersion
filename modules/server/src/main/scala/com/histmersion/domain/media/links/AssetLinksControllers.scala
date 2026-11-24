@@ -18,6 +18,7 @@ import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.media.MediaTarget
+import com.histmersion.domain.Creator
 
 /** A figure's links over REST and MCP: listed, made and removed. A citekey or a target named by an old identifier is
   * resolved first (`current`, the alias tables), as every read and write of a renamed kind is.
@@ -51,7 +52,7 @@ final class AssetLinksControllers(
           target.map(AssetService.TargetId(_)).orElse(targetId)
         )
 
-  def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
+  def create(in: AssetLink.Put)(using Creator.New): Either[Api.Error, AssetLink] =
     maintenance.guard(WriteGate.OperationName("create_asset_link"))(
       links.create(
         in.modify(_.citekey)

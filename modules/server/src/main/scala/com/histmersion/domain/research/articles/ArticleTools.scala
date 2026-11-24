@@ -20,6 +20,7 @@ import com.histmersion.api.Write
 import com.histmersion.domain.research.Slug
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.LibraryTools
+import com.histmersion.domain.Creator
 
 /** The articles' MCP tools, in their place among `/mcp`'s: the list, one article read, its writes, a draft checked, its
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge
@@ -40,6 +41,7 @@ object ArticleTools:
     // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
     // Shared preamble: the ONE place the writing rules are named, so all four tools point an agent at
     // the same document instead of paraphrasing it differently.
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val ArticleRules =
       "Articles are the COMPILED KNOWLEDGE of this corpus — the concept/myth/culture/region/timeline/" +
         "report pages a reader reads instead of the papers. Write them by the rules in " +

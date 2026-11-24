@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The seam between an acquisition and the ingest's job queue.
   *
@@ -19,4 +20,4 @@ trait IngestJobs:
     */
   def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta)(using
       WritePermit
-  ): Either[Problems, IngestOutcome]
+  )(using Creator.New): Either[Problems, IngestOutcome]

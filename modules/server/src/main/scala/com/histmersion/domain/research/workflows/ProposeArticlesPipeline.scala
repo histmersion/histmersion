@@ -46,6 +46,7 @@ import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -69,10 +70,10 @@ final class ProposeArticlesPipeline(
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
-  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     Goal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
-  private def runFor(ctx: RunCtx, goal: Goal.Slug)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  private def runFor(ctx: RunCtx, goal: Goal.Slug)(using WritePermit, Creator.New): Either[Halt, PipelineDef.Summary] =
     val runId = ctx.runId
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(goal))
@@ -245,7 +246,7 @@ final class ProposeArticlesPipeline(
   /** The plan as an `article-plan` approval (a person's, or the supervisor's checks — [[AutoApprovals]]), through the
     * write gate.
     */
-  private def record(ctx: RunCtx, goal: Goal.Slug, plan: ArticlePlan): Either[Problems, Recorded] =
+  private def record(ctx: RunCtx, goal: Goal.Slug, plan: ArticlePlan)(using Creator.New): Either[Problems, Recorded] =
     if plan.isEmpty then Right(Recorded(None, Recorded.Line("nothing survived the checks; no approval was opened")))
     else
       ctx.write(

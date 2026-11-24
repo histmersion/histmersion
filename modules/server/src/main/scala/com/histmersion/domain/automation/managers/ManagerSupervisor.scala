@@ -59,6 +59,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -136,14 +137,16 @@ final class ManagerSupervisor(
   /** The library-wide managers exist — `review` and `enrich` — created PAUSED, so deploying never starts spending until
     * a person resumes them. Idempotent.
     */
-  def ensureDefaults()(using WritePermit): Unit =
+  def ensureDefaults()(using WritePermit)(using Creator.New): Unit =
     Unused(ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
     Unused(ensure(Kind.Enrich, ManagerLight.Id(EnrichId), None), Unused.Why.Idempotent)
 
   /** Manager `id` of kind `k` exists (created PAUSED when it did not — active while the autopilot is on, which runs
     * every manager); true = it was created now.
     */
-  def ensure(k: Kind, id: ManagerLight.Id, goal: Option[DomainGoal.Slug])(using WritePermit): Boolean =
+  def ensure(k: Kind, id: ManagerLight.Id, goal: Option[DomainGoal.Slug])(using
+      WritePermit
+  )(using Creator.New): Boolean =
     val auto = agents.autopilot.on
     val infoId = id.transformInto[ManagerInfo.Id]
     val made = agents.managerStore.create(infoId, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
@@ -158,7 +161,7 @@ final class ManagerSupervisor(
       )
     made
 
-  def start(): Unit =
+  def start()(using Creator.New): Unit =
     if cfg.enabled.value && mcfg.enabled.value && thread.isEmpty then
       stopping = false
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agent-managers").unstarted(() => loop())
@@ -173,7 +176,7 @@ final class ManagerSupervisor(
     thread.foreach(_.interrupt())
     thread = None
 
-  private def loop(): Unit =
+  private def loop()(using Creator.New): Unit =
     try
       while !stopping do
         hold.synchronized(while holding do hold.wait()) // a restore holds the managers here
@@ -208,7 +211,7 @@ final class ManagerSupervisor(
       if ticking.get() then Vector(Quiescent.Busy("a tick of the managers")) else Vector.empty
 
     /** Nothing is kept between ticks but the nudges, which spoke of runs the restore replaced. */
-    def restored()(using WritePermit): Unit = nudges.clear()
+    def restored()(using WritePermit)(using Creator.New): Unit = nudges.clear()
     def resume(): Unit = hold.synchronized { holding = false; hold.notifyAll() }
 
   /** When the events were last pruned (epoch ms). */
@@ -223,7 +226,7 @@ final class ManagerSupervisor(
     * manager's sake.
     */
 
-  def tick(now: Instant)(using WritePermit): List[TickLine] = synchronized {
+  def tick(now: Instant)(using WritePermit)(using Creator.New): List[TickLine] = synchronized {
     if !cfg.enabled.value || !mcfg.enabled.value then Nil
     else
       val out = List.newBuilder[TickLine]
@@ -296,7 +299,9 @@ final class ManagerSupervisor(
 
   // ── 1. evaluate ────────────────────────────────────────────────────────────────────────────────
 
-  private def evaluate(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]])(using WritePermit): Unit =
+  private def evaluate(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]])(using
+      WritePermit
+  )(using Creator.New): Unit =
     val s = settings(m)
     Transactor(ds).read(ManagerRepo.toEvaluate(m.id)).foreach {
       case (item, None) =>
@@ -360,7 +365,7 @@ final class ManagerSupervisor(
       now: Instant,
       out: Builder[TickLine, List[TickLine]],
       kind: ManagerKindDefinition
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     val runInfoId = item.runId.get
     val run = runIdOf(runInfoId)
     ManagerPolicy.evaluateStep(
@@ -525,7 +530,7 @@ final class ManagerSupervisor(
     */
   def applyPlan(a: ApprovalInfo, out: Builder[TickLine, List[TickLine]] = List.newBuilder[TickLine])(using
       WritePermit
-  ): RowCount =
+  )(using Creator.New): RowCount =
     (a.subject, a.articles) match
       case (Some(goal), Some(plan)) if a.state == ApprovalState.Approved.wire =>
         val id = seedId(Goal.Ref(goal.value))
@@ -565,7 +570,7 @@ final class ManagerSupervisor(
 
   private def releaseHolds(m: ManagerInfo, now: Instant, out: Builder[TickLine, List[TickLine]])(using
       WritePermit
-  ): Unit =
+  )(using Creator.New): Unit =
     connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Held)).foreach { i =>
       i.hold.flatMap(_.untilApproval) match
         case Some(aid) => settleOnApproval(m, i, aid, out)
@@ -598,7 +603,7 @@ final class ManagerSupervisor(
       i: ManagerItem,
       aid: Hold.UntilApproval,
       out: Builder[TickLine, List[TickLine]]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     agents.approvalStore.approval(DomainApproval.Id(aid.value)) match
       case None =>
         if Transactor(ds).write(
@@ -641,7 +646,7 @@ final class ManagerSupervisor(
     * every start and every tick (a bundle import still writes rows), it finds nothing once they are moved. Returns one
     * line per goal migrated.
     */
-  def migrateSchedules(now: Instant)(using WritePermit): List[TickLine] =
+  def migrateSchedules(now: Instant)(using WritePermit)(using Creator.New): List[TickLine] =
     agents.goals.scheduleGoals().flatMap { g =>
       val id = watchId(Goal.Ref(g.value))
       val apiGoal = g.transformInto[Goal.Slug]
@@ -743,7 +748,7 @@ final class ManagerSupervisor(
       ms: List[ManagerInfo],
       now: Instant,
       out: Builder[TickLine, List[TickLine]]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
       if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then
@@ -851,7 +856,7 @@ final class ManagerSupervisor(
       item: ManagerItem,
       now: Instant,
       out: Builder[TickLine, List[TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id] =
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then None // another run writes it: wait
     else
       byItem.get(itemKindOf(item)) match
@@ -876,7 +881,7 @@ final class ManagerSupervisor(
       state: ItemState,
       what: ManagerContext.StartWhat,
       out: Builder[TickLine, List[TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id] =
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     val roles = pipelineOf(itemKindOf(item)).roles
     val req =
       req0
@@ -984,7 +989,7 @@ final class ManagerSupervisor(
         item: ManagerItem,
         now: Instant,
         out: Builder[TickLine, List[TickLine]]
-    )(using WritePermit): Option[ManagerLight.Id] = None
+    )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] = None
     def target(
         m: ManagerInfo,
         itemKind: ManagerContext.ItemKind,
@@ -1178,7 +1183,7 @@ final class ManagerSupervisor(
       kind: Goal.Plans.LinkKind,
       ref: BGoalLinkRow.Ref,
       note: Option[BGoalLinkRow.Note]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     agents.goals.linkIfThere(
       goal,
       kind.transformInto[domain.automation.Goal.LinkKind],

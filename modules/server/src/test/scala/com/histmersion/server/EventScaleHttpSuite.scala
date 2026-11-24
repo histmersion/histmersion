@@ -16,6 +16,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** An event's scale (#1440) over real HTTP and MCP: PUT and PATCH take it and refuse a value that is none, `auto`
   * forgets it, `GET /api/events/geo` answers (and is not read as the event `geo`), and the `patch_event` tool writes

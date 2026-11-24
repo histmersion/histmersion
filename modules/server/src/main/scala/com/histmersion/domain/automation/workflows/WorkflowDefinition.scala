@@ -29,7 +29,7 @@ trait WorkflowDefinition:
   def allowedTools(role: AgentRole): Set[ToolName]
 
   /** One run to its next resting state: a one-line summary for the run's log entry, or why it halted. */
-  def run(run: RunCtx)(using WritePermit): Either[Halt, WorkflowDefinition.Summary]
+  def run(run: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, WorkflowDefinition.Summary]
 
   /** How its runs' outputs compare (`agent compare`); none by default. */
   def outputs: OutputComparison = OutputComparison.none

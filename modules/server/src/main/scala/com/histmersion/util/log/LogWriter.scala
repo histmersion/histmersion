@@ -14,6 +14,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 
 import LogWriter.{subjectsOf, writesCounted, written, StagedEveryMillis}
+import com.histmersion.domain.Creator
 
 final class LogWriter(
     settings: () => LogConfig,
@@ -39,7 +40,7 @@ final class LogWriter(
     def quiesce(): Unit = resting.set(true)
     def busy: Vector[Quiescent.Busy] =
       if writing.get() then Vector(Quiescent.Busy("a batch of events into the table")) else Vector.empty
-    def restored()(using WritePermit): Unit = ()
+    def restored()(using WritePermit)(using Creator.New): Unit = ()
     def resume(): Unit = resting.set(false)
 
   def mintTrace(): LogEvent.Trace =

@@ -10,6 +10,7 @@ import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The contract the attestations keep: ids in the order they were made, every field read back, the list narrowed by
   * source, target kind and target and paged, a patch changing only what it names, a delete once.

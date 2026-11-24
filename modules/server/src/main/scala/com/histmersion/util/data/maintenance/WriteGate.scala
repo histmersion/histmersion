@@ -11,6 +11,7 @@ import com.histmersion.util.problem.Problem
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** The maintenance lock. A restore drops and recreates every table, so nothing else may touch the database while it
   * runs, and nothing begun before it may write after it:
@@ -60,7 +61,7 @@ final class WriteGate(val permits: WritePermit.Gate = WritePermit.Gate()):
       op: OperationName,
       drain: FiniteDuration = FiniteDuration(0L, java.util.concurrent.TimeUnit.SECONDS),
       refused: => Option[Api.Error] = None
-  )(f: Quiet ?=> WritePermit ?=> Either[Api.Error, A]): Either[Api.Error, A] =
+  )(f: Quiet ?=> WritePermit ?=> Either[Api.Error, A])(using Creator.New): Either[Api.Error, A] =
     if !permits.drain() then Left(refusal(op, WritePermit.Refusal.Restoring))
     else
       try
@@ -99,7 +100,7 @@ object WriteGate:
     /** Every worker reconciles with the database as it is now; once (later calls answer nothing). The workers that
       * failed to, as problems (each logged).
       */
-    def reconcile()(using WritePermit): List[Problem] =
+    def reconcile()(using WritePermit)(using Creator.New): List[Problem] =
       if reconciled.compareAndSet(false, true) then workers.reconcileAll() else Nil
 
   private def refusal(op: OperationName, why: WritePermit.Refusal): Api.Error = why match

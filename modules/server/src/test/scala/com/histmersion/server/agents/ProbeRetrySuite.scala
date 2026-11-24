@@ -40,6 +40,7 @@ import com.histmersion.config.AgentsConfig
 import com.histmersion.config.AgentEnrichConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ClaudeCodeConfig
+import com.histmersion.util.database.TestCreators.given
 
 /** `agent probe` against a `*_test` database with a scripted model: an answer that leaves the title empty and the year
   * null (2026-10-08, codex:gpt-6-luna: `{"citekey":"huxley1956_catalogue", "title":"","year":null}`) is not an answer —

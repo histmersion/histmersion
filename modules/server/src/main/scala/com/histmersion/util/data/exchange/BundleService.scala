@@ -34,6 +34,7 @@ import com.histmersion.util.storage.Reservation
 import com.histmersion.api.ByteCount
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The portable bundle and the merge (docs/research-merge-import.md, milestones M0–M7): this instance's identity, the
   * export, verify and import of a `.hmx` bundle, the bundles kept to be planned, the plan, the apply, the review
@@ -62,7 +63,7 @@ trait BundleService:
       bundle: Sha256,
       planHash: MergeRow.PlanHash,
       resolutions: MergeResolutions
-  )(using WritePermit): Either[Api.Error, MergeApplyJob]
+  )(using WritePermit)(using Creator.New): Either[Api.Error, MergeApplyJob]
   def applyStatus(job: Job.Id): Option[MergeApplyJob]
   def session(bundle: Sha256): MergeSession
   def putSession(bundle: Sha256, resolutions: MergeResolutions)(using WritePermit): MergeSession
@@ -297,7 +298,7 @@ object BundleService:
         bundle: Sha256,
         planHash: MergeRow.PlanHash,
         resolutions: MergeResolutions
-    )(using WritePermit): Either[Api.Error, MergeApplyJob] =
+    )(using WritePermit)(using Creator.New): Either[Api.Error, MergeApplyJob] =
       kept(bundle).flatMap { source =>
         w.applyJobs.start(bundle, planHash) { () =>
           BundleImporter

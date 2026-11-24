@@ -7,6 +7,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The background job a base-map fetch runs as: one at a time, behind the server's write guard, its row in the jobs
   * table (`histmersion jobs` follows it). The composition root runs it on the server's database, on the generation the
@@ -32,7 +33,7 @@ trait BasemapJobs:
       busyCode: Option[Api.Error.Code]
   )(
       body: (BasemapJobs.Target => Unit) => Either[Problem, BasemapJobs.Description]
-  )(using WritePermit): Either[Api.Error, JobInfo]
+  )(using WritePermit)(using Creator.New): Either[Api.Error, JobInfo]
 
 object BasemapJobs:
   type Description = Description.T
