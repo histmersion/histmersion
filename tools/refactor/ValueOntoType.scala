@@ -87,6 +87,12 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
 
   private def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))
 
+  private def selection(sel: Term.Select): Seq[Token] = {
+    val tokens = sel.tokens
+    val dot = tokens.lastIndexWhere(t => t.is[Token.Dot] && t.end <= sel.name.pos.start)
+    tokens.drop(dot).filter(_.end <= sel.name.pos.end)
+  }
+
   override def fix(implicit doc: SemanticDocument): Patch = {
     val path = relative(doc.input match {
       case Input.File(p, _) => p.toString
@@ -192,7 +198,7 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
     def dropValue(sel: Term.Select, why: String): Patch = {
       used += sel
       rewritten.add(s"$path:${sel.pos.startLine + 1}\t$why")
-      Patch.removeTokens(sel.tokens.filter(t => t.start >= sel.qual.pos.end)).atomic
+      Patch.removeTokens(selection(sel)).atomic
     }
     def valueSelect(t: Term): Option[(Term.Select, String)] = t match {
       case sel @ Term.Select(q, n) if isIronValue(n) && !used(sel) => newtypeOfTerm(q).map(sel -> _)

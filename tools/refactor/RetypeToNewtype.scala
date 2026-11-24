@@ -175,7 +175,8 @@ class RetypeToNewtype(config: RetypeToNewtype.Config, index: ConcurrentHashMap[S
           param.flatMap(byParam.get).foreach { r =>
             value match {
               case sel @ Term.Select(q, v) if isIronValue(v) && termNewtype(q).exists(sameNewtype(_, r.newtype)) =>
-                patches += Patch.removeTokens(sel.tokens.filter(_.start >= q.pos.end)).atomic
+                val dot = sel.tokens.lastIndexWhere(t => t.is[Token.Dot] && t.end <= v.pos.start)
+                patches += Patch.removeTokens(sel.tokens.drop(dot).filter(_.end <= v.pos.end)).atomic
                 log.add(s"$path:${a.pos.startLine + 1}\tcall-unwrap-removed\t${r.param}")
               case other =>
                 patches += Patch.addLeft(other, s"${r.wrap}(").atomic + Patch.addRight(other, ")").atomic

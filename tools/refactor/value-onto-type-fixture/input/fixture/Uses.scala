@@ -18,3 +18,4 @@ object Uses:
   def plain(text: String): String = Dom.span(text)
   def undisplayed(name: Name): String = Dom.span(name.value)
   def earlier(a: Year, b: Year): Boolean = a.value < b.value
+  def bracketed(a: Year, b: Year): Boolean = (a).value < (b).value
