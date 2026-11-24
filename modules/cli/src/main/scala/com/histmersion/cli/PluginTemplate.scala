@@ -49,7 +49,7 @@ object PluginTemplate:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultsPath(id: PluginId): TemplateFile.Path =
-    TemplateFile.Path(s"resources/META-INF/histmersion/plugins/${id.value}.conf")
+    TemplateFile.Path(shown"resources/META-INF/histmersion/plugins/$id.conf")
 
   /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and name, so no two
     * jars' metadata files share a path.
@@ -57,7 +57,7 @@ object PluginTemplate:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): TemplateFile.Path =
-    TemplateFile.Path(s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json")
+    TemplateFile.Path(shown"resources/META-INF/native-image/$pkg/$id/reachability-metadata.json")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -150,7 +150,7 @@ object PluginTemplate:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def header(r: Request): String = s"package ${r.pkg.value}\n\n"
+  private def header(r: Request): String = shown"package ${r.pkg}\n\n"
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -169,7 +169,7 @@ object PluginTemplate:
       "@platform@" -> PluginArtifacts.coordinates(PluginArtifacts.CoordinatesName(PluginArtifacts.Platform)).value,
       "@testkit@" -> PluginArtifacts.coordinates(PluginArtifacts.CoordinatesName(PluginArtifacts.Testkit)).value,
       "@apiSources@" -> PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value,
-      "@coordinates@" -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
+      "@coordinates@" -> shown"${r.pkg}::${r.id}:$FirstVersion",
       "@publishDir@" -> PublishDir,
       "@projectProperty@" -> ProjectProperty,
       "@graalvm@" -> PluginBuildVersions.graalvm,
@@ -195,12 +195,12 @@ object PluginTemplate:
         s"""    { "type": "$tpe", "fields": [ { "name": "$field" } ] }"""
       }
       .mkString(",\n")
-    s"""{
+    shown"""{
        |  "reflection": [
        |$reflection
        |  ],
        |  "resources": [
-       |    { "glob": "META-INF/histmersion/plugins/${r.id.value}.conf" }
+       |    { "glob": "META-INF/histmersion/plugins/${r.id}.conf" }
        |  ]
        |}
        |""".stripMargin

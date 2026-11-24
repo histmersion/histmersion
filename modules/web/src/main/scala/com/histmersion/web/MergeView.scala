@@ -393,7 +393,7 @@ object MergeView:
       val url = dom.URL.createObjectURL(blob)
       val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
       a.href = url
-      a.setAttribute("download", s"resolutions-${p.planHash}.yaml")
+      a.setAttribute("download", shown"resolutions-${p.planHash}.yaml")
       dom.document.body.appendChild(a)
       a.click()
       a.remove()
@@ -502,7 +502,7 @@ object MergeView:
           strong(MergeMarkdown.who(p.from)),
           s" into ",
           strong(MergeMarkdown.who(p.into)),
-          span(cls := "muted", s" · plan ${p.planHash}" + p.asOf.fold("")(a => s" · as of ${a.value.take(10)}"))
+          span(cls := "muted", shown" · plan ${p.planHash}" + p.asOf.fold("")(a => s" · as of ${a.value.take(10)}"))
         )
       }),
       child.maybe <-- plan.signal.map(
@@ -1036,7 +1036,7 @@ object MergeView:
             cls := "form-row merge-confirm",
             span(
               shown"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}, " +
-                s"plan ${p.planHash}. A backup is taken first."
+                shown"plan ${p.planHash}. A backup is taken first."
             ),
             button(
               typ := "button",

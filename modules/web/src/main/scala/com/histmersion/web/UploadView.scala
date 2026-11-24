@@ -158,7 +158,7 @@ object UploadView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemLabel(item: Queue.QueueItem, max: Int = 110): UiLabels.Text =
     val line = item.text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
-    UiLabels.Text(s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
+    UiLabels.Text(shown"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
 
   /** The item a picker entry names (`#42 …`), among the items offered. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -367,7 +367,7 @@ object UploadView:
           _.map(item =>
             div(
               cls := "pane-note muted",
-              s"For acquisition item ${item.id} — the OCR job ticks it off as ingested when it succeeds. ",
+              shown"For acquisition item ${item.id} — the OCR job ticks it off as ingested when it succeeds. ",
               a(
                 href := "#",
                 "don't link it",
@@ -440,7 +440,7 @@ object UploadView:
             ". Follow it in ",
             a(href := "#", "background jobs", onClick.preventDefault --> (_ => WindowManager.open(WindowKey.Jobs))),
             ".",
-            item.map(i => s" Acquisition item $i is ticked off when the job succeeds.")
+            item.map(i => shown" Acquisition item $i is ticked off when the job succeeds.")
           )
         )
       ),

@@ -61,7 +61,7 @@ final class ResearchState:
     val r = historyOf(id)
     div(
       cls := "state-history",
-      dataAttr("history") := s"$id",
+      dataAttr("history") := shown"$id",
       ErrorLine.of(r.signal),
       child <-- r.signal.map(_.shown).map {
         case None    => p(cls := "muted", "Loading…")
@@ -209,7 +209,7 @@ final class ResearchState:
           children <-- rows.map(_.take(Rows)).split(_.item) { (id, first, _) =>
             tr(
               cls := "state-acq",
-              dataAttr("item") := s"$id",
+              dataAttr("item") := shown"$id",
               dataAttr("verdict") := first.verdict.label,
               td(firstLine(first.text)),
               td(cls := "state-verdict", first.verdict.label),
@@ -256,8 +256,8 @@ object ResearchState:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(i: OpenItem): String = i match
     case d: OpenItem.Decision    => s"decision-${d.approval.id}"
-    case a: OpenItem.Acquisition => s"acquisition-${a.item}"
-    case t: OpenItem.Task        => s"task-${t.item}"
+    case a: OpenItem.Acquisition => shown"acquisition-${a.item}"
+    case t: OpenItem.Task        => shown"task-${t.item}"
     case r: OpenItem.PausedRun   => shown"run-${r.run}"
 
   def shown(s: OpenWork.State, words: String): OpenWork.State = s.modify(_.items).using(_.filter(_.mentions(words)))

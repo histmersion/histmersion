@@ -66,7 +66,8 @@ object Queue:
 
   object QueueItem:
     type Id = Id.T
-    object Id extends Newtype[Int, Pure]
+    object Id extends Newtype[Int, Pure]:
+      given Display[T] = Display(id => s"${id.value}")
     export Kind.Label as List
     type Text = Text.T
     object Text extends Newtype[String, Pure]

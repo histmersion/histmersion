@@ -45,7 +45,7 @@ object PluginCmd:
         Cli.Error(
           Problem.Unclassified(
             Legacy.Text(
-              s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
+              shown"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
                 "run the command on the machine the server runs on"
             )
           )

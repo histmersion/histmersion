@@ -10,6 +10,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 type ScalaPackage = ScalaPackage.T
 
 object ScalaPackage extends Newtype[String, Match["[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*"]]:
+  given Display[T] = Display(_.value)
+
   type Path = Path.T
   object Path extends Newtype[String, Pure]
 

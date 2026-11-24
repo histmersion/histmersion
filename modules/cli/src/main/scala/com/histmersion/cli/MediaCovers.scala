@@ -90,7 +90,7 @@ object MediaCovers:
           ck,
           MediaSourceLine.Role(MediaRole.Cover),
           MediaItem.Provider(MediaProvider.Calibre),
-          MediaSourceLine.Detail(s"Calibre id ${book.id}")
+          MediaSourceLine.Detail(shown"Calibre id ${book.id}")
         )
         if dryRun.value then Outcome.Uploaded(line)
         else

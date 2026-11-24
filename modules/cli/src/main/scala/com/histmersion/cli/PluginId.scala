@@ -12,6 +12,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 type PluginId = PluginId.T
 
 object PluginId extends Newtype[String, Match["[a-z][a-z0-9]*(-[a-z0-9]+)*"]]:
+  given Display[T] = Display(_.value)
+
   type PackageName = PackageName.T
   object PackageName extends Newtype[String, Pure]
   type TypeName = TypeName.T

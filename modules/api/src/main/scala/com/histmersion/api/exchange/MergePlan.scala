@@ -43,7 +43,8 @@ object MergePlan:
   type AsOf = AsOf.T
   object AsOf extends Newtype[String, Pure]
   type PlanHash = PlanHash.T
-  object PlanHash extends Newtype[String, Pure]
+  object PlanHash extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Info = Info.T
   object Info extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
