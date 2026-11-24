@@ -13,7 +13,7 @@ object YearFmt:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(v: Year): String =
     if (v).value < 0 then (s"${-(v).value} BCE")
-    else if (v).value == 0 then ("1 BCE") // no year zero in historical reckoning
+    else if (v).value == 0 then ("1 BCE")
     else (s"$v CE")
 
   def apply(v: Option[Year]): String = v.fold("?")(apply)
