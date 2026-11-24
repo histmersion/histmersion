@@ -11,6 +11,15 @@
     {
       "claim" : "the walls of Zxtown were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -26,6 +35,15 @@
     {
       "claim" : "the gate of Zxtown faced the sea",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1300,
@@ -47,6 +65,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxone2001_storm",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zx.one",
     "notes" : "Notes on The Storm of Zxtown.",
     "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea.\n",
@@ -78,6 +105,15 @@
     {
       "claim" : "a kingdom ruled Zxland",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.5,
       "lon" : 35.0,
       "periodEnd" : -1250,
@@ -99,6 +135,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxtwo2005_kingdom",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Kingdom of Zxland.",
     "ocrMarkdown" : null,
@@ -136,6 +181,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxthree1903_old",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on An Old Book on Zxland.",
     "ocrMarkdown" : null,
@@ -182,6 +236,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxthree1903_prolegomena",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on An Old Book on Zxland.",
     "ocrMarkdown" : null,
@@ -303,6 +366,15 @@
     {
       "claim" : "the walls of Zxtown were raised around 1490 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -318,6 +390,15 @@
     {
       "claim" : "the gate of Zxtown faced the sea",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1300,
@@ -333,6 +414,15 @@
     {
       "claim" : "a third claim, lib's",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.02,
       "lon" : 34.62,
       "periodEnd" : -1200,
@@ -354,6 +444,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxone2001_storm",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zx.one",
     "notes" : "Notes on The Storm of Zxtown.",
     "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as lib reads it.\n",
@@ -385,6 +484,15 @@
     {
       "claim" : "the walls of Zxtown were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unknown",
+        "plugin" : null,
+        "surface" : null,
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -400,6 +508,15 @@
     {
       "claim" : "the gate of Zxtown faced the harbour",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unknown",
+        "plugin" : null,
+        "surface" : null,
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1300,
@@ -415,6 +532,15 @@
     {
       "claim" : "a claim of home's",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.03,
       "lon" : 34.63,
       "periodEnd" : -1250,
@@ -436,6 +562,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxone2001_storm",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unknown",
+      "plugin" : null,
+      "surface" : null,
+      "workflow" : null
+    },
     "doi" : "10.9999/zx.one",
     "notes" : "Notes on The Storm of Zxtown.",
     "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea, as home reads it.\n",
@@ -482,6 +617,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxtwo2005_hittites",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Kingdom of Zxland.",
     "ocrMarkdown" : null,
@@ -513,6 +657,15 @@
     {
       "claim" : "a kingdom ruled Zxland",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unknown",
+        "plugin" : null,
+        "surface" : null,
+        "workflow" : null
+      },
       "lat" : 39.5,
       "lon" : 35.0,
       "periodEnd" : -1250,
@@ -534,6 +687,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxtwo2005_kingdom",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unknown",
+      "plugin" : null,
+      "surface" : null,
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Kingdom of Zxland.",
     "ocrMarkdown" : null,
@@ -572,6 +734,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxdoi2010_lib",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/ZX.Both",
     "notes" : "Notes on A Work Both Hold.",
     "ocrMarkdown" : null,
@@ -609,6 +780,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxdoi2010_home",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "https://doi.org/10.9999/zx.both",
     "notes" : "Notes on A Work Both Hold.",
     "ocrMarkdown" : null,
@@ -646,6 +826,15 @@
       "Zxwriter, Bo"
     ],
     "citekey" : "zxfp1950_lib",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on On the Zxtown Hoard.",
     "ocrMarkdown" : "# Hoard\n\nCoins.\n",
@@ -683,6 +872,15 @@
       "Zxwriter, B."
     ],
     "citekey" : "zxfp1950_home",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on On the Zxtown hoard..",
     "ocrMarkdown" : "# Hoard\n\nCoins and rings.\n",
@@ -720,6 +918,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxtaken2020_x",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Lib's Work.",
     "ocrMarkdown" : null,
@@ -757,6 +964,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxtaken2020_x",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Home's Other Work.",
     "ocrMarkdown" : null,

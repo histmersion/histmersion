@@ -56,6 +56,15 @@
     {
       "claim" : "the walls of Zqtell were raised around 1500 BC",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1480,
@@ -71,6 +80,15 @@
     {
       "claim" : "Zqcove sent tin to Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -86,6 +104,15 @@
     {
       "claim" : "the sea peoples reached Zqtell",
       "confidence" : "contested",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.01,
       "lon" : 34.61,
       "periodEnd" : -1180,
@@ -108,6 +135,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqalpha1990_tell",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Walls of Zqtell.",
     "ocrMarkdown" : "# Zqtell\n\n## The walls\n\nThe walls of Zqtell were raised in the Zq period; the Ḫattuša-style gate faced the “sea road”.\nThe sea peoples came to Zqtell — twice — and the walls of Zqtell fell.\n\n## The harbour\n\nThe harbour of Zqcove sent tin and copper to Zqtell.\n\n## References\n\nZqauthor 1950; Zqtell excavations.\n",
@@ -141,6 +177,15 @@
     {
       "claim" : "Zqcove traded tin with the islands",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1250,
@@ -156,6 +201,15 @@
     {
       "claim" : "ships of Zqcove reached the Zqisles",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : -17.0,
       "lon" : 178.0,
       "periodEnd" : -1200,
@@ -177,6 +231,15 @@
       "Zqwriter, Bo"
     ],
     "citekey" : "zqbeta2001_cove",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on The Harbour at Zqcove.",
     "ocrMarkdown" : "# Zqcove\n\nThe harbour at Zqcove traded tin with the islands. Ships of Zqcove reached the Zqisles.\n",
@@ -210,6 +273,15 @@
     {
       "claim" : "the kings of Zqland ruled from Zqtell",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -231,6 +303,15 @@
       "Zqauthor, Ann"
     ],
     "citekey" : "zqgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Kings of Zqland.",
     "ocrMarkdown" : "# Kings of Zqland\n\nThe kings of Zqland ruled from Zqtell; a later dynasty moved the court to Zqcove.\n",
@@ -263,6 +344,15 @@
     {
       "claim" : "nothing survives",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.1,
       "lon" : 34.7,
       "periodEnd" : -1200,
@@ -284,6 +374,15 @@
       "Zqother, Cy"
     ],
     "citekey" : "zqdelta2010_gone",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on A Lost Report.",
     "ocrMarkdown" : "# A lost report\n\nNothing of Zqtell survives here.\n",
@@ -321,6 +420,15 @@
       "Zqother, Cy"
     ],
     "citekey" : "zqeps1999_cited",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on A Cited Survey.",
     "ocrMarkdown" : "# Survey\n\nThe survey of Zqcove.\n",
@@ -378,14 +486,14 @@
         ],
         "damage" : {
           "Unreadable" : {
-            "reported" : "unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges)"
+            "reported" : "unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges, createdBy, via)"
           }
         },
         "format" : "Json",
         "where" : "body"
       },
       "group" : "Invalid",
-      "text" : "the json data at body cannot be read — unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges)"
+      "text" : "the json data at body cannot be read — unknown key 'nope' (one of: title, authors, doi, year, venue, status, topics, regions, tags, periodStart, periodEnd, summary, body, notes, citedByCount, influentialCitations, provenance, calibreId, findings, edges, createdBy, via)"
     }
   ]
 }
@@ -426,6 +534,15 @@
 200 {
   "article" : {
     "body" : "The walls fell [[zqalpha1990_tell]]; see also [[zqalpha1990|the walls]] and [[zqeps1999_cited#Survey]].\n\nThe harbour [[zqbeta2001_cove]].",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,
@@ -769,6 +886,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
     {
       "citekey" : "zqalpha1990_tell",
@@ -895,6 +1021,15 @@
 }
 == a goal
 200 {
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "notes" : null,
   "parentSlug" : null,
   "periodEnd" : null,

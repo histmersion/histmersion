@@ -214,6 +214,8 @@ object Place:
     def locationPrecision: Precision
     def siteType: Option[Entry.SiteType]
     def record: Record
+    def creator: Option[Creation]
+    def createdAt: Option[Creation.At]
 
     def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary.value)
 
@@ -461,7 +463,9 @@ object Place:
       /** `grid-cell` for a Pleiades point that is only the centre of an atlas grid square. */
       locationPrecision: Precision = Precision.Stated,
       siteType: Option[Entry.SiteType] = None,
-      record: Record = Record()
+      record: Record = Record(),
+      creator: Option[Creation] = None,
+      createdAt: Option[Creation.At] = None
   ) extends Card
 
   object Entry:

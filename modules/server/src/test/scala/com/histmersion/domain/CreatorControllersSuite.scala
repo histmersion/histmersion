@@ -33,22 +33,22 @@ class CreatorControllersSuite extends munit.FunSuite:
     CreatorControllers.rest(in)(Right(summon[Creator.New]))
 
   test("a REST write that names nothing is unattributed: the script, the page and the CLI look alike"):
-    assertEquals(seen(Source.Patch()), Right(Creator.New.Unattributed(Creator.Surface.Rest)))
+    assertEquals(seen(Source.Patch.Request()), Right(Creator.New.Unattributed(Creator.Surface.Rest)))
 
   test("a REST write that says how it came and names no agent is the person's, by that surface"):
-    assertEquals(seen(Source.Patch(via = Some(Creation.Web))), Right(Creator.New.Manual(Creator.Surface.Web)))
-    assertEquals(seen(Source.Patch(via = Some(Creation.Cli))), Right(Creator.New.Manual(Creator.Surface.Cli)))
-    assertEquals(seen(Source.Patch(via = Some(Creation.Rest))), Right(Creator.New.Manual(Creator.Surface.Rest)))
+    assertEquals(seen(Source.Patch.Request(via = Some(Creation.Web))), Right(Creator.New.Manual(Creator.Surface.Web)))
+    assertEquals(seen(Source.Patch.Request(via = Some(Creation.Cli))), Right(Creator.New.Manual(Creator.Surface.Cli)))
+    assertEquals(seen(Source.Patch.Request(via = Some(Creation.Rest))), Right(Creator.New.Manual(Creator.Surface.Rest)))
 
   test("an agent through the CLI is automated with its three names and the CLI's surface"):
-    assertEquals(seen(Source.Patch(createdBy = Some(agent), via = Some(Creation.Cli))), Right(skeptic))
+    assertEquals(seen(Source.Patch.Request(createdBy = Some(agent), via = Some(Creation.Cli))), Right(skeptic))
 
   test("an unknown surface and half an agent are refused before the write"):
-    assert(seen(Source.Patch(via = Some(Creation.Via("mcp")))).isLeft)
-    assert(seen(Source.Patch(createdBy = Some(Creation.By(Some(Creation.Plugin("p")))))).isLeft)
+    assert(seen(Source.Patch.Request(via = Some(Creation.Via("mcp")))).isLeft)
+    assert(seen(Source.Patch.Request(createdBy = Some(Creation.By(Some(Creation.Plugin("p")))))).isLeft)
     assert(
       seen(
-        Source.Patch(createdBy =
+        Source.Patch.Request(createdBy =
           Some(Creation.By(Some(Creation.Plugin("p")), Some(Creation.Workflow("w")), Some(Creation.Definition("d"))))
         )
       ).isLeft
@@ -56,7 +56,7 @@ class CreatorControllersSuite extends munit.FunSuite:
 
   test("the refused write never runs its body"):
     var ran = false
-    CreatorControllers.rest(Source.Patch(via = Some(Creation.Via("fax")))) { ran = true; Right(()) }
+    CreatorControllers.rest(Source.Patch.Request(via = Some(Creation.Via("fax")))) { ran = true; Right(()) }
     assert(!ran)
 
   test("an MCP call is unattributed unless the agent names itself, and then automated over the MCP"):
@@ -75,7 +75,7 @@ class CreatorControllersSuite extends munit.FunSuite:
 
   test("an MCP tool given a malformed name answers with the refusal"):
     val refused =
-      CreatorControllers.mcp(Source.Patch(createdBy = Some(Creation.By(Some(Creation.Plugin("Bad Name"))))))(
+      CreatorControllers.mcp(Source.Patch.Request(createdBy = Some(Creation.By(Some(Creation.Plugin("Bad Name"))))))(
         ToolResult.text("written")
       )
     assert(refused.isError)

@@ -5,6 +5,7 @@ import com.histmersion.domain.{Actor, Creator}
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.augustnagro.magnum.{sql, Frag}
 import StoredCreator.Agent
 
 final private[histmersion] case class StoredCreator(
@@ -91,6 +92,8 @@ object StoredCreator:
         case _                                    => None
 
   def recorded(text: Jsonb.JsonText): Option[Creator.New] = Jsonb.read[Recorded](text).flatMap(_.written)
+
+  def at(column: Frag): Frag = sql"""to_char($column AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')"""
 
   def actor(creator: Creator.New): String = creator.actor match
     case Actor.Person => "person"

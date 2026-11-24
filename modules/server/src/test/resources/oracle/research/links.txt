@@ -12,6 +12,15 @@
       "Zrwriter, Bo"
     ],
     "citekey" : "zralpha1990_walls",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# The Walls of Zrtown\n\nThe walls of Zrtown and its harbour, as The Walls of Zrtown tells it.\n",
@@ -51,6 +60,15 @@
       "Zrwriter, Bo"
     ],
     "citekey" : "zrbeta2001_harbour",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# The Harbour of Zrtown\n\nThe walls of Zrtown and its harbour, as The Harbour of Zrtown tells it.\n",
@@ -90,6 +108,15 @@
       "Zrauthor, Ann"
     ],
     "citekey" : "zrgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Kings of Zrland\n\nThe walls of Zrtown and its harbour, as Kings of Zrland tells it.\n",
@@ -128,6 +155,15 @@
       "Zrother, Cy"
     ],
     "citekey" : "zrdelta2010_survey",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# A Survey of Zrland\n\nThe walls of Zrtown and its harbour, as A Survey of Zrland tells it.\n",
@@ -166,6 +202,15 @@
       "Zrother, Cy"
     ],
     "citekey" : "zreps1999_lost",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# A Lost Report\n\nThe walls of Zrtown and its harbour, as A Lost Report tells it.\n",
@@ -195,6 +240,15 @@
 200 {
   "article" : {
     "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,
@@ -432,6 +486,15 @@
 200 {
   "article" : {
     "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "myth",
     "periodEnd" : null,
     "periodStart" : null,
@@ -467,6 +530,15 @@
 200 {
   "article" : {
     "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "timeline",
     "periodEnd" : null,
     "periodStart" : null,
@@ -566,6 +638,15 @@
       "Zrother, Cy"
     ],
     "citekey" : "zrdelta2011_survey",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : null,
@@ -604,6 +685,15 @@
       "Zrlib, Lu"
     ],
     "citekey" : "zrzeta2020_tin",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Tin of Zrland\n\nThe walls of Zrtown and its harbour, as Tin of Zrland tells it.\n",
@@ -633,6 +723,15 @@
 200 {
   "article" : {
     "body" : "## Overview\n\nTin came by sea [[zrzeta2020_tin]], as the survey shows [[zrdelta2011_survey]].\n\n## Elsewhere\n\nSee [[zr_walls]] and [[zr_kings]].\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,
@@ -686,6 +785,15 @@
       "Zrhome, Mo"
     ],
     "citekey" : "zrzeta2020_tin",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Copper of Zrland\n\nThe walls of Zrtown and its harbour, as Copper of Zrland tells it.\n",
@@ -715,6 +823,15 @@
 200 {
   "article" : {
     "body" : "## Overview\n\nCopper was mined inland [[zrzeta2020_tin]] [[zrdelta2010_survey]].\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,

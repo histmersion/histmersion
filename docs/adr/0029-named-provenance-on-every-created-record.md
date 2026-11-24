@@ -180,6 +180,18 @@ table's create paths were done in this lane, so no table waits on a pending list
 
 ## As built: slice 4 and its refinements (2026-11-24)
 
+### Request metadata never lives in a stored or checkpointed content type
+
+The rule (coordinator's decision of 2026-11-24): `createdBy` and `via` say who asked and how, which is not part of what
+was asked. A type that is also stored or checkpointed keeps its stored form, and the request carries the metadata
+beside it in a request type of its own. Of the write inputs, one is stored this way: a source's patch, which an
+agent's run checkpoints (an enrichment's proposal holds one; `CheckpointGoldenSuite` keeps old checkpoints reading
+back byte for byte). Its REST body is `Source.Patch.Request`, the patch's own fields flat (the queue's `QueueAdd`
+convention) plus `createdBy` and `via`; the route hands `request.patch` on, and `Source.Patch` is what it was. The
+CLI and the web page send `Source.Patch.Request.of(patch)`; the MCP `patch_source` input already held the patch beside
+its own `createdBy`. The codecs write every `None` as `null` (ADR 0026), so a field cannot be added to a stored type
+without changing its stored form.
+
 ### A model step's writes name their model, others are the run's
 
 The rule (coordinator's decision of 2026-11-24): a write is credited to the model whose answer produced it, never to

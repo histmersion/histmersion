@@ -11,6 +11,15 @@
       "Zrwriter, Bo"
     ],
     "citekey" : "zralpha1990_walls",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# The Walls of Zrtown\n\nThe walls of Zrtown and its harbour, as The Walls of Zrtown tells it.\n",
@@ -50,6 +59,15 @@
       "Zrwriter, Bo"
     ],
     "citekey" : "zrbeta2001_harbour",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# The Harbour of Zrtown\n\nThe walls of Zrtown and its harbour, as The Harbour of Zrtown tells it.\n",
@@ -89,6 +107,15 @@
       "Zrauthor, Ann"
     ],
     "citekey" : "zrgamma1975_kings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Kings of Zrland\n\nThe walls of Zrtown and its harbour, as Kings of Zrland tells it.\n",
@@ -127,6 +154,15 @@
       "Zrother, Cy"
     ],
     "citekey" : "zrdelta2010_survey",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# A Survey of Zrland\n\nThe walls of Zrtown and its harbour, as A Survey of Zrland tells it.\n",
@@ -165,6 +201,15 @@
       "Zrother, Cy"
     ],
     "citekey" : "zreps1999_lost",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# A Lost Report\n\nThe walls of Zrtown and its harbour, as A Lost Report tells it.\n",
@@ -194,6 +239,15 @@
 200 {
   "article" : {
     "body" : "## Overview\n\nIt is important to note that the walls rose [[zralpha1990_walls]]. Needless to say, they fell.\n\nA paragraph with no citation at all.\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,
@@ -230,6 +284,15 @@
 200 {
   "article" : {
     "body" : "## Overview\n\nThe walls \\[\\[zralpha1990_walls\\]\\] and [[zr_nowhere]] and [[zralpha1990_walls]].\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,
@@ -286,6 +349,15 @@
 200 {
   "article" : {
     "body" : "## Overview\n\nThe walls rose around 1500 BC [[zralpha1990_walls]].\n\n## Elsewhere\n\nThe harbour traded tin [[zrbeta2001_harbour]], which Zrauthor (1975) disputes.\n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,
@@ -332,6 +404,15 @@
 200 {
   "article" : {
     "body" : "## Overview\n\n* one [[zralpha1990_walls]]\n* two [[zralpha1990_walls]]\n\n\n\nTrailing   \n",
+    "createdAt" : "TS",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "kind" : "concept",
     "periodEnd" : null,
     "periodStart" : null,

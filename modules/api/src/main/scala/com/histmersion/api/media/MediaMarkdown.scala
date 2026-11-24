@@ -6,6 +6,7 @@ import com.histmersion.api.{OffsetPage, Plural}
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.YearFmt
 import com.histmersion.api.library.RepairAcquire
+import com.histmersion.api.automation.Creation
 
 object MediaMarkdown:
 
@@ -31,7 +32,8 @@ object MediaMarkdown:
       }
     ).flatten.mkString("  \n")
     val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")
-    (s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap")
+    val created = Creation.line(a.creator, a.createdAt).map(l => s"  \n_${l}_").getOrElse("")
+    (s"# `$ck` / `${a.name}`\n\n$meta$loc$per$created$cap")
 
   private[api] def countsLine(cs: List[MediaCount]): String =
     if cs.isEmpty then ("none")

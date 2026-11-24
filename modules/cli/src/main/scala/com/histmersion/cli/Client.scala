@@ -284,7 +284,7 @@ final class Client(
       p: Source.Patch,
       strict: Cli.Strict = Cli.Strict(false)
   ): Either[Cli.Error, Source.WithFindings] =
-    call(Api.patchSource)((ck, p, Api.Apply(strict.value)))
+    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Apply(strict.value)))
   // the formatting lint of agent-written Markdown
   def lintSource(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
   def fixSourceFormat(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.fixSourceFormat)(ck)

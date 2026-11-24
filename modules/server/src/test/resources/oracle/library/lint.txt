@@ -23,6 +23,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -44,6 +53,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxa2001_edges",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Edges.",
     "ocrMarkdown" : null,
@@ -81,6 +99,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxb2002_nofindings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on No findings.",
     "ocrMarkdown" : null,
@@ -112,6 +139,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -133,6 +169,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxc2003_noperiod",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on No period.",
     "ocrMarkdown" : null,
@@ -164,6 +209,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -185,6 +239,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxd2004_noregions",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on No regions.",
     "ocrMarkdown" : null,
@@ -215,6 +278,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -236,6 +308,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxe2005_nosummary",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on No summary.",
     "ocrMarkdown" : null,
@@ -267,6 +348,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -288,6 +378,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxf2006_unassessed",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Unassessed.",
     "ocrMarkdown" : null,
@@ -319,6 +418,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -340,6 +448,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxg2007_doia",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/zx.dup",
     "notes" : "Notes on Doi A.",
     "ocrMarkdown" : null,
@@ -371,6 +488,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -392,6 +518,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxh2008_doib",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.9999/ZX.DUP",
     "notes" : "Notes on Doi B.",
     "ocrMarkdown" : null,
@@ -423,6 +558,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -444,6 +588,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxi2009_stale",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Stale chunks.",
     "ocrMarkdown" : "# Zxtown\n\n## The walls\n\nThe walls of Zxtown were raised in the Zx period.\n\n## The gate\n\nThe gate faced the sea.\n",
@@ -475,6 +628,15 @@
     {
       "claim" : "an undated claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : null,
@@ -490,6 +652,15 @@
     {
       "claim" : "an unlocated claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : -1400,
@@ -511,6 +682,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxj2010_findings",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Undated and unlocated.",
     "ocrMarkdown" : null,
@@ -542,6 +722,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -563,6 +752,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxk2011_figures",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Legacy figures.",
     "ocrMarkdown" : "# F\n\n![a figure](md/zxk/figures/fig1.png)\n",
@@ -594,6 +792,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -615,6 +822,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxl2012_tags",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Tags.",
     "ocrMarkdown" : null,
@@ -647,6 +863,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -668,6 +893,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxm2013_noyear",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on No year.",
     "ocrMarkdown" : null,
@@ -699,6 +933,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -720,6 +963,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxn2014_mismatch",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Year mismatch.",
     "ocrMarkdown" : null,
@@ -751,6 +1003,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -772,6 +1033,15 @@
       "Zxauthor, Ann | Zxwriter, Bo"
     ],
     "citekey" : "zxo2015_pipe",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Author pipe.",
     "ocrMarkdown" : null,
@@ -803,6 +1073,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -824,6 +1103,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxp2016_superseded",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Superseded.",
     "ocrMarkdown" : null,
@@ -855,6 +1143,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -886,6 +1183,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxq2017_notes",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "<div> never closed",
     "ocrMarkdown" : null,
@@ -917,6 +1223,15 @@
     {
       "claim" : "a claim",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1400,
@@ -938,6 +1253,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxr2018_orphan",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Orphan.",
     "ocrMarkdown" : null,
@@ -969,6 +1293,15 @@
     {
       "claim" : "at Zxville, as the old geocoder placed it",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 30.0,
       "lon" : 30.0,
       "periodEnd" : -1400,
@@ -984,6 +1317,15 @@
     {
       "claim" : "at Zxfort, with no point",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : null,
       "lon" : null,
       "periodEnd" : -1400,
@@ -999,6 +1341,15 @@
     {
       "claim" : "on a grid square's centre, named nowhere",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 37.5,
       "lon" : 22.5,
       "periodEnd" : -1400,
@@ -1020,6 +1371,15 @@
       "Zxauthor, Ann"
     ],
     "citekey" : "zxs2019_places",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : "Notes on Places.",
     "ocrMarkdown" : null,

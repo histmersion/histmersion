@@ -700,20 +700,20 @@ object Api:
         (((refactorEncoded10)._1).value, (refactorEncoded10)._2, ((refactorEncoded10)._3).value)
       )
 
-  lazy val patchSource: PublicEndpoint[(Citekey, Source.Patch, Apply), Error, Source.WithFindings, Any] =
+  lazy val patchSource: PublicEndpoint[(Citekey, Source.Patch.Request, Apply), Error, Source.WithFindings, Any] =
     (endpoint.patch
       .in("api" / "sources" / path[String]("citekey"))
-      .in(jsonBody[Source.Patch])
+      .in(jsonBody[Source.Patch.Request])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
-      .mapIn[(Citekey, Source.Patch, Apply)]((refactorDecoded117: (String, Source.Patch, Boolean)) =>
+      .mapIn[(Citekey, Source.Patch.Request, Apply)]((refactorDecoded117: (String, Source.Patch.Request, Boolean)) =>
         (
           Citekey((refactorDecoded117)._1),
           (refactorDecoded117)._2,
           Apply((refactorDecoded117)._3)
         )
-      )((refactorEncoded117: (Citekey, Source.Patch, Apply)) =>
+      )((refactorEncoded117: (Citekey, Source.Patch.Request, Apply)) =>
         (((refactorEncoded117)._1).value, (refactorEncoded117)._2, ((refactorEncoded117)._3).value)
       )
 

@@ -151,6 +151,15 @@
 200 {
   "bytes" : 7024,
   "caption" : "The plan, revised",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "height" : 48,
   "kind" : "plan",
   "lat" : 40.0,
@@ -167,6 +176,15 @@
 200 {
   "bytes" : 7024,
   "caption" : "The plan (home)",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unknown",
+    "plugin" : null,
+    "surface" : null,
+    "workflow" : null
+  },
   "height" : 48,
   "kind" : "plan",
   "lat" : 40.0,

@@ -3,6 +3,7 @@ package api.library
 import com.histmersion.api.Plural
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.media.AssetLinks
+import com.histmersion.api.automation.Creation
 
 object SourcesMarkdown:
 
@@ -45,6 +46,7 @@ object SourcesMarkdown:
     val doi = s.doi.map(_.value).map(d => s"  \n**DOI:** $d").getOrElse("")
     val prov = s.provenance.map(_.value).filter(_.nonEmpty).map(p => s"  \n**Provenance:** $p").getOrElse("")
     val uid = s.uid.map(u => s"  \n**Uid:** $u").getOrElse("")
+    val created = Creation.line(s.creator, s.createdAt).map(l => s"  \n_${l}_").getOrElse("")
     val summary = s.summary.map(x => s"\n\n${x.value.trim}").getOrElse("")
     val notes = s.notes.map(_.value.trim).filter(_.nonEmpty).map(n => s"\n\n## Notes\n\n$n").getOrElse("")
     val findingsMd =
@@ -58,7 +60,8 @@ object SourcesMarkdown:
             if loc.nonEmpty then s"@ $loc" else "",
             p,
             f.confidence.map(c => s"(${c.toString.toLowerCase})").getOrElse(""),
-            sig
+            sig,
+            Creation.line(f.creator, f.createdAt).getOrElse("")
           )
             .filter(_.nonEmpty)
             .mkString(" · ")
@@ -75,7 +78,7 @@ object SourcesMarkdown:
             s"\n\n---\n\n${AssetLinks.normalizeBody(AssetLinks.Body(t.value), AssetLinks.Title(s.title.value))}"
           )
           .getOrElse("\n\n_(no full text stored)_")
-    (header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body)
+    (header + topics + regions + tags + doi + prov + uid + created + summary + notes + findingsMd + body)
 
   def neighbors(citekey: Citekey, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then
@@ -91,8 +94,9 @@ object SourcesMarkdown:
         rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
       val sourceItem: NeighborRow => Source.Neighbor.Line = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
+        val created = Creation.line(r.creator, r.createdAt).map(l => s" · _${l}_").getOrElse("")
         Source.Neighbor
-          .Line(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st")
+          .Line(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st$created")
       s"### Sources · $citekey" +
         block(
           ("Outgoing (this → other)"),

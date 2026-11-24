@@ -308,7 +308,8 @@ object AgentsMarkdown:
       s"- status: **${r.status}**${r.error.filter(_.sentence.nonEmpty).fold("")(e => s" — ${e.sentence}")}\n" +
       r.progress.filter(_.value.nonEmpty).fold("")(p => s"- last: $p\n") +
       s"- spent: ${tokens(r.usage)} · ${usd(r.costUsd.value)} of ${usd(r.budgetUsd.value)} USD · budget ${r.budgetTokens} tokens\n" +
-      s"- started ${r.createdAt}, updated ${r.updatedAt}\n"
+      s"- started ${r.createdAt}, updated ${r.updatedAt}\n" +
+      Creation.line(r.creator, None).fold("")(l => s"- $l\n")
     val warnings =
       if r.warnings.isEmpty then "" else "\n## Warnings\n\n" + r.warnings.map(w => s"- $w").mkString("\n") + "\n"
     val steps =
@@ -378,7 +379,8 @@ object AgentsMarkdown:
   def approvalLine(a: ApprovalInfo): String =
     val run = a.runId.fold("")(r => s" · run ${r.value.take(8)}")
     val res = a.result.filter(_.value.nonEmpty).fold("")(r => s" · $r")
-    (s"#${a.id} · ${a.state} · ${change(a)}$run$res")
+    val created = Creation.line(a.creator, None).fold("")(l => s" · $l")
+    (s"#${a.id} · ${a.state} · ${change(a)}$run$res$created")
 
   def approvals(
       as: List[ApprovalInfo],

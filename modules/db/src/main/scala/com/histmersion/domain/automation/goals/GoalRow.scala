@@ -8,9 +8,12 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.{Creation, Goal}
+import com.histmersion.util.database.Jsonb
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+
+private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
 final private[histmersion] case class GoalRow(
     slug: GoalRow.Slug,
@@ -22,7 +25,9 @@ final private[histmersion] case class GoalRow(
     periodStart: Option[DeepTime.SignedYear],
     periodEnd: Option[DeepTime.SignedYear],
     parentSlug: Option[GoalRow.ParentSlug],
-    updatedAt: Option[GoalRow.UpdatedAt]
+    updatedAt: Option[GoalRow.UpdatedAt],
+    creator: Option[Creation] = None,
+    createdAt: Option[Creation.At] = None
 ) derives DbCodec:
   def toDto: Goal =
     Goal(
@@ -35,7 +40,9 @@ final private[histmersion] case class GoalRow(
       periodStart.map(y => Year(y.value)),
       periodEnd.map(y => Year(y.value)),
       parentSlug.map(p => Goal.Slug(p.value)),
-      updatedAt.map(u => Goal.UpdatedAt(u.value))
+      updatedAt.map(u => Goal.UpdatedAt(u.value)),
+      creator,
+      createdAt
     )
 
 object GoalRow:

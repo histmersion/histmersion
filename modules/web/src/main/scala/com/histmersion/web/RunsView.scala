@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunRequest, RunState, TargetKind}
+import com.histmersion.api.automation.Creation
 import com.raquo.laminar.api.L.*
 
 import scala.concurrent.Future
@@ -616,7 +617,8 @@ object RunsView:
         dt("started"),
         dd(r.createdAt.value),
         dt("updated"),
-        dd(r.updatedAt.value)
+        dd(r.updatedAt.value),
+        Creation.line(r.creator, None).toList.flatMap(c => List(dt("created"), dd(c)))
       ),
       controls(r, busy, raise, act),
       Option.when(r.warnings.nonEmpty)(

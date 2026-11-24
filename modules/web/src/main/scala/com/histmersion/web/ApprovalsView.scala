@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
+import com.histmersion.api.automation.Creation
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.automation.ListFilters
 
@@ -622,6 +623,7 @@ object ApprovalsView:
               )
         ),
         evidenceLine(a).map(e => p(cls := "approval-evidence", e)),
+        Creation.line(a.creator, None).map(c => p(cls := "item-provenance muted", c)),
         a.plan.map(planBlock),
         a.article.map(draftBlock),
         a.quote.filter(_.value.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),

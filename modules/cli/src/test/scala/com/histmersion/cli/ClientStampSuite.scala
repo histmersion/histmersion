@@ -29,7 +29,7 @@ class ClientStampSuite extends munit.FunSuite:
   private val json = basicRequest.post(Uri.unsafeParse("http://h/api/sources/x")).body("""{"title":"T"}""")
 
   test("a write body is stamped via cli and with the caller's identity, keeping its content type"):
-    val req = Client.stamped(Source.Patch(), agent)(json.contentType("application/json"))
+    val req = Client.stamped(Source.Patch.Request(), agent)(json.contentType("application/json"))
     val body = bodyOf(req)
     assert(body.contains("\"via\":\"cli\""), body)
     assert(body.contains("\"createdBy\":{\"plugin\":\"p\""), body)
@@ -37,12 +37,13 @@ class ClientStampSuite extends munit.FunSuite:
     assertEquals(req.headers.find(_.is("Content-Type")).map(_.value), Some("application/json"))
 
   test("a person's write says only how it came"):
-    val body = bodyOf(Client.stamped(("ck", Source.Patch()), AgentIdentity.Nobody)(json))
+    val body = bodyOf(Client.stamped(("ck", Source.Patch.Request()), AgentIdentity.Nobody)(json))
     assert(body.contains("\"via\":\"cli\""), body)
     assert(!body.contains("createdBy"), body)
 
   test("an input that names its own creator keeps it"):
-    val own = Source.Patch(createdBy = Some(Creation.By(Some(Creation.Plugin("own")))), via = Some(Creation.Web))
+    val own =
+      Source.Patch.Request(createdBy = Some(Creation.By(Some(Creation.Plugin("own")))), via = Some(Creation.Web))
     val body = bodyOf(Client.stamped(own, agent)(json))
     assert(body.contains("\"via\":\"web\""), body)
     assert(body.contains("\"plugin\":\"own\""), body)

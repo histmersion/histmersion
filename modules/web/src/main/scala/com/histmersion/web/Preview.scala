@@ -19,6 +19,7 @@ import com.histmersion.api.library.{DiscoverResult, Label, Source}
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.research.Article
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
+import com.histmersion.api.automation.Creation
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.LpfDataset
 import com.histmersion.api.Years
@@ -349,7 +350,7 @@ object Preview:
             plural(c.articles.value, "article"),
             plural(c.events.value, "event")
           ).mkString(" · ")
-        )).map(Card.Facts(_)),
+        ) ++ Creation.line(d.creator, d.createdAt).toList).map(Card.Facts(_)),
       links = links,
       media = d.media.headOption,
       icon = Some(CardIcons.place(Place.Kind.Wire(p.kind.value), d.siteType))
@@ -408,7 +409,8 @@ object Preview:
           if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l
         )
         .toList ++
-      d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}")).map(UiLabels.Text(_))
+      d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}") ++
+      Creation.line(d.creator, d.createdAt).toList).map(UiLabels.Text(_))
 
   /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is written about,
     * what the corpus holds around it, what may discuss it, where the catalogue record is from, and what to do next.

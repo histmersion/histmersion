@@ -20,6 +20,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
+import com.histmersion.api.automation.Creation
 
 final case class Goal(
     slug: Goal.Slug,
@@ -31,7 +32,9 @@ final case class Goal(
     periodStart: Option[Year] = None,
     periodEnd: Option[Year] = None,
     parentSlug: Option[Goal.Slug] = None,
-    updatedAt: Option[Goal.UpdatedAt] = None
+    updatedAt: Option[Goal.UpdatedAt] = None,
+    creator: Option[Creation] = None,
+    createdAt: Option[Creation.At] = None
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema

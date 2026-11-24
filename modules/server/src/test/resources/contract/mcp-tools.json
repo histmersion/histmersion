@@ -908,12 +908,6 @@
                 },
                 "ifUpdatedAt" : {
                   "type" : "string"
-                },
-                "createdBy" : {
-                  "$ref" : "#/$defs/By"
-                },
-                "via" : {
-                  "type" : "string"
                 }
               }
             },

@@ -22,6 +22,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
+import com.histmersion.util.database.StoredCreator
+import com.histmersion.util.database.Jsonb
+import com.histmersion.api.automation.Creation
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.
@@ -35,6 +38,7 @@ private[citations] object CitationRepo:
     e => WireEnumValues.Wire(e.toString.toLowerCase),
     NeighborTarget.Unresolved
   )
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   private given DbCodec[NeighborRow] = DbCodec.derived
   private given DbCodec[ContradictionRow] = DbCodec.derived
 
@@ -47,16 +51,18 @@ private[citations] object CitationRepo:
       DbCon
   ): Vector[NeighborRow] =
     val all = kinds.isEmpty
-    sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, 'source' AS target
+    sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, 'source' AS target,
+                   e.creator::text, ${StoredCreator.at(sql"e.created_at")}
             FROM edges e JOIN sources s ON s.citekey = e.dst
             WHERE e.src = $citekey AND ($all OR e.kind = ANY($kinds::text[]))
             UNION ALL
             SELECT 'out', u.kind, u.dst, a.title, NULL,
-                   CASE WHEN a.slug IS NULL THEN 'unresolved' ELSE 'article' END
+                   CASE WHEN a.slug IS NULL THEN 'unresolved' ELSE 'article' END, u.creator::text, NULL
             FROM unresolved_edges u LEFT JOIN articles a ON a.slug = u.dst
             WHERE u.src = $citekey AND ($all OR u.kind = ANY($kinds::text[]))
             UNION ALL
-            SELECT 'in', e.kind, e.src, s.title, s.status, 'source'
+            SELECT 'in', e.kind, e.src, s.title, s.status, 'source', e.creator::text,
+                   ${StoredCreator.at(sql"e.created_at")}
             FROM edges e JOIN sources s ON s.citekey = e.src
             WHERE e.dst = $citekey AND ($all OR e.kind = ANY($kinds::text[]))
             ORDER BY 1, 2, 3""".query[NeighborRow].run()

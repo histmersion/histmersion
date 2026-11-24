@@ -25,7 +25,8 @@ import com.histmersion.util.database.StoredCreator
 object GoalRepo:
 
   private val cols =
-    sql"g.slug, g.title, g.status, g.notes, g.tags, g.regions, ${RangeSql.cols(sql"g.period")}, g.parent_slug, g.updated_at::text"
+    sql"""g.slug, g.title, g.status, g.notes, g.tags, g.regions, ${RangeSql.cols(sql"g.period")}, g.parent_slug,
+          g.updated_at::text, g.creator::text, ${StoredCreator.at(sql"g.created_at")}"""
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
   def listIn(status: Option[GoalRow.Status], limit: PageSize, offset: Offset)(using DbCon): Goal.List =

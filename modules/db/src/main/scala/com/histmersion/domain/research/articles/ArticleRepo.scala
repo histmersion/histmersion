@@ -38,6 +38,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.api.automation.Creation
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived
@@ -65,6 +66,7 @@ private[articles] object ArticleRepo:
   private given DbCodec[Backlink] = DbCodec.derived
   private given DbCodec[Article.Version] = DbCodec.derived
   private given DbCodec[Article.VersionFull] = DbCodec.derived
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   private given DbCodec[Article.Row] = DbCodec.derived
   private given DbCodec[CitedSource] = DbCodec.derived
   private given DbCodec[Article.Ref] = DbCodec.derived
@@ -84,7 +86,7 @@ private[articles] object ArticleRepo:
     sql"a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions, ${RangeSql.cols(sql"a.period")}, $Token"
 
   /** [[ArticleRow]], the wire shape: the row plus its uid (V030). */
-  private val ViewCols = sql"$RowCols, a.uid"
+  private val ViewCols = sql"$RowCols, a.uid, a.creator::text, ${StoredCreator.at(sql"a.created_at")}"
 
   /** [[FullArticleRow]], the domain read: the row plus its recorded filter and reasons (V066), as JSON text. */
   private val LoadCols = sql"$RowCols, a.coverage_filter::text, a.coverage_reasons::text"

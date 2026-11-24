@@ -374,7 +374,8 @@ class ToolsSuite extends munit.FunSuite:
           title = None,
           authors = List(AuthorName("David W. Anthony")),
           year = Some(Year(2007)),
-          doi = Some(api.library.Doi("10.1515/9781400831104"))
+          doi = Some(api.library.Doi("10.1515/9781400831104")),
+          via = Some(Creation.Web)
         )
       )
     )

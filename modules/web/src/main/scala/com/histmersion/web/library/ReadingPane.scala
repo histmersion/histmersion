@@ -148,7 +148,8 @@ object ReadingPane:
           Option.when(h.regions.nonEmpty)(span(cls := "reading-regions", h.regions))
         )
       ),
-      h.summary.map(s => p(cls := "reading reading-summary", s))
+      h.summary.map(s => p(cls := "reading reading-summary", s)),
+      h.created.map(c => p(cls := "item-provenance muted", c))
     )
 
   // ── a source ────────────────────────────────────────────────────────────────────────────────────

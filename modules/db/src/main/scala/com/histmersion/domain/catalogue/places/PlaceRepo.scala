@@ -30,6 +30,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.util.database.Jsonb
+import com.histmersion.api.automation.Creation
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -79,6 +81,7 @@ private[places] object PlaceRepo:
   type ScopeForValues = ScopeForValues.T
   object ScopeForValues extends Newtype[String, Pure]
 
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   given DbCodec[Place.Summary] = DbCodec.derived
   given DbCodec[Place.Hit] = DbCodec.derived
   given DbCodec[Place.TreeRow] = DbCodec.derived
@@ -362,6 +365,12 @@ private[places] object PlaceRepo:
         .run()
         .toList
       val tps = typesIn(id, asOf)
+      val (creator, createdAt) =
+        sql"SELECT creator::text, ${StoredCreator.at(sql"created_at")} FROM places WHERE id = $id"
+          .query[(Option[Creation], Option[Creation.At])]
+          .run()
+          .headOption
+          .getOrElse((None, None))
       Place.Entry(
         r.toSummary,
         r.geometry.map(g => Place.Entry.Geometry(g.value)),
@@ -378,7 +387,9 @@ private[places] object PlaceRepo:
         timeBasis = r.timeBasis,
         locationPrecision = r.precision.transformInto[Place.Precision],
         siteType = siteTypeOf(id).map(t => Place.Entry.SiteType(t.value)),
-        record = recordOf(id)
+        record = recordOf(id),
+        creator = creator,
+        createdAt = createdAt
       )
     }
 

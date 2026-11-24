@@ -744,6 +744,15 @@ A Zq atlas (buy)
   - _checked DAY: no legal copy (archive-org: no identifier it reads — archive.org identifier is required; unpaywall: no copy — no copy '10.5555/zq.closed'; core: asked to wait — CORE's daily budget for PDF lookups is spent (6 of 6 tokens today, UTC; acquire.core.daily-tokens); openalex: no copy — no copy '10.5555/zq.closed'; pmc: no copy — no copy '10.5555/zq.closed'; arxiv: no identifier it reads — arxiv is required; landing: no copy — no copy '10.5555/zq.closed'; pmc-text: no copy — no copy_
 == put goal zqa-goal
 200 {
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "notes" : null,
   "parentSlug" : null,
   "periodEnd" : null,

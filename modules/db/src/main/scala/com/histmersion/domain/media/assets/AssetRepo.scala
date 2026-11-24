@@ -24,6 +24,8 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.util.database.Jsonb
+import com.histmersion.api.automation.Creation
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *
@@ -33,6 +35,8 @@ import com.histmersion.util.database.StoredCreator
   * deduplicated by sha256, and the later names are dropped. Every method runs on the connection it is given.
   */
 private[assets] object AssetRepo:
+  private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
+
   type ReplaceExisting = ReplaceExisting.T
   object ReplaceExisting extends Newtype[Boolean, Pure]
 
@@ -153,12 +157,12 @@ private[assets] object AssetRepo:
     sql"""SELECT name, mime, length(bytes), sha256, width, height,
                  kind, caption, license,
                  ST_Y(geom::geometry), ST_X(geom::geometry),
-                 ${RangeSql.cols(sql"period")}
+                 ${RangeSql.cols(sql"period")}, creator::text, ${StoredCreator.at(sql"created_at")}
           FROM assets WHERE citekey = $citekey AND name = $name"""
-      .query[AssetDetailRow]
+      .query[(AssetDetailRow, Option[Creation], Option[Creation.At])]
       .run()
       .headOption
-      .map { r =>
+      .map { (r, creator, createdAt) =>
         AssetDetail(
           Bundle.Asset.FileName(r.name.value),
           Bundle.Asset.MimeText(r.mime.value),
@@ -172,7 +176,9 @@ private[assets] object AssetRepo:
           r.lat.map(l => Latitude(l.value)),
           r.lon.map(l => Longitude(l.value)),
           r.periodStart.map(y => Year(y.value.toLong)),
-          r.periodEnd.map(y => Year(y.value.toLong))
+          r.periodEnd.map(y => Year(y.value.toLong)),
+          creator,
+          createdAt
         )
       }
 

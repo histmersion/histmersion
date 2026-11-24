@@ -10,6 +10,15 @@
       "Bo Zqwriter"
     ],
     "citekey" : "zqa_cited",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.cited",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -44,6 +53,15 @@
       "Cy Zqmaker"
     ],
     "citekey" : "zqa_ref",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.ref1",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -78,6 +96,15 @@
       "Ed Zqfalse"
     ],
     "citekey" : "zqa_retracted",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.retracted",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -112,6 +139,15 @@
       "Gus Zqlater"
     ],
     "citekey" : "zqa_later",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : "10.5555/zq.later",
     "notes" : null,
     "ocrMarkdown" : null,
@@ -146,6 +182,15 @@
       "Jo Zqnotes"
     ],
     "citekey" : "zqa_nodoi",
+    "createdAt" : "DAY",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : null,

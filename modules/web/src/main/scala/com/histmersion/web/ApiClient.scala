@@ -350,7 +350,7 @@ object ApiClient:
     )
 
   def patchSource(ck: Citekey, p: Source.Patch): Future[Source.WithFindings] =
-    call(Api.patchSource)((ck, p, Api.Apply(false)))
+    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Apply(false)))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 

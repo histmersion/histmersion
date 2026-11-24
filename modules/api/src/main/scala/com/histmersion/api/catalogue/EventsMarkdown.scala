@@ -2,6 +2,7 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.{OffsetPage, TimeSpan, YearFmt}
 import com.histmersion.api.Markdown.*
+import com.histmersion.api.automation.Creation
 
 object EventsMarkdown:
 
@@ -33,7 +34,8 @@ object EventsMarkdown:
         if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l
       ))
       .mkString(" · ")
-    val datingLine = if dating.isEmpty then "" else s"  \n**Dating:** $dating"
+    val datingLine = (if dating.isEmpty then "" else s"  \n**Dating:** $dating") +
+      Creation.line(d.creator, d.createdAt).fold("")(l => s"  \n_${l}_")
     val corrections = if d.corrections.isEmpty then ""
     else
       "\n\n**Corrected by hand** (kept over the catalogue on a re-import)\n" +

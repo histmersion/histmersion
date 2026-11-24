@@ -13,6 +13,7 @@ import com.histmersion.api.catalogue.{
   EventSourceRef,
   EventSummary
 }
+import com.histmersion.api.automation.Creation
 
 /** What an event's page shows of the catalogue: the event, its evidence and its context. The catalogue's own record
   * ([[EventEntry]]) and the page the server answers (`EventDetail`, which adds the event's pictures) both are one, so
@@ -36,3 +37,5 @@ trait EventCard:
   def candidates: List[EventLinkCandidate]
   def leads: List[EventLead]
   def corrections: List[Correction]
+  def creator: Option[Creation]
+  def createdAt: Option[Creation.At]

@@ -13,6 +13,15 @@
     {
       "claim" : "the tell was settled",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1200,
@@ -28,6 +37,15 @@
     {
       "claim" : "the cove",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -49,6 +67,15 @@
       "Doe, Jane"
     ],
     "citekey" : "zqfig2001_tell",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Zqtell\n\nThe tell of Zqtell is shown in ![the plan](assets/fig-a.png) and again in ![](assets/fig-a.png).\nThe cove is ![a photograph](assets/fig-c.jpg).\n",
@@ -85,6 +112,15 @@
       "Doe, Jane"
     ],
     "citekey" : "zqbook1999_ships",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Ships\n\nNo figures.\n",
@@ -121,6 +157,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -268,6 +313,15 @@
 200 {
   "bytes" : 7024,
   "caption" : "The plan of Zqtell",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "height" : 48,
   "kind" : "plan",
   "lat" : 40.0,
@@ -284,6 +338,15 @@
 200 {
   "bytes" : 7024,
   "caption" : "The plan of Zqtell",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "height" : 48,
   "kind" : "plan",
   "lat" : 40.0,
@@ -300,6 +363,15 @@
 200 {
   "bytes" : 6918,
   "caption" : "The cove",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "height" : 90,
   "kind" : "photo",
   "lat" : 39.2,
@@ -664,6 +736,15 @@
 200 {
   "bytes" : 7024,
   "caption" : "The plan of Zqtell",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "height" : 48,
   "kind" : "plan",
   "lat" : 40.0,
@@ -680,6 +761,15 @@
 200 {
   "bytes" : 6918,
   "caption" : "The cove",
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "height" : 90,
   "kind" : "photo",
   "lat" : 39.2,
@@ -1711,6 +1801,15 @@
   ],
   "contested" : false,
   "counts" : null,
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 1,
@@ -1770,6 +1869,15 @@
   ],
   "contested" : false,
   "counts" : null,
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "descriptions" : [
   ],
   "findings" : 1,
@@ -1831,6 +1939,15 @@
   ],
   "corrections" : [
   ],
+  "createdAt" : "TS",
+  "creator" : {
+    "agent" : null,
+    "job" : null,
+    "kind" : "unattributed",
+    "plugin" : null,
+    "surface" : "rest",
+    "workflow" : null
+  },
   "datings" : [
   ],
   "edges" : [
@@ -1929,6 +2046,15 @@
     {
       "claim" : "the tell was settled",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 40.0,
       "lon" : 34.6,
       "periodEnd" : -1200,
@@ -1944,6 +2070,15 @@
     {
       "claim" : "the cove",
       "confidence" : "high",
+      "createdAt" : "TS",
+      "creator" : {
+        "agent" : null,
+        "job" : null,
+        "kind" : "unattributed",
+        "plugin" : null,
+        "surface" : "rest",
+        "workflow" : null
+      },
       "lat" : 39.2,
       "lon" : 35.5,
       "periodEnd" : -1300,
@@ -1965,6 +2100,15 @@
       "Doe, Jane"
     ],
     "citekey" : "zqfig2001_tell",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Zqtell\n\nThe tell of Zqtell is shown in ![the plan](assets/fig-a.png) and again in ![](assets/fig-a.png).\nThe cove is ![a photograph](assets/fig-c.jpg).\n",
@@ -2011,6 +2155,15 @@
       "Doe, Jane"
     ],
     "citekey" : "zqbook1999_ships",
+    "createdAt" : "2026-11-24",
+    "creator" : {
+      "agent" : null,
+      "job" : null,
+      "kind" : "unattributed",
+      "plugin" : null,
+      "surface" : "rest",
+      "workflow" : null
+    },
     "doi" : null,
     "notes" : null,
     "ocrMarkdown" : "# Ships\n\nNo figures.\n",
@@ -2115,7 +2268,8 @@ Find a citekey with search.
 **Kind:** figure  
 **License:** CC-BY-4.0  
 **Size:** 268 bytes  
-**Dimensions:** 8×8
+**Dimensions:** 8×8  
+_Created by an unnamed caller via the REST API at TS_
 
 > A tiny sherd
 == tool patch_asset {"citekey":"zqfig2001_tell","name":"nope.png"}

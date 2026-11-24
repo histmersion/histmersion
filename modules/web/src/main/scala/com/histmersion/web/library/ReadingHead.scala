@@ -6,6 +6,7 @@ import com.histmersion.api.library.{Label, SearchHit}
 import com.histmersion.api.media.MediaRole
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
+import com.histmersion.api.automation.Creation
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its
   * title, its authors, its status, its period, its regions and its summary. A row of the table already holds most of
@@ -18,7 +19,8 @@ final case class ReadingHead(
     status: Option[Source.Status],
     period: String,
     regions: String,
-    summary: Option[String]
+    summary: Option[String],
+    created: Option[String] = None
 )
 
 object ReadingHead:
@@ -59,7 +61,8 @@ object ReadingHead:
       Some(s.status),
       YearFmt.period(s.periodStart, s.periodEnd),
       regions(s.regions.map(_.value)),
-      text(s.summary.map(_.value))
+      text(s.summary.map(_.value)),
+      Creation.line(s.creator, s.createdAt)
     )
 
   def of(a: Article.Summary): ReadingHead =
@@ -82,5 +85,6 @@ object ReadingHead:
       None,
       YearFmt.period(a.periodStart, a.periodEnd),
       regions(a.regions.map(_.value)),
-      text(a.summary.map(_.value))
+      text(a.summary.map(_.value)),
+      Creation.line(a.creator, a.createdAt)
     )
