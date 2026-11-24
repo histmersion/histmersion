@@ -576,7 +576,8 @@ object Agents:
     type Seq = Seq.T
     object Seq extends Newtype[Int, Pure]
     type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    object Name extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     type Attempt = Attempt.T
@@ -857,7 +858,8 @@ object Agents:
     type Evidence = Evidence.T
     object Evidence extends Newtype[String, Pure]
     type Quote = Quote.T
-    object Quote extends Newtype[String, Pure]
+    object Quote extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export Approval.State.Wire as State
     export Approval.Note
     type Result = Result.T
@@ -867,7 +869,8 @@ object Agents:
     type DecidedAt = DecidedAt.T
     object DecidedAt extends Newtype[String, Pure]
     type Subject = Subject.T
-    object Subject extends Newtype[String, Pure]
+    object Subject extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   final case class DecisionRequest(note: Option[DecisionRequest.Note] = None)
       derives JsonCodec,

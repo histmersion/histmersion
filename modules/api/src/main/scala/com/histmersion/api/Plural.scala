@@ -14,7 +14,8 @@ object Plural:
   type Count = Count.T
   object Count extends Newtype[Long, Pure]
   type Phrase = Phrase.T
-  object Phrase extends Newtype[String, Pure]
+  object Phrase extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   type CountN = Count
   val CountN: Count.type = Count

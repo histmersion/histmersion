@@ -13,6 +13,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Title
+import com.histmersion.web.{:=, given}
 
 /** The person's own periods: years kept under a name (a bookmark of kind "period"), listed first in the timeline's
   * "Zoom to period" menu, beside the authorities' presets; and the years the timeline opens on (`ui.time.default-from`
@@ -110,8 +111,8 @@ object PeriodMarks:
             cls := "tl-preset-item tl-my-period-item",
             span(
               cls := "tl-preset-line",
-              span(cls := "tl-preset-label", b.name.value),
-              span(cls := "tl-preset-years", Fmt.periodStr(a, z).value)
+              span(cls := "tl-preset-label", b.name),
+              span(cls := "tl-preset-years", Fmt.periodStr(a, z))
             ),
             onClick --> (_ => choose(a, z))
           ),

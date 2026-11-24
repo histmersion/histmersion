@@ -57,7 +57,8 @@ object Place:
     */
 
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type KindValue = KindValue.T
   object KindValue extends Newtype[String, Pure]
   type Geometry = Geometry.T
@@ -999,7 +1000,8 @@ object Place:
 
   object Record:
     type DateSourceText = DateSourceText.T
-    object DateSourceText extends Newtype[String, Pure]
+    object DateSourceText extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
     type DateSource = DateSource.T
     object DateSource extends Newtype[String, Pure]

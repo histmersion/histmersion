@@ -23,6 +23,7 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.ByteCount
 import com.histmersion.web.ErrorLine
 import com.histmersion.api.BBox
+import com.histmersion.web.{:=, given}
 
 /** The first-run setup (`/setup`): seven steps with safe defaults — finding open papers, the maps, the background data,
   * research agents and Calibre (both optional) — then Ready. Nothing is written or downloaded until it is finished;
@@ -152,7 +153,7 @@ object SetupPage:
                   aria.hidden := true,
                   child.text <-- step.signal.map(x => if x.ordinal > s.ordinal then "✓" else s.number.toString)
                 ),
-                span(cls := "setup-label", s.label.value),
+                span(cls := "setup-label", s.label),
                 Option.when(s.optional.value)(span(cls := "setup-optional", " optional"))
               )
             }

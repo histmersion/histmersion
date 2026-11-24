@@ -106,7 +106,7 @@ object PointKinds:
     override def pane =
       MapStack.Pane.Sites // above every region: a site inside one still takes the click
     def key(p: SitePoint): PointKind.PointKey = PointKind.PointKey(p.id.fold(s"${p.lat}|${p.lon}")(_.value))
-    def at(p: SitePoint): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(p.lat.value), Geo.Longitude(p.lon.value))
+    def at(p: SitePoint): (Geo.Latitude, Geo.Longitude) = (p.lat, p.lon)
     def inner(p: SitePoint): Html =
       Glyphs.badge(CardIcons.siteMarker(p.known.map(t => Place.Entry.SiteType(t.id.value))))
     override def classes(p: SitePoint): String =

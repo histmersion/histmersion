@@ -38,7 +38,8 @@ object Finding:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Claim = Claim.T
-  object Claim extends Newtype[String, Pure]
+  object Claim extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Region = Region.T
   object Region extends Newtype[String, Pure]
   type PeriodName = PeriodName.T

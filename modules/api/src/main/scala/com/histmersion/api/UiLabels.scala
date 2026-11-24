@@ -16,7 +16,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 object UiLabels:
   export Wording.Id as Key
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   lazy val known: Map[Key, Text] =
     (Wording.schedulerJobTypes.toList.map((k, v) => (k.value: String) -> v) ++

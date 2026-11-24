@@ -8,6 +8,7 @@ import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
+import com.histmersion.web.{:=, given}
 
 /** Settings › Advanced (all settings): every setting of the settings file, generated from the defaults
   * (reference.conf), grouped by its block with the words that document each — for what the other pages do not show. One
@@ -17,7 +18,8 @@ object AdvancedSection:
   type Query = Query.T
   object Query extends Newtype[String, Pure]
   type SectionName = SectionName.T
-  object SectionName extends Newtype[String, Pure]
+  object SectionName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** Does a setting match what was typed in the filter (its key or its words)? Pure. */
   def matches(f: ConfigEdit.Field, q: Query): Boolean =
@@ -96,7 +98,7 @@ object AdvancedSection:
       summaryTag(
         cls := "advanced-summary",
         onClick.preventDefault --> (_ => open.update(!_)),
-        span(cls := "advanced-name", sectionName(s.id).value),
+        span(cls := "advanced-name", sectionName(s.id)),
         span(cls := "muted", s" · ${s.fields.size}"),
         Option.when(s.doc.value.nonEmpty)(span(cls := "advanced-doc muted", s" — ${s.doc}"))
       ),

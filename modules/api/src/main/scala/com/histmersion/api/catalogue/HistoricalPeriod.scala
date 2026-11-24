@@ -26,7 +26,8 @@ object HistoricalPeriod:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Authority = Authority.T
   object Authority extends Newtype[String, Pure]
   type Region = Region.T

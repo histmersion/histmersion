@@ -13,6 +13,7 @@ import scala.collection.mutable
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.web.map.MapSurface
 import com.histmersion.api.Html
+import com.histmersion.web.{:=, given}
 
 /** The map's "My notes" layer: each note left at a place on the map, as a marker of the map's own kind — off until
   * switched on under Layers. A click or Enter on one shows the note there, to read, change or delete.
@@ -95,7 +96,7 @@ object NoteMarkers:
             box,
             div(
               cls := "note-popup-body",
-              p(cls := "note-popup-where muted", Target.where(n.target).value),
+              p(cls := "note-popup-where muted", Target.where(n.target)),
               NoteList.card(n)
             )
           )

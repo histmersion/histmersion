@@ -54,7 +54,8 @@ object MediaItem:
   type Author = Author.T
   object Author extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends Newtype[String, Pure]
+  object Credit extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type SourceUrl = SourceUrl.T
   object SourceUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T

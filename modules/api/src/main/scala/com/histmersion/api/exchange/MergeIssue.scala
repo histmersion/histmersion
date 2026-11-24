@@ -42,7 +42,8 @@ object MergeIssue:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  object Title extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** Why the planner raises an issue or suggests a choice: the account of its decision, not a failure. */
   type Rationale = Rationale.T

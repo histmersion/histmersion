@@ -19,6 +19,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.Paging
 import com.histmersion.api.Wording
 import com.histmersion.web.ErrorLine
+import com.histmersion.web.{:=, given}
 
 /** "Where should the map open?" — where this browser last left it, or at a place: one found by its name in the
   * gazetteer, or the map's view now. The choice is held in `choice` until the form saves it.
@@ -105,7 +106,7 @@ object StartPlace:
             )
           ),
           " ",
-          m.label.value
+          m.label
         )
       },
       div(
@@ -148,7 +149,7 @@ object StartPlace:
                 button(
                   typ := "button",
                   cls := "btn btn--bare start-place-hit",
-                  h.label.value,
+                  h.label,
                   span(cls := "muted", s" ${Wording.humanize(Wording.Id(h.kind.value))}"),
                   onClick --> (_ => pick(h))
                 )

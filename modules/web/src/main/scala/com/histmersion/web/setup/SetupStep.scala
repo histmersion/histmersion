@@ -22,6 +22,7 @@ object SetupStep:
   type Number = Number.T
   object Number extends Newtype[Int, Pure]
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Optional = Optional.T
   object Optional extends Newtype[Boolean, Pure]

@@ -24,7 +24,8 @@ final case class PluginSet(
       api.json.Schema
 object PluginSet:
   type Description = Description.T
-  object Description extends Newtype[String, Pure]
+  object Description extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   type Digest = Digest.T
   object Digest extends Newtype[String, Pure]

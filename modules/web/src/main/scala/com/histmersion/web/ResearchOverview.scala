@@ -219,8 +219,8 @@ object ResearchOverview:
         evidence(a).map((label, to) =>
           L.a(
             cls := "btn decision-evidence",
-            href := to.value,
-            label.value,
+            href := to,
+            label,
             onClick --> { ev =>
               if Router.plain(ev) && !to.value.startsWith("/source/") && !to.value.startsWith("/article/") then
                 ev.preventDefault()

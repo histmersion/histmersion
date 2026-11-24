@@ -6,6 +6,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.Icon
+import com.histmersion.web.{:=, given}
 
 /** The ONE menu of actions on a thing — a row, the reading pane, the map, the timeline: opened by a right click, by the
   * keyboard's menu key or Shift+F10 on the thing, or by its "⋯" button. Every action in it is also somewhere a person
@@ -30,11 +31,13 @@ object ContextMenu:
 
   object Entry:
     type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    object Label extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Disabled = Disabled.T
     object Disabled extends Newtype[Boolean, Pure]
     type Hint = Hint.T
-    object Hint extends Newtype[String, Pure]
+    object Hint extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Pressed = Pressed.T
     object Pressed extends Newtype[Boolean, Pure]
 
@@ -51,7 +54,8 @@ object ContextMenu:
 
   object Open:
     type Title = Title.T
-    object Title extends Newtype[String, Pure]
+    object Title extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   private val open = Var(Option.empty[Open])
 
@@ -128,7 +132,7 @@ object ContextMenu:
       typ := "button",
       cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim,
       aria.label := title.value,
-      L.title := title.value,
+      L.title := title,
       aria.hasPopup := true,
       aria.expanded <-- open.signal.map(_.exists(_.title == title)),
       Icon(Icon.More),
@@ -183,7 +187,7 @@ object ContextMenu:
           case "Tab"       => close(returnFocus = false)
           case _           => ()
       },
-      p(cls := "context-menu-title", o.title.value),
+      p(cls := "context-menu-title", o.title),
       o.entries.map { e =>
         if e == Separator then div(cls := "context-menu-sep", role := "separator")
         else
@@ -193,9 +197,9 @@ object ContextMenu:
             role := (if e.pressed.isDefined then "menuitemcheckbox" else "menuitem"),
             e.pressed.map(on => aria.checked := on.value.toString),
             disabled := e.disabled.value,
-            e.hint.map(h => L.title := h.value),
-            span(cls := "context-menu-label", e.label.value),
-            e.hint.filter(_ => e.disabled.value).map(h => span(cls := "context-menu-hint", h.value)),
+            e.hint.map(h => L.title := h),
+            span(cls := "context-menu-label", e.label),
+            e.hint.filter(_ => e.disabled.value).map(h => span(cls := "context-menu-hint", h)),
             onClick --> { _ =>
               close()
               e.run()

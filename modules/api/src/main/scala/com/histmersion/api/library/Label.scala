@@ -4,6 +4,7 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 object Label:
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   def display(s: Text): Text = Text((s).value.replace("_", " "))

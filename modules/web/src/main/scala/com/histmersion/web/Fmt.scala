@@ -14,7 +14,8 @@ import com.histmersion.api.Markdown
 
 object Fmt:
   type PeriodText = PeriodText.T
-  object PeriodText extends Newtype[String, Pure]
+  object PeriodText extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type RampPosition = RampPosition.T
   object RampPosition extends Newtype[Double, Pure]
 

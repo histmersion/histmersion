@@ -21,7 +21,8 @@ import com.histmersion.api.catalogue.Year
   */
 object MobileChrome:
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type SpanLabel = SpanLabel.T
   object SpanLabel extends Newtype[String, Pure]
 
@@ -149,7 +150,7 @@ object MobileChrome:
   def drawerHead(name: Name): HtmlElement =
     div(
       cls := "drawer-head",
-      span(cls := "drawer-title", name.value),
+      span(cls := "drawer-title", name),
       button(
         typ := "button",
         cls := "btn btn--bare btn--icon drawer-close",

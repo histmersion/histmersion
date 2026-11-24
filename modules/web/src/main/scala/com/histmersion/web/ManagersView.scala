@@ -52,19 +52,25 @@ object ManagersView:
   type ConfigKey = ConfigKey.T
   object ConfigKey extends Newtype[String, Pure]
   type ConfigText = ConfigText.T
-  object ConfigText extends Newtype[String, Pure]
+  object ConfigText extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type CountsText = CountsText.T
-  object CountsText extends Newtype[String, Pure]
+  object CountsText extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type DrainLine = DrainLine.T
-  object DrainLine extends Newtype[String, Pure]
+  object DrainLine extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type EnqueuedNote = EnqueuedNote.T
   object EnqueuedNote extends Newtype[String, Pure]
   type FocusHead = FocusHead.T
-  object FocusHead extends Newtype[String, Pure]
+  object FocusHead extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type FocusPace = FocusPace.T
-  object FocusPace extends Newtype[String, Pure]
+  object FocusPace extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type GoalLine = GoalLine.T
-  object GoalLine extends Newtype[String, Pure]
+  object GoalLine extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Hint = Hint.T
   object Hint extends Newtype[String, Pure]
   type ItemAction = ItemAction.T
@@ -80,9 +86,11 @@ object ManagersView:
   type StatusMeaning = StatusMeaning.T
   object StatusMeaning extends Newtype[String, Pure]
   type StrategyLabel = StrategyLabel.T
-  object StrategyLabel extends Newtype[String, Pure]
+  object StrategyLabel extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type WaitLabel = WaitLabel.T
-  object WaitLabel extends Newtype[String, Pure]
+  object WaitLabel extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type WaitMeaning = WaitMeaning.T
   object WaitMeaning extends Newtype[String, Pure]
   type WaitingSummary = WaitingSummary.T
@@ -546,7 +554,7 @@ object ManagersView:
       cls := "autopilot-focus",
       div(
         cls := "toolbar",
-        div(cls := "btn-group", span(cls := "autopilot-state", focusHead(f).value)),
+        div(cls := "btn-group", span(cls := "autopilot-state", focusHead(f))),
         div(
           cls := "btn-group",
           input(
@@ -580,7 +588,7 @@ object ManagersView:
           )
         )
       ),
-      f.note.map(n => div(cls := "muted", n.value)),
+      f.note.map(n => div(cls := "muted", n)),
       Option.when(f.changes.nonEmpty)(div(cls := "form-ok", f.changes.mkString("; ").take(400))),
       ul(
         cls := "job-list focus-active",
@@ -598,7 +606,7 @@ object ManagersView:
               ),
               div(cls := "job-progress", s"${g.why}"),
               g.doing.map(d => div(cls := "muted", s"now: $d")),
-              div(cls := "job-meta muted", focusPace(g).value),
+              div(cls := "job-meta muted", focusPace(g)),
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
             )
           )
@@ -730,7 +738,7 @@ object ManagersView:
           }
         )
       ),
-      child.maybe <-- st.signal.map(_.flatMap(_.drain).map(d => div(cls := "form-ok", drainLine(d).value))),
+      child.maybe <-- st.signal.map(_.flatMap(_.drain).map(d => div(cls := "form-ok", drainLine(d)))),
       errorLine(failure.signal),
       child.maybe <-- st.signal.map(_.map { s =>
         div(
@@ -779,7 +787,7 @@ object ManagersView:
                         .getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
                     )
                   ),
-                  div(cls := "job-meta muted", goalLine(g).value),
+                  div(cls := "job-meta muted", goalLine(g)),
                   Option.when(g.managers.nonEmpty)(
                     div(
                       cls := "muted",
@@ -946,7 +954,7 @@ object ManagersView:
                 button(
                   typ := "button",
                   cls := "btn btn--toggle btn--sm",
-                  strategyLabel(x.name).value,
+                  strategyLabel(x.name),
                   title := s"${x.describe} (${x.name})",
                   aria.pressed := (x.name == s.strategy).toString,
                   onClick --> (_ => switch(x.name))
@@ -1010,7 +1018,7 @@ object ManagersView:
                       ),
                       span(cls := "muted", x.idleDays.fold(" · never progressed")(d => s" · idle $d d"))
                     ),
-                    div(cls := "job-progress", x.why.value),
+                    div(cls := "job-progress", x.why),
                     div(cls := "muted", s"unblock: ${x.action}")
                   )
                 )
@@ -1036,7 +1044,7 @@ object ManagersView:
               s.started.map(x =>
                 li(
                   cls := "job-row",
-                  span(cls := "job-state state-running", title := x.jobType.value, jobTypeLabel(x.jobType).value),
+                  span(cls := "job-state state-running", title := x.jobType.value, jobTypeLabel(x.jobType)),
                   div(
                     cls := "job-main",
                     div(
@@ -1102,7 +1110,7 @@ object ManagersView:
               shown.map(w =>
                 li(
                   cls := "job-row",
-                  span(cls := s"job-state state-${w.code}", title := w.code.value, waitLabel(w.code).value),
+                  span(cls := s"job-state state-${w.code}", title := w.code.value, waitLabel(w.code)),
                   div(
                     cls := "job-main",
                     div(
@@ -1182,7 +1190,7 @@ object ManagersView:
                   m.statusNote.map(_.render).filter(_.nonEmpty).map(n => div(cls := "job-progress", n)),
                   div(
                     cls := "job-meta muted",
-                    counts(m.counts).value,
+                    counts(m.counts),
                     s" · ${counted(m.inFlight.value, "run")} in flight",
                     s" · ${ManagersMarkdown.today(m)}"
                   ),
@@ -1442,7 +1450,7 @@ object ManagersView:
       dl(
         cls := "run-facts",
         dt("items"),
-        dd(counts(m.counts).value),
+        dd(counts(m.counts)),
         m.cron.toList.flatMap(c => List(dt("cron"), dd(s"$c (UTC)" + m.nextTickAt.fold("")(t => s", next $t")))),
         dt("in flight"),
         dd(counted(m.inFlight.value, "run")),
@@ -1829,7 +1837,7 @@ object ManagersView:
         settingsFor(m.kind).map { (k, lbl) =>
           label(
             cls := "manager-setting",
-            span(lbl.value),
+            span(lbl),
             input(
               typ := "text",
               cls := "field",

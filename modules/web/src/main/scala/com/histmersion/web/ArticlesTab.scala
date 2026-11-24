@@ -73,10 +73,10 @@ object ArticlesTab:
             if inPanel then ResultsPanel.show(Preview.Target.Article(Preview.Target.Article.Slug(art.slug.value)))
             else ArticleModal.openSlug(art.slug)
         },
-        div(cls := "article-title", art.title.value),
+        div(cls := "article-title", art.title),
         div(
           cls := "article-meta",
-          span(cls := "article-kind", Fmt.display(UiLabels.Text(art.kind.value)).value),
+          span(cls := "article-kind", Fmt.display(UiLabels.Text(art.kind.value))),
           art.review.map(reviewBadge),
           Fmt.periodStr(art.periodStart, art.periodEnd).value match
             case ""  => emptyNode
@@ -110,7 +110,7 @@ object ArticlesTab:
 
   /** An article's review state as a coloured badge, what it means on hover. */
   def reviewBadge(b: ReviewBadge): HtmlElement =
-    span(cls := reviewClass(b.state), title := b.detail.value, Wording.capitalize(b.label.value))
+    span(cls := reviewClass(b.state), title := b.detail, Wording.capitalize(b.label.value))
 
   /** The badge's classes: the stylesheet colours each state (as the article page's badge). */
   def reviewClass(state: ReviewState): String = s"job-state review-state state-${state.wire}"

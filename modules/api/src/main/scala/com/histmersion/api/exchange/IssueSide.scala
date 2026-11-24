@@ -16,6 +16,7 @@ final case class IssueSide(label: IssueSide.Label, uid: UUID, lines: List[IssueS
 
 object IssueSide:
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Lines = Lines.T
   object Lines extends Newtype[String, Pure]

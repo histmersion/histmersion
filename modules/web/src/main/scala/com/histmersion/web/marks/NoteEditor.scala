@@ -9,6 +9,7 @@ import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Title
+import com.histmersion.web.{:=, given}
 
 /** Writing a note: what it is left on, a plain text box (Markdown) with a preview of what it will look like, and Save
   * or Cancel — nothing is saved until Save. What is typed is kept by this browser as a draft ([[NoteDrafts]]) until
@@ -86,7 +87,7 @@ object NoteEditor:
         p(
           cls := "note-editor-on muted",
           s"On ${s.target.kind.label.value.toLowerCase}: ",
-          strong(s.title.value),
+          strong(s.title),
           Option.when(Target.where(s.target).value.nonEmpty)(
             span(s" · ${Target.where(s.target).value}")
           )

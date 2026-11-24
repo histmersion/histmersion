@@ -191,7 +191,7 @@ object TreeTab:
           b.label.value + contestedStr,
           onClick --> { _ => act(b) }
         ),
-        span(cls := "tcount", unitWord(b.count).value),
+        span(cls := "tcount", unitWord(b.count)),
         span(
           cls := "tmeta",
           overStr +
@@ -271,7 +271,7 @@ object TreeTab:
       tabIndex := 0,
       span(cls := "ck", SourceLink(s.citekey)),
       " ",
-      span(cls := "title", s.title.value),
+      span(cls := "title", s.title),
       onClick --> { _ => ArticleModal.open(s.citekey, Map("q" -> UiState.q.now().getOrElse(""))) },
       onKeyDown --> { ev =>
         if ev.key == "Enter" || ev.key == " " then

@@ -157,7 +157,7 @@ object TimelineCurve:
       var hi = pts.length - 1
       while lo < hi do
         val mid = (lo + hi) >>> 1
-        if pts(mid).x.value < x.value then lo = mid + 1 else hi = mid
+        if pts(mid).x < x then lo = mid + 1 else hi = mid
       val right = pts(lo)
       if lo > 0 && math.abs(pts(lo - 1).x.value - x.value) <= math.abs(right.x.value - x.value) then Some(pts(lo - 1))
       else Some(right)

@@ -43,7 +43,7 @@ object AgentCmd:
       case Right(d) =>
         val line = AgentsMarkdown.runLine(d.run)
         if line != last then Cli.err.println(line)
-        RunState.parse(Run.State.Wire(d.run.status.value)) match
+        RunState.parse(d.run.status) match
           case Some(RunState.Queued) | Some(RunState.Running) =>
             Thread.sleep(PollMs.toLong)
             follow(c, id, line)

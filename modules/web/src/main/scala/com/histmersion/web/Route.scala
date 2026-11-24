@@ -40,7 +40,7 @@ enum Route derives CanEqual:
     case Settings(s)   => sub("/settings", s.slug.value)
     case Setup         => "/setup"
     case Source(ck)    => SourceLink.href(ck)
-    case Article(slug) => ArticleLink.href(api.research.Article.Slug(slug.value))
+    case Article(slug) => ArticleLink.href(slug)
     case Place(id)     => s"/place/${Atoms.segment(id.value)}"
     case Event(id)     => s"/event/${Atoms.segment(id.value)}"
     case Run(id)       => s"/run/${Atoms.segment(id.value)}"
@@ -183,7 +183,7 @@ object Route:
     case WindowKey.Source(ck)    => Some(Source(Preview.Target.Source.Citekey(ck.value)))
     case WindowKey.Article(slug) => Some(Article(Preview.Item.Slug(slug.value)))
     case WindowKey.Run(id)       => Some(Run(RunId(id.value)))
-    case WindowKey.Goal(slug)    => Some(Goal(api.automation.Goal.Slug(slug.value)))
+    case WindowKey.Goal(slug)    => Some(Goal(slug))
     case WindowKey.Manager(id)   => Some(Manager(ManagerId(id.value)))
     case _                       => None
 

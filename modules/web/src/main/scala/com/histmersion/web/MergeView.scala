@@ -56,15 +56,18 @@ import com.histmersion.web.map.MapStart
   */
 object MergeView:
   type Description = Description.T
-  object Description extends Newtype[String, Pure]
+  object Description extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type FieldName = FieldName.T
   object FieldName extends Newtype[String, Pure]
   type KindLabel = KindLabel.T
-  object KindLabel extends Newtype[String, Pure]
+  object KindLabel extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type MarkedText = MarkedText.T
   object MarkedText extends Newtype[String, Pure]
   type ResultText = ResultText.T
-  object ResultText extends Newtype[String, Pure]
+  object ResultText extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -571,7 +574,7 @@ object MergeView:
                     span(cls := "merge-entity", i.entity.wire.value),
                     " ",
                     span(i.left.orElse(i.right).map(_.label.value).getOrElse("")),
-                    div(cls := "muted", i.title.value),
+                    div(cls := "muted", i.title),
                     i.decision.map(d =>
                       div(
                         cls := "merge-decided",
@@ -598,7 +601,7 @@ object MergeView:
         htmlTag("details")(
           cls := "merge-info",
           htmlTag("summary")(s"information (${p.info.size})"),
-          ul(p.info.map(x => li(x.value)))
+          ul(p.info.map(x => li(x)))
         )
       ),
       Option.when(!p.sources.isEmpty)(
@@ -610,7 +613,7 @@ object MergeView:
           ul(
             matched(p).map(m =>
               li(
-                code(m.rightCitekey.value),
+                code(m.rightCitekey),
                 m.leftCitekey.fold(span(" — new"))(l => span(" → ", SourceLink(l))),
                 span(
                   cls := "muted",
@@ -632,7 +635,7 @@ object MergeView:
       h3(
         code(i.id.value),
         " ",
-        kindText(i.kind).value,
+        kindText(i.kind),
         span(cls := "muted", s" · ${i.entity.wire} · ${i.severity.toString.toLowerCase}")
       ),
       p_(i.title.value),
@@ -665,7 +668,7 @@ object MergeView:
       s.fold(span(cls := "muted", "nothing")) { x =>
         div(
           if who == "here" && entity == Bundle.Kind.Source then SourceLink(Citekey(x.label.value))
-          else code(x.label.value),
+          else code(x.label),
           x.lines.map(l => div(cls := "muted", l.value))
         )
       }
@@ -681,8 +684,8 @@ object MergeView:
           td(f.field.value),
           td(f.left.map(_.value).getOrElse("—")),
           resultOf(i, f, i.decision) match
-            case Some(Right(v)) => td(cls := "merge-result", v.value)
-            case Some(Left(v))  => td(cls := "merge-result pending", v.value)
+            case Some(Right(v)) => td(cls := "merge-result", v)
+            case Some(Left(v))  => td(cls := "merge-result pending", v)
             case None           => td(cls := "merge-result"),
           td(f.right.map(_.value).getOrElse("—"))
         )
@@ -874,7 +877,7 @@ object MergeView:
                 .foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
             )
           ),
-          describe(k).value
+          describe(k)
         ),
         input(
           typ := "text",
@@ -909,7 +912,7 @@ object MergeView:
                       MergeDecision.withArg(MergeDecision.Kind.Map, MergeDecision.Argument(s.label.value)),
                       describe(MergeDecision.Kind.Map).value,
                       " ",
-                      strong(s.label.value)
+                      strong(s.label)
                     )
                   )
                 )
@@ -923,7 +926,7 @@ object MergeView:
                     checked := i.decision.exists(_.kind == MergeDecision.Kind.File),
                     disabled := true
                   ),
-                  describe(MergeDecision.Kind.File).value,
+                  describe(MergeDecision.Kind.File),
                   span(cls := "muted", " — write it above and press “use this text”")
                 )
               case k => radio(MergeDecision.of(k), describe(k).value)

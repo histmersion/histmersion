@@ -100,7 +100,7 @@ object MapMenu:
       .save(
         StartPlace
           .changes(c)
-          .map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), Some(ConfigEdit.Change.Value(v.value))))
+          .map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), Some(v)))
       )
       .onComplete(r =>
         Flash.say(

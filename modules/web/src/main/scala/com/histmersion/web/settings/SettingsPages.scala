@@ -5,13 +5,15 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.{AboutView, Auth, CreditsView, Route, SettingsSection}
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.{:=, given}
 
 /** Settings' pages: one per section of its side navigation, each over the settings file as the server reads it now
   * (read when a page opens).
   */
 object SettingsPages:
   type Lead = Lead.T
-  object Lead extends Newtype[String, Pure]
+  object Lead extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** What a section's page says under its title. Pure. */
 
@@ -35,7 +37,7 @@ object SettingsPages:
         SettingsStore.clearResult()
         SettingsStore.load()
       },
-      lead(s).map(t => p(cls := "settings-page-lead", t.value)),
+      lead(s).map(t => p(cls := "settings-page-lead", t)),
       s match
         case SettingsSection.General  => GeneralSection.pane(ui)
         case SettingsSection.Data     => DataSection.pane(ui)

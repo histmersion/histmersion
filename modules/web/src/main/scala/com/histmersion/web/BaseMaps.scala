@@ -78,10 +78,7 @@ object BaseMaps:
   val SoftwareNotice: String =
     "This browser draws maps without a GPU: the relief is left out to keep the map quick."
 
-  /** The docs section the notice links to, under `ui.docs-url`. */
-  def docsLink(docsUrl: String, page: String = "exploring/web-ui.md#the-base-map"): String =
-    val base = if docsUrl.isEmpty || docsUrl.endsWith("/") then docsUrl else docsUrl + "/"
-    s"$base$page"
+  val BaseMapPage: String = "exploring/web-ui.md#the-base-map"
 
   /** The docs section on downloading the full extract. */
   val OfflinePage = "how-to/offline.md#the-one-time-download"
@@ -324,9 +321,9 @@ object BaseMaps:
         val p = dom.document.createElement("span")
         p.textContent = text
         val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
-        a.href = if lacking then docsLink(ui.docsUrl.value, OfflinePage)
-        else if warn then docsLink(ui.docsUrl.value, "how-to/offline.md")
-        else docsLink(ui.docsUrl.value)
+        a.href = if lacking then ui.docsUrl.page(OfflinePage)
+        else if warn then ui.docsUrl.page("how-to/offline.md")
+        else ui.docsUrl.page(BaseMapPage)
         a.target = "_blank"
         a.rel = "noopener"
         a.textContent = if warn then "How to download it" else "Why?"
@@ -662,7 +659,7 @@ object BaseMaps:
           idAttr := "map-motion-select",
           aria.label := "map motion",
           aria.describedBy <-- MotionPref.heldBySystem.map(h => if h.value then "map-motion-note" else ""),
-          MapMotion.values.toList.map(m => option(value := m.wire.value, m.label.value)),
+          MapMotion.values.toList.map(m => option(value := m.wire.value, m.label)),
           controlled(
             value <-- UiState.mapMotion.signal.map(_.wire.value),
             onChange.mapToValue --> (v =>

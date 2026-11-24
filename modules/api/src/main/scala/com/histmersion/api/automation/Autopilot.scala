@@ -177,7 +177,8 @@ object Autopilot:
     type Held = Held.T
     object Held extends Newtype[Int, Pure]
     type Note = Note.T
-    object Note extends Newtype[String, Pure]
+    object Note extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Changes = Changes.T
     object Changes extends Newtype[String, Pure]
 

@@ -12,17 +12,20 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
+import com.histmersion.web.{:=, given}
 
 /** A group of settings with one Save: the changes are held until Save writes them into the settings file together (or
   * Undo drops them), then the server applies them.
   */
 object SettingsForm:
   type Intro = Intro.T
-  object Intro extends Newtype[String, Pure]
+  object Intro extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** One setting of the form: its key, and the name and help shown instead of reference.conf's words. */
   type ApplyTitle = ApplyTitle.T
-  object ApplyTitle extends Newtype[String, Pure]
+  object ApplyTitle extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   final case class Item(
       key: Item.Key,
@@ -46,8 +49,8 @@ object SettingsForm:
       cls := "settings-card",
       div(
         cls := "settings-card-head",
-        h2(cls := "settings-card-title", title.value),
-        intro.map(t => p(cls := "settings-card-intro", t.value))
+        h2(cls := "settings-card-title", title),
+        intro.map(t => p(cls := "settings-card-intro", t))
       ),
       div(
         cls := "settings-card-body",

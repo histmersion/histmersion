@@ -25,8 +25,8 @@ object SourceLink:
   def apply(citekey: Citekey, doi: Option[Doi] = None, label: Option[UiLabels.Text] = None): HtmlElement =
     a(
       cls := "src-ref",
-      dataAttr("ck") := citekey.value,
-      doi.filter(_.value.trim.nonEmpty).map(d => dataAttr("doi") := d.value),
+      dataAttr("ck") := citekey,
+      doi.filter(_.value.trim.nonEmpty).map(d => dataAttr("doi") := d),
       L.href := href(citekey),
       label.getOrElse(idLabel(citekey, doi)).value,
       onClick --> { ev =>

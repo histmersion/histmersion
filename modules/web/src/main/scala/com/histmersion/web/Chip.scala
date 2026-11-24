@@ -16,11 +16,14 @@ object Chip:
   type ExtraClass = ExtraClass.T
   object ExtraClass extends Newtype[String, Pure]
   type Prefix = Prefix.T
-  object Prefix extends Newtype[String, Pure]
+  object Prefix extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Tip = Tip.T
-  object Tip extends Newtype[String, Pure]
+  object Tip extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   def apply(
       text: Text,
@@ -32,9 +35,9 @@ object Chip:
   ): HtmlElement =
     span(
       cls := s"chip $extraCls".trim,
-      tip.map(t => title := t.value),
-      prefix.map(p => span(cls := "pfx", p.value)),
-      text.value,
+      tip.map(t => title := t),
+      prefix.map(p => span(cls := "pfx", p)),
+      text,
       mods,
       remove.map(r =>
         button(

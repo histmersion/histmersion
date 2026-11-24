@@ -47,7 +47,7 @@ G22comment	server	main	4407
 G22comment	server	test	2239
 G22comment	upstreams	main	151
 G22comment	upstreams	test	19
-G22comment	web	main	2814
+G22comment	web	main	2813
 G22comment	web	test	276
 G3misplaced	api	main	563
 G3misplaced	cli	main	94
@@ -122,7 +122,7 @@ G44	upstreams	main	151
 G44	upstreams	test	42
 G44	values	main	181
 G44	values	test	15
-G44	web	main	5316
+G44	web	main	5134
 G44	web	test	852
 G44conversion	server	main	1197
 G44plaindef	api	main	36
@@ -136,9 +136,9 @@ G44plaindef	plugin-vaults	main	1
 G44plaindef	server	main	28
 G44plaindef	server	test	1
 G44plaindef	values	main	4
-G44plaindef	web	main	25
+G44plaindef	web	main	22
 G45boundary	api	main	334
-G45boundary	cli	main	485
+G45boundary	cli	main	483
 G45boundary	config	main	28
 G45boundary	console	main	1
 G45boundary	core	main	5
@@ -156,7 +156,7 @@ G45boundary	plugins/media	main	205
 G45boundary	problem	main	634
 G45boundary	server	main	196
 G45boundary	upstreams	main	60
-G45boundary	web	main	79
+G45boundary	web	main	78
 G46	api	main	71
 G46	cli	main	18
 G46	config	main	5
@@ -282,7 +282,7 @@ booleanParam	plugins/calibre	test	3
 booleanParam	plugins/media	main	1
 booleanParam	server	main	77
 booleanParam	server	test	13
-booleanParam	web	main	67
+booleanParam	web	main	65
 booleanParam	web	test	1
 silentCompare	api	main	13
 silentCompare	api	test	9
@@ -330,5 +330,5 @@ unnamedBoolean	plugins/fetchers	main	1
 unnamedBoolean	plugins/media	main	1
 unnamedBoolean	server	main	113
 unnamedBoolean	server	test	31
-unnamedBoolean	web	main	107
-unnamedBoolean	web	test	46
+unnamedBoolean	web	main	104
+unnamedBoolean	web	test	43

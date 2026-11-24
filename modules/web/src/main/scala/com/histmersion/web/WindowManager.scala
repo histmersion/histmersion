@@ -65,7 +65,7 @@ object WindowManager:
             mins.map { w =>
               button(
                 cls := "btn btn--sm wm-taskbar-btn",
-                w.title.value,
+                w.title,
                 onClick --> { _ => restore(w.id) }
               )
             }

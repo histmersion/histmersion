@@ -113,7 +113,8 @@ object QueueView:
   object Spec:
 
     type Empty = Empty.T
-    object Empty extends Newtype[String, Pure]
+    object Empty extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Untitled = Untitled.T
     object Untitled extends Newtype[String, Pure]
     type OpenNoun = OpenNoun.T
@@ -251,7 +252,7 @@ object QueueView:
     * server's OCR job applies too, addressed to the item.
     */
   def fulfil(item: Queue.QueueItem, citekey: Preview.Target.Source.Citekey): (Queue.QueueItem.Id, Queue.QueuePatch) =
-    item.id -> Queue.fulfil(item, api.library.Citekey(citekey.value))
+    item.id -> Queue.fulfil(item, citekey)
 
   /** The add form, as typed. */
   final case class AddDraft(
@@ -432,7 +433,7 @@ object QueueView:
         idAttr := topicsId,
         children <-- items.signal.map(its =>
           topicSuggestions(its, Api.Search.Text(""), limit = Paging.Limit(200)).map(t =>
-            option(value := t.value, htmlAttr("label", com.raquo.laminar.codecs.StringAsIsCodec) := topicLabel(t).value)
+            option(value := t.value, htmlAttr("label", com.raquo.laminar.codecs.StringAsIsCodec) := topicLabel(t))
           )
         )
       ),
@@ -502,7 +503,7 @@ object QueueView:
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child <-- items.signal.combineWith(loaded.signal, checks.signal, goals.signal).map { (its, ok, cs, gs) =>
         if !ok then p(cls := "muted", "Loading…")
-        else if its.isEmpty then p(cls := "muted", sp.empty.value)
+        else if its.isEmpty then p(cls := "muted", sp.empty)
         else
           div(
             cls := "queue-groups",
@@ -623,7 +624,7 @@ object QueueView:
     div(
       cls := "queue-group",
       if path.nonEmpty then div(cls := "group-path muted", path.mkString(" › ")) else emptyNode,
-      h3(cls := "group-topic", title.value),
+      h3(cls := "group-topic", title),
       ul(
         cls := "queue-items",
         its.map(i =>
@@ -814,7 +815,7 @@ object QueueView:
     button(
       typ := "button",
       cls := "btn btn--sm",
-      text.value,
+      text,
       if write.value then disabled <-- Auth.writable.map(!_) else emptyMod,
       onClick --> (_ => act())
     )
@@ -902,9 +903,9 @@ object QueueView:
                   cls := "link-hit",
                   disabled <-- Auth.writable.map(!_),
                   title := s"tick the item off as ingested as ${h.citekey}",
-                  span(cls := "hit-title", h.title.value),
+                  span(cls := "hit-title", h.title),
                   h.year.map(y => span(cls := "muted", s" ($y)")),
-                  span(cls := "muted hit-key", " · ", code(h.citekey.value)),
+                  span(cls := "muted hit-key", " · ", code(h.citekey)),
                   onClick --> (_ => { ops.fulfil(item, Preview.Target.Source.Citekey(h.citekey.value)); close() })
                 )
               )
@@ -916,10 +917,10 @@ object QueueView:
 
   private def render(s: Seg): Modifier[HtmlElement] = s match
     case Seg.Text(t)   => t.value
-    case Seg.Bold(t)   => b(t.value)
-    case Seg.Italic(t) => em(t.value)
+    case Seg.Bold(t)   => b(t)
+    case Seg.Italic(t) => em(t)
     case Seg.Doi(d)    =>
-      a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d.value)
+      a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d)
     case Seg.Url(u)    => a(href := u.value, target := "_blank", rel := "noopener", u.value)
     case Seg.Cite(ck)  => SourceLink(ck)
     case Seg.Ident(id) => IdentLink(id)

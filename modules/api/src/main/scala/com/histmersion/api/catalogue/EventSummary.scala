@@ -34,7 +34,8 @@ final case class EventSummary(
 object EventSummary:
 
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
   type Historicity = Historicity.T

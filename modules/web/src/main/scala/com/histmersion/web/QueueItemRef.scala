@@ -36,7 +36,8 @@ object QueueItemRef:
     type Year = Year.T
     object Year extends Newtype[Int, Pure]
     type Doi = Doi.T
-    object Doi extends Newtype[String, Pure]
+    object Doi extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   private val AuthorYear = """^(.+?)\s+((?:1[5-9]|20)\d\d)[a-z]?\.\s+['‘"“](.+?)['’"”][,.]\s*(.*)$""".r
   private val Paren = """\(([^()]*)\)""".r
@@ -148,10 +149,10 @@ object QueueItemRef:
     QueueView
       .segments(UiLabels.Text(slot.trim.replaceFirst(DoiLead, "")))
       .headOption
-      .collect { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
+      .collect { case QueueView.Seg.Doi(d) => d }
 
   private def firstDoi(s: String): Option[Ref.Doi] =
-    QueueView.segments(UiLabels.Text(s)).collectFirst { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
+    QueueView.segments(UiLabels.Text(s)).collectFirst { case QueueView.Seg.Doi(d) => d }
 
   /** A citekey in the corpus's `surnameYEAR_word` shape, through [[UploadView.suggestCitekey]] so it is always a valid
     * one.

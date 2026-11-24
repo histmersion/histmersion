@@ -164,19 +164,25 @@ object Preview:
 
   object Card:
     type Title = Title.T
-    object Title extends Newtype[String, Pure]
+    object Title extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Byline = Byline.T
-    object Byline extends Newtype[String, Pure]
+    object Byline extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Identifier = Identifier.T
-    object Identifier extends Newtype[String, Pure]
+    object Identifier extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type ChipKind = ChipKind.T
     object ChipKind extends Newtype[String, Pure]
     type Where = Where.T
-    object Where extends Newtype[String, Pure]
+    object Where extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Summary = Summary.T
-    object Summary extends Newtype[String, Pure]
+    object Summary extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Facts = Facts.T
-    object Facts extends Newtype[String, Pure]
+    object Facts extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type LinkLabel = LinkLabel.T
     object LinkLabel extends Newtype[String, Pure]
     type LinkHref = LinkHref.T
@@ -192,9 +198,11 @@ object Preview:
 
   object Section:
     type Title = Title.T
-    object Title extends Newtype[String, Pure]
+    object Title extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Note = Note.T
-    object Note extends Newtype[String, Pure]
+    object Note extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
@@ -1075,18 +1083,18 @@ object Preview:
         c.icon.map(i =>
           span(cls := "cite-tip-icon", onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, Glyphs.svg(i))))
         ),
-        c.title.value,
+        c.title,
         c.tier.map(t =>
           span(cls := s"cite-tip-tier tier-$t", if t.value == EventTier.Catalogue then "catalogue only" else "attested")
         )
       ),
-      Option.when(c.byline.value.nonEmpty)(div(cls := "cite-tip-meta", c.byline.value)),
+      Option.when(c.byline.value.nonEmpty)(div(cls := "cite-tip-meta", c.byline)),
       c.media.map(mediaView),
-      div(cls := "cite-tip-ident", c.identifier.value),
+      div(cls := "cite-tip-ident", c.identifier),
       Option.when(c.chips.nonEmpty)(div(cls := "cite-tip-chips", c.chips.map((_, v) => Chip.value(v)))),
-      Option.when(c.where.value.nonEmpty)(div(cls := "cite-tip-geo", c.where.value)),
+      Option.when(c.where.value.nonEmpty)(div(cls := "cite-tip-geo", c.where)),
       c.status.map(s => div(cls := "cite-tip-status", StatusBadge(s))),
-      c.facts.map(f => div(cls := "cite-tip-fact", f.value)),
+      c.facts.map(f => div(cls := "cite-tip-fact", f)),
       Option.when(c.links.nonEmpty)(
         div(
           cls := "cite-tip-links",
@@ -1106,7 +1114,7 @@ object Preview:
           )
         )
       ),
-      c.summary.map(s => div(cls := "cite-tip-summary", s.value)),
+      c.summary.map(s => div(cls := "cite-tip-summary", s)),
       c.sections.map(sectionView)
     )
 
@@ -1116,8 +1124,8 @@ object Preview:
   private def sectionView(sec: Section): HtmlElement =
     div(
       cls := s"cite-tip-section section-${sec.kind}",
-      div(cls := "cite-tip-section-title", sec.title.value),
-      sec.note.map(n => div(cls := "cite-tip-section-note", n.value)),
+      div(cls := "cite-tip-section-title", sec.title),
+      sec.note.map(n => div(cls := "cite-tip-section-note", n)),
       ul(cls := "cite-tip-items", sec.items.map(itemView))
     )
 
@@ -1128,7 +1136,7 @@ object Preview:
       // a discover action is its button alone; anything else says what it is
       Option.when(it.query.isEmpty)(
         it.slug
-          .map(slug => ArticleLink(Article.Slug(slug.value), it.text.value): HtmlElement)
+          .map(slug => ArticleLink(slug, it.text.value): HtmlElement)
           .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text.value))
       ),
       it.href
@@ -1218,7 +1226,7 @@ object Preview:
       img(
         cls := "cite-tip-thumb is-zoomable",
         Href.image(t.url.value).map(u => src := u.address),
-        alt := credit.value,
+        alt := credit,
         loadingAttr := "lazy",
         title := "open full size",
         // a click opens the stored picture full size, with its credit, licence and provider's page (Lightbox)
@@ -1226,7 +1234,7 @@ object Preview:
       ),
       figCaption(
         cls := "cite-tip-credit",
-        span(credit.value),
+        span(credit),
         lic.map((l, u) =>
           val name = LicenseName.label(l.value)
           Href.link(u.value).filter(_.address.nonEmpty) match

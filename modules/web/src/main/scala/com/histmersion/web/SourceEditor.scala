@@ -25,7 +25,8 @@ import com.histmersion.api.UiLabels
   */
 object SourceEditor:
   type FieldName = FieldName.T
-  object FieldName extends Newtype[String, Pure]
+  object FieldName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
 
@@ -156,7 +157,7 @@ object SourceEditor:
         tags = tags
       )
       if patch == Source.Patch() then Right(None)
-      else Right(Some(patch.modify(_.ifUpdatedAt).setTo(orig.updatedAt.map(u => Source.UpdatedAt(u.value)))))
+      else Right(Some(patch.modify(_.ifUpdatedAt).setTo(orig.updatedAt.map(u => u))))
 
   val ConflictMessage =
     "Someone else changed this source after you opened it. The form now shows the current version — " +
@@ -165,7 +166,7 @@ object SourceEditor:
   // ── the component (one per open editor window) ──────────────────────────────────────────────────
 
   def apply(ck: Preview.Target.Source.Citekey): HtmlElement =
-    val key = Citekey(ck.value)
+    val key = ck
     val orig = Var(Option.empty[Source.Detail])
     // the form's own model until it is saved; it shadows nothing in UiState
     val draft = Var(Option.empty[Draft])
@@ -236,7 +237,7 @@ object SourceEditor:
       )
 
     def field(name: FieldName, f: Field, control: HtmlElement, extra: Modifier[HtmlElement]*): HtmlElement =
-      div(cls := "form-field", label(name.value, control), extra, errorFor(f))
+      div(cls := "form-field", label(name, control), extra, errorFor(f))
 
     def chips(
         facet: Facet.Field,
