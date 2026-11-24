@@ -28,7 +28,14 @@ object StoredCreator:
     def of(agent: Creator.Agent): Agent = agent match
       case Creator.Agent.Code                               => Agent("code")
       case Creator.Agent.Model(definition, provider, model) =>
-        Agent("model", Some(s"$definition"), Some(s"$provider"), Some(s"$model"))
+        modelOf(Some(definition), Some(s"$provider"), Some(s"$model"))
+      case Creator.Agent.RunModels(definition) => modelOf(definition, None, None)
+
+    private def modelOf(
+        definition: Option[Creator.Definition.Name],
+        provider: Option[String],
+        model: Option[String]
+    ): Agent = Agent("model", definition.map(d => s"$d"), provider, model)
 
   private def surfaceText(surface: Creator.Surface): String = surface.toString.toLowerCase
 

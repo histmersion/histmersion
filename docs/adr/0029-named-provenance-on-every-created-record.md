@@ -178,6 +178,28 @@ table's create paths were done in this lane, so no table waits on a pending list
 | 4. surfaces | — | `createdBy` on the write inputs, the views, Markdown, the CLI flags, the web card |
 | 5. check | `CreatorRewrite` with `testFixtures` (`creator-fixtures.conf`): the tests' own fixture INSERTs name an unknown creator | `ProvenanceSuite`, V116 and its schema test |
 
+## As built: slice 4 and its refinements (2026-11-24)
+
+### A model step's writes name their model, others are the run's
+
+The rule (coordinator's decision of 2026-11-24): a write is credited to the model whose answer produced it, never to
+"the last model that answered" — a run with several model steps (a draft, then a review) would otherwise credit the
+drafter's writes to the reviewer.
+
+- A record one model step's answer produced names that step's model: `Automated(plugin, workflow, Model(definition,
+  provider, model), internal)` — the step's agent definition, and the provider and model the chain picked for the
+  attempt whose answer passed its checks. The step's context records it (`RunCtx.answered(step)`) and the code that
+  writes that answer runs under it (`RunCtx.byAnswer(step) { … }`): a goal's plan and its approval (plan-goal,
+  `propose`), a hint's effect (hint-effect, `propose`), an article's filter (infer-filter, `propose`), a plan of
+  articles (propose-articles, `propose`), the sweep's seen, ingested, parked and queued picks (acquisition-sweep,
+  `rank`), a compiled article (compile-article, `draft`), a review round's patch (review-article, `fixer-<n>`).
+- A write no one step's answer produced is **the run's**: `Automated(plugin, workflow, RunModels(definition),
+  internal)`, a model agent whose provider and model are not tied to the write; its definition is named when the
+  workflow's steps use exactly one (`WorkflowDefinition.stepDefinitions`), else none. A workflow with no model step
+  is `Code`. Nothing is guessed: a replayed step (a resumed run) has no answer in this process, so its writes are the
+  run's, and so is a write whose model's names do not pass their rules. Stored, `RunModels` is
+  `agent: {kind: model, definition?}` with no provider or model.
+
 ## Consequences
 
 - No create path compiles without a creator in scope, and after V116 none runs without one.

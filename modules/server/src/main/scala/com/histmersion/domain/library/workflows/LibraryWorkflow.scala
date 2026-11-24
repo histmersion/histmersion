@@ -30,6 +30,8 @@ final class LibraryWorkflow(
   private val pipeline: Pipeline = impl.pipeline
   val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire.value)
   def contributor: Creator.Plugin.Name = InTreeWorkflow.Library
+  def stepDefinitions: List[Creator.Definition.Name] =
+    agents.flatMap(a => Creator.Definition.Name.from(a.wire).toOption)
   def version: domain.automation.Pipeline.Version =
     domain.automation.Pipeline.Version(pipeline.version.value)
   def target: TargetKind = io.scalaland.chimney.Transformer

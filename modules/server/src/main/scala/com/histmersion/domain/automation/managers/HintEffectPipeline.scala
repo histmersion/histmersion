@@ -85,7 +85,9 @@ final class HintEffectPipeline(
             )
           )
       )
-      line <- ctx.code[String](AgentRepo.StepRecord.Name("record"))(record(ctx, loaded, proposed))
+      line <- ctx.code[String](AgentRepo.StepRecord.Name("record"))(
+        ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, loaded, proposed))
+      )
       closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
         Pipelines
           .log(

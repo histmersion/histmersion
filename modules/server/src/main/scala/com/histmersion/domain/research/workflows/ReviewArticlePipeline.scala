@@ -186,7 +186,7 @@ final class ReviewArticlePipeline(
         fixed <- fixer(ctx, st.snap, st.merged, c.ledger, r, c.reasons)
         after = ReviewLedger.applyFix(c.ledger, fixed, runId(ctx), ReviewLedger.ApplyFixRound(r))
         patched <- ctx.code[ReviewArticle.Patched](AgentRepo.StepRecord.Name(s"patch-$r"))(
-          write(ctx, st.snap, fixed, r, after)
+          ctx.byAnswer(fixerStep(r))(write(ctx, st.snap, fixed, r, after))
         )
         carry = Carry(
           if patched.conflict.value then c.ledger else after,
@@ -787,6 +787,8 @@ final class ReviewArticlePipeline(
       o.line
     }
 
+  private def fixerStep(r: Int): AgentRepo.StepRecord.Name = AgentRepo.StepRecord.Name(s"fixer-$r")
+
   /** The fixer: every open finding to answer, with the ledger's history, and the critique work code worked out (§6.9) —
     * where each missing critique goes, the paragraphs that name a partner they do not cite. Its revision is checked
     * with the guards: the pairing repair, the pairs its edits leave unanswered or bring in, the closed findings they
@@ -855,7 +857,7 @@ final class ReviewArticlePipeline(
         (ReviewArticle.Fix.Body(repaired.value), hits)
     )
     ctx.llm[FixerAnswer, Fix](
-      AgentRepo.StepRecord.Name(s"fixer-$r"),
+      fixerStep(r),
       StepAgent.Fixer,
       Prompt.UserText(user),
       ResearchAnswers.fixer,

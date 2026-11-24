@@ -126,7 +126,9 @@ final class CompileArticlePipeline(
             )(
               Right(draft.asJson.noSpaces)
             )
-            written <- ctx.code[Written](StepRecord.Name("write"))(write(ctx, snap, draft, decided))
+            written <- ctx.code[Written](StepRecord.Name("write"))(
+              ctx.byAnswer(StepRecord.Name("draft"))(write(ctx, snap, draft, decided))
+            )
             review <- ctx.code[Option[String]](StepRecord.Name("review"))(Right(review(ctx, snap, written)))
             closed <- ctx.code[String](StepRecord.Name("close"))(close(ctx, draft, written, review))
           yield closed

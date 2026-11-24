@@ -101,15 +101,19 @@ final class PlanGoalPipeline(
           )
         else
           for
-            decided <- ctx.approval(
-              AgentRepo.StepRecord.Name("approve"),
-              ApprovalKind.GoalPlan,
-              ApprovalQuery.Subject(slug.value),
-              ApprovalMode.Manual
-            )(
-              Right(plan.asJson.noSpaces)
+            decided <- ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(
+              ctx.approval(
+                AgentRepo.StepRecord.Name("approve"),
+                ApprovalKind.GoalPlan,
+                ApprovalQuery.Subject(slug.value),
+                ApprovalMode.Manual
+              )(
+                Right(plan.asJson.noSpaces)
+              )
             )
-            applied <- ctx.code[Applied](AgentRepo.StepRecord.Name("apply"))(apply(ctx, slug, plan, decided))
+            applied <- ctx.code[Applied](AgentRepo.StepRecord.Name("apply"))(
+              ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(apply(ctx, slug, plan, decided))
+            )
           yield applied.line.value
     yield PipelineDef.Summary(line)
 
