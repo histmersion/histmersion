@@ -594,6 +594,31 @@ edited by hand first; the fixture:
 bash tools/refactor/magnum3-frag-fixture/check.sh
 ```
 
+## Newtypes do the job (G1/G2)
+
+`ValueOntoType` removes `.value` where the newtype itself does the work, so the raw value is touched only in the
+type's companion and at a boundary: `x.value.op(…)` becomes `x.op(…)` when the newtype's companion declares the
+extension `op` (an operation added to the type by hand, then every call site follows); `X(x.value)` of an `x: X`
+becomes `x`; `x.value == y.value` (`!=`, `<`, `<=`, `>`, `>=`) of one newtype becomes `x == y` (Newtype's lifted
+CanEqual and Ordering); and a `.value` handed to a `sinks` method (regexes over SemanticDB symbols of methods whose
+parameter takes the newtype through an instance lifted from its base) is dropped, adding `sinkImport` where the
+file's package is not `sinkPackage`. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
+extensions, limits itself to `paths`, and writes `report` (each rewrite) and `<report>-missing.tsv` (each
+`x.value.op` whose newtype has no extension `op`: the worklist of operations to add to the types). After
+`sbt compile Test/compile`, from the worktree root:
+
+```text
+SCALAFIX_JAVA_OPTS="-Xmx6g -Xss8m" bash tools/refactor/scalafix.sh --config tools/refactor/value-onto-type-<batch>.conf \
+  --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules/<module>/src/main
+```
+
+The fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/ValueOntoType.scala \
+  tools/refactor/value-onto-type-fixture/input tools/refactor/value-onto-type-fixture/expected
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.
