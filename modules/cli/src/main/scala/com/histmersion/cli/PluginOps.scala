@@ -291,7 +291,7 @@ final class PluginOps(using console: Console)(
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
           o.yes.value || confirm(
-            Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")
+            Cli.Question(s"Install ${jar.plugins.map(p => shown"${p.id} ${p.version}").mkString(", ")}?")
           ),
           (),
           err("not installed (answer y, or pass --yes when there is no terminal)")
@@ -378,7 +378,7 @@ final class PluginOps(using console: Console)(
       )
       p.error.foreach { e =>
         Cli.out.println(
-          s"  with its defaults alone it does not register (it may need settings under histmersion.plugins.${p.id}):"
+          shown"  with its defaults alone it does not register (it may need settings under histmersion.plugins.${p.id}):"
         )
         e.sentences.foreach(s => Cli.out.println(s"    - $s"))
       }
@@ -433,7 +433,7 @@ final class PluginOps(using console: Console)(
         .map(_.plugins)
         .filter(_.nonEmpty)
         .map(
-          _.map(p => s"${p.id} ${p.version}" + (if p.access.isEmpty then "" else s" (${p.access.mkString(", ")})"))
+          _.map(p => shown"${p.id} ${p.version}" + (if p.access.isEmpty then "" else s" (${p.access.mkString(", ")})"))
             .mkString(", ")
         )
         .getOrElse(s"${PluginKit.idsOf(f, idx).mkString(", ")} (dropped in; not described)")

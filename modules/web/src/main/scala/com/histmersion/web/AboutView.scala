@@ -181,7 +181,7 @@ object AboutView:
             case Some(PluginState.Failed | PluginState.Refused) => ServiceState.Down
             case _                                              => ServiceState.Unknown
           val detail = List(
-            Some(s"v${p.version}"),
+            Some(shown"v${p.version}"),
             Option.when(p.provides.nonEmpty)(p.provides.mkString(", ")),
             Option.when(p.settings.nonEmpty)(p.settings.map(s => s"${s.key} = ${s.value}").mkString(", ")),
             Option.when(p.errors.nonEmpty)(p.errors.map(_.sentence).mkString("; ")),
@@ -191,7 +191,7 @@ object AboutView:
             Wording.plugin(Wording.PluginId(p.id.value)),
             Wording.capitalize(p.state.value),
             Some(st),
-            Some(s"${p.id} · $detail")
+            Some(shown"${p.id} · $detail")
           )
         } ++ r.warnings.map(w => Row("", w.value))
       )

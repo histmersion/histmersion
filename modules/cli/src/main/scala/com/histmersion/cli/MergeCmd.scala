@@ -265,7 +265,7 @@ object MergeCmd:
               yes || plan.changes.value == 0 ||
                 Cli.confirm(
                   Cli.Question(
-                    s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
+                    shown"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
                       shown"${Plural.count(Plural.CountN(plan.changes.value.toLong), Plural.CountSingular("change"))})? A backup is taken first."
                   )
                 ),

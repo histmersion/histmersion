@@ -565,7 +565,8 @@ object Client:
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
 
   type ServerUrl = ServerUrl.T
-  object ServerUrl extends Newtype[String, Pure]
+  object ServerUrl extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** The API key the CLI sends as `Authorization: Bearer <token>`. Never a command-line argument, where `ps` shows it:
     * `HISTMERSION_TOKEN`, else the first line of the file `cli.token-file` names.
@@ -615,14 +616,14 @@ object Client:
     case 401 =>
       Problem.Unclassified(
         Legacy.Text(
-          s"$serverUrl refused ${what(write)}: it needs its API key — set HISTMERSION_TOKEN, or name a file that " +
+          shown"$serverUrl refused ${what(write)}: it needs its API key — set HISTMERSION_TOKEN, or name a file that " +
             "holds it in cli.token-file"
         )
       )
-    case 403 => Problem.Unclassified(Legacy.Text(s"$serverUrl refused ${what(write)} (HTTP 403)"))
+    case 403 => Problem.Unclassified(Legacy.Text(shown"$serverUrl refused ${what(write)} (HTTP 403)"))
     case 404 =>
       Problem.Unclassified(
-        Legacy.Text(s"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?")
+        Legacy.Text(shown"$serverUrl has no such endpoint (HTTP 404) — is the CLI newer than the server?")
       )
     case c => Problem.Unclassified(Legacy.Text(s"unexpected answer from $serverUrl: HTTP $c"))
 

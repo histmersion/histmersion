@@ -410,22 +410,22 @@ object QueueView:
     val ops = Ops(
       setDone = (item, d) =>
         write(
-          UiLabels.Text(s"update item ${item.id}"),
+          UiLabels.Text(shown"update item ${item.id}"),
           ApiClient.queuePatch(
             item.id,
             Queue.QueuePatch(status = Some(Queue.QueueItem.Status(if d.value then Queue.Done else Queue.Open)))
           )
         )(),
       edit = (item, p, after) =>
-        write(UiLabels.Text(s"edit item ${item.id}"), ApiClient.queuePatch(item.id, p))(_ => after()),
-      delete = item => write(UiLabels.Text(s"delete item ${item.id}"), ApiClient.queueDelete(item.id))(),
+        write(UiLabels.Text(shown"edit item ${item.id}"), ApiClient.queuePatch(item.id, p))(_ => after()),
+      delete = item => write(UiLabels.Text(shown"delete item ${item.id}"), ApiClient.queueDelete(item.id))(),
       fulfil = (item, ck) =>
         val (id, p) = fulfil(item, ck)
-        write(UiLabels.Text(s"tick item $id off"), ApiClient.queuePatch(id, p))()
+        write(UiLabels.Text(shown"tick item $id off"), ApiClient.queuePatch(id, p))()
       ,
       recheck = item =>
         write(
-          UiLabels.Text(s"re-check item ${item.id}"),
+          UiLabels.Text(shown"re-check item ${item.id}"),
           ApiClient.acquireRecheck(
             Acquire.Checks.RecheckRequest(
               id = Some(Acquire.Checks.RecheckRequest.Id(item.id.value)),
@@ -841,7 +841,7 @@ object QueueView:
   /** The id of an item's row, which a link to it scrolls to. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def itemAnchor(id: Queue.QueueItem.Id): String = s"queue-item-$id"
+  def itemAnchor(id: Queue.QueueItem.Id): String = shown"queue-item-$id"
 
   /** The item a link to the list points at (`?item=12`). Pure. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

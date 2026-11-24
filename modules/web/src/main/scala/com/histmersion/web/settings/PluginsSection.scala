@@ -58,7 +58,7 @@ object PluginsSection:
         ),
         r.plugins.map(p =>
           SettingsForm.Item(
-            SettingsForm.Item.Key(s"plugins.${p.id}.enabled"),
+            SettingsForm.Item.Key(shown"plugins.${p.id}.enabled"),
             Some(SettingsForm.Item.Name(Wording.plugin(Wording.PluginId(p.id.value)))),
             Some(SettingsForm.Item.Help((state(p).value :: provides(p).map(_.value)).mkString(" · "))),
             fallback = Some(SettingsForm.Item.Fallback(p.enabled.toString))

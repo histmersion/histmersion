@@ -321,9 +321,9 @@ object JobsView:
               QueueItemLink(
                 Queue.Kind.Acquire,
                 Goal.Plans.GoalLink.QueueNumber(i.value),
-                title := (if j.succeeded then s"acquisition item $i was ticked off by this job"
-                          else s"acquisition item $i is ticked off when this job succeeds"),
-                s"acquisition item $i"
+                title := (if j.succeeded then shown"acquisition item $i was ticked off by this job"
+                          else shown"acquisition item $i is ticked off when this job succeeds"),
+                shown"acquisition item $i"
               )
             )
           )

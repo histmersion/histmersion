@@ -159,7 +159,7 @@ object CalibreCmd:
     ).flatMap { res =>
       if json.value then Cli.out.println(Output.json(res.source))
       else
-        Cli.out.println(s"Imported Calibre id $id as `${res.citekey}` — ${res.title}")
+        Cli.out.println(shown"Imported Calibre id $id as `${res.citekey}` — ${res.title}")
         res.relinkedFrom.foreach(prev => Cli.out.println(s"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
         Cli.out.println(s"File (left in place, never modified): ${res.file}")
         res.cover.foreach(cv =>
@@ -174,7 +174,7 @@ object CalibreCmd:
             res.job.fold(Right(())) { a =>
               Cli.out.println(
                 s"queued job ${a.jobId} for ${a.citekey}" +
-                  item.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
+                  item.fold("")(i => shown" — acquisition item $i is ticked off when it succeeds")
               )
               json.choose(Cli.Following.Return, following).follow(IngestCmd.pollJob(c, a.jobId, 0))
             }
@@ -231,7 +231,7 @@ object CalibreCmd:
       _ =
         if json.value then Cli.out.println(Output.json(res))
         else
-          Cli.out.println(s"Imported Calibre id $id as `$ck` — ${book.title}")
+          Cli.out.println(shown"Imported Calibre id $id as `$ck` — ${book.title}")
           target match
             case ImportTarget.Update(Some(prev)) => Cli.out.println(s"Re-linked `$ck` from Calibre id $prev to $id")
             case _                               => ()
@@ -349,7 +349,7 @@ object CalibreCmd:
       }
     else
       pushOne(c, ck, file.map(f => Path.of(f))).map { case (id, title) =>
-        Output.emit(json, Calibre.Json.Linked(ck, id))(_ => s"added `$ck` to Calibre as id $id — $title")
+        Output.emit(json, Calibre.Json.Linked(ck, id))(_ => shown"added `$ck` to Calibre as id $id — $title")
       }
 
   /** `push --replace` (#652): the file goes into the entry the source is ALREADY linked to, so the link stays valid and
@@ -555,7 +555,7 @@ object CalibreCmd:
         else
           val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
           results.foreach {
-            case (ck, Right((id, _))) => Cli.out.println(s"  + $ck → Calibre id $id")
+            case (ck, Right((id, _))) => Cli.out.println(shown"  + $ck → Calibre id $id")
             case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.problems.sentences.mkString("; ")}")
           }
           val failed = results.count(_._2.isLeft)
@@ -690,7 +690,7 @@ object CalibreCmd:
       json,
       Calibre.Json.Updated(ck, id, changes.map(ch => Calibre.Json.Updated.Changed(ch.field.name.value)))
     )(u =>
-      if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
+      if u.changed.isEmpty then shown"Calibre id $id already agrees with `$ck` — nothing written"
       else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
     )
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -747,7 +747,7 @@ object CalibreCmd:
               s.link(CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value.toString)))
                 .map(l =>
                   Output.emit(json, Calibre.Json.Linked(l.citekey, id))(_ =>
-                    s"linked `${l.citekey}` to Calibre id $id — ${l.title}"
+                    shown"linked `${l.citekey}` to Calibre id $id — ${l.title}"
                   )
                 )
             case None =>
@@ -762,7 +762,7 @@ object CalibreCmd:
                   Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(Source.CalibreId(id.value.toString)))))
                 )
               yield Output.emit(json, Calibre.Json.Linked(sw.source.citekey, id))(l =>
-                s"linked `${l.citekey}` to Calibre id $id — ${book.title}"
+                shown"linked `${l.citekey}` to Calibre id $id — ${book.title}"
               )
         case Command.Push(ckText, file, replaceFlag, json) =>
           val ck = Citekey(ckText)

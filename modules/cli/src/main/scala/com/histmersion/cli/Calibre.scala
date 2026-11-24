@@ -70,7 +70,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def byId(id: Calibre.Book.Id): Either[Problem, Option[Calibre.Book]] =
-    viaCalibredb(Some(Api.Search.Text(s"id:$id")), Paging.Limit(1))
+    viaCalibredb(Some(Api.Search.Text(shown"id:$id")), Paging.Limit(1))
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), Paging.Limit(1)).map(_.headOption))
 
@@ -96,7 +96,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       limit: Paging.Limit
   ): Either[Problem, List[Calibre.Book]] =
     val where = id match
-      case Some(n) => s"b.id = ${n.value}"
+      case Some(n) => shown"b.id = $n"
       case None    =>
         val like = Calibre.sqlLiteral("%" + query.fold("")(_.value) + "%")
         s"(b.title LIKE $like OR b.author_sort LIKE $like)"
@@ -147,7 +147,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     for
       _ <- Calibre.guard(meta.title, Calibre.normaliseAuthors(meta.authors))
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      cur <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
+      cur <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(shown"there is no Calibre entry $id"))))
       changes <- Calibre.updatePlan(meta, cur)
       _ <- write(id, changes)
     yield changes
@@ -205,7 +205,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         (),
         GuiRunning
       )
-      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
+      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(shown"there is no Calibre entry $id"))))
       _ <- shell.run(cmd)
     yield ()
 
@@ -224,7 +224,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         GuiRunning
       )
       _ <- Either.cond(Files.isRegularFile(file), (), Problem.Unclassified(Legacy.Text(s"no such file: $file")))
-      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(s"there is no Calibre entry $id"))))
+      _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(shown"there is no Calibre entry $id"))))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb.value, libArgs, id, file))
     yield fmt
 
@@ -344,7 +344,7 @@ object Calibre:
         Left(
           Problem.Unclassified(
             Legacy.Text(
-              s"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
+              shown"the generated citekey '$ck' is already $what — importing Calibre id $id would merge two " +
                 shown"works into one record. Pass --citekey <another key> for a separate record, or --citekey $ck " +
                 "to import into that record on purpose"
             )
@@ -1077,7 +1077,8 @@ object Calibre:
     val Year: api.catalogue.Year.type = api.catalogue.Year
 
     type Id = Id.T
-    object Id extends Newtype[Int, Pure]
+    object Id extends Newtype[Int, Pure]:
+      given Display[T] = Display(id => s"${id.value}")
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = api.library.Title
     val Title: api.library.Title.type = api.library.Title
