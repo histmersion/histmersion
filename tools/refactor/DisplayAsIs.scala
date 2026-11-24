@@ -24,7 +24,11 @@ class DisplayAsIs(config: DisplayAsIs.Config) extends SemanticRule("DisplayAsIs"
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val objects = doc.tree.collect {
-      case o: Defn.Object if wanted(o.name.symbol.value.replaceAll("[^/.#]*\\$package\\.", "")) && !o.templ.stats.exists(_.syntax == config.instance) => o
+      case o: Defn.Object if wanted(o.name.symbol.value.replaceAll("[^/.#]*\\$package\\.", "")) && !o.templ.stats.exists {
+            case g: Defn.Given => g.syntax.contains(config.typeClass.split('.').last)
+            case g: Defn.GivenAlias => g.syntax.contains(config.typeClass.split('.').last)
+            case _ => false
+          } => o
     }
     if (objects.isEmpty) Patch.empty
     else {
