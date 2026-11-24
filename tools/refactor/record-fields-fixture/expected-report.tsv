@@ -1,0 +1,6 @@
+kind	class	what
+fields	fixture/Put#	createdBy: Option[provenance.By] = None
+parent	fixture/Put#	provenance.Named
+fields	fixture/Patch#	createdBy: Option[provenance.By] = None
+parent	fixture/Patch#	provenance.Named
+fields	fixture/View#	createdAt: Option[java.time.Instant] = None
