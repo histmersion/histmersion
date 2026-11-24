@@ -28,7 +28,8 @@ object ProviderKind:
   /** The host's own providers, in their order. */
   object Plugin:
     type FilePath = FilePath.T
-    object FilePath extends Newtype[String, Pure]
+    object FilePath extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Id = Id.T
     object Id extends Newtype[String, Pure]
     type Name = Name.T

@@ -468,7 +468,8 @@ object PlanQuota:
     type Covers = Covers.T
     object Covers extends Newtype[String, Pure]
     type Floors = Floors.T
-    object Floors extends Newtype[String, Pure]
+    object Floors extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type FloorsSource = FloorsSource.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object FloorsSource extends Newtype[String, Pure]

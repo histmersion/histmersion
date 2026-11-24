@@ -41,7 +41,8 @@ object IconSelect:
     object Label extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type Group = Group.T
-    object Group extends Newtype[String, Pure]
+    object Group extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Hint = Hint.T
     object Hint extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
@@ -225,7 +226,7 @@ object IconSelect:
           os.zipWithIndex.flatMap { (o, i) =>
             val head = o.group
               .filter(g => i == 0 || os(i - 1).group != o.group)
-              .map(g => li(cls := "icon-select-group", role := "presentation", g.value))
+              .map(g => li(cls := "icon-select-group", role := "presentation", g))
               .toList
             head :+ li(
               idAttr := s"$id-$i",

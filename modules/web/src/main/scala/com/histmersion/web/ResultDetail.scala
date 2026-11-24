@@ -153,7 +153,7 @@ object ResultDetail:
       Option.when(r.registers.nonEmpty)(
         div(
           h3(cls := "place-record-title", "Listed in"),
-          ul(r.registers.map(g => li(s"${g.name}: ", code(g.id.value))))
+          ul(r.registers.map(g => li(s"${g.name}: ", code(g.id))))
         )
       )
     )

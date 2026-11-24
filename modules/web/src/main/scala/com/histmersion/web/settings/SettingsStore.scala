@@ -11,6 +11,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.web.{:=, given}
 
 /** The settings as the server reads its settings file, for every Settings page: read once when a page opens and again
   * after each change; and the change itself — written into the file by the server, then applied.
@@ -95,7 +96,7 @@ object SettingsStore:
                                                          else "")
       ),
       Option.when(w.restart.nonEmpty)(restartLine(w)),
-      w.warnings.map(x => p(cls := "settings-warning", x.value)),
+      w.warnings.map(x => p(cls := "settings-warning", x)),
       reloadErrors.map(e =>
         ErrorLine.text(Problem.Unclassified(Legacy.Text(s"The server did not take the change on: $e")))
       ),

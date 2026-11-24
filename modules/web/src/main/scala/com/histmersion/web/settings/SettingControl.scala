@@ -6,6 +6,7 @@ import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.web.{:=, given}
 
 /** One setting in a form: its name and what it does, the control for its kind, and where its value comes from — the
   * default, the settings file, or an environment variable that wins over the file. A setting the file writes with a
@@ -48,7 +49,7 @@ object SettingControl:
             name.getOrElse(nameOf(f.key)).value
           )
         else label(forId := id, cls := "setting-name", name.getOrElse(nameOf(f.key)).value),
-        span(cls := "setting-key muted", f.relative.value)
+        span(cls := "setting-key muted", f.relative)
       ),
       help.map(_.value).orElse(Option(f.doc.value).filter(_.nonEmpty)).map(t => p(cls := "setting-doc", t)),
       Option.when(f.kind.value != "flag")(control(f, draft, id, locked)),
@@ -110,7 +111,7 @@ object SettingControl:
     val dflt = Draft.plain(f.default.map(d => Draft.Text(d.value)))
     div(
       cls := "setting-status muted",
-      f.locked.map(why => span(cls := "setting-locked", why.value)),
+      f.locked.map(why => span(cls := "setting-locked", why)),
       Option.when(f.source == ConfigEdit.Source.Environment.wire)(
         span(
           cls := "setting-env",

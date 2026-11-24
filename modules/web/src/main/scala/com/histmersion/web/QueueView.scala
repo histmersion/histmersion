@@ -732,7 +732,7 @@ object QueueView:
               .map(g =>
                 WinLink(
                   WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)),
-                  title := g.slug.value,
+                  title := g.slug,
                   Option(g.title)
                     .filter(_.value.trim.nonEmpty)
                     .map(_.value)
@@ -976,6 +976,6 @@ object QueueView:
     case Seg.Italic(t) => em(t)
     case Seg.Doi(d)    =>
       a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d)
-    case Seg.Url(u)    => a(href := u.value, target := "_blank", rel := "noopener", u.value)
+    case Seg.Url(u)    => a(href := u, target := "_blank", rel := "noopener", u)
     case Seg.Cite(ck)  => SourceLink(ck)
     case Seg.Ident(id) => IdentLink(id)

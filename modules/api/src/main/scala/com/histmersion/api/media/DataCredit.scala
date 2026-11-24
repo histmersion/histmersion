@@ -18,13 +18,17 @@ object DataCredit:
   object Name extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type UsedFor = UsedFor.T
-  object UsedFor extends Newtype[String, Pure]
+  object UsedFor extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Licence = Licence.T
-  object Licence extends Newtype[String, Pure]
+  object Licence extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type LicenceUrl = LicenceUrl.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object LicenceUrl extends Newtype[String, Pure]
+  object LicenceUrl extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Url = Url.T
-  object Url extends Newtype[String, Pure]
+  object Url extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type OnMap = OnMap.T
   object OnMap extends Newtype[Boolean, Pure]

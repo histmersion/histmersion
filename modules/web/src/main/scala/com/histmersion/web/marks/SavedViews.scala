@@ -117,7 +117,7 @@ object SavedViews:
               cls := "saved-view",
               a(
                 cls := "saved-view-open",
-                href := ItemRef.back(b.target).value,
+                href := ItemRef.back(b.target),
                 b.name,
                 title := s"Open the view “${b.name}”: ${Target.where(b.target)}",
                 onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); OpenBack(b.target) } }

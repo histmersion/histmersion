@@ -11,7 +11,8 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object NoteMarkdown:
   type Href = Href.T
-  object Href extends Newtype[String, Pure]
+  object Href extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 

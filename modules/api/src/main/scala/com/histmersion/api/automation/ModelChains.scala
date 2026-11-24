@@ -14,6 +14,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 object ModelChains:
   object Chain:
@@ -445,7 +446,8 @@ object ModelChains:
 
   object SettingSource:
     type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    object Wire extends Newtype[String, Pure]:
+      given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LimitStatus(
@@ -464,7 +466,8 @@ object ModelChains:
 
   object LimitStatus:
     type Limit = Limit.T
-    object Limit extends Newtype[String, Pure]
+    object Limit extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Window = Window.T
     object Window extends Newtype[String, Pure]
     type Amount = Amount.T
@@ -495,7 +498,8 @@ object ModelChains:
 
   object AllowanceStatus:
     type Target = Target.T
-    object Target extends Newtype[String, Pure]
+    object Target extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export Allowance.ReservePct
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
@@ -519,7 +523,8 @@ object ModelChains:
 
   object ChainEntry:
     type Model = Model.T
-    object Model extends Newtype[String, Pure]
+    object Model extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Ready = Ready.T
     object Ready extends Newtype[Boolean, Pure]
     type Usable = Usable.T
@@ -542,6 +547,7 @@ object ModelChains:
 
   object RoleChain:
     type Role = Role.T
-    object Role extends Newtype[String, Pure]
+    object Role extends Newtype[String, Pure]:
+      given Display[T] = Display(role => Wording.humanize(Wording.Id(role.value)))
     type Active = Active.T
     object Active extends Newtype[String, Pure]

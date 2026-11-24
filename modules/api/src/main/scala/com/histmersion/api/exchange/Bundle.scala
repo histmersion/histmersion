@@ -25,6 +25,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
@@ -67,7 +68,8 @@ object Bundle:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    object Wire extends Newtype[String, Pure]:
+      given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
 
     def wireOf(k: Kind): Wire = k match
       case Source         => Wire("source")

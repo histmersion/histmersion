@@ -3,6 +3,7 @@ package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 enum ItemStatus(val wire: ItemStatus.Wire) derives CanEqual:
   case Pending extends ItemStatus(ItemStatus.Wire("pending"))
   case Held extends ItemStatus(ItemStatus.Wire("held"))
@@ -17,7 +18,8 @@ enum ItemStatus(val wire: ItemStatus.Wire) derives CanEqual:
 
 object ItemStatus:
   type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  object Wire extends Newtype[String, Pure]:
+    given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[ItemStatus] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

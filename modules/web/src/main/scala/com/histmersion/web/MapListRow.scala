@@ -32,6 +32,7 @@ object MapListRow:
   object Note extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type Href = Href.T
-  object Href extends Newtype[String, Pure]
+  object Href extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Undated = Undated.T
   object Undated extends Newtype[Boolean, Pure]

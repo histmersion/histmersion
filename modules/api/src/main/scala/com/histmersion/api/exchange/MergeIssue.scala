@@ -42,7 +42,8 @@ object MergeIssue:
   /** What an issue is about. The wire name is part of the issue id, so it never changes. */
 
   type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  object Id extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Title = Title.T
   object Title extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

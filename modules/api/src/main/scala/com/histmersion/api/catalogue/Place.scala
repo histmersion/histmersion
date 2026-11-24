@@ -1106,7 +1106,8 @@ object Place:
     type Property = Property.T
     object Property extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    object Id extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val names: Map[Property, Name] = Map(

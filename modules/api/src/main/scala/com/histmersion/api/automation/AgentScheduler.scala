@@ -9,6 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 object AgentScheduler:
   /** Why the scheduler started, keeps waiting or holds an item: the narration of its decision, not a failure. */
@@ -42,12 +43,14 @@ object AgentScheduler:
     type Item = Item.T
     object Item extends Newtype[Long, Pure]
     type Manager = Manager.T
-    object Manager extends Newtype[String, Pure]
+    object Manager extends Newtype[String, Pure]:
+      given Display[T] = Display(manager => Wording.humanize(Wording.Id(manager.value)))
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     export JobKinds.Wire as JobType
     type Target = Target.T
-    object Target extends Newtype[String, Pure]
+    object Target extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Waiting(
@@ -82,7 +85,8 @@ object AgentScheduler:
     type WaitedMinutes = WaitedMinutes.T
     object WaitedMinutes extends Newtype[Long, Pure]
     type Code = Code.T
-    object Code extends Newtype[String, Pure]
+    object Code extends Newtype[String, Pure]:
+      given Display[T] = Display(code => Wording.humanize(Wording.Id(code.value)))
     type Behind = Behind.T
     object Behind extends Newtype[String, Pure]
     type Position = Position.T

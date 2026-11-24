@@ -23,6 +23,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -538,14 +539,18 @@ object Agents:
   object RunInfo:
 
     type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    object Id extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Pipeline = Pipeline.T
-    object Pipeline extends Newtype[String, Pure]
+    object Pipeline extends Newtype[String, Pure]:
+      given Display[T] = Display(pipeline => Wording.humanize(Wording.Id(pipeline.value)))
     type Target = Target.T
-    object Target extends Newtype[String, Pure]
+    object Target extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export Run.State.Wire as Status
     type Progress = Progress.T
-    object Progress extends Newtype[String, Pure]
+    object Progress extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
@@ -555,7 +560,8 @@ object Agents:
     type BudgetTokens = BudgetTokens.T
     object BudgetTokens extends Newtype[Long, Pure]
     type Warnings = Warnings.T
-    object Warnings extends Newtype[String, Pure]
+    object Warnings extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
@@ -726,7 +732,8 @@ object Agents:
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object CheckLevel:
     type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    object Wire extends Newtype[String, Pure]:
+      given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
 
     def parse(s: Wire): Option[CheckLevel] = values.find(_.wire == s)
     given WireEnumValues[CheckLevel]:
@@ -911,7 +918,8 @@ object Agents:
     export Approval.State.Wire as State
     export Approval.Note
     type Result = Result.T
-    object Result extends Newtype[String, Pure]
+    object Result extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type DecidedAt = DecidedAt.T

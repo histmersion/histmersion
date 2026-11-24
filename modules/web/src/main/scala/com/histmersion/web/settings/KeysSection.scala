@@ -183,7 +183,7 @@ object KeysSection:
       div(
         cls := "setting-head",
         span(cls := "setting-name", name(f.relative)),
-        span(cls := "setting-key muted", f.relative.value)
+        span(cls := "setting-key muted", f.relative)
       ),
       p(cls := "key-state", f.credential.map(c => state(c).value).getOrElse("")),
       f.envVar.map(v => p(cls := "muted", s"Environment variable: $v"))
@@ -215,7 +215,7 @@ object KeysSection:
       div(
         cls := "setting-head",
         span(cls := "setting-name", name(f.relative)),
-        span(cls := "setting-key muted", f.relative.value)
+        span(cls := "setting-key muted", f.relative)
       ),
       p(
         cls := "key-state",

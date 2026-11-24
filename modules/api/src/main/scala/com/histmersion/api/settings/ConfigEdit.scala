@@ -68,7 +68,8 @@ object ConfigEdit:
 
   object Field:
     type LocalKey = LocalKey.T
-    object LocalKey extends Newtype[String, Pure]
+    object LocalKey extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
     type Key = Key.T
     object Key extends Newtype[String, Pure]:
@@ -92,7 +93,8 @@ object ConfigEdit:
     type Restart = Restart.T
     object Restart extends Newtype[String, Pure]
     type Locked = Locked.T
-    object Locked extends Newtype[String, Pure]
+    object Locked extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Resolved = Resolved.T
     object Resolved extends Newtype[String, Pure]
 
@@ -201,7 +203,8 @@ object ConfigEdit:
     type Created = Created.T
     object Created extends Newtype[Boolean, Pure]
     type Warnings = Warnings.T
-    object Warnings extends Newtype[String, Pure]
+    object Warnings extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Restartable = Restartable.T
     object Restartable extends Newtype[Boolean, Pure]
 

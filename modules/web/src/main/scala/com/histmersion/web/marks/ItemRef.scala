@@ -26,7 +26,8 @@ final case class ItemRef(target: Target, title: Title):
 
 object ItemRef:
   type Href = Href.T
-  object Href extends Newtype[String, Pure]
+  object Href extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def source(ck: Citekey, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ItemKey(ck.value)), title)

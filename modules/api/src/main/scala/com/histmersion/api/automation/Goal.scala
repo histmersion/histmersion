@@ -56,13 +56,15 @@ object Goal:
   object Stage extends Newtype[String, Pure]
   type StageMeaning = StageMeaning.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object StageMeaning extends Newtype[String, Pure]
+  object StageMeaning extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Uid = Uid.T
   object Uid extends Newtype[String, Pure]
 
   /** The stages of a research goal, as the store and the wire spell them. */
   type Slug = Slug.T
-  object Slug extends Newtype[String, Pure]
+  object Slug extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type StatusValue = StatusValue.T
@@ -244,9 +246,11 @@ object Goal:
       type Rationale = Rationale.T
       object Rationale extends Newtype[String, Pure]
       type Queries = Queries.T
-      object Queries extends Newtype[String, Pure]
+      object Queries extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type Dropped = Dropped.T
-      object Dropped extends Newtype[String, Pure]
+      object Dropped extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
 
     export Goal.LinkKind as LinkKind
     export com.histmersion.api.research.DraftMode
@@ -277,7 +281,8 @@ object Goal:
       type Section = Section.T
       object Section extends Newtype[String, Pure]
       type Problems = Problems.T
-      object Problems extends Newtype[String, Pure]
+      object Problems extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type Filter = Filter.T
       object Filter extends Newtype[String, Pure]
 
@@ -340,7 +345,8 @@ object Goal:
 
     object GoalSchedule:
       type Cron = Cron.T
-      object Cron extends Newtype[String, Pure]
+      object Cron extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type Enabled = Enabled.T
       object Enabled extends Newtype[Boolean, Pure]
       type BudgetUsd = BudgetUsd.T

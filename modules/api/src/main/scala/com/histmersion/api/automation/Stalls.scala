@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Stalls:
@@ -33,7 +34,8 @@ object Stalls:
     export api.research.ReviewGoal.Slug
     export Facts.{IdleDays, LastProgress, Status, Title}
     type Code = Code.T
-    object Code extends Newtype[String, Pure]
+    object Code extends Newtype[String, Pure]:
+      given Display[T] = Display(code => Wording.humanize(Wording.Id(code.value)))
     type Why = Why.T
     @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
     object Why extends Newtype[String, Pure]:

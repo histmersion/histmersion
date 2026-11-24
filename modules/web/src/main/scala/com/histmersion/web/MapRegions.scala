@@ -122,9 +122,11 @@ object MapRegions:
 
   object LayerSizes:
     type Line = Line.T
-    object Line extends Newtype[String, Pure]
+    object Line extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Zooms = Zooms.T
-    object Zooms extends Newtype[String, Pure]
+    object Zooms extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
     * `by zoom — zoom 0: … · zoom 1: …`).

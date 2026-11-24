@@ -33,6 +33,6 @@ object NoteView:
     case NoteMarkdown.Inline.Em(s)       => em(s)
     case NoteMarkdown.Inline.Code(s)     => code(s)
     case NoteMarkdown.Inline.Link(t, to) =>
-      if to.value.startsWith("/") then a(href := to.value, t)
-      else a(href := to.value, target := "_blank", rel := "noopener", t)
+      if to.value.startsWith("/") then a(href := to, t)
+      else a(href := to, target := "_blank", rel := "noopener", t)
     case NoteMarkdown.Inline.Cite(ck) => a(href := SourceLink.href(ck), cls := "note-cite", ck)

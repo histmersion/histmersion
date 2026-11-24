@@ -10,7 +10,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 /** The "open in a new tab" action of a list row or a detail. */
 object NewTabLink:
   type Href = Href.T
-  object Href extends Newtype[String, Pure]
+  object Href extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
@@ -19,7 +20,7 @@ object NewTabLink:
   def apply(href0: Href, what: Label): HtmlElement =
     a(
       cls := "btn btn--bare btn--icon btn--sm new-tab",
-      href := href0.value,
+      href := href0,
       target := "_blank",
       rel := "noopener",
       title := s"Open “$what” in a new tab",
