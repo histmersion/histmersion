@@ -78,7 +78,7 @@ abstract class JobRecordsContract extends DbSuite:
   jtest("a job that failed with several problems keeps every one, in order") { jobs =>
     val j = jobs.create(Job.Kind("reocr"), None, None, None)
     val _ = jobs.transition(jobId(j), JobState.Queued, JobState.Running)
-    val all = Problems.of(Problem.Conflict.Busy(Problem.Conflict.Activity.Backup), Problem.Run.Interrupted)
+    val all = Problems.of(Problem.Conflict.Busy(Problem.Conflict.Activity.Restore), Problem.Run.Interrupted)
     val _ = jobs.transition(jobId(j), JobState.Running, JobState.Failed, error = Some(all))
     assertEquals(jobs.get(jobId(j)).flatMap(_.problems), Some(all.toNonEmpty))
   }

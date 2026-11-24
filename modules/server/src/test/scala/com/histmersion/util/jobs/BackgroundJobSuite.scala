@@ -60,7 +60,7 @@ class BackgroundJobSuite extends DbSuite:
         .endsWith("java.lang.IllegalStateException: boom")
     )
     // problems carried through an exception are each kept, not folded into one
-    val two = Problems.of(Problem.Run.Interrupted, Problem.Conflict.Busy(Problem.Conflict.Activity.Backup))
+    val two = Problems.of(Problem.Run.Interrupted, Problem.Conflict.Busy(Problem.Conflict.Activity.Restore))
     assertEquals(BackgroundJob.describe(Raised(two)), two)
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
@@ -128,13 +128,13 @@ class BackgroundJobSuite extends DbSuite:
     Thread.sleep(50)
     val several = BackgroundJob
       .start(ds, workers, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
-        Outcome.failed(Problems.of(Problem.Conflict.Busy(Problem.Conflict.Activity.Backup), Problem.Run.Interrupted))
+        Outcome.failed(Problems.of(Problem.Conflict.Busy(Problem.Conflict.Activity.Restore), Problem.Run.Interrupted))
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       await(several.id).problems,
       Some(
-        NonEmptyVector.of[Problem](Problem.Conflict.Busy(Problem.Conflict.Activity.Backup), Problem.Run.Interrupted)
+        NonEmptyVector.of[Problem](Problem.Conflict.Busy(Problem.Conflict.Activity.Restore), Problem.Run.Interrupted)
       ),
       "every problem, in order"
     )

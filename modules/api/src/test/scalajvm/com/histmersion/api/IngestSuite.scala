@@ -309,7 +309,7 @@ class IngestSuite extends munit.FunSuite:
 
   test("job Markdown lists every problem of a job that failed with several"):
     val missing = Problem.Invalid.Missing.here(Problem.Field("doi"))
-    val busy = Problem.Conflict.Busy(Problem.Conflict.Activity.Backup)
+    val busy = Problem.Conflict.Busy(Problem.Conflict.Activity.Restore)
     val j = JobInfo(
       SpatialHierarchyResult.Job.Id("abc"),
       JobKinds.Wire(Ingest.KindIngest),

@@ -75,7 +75,7 @@ class JobFollowSuite extends munit.FunSuite:
           Some(
             NonEmptyVector.of[Problem](
               Problem.Run.Interrupted,
-              Problem.Conflict.Busy(Problem.Conflict.Activity.Backup)
+              Problem.Conflict.Busy(Problem.Conflict.Activity.Restore)
             )
           )
         )
@@ -85,7 +85,7 @@ class JobFollowSuite extends munit.FunSuite:
       r.left.map(_.problems.sentences),
       Left(
         Vector(
-          s"job j1 failed: interrupted by a restart; ${(Problem.Conflict.Busy(Problem.Conflict.Activity.Backup): Problem).sentence}"
+          s"job j1 failed: interrupted by a restart; ${(Problem.Conflict.Busy(Problem.Conflict.Activity.Restore): Problem).sentence}"
         )
       )
     )
