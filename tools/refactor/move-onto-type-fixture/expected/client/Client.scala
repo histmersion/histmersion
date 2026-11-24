@@ -29,3 +29,5 @@ object Client:
   val findings = List(Finding("rule", 3), Finding("other", 1))
 
   val first3 = worst(findings)
+
+  val shown = Year.show(Year(-3300)) + Year.show(Option(Year(1)))

@@ -5,7 +5,7 @@ import fixture.api.Lint.Finding
 import fixture.automation.ApprovalModes
 import fixture.kernel.DeepTime
 import fixture.kernel.DeepTime.*
-import fixture.kernel.Year
+import fixture.kernel.{Shown, Year}
 import fixture.library.{Citekey, Citekeys}
 
 object Client:
@@ -32,3 +32,5 @@ object Client:
   val findings = List(Finding("rule", 3), Lint.Finding("other", 1))
 
   val first3 = Lint.worst(findings)
+
+  val shown = Shown(Year(-3300)) + Shown(Option(Year(1)))

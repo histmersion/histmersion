@@ -9,6 +9,10 @@ object Year:
   def apply(raw: Int): T = raw
   extension (year: T) def value: Int = year
 
+  def show(year: Year): String = if year.value < 0 then s"${-year.value} BCE" else s"${year.value} CE"
+
+  def show(year: Option[Year]): String = year.fold("?")(show)
+
   type SignedYear = SignedYear.T
 
   object SignedYear:

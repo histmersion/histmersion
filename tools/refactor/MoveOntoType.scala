@@ -217,13 +217,28 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     }
   }
 
+  private lazy val applyOf: Map[String, Planned] = sourceObjects.flatMap { so =>
+    so.stats.collect { case (_, Some(p)) if p.name == "apply" && !p.extension => so.symbol -> p }
+  }.toMap
+
   private lazy val deletedObjects: Set[String] = sourceObjects.filter(_.emptied).map(_.symbol).toSet
 
   private final class Rewriter(text: String, symbolOf: Tree => String, insideTarget: (Tree, String) => Boolean) {
     val imports = mutable.LinkedHashSet.empty[String]
     val lints = mutable.ListBuffer.empty[(Tree, String)]
 
-    def moved(t: Tree): Option[Planned] = plannedFor(symbolOf(t))
+    def moved(t: Tree): Option[Planned] = plannedFor(symbolOf(t)).orElse {
+      applyOf.get(symbolOf(t)).filter { _ =>
+        val ref = t.parent match {
+          case Some(s: Term.Select) if s.name eq t => s
+          case _ => t
+        }
+        ref.parent.exists {
+          case a: Term.Apply => a.fun eq ref
+          case _ => false
+        }
+      }
+    }
 
     def inImport(t: Tree): Boolean = t.parent match {
       case Some(_: Importer) | Some(_: Import) | Some(_: Export) => true
@@ -537,7 +552,12 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     val (inserts, insertImports) = insertPatches(doc, text)
 
     val visible = visiblePackages(doc.tree)
-    val existing = doc.tree.collect { case i: Importer => i.syntax }.toSet
+    val existing = doc.tree.collect { case i: Importer =>
+      i.syntax :: i.importees.collect {
+        case n: Importee.Name => s"${i.ref.syntax}.${n.name.value}"
+        case _: Importee.Wildcard => s"${i.ref.syntax}.*"
+      }
+    }.flatten.toSet
     val importAdds = (rw.imports.toList ++ insertImports).distinct.filterNot { imp =>
       val plain = imp.matches("[\\w.`]+")
       val pkg = imp.split('.').dropRight(1).mkString(".")
