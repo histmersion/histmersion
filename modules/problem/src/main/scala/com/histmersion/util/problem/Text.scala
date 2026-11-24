@@ -265,11 +265,11 @@ object Text:
       case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
         s"$step: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise ${setting.said} " +
           "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
-      case Problem.Run.NoText(source)                       => s"$source has no text — ingest or OCR it first"
-      case Problem.Run.NoBody(article)                      => s"article '$article' has no body to review"
-      case Problem.Run.Stopped(Problem.Run.Stop.Guard(why)) => s"claude -p stopped by the quota guard: $why"
-      case Problem.Run.NoLogin(why)                         => s"unavailable: no login — $why"
-      case Problem.Run.ProbeUnread(exit, said)              =>
+      case Problem.Run.Needs(Problem.Run.Need.Text(source))      => s"$source has no text — ingest or OCR it first"
+      case Problem.Run.Needs(Problem.Run.Need.Body(article))     => s"article '$article' has no body to review"
+      case Problem.Run.Stopped(Problem.Run.Stop.Guard(why))      => s"claude -p stopped by the quota guard: $why"
+      case Problem.Run.Needs(Problem.Run.Need.Login(why))        => s"unavailable: no login — $why"
+      case Problem.Run.Needs(Problem.Run.Need.Probe(exit, said)) =>
         s"the probe printed no rate_limit_event (exit $exit${said.fold("")(m => s": $m")})"
       case Problem.Run.Interrupted        => "interrupted by a restart"
       case Problem.Run.Restored           => "interrupted by a restore, which replaced the database it was writing to"

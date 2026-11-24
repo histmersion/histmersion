@@ -34,7 +34,7 @@ G22comment	plugins/gazetteers	main	18
 G22comment	plugins/gazetteers	test	11
 G22comment	plugins/media	main	151
 G22comment	plugins/media	test	35
-G22comment	problem	main	838
+G22comment	problem	main	834
 G22comment	problem	test	6
 G22comment	repo/.claude	main	18
 G22comment	repo/build.sbt	main	101

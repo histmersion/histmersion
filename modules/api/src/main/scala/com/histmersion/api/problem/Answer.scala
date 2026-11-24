@@ -146,6 +146,7 @@ object Answer:
 
   private val runs = Group("Run")
   private val stopped = Case("Stopped")
+  private val needs = Case("Needs")
 
   val translations: Map[Former, Entry => Entry] = Map(
     Former(runs, Case("Stalled")) -> into(runs, stopped, "stop" -> "Stalled"),
@@ -161,7 +162,11 @@ object Answer:
     Former(runs, Case("MovedOn")) -> into(runs, stopped, "stop" -> "MovedOn"),
     Former(runs, Case("Withdrawn")) -> into(runs, stopped, "stop" -> "Withdrawn"),
     Former(runs, Case("GuardStopped")) -> into(runs, stopped, "stop" -> "Guard"),
-    Former(runs, Case("Unrecorded")) -> into(runs, stopped, "stop" -> "Unrecorded")
+    Former(runs, Case("Unrecorded")) -> into(runs, stopped, "stop" -> "Unrecorded"),
+    Former(runs, Case("NoText")) -> into(runs, needs, "need" -> "Text"),
+    Former(runs, Case("NoBody")) -> into(runs, needs, "need" -> "Body"),
+    Former(runs, Case("NoLogin")) -> into(runs, needs, "need" -> "Login"),
+    Former(runs, Case("ProbeUnread")) -> into(runs, needs, "need" -> "Probe")
   )
 
   extension (entry: Entry)
