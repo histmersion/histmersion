@@ -59,7 +59,7 @@ private[sources] object SourceBundleRepo:
                        octet_length(convert_to(s.ocr_markdown, 'UTF8'))::bigint,
                        nullif(lower(btrim(s.sha256)), ''), ${Timestamps.iso(sql"s.updated_at")},
                        coalesce((SELECT array_agg(i.value ORDER BY i.value COLLATE "C") FROM source_identifiers i
-                                 WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[])
+                                 WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[]), s.creator::text
                 FROM sources s WHERE ${where(scope, sql"s.uid", sql"s.updated_at")} ORDER BY s.uid"""
       .query[BSourceRow]
       .run()
@@ -67,7 +67,7 @@ private[sources] object SourceBundleRepo:
   def findings(scope: BundleScope)(using DbCon): Vector[Bundle.Finding] =
     sql"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
                        ${rangeCols(sql"f.period")}, f.period_name, f.tags, f.confidence, f.significance,
-                       ${Timestamps.iso(sql"f.updated_at")}
+                       ${Timestamps.iso(sql"f.updated_at")}, f.creator::text
                 FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${where(
         scope,
         sql"f.uid",
@@ -91,7 +91,8 @@ private[sources] object SourceBundleRepo:
         r.tags.map(t => Bundle.Finding.Tags(t.value)),
         r.confidence.transformInto[Option[Confidence]],
         r.significance.map(x => Bundle.Finding.Significance(x.value)),
-        Bundle.Finding.UpdatedAt(r.updatedAt.value)
+        Bundle.Finding.UpdatedAt(r.updatedAt.value),
+        creator = StoredCreator.document(r.creator)
       )
     }
 
@@ -178,7 +179,8 @@ private[sources] object SourceBundleRepo:
       r.originalSha.map(x => Bundle.Source.OriginalSha256(x.value)),
       r.originalSha.flatMap(originals.find).map(e => Bundle.Source.OriginalExt(e._2.value)),
       Bundle.Source.UpdatedAt(r.updatedAt.value),
-      isbns = Option.when(r.isbns.nonEmpty)(r.isbns.map(i => Bundle.Source.Isbns(i.value)))
+      isbns = Option.when(r.isbns.nonEmpty)(r.isbns.map(i => Bundle.Source.Isbns(i.value))),
+      creator = StoredCreator.document(r.creator)
     )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
@@ -232,9 +234,8 @@ private[sources] object SourceBundleRepo:
                 ${s.tags}::text[],
                 ${rangeLiteral(s.period)}::int8range,
                 ${s.summary}, ${s.notes}, ${s.provenance}, ${s.citedByCount}, ${s.influentialCitations},
-                ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz, ${StoredCreator.write(
-            Creator.unrecorded
-          )}::jsonb)""".update.run()
+                ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz,
+                ${StoredCreator.carried(s.creator)}::jsonb)""".update.run()
       else
         val before = w.local.sources.find(_.uid == s.uid)
         if before.flatMap(_.bodySha256) != s.bodySha256 then
@@ -326,8 +327,8 @@ private[sources] object SourceBundleRepo:
               CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
                    ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
               ${rangeLiteral(f.period)}::int8range,
-              ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz, ${StoredCreator
-          .write(Creator.unrecorded)}::jsonb)
+              ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz,
+              ${StoredCreator.carried(f.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
               geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,

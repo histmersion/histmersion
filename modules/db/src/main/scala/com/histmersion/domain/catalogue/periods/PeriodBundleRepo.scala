@@ -14,7 +14,6 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
@@ -29,7 +28,7 @@ private[periods] object PeriodBundleRepo:
     val sel = if alsoIds.isEmpty then own
     else sql"(($own) OR p.id = ANY(${alsoIds.distinct}::text[]))"
     sql"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols(sql"p.period")}, p.region, p.parent_id,
-                       ${Timestamps.iso(sql"p.updated_at")}
+                       ${Timestamps.iso(sql"p.updated_at")}, p.creator::text
                 FROM periods p WHERE $sel ORDER BY p.uid""".query[BPeriodRow].run().map { r =>
       Bundle.Period(
         r.uid,
@@ -44,7 +43,8 @@ private[periods] object PeriodBundleRepo:
         ),
         r.region.map(g => Bundle.Period.Region(g.value)),
         r.parentId.map(p => Bundle.Period.ParentId(p.value)),
-        Bundle.Period.UpdatedAt(r.updatedAt.value)
+        Bundle.Period.UpdatedAt(r.updatedAt.value),
+        creator = StoredCreator.document(r.creator)
       )
     }
 
@@ -82,9 +82,8 @@ private[periods] object PeriodBundleRepo:
       val range = rangeOrAll(p.period)
       sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at, creator)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
-              $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz, ${StoredCreator.write(
-          Creator.unrecorded
-        )}::jsonb)
+              $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz,
+              ${StoredCreator.carried(p.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
               dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

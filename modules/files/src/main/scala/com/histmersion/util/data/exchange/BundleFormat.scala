@@ -26,16 +26,16 @@ import com.histmersion.api.ByteCount
   * read or as the codecs write them, not by JCS's ECMAScript rule; both ends of a bundle are this code, so they agree.
   *
   * ==rev==
-  * `rev` is the sha256 of a record's canonical JSON without `rev` and `updatedAt`: two records with the same content
-  * have the same rev whatever their timestamps, which is what lets an import say "unchanged" and the merge ledger
-  * remember what was merged.
+  * `rev` is the sha256 of a record's canonical JSON without `rev`, `updatedAt` and `creator`: two records with the same
+  * content have the same rev whatever their timestamps and whoever made them (the creator is provenance, not content —
+  * ADR 0029), which is what lets an import say "unchanged" and the merge ledger remember what was merged.
   */
 object BundleFormat:
   /** The canonical text of a JSON value. */
   def print(json: Json): String = json.canonical.noSpaces
 
   /** Fields a rev does NOT cover. */
-  val Unrevved: Set[String] = Set("rev", "updatedAt")
+  val Unrevved: Set[String] = Set("rev", "updatedAt", "creator")
 
   def sha256Hex(bytes: Array[Byte]): Sha256 =
     Sha256(hex(MessageDigest.getInstance("SHA-256").digest(bytes)))

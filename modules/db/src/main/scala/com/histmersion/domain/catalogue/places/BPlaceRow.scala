@@ -6,6 +6,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Jsonb
 
 /** A place of this collection's own, as its bundle line reads it. */
 final private[places] case class BPlaceRow(
@@ -20,7 +21,8 @@ final private[places] case class BPlaceRow(
     pHi: Option[BPlaceRow.PHi],
     source: Option[BPlaceRow.Source],
     properties: Option[BPlaceRow.Properties],
-    updatedAt: BPlaceRow.UpdatedAt
+    updatedAt: BPlaceRow.UpdatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BPlaceRow:

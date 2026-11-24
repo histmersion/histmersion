@@ -488,9 +488,9 @@
       "creator" : {
         "agent" : null,
         "job" : null,
-        "kind" : "unknown",
+        "kind" : "unattributed",
         "plugin" : null,
-        "surface" : null,
+        "surface" : "rest",
         "workflow" : null
       },
       "lat" : 40.0,
@@ -512,9 +512,9 @@
       "creator" : {
         "agent" : null,
         "job" : null,
-        "kind" : "unknown",
+        "kind" : "unattributed",
         "plugin" : null,
-        "surface" : null,
+        "surface" : "rest",
         "workflow" : null
       },
       "lat" : 40.01,
@@ -566,9 +566,9 @@
     "creator" : {
       "agent" : null,
       "job" : null,
-      "kind" : "unknown",
+      "kind" : "unattributed",
       "plugin" : null,
-      "surface" : null,
+      "surface" : "rest",
       "workflow" : null
     },
     "doi" : "10.9999/zx.one",
@@ -661,9 +661,9 @@
       "creator" : {
         "agent" : null,
         "job" : null,
-        "kind" : "unknown",
+        "kind" : "unattributed",
         "plugin" : null,
-        "surface" : null,
+        "surface" : "rest",
         "workflow" : null
       },
       "lat" : 39.5,
@@ -691,9 +691,9 @@
     "creator" : {
       "agent" : null,
       "job" : null,
-      "kind" : "unknown",
+      "kind" : "unattributed",
       "plugin" : null,
-      "surface" : null,
+      "surface" : "rest",
       "workflow" : null
     },
     "doi" : null,
@@ -1177,7 +1177,7 @@
     }
   ],
   "format" : "histmersion-bundle",
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "instance" : {
     "id" : "instance:lib",
     "label" : "zxlib"
@@ -1191,16 +1191,16 @@
   "schemaVersion" : "116"
 }
 == entities/sources.ndjson (5 lines)
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtwo2005_hittites",   "notes" : "Notes on The Kingdom of Zxland.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "contested",   "summary" : "On The Kingdom of Zxland.",   "tags" : [     "zx-oracle"   ],   "title" : "The Kingdom of Zxland",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtwo2005_hittites",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2005 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxdoi2010_lib",   "doi" : "10.9999/ZX.Both",   "notes" : "Notes on A Work Both Hold.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On A Work Both Hold.",   "tags" : [     "zx-oracle"   ],   "title" : "A Work Both Hold",   "topics" : [     "bronze age"   ],   "uid" : "source:zxdoi2010_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2010 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxwriter, Bo"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxfp1950_lib",   "notes" : "Notes on On the Zxtown Hoard.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On On the Zxtown Hoard.",   "tags" : [     "zx-oracle"   ],   "title" : "On the Zxtown Hoard",   "topics" : [     "bronze age"   ],   "uid" : "source:zxfp1950_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 1950 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtaken2020_x",   "notes" : "Notes on Lib's Work.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On Lib's Work.",   "tags" : [     "zx-oracle"   ],   "title" : "Lib's Work",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtaken2020_x",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2020 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtwo2005_hittites",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "notes" : "Notes on The Kingdom of Zxland.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "contested",   "summary" : "On The Kingdom of Zxland.",   "tags" : [     "zx-oracle"   ],   "title" : "The Kingdom of Zxland",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtwo2005_hittites",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2005 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxdoi2010_lib",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "doi" : "10.9999/ZX.Both",   "notes" : "Notes on A Work Both Hold.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On A Work Both Hold.",   "tags" : [     "zx-oracle"   ],   "title" : "A Work Both Hold",   "topics" : [     "bronze age"   ],   "uid" : "source:zxdoi2010_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2010 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxwriter, Bo"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxfp1950_lib",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "notes" : "Notes on On the Zxtown Hoard.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On On the Zxtown Hoard.",   "tags" : [     "zx-oracle"   ],   "title" : "On the Zxtown Hoard",   "topics" : [     "bronze age"   ],   "uid" : "source:zxfp1950_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 1950 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtaken2020_x",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "notes" : "Notes on Lib's Work.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On Lib's Work.",   "tags" : [     "zx-oracle"   ],   "title" : "Lib's Work",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtaken2020_x",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2020 }
 == entities/findings.ndjson (4 lines)
-{   "claim" : "the walls of Zxtown were raised around 1490 BC",   "confidence" : "high",   "id" : "zxone2001_storm#0",   "lat" : 40.0,   "lon" : 34.6,   "origin" : "instance:lib",   "period" : {     "end" : -1480,     "start" : -1500   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#0",   "updatedAt" : "TS" }
-{   "claim" : "the gate of Zxtown faced the sea",   "confidence" : "high",   "id" : "zxone2001_storm#1",   "lat" : 40.01,   "lon" : 34.61,   "origin" : "instance:lib",   "period" : {     "end" : -1300,     "start" : -1400   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#1",   "updatedAt" : "TS" }
-{   "claim" : "a kingdom ruled Zxland",   "confidence" : "high",   "id" : "zxtwo2005_hittites#0",   "lat" : 39.5,   "lon" : 35.0,   "origin" : "instance:lib",   "period" : {     "end" : -1250,     "start" : -1450   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxtwo2005_hittites",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxtwo2005_hittites#0",   "updatedAt" : "TS" }
-{   "claim" : "a third claim, lib's",   "confidence" : "high",   "id" : "zxone2001_storm#2",   "lat" : 40.02,   "lon" : 34.62,   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1300   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#2",   "updatedAt" : "TS" }
+{   "claim" : "the walls of Zxtown were raised around 1490 BC",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxone2001_storm#0",   "lat" : 40.0,   "lon" : 34.6,   "origin" : "instance:lib",   "period" : {     "end" : -1480,     "start" : -1500   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#0",   "updatedAt" : "TS" }
+{   "claim" : "the gate of Zxtown faced the sea",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxone2001_storm#1",   "lat" : 40.01,   "lon" : 34.61,   "origin" : "instance:lib",   "period" : {     "end" : -1300,     "start" : -1400   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#1",   "updatedAt" : "TS" }
+{   "claim" : "a kingdom ruled Zxland",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxtwo2005_hittites#0",   "lat" : 39.5,   "lon" : 35.0,   "origin" : "instance:lib",   "period" : {     "end" : -1250,     "start" : -1450   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxtwo2005_hittites",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxtwo2005_hittites#0",   "updatedAt" : "TS" }
+{   "claim" : "a third claim, lib's",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxone2001_storm#2",   "lat" : 40.02,   "lon" : 34.62,   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1300   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#2",   "updatedAt" : "TS" }
 == entities/articles.ndjson (0 lines)
 == entities/article-versions.ndjson (0 lines)
 == entities/assets.ndjson (0 lines)
@@ -1209,7 +1209,7 @@
 == entities/events.ndjson (0 lines)
 == entities/goals.ndjson (0 lines)
 == entities/queue.ndjson (1 lines)
-{   "createdAt" : "TS",   "list" : "log",   "origin" : "instance:lib",   "rev" : "DIGEST",   "status" : "open",   "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases",   "topic" : "DAY",   "uid" : "UUID",   "updatedAt" : "TS" }
+{   "createdAt" : "TS",   "creator" : {     "kind" : "manual",     "surface" : "internal"   },   "list" : "log",   "origin" : "instance:lib",   "rev" : "DIGEST",   "status" : "open",   "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases",   "topic" : "DAY",   "uid" : "UUID",   "updatedAt" : "TS" }
 == entities/places.ndjson (0 lines)
 == entities/periods.ndjson (0 lines)
 == entities/edges.ndjson (1 lines)
@@ -1374,7 +1374,7 @@
     }
   ],
   "format" : "histmersion-bundle",
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "instance" : {
     "id" : "instance:lib",
     "label" : "zxlib"
@@ -1389,16 +1389,16 @@
   "since" : "TS"
 }
 == entities/sources.ndjson (5 lines)
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtwo2005_hittites",   "notes" : "Notes on The Kingdom of Zxland.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "contested",   "summary" : "On The Kingdom of Zxland.",   "tags" : [     "zx-oracle"   ],   "title" : "The Kingdom of Zxland",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtwo2005_hittites",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2005 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxdoi2010_lib",   "doi" : "10.9999/ZX.Both",   "notes" : "Notes on A Work Both Hold.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On A Work Both Hold.",   "tags" : [     "zx-oracle"   ],   "title" : "A Work Both Hold",   "topics" : [     "bronze age"   ],   "uid" : "source:zxdoi2010_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2010 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxwriter, Bo"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxfp1950_lib",   "notes" : "Notes on On the Zxtown Hoard.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On On the Zxtown Hoard.",   "tags" : [     "zx-oracle"   ],   "title" : "On the Zxtown Hoard",   "topics" : [     "bronze age"   ],   "uid" : "source:zxfp1950_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 1950 }
-{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtaken2020_x",   "notes" : "Notes on Lib's Work.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On Lib's Work.",   "tags" : [     "zx-oracle"   ],   "title" : "Lib's Work",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtaken2020_x",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2020 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxone2001_storm",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "doi" : "10.9999/zx.one",   "notes" : "Notes on The Storm of Zxtown.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On The Storm of Zxtown.",   "tags" : [     "zx-oracle"   ],   "title" : "The Storm of Zxtown",   "topics" : [     "bronze age"   ],   "uid" : "source:zxone2001_storm",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2001 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtwo2005_hittites",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "notes" : "Notes on The Kingdom of Zxland.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "contested",   "summary" : "On The Kingdom of Zxland.",   "tags" : [     "zx-oracle"   ],   "title" : "The Kingdom of Zxland",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtwo2005_hittites",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2005 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxdoi2010_lib",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "doi" : "10.9999/ZX.Both",   "notes" : "Notes on A Work Both Hold.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On A Work Both Hold.",   "tags" : [     "zx-oracle"   ],   "title" : "A Work Both Hold",   "topics" : [     "bronze age"   ],   "uid" : "source:zxdoi2010_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2010 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxwriter, Bo"   ],   "bodySha256" : "DIGEST",   "citekey" : "zxfp1950_lib",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "notes" : "Notes on On the Zxtown Hoard.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On On the Zxtown Hoard.",   "tags" : [     "zx-oracle"   ],   "title" : "On the Zxtown Hoard",   "topics" : [     "bronze age"   ],   "uid" : "source:zxfp1950_lib",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 1950 }
+{   "addedDate" : "DAY",   "authors" : [     "Zxauthor, Ann"   ],   "citekey" : "zxtaken2020_x",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "notes" : "Notes on Lib's Work.",   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1500   },   "regions" : [     "Zxland"   ],   "rev" : "DIGEST",   "status" : "current",   "summary" : "On Lib's Work.",   "tags" : [     "zx-oracle"   ],   "title" : "Lib's Work",   "topics" : [     "bronze age"   ],   "uid" : "source:zxtaken2020_x",   "updatedAt" : "TS",   "venue" : "Zx Review",   "year" : 2020 }
 == entities/findings.ndjson (4 lines)
-{   "claim" : "the walls of Zxtown were raised around 1490 BC",   "confidence" : "high",   "id" : "zxone2001_storm#0",   "lat" : 40.0,   "lon" : 34.6,   "origin" : "instance:lib",   "period" : {     "end" : -1480,     "start" : -1500   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#0",   "updatedAt" : "TS" }
-{   "claim" : "the gate of Zxtown faced the sea",   "confidence" : "high",   "id" : "zxone2001_storm#1",   "lat" : 40.01,   "lon" : 34.61,   "origin" : "instance:lib",   "period" : {     "end" : -1300,     "start" : -1400   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#1",   "updatedAt" : "TS" }
-{   "claim" : "a kingdom ruled Zxland",   "confidence" : "high",   "id" : "zxtwo2005_hittites#0",   "lat" : 39.5,   "lon" : 35.0,   "origin" : "instance:lib",   "period" : {     "end" : -1250,     "start" : -1450   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxtwo2005_hittites",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxtwo2005_hittites#0",   "updatedAt" : "TS" }
-{   "claim" : "a third claim, lib's",   "confidence" : "high",   "id" : "zxone2001_storm#2",   "lat" : 40.02,   "lon" : 34.62,   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1300   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#2",   "updatedAt" : "TS" }
+{   "claim" : "the walls of Zxtown were raised around 1490 BC",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxone2001_storm#0",   "lat" : 40.0,   "lon" : 34.6,   "origin" : "instance:lib",   "period" : {     "end" : -1480,     "start" : -1500   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#0",   "updatedAt" : "TS" }
+{   "claim" : "the gate of Zxtown faced the sea",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxone2001_storm#1",   "lat" : 40.01,   "lon" : 34.61,   "origin" : "instance:lib",   "period" : {     "end" : -1300,     "start" : -1400   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#1",   "updatedAt" : "TS" }
+{   "claim" : "a kingdom ruled Zxland",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxtwo2005_hittites#0",   "lat" : 39.5,   "lon" : 35.0,   "origin" : "instance:lib",   "period" : {     "end" : -1250,     "start" : -1450   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxtwo2005_hittites",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxtwo2005_hittites#0",   "updatedAt" : "TS" }
+{   "claim" : "a third claim, lib's",   "confidence" : "high",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "id" : "zxone2001_storm#2",   "lat" : 40.02,   "lon" : 34.62,   "origin" : "instance:lib",   "period" : {     "end" : -1200,     "start" : -1300   },   "periodName" : "Zx",   "region" : "Zxland",   "rev" : "DIGEST",   "sourceUid" : "source:zxone2001_storm",   "tags" : [     "zx-claim"   ],   "uid" : "finding:zxone2001_storm#2",   "updatedAt" : "TS" }
 == entities/articles.ndjson (0 lines)
 == entities/article-versions.ndjson (0 lines)
 == entities/assets.ndjson (0 lines)
@@ -1407,7 +1407,7 @@
 == entities/events.ndjson (0 lines)
 == entities/goals.ndjson (0 lines)
 == entities/queue.ndjson (1 lines)
-{   "createdAt" : "TS",   "list" : "log",   "origin" : "instance:lib",   "rev" : "DIGEST",   "status" : "open",   "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases",   "topic" : "DAY",   "uid" : "UUID",   "updatedAt" : "TS" }
+{   "createdAt" : "TS",   "creator" : {     "kind" : "manual",     "surface" : "internal"   },   "list" : "log",   "origin" : "instance:lib",   "rev" : "DIGEST",   "status" : "open",   "text" : "deleted zxthree1903_prolegomena (An Old Book on Zxland): 1 edges in (parked), 1 aliases",   "topic" : "DAY",   "uid" : "UUID",   "updatedAt" : "TS" }
 == entities/places.ndjson (0 lines)
 == entities/periods.ndjson (0 lines)
 == entities/edges.ndjson (1 lines)
@@ -1612,7 +1612,7 @@
   "asOf" : "TS",
   "bundleId" : "UUID",
   "changes" : 9,
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "from" : {
     "id" : "instance:lib",
     "label" : "zxlib"
@@ -2386,7 +2386,7 @@
   "asOf" : "TS",
   "bundleId" : "UUID",
   "changes" : 12,
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "from" : {
     "id" : "instance:lib",
     "label" : "zxlib"

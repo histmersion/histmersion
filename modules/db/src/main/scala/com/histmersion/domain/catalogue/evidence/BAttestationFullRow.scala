@@ -6,6 +6,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Jsonb
 
 /** An attestation, as its bundle line reads it: the row, its source's and its target's uids. */
 final private[evidence] case class BAttestationFullRow(
@@ -27,7 +28,8 @@ final private[evidence] case class BAttestationFullRow(
     ctsUrn: Option[BAttestationFullRow.CtsUrn],
     note: Option[BAttestationFullRow.Note],
     createdAt: BAttestationFullRow.CreatedAt,
-    updatedAt: BAttestationFullRow.UpdatedAt
+    updatedAt: BAttestationFullRow.UpdatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BAttestationFullRow:

@@ -6,6 +6,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.Jsonb
 
 /** An asset as a bundle reads it: its line's fields, the size of its bytes, its period's inclusive bounds. */
 final private[assets] case class AssetBundleRow(
@@ -25,7 +26,8 @@ final private[assets] case class AssetBundleRow(
     pNull: AssetBundleRow.PNull,
     pLo: Option[AssetBundleRow.PLo],
     pHi: Option[AssetBundleRow.PHi],
-    updatedAt: AssetBundleRow.UpdatedAt
+    updatedAt: AssetBundleRow.UpdatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object AssetBundleRow:

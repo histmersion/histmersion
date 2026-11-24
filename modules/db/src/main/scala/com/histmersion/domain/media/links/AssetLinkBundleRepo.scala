@@ -10,8 +10,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
-import com.histmersion.domain.Creator
-import com.histmersion.util.database.StoredCreator
+import com.histmersion.util.database.{Jsonb, StoredCreator}
 
 /** The figures' links as a bundle carries them: each with its figure's uid and its target's uid when the target is a
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label
@@ -23,15 +22,29 @@ private[links] object AssetLinkBundleRepo:
     sql"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
                        ${targetUid(sql"l.target_type", sql"l.target_id")}, l.xywh, l.notes, ${Timestamps.iso(
         sql"l.updated_at"
-      )}
+      )}, l.creator::text
                 FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE ${where(
         scope,
         sql"l.uid",
         sql"l.updated_at"
       )} ORDER BY l.uid"""
-      .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
+      .query[
+        (
+            UUID,
+            UUID,
+            UUID,
+            String,
+            String,
+            String,
+            Option[UUID],
+            Option[String],
+            Option[String],
+            String,
+            Option[Jsonb.JsonText]
+        )
+      ]
       .run()
-      .map((uid, origin, assetUid, relation, targetType, targetId, targetUid, xywh, notes, updatedAt) =>
+      .map((uid, origin, assetUid, relation, targetType, targetId, targetUid, xywh, notes, updatedAt, creator) =>
         Bundle.AssetLink(
           uid,
           origin,
@@ -42,7 +55,8 @@ private[links] object AssetLinkBundleRepo:
           targetUid,
           xywh.map(x => Bundle.AssetLink.Xywh(x)),
           notes.map(x => Bundle.AssetLink.Notes(x)),
-          Bundle.AssetLink.UpdatedAt(updatedAt)
+          Bundle.AssetLink.UpdatedAt(updatedAt),
+          creator = StoredCreator.document(creator)
         )
       )
 
@@ -58,7 +72,7 @@ private[links] object AssetLinkBundleRepo:
       )
       sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at, creator)
             VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
-              ${l.notes}, ${l.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
+              ${l.notes}, ${l.updatedAt}::timestamptz, ${StoredCreator.carried(l.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
               asset_name = EXCLUDED.asset_name, relation = EXCLUDED.relation,
               target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, xywh = EXCLUDED.xywh,

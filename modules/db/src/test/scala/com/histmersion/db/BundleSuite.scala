@@ -746,6 +746,29 @@ class BundleSuite extends DbSuite with Bounded:
     assert(result.applied.value, result.problems.mkString("\n"))
     assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE citekey = '$G1' AND source = 'Unheard-Of'"), 1)
 
+  test("a bundle carries each record's creator, outside its rev, and the import writes it"):
+    val (a, b) = (fresh("crea"), fresh("creb"))
+    val (sa, sb) = (spool("crea"), spool("creb"))
+    put(a, source(G1, Some(Source.OcrMarkdown("# Gamma\n\nshort")), 0))
+    val before = text(entries(exportOf(a, sa)), "entities/sources.ndjson")
+    exec(
+      a,
+      """UPDATE sources SET creator = '{"kind": "automated", "surface": "internal", "plugin": "p", "workflow": "w",
+        |"agent": {"kind": "code"}}'::jsonb""".stripMargin
+    )
+    val bundle = exportOf(a, sa)
+    val after = text(entries(bundle), "entities/sources.ndjson")
+    assert(after.contains("\"plugin\":\"p\""), after)
+    def revs(lines: String): List[String] =
+      lines.linesIterator.map(l => RawJson.parse(l).toOption.flatMap(_.asObject).fold("")(BundleFormat.revOf)).toList
+    assertEquals(revs(after), revs(before))
+    val result = importInto(b, bundle, sb)
+    assertEquals(result.problems, Nil)
+    assertEquals(
+      count(b, "SELECT count(*)::int FROM sources WHERE creator->>'plugin' = 'p' AND creator->>'workflow' = 'w'"),
+      1
+    )
+
   /** The bundle with the event-catalogue files taken out, as a bundle written before they existed. */
   private def withoutEventSets(bundle: Array[Byte]): Array[Byte] =
     val gone = Set(

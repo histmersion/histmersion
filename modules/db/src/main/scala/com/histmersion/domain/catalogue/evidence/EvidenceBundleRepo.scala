@@ -32,7 +32,7 @@ private[evidence] object EvidenceBundleRepo:
     sql"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
                        ${targetUid(sql"t.target_type", sql"t.target_id")}, t.quote, t.prefix, t.suffix,
                        t.char_start, t.char_end, t.chunk_ord, t.page, t.canvas, t.xywh, t.cts_urn, t.note,
-                       ${Timestamps.iso(sql"t.created_at")}, ${Timestamps.iso(sql"t.updated_at")}
+                       ${Timestamps.iso(sql"t.created_at")}, ${Timestamps.iso(sql"t.updated_at")}, t.creator::text
                 FROM attestations t JOIN sources s ON s.citekey = t.citekey WHERE ${where(
         scope,
         sql"t.uid",
@@ -60,7 +60,8 @@ private[evidence] object EvidenceBundleRepo:
           r.ctsUrn.map(v => Bundle.Attestation.CtsUrn(v.value)),
           r.note.map(v => Bundle.Attestation.Note(v.value)),
           Bundle.Attestation.CreatedAt(r.createdAt.value),
-          Bundle.Attestation.UpdatedAt(r.updatedAt.value)
+          Bundle.Attestation.UpdatedAt(r.updatedAt.value),
+          creator = StoredCreator.document(r.creator)
         )
       )
 
@@ -200,9 +201,8 @@ private[evidence] object EvidenceBundleRepo:
               char_start, char_end, chunk_ord, page, canvas, xywh, cts_urn, note, created_at, updated_at, creator)
             VALUES (${t.uid}, ${t.origin}, $ck, ${t.targetType}, $target, ${t.quote}, ${t.prefix}, ${t.suffix},
               ${t.charStart}, ${t.charEnd}, ${t.chunkOrd}, ${t.page}, ${t.canvas}, ${t.xywh}, ${t.ctsUrn},
-              ${t.note}, ${t.createdAt}::timestamptz, ${t.updatedAt}::timestamptz, ${StoredCreator.write(
-          Creator.unrecorded
-        )}::jsonb)
+              ${t.note}, ${t.createdAt}::timestamptz, ${t.updatedAt}::timestamptz,
+              ${StoredCreator.carried(t.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
               target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, quote = EXCLUDED.quote,
               prefix = EXCLUDED.prefix, suffix = EXCLUDED.suffix, char_start = EXCLUDED.char_start,

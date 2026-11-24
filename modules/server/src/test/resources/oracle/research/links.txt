@@ -877,12 +877,12 @@
 == entities/sources.ndjson
 == entities/findings.ndjson
 == entities/articles.ndjson (4 lines)
-{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
-{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n",   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
-{   "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",   "kind" : "timeline",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_kings",   "tags" : [   ],   "title" : "Kings",   "uid" : "article:zr_kings",   "updatedAt" : "TS" }
-{   "body" : "## Overview\n\nTin came by sea [[zrzeta2020_tin]], as the survey shows [[zrdelta2011_survey]].\n\n## Elsewhere\n\nSee [[zr_walls]] and [[zr_kings]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_tin",   "tags" : [   ],   "title" : "Tin",   "uid" : "article:zr_tin",   "updatedAt" : "TS" }
+{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1500 BC [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
+{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
+{   "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "timeline",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_kings",   "tags" : [   ],   "title" : "Kings",   "uid" : "article:zr_kings",   "updatedAt" : "TS" }
+{   "body" : "## Overview\n\nTin came by sea [[zrzeta2020_tin]], as the survey shows [[zrdelta2011_survey]].\n\n## Elsewhere\n\nSee [[zr_walls]] and [[zr_kings]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_tin",   "tags" : [   ],   "title" : "Tin",   "uid" : "article:zr_tin",   "updatedAt" : "TS" }
 == entities/article-versions.ndjson (1 lines)
-{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
 == entities/assets.ndjson
 == entities/asset-links.ndjson
 == entities/attestations.ndjson
@@ -910,7 +910,7 @@
   "asOf" : "TS",
   "bundleId" : "UUID",
   "changes" : 4,
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "from" : {
     "id" : "instance:lib",
     "label" : null
@@ -1059,7 +1059,7 @@
   "asOf" : "TS",
   "bundleId" : "UUID",
   "changes" : 4,
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "from" : {
     "id" : "instance:lib",
     "label" : null

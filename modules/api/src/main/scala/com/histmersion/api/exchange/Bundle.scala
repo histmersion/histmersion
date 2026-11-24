@@ -115,7 +115,7 @@ object Bundle:
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = Kind.fromWire(Wire((s).value))
   val Format = "histmersion-bundle"
-  val FormatVersion = 1
+  val FormatVersion = 2
   val Extension = ".hmx"
   val ManifestPath = "manifest.json"
 
@@ -153,7 +153,8 @@ object Bundle:
       regions: List[Article.Regions],
       period: Option[Range],
       updatedAt: Article.UpdatedAt,
-      rev: Article.Rev = Article.Rev("")
+      rev: Article.Rev = Article.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Article:
@@ -187,7 +188,8 @@ object Bundle:
       summary: Option[ArticleVersion.Summary],
       versionOf: ArticleVersion.VersionOf,
       updatedAt: ArticleVersion.UpdatedAt,
-      rev: ArticleVersion.Rev = ArticleVersion.Rev("")
+      rev: ArticleVersion.Rev = ArticleVersion.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object ArticleVersion:
@@ -238,7 +240,8 @@ object Bundle:
       geom: Option[Asset.Geom],
       period: Option[Range],
       updatedAt: Asset.UpdatedAt,
-      rev: Asset.Rev = Asset.Rev("")
+      rev: Asset.Rev = Asset.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Asset:
@@ -280,7 +283,8 @@ object Bundle:
       xywh: Option[AssetLink.Xywh],
       notes: Option[AssetLink.Notes],
       updatedAt: AssetLink.UpdatedAt,
-      rev: AssetLink.Rev = AssetLink.Rev("")
+      rev: AssetLink.Rev = AssetLink.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec:
 
     /** What the link points at: the target's uid when the link has one, else its id. */
@@ -329,7 +333,8 @@ object Bundle:
       note: Option[Attestation.Note],
       createdAt: Attestation.CreatedAt,
       updatedAt: Attestation.UpdatedAt,
-      rev: Attestation.Rev = Attestation.Rev("")
+      rev: Attestation.Rev = Attestation.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Attestation:
@@ -447,7 +452,8 @@ object Bundle:
       wikidata: Option[Event.Wikidata] = None,
       central: Option[Event.Central] = None,
       plusMinus: Option[Event.PlusMinus] = None,
-      datingMethod: Option[Event.DatingMethod] = None
+      datingMethod: Option[Event.DatingMethod] = None,
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Event:
@@ -707,7 +713,8 @@ object Bundle:
       confidence: Option[Confidence],
       significance: Option[Finding.Significance],
       updatedAt: Finding.UpdatedAt,
-      rev: Finding.Rev = Finding.Rev("")
+      rev: Finding.Rev = Finding.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Finding:
@@ -746,7 +753,8 @@ object Bundle:
       planApprovedAt: Option[Goal.PlanApprovedAt] = None,
       budgetUsd: Option[Goal.BudgetUsd] = None,
       links: Option[List[GoalLink]] = None,
-      schedules: Option[List[GoalSchedule]] = None
+      schedules: Option[List[GoalSchedule]] = None,
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Goal:
@@ -936,7 +944,8 @@ object Bundle:
       region: Option[Period.Region],
       parentId: Option[Period.ParentId],
       updatedAt: Period.UpdatedAt,
-      rev: Period.Rev = Period.Rev("")
+      rev: Period.Rev = Period.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Period:
@@ -970,7 +979,8 @@ object Bundle:
       links: List[PlaceLink],
       types: List[PlaceType],
       updatedAt: Place.UpdatedAt,
-      rev: Place.Rev = Place.Rev("")
+      rev: Place.Rev = Place.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Place:
@@ -1040,7 +1050,8 @@ object Bundle:
       createdAt: QueueItem.CreatedAt,
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,
-      rev: QueueItem.Rev = QueueItem.Rev("")
+      rev: QueueItem.Rev = QueueItem.Rev(""),
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object QueueItem:
@@ -1124,7 +1135,8 @@ object Bundle:
       updatedAt: Source.UpdatedAt,
       rev: Source.Rev = Source.Rev(""),
       /** Absent when there are none, so a line written before the field existed keeps its rev. */
-      isbns: Option[List[Source.Isbns]] = None
+      isbns: Option[List[Source.Isbns]] = None,
+      creator: Option[Json] = None
   ) derives JsonCodec
 
   object Source:
