@@ -157,7 +157,7 @@ active: `problem/`, the Run/jobs code and the `*Routes`/`*Tools`/Controllers inp
 | api | `api` | `BundleMarkdown` | 67 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
 | api | `api` | `Candidates` | 129 | plural helper | companion of Candidate | helper named after the type it works on |
 | api | `api` | `CandidatesMarkdown` | 34 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
-| api | `api` | `ConfidenceStyle` | 49 | decided per object | `Confidence` extension in api (style is a wire/UI concern of Confidence) | about Confidence |
+| api | `api` | `ConfidenceStyle` | 49 | decided per object | `Confidence` extension in api.ui (style is a wire/UI concern of Confidence); not `Confidence`'s companion: `Html` (util.markdown) uses it, and the companion is library's (tried in batch 1: a new upward dependency) | about Confidence |
 | api | `api` | `ConfigEdit` | 102 | namespace object | dissolves: nested types become top-level in package api.<subdomain>.<feature> | a namespace object stands in for a package |
 | api | `api` | `ConfigEditApi` | 35 | endpoint group | stays: api.<subdomain>.<feature>.<Feature>Endpoints | a group of Tapir endpoint values, not about one type |
 | api | `api` | `ConfigEditMarkdown` | 55 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
@@ -254,8 +254,8 @@ active: `problem/`, the Run/jobs code and the `*Routes`/`*Tools`/Controllers inp
 | api | `api` | `WireEnum` | 13 | decided per object | stays: util.json.WireEnum (derives codecs for wire enums) | codec derivation helper |
 | api | `api` | `Wording` | 235 | decided per object | split: each sentence to the companion of the type it words (`AgentMode`, `SourceStatus`, …) | functions about those types |
 | api | `api` | `Write` | 241 | decided per object | dissolve: `Write.Code*` → enum `WriteCode`; checks → `SourcePatch`/`FindingInput` companions | namespace of codes + input checks |
-| api | `api` | `YearFmt` | 34 | decided per object | `Year` extension in api (`year.show`) | formats a Year |
-| api | `api` | `Years` | 54 | plural helper | companion of Year | helper named after the type it works on |
+| api | `api` | `YearFmt` | 34 | decided per object | `Year` extension in api (`year.show`); blocked (batch 1, not committed): api `Year` lives in the catalogue place, so automation's renderers calling `Year.show` gain a direction violation (`automation -> catalogue: Year`) until `Year` is placed in the kernel; and its file's places.tsv row cannot be removed (the hook guards places.tsv) | formats a Year |
+| api | `api` | `Years` | 54 | plural helper | companion of Year; blocked (batch 1, not committed): compiles and lowers G3/G44/G22, but its file's places.tsv row cannot be removed (the hook guards places.tsv) | helper named after the type it works on |
 | api | `api.personal` | `PersonalApi` | 100 | endpoint group | stays: api.<subdomain>.<feature>.<Feature>Endpoints | a group of Tapir endpoint values, not about one type |
 | api | `api.personal` | `PersonalIds` | 9 | decided per object | `ItemKey`/`PageSize` companions | limits and id rules |
 | api | `api.personal` | `PersonalMarkdown` | 51 | renderer | renderer: per rendered type into a Markdown[A] instance in api.<subdomain>.<feature> | a rendering is a type class instance of the wire type |
@@ -339,7 +339,7 @@ active: `problem/`, the Run/jobs code and the `*Routes`/`*Tools`/Controllers inp
 | core | `domain` | `CompareRuns` | 378 | decided per object | dissolve into domain.automation.agents: functions on `Run`/`Step` companions | namespace of 14 types |
 | core | `domain` | `CompileArticle` | 432 | decided per object | dissolve into domain.research.workflows.compile: `Claim`/`Evidence` companions | namespace of 10 types |
 | core | `domain` | `CoreQuota` | 188 | decided per object | dissolve into domain.library.acquisition.fetching: `QuotaState` (was State) with its methods | namespace; methods about the state |
-| core | `domain` | `DeepTime` | 17 | decided per object | `Year`/`Period` companions in values (`Year.fromLong`, `Period.span`) | about Year/Period |
+| core | `domain` | `DeepTime` | 17 | decided per object | refined: the new top-level newtype `domain.SignedYear` in core with `signed.year` and `a.span(b)` on its companion (in values' `Year`/`Period` the unwraps would raise values' G44: a per-module ratchet); batch 1 made it and it compiles with no ratchet rise, not committed (the batch stops at places.tsv) | about Year/Period |
 | core | `domain` | `Diff3` | 118 | decided per object | stays: util.text.Diff3 | a text algorithm, no domain type |
 | core | `domain` | `EnrichSource` | 603 | decided per object | dissolve into domain.library.workflows.enrich: `StatedPeriod`/`FindingProposal` companions | namespace of 19 types |
 | core | `domain` | `Europeana` | 222 | decided per object | moves to plugins/media: `EuropeanaItem.fromJson`, `Exclusions` companion | an upstream parser |
