@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class EventImportRequest(
     provider: EventImportRequest.Provider,
@@ -16,10 +17,10 @@ final case class EventImportRequest(
     to: Option[EventImportRequest.To] = None,
     minVei: Option[EventImportRequest.MinVei] = None,
     minMagnitude: Option[EventImportRequest.MinMagnitude] = None,
-    refresh: EventImportRequest.Refresh = EventImportRequest.Refresh(false)
-) derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+    refresh: EventImportRequest.Refresh = EventImportRequest.Refresh(false),
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object EventImportRequest:
   export EventImportReport.Provider

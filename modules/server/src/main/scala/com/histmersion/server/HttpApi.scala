@@ -83,6 +83,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.research.Slug
+import com.histmersion.domain.CreatorControllers
 
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same netty-sync server as
   * MCP.
@@ -135,7 +136,7 @@ final class HttpApi(
     Api.sourceArticles.serverLogic[Identity](ck => HttpApi.citekey(ck).flatMap(h.research.articles.sourceArticles)),
     OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.formats.check(in)),
     Api.resolveId.serverLogic[Identity](id => h.resolveView(ResolvedId.Id(id.value))),
-    Api.seed.serverLogic[Identity](req => h.seeding.seed(req)),
+    Api.seed.serverLogic[Identity](req => CreatorControllers.rest(req)(h.seeding.seed(req))),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
     Api.exportSource.serverLogic[Identity](ck =>
       h.mirror.note(LibraryData.SourceNotes, MirrorPlacement.RecordId(ck.value)).map(n => Source.Export(n.value))
@@ -227,19 +228,23 @@ final class HttpApi(
     List(
       Api.getEvent.serverLogic[Identity](id => HttpApi.eventId(id.value).flatMap(h.eventCard.get)),
       Api.putEvent.serverLogic[Identity]((id, in) =>
-        HttpApi.eventId(id.value).flatMap(e => h.eventCard.put(Caller.Local, e, in))
+        CreatorControllers.rest(in)(HttpApi.eventId(id.value).flatMap(e => h.eventCard.put(Caller.Local, e, in)))
       ),
       Api.patchEvent.serverLogic[Identity]((id, p) =>
-        HttpApi.eventId(id.value).flatMap(e => h.eventCard.patch(Caller.Local, e, p))
+        CreatorControllers.rest(p)(HttpApi.eventId(id.value).flatMap(e => h.eventCard.patch(Caller.Local, e, p)))
       )
     )
   ) ++ AttestationsRoutes(h.attestations) ++ List[ServerEndpoint[Any, Identity]](
     // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
     Api.goals.serverLogicSuccess[Identity](q => h.goals.list(q)),
     Api.getGoal.serverLogic[Identity](slug => HttpApi.goalSlug(slug.value).flatMap(h.goals.get)),
-    Api.putGoal.serverLogic[Identity]((slug, in) => HttpApi.goalSlug(slug.value).flatMap(g => h.goals.put(g, in))),
+    Api.putGoal.serverLogic[Identity]((slug, in) =>
+      CreatorControllers.rest(in)(HttpApi.goalSlug(slug.value).flatMap(g => h.goals.put(g, in)))
+    ),
     Api.createArea.serverLogic[Identity](in =>
-      h.maintenance.guard(WriteGate.OperationName("create_area"))(h.agents.managing.createArea(in))
+      CreatorControllers.rest(in) {
+        h.maintenance.guard(WriteGate.OperationName("create_area"))(h.agents.managing.createArea(in))
+      }
     ),
     Api.patchGoal.serverLogic[Identity]((slug, p) => HttpApi.goalSlug(slug.value).flatMap(g => h.goals.patch(g, p))),
     Api.deleteGoal.serverLogic[Identity](slug => HttpApi.goalSlug(slug.value).flatMap(h.goals.delete)),
@@ -250,7 +255,7 @@ final class HttpApi(
     Api.agentStateDelete.serverLogic[Identity](key => h.agentState.delete(AgentStateRecord.Key(key.value))),
     // ── ingest, jobs and assets (plan §1.8): `sources/{ck}/assets` precedes `sources/{ck}` ─────
     Api.ingest.serverLogic[Identity]((p, file) =>
-      h.ingest.controllers.ingest(p, Upload.handed(HandedFile.snapshot(file)))
+      CreatorControllers.rest(p)(h.ingest.controllers.ingest(p, Upload.handed(HandedFile.snapshot(file))))
     ),
     Api.reocr.serverLogic[Identity]((ck, quality) =>
       HttpApi.citekey(ck).flatMap(c => h.ingest.controllers.reocr(c, Ingest.Params.Quality(quality.value)))
@@ -407,8 +412,10 @@ final class HttpApi(
         h.agents.managing,
         List(
           AutopilotApi.autopilot.serverLogicSuccess[Identity](_ => h.autopilot.autopilot),
-          AutopilotApi.setAutopilot.serverLogic[Identity](in => h.autopilot.setAutopilot(in).left.map(Api.Error(_))),
-          AutopilotApi.setMode.serverLogic[Identity](in => h.autopilot.setMode(in))
+          AutopilotApi.setAutopilot.serverLogic[Identity](in =>
+            CreatorControllers.rest(in)(h.autopilot.setAutopilot(in).left.map(Api.Error(_)))
+          ),
+          AutopilotApi.setMode.serverLogic[Identity](in => CreatorControllers.rest(in)(h.autopilot.setMode(in)))
         ),
         AcquisitionWorkRoutes(
           EngineContributions.work(h.agents)

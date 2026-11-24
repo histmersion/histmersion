@@ -10,6 +10,7 @@ import java.nio.file.{Files, Path}
 import scala.concurrent.duration.DurationInt
 import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.library.Ingest
+import com.histmersion.api.automation.Creation
 import com.histmersion.api.library.{AuthorName, Citekey, Doi, Title}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.SpatialHierarchyResult.Job
@@ -81,7 +82,9 @@ object IngestCmd:
           year,
           doi,
           prov,
-          acquireItem
+          acquireItem,
+          c.createdBy,
+          Some(Creation.Cli)
         )
       c.ingest(params, file.toFile).flatMap { a =>
         Cli.out.println(

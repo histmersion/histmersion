@@ -3,6 +3,7 @@ package web
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.json.RawJson
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
@@ -29,6 +30,7 @@ import com.histmersion.api.automation.{
   AgentScheduler,
   ApprovalDigest,
   Autopilot,
+  Creation,
   Goal,
   ListFilters,
   Managers,
@@ -118,8 +120,35 @@ object ApiClient:
     if f.unauthorized then Auth.rejected()
     f
 
+  def viaWeb[T](req: Request[T], in: Any): Request[T] =
+    val asRequested = scala.reflect.classTag[Creation.Requested]
+    val requested = asRequested
+      .unapply(in)
+      .orElse(
+        scala.reflect
+          .classTag[Product]
+          .unapply(in)
+          .filter(_.productPrefix.startsWith("Tuple"))
+          .flatMap(_.productIterator.flatMap(asRequested.unapply).nextOption())
+      )
+    if !requested.exists(_.via.isEmpty) then req
+    else
+      req.body match
+        case StringBody(text, _, _) =>
+          RawJson
+            .parse(text)
+            .toOption
+            .filter(_.asObject.isDefined)
+            .fold(req) { json =>
+              val replaced = req
+                .withHeaders(req.headers.filterNot(_.is(sttp.model.HeaderNames.ContentLength)))
+                .body(json.mapObject(_.updated("via", Creation.Web.asJson)).noSpaces)
+              req.header(sttp.model.HeaderNames.ContentType).fold(replaced)(replaced.contentType)
+            }
+        case _ => req
+
   private[web] def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Future[O] =
-    val req = authorize(interp.toRequest(ep, None).apply(in))
+    val req = authorize(viaWeb(interp.toRequest(ep, None).apply(in), in))
     // no answer at all (the fetch itself failed) is a transport failure, never a problem the server sent
     unreachable(req.send(backend)).flatMap { resp =>
       resp.header(BuildId.Header).flatMap(BuildId.parse).foreach(PageBuild.current.check)
@@ -409,7 +438,7 @@ object ApiClient:
     * [[authorize]] — the same two places as every other call.
     */
   def ingest(params: Ingest.Params, file: dom.File, progress: Double => Unit): Future[Ingest.Accepted] =
-    val req = authorize(interp.toRequest(Api.ingest, None).apply((params, file)))
+    val req = authorize(viaWeb(interp.toRequest(Api.ingest, None).apply((params, file)), (params, file)))
     val result = Promise[Ingest.Accepted]()
     val xhr = new dom.XMLHttpRequest()
     xhr.open("POST", req.uri.toString)

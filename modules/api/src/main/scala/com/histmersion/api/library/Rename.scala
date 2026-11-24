@@ -9,6 +9,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 object Rename:
   type ShortForm = ShortForm.T
@@ -61,4 +62,5 @@ object Rename:
     type EdgesPromoted = EdgesPromoted.T
     object EdgesPromoted extends Newtype[Int, Pure]
 
-  final case class Request(newCitekey: Citekey) derives JsonCodec, KindlingsSchema, api.json.Schema
+  final case class Request(newCitekey: Citekey, createdBy: Option[Creation.By] = None, via: Option[Creation.Via] = None)
+      extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema

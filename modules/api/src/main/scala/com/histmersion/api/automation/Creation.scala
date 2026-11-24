@@ -21,6 +21,12 @@ final case class Creation(
 
 object Creation:
 
+  trait Named:
+    def createdBy: Option[By]
+
+  trait Requested extends Named:
+    def via: Option[Via]
+
   final case class By(
       plugin: Option[Plugin] = None,
       workflow: Option[Workflow] = None,

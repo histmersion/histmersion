@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.api.BBox
+import com.histmersion.api.automation.Creation
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.{Filter, Sort}
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
@@ -65,7 +66,7 @@ object CommandLine:
 
   /** What the command line asks for. */
   enum Outcome:
-    case Run(server: Option[Client.ServerUrl], command: Cli.Command, json: Cli.JsonOutput)
+    case Run(server: Option[Client.ServerUrl], caller: AgentIdentity, command: Cli.Command, json: Cli.JsonOutput)
     case Help(text: HelpText)
     case Failed(problems: Problems, help: HelpText, json: Cli.JsonOutput)
 
@@ -478,7 +479,25 @@ object CommandLine:
         "server",
         "Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)"
       )
+    private val byPlugin =
+      value[Creation.Plugin](
+        "by-plugin",
+        "An automated caller: the plugin it runs in, named on what it creates (else $HISTMERSION_AGENT_PLUGIN)"
+      )
+    private val byWorkflow =
+      value[Creation.Workflow]("by-workflow", "An automated caller: its workflow (else $HISTMERSION_AGENT_WORKFLOW)")
+    private val byAgent =
+      value[Creation.Definition](
+        "by-agent",
+        "The agent's definition, with --by-provider and --by-model (else $HISTMERSION_AGENT_DEFINITION)"
+      )
+    private val byProvider =
+      value[Creation.Provider]("by-provider", "The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)")
+    private val byModel = value[Creation.Model]("by-model", "The agent's model (else $HISTMERSION_AGENT_MODEL)")
     entries.foreach(e => adopt(e.conf()))
+
+    private def caller: AgentIdentity =
+      AgentIdentity(byPlugin.toOption, byWorkflow.toOption, byAgent.toOption, byProvider.toOption, byModel.toOption)
 
     private val askedJson = jsonOutput(args.contains("--json"))
 
@@ -496,7 +515,7 @@ object CommandLine:
             case Some(leaf: Leaf) =>
               leaf.command.fold(
                 problem => Outcome.Failed(problem, HelpText(helpOf(args)), leaf.jsonRequested),
-                Outcome.Run(server.toOption, _, leaf.jsonRequested)
+                Outcome.Run(server.toOption, caller, _, leaf.jsonRequested)
               )
             case _ =>
               Outcome.Failed(Problem.Invalid.Missing.here(Problem.Field("command")), HelpText(helpOf(args)), askedJson)

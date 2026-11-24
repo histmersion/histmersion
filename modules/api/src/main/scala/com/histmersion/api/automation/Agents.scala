@@ -20,6 +20,7 @@ import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.automation.Creation
 
 object Agents:
   type Action = Action.T
@@ -355,10 +356,10 @@ object Agents:
       /** Every field is optional: a run stored before an option existed must still decode. */
       goal: Option[Goal.Slug] = None,
       dryRun: Option[RunRequest.DryRun] = None,
-      modelFor: List[ModelOverride] = Nil
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      modelFor: List[ModelOverride] = Nil,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object RunRequest:
     type Pipeline = Pipeline.T
@@ -872,10 +873,11 @@ object Agents:
     object Subject extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
 
-  final case class DecisionRequest(note: Option[DecisionRequest.Note] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+  final case class DecisionRequest(
+      note: Option[DecisionRequest.Note] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object DecisionRequest:
     export Approval.Note

@@ -8122,6 +8122,72 @@
               ],
               "format" : "int32"
             }
+          },
+          {
+            "name" : "byPlugin",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name" : "byWorkflow",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name" : "byAgentDefinition",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name" : "byProvider",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name" : "byModel",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : [
+                "string",
+                "null"
+              ]
+            }
+          },
+          {
+            "name" : "via",
+            "in" : "query",
+            "required" : false,
+            "schema" : {
+              "type" : [
+                "string",
+                "null"
+              ]
+            }
           }
         ],
         "requestBody" : {
@@ -18157,6 +18223,22 @@
               "null"
             ],
             "format" : "int64"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -18601,6 +18683,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -18708,6 +18806,22 @@
               {
                 "type" : "null"
               }
+            ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
             ]
           }
         }
@@ -19004,6 +19118,22 @@
           },
           "forceStatus" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -19537,6 +19667,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -19933,6 +20079,22 @@
             "format" : "int32"
           },
           "by" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
             "type" : [
               "string",
               "null"
@@ -20893,6 +21055,22 @@
               "null"
             ],
             "format" : "int32"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -21017,6 +21195,22 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -22142,6 +22336,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -22972,6 +23182,22 @@
               "null"
             ],
             "format" : "int32"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -23327,6 +23553,22 @@
               "null"
             ],
             "format" : "int32"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -23872,6 +24114,22 @@
           },
           "refresh" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -24010,6 +24268,22 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -24250,6 +24524,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -24321,6 +24611,22 @@
             }
           },
           "scale" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
             "type" : [
               "string",
               "null"
@@ -24400,6 +24706,22 @@
           },
           "dryRun" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -25190,6 +25512,22 @@
           },
           "apply" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -26145,6 +26483,22 @@
               "boolean",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -26508,6 +26862,22 @@
           },
           "strict" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -28014,6 +28384,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -28722,6 +29108,22 @@
             ]
           },
           "cron" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
             "type" : [
               "string",
               "null"
@@ -29533,6 +29935,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -29786,6 +30204,22 @@
           },
           "refresh" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -31024,6 +31458,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -31363,6 +31813,22 @@
             "items" : {
               "$ref" : "#/components/schemas/AssetInput"
             }
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -31852,6 +32318,22 @@
               "null"
             ],
             "format" : "double"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -32086,6 +32568,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -32185,6 +32683,22 @@
             "items" : {
               "$ref" : "#/components/schemas/CritiqueReason"
             }
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -33480,6 +33994,22 @@
             "items" : {
               "$ref" : "#/components/schemas/Input1"
             }
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -33548,6 +34078,22 @@
             "items" : {
               "$ref" : "#/components/schemas/Reason"
             }
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -33637,6 +34183,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -33690,6 +34252,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -33726,6 +34304,22 @@
             ]
           },
           "notes" : {
+            "type" : [
+              "string",
+              "null"
+            ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
             "type" : [
               "string",
               "null"
@@ -34638,6 +35232,22 @@
           },
           "apply" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -34897,6 +35507,22 @@
               "string",
               "null"
             ]
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -35132,6 +35758,22 @@
         "properties" : {
           "newCitekey" : {
             "type" : "string"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -35183,6 +35825,22 @@
           },
           "refresh" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -35213,6 +35871,22 @@
           },
           "legalOnly" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -35228,6 +35902,22 @@
           },
           "dryRun" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -36612,6 +37302,22 @@
             "items" : {
               "$ref" : "#/components/schemas/ModelOverride"
             }
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -36722,6 +37428,22 @@
               "null"
             ],
             "format" : "double"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -37055,6 +37777,22 @@
           },
           "force" : {
             "type" : "boolean"
+          },
+          "createdBy" : {
+            "anyOf" : [
+              {
+                "$ref" : "#/components/schemas/By"
+              },
+              {
+                "type" : "null"
+              }
+            ]
+          },
+          "via" : {
+            "type" : [
+              "string",
+              "null"
+            ]
           }
         }
       },

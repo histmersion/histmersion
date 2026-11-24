@@ -6,14 +6,15 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class ArchiveImportRequest(
     id: ArchiveImportRequest.Id,
     citekey: Option[Citekey] = None,
-    format: Option[ArchiveImportRequest.Format] = None
-) derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+    format: Option[ArchiveImportRequest.Format] = None,
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object ArchiveImportRequest:
   export com.histmersion.api.library.ArchiveId as Id

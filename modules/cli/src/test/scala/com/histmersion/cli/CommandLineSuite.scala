@@ -4,6 +4,7 @@ import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.Api
 import com.histmersion.api.aliases.LabelRename
+import com.histmersion.api.automation.Creation
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.{Article, ReviewGoal}
@@ -23,8 +24,8 @@ class CommandLineSuite extends munit.FunSuite:
   private def scallop(args: String*): CommandLine.Outcome = CommandLine.parse("article" +: args)
 
   private def run(args: String*): ArticleCommand = scallop(args*) match
-    case CommandLine.Outcome.Run(_, cmd: ArticleCommand, _) => cmd
-    case other                                              => fail(s"${args.mkString(" ")}: ${other.toString}")
+    case CommandLine.Outcome.Run(_, _, cmd: ArticleCommand, _) => cmd
+    case other                                                 => fail(s"${args.mkString(" ")}: ${other.toString}")
 
   private def problem(args: String*): Problem = scallop(args*) match
     case CommandLine.Outcome.Failed(p, _, _) => p.fold(identity)(ps => fail(s"several problems: $ps"))
@@ -116,8 +117,44 @@ class CommandLineSuite extends munit.FunSuite:
   test("the global options before the group"):
     assertEquals(
       CommandLine.parse(List("--server", "http://h:1", "article", "delete", "sea_peoples")),
-      CommandLine.Outcome.Run(Some(Client.ServerUrl("http://h:1")), ArticleCommand.Delete(slug), Cli.JsonOutput(false))
+      CommandLine.Outcome.Run(
+        Some(Client.ServerUrl("http://h:1")),
+        AgentIdentity.Nobody,
+        ArticleCommand.Delete(slug),
+        Cli.JsonOutput(false)
+      )
     )
+
+  test("the caller's identity before the group: the agent that runs the CLI"):
+    CommandLine.parse(
+      List(
+        "--by-plugin",
+        "p",
+        "--by-workflow",
+        "w",
+        "--by-agent",
+        "d",
+        "--by-provider",
+        "x",
+        "--by-model",
+        "m",
+        "version"
+      )
+    ) match
+      case CommandLine.Outcome.Run(_, caller, _, _) =>
+        assertEquals(
+          caller.createdBy,
+          Some(
+            Creation.By(
+              Some(Creation.Plugin("p")),
+              Some(Creation.Workflow("w")),
+              Some(Creation.Definition("d")),
+              Some(Creation.Provider("x")),
+              Some(Creation.Model("m"))
+            )
+          )
+        )
+      case other => fail(other.toString)
 
   test("there is no --token: a key on the command line is visible to every user of the machine"):
     assert(

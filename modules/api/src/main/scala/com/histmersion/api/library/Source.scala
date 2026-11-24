@@ -26,6 +26,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
 import com.histmersion.api.exchange.PlanMatchKind
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class Source(
     citekey: Citekey,
@@ -506,11 +507,10 @@ object Source:
       tags: Option[ListPatch] = None,
       findings: Option[FindingsPatch] = None,
       edges: Option[EdgesPatch] = None,
-      ifUpdatedAt: Option[UpdatedAt] = None
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema,
-        CanEqual
+      ifUpdatedAt: Option[UpdatedAt] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema, CanEqual
 
   final case class Put(
       title: Title,
@@ -532,10 +532,10 @@ object Source:
       provenance: Option[Provenance] = None,
       calibreId: Option[CalibreId] = None,
       findings: List[Finding.Input] = Nil,
-      edges: List[Edge.Input] = Nil
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema
+      edges: List[Edge.Input] = Nil,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
   object Put:
 
     def of(s: Source): Put = Put(

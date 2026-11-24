@@ -7,11 +7,14 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
-final case class RefsRequest(id: RefsRequest.Id, apply: RefsRequest.Apply = Api.Apply(false))
-    derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+final case class RefsRequest(
+    id: RefsRequest.Id,
+    apply: RefsRequest.Apply = Api.Apply(false),
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object RefsRequest:
   type Id = Id.T

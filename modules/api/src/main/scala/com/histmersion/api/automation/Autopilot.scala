@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 object Autopilot:
 
@@ -14,10 +15,12 @@ object Autopilot:
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 
-  final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+  final case class AutopilotSet(
+      on: AutopilotSet.On,
+      by: Option[AutopilotSet.By] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object AutopilotSet:
     type On = On.T

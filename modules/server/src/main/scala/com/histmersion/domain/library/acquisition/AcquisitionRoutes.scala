@@ -17,6 +17,7 @@ import com.histmersion.domain.library.ArchiveId
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.Write
 import com.histmersion.api.Api
+import com.histmersion.domain.CreatorControllers
 
 /** The REST wiring of [[AcquireApi]] — every route delegates to the [[AcquisitionControllers]] the MCP tools also call;
   * `archive search|info|import` to the library's collections, which run archive.org, and the Calibre gaps to theirs.
@@ -35,11 +36,11 @@ final class AcquisitionRoutes(
     ),
     AcquireApi.meta.serverLogic[Identity](id => h.meta(id)),
     AcquireApi.wikirefs.serverLogic[Identity](url => h.wikirefs(url)),
-    AcquireApi.refs.serverLogic[Identity](req => h.refs(req)),
-    AcquireApi.assess.serverLogic[Identity](req => h.assess(req)),
+    AcquireApi.refs.serverLogic[Identity](req => CreatorControllers.rest(req)(h.refs(req))),
+    AcquireApi.assess.serverLogic[Identity](req => CreatorControllers.rest(req)(h.assess(req))),
     AcquireApi.updateRetractions.serverLogic[Identity](_ => h.updateRetractions()),
     AcquireApi.retractionsStatus.serverLogicSuccess[Identity](_ => h.retractionsStatus),
-    AcquireApi.followups.serverLogic[Identity](req => h.followups(req)),
+    AcquireApi.followups.serverLogic[Identity](req => CreatorControllers.rest(req)(h.followups(req))),
     AcquireApi.ingest.serverLogic[Identity](req => h.ingest(req)),
     AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) =>
       collections.archiveSearch(
@@ -49,7 +50,9 @@ final class AcquisitionRoutes(
       )
     ),
     AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, ArchiveId(id.value))),
-    AcquireApi.archiveImport.serverLogic[Identity](req => collections.archiveImport(Caller.Local, req)),
+    AcquireApi.archiveImport.serverLogic[Identity](req =>
+      CreatorControllers.rest(req)(collections.archiveImport(Caller.Local, req))
+    ),
     AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit =>
       gaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
     ),
@@ -62,6 +65,6 @@ final class AcquisitionRoutes(
     ),
     AcquireApi.calibrePushed.serverLogic[Identity](req => gaps.pushed(req)),
     AcquireApi.candidates.serverLogic[Identity]((g, st, limit, offset) => h.candidates(g, st, limit, offset)),
-    AcquireApi.sweepCandidates.serverLogic[Identity](req => h.sweepCandidates(req)),
+    AcquireApi.sweepCandidates.serverLogic[Identity](req => CreatorControllers.rest(req)(h.sweepCandidates(req))),
     AcquireApi.markCandidates.serverLogic[Identity](req => h.markCandidates(req))
   )

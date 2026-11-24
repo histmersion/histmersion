@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{Creator, CreatorControllers}
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Problem, ProblemLog, Problems}
@@ -1043,7 +1043,7 @@ final class AcquisitionControllers(
     * the same.
     */
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
-    ingestAs(req, Creator.New.Unattributed(Creator.Surface.Rest))
+    CreatorControllers(req.createdBy, req.via).overRest.left.map(Api.Error(_)).flatMap(ingestAs(req, _))
 
   private def ingestAs(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
@@ -1061,7 +1061,8 @@ final class AcquisitionControllers(
     import AcquisitionControllers.agentChain
     agentChain(req.legalOnly, acq.agentsMayUseUnauthorised).left
       .map(Api.Error(_))
-      .flatMap(_ => ingestAs(req, Creator.New.Unattributed(Creator.Surface.Mcp)))
+      .flatMap(_ => CreatorControllers(req.createdBy, None).overMcp.left.map(Api.Error(_)))
+      .flatMap(ingestAs(req, _))
 
   /** [[ingest]] for a watcher's auto-ingest (docs/research-process-managers.md §4 (c)) and the acquisition list's
     * re-check: the LEGAL open-access chain only — no unauthorised fetcher is asked, whatever

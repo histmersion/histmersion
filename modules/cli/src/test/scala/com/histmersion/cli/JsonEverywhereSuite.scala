@@ -64,11 +64,11 @@ class JsonEverywhereSuite extends munit.FunSuite:
 
   test("a command that runs knows it was asked for --json"):
     CommandLine.parse(List("version", "--json")) match
-      case CommandLine.Outcome.Run(_, _, json) => assertEquals(json, Asked)
-      case other                               => fail(other.toString)
+      case CommandLine.Outcome.Run(_, _, _, json) => assertEquals(json, Asked)
+      case other                                  => fail(other.toString)
     CommandLine.parse(List("version")) match
-      case CommandLine.Outcome.Run(_, _, json) => assertEquals(json, Cli.JsonOutput(false))
-      case other                               => fail(other.toString)
+      case CommandLine.Outcome.Run(_, _, _, json) => assertEquals(json, Cli.JsonOutput(false))
+      case other                                  => fail(other.toString)
 
   test("a failure in JSON is the API's body: every typed entry decodes back to its problem, in order"):
     val all: Problems = Problems.of(Problem.examples.head, Problem.examples.tail*)

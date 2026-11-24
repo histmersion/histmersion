@@ -7,6 +7,7 @@ import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Creation
 
 final case class EventPut(
     label: EventSummary.Label,
@@ -21,10 +22,10 @@ final case class EventPut(
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
-    scale: Option[EventSummary.Scale] = None
-) derives StrictJson,
-      KindlingsSchema,
-      api.json.Schema
+    scale: Option[EventSummary.Scale] = None,
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
 object EventPut:
 
   export EventPatch.Geometry

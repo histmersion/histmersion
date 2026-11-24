@@ -10,6 +10,7 @@ import com.histmersion.{Offset, PageSize}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The event catalogues' endpoints bound to their controllers, in their old order: matched before `events/{id}`, which
   * would read `events/import` as an event id.
@@ -19,8 +20,8 @@ object EventImportsRoutes:
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     List(
-      EventsApi.importEvents.serverLogic[Identity](req => imports.importJob(me, req)),
-      EventsApi.rederive.serverLogic[Identity](req => imports.rederiveJob(me, req)),
+      EventsApi.importEvents.serverLogic[Identity](req => CreatorControllers.rest(req)(imports.importJob(me, req))),
+      EventsApi.rederive.serverLogic[Identity](req => CreatorControllers.rest(req)(imports.rederiveJob(me, req))),
       // the query's own order: status, event, limit, offset
       EventsApi.corrections.serverLogic[Identity]((status, event, limit, offset) =>
         for

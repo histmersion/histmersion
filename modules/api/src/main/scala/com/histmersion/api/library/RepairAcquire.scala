@@ -9,6 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
+import com.histmersion.api.automation.Creation
 
 object RepairAcquire:
   type Markdown = Markdown.T
@@ -16,10 +17,10 @@ object RepairAcquire:
 
   final case class RepairRequest(
       dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false),
-      by: Option[RepairRequest.By] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      by: Option[RepairRequest.By] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object RepairRequest:
     type DryRun = DryRun.T

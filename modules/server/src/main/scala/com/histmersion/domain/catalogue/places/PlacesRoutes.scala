@@ -12,6 +12,7 @@ import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The gazetteer's endpoints bound to their controllers, in the order route matching needs: the `/{id}` route is a
   * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page (`GET
@@ -71,10 +72,12 @@ object PlacesRoutes:
       card,
       Api.addPlaceName.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.addName(me, i, in))),
       Api.removePlaceName.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.removeName(me, i, in))),
-      Api.setPlaceOverride.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.setOverride(me, i, in))),
+      Api.setPlaceOverride.serverLogic[Identity]((id, in) =>
+        CreatorControllers.rest(in)(trimmed(id).flatMap(i => places.setOverride(me, i, in)))
+      ),
       Api.mergePlace.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.merge(me, i, in))),
       Api.removePlace.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.remove(me, i, in))),
-      Api.addPlace.serverLogic[Identity](in => places.add(me, in)),
+      Api.addPlace.serverLogic[Identity](in => CreatorControllers.rest(in)(places.add(me, in))),
       Api.importPlaces.serverLogic[Identity]((kind, dataset, body) =>
         places.importPlaces(
           me,

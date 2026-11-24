@@ -21,6 +21,8 @@ import com.histmersion.domain.research.Slug
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.LibraryTools
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The articles' MCP tools, in their place among `/mcp`'s: the list, one article read, its writes, a draft checked, its
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge
@@ -113,18 +115,20 @@ object ArticleTools:
         )
         .input[PutArticleInput]
         .handle { in =>
-          writeSlug(in.slug).flatMap(articles.put(_, in.article, in.strict)) match
-            case Right(v) =>
-              ToolResult.text(
-                Aliases
-                  .note(
-                    AliasKinds.ArticleRecords,
-                    Aliases.Id(in.slug.value.toLowerCase),
-                    Aliases.Id(v.article.slug.value)
-                  )(Aliases.Note(ArticleMarkdown.article(v)))
-                  .value
-              )
-            case Left(e) => McpOut.error(e)
+          CreatorControllers.mcp(in) {
+            writeSlug(in.slug).flatMap(articles.put(_, in.article, in.strict)) match
+              case Right(v) =>
+                ToolResult.text(
+                  Aliases
+                    .note(
+                      AliasKinds.ArticleRecords,
+                      Aliases.Id(in.slug.value.toLowerCase),
+                      Aliases.Id(v.article.slug.value)
+                    )(Aliases.Note(ArticleMarkdown.article(v)))
+                    .value
+                )
+              case Left(e) => McpOut.error(e)
+          }
         }
 
     val patchArticle =
@@ -146,18 +150,20 @@ object ArticleTools:
         )
         .input[PatchArticleInput]
         .handle { in =>
-          writeSlug(in.slug).flatMap(articles.patch(_, in.patch, in.strict)) match
-            case Right(v) =>
-              ToolResult.text(
-                Aliases
-                  .note(
-                    AliasKinds.ArticleRecords,
-                    Aliases.Id(in.slug.value.toLowerCase),
-                    Aliases.Id(v.article.slug.value)
-                  )(Aliases.Note(ArticleMarkdown.article(v)))
-                  .value
-              )
-            case Left(e) => McpOut.error(e)
+          CreatorControllers.mcp(in) {
+            writeSlug(in.slug).flatMap(articles.patch(_, in.patch, in.strict)) match
+              case Right(v) =>
+                ToolResult.text(
+                  Aliases
+                    .note(
+                      AliasKinds.ArticleRecords,
+                      Aliases.Id(in.slug.value.toLowerCase),
+                      Aliases.Id(v.article.slug.value)
+                    )(Aliases.Note(ArticleMarkdown.article(v)))
+                    .value
+                )
+              case Left(e) => McpOut.error(e)
+          }
         }
 
     val checkEdits =
@@ -393,8 +399,9 @@ object ArticleTools:
   final case class PutArticleInput(
       slug: PutArticleInput.Slug,
       article: Article.Put,
-      strict: PutArticleInput.Strict = PutArticleInput.Strict(false)
-  ) derives StrictJson
+      strict: PutArticleInput.Strict = PutArticleInput.Strict(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson
   object PutArticleInput:
     export Article.Slug
     export domain.research.Article.StrictMode as Strict
@@ -407,8 +414,9 @@ object ArticleTools:
   final case class PatchArticleInput(
       slug: PatchArticleInput.Slug,
       patch: Article.Patch,
-      strict: PatchArticleInput.Strict = PatchArticleInput.Strict(false)
-  )
+      strict: PatchArticleInput.Strict = PatchArticleInput.Strict(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named
   object PatchArticleInput:
     export Article.Slug
     export domain.research.Article.StrictMode as Strict

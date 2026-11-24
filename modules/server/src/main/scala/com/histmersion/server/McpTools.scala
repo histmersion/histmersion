@@ -72,6 +72,8 @@ import com.histmersion.domain.automation.agents.AgentsTools
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.domain.library.acquisition.AcquisitionTools
 import com.histmersion.domain.library.collections.CollectionsTools
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 final class McpTools(
@@ -121,28 +123,30 @@ final class McpTools(
       )
       .input[IngestInput]
       .handle { in =>
-        Citekey
-          .parse(in.citekey)
-          .left
-          .map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
-          .flatMap(ck =>
-            h.ingest.controllers.fromTool(
-              ck,
-              in.path.map(ToolFiles.Path(_)),
-              in.base64.map(IngestControllers.Base64(_)),
-              in.filename.map(Ingest.Params.Filename(_)),
-              Ingest.Params.Quality(in.quality),
-              Ingest.Params.Force(in.force),
-              in.title.map(Title(_)),
-              in.authors.map(IngestMeta.Authors(_)),
-              in.year.map(Year(_)),
-              in.doi.flatMap(Doi.normalize),
-              in.acquireItem.map(AcquireAttemptRow.Id(_))
-            )
-          ) match
-          case Right(a) =>
-            ToolResult.text(s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
-          case Left(e) => McpOut.error(e)
+        CreatorControllers.mcp(in) {
+          Citekey
+            .parse(in.citekey)
+            .left
+            .map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
+            .flatMap(ck =>
+              h.ingest.controllers.fromTool(
+                ck,
+                in.path.map(ToolFiles.Path(_)),
+                in.base64.map(IngestControllers.Base64(_)),
+                in.filename.map(Ingest.Params.Filename(_)),
+                Ingest.Params.Quality(in.quality),
+                Ingest.Params.Force(in.force),
+                in.title.map(Title(_)),
+                in.authors.map(IngestMeta.Authors(_)),
+                in.year.map(Year(_)),
+                in.doi.flatMap(Doi.normalize),
+                in.acquireItem.map(AcquireAttemptRow.Id(_))
+              )
+            ) match
+            case Right(a) =>
+              ToolResult.text(s"queued job `${a.jobId}` for **${a.citekey}** — poll `job_status` with that id")
+            case Left(e) => McpOut.error(e)
+        }
       }
 
   private val jobStatus =
@@ -202,12 +206,14 @@ final class McpTools(
       )
       .input[JobControlInput]
       .handle(in =>
-        Job.Id
-          .either(in.id.trim)
-          .left
-          .map(_ => noSuchJob(in.id))
-          .flatMap(h.jobControl.control(_, JobAction.Wire(in.action)))
-          .fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j)))
+        CreatorControllers.mcp(in) {
+          Job.Id
+            .either(in.id.trim)
+            .left
+            .map(_ => noSuchJob(in.id))
+            .flatMap(h.jobControl.control(_, JobAction.Wire(in.action)))
+            .fold(McpOut.error, j => ToolResult.text(IngestMarkdown.job(j)))
+        }
       )
 
   private val activityTool =
@@ -381,31 +387,33 @@ final class McpTools(
       )
       .input[GoalPutInput]
       .handle { in =>
-        val put =
-          Goal.Put(
-            Goal.Title(in.title),
-            Goal.StatusValue(in.status),
-            in.notes.map(Goal.Notes(_)),
-            in.tags.map(Goal.Tags(_)),
-            in.regions.map(Goal.Regions(_)),
-            in.periodStart.map(com.histmersion.api.catalogue.Year(_)),
-            in.periodEnd.map(com.histmersion.api.catalogue.Year(_)),
-            in.parentSlug.map(Goal.Slug(_))
-          )
-        domain.automation.Goal.Slug
-          .either(in.slug)
-          .left
-          .map(_ => invalidValue("goal slug", in.slug))
-          .flatMap(h.goals.put(_, put)) match
-          case Right(g) =>
-            ToolResult.text(
-              Aliases
-                .note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
-                  Aliases.Note(GoalsMarkdown.goal(g))
-                )
-                .value
+        CreatorControllers.mcp(in) {
+          val put =
+            Goal.Put(
+              Goal.Title(in.title),
+              Goal.StatusValue(in.status),
+              in.notes.map(Goal.Notes(_)),
+              in.tags.map(Goal.Tags(_)),
+              in.regions.map(Goal.Regions(_)),
+              in.periodStart.map(com.histmersion.api.catalogue.Year(_)),
+              in.periodEnd.map(com.histmersion.api.catalogue.Year(_)),
+              in.parentSlug.map(Goal.Slug(_))
             )
-          case Left(e) => McpOut.error(e)
+          domain.automation.Goal.Slug
+            .either(in.slug)
+            .left
+            .map(_ => invalidValue("goal slug", in.slug))
+            .flatMap(h.goals.put(_, put)) match
+            case Right(g) =>
+              ToolResult.text(
+                Aliases
+                  .note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
+                    Aliases.Note(GoalsMarkdown.goal(g))
+                  )
+                  .value
+              )
+            case Left(e) => McpOut.error(e)
+        }
       }
 
   private val patchGoalTool =
@@ -710,8 +718,9 @@ object McpTools:
       year: Option[Int] = None,
       doi: Option[String] = None,
       provenance: Option[String] = None,
-      acquireItem: Option[Int] = None
-  ) derives JsonCodec
+      acquireItem: Option[Int] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object IngestInput:
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
@@ -728,10 +737,8 @@ object McpTools:
         _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
       )
 
-  final case class JobControlInput(id: String, action: String)
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class JobControlInput(id: String, action: String, createdBy: Option[Creation.By] = None)
+      extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   final case class ActivityInput(
       show: Option[String] = None,
@@ -801,8 +808,9 @@ object McpTools:
       regions: List[String] = Nil,
       periodStart: Option[Long] = None,
       periodEnd: Option[Long] = None,
-      parentSlug: Option[String] = None
-  ) derives StrictJson
+      parentSlug: Option[String] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson
   object GoalPutInput:
     given Schema[GoalPutInput] = KindlingsSchema
       .derived[GoalPutInput]

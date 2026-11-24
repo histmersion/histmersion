@@ -21,6 +21,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.api.ItemKind
+import com.histmersion.api.automation.Creation
 
 object Managers:
   /** Why a manager proposes, holds or changes an item: the narration of a decision, not a failure. */
@@ -873,10 +874,10 @@ object Managers:
       goal: Option[Goal.Slug] = None,
       config: ManagerConfig = ManagerConfig(),
       paused: Option[ManagerCreate.Paused] = None,
-      cron: Option[ManagerCreate.Cron] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      cron: Option[ManagerCreate.Cron] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object ManagerCreate:
     export Manager.Kind.Wire as Kind
@@ -897,10 +898,10 @@ object Managers:
   final case class EnqueueRequest(
       kind: EnqueueRequest.Kind,
       target: EnqueueRequest.Target,
-      priority: Option[EnqueueRequest.Priority] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      priority: Option[EnqueueRequest.Priority] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object EnqueueRequest:
     export EnqueueKind.Wire as Kind
@@ -950,10 +951,10 @@ object Managers:
       effect: Option[HintEffect] = None,
       author: Option[HintAdd.Author] = None,
       propose: Option[HintAdd.Propose] = None,
-      suggest: Option[HintAdd.Suggest] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      suggest: Option[HintAdd.Suggest] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object HintAdd:
     type Text = Text.T

@@ -9,6 +9,7 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class MediaImportRequest(
     provider: MediaItem.Provider = MediaItem.Provider("wikidata"),
@@ -16,10 +17,10 @@ final case class MediaImportRequest(
     limit: Option[MediaImportRequest.Limit] = None,
     place: Option[Place.Id] = None,
     event: Option[Event.Id] = None,
-    refresh: MediaImportRequest.Refresh = MediaImportRequest.Refresh(false)
-) derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+    refresh: MediaImportRequest.Refresh = MediaImportRequest.Refresh(false),
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object MediaImportRequest:
   export RepairAcquire.RepairRequest.DryRun

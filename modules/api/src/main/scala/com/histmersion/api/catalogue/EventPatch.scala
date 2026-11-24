@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class EventPatch(
     label: Option[EventSummary.Label] = None,
@@ -23,11 +24,10 @@ final case class EventPatch(
     edges: Option[List[EventEdge]] = None,
     participants: Option[List[EventParticipant]] = None,
     scale: Option[EventSummary.Scale] = None,
-    wikidata: Option[EventPatch.Wikidata] = None
-) derives StrictJson,
-      KindlingsSchema,
-      api.json.Schema,
-      CanEqual
+    wikidata: Option[EventPatch.Wikidata] = None,
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema, CanEqual
 object EventPatch:
 
   type Geometry = Geometry.T

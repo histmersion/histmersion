@@ -1,64 +1,64 @@
 ==== histmersion
 Usage:
-    histmersion [--server <string>] version
-    histmersion [--server <string>] health
-    histmersion [--server <string>] about
-    histmersion [--server <string>] seed
-    histmersion [--server <string>] reindex
-    histmersion [--server <string>] search
-    histmersion [--server <string>] facets
-    histmersion [--server <string>] get
-    histmersion [--server <string>] passages
-    histmersion [--server <string>] geo-when
-    histmersion [--server <string>] histogram
-    histmersion [--server <string>] neighbors
-    histmersion [--server <string>] graph
-    histmersion [--server <string>] contradictions
-    histmersion [--server <string>] put
-    histmersion [--server <string>] patch
-    histmersion [--server <string>] rename
-    histmersion [--server <string>] delete
-    histmersion [--server <string>] export
-    histmersion [--server <string>] backup
-    histmersion [--server <string>] backups
-    histmersion [--server <string>] restore
-    histmersion [--server <string>] maintenance
-    histmersion [--server <string>] bundle
-    histmersion [--server <string>] merge
-    histmersion [--server <string>] article
-    histmersion [--server <string>] places
-    histmersion [--server <string>] periods
-    histmersion [--server <string>] init
-    histmersion [--server <string>] events
-    histmersion [--server <string>] attestations
-    histmersion [--server <string>] candidates
-    histmersion [--server <string>] goals
-    histmersion [--server <string>] agent-state
-    histmersion [--server <string>] agent
-    histmersion [--server <string>] media
-    histmersion [--server <string>] asset-links
-    histmersion [--server <string>] lint
-    histmersion [--server <string>] queue
-    histmersion [--server <string>] query
-    histmersion [--server <string>] schema
-    histmersion [--server <string>] discover
-    histmersion [--server <string>] refs
-    histmersion [--server <string>] assess
-    histmersion [--server <string>] followups
-    histmersion [--server <string>] ingest
-    histmersion [--server <string>] archive
-    histmersion [--server <string>] calibre
-    histmersion [--server <string>] reocr
-    histmersion [--server <string>] assets
-    histmersion [--server <string>] jobs
-    histmersion [--server <string>] activity
-    histmersion [--server <string>] log
-    histmersion [--server <string>] state
-    histmersion [--server <string>] bookmarks
-    histmersion [--server <string>] notes
-    histmersion [--server <string>] config
-    histmersion [--server <string>] basemap
-    histmersion [--server <string>] plugin
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] version
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] health
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] about
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] seed
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] reindex
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] search
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] facets
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] get
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] passages
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] geo-when
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] histogram
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] neighbors
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] graph
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] contradictions
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] put
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] patch
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] rename
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] delete
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] export
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] backup
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] backups
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] restore
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] maintenance
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] bundle
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] merge
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] article
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] places
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] periods
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] init
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] events
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] attestations
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] candidates
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] goals
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] agent-state
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] agent
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] media
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] asset-links
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] lint
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] queue
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] query
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] schema
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] discover
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] refs
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] assess
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] followups
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] ingest
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] archive
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] calibre
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] reocr
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] assets
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] jobs
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] activity
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] log
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] state
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] bookmarks
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] notes
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] config
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] basemap
+    histmersion [--server <string>] [--by-plugin <string>] [--by-workflow <string>] [--by-agent <string>] [--by-provider <string>] [--by-model <string>] plugin
 
 Histmersion — CLI over the Histmersion server (MCP twin)
 
@@ -67,6 +67,16 @@ Options and flags:
         Display this help text.
     --server <string>
         Histmersion server URL (default: config cli.serverUrl / $HISTMERSION_SERVER_URL)
+    --by-plugin <string>
+        An automated caller: the plugin it runs in, named on what it creates (else $HISTMERSION_AGENT_PLUGIN)
+    --by-workflow <string>
+        An automated caller: its workflow (else $HISTMERSION_AGENT_WORKFLOW)
+    --by-agent <string>
+        The agent's definition, with --by-provider and --by-model (else $HISTMERSION_AGENT_DEFINITION)
+    --by-provider <string>
+        The agent's AI provider (else $HISTMERSION_AGENT_PROVIDER)
+    --by-model <string>
+        The agent's model (else $HISTMERSION_AGENT_MODEL)
 
 Subcommands:
     version

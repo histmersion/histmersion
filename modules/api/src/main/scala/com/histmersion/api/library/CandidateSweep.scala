@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
+import com.histmersion.api.automation.Creation
 
 final case class CandidateSweep(
     goal: CandidateSweep.Goal,
@@ -40,10 +41,12 @@ object CandidateSweep:
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
 
-  final case class Request(goal: Request.Goal, dryRun: Request.DryRun = Request.DryRun(false))
-      derives JsonCodec,
-        KindlingsSchema,
-        Schema
+  final case class Request(
+      goal: Request.Goal,
+      dryRun: Request.DryRun = Request.DryRun(false),
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, Schema
 
   object Request:
     export api.research.ReviewGoal.Slug as Goal

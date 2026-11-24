@@ -12,6 +12,7 @@ import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.domain.automation.Approval
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** REST wiring of the embedded agents — every route delegates to [[AgentsControllers]]. */
 object AgentsRoutes:
@@ -38,7 +39,7 @@ object AgentsRoutes:
       a.doctor(AgentsControllers.Offline(offline.exists(_.value)))
     ),
     AgentsApi.probe.serverLogic[Identity](req => a.probe(req)),
-    AgentsApi.startRun.serverLogic[Identity](req => a.startRun(req)),
+    AgentsApi.startRun.serverLogic[Identity](req => CreatorControllers.rest(req)(a.startRun(req))),
     AgentsApi.runs.serverLogic[Identity]((f, limit, before, upTo) =>
       a.runsPage(
         f,
@@ -70,17 +71,17 @@ object AgentsRoutes:
       )
     ),
     AgentsApi.decide.serverLogic[Identity]((id, decision, req) =>
-      a.decide(Approval.Id(id.value), Approval.Outcome(decision.value), req)
+      CreatorControllers.rest(req)(a.decide(Approval.Id(id.value), Approval.Outcome(decision.value), req))
     ),
     AgentsApi.goalView.serverLogic[Identity](slug => AgentsControllers.goalSlug(slug.value).flatMap(a.goalView)),
     AgentsApi.addGoalLink.serverLogic[Identity]((slug, in) =>
-      AgentsControllers.goalSlug(slug.value).flatMap(g => a.addGoalLink(g, in))
+      CreatorControllers.rest(in)(AgentsControllers.goalSlug(slug.value).flatMap(g => a.addGoalLink(g, in)))
     ),
     AgentsApi.removeGoalLink.serverLogic[Identity]((slug, kind, ref) =>
       AgentsControllers.goalSlug(slug.value).flatMap(g => a.removeGoalLink(g, kind, BGoalLinkRow.Ref(ref.value)))
     ),
     AgentsApi.setSchedule.serverLogic[Identity]((slug, kind, in) =>
-      AgentsControllers.goalSlug(slug.value).flatMap(g => a.setSchedule(g, kind, in))
+      CreatorControllers.rest(in)(AgentsControllers.goalSlug(slug.value).flatMap(g => a.setSchedule(g, kind, in)))
     ),
     AgentsApi.removeSchedule.serverLogic[Identity]((slug, kind) =>
       AgentsControllers.goalSlug(slug.value).flatMap(g => a.removeSchedule(g, kind))

@@ -11,6 +11,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 object ApprovalDigest:
   type Line = Line.T
@@ -77,10 +78,10 @@ object ApprovalDigest:
       note: Option[BulkDecide.Note] = None,
       dryRun: BulkDecide.DryRun = BulkDecide.DryRun(false),
       limit: Option[BulkDecide.Limit] = None,
-      by: Option[BulkDecide.By] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      by: Option[BulkDecide.By] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object BulkDecide:
     type Decision = Decision.T

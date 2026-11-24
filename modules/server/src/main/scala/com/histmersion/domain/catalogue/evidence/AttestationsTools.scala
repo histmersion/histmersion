@@ -15,6 +15,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The attestations for agents: list or show, create, delete. */
 object AttestationsTools:
@@ -51,8 +53,9 @@ object AttestationsTools:
       canvas: Option[Attestation.Canvas] = None,
       xywh: Option[Attestation.Xywh] = None,
       ctsUrn: Option[Attestation.CtsUrn] = None,
-      note: Option[Attestation.Note] = None
-  ) derives StrictJson // #813
+      note: Option[Attestation.Note] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson // #813
   object AttestationPutInput:
     given Schema[AttestationPutInput] = KindlingsSchema
       .derived[AttestationPutInput]
@@ -111,25 +114,27 @@ object AttestationsTools:
         )
         .input[AttestationPutInput]
         .handle { in =>
-          val put = Attestation.Put(
-            in.citekey,
-            in.targetType,
-            in.targetId,
-            in.quote,
-            in.prefix,
-            in.suffix,
-            in.charStart,
-            in.charEnd,
-            in.chunkOrd,
-            in.page,
-            in.canvas,
-            in.xywh,
-            in.ctsUrn,
-            in.note
-          )
-          attestations.create(Caller.Local, put) match
-            case Right(a) => ToolResult.text(AttestationsMarkdown.attestation(a))
-            case Left(e)  => McpOut.error(e)
+          CreatorControllers.mcp(in) {
+            val put = Attestation.Put(
+              in.citekey,
+              in.targetType,
+              in.targetId,
+              in.quote,
+              in.prefix,
+              in.suffix,
+              in.charStart,
+              in.charEnd,
+              in.chunkOrd,
+              in.page,
+              in.canvas,
+              in.xywh,
+              in.ctsUrn,
+              in.note
+            )
+            attestations.create(Caller.Local, put) match
+              case Right(a) => ToolResult.text(AttestationsMarkdown.attestation(a))
+              case Left(e)  => McpOut.error(e)
+          }
         }
 
     val deleteTool =

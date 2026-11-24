@@ -2085,7 +2085,8 @@ object Api:
         query[Option[Int]]("acquireItem")
           .description("id of the acquisition item this upload fulfils; the OCR job ticks it off when it succeeds")
       )
-      .map { case (citekey, filename, quality, force, title, authors, year, doi, provenance, acquireItem) =>
+      .and(creatorQuery)
+      .map { case (citekey, filename, quality, force, title, authors, year, doi, provenance, acquireItem, by, via) =>
         Ingest.Params(
           Citekey(citekey),
           filename.map(Ingest.Params.Filename(_)),
@@ -2096,7 +2097,9 @@ object Api:
           year.map(catalogue.Year(_)),
           doi.map(Doi(_)),
           provenance.map(Ingest.Params.Provenance(_)),
-          acquireItem.map(Ingest.Params.AcquireItem(_))
+          acquireItem.map(Ingest.Params.AcquireItem(_)),
+          by,
+          via
         )
       }(v =>
         (
@@ -2109,9 +2112,34 @@ object Api:
           v.year.map(_.value),
           v.doi.map(_.value),
           v.provenance.map(_.value),
-          v.acquireItem.map(_.value)
+          v.acquireItem.map(_.value),
+          v.createdBy,
+          v.via
         )
       )
+
+  lazy val creatorQuery: EndpointInput[(Option[automation.Creation.By], Option[automation.Creation.Via])] =
+    query[Option[automation.Creation.Plugin]]("byPlugin")
+      .and(query[Option[automation.Creation.Workflow]]("byWorkflow"))
+      .and(query[Option[automation.Creation.Definition]]("byAgentDefinition"))
+      .and(query[Option[automation.Creation.Provider]]("byProvider"))
+      .and(query[Option[automation.Creation.Model]]("byModel"))
+      .and(query[Option[automation.Creation.Via]]("via"))
+      .map { case (plugin, workflow, definition, provider, model, via) =>
+        val by = Option.when(List(plugin, workflow, definition, provider, model).exists(_.isDefined))(
+          automation.Creation.By(plugin, workflow, definition, provider, model)
+        )
+        (by, via)
+      } { case (by, via) =>
+        (
+          by.flatMap(_.plugin),
+          by.flatMap(_.workflow),
+          by.flatMap(_.agentDefinition),
+          by.flatMap(_.provider),
+          by.flatMap(_.model),
+          via
+        )
+      }
 
   lazy val ingest: PublicEndpoint[(Ingest.Params, TapirFile), Error, Ingest.Accepted, Any] =
     endpoint.post

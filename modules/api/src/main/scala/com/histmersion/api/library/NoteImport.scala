@@ -8,6 +8,7 @@ import com.histmersion.api.media.AssetInput
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class NoteImport(
     text: NoteImport.Text,
@@ -15,10 +16,10 @@ final case class NoteImport(
     body: Option[NoteImport.Body] = None,
     mtime: Option[NoteImport.Mtime] = None,
     force: NoteImport.Force = NoteImport.Force(false),
-    assets: List[AssetInput] = Nil
-) derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+    assets: List[AssetInput] = Nil,
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object NoteImport:
   export Source.{Notes as Body, Notes as Text}

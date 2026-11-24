@@ -26,6 +26,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Creation
 final case class Place(
     id: Place.Id,
     label: Place.Label,
@@ -174,8 +175,10 @@ object Place:
       names: List[Add.Names] = Nil,
       lang: Option[Add.Lang] = None,
       periodStart: Option[Year] = None,
-      periodEnd: Option[Year] = None
-  ) derives StrictJson
+      periodEnd: Option[Year] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson
   object Add:
     export Place.Label
     type Kind = Kind.T
@@ -805,8 +808,10 @@ object Place:
       reason: Option[Rationale] = None,
       reset: OverrideSet.Reset = OverrideSet.Reset(false),
       pointLat: Option[Latitude] = None,
-      pointLon: Option[Longitude] = None
-  ) derives StrictJson
+      pointLon: Option[Longitude] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson
   object OverrideSet:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]

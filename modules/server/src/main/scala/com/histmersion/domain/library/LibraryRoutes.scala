@@ -11,6 +11,7 @@ import com.histmersion.domain.library.sources.{SourcesControllers, SourceService
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The library's endpoints bound to its features' controllers, in the order route matching needs (`sources/{ck}/lint`
   * and `…/view` before `sources/{ck}`, `sources/{ck}/export` before the write paths). The endpoints of other owners
@@ -87,15 +88,19 @@ object LibraryRoutes:
       seed,
       exportSource,
       Api.putSource.serverLogic[Identity]((ck, in, strict) =>
-        citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.value)))
+        CreatorControllers.rest(in)(citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.value))))
       ),
       Api.patchSource.serverLogic[Identity]((ck, p, strict) =>
-        citekey(ck).flatMap(sources.patch(_, p, SourcesControllers.PatchStrict(strict.value)))
+        CreatorControllers.rest(p) {
+          citekey(ck).flatMap(sources.patch(_, p, SourcesControllers.PatchStrict(strict.value)))
+        }
       ),
-      Api.renameSource.serverLogic[Identity]((ck, req) => citekey(ck).flatMap(sources.rename(_, req))),
+      Api.renameSource.serverLogic[Identity]((ck, req) =>
+        CreatorControllers.rest(req)(citekey(ck).flatMap(sources.rename(_, req)))
+      ),
       Api.deleteSource.serverLogic[Identity]((ck, req) => citekey(ck).flatMap(sources.delete(_, req))),
       Api.sourceAliases.serverLogicSuccess[Identity](_ => sources.aliases),
-      Api.importNote.serverLogic[Identity](req => sources.importNote(req)),
+      Api.importNote.serverLogic[Identity](req => CreatorControllers.rest(req)(sources.importNote(req))),
       Api.citekeys.serverLogicSuccess[Identity](_ => sources.citekeys.map(c => ApiCitekey(c.value))),
       Api.resolveEdges.serverLogic[Identity](_ => citations.resolveEdges),
       reindex

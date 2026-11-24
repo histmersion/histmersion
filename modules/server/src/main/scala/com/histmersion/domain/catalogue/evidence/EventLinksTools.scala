@@ -17,6 +17,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** `event_links` for agents: the sources that may discuss an event, their confirmation (an attestation from a passage
   * that names it), and the leads catalogue events raise.
@@ -32,8 +34,9 @@ object EventLinksTools:
       from: Option[Year] = None,
       to: Option[Year] = None,
       kind: Option[Api.EventQuery.Kind] = None,
-      limit: Option[Filter.Limit] = None
-  ) derives JsonCodec
+      limit: Option[Filter.Limit] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object EventLinksInput:
     given Schema[EventLinksInput] = KindlingsSchema
       .derived[EventLinksInput]
@@ -66,27 +69,29 @@ object EventLinksTools:
         )
         .input[EventLinksInput]
         .handle { in =>
-          in.id.map(_.value.trim).filter(_.nonEmpty) match
-            case Some(raw) =>
-              val r =
-                Event.Id
-                  .option(raw)
-                  .toRight(
-                    Api.Error(
-                      Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$raw")),
-                      Some(Api.Error.Code(Write.CodeNotFound))
+          CreatorControllers.mcp(in) {
+            in.id.map(_.value.trim).filter(_.nonEmpty) match
+              case Some(raw) =>
+                val r =
+                  Event.Id
+                    .option(raw)
+                    .toRight(
+                      Api.Error(
+                        Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$raw")),
+                        Some(Api.Error.Code(Write.CodeNotFound))
+                      )
                     )
-                  )
-                  .flatMap { id =>
-                    if in.recompute.value || in.confirm.nonEmpty || in.reject.nonEmpty then
-                      links
-                        .applyLinks(Caller.Local, id, EventLinksRequest(in.recompute, in.confirm, in.reject))
-                        .map(EventLinksMarkdown.result)
-                    else links.links(id).map(EventLinksMarkdown.list)
-                  }
-              McpOut.ofText(r)
-            case None =>
-              val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
-              ToolResult.text(EventLeads.markdown(links.leads(q)).value)
+                    .flatMap { id =>
+                      if in.recompute.value || in.confirm.nonEmpty || in.reject.nonEmpty then
+                        links
+                          .applyLinks(Caller.Local, id, EventLinksRequest(in.recompute, in.confirm, in.reject))
+                          .map(EventLinksMarkdown.result)
+                      else links.links(id).map(EventLinksMarkdown.list)
+                    }
+                McpOut.ofText(r)
+              case None =>
+                val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
+                ToolResult.text(EventLeads.markdown(links.leads(q)).value)
+          }
         }
     List(linksTool)

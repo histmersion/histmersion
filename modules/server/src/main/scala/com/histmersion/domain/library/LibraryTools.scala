@@ -34,6 +34,8 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Sort
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`
@@ -276,19 +278,21 @@ object LibraryTools:
         )
         .input[PutSourceInput]
         .handle { in =>
-          sources.put(in.citekey, in.source, SourcesControllers.PutStrict(in.strict.value)) match
-            case Right(sw) =>
-              ToolResult.text(
-                Aliases
-                  .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
-                    Aliases.Note(
-                      SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
-                        .notice(sw.formatting)
+          CreatorControllers.mcp(in) {
+            sources.put(in.citekey, in.source, SourcesControllers.PutStrict(in.strict.value)) match
+              case Right(sw) =>
+                ToolResult.text(
+                  Aliases
+                    .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
+                      Aliases.Note(
+                        SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
+                          .notice(sw.formatting)
+                      )
                     )
-                  )
-                  .value
-              )
-            case Left(e) => McpOut.error(e)
+                    .value
+                )
+              case Left(e) => McpOut.error(e)
+          }
         }
 
     val patchSource =
@@ -309,19 +313,21 @@ object LibraryTools:
         )
         .input[PatchSourceInput]
         .handle { in =>
-          sources.patch(in.citekey, in.patch, SourcesControllers.PatchStrict(in.strict.value)) match
-            case Right(sw) =>
-              ToolResult.text(
-                Aliases
-                  .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
-                    Aliases.Note(
-                      SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
-                        .notice(sw.formatting)
+          CreatorControllers.mcp(in) {
+            sources.patch(in.citekey, in.patch, SourcesControllers.PatchStrict(in.strict.value)) match
+              case Right(sw) =>
+                ToolResult.text(
+                  Aliases
+                    .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
+                      Aliases.Note(
+                        SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
+                          .notice(sw.formatting)
+                      )
                     )
-                  )
-                  .value
-              )
-            case Left(e) => McpOut.error(e)
+                    .value
+                )
+              case Left(e) => McpOut.error(e)
+          }
         }
 
     val renameSource =
@@ -340,9 +346,11 @@ object LibraryTools:
         )
         .input[RenameSourceInput]
         .handle { in =>
-          sources.rename(in.citekey, Rename.Request(in.newCitekey)) match
-            case Right(r) => ToolResult.text(SourcesMarkdown.sourceRenamed(r))
-            case Left(e)  => McpOut.error(e)
+          CreatorControllers.mcp(in) {
+            sources.rename(in.citekey, Rename.Request(in.newCitekey)) match
+              case Right(r) => ToolResult.text(SourcesMarkdown.sourceRenamed(r))
+              case Left(e)  => McpOut.error(e)
+          }
         }
 
     val exportSource =
@@ -660,8 +668,9 @@ object LibraryTools:
   final case class PutSourceInput(
       citekey: Citekey,
       source: com.histmersion.api.library.Source.Put,
-      strict: PutSourceInput.Strict = PutSourceInput.Strict(false)
-  ) derives StrictJson
+      strict: PutSourceInput.Strict = PutSourceInput.Strict(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson
   object PutSourceInput:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, Pure]
@@ -674,8 +683,9 @@ object LibraryTools:
   final case class PatchSourceInput(
       citekey: Citekey,
       patch: com.histmersion.api.library.Source.Patch,
-      strict: PatchSourceInput.Strict = PatchSourceInput.Strict(false)
-  ) derives StrictJson
+      strict: PatchSourceInput.Strict = PatchSourceInput.Strict(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson
   object PatchSourceInput:
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, Pure]
@@ -685,8 +695,11 @@ object LibraryTools:
       .schema
       .modify(_.strict)(_.description(StrictDoc))
 
-  final case class RenameSourceInput(citekey: Citekey, newCitekey: com.histmersion.api.library.Citekey)
-      derives JsonCodec
+  final case class RenameSourceInput(
+      citekey: Citekey,
+      newCitekey: com.histmersion.api.library.Citekey,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object RenameSourceInput:
 
     given Schema[RenameSourceInput] = KindlingsSchema

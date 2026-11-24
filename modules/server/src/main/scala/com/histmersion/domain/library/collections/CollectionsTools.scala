@@ -24,6 +24,8 @@ import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
@@ -41,10 +43,9 @@ object CollectionsTools:
       convert: CollectionInput.Convert = CollectionInput.Convert(true),
       replace: CollectionInput.Replace = CollectionInput.Replace(false),
       apply: CollectionInput.Apply = CollectionInput.Apply(false),
-      fields: List[CollectionInput.Fields] = Nil
-  ) derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+      fields: List[CollectionInput.Fields] = Nil,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object CollectionInput:
     type Action = Action.T
@@ -90,102 +91,105 @@ object CollectionsTools:
         )
         .input[CollectionInput]
         .handle { in =>
-          val name = in.name
-            .map(_.value.trim)
-            .filter(_.nonEmpty)
-            .fold(CollectionsService.Calibre)(CollectionsService.CollectionName(_))
-          val limit = in.limit.map(l => CollectionsService.Limit(l.value))
-          in.action.value.trim.toLowerCase(java.util.Locale.ROOT) match
-            case "list"   => answer(c.collections(me).left.map(Api.Error(_)))(CollectionsMarkdown.collections)
-            case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
-            case "search" =>
-              answer(c.search(me, name, in.query, limit, CollectionsService.SearchUnlinked(in.unlinked.value)))(s =>
-                if in.unlinked.value then
-                  CollectionsMarkdown.unlinked(s.entries, CollectionsMarkdown.Total(s.total.value))
-                else CollectionsMarkdown.search(s.entries)
-              )
-            case "import" =>
-              in.id.fold(noId)(id =>
-                answer(
-                  c.importItem(
-                    me,
-                    name,
-                    CollectionImportRequest(
-                      CollectionImportRequest.Id(id.value),
-                      in.citekey,
-                      in.format.map(f => CollectionImportRequest.Format(f.value)),
-                      CollectionImportRequest.Convert(in.convert.value)
-                    )
-                  )
-                )(
-                  CollectionsMarkdown.imported
+          CreatorControllers.mcp(in) {
+            val name = in.name
+              .map(_.value.trim)
+              .filter(_.nonEmpty)
+              .fold(CollectionsService.Calibre)(CollectionsService.CollectionName(_))
+            val limit = in.limit.map(l => CollectionsService.Limit(l.value))
+            in.action.value.trim.toLowerCase(java.util.Locale.ROOT) match
+              case "list"   => answer(c.collections(me).left.map(Api.Error(_)))(CollectionsMarkdown.collections)
+              case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
+              case "search" =>
+                answer(c.search(me, name, in.query, limit, CollectionsService.SearchUnlinked(in.unlinked.value)))(s =>
+                  if in.unlinked.value then
+                    CollectionsMarkdown.unlinked(s.entries, CollectionsMarkdown.Total(s.total.value))
+                  else CollectionsMarkdown.search(s.entries)
                 )
-              )
-            case "link" =>
-              (in.citekey, in.id) match
-                case (Some(ck), Some(id)) =>
-                  answer(c.link(me, name, CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value))))(
-                    CollectionsMarkdown.linked
-                  )
-                case (None, _) => noCitekey
-                case _         => noId
-            case "push" =>
-              in.citekey.fold(noCitekey)(ck =>
-                answer(c.push(me, name, CollectionPushRequest(ck, CollectionPushRequest.Replace(in.replace.value))))(
-                  CollectionsMarkdown.pushed
-                )
-              )
-            case "update" =>
-              in.citekey match
-                case Some(ck) => answer(c.updateOne(me, name, CollectionUpdateOne(ck)))(CollectionsMarkdown.updatedOne)
-                case None     =>
+              case "import" =>
+                in.id.fold(noId)(id =>
                   answer(
-                    c.updateAll(
+                    c.importItem(
                       me,
                       name,
-                      CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))
+                      CollectionImportRequest(
+                        CollectionImportRequest.Id(id.value),
+                        in.citekey,
+                        in.format.map(f => CollectionImportRequest.Format(f.value)),
+                        CollectionImportRequest.Convert(in.convert.value)
+                      )
                     )
-                  )(u => CollectionsMarkdown.updateAll(u.rows, u.applied.value))
-            case "set" =>
-              val fields = in.fields.flatMap(f =>
-                f.value.split(":", 2) match
-                  case Array(k, v) if k.trim.nonEmpty =>
-                    Some(CollectionFieldValue(CollectionFieldValue.Name(k.trim), CollectionFieldValue.Value(v)))
-                  case _ => None
-              )
-              in.id.fold(noId)(id =>
-                answer(c.set(me, name, CollectionSetRequest(CollectionSetRequest.Id(id.value), fields)))(
-                  CollectionsMarkdown.set
-                )
-              )
-            case "audit" => answer(c.audit(me, name))(CollectionsMarkdown.audit)
-            case "gaps"  => answer(c.gaps(me, name, limit))(g => CollectionsMarkdown.gaps(g.gaps))
-            case "sync"  =>
-              answer(
-                c.sync(
-                  me,
-                  name,
-                  CollectionSync.Request(
-                    CollectionSync.Request.Apply(in.apply.value),
-                    in.limit.map(l => CollectionSync.Request.Limit(l.value))
+                  )(
+                    CollectionsMarkdown.imported
                   )
                 )
-              )(CollectionsMarkdown.sync)
-            case other =>
-              McpOut.unknown(
-                Problem.TypeName("CollectionAction"),
-                other,
-                Problem.Raw("list"),
-                Problem.Raw("info"),
-                Problem.Raw("search"),
-                Problem.Raw("import"),
-                Problem.Raw("link"),
-                Problem.Raw("push"),
-                Problem.Raw("update"),
-                Problem.Raw("set"),
-                Problem.Raw("audit"),
-                Problem.Raw("gaps"),
-                Problem.Raw("sync")
-              )
+              case "link" =>
+                (in.citekey, in.id) match
+                  case (Some(ck), Some(id)) =>
+                    answer(c.link(me, name, CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value))))(
+                      CollectionsMarkdown.linked
+                    )
+                  case (None, _) => noCitekey
+                  case _         => noId
+              case "push" =>
+                in.citekey.fold(noCitekey)(ck =>
+                  answer(c.push(me, name, CollectionPushRequest(ck, CollectionPushRequest.Replace(in.replace.value))))(
+                    CollectionsMarkdown.pushed
+                  )
+                )
+              case "update" =>
+                in.citekey match
+                  case Some(ck) =>
+                    answer(c.updateOne(me, name, CollectionUpdateOne(ck)))(CollectionsMarkdown.updatedOne)
+                  case None =>
+                    answer(
+                      c.updateAll(
+                        me,
+                        name,
+                        CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))
+                      )
+                    )(u => CollectionsMarkdown.updateAll(u.rows, u.applied.value))
+              case "set" =>
+                val fields = in.fields.flatMap(f =>
+                  f.value.split(":", 2) match
+                    case Array(k, v) if k.trim.nonEmpty =>
+                      Some(CollectionFieldValue(CollectionFieldValue.Name(k.trim), CollectionFieldValue.Value(v)))
+                    case _ => None
+                )
+                in.id.fold(noId)(id =>
+                  answer(c.set(me, name, CollectionSetRequest(CollectionSetRequest.Id(id.value), fields)))(
+                    CollectionsMarkdown.set
+                  )
+                )
+              case "audit" => answer(c.audit(me, name))(CollectionsMarkdown.audit)
+              case "gaps"  => answer(c.gaps(me, name, limit))(g => CollectionsMarkdown.gaps(g.gaps))
+              case "sync"  =>
+                answer(
+                  c.sync(
+                    me,
+                    name,
+                    CollectionSync.Request(
+                      CollectionSync.Request.Apply(in.apply.value),
+                      in.limit.map(l => CollectionSync.Request.Limit(l.value))
+                    )
+                  )
+                )(CollectionsMarkdown.sync)
+              case other =>
+                McpOut.unknown(
+                  Problem.TypeName("CollectionAction"),
+                  other,
+                  Problem.Raw("list"),
+                  Problem.Raw("info"),
+                  Problem.Raw("search"),
+                  Problem.Raw("import"),
+                  Problem.Raw("link"),
+                  Problem.Raw("push"),
+                  Problem.Raw("update"),
+                  Problem.Raw("set"),
+                  Problem.Raw("audit"),
+                  Problem.Raw("gaps"),
+                  Problem.Raw("sync")
+                )
+          }
         }
     List(collection)

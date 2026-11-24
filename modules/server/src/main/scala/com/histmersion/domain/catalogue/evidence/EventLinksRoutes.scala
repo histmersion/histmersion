@@ -9,6 +9,7 @@ import com.histmersion.domain.catalogue.Event
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The event links' endpoints bound to their controllers, in their old order: matched before `events/{id}`, which would
   * read `events/leads` as an event id.
@@ -29,7 +30,9 @@ object EventLinksRoutes:
         )
     List(
       EventsApi.leads.serverLogicSuccess[Identity](q => links.leads(q)),
-      EventsApi.candidatesJob.serverLogic[Identity](req => links.candidatesJob(me, req)),
+      EventsApi.candidatesJob.serverLogic[Identity](req => CreatorControllers.rest(req)(links.candidatesJob(me, req))),
       EventsApi.links.serverLogic[Identity](id => eventId(id).flatMap(links.links)),
-      EventsApi.applyLinks.serverLogic[Identity]((id, req) => eventId(id).flatMap(links.applyLinks(me, _, req)))
+      EventsApi.applyLinks.serverLogic[Identity]((id, req) =>
+        CreatorControllers.rest(req)(eventId(id).flatMap(links.applyLinks(me, _, req)))
+      )
     )

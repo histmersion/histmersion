@@ -30,6 +30,8 @@ import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.server.agents.EngineContributions
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).
@@ -62,40 +64,42 @@ object OpsTools:
         )
         .input[LintInput]
         .handle { in =>
-          val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
-          subject match
-            case (Some(raw), _, _) =>
-              Slug
-                .parse(raw)
-                .fold(
-                  p => McpOut.refused(p),
-                  slug =>
-                    (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
-                      .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+          CreatorControllers.mcp(in) {
+            val subject = (in.article.map(_.trim).filter(_.nonEmpty), in.source.map(_.trim).filter(_.nonEmpty), in.text)
+            subject match
+              case (Some(raw), _, _) =>
+                Slug
+                  .parse(raw)
+                  .fold(
+                    p => McpOut.refused(p),
+                    slug =>
+                      (if in.fix then h.research.articles.fix(slug) else h.research.articles.lint(slug))
+                        .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+                  )
+              case (_, Some(raw), _) =>
+                Citekey
+                  .parse(raw)
+                  .fold(
+                    p => McpOut.refused(p),
+                    ck =>
+                      (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
+                        .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+                  )
+              case (_, _, Some(text)) =>
+                val r = h.formats.check(
+                  FormatCheck(FormatCheck.Text(text), in.field.getOrElse(FormatField.Body), FormatCheck.Fix(in.fix))
                 )
-            case (_, Some(raw), _) =>
-              Citekey
-                .parse(raw)
-                .fold(
-                  p => McpOut.refused(p),
-                  ck =>
-                    (if in.fix then h.library.sources.fix(ck) else h.library.sources.lint(ck))
-                      .fold(McpOut.error, r => ToolResult.text(FormatMarkdown.report(r)))
+                ToolResult.text(
+                  FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````")
                 )
-            case (_, _, Some(text)) =>
-              val r = h.formats.check(
-                FormatCheck(FormatCheck.Text(text), in.field.getOrElse(FormatField.Body), FormatCheck.Fix(in.fix))
-              )
-              ToolResult.text(
-                FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````")
-              )
-            case _ =>
-              h.checks.lintWithFix(
-                in.rules.map(CheckRule.Name(_)),
-                CheckControllers.ApplyFix(in.fix)
-              ) match
-                case Right(rep) => ToolResult.text(Lint.markdown(rep).value)
-                case Left(e)    => McpOut.error(e)
+              case _ =>
+                h.checks.lintWithFix(
+                  in.rules.map(CheckRule.Name(_)),
+                  CheckControllers.ApplyFix(in.fix)
+                ) match
+                  case Right(rep) => ToolResult.text(Lint.markdown(rep).value)
+                  case Left(e)    => McpOut.error(e)
+          }
         }
 
     val queue =
@@ -221,8 +225,9 @@ object OpsTools:
       article: Option[String] = None,
       source: Option[String] = None,
       text: Option[String] = None,
-      field: Option[FormatField] = None
-  ) derives JsonCodec
+      field: Option[FormatField] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object LintInput:
     given Schema[LintInput] = KindlingsSchema
       .derived[LintInput]

@@ -6,6 +6,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 /** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format` (else the
   * collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off acquisition
@@ -17,10 +18,10 @@ final case class CollectionImportRequest(
     format: Option[CollectionImportRequest.Format] = None,
     convert: CollectionImportRequest.Convert = CollectionImportRequest.Convert(true),
     cover: CollectionImportRequest.Cover = CollectionImportRequest.Cover(true),
-    acquireItem: Option[CollectionImportRequest.AcquireItem] = None
-) derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+    acquireItem: Option[CollectionImportRequest.AcquireItem] = None,
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object CollectionImportRequest:
   type Id = Id.T
