@@ -33,6 +33,7 @@ import javax.imageio.ImageIO
 import javax.sql.DataSource
 import com.histmersion.db.*
 import com.histmersion.api.media.{MediaCoversRequest, MediaImportReport, MediaImportRequest}
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
 import com.histmersion.config.DbConfig
 import com.histmersion.plugin.LicenceReader
@@ -427,9 +428,12 @@ class MediaOracleSuite extends DbSuite:
       .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
+  @scala.annotation.tailrec
   private def awaitJob(url: String, id: String, left: Int = 600): String =
-    val j = get(s"$url/api/jobs/$id")
-    if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
+    val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/jobs/$id")))
+    val body = String(r.body, UTF_8)
+    val ended = r.statusCode != 200 || RawJson.decode[JobInfo](body).exists(_.isTerminal)
+    if ended || left == 0 then s"${r.statusCode} $body"
     else { Thread.sleep(100); awaitJob(url, id, left - 1) }
 
   private def exec(ds: DataSource, statement: String): Unit =

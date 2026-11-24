@@ -26,6 +26,7 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.db.*
 import com.histmersion.api.media.DataCredits
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.ocr.{ConvertedDoc, ConvertedImage}
 import com.histmersion.config.DbConfig
 import com.histmersion.plugin.Plugin
@@ -581,8 +582,10 @@ class AcquisitionOracleSuite extends DbSuite:
 
   @scala.annotation.tailrec
   private def awaitJob(url: String, id: String, left: Int = 600): String =
-    val j = get(s"$url/api/jobs/$id")
-    if j.contains("\"done\"") || j.contains("\"failed\"") || j.contains("\"cancelled\"") || left == 0 then j
+    val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/jobs/$id")))
+    val body = String(r.body, UTF_8)
+    val ended = r.statusCode != 200 || RawJson.decode[JobInfo](body).exists(_.isTerminal)
+    if ended || left == 0 then s"${r.statusCode} $body"
     else { Thread.sleep(100); awaitJob(url, id, left - 1) }
 
   /** Wait for every job the answer names, then record each. */
