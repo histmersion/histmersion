@@ -15,6 +15,12 @@ the call), its result is flagged `isError: true`. Its text is the reason in ital
 where to look next; its `structuredContent` is the same `{"problems": [...], "code": ...}` body the REST
 API answers with, so a client can branch on the problem's case instead of the sentence.
 
+**Name yourself on a write.** Every tool that creates a record (`put_source`, `patch_source`, `put_article`,
+`patch_article`, `ingest_doi`, `refs`/`assess`/`followups` with `apply`, `put_goal`, `add_place`, `put_attestation`,
+`start_run`, …) takes `createdBy`: the `plugin` and `workflow` you run in (both), and your agent as `agentDefinition`,
+`provider` and `model` (all three, or none for code without a model). What you create is recorded as that agent's,
+through the MCP; without `createdBy` it is recorded as an unnamed MCP caller's. `queue` `add` refuses an item without it.
+
 **One size cap for every tool** (`mcp.result-max-chars`, default 100 000 characters): a longer answer
 is cut at a line and ends with `…cut at N of M characters` and how to ask for less. A call whose
 arguments are longer than `mcp.arguments-max-chars` (default 64 Mi characters, a base64 upload

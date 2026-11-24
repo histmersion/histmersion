@@ -22,6 +22,8 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -72,8 +74,9 @@ object PlacesTools:
       mergeInto: Option[PlaceOverrideInput.MergeInto] = None,
       remove: Option[PlaceOverrideInput.Remove] = None,
       pointLat: Option[PlaceOverrideInput.PointLat] = None,
-      pointLon: Option[PlaceOverrideInput.PointLon] = None
-  ) derives StrictJson
+      pointLon: Option[PlaceOverrideInput.PointLon] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson
   object PlaceOverrideInput:
     type PlaceId = PlaceId.T
     object PlaceId extends Newtype[String, Pure]
@@ -258,73 +261,75 @@ object PlacesTools:
         )
         .input[PlaceOverrideInput]
         .handle { in =>
-          val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
-          val into = in.mergeInto.map(_.value.trim).filter(_.nonEmpty)
-          val gone = into.isDefined || in.remove.exists(_.value)
-          val ask =
-            gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
-              in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
-          def text(r: Either[Api.Error, String]) = McpOut.ofText(r)
-          (id, ask) match
-            case (_, false) =>
-              ToolResult.text(
-                PlacesMarkdown.placeOverrides(id match
-                  case None      => places.overrides(None)
-                  case Some(raw) =>
-                    Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i))))
-              )
-            case (None, true) =>
-              McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("placeId"))), FindPlaceId)
-            case (Some(pid), true) =>
-              (into, in.remove.exists(_.value)) match
-                case (Some(_), true) =>
-                  McpOut.refused(
-                    Problem.Invalid.Inconsistent.here(
-                      NonEmptyVector.of(Problem.Field("mergeInto"), Problem.Field("remove")),
-                      Problem.Invalid.Exclusion.AtMostOne
+          CreatorControllers.mcp(in) {
+            val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
+            val into = in.mergeInto.map(_.value.trim).filter(_.nonEmpty)
+            val gone = into.isDefined || in.remove.exists(_.value)
+            val ask =
+              gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
+                in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
+            def text(r: Either[Api.Error, String]) = McpOut.ofText(r)
+            (id, ask) match
+              case (_, false) =>
+                ToolResult.text(
+                  PlacesMarkdown.placeOverrides(id match
+                    case None      => places.overrides(None)
+                    case Some(raw) =>
+                      Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i))))
+                )
+              case (None, true) =>
+                McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("placeId"))), FindPlaceId)
+              case (Some(pid), true) =>
+                (into, in.remove.exists(_.value)) match
+                  case (Some(_), true) =>
+                    McpOut.refused(
+                      Problem.Invalid.Inconsistent.here(
+                        NonEmptyVector.of(Problem.Field("mergeInto"), Problem.Field("remove")),
+                        Problem.Invalid.Exclusion.AtMostOne
+                      )
                     )
-                  )
-                case (Some(t), false) =>
-                  text(
-                    placeId(pid)
-                      .flatMap(found =>
-                        places.merge(
-                          me,
-                          found,
-                          ApiPlace.MergeIn(ApiPlace.Id(t), in.reason)
-                        )
-                      )
-                      .map(PlacesMarkdown.placeGone)
-                  )
-                case (None, true) =>
-                  text(
-                    placeId(pid)
-                      .flatMap(found =>
-                        places
-                          .remove(me, found, ApiPlace.RemoveIn(in.reason))
-                      )
-                      .map(PlacesMarkdown.placeGone)
-                  )
-                case (None, false) =>
-                  text(
-                    placeId(pid)
-                      .flatMap(found =>
-                        places.setOverride(
-                          me,
-                          found,
-                          ApiPlace.OverrideSet(
-                            in.kind.map(k => ApiPlace.OverrideSet.Kind(k.value)),
-                            in.periodStart.map(year),
-                            in.periodEnd.map(year),
-                            in.reason,
-                            ApiPlace.OverrideSet.Reset(in.reset.exists(_.value)),
-                            in.pointLat.map(l => Latitude(l.value)),
-                            in.pointLon.map(l => Longitude(l.value))
+                  case (Some(t), false) =>
+                    text(
+                      placeId(pid)
+                        .flatMap(found =>
+                          places.merge(
+                            me,
+                            found,
+                            ApiPlace.MergeIn(ApiPlace.Id(t), in.reason)
                           )
                         )
-                      )
-                      .map(PlacesMarkdown.placeOverrideChanged)
-                  )
+                        .map(PlacesMarkdown.placeGone)
+                    )
+                  case (None, true) =>
+                    text(
+                      placeId(pid)
+                        .flatMap(found =>
+                          places
+                            .remove(me, found, ApiPlace.RemoveIn(in.reason))
+                        )
+                        .map(PlacesMarkdown.placeGone)
+                    )
+                  case (None, false) =>
+                    text(
+                      placeId(pid)
+                        .flatMap(found =>
+                          places.setOverride(
+                            me,
+                            found,
+                            ApiPlace.OverrideSet(
+                              in.kind.map(k => ApiPlace.OverrideSet.Kind(k.value)),
+                              in.periodStart.map(year),
+                              in.periodEnd.map(year),
+                              in.reason,
+                              ApiPlace.OverrideSet.Reset(in.reset.exists(_.value)),
+                              in.pointLat.map(l => Latitude(l.value)),
+                              in.pointLon.map(l => Longitude(l.value))
+                            )
+                          )
+                        )
+                        .map(PlacesMarkdown.placeOverrideChanged)
+                    )
+          }
         },
       /** A place of a person's own (#987). */
       tool("add_place")
@@ -338,5 +343,9 @@ object PlacesTools:
             "given), carried in a bundle and never touched by a re-seed. Refused when the id is taken."
         )
         .input[com.histmersion.api.catalogue.Place.Add]
-        .handle(in => places.add(me, in).fold(McpOut.error, p => ToolResult.text(PlacesMarkdown.placeAdded(p))))
+        .handle(in =>
+          CreatorControllers.mcp(in) {
+            places.add(me, in).fold(McpOut.error, p => ToolResult.text(PlacesMarkdown.placeAdded(p)))
+          }
+        )
     )

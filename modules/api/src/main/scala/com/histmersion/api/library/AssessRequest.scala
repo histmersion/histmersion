@@ -6,14 +6,15 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class AssessRequest(
     id: AssessRequest.Id,
     apply: AssessRequest.Apply = AssessRequest.Apply(false),
-    forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false)
-) derives JsonCodec,
-      KindlingsSchema,
-      api.json.Schema
+    forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false),
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object AssessRequest:
   type Id = Id.T

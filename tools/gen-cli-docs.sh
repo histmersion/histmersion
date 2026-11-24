@@ -148,6 +148,8 @@ render() {
   echo
   printf '%s\n' "Global: \`--server <url>\` overrides the configured server (\`\$HISTMERSION_SERVER_URL\`)."
   echo
+  printf '%s\n' "Global, before the command: \`--by-plugin <name> --by-workflow <name>\` and \`--by-agent <definition> --by-provider <name> --by-model <name>\` name an automated caller (an agent: all five; a workflow's code: the first two), recorded as the creator of every record the command creates (else \`cli.agent.*\`, \`\$HISTMERSION_AGENT_*\`); without them a write is the person's, through the command line."
+  echo
   echo "$END"
 }
 

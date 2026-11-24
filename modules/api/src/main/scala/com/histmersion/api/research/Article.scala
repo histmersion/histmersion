@@ -35,6 +35,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.api.automation.Creation
 final case class Article(
     slug: Article.Slug,
     title: Article.Title,
@@ -753,10 +754,10 @@ object Article:
       kind: Option[Kind.Wire] = None,
       mtime: Option[Import.Mtime] = None,
       force: Import.Force = Import.Force(false),
-      strict: Import.Strict = Import.Strict(false)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      strict: Import.Strict = Import.Strict(false),
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Import:
     export Article.Body as Text
@@ -1023,11 +1024,10 @@ object Article:
       ifUpdatedAt: Option[Patch.IfUpdatedAt] = None,
       filter: Option[Filter] = None,
       reasons: scala.List[api.research.Coverage.Reason] = Nil,
-      critiqueReasons: scala.List[CritiqueReason] = Nil
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema,
-        CanEqual:
+      critiqueReasons: scala.List[CritiqueReason] = Nil,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema, CanEqual:
     def onlyCritiques: Boolean =
       (critiqueReasons.nonEmpty && this
         .modify(_.critiqueReasons)
@@ -1150,10 +1150,10 @@ object Article:
       periodStart: Option[Put.PeriodStart] = None,
       periodEnd: Option[Put.PeriodEnd] = None,
       filter: Option[Filter] = None,
-      reasons: scala.List[api.research.Coverage.Reason] = Nil
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema
+      reasons: scala.List[api.research.Coverage.Reason] = Nil,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
   object Put:
 
     export Article.{Regions, Tags}

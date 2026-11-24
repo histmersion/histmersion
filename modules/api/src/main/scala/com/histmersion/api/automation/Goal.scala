@@ -19,6 +19,7 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Creation
 
 final case class Goal(
     slug: Goal.Slug,
@@ -161,10 +162,10 @@ object Goal:
       goal: Put,
       plan: AreaCreate.Plan = AreaCreate.Plan(false),
       seed: AreaCreate.Seed = AreaCreate.Seed(false),
-      watch: Option[Managers.ManagerConfig] = None
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema
+      watch: Option[Managers.ManagerConfig] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
 
   object AreaCreate:
     type Plan = Plan.T
@@ -291,10 +292,13 @@ object Goal:
       type Queue = Queue.T
       object Queue extends Newtype[String, Pure]
 
-    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None)
-        derives StrictJson,
-          KindlingsSchema,
-          api.json.Schema
+    final case class LinkAdd(
+        kind: LinkKind,
+        ref: LinkAdd.Ref,
+        note: Option[LinkAdd.Note] = None,
+        createdBy: Option[Creation.By] = None,
+        via: Option[Creation.Via] = None
+    ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
     object LinkAdd:
 
       type Ref = Ref.T
@@ -336,10 +340,10 @@ object Goal:
     final case class ScheduleSet(
         cron: ScheduleSet.Cron,
         enabled: ScheduleSet.Enabled = ScheduleSet.Enabled(true),
-        budgetUsd: Option[ScheduleSet.BudgetUsd] = None
-    ) derives StrictJson,
-          KindlingsSchema,
-          api.json.Schema
+        budgetUsd: Option[ScheduleSet.BudgetUsd] = None,
+        createdBy: Option[Creation.By] = None,
+        via: Option[Creation.Via] = None
+    ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
     object ScheduleSet:
 
       type Cron = Cron.T
@@ -378,10 +382,10 @@ object Goal:
       regions: scala.List[Regions] = Nil,
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None,
-      parentSlug: Option[Slug] = None
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema
+      parentSlug: Option[Slug] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
 
   object Stages:
     export Goal.{Stage as MeaningStatus, StageMeaning as MeaningResult}

@@ -2,6 +2,10 @@ package com.histmersion
 package cli
 import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.api.log.LogEvent
+import com.histmersion.api.automation.Creation
+import com.histmersion.util.json.RawJson
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
@@ -101,10 +105,16 @@ import com.histmersion.api.Api.HttpMethod.equality
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
   * `Authorization: Bearer <key>` value for authenticated servers; `None` = local.
   */
-final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] = None):
+final class Client(
+    val serverUrl: Client.ServerUrl,
+    token: Option[Client.Token] = None,
+    caller: AgentIdentity = AgentIdentity.Nobody
+):
   import Client.{transport, unexpected, ConnectTimeout, Histmersion, HttpStatus, PollTimeout, Write}
 
   private val base = Uri.unsafeParse(serverUrl.value)
+
+  def createdBy: Option[Creation.By] = caller.createdBy
 
   // HTTP/1.1, explicitly. sttp's sync backend is java.net.http, whose default HTTP/2 client reuses a
   // connection in a way the server's netty backend mishandles for body-carrying requests: the SECOND
@@ -124,10 +134,16 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   private[cli] def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Either[Cli.Error, O] =
     // No client-side read timeout: the server bounds every request itself
     // (`server.request-timeout-seconds`), and sttp's 1-minute default is shorter than a backup.
-    send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(scala.concurrent.duration.Duration.Inf)))
+    send(
+      authed(
+        Client
+          .stamped(in, caller)(interp.toRequest(ep, Some(base)).apply(in))
+          .readTimeout(scala.concurrent.duration.Duration.Inf)
+      )
+    )
 
   private def poll[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Either[Cli.Error, O] =
-    send(authed(interp.toRequest(ep, Some(base)).apply(in).readTimeout(PollTimeout)))
+    send(authed(Client.stamped(in, caller)(interp.toRequest(ep, Some(base)).apply(in)).readTimeout(PollTimeout)))
 
   /** The bearer token on a request. EVERY request goes through here — the typed calls and the two file downloads alike
     * (#767: `downloadBackup` was built by hand and sent none).
@@ -480,6 +496,35 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
 object Client:
   val TraceHeader = "Histmersion-Trace"
+
+  def requested(in: Any): Option[Creation.Requested] =
+    val asRequested = scala.reflect.classTag[Creation.Requested]
+    asRequested
+      .unapply(in)
+      .orElse(
+        scala.reflect
+          .classTag[Product]
+          .unapply(in)
+          .filter(_.productPrefix.startsWith("Tuple"))
+          .flatMap(_.productIterator.flatMap(asRequested.unapply).nextOption())
+      )
+
+  private def rebodied[T](req: Request[T], text: String): Request[T] =
+    val replaced = req.withHeaders(req.headers.filterNot(_.is(sttp.model.HeaderNames.ContentLength))).body(text)
+    req.header(sttp.model.HeaderNames.ContentType).fold(replaced)(replaced.contentType)
+
+  def stamped[I, T](in: I, caller: AgentIdentity)(req: Request[T]): Request[T] =
+    requested(in).fold(req) { r =>
+      val via = r.via.getOrElse(Creation.Cli)
+      val by = r.createdBy.orElse(caller.createdBy)
+      req.body match
+        case StringBody(text, _, _) =>
+          RawJson.parse(text).toOption.filter(_.asObject.isDefined).fold(req) { json =>
+            val fields = ("via" -> via.asJson) :: by.map(b => "createdBy" -> b.asJson).toList
+            rebodied(req, json.mapObject(o => fields.foldLeft(o) { case (acc, (k, v)) => acc.updated(k, v) }).noSpaces)
+          }
+        case _ => req
+    }
 
   def traceOf(header: Option[String]): Option[LogEvent.Trace] =
     header.flatMap(LogEvent.Trace.fromHeader)

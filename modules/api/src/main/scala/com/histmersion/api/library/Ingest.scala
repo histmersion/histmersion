@@ -9,6 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Sha256
 import com.histmersion.api.catalogue.Year
+import com.histmersion.api.automation.Creation
 object Ingest:
   type Disposition = Disposition.T
   object Disposition extends Newtype[String, Pure]
@@ -69,8 +70,10 @@ object Ingest:
       year: Option[Year] = None,
       doi: Option[Doi] = None,
       provenance: Option[Params.Provenance] = None,
-      acquireItem: Option[Params.AcquireItem] = None
-  )
+      acquireItem: Option[Params.AcquireItem] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested
 
   object Params:
     export api.exchange.Bundle.Asset.FileName as Filename
@@ -110,10 +113,10 @@ object Ingest:
       citekey: Option[Citekey] = None,
       arxiv: Option[Request.Arxiv] = None,
       refetch: Request.Refetch = Request.Refetch(false),
-      legalOnly: Request.LegalOnly = Request.LegalOnly(true)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      legalOnly: Request.LegalOnly = Request.LegalOnly(true),
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Request:
     type Id = Id.T

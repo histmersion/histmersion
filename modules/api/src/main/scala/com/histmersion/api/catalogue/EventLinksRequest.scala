@@ -7,14 +7,15 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 final case class EventLinksRequest(
     recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false),
     confirm: List[EventLinksRequest.Confirm] = Nil,
-    reject: List[EventLinksRequest.Reject] = Nil
-) derives StrictJson,
-      KindlingsSchema,
-      api.json.Schema
+    reject: List[EventLinksRequest.Reject] = Nil,
+    createdBy: Option[Creation.By] = None,
+    via: Option[Creation.Via] = None
+) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
 object EventLinksRequest:
 
   type Recompute = Recompute.T

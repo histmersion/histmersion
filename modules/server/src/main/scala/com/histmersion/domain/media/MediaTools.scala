@@ -27,6 +27,8 @@ import com.histmersion.api.media.AssetRelation
 import com.histmersion.api.media.MediaTarget
 import com.histmersion.domain.media.links.AssetLinkService
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** Media's agent tools, in their place among `/mcp`'s: a source's figures, a figure's description, its links. The
   * imports and the sources' pictures are not tools, on purpose (an operator's decision; a picture is for the reader).
@@ -74,8 +76,9 @@ object MediaTools:
       targetId: Option[AssetLinksInput.TargetId] = None,
       relation: Option[AssetLinksInput.Relation] = None,
       xywh: Option[AssetLinksInput.Xywh] = None,
-      notes: Option[AssetLinksInput.Notes] = None
-  ) derives JsonCodec
+      notes: Option[AssetLinksInput.Notes] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object AssetLinksInput:
     type Asset = Asset.T
     object Asset extends Newtype[String, Pure]
@@ -159,31 +162,33 @@ object MediaTools:
         )
         .input[AssetLinksInput]
         .handle { in =>
-          in.relation match
-            case Some(rel) =>
-              val put = AssetLink.Put(
-                citekey = com.histmersion.api.library.Citekey(in.citekey.fold("")(_.value)),
-                assetName = Bundle.Asset.FileName(in.asset.fold("")(_.value)),
-                relation = AssetRelation.Wire(rel.value),
-                targetType = MediaTarget.TargetType(in.targetType.fold("")(_.value)),
-                targetId = MediaTarget.TargetId(in.targetId.fold("")(_.value)),
-                xywh = in.xywh.map(x => AssetLink.Xywh(x.value)),
-                notes = in.notes.map(n => AssetLink.Notes(n.value))
-              )
-              links.create(put) match
-                case Right(l) => ToolResult.text(MediaMarkdown.assetLink(l))
-                case Left(e)  => McpOut.error(e)
-            case None =>
-              ToolResult.text(
-                MediaMarkdown.assetLinkList(
-                  links.list(
-                    in.citekey,
-                    in.asset.map(a => AssetService.AssetUid(a.value)),
-                    in.targetType.map(t => AssetService.TargetType(t.value)),
-                    in.targetId.map(t => AssetService.TargetId(t.value))
+          CreatorControllers.mcp(in) {
+            in.relation match
+              case Some(rel) =>
+                val put = AssetLink.Put(
+                  citekey = com.histmersion.api.library.Citekey(in.citekey.fold("")(_.value)),
+                  assetName = Bundle.Asset.FileName(in.asset.fold("")(_.value)),
+                  relation = AssetRelation.Wire(rel.value),
+                  targetType = MediaTarget.TargetType(in.targetType.fold("")(_.value)),
+                  targetId = MediaTarget.TargetId(in.targetId.fold("")(_.value)),
+                  xywh = in.xywh.map(x => AssetLink.Xywh(x.value)),
+                  notes = in.notes.map(n => AssetLink.Notes(n.value))
+                )
+                links.create(put) match
+                  case Right(l) => ToolResult.text(MediaMarkdown.assetLink(l))
+                  case Left(e)  => McpOut.error(e)
+              case None =>
+                ToolResult.text(
+                  MediaMarkdown.assetLinkList(
+                    links.list(
+                      in.citekey,
+                      in.asset.map(a => AssetService.AssetUid(a.value)),
+                      in.targetType.map(t => AssetService.TargetType(t.value)),
+                      in.targetId.map(t => AssetService.TargetId(t.value))
+                    )
                   )
                 )
-              )
+          }
         },
       tool("delete_asset_link")
         .description("Delete an asset link by id.")

@@ -27,6 +27,8 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The events for agents: list or show one (its page, with its pictures and the articles citing its sources), and patch
   * one.
@@ -87,8 +89,9 @@ object EventCardTools:
       parentId: Option[PatchEventInput.ParentId] = None,
       description: Option[PatchEventInput.Description] = None,
       citekey: Option[PatchEventInput.Citekey] = None,
-      wikidata: Option[PatchEventInput.Wikidata] = None
-  ) derives StrictJson
+      wikidata: Option[PatchEventInput.Wikidata] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives StrictJson
   object PatchEventInput:
     export com.histmersion.api.catalogue.Event.Id
     export EventSummary.{Historicity, Kind, Label, Scale}
@@ -175,38 +178,40 @@ object EventCardTools:
         )
         .input[PatchEventInput]
         .handle { in =>
-          EventGeometry.of(in.geometry, in.lat, in.lon) match
-            case Left(msg)   => McpOut.refused(msg)
-            case Right(geom) =>
-              val p = EventPatch(
-                label = in.label,
-                kind = in.kind,
-                historicity = in.historicity,
-                geometry = geom.map(g => EventPatch.Geometry(g.value)),
-                placeId = in.placeId,
-                parentId = in.parentId,
-                description = in.description,
-                citekey = in.citekey,
-                scale = in.scale,
-                wikidata = in.wikidata
-              )
-              Event.Id
-                .option(in.id.value)
-                .toRight(
-                  Api.Error(
-                    Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"${in.id.value}")),
-                    Some(Api.Error.Code(Write.CodeNotFound))
-                  )
+          CreatorControllers.mcp(in) {
+            EventGeometry.of(in.geometry, in.lat, in.lon) match
+              case Left(msg)   => McpOut.refused(msg)
+              case Right(geom) =>
+                val p = EventPatch(
+                  label = in.label,
+                  kind = in.kind,
+                  historicity = in.historicity,
+                  geometry = geom.map(g => EventPatch.Geometry(g.value)),
+                  placeId = in.placeId,
+                  parentId = in.parentId,
+                  description = in.description,
+                  citekey = in.citekey,
+                  scale = in.scale,
+                  wikidata = in.wikidata
                 )
-                .flatMap(page.patch(Caller.Local, _, p)) match
-                case Right(d) =>
-                  ToolResult.text(
-                    Aliases
-                      .note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(
-                        Aliases.Note(d.markdown.value)
-                      )
-                      .value
+                Event.Id
+                  .option(in.id.value)
+                  .toRight(
+                    Api.Error(
+                      Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"${in.id.value}")),
+                      Some(Api.Error.Code(Write.CodeNotFound))
+                    )
                   )
-                case Left(e) => McpOut.error(e)
+                  .flatMap(page.patch(Caller.Local, _, p)) match
+                  case Right(d) =>
+                    ToolResult.text(
+                      Aliases
+                        .note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(
+                          Aliases.Note(d.markdown.value)
+                        )
+                        .value
+                    )
+                  case Left(e) => McpOut.error(e)
+          }
         }
     List(listTool, patchTool)

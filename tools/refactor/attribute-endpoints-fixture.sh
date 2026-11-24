@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# The fixtures of row 32's slice-4 rules, through the scalafix skill's run-rule.sh: <name>-fixture/input/ becomes
-# <name>-fixture/expected/, the result compiles, and the report lists exactly <name>-fixture/expected-report.tsv.
-# Run from the worktree root:
-#   bash tools/refactor/attribute-endpoints-fixture.sh                                  (AttributeEndpoints)
-#   bash tools/refactor/attribute-endpoints-fixture.sh record-fields AddRecordFields    (AddRecordFields)
 set -euo pipefail
 name=${1:-attribute-endpoints}
 rule=${2:-AttributeEndpoints}

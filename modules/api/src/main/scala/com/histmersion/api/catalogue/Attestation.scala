@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.api.automation.Creation
 
 final case class Attestation(
     id: Attestation.Id,
@@ -125,7 +126,7 @@ object Attestation:
       canvas: Option[Canvas] = None,
       xywh: Option[Xywh] = None,
       ctsUrn: Option[CtsUrn] = None,
-      note: Option[Note] = None
-  ) derives StrictJson,
-        KindlingsSchema,
-        api.json.Schema
+      note: Option[Note] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema

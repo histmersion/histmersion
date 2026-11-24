@@ -8,6 +8,7 @@ import com.histmersion.{Offset, PageSize}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The attestations' endpoints bound to their controllers, in their old order. */
 object AttestationsRoutes:
@@ -25,7 +26,7 @@ object AttestationsRoutes:
         )
       ),
       Api.getAttestation.serverLogic[Identity](id => attestations.get(id)),
-      Api.createAttestation.serverLogic[Identity](in => attestations.create(me, in)),
+      Api.createAttestation.serverLogic[Identity](in => CreatorControllers.rest(in)(attestations.create(me, in))),
       Api.patchAttestation.serverLogic[Identity]((id, p) => attestations.patch(me, id, p)),
       Api.deleteAttestation.serverLogic[Identity](id => attestations.delete(me, id))
     )

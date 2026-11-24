@@ -10,6 +10,7 @@ import com.histmersion.config.AgentAutopilotConfig
 import com.histmersion.{Offset, PageSize}
 import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** REST wiring of the process managers — every route delegates to [[ManagersControllers]]. The fixed paths come before
   * `{id}/{action}`.
@@ -34,7 +35,7 @@ object ManagersRoutes:
   ): List[ServerEndpoint[Any, Identity]] =
     List(
       ManagersApi.list.serverLogicSuccess[Identity](_ => m.list),
-      ManagersApi.create.serverLogic[Identity](in => m.create(in)),
+      ManagersApi.create.serverLogic[Identity](in => CreatorControllers.rest(in)(m.create(in))),
       ManagersApi.get.serverLogic[Identity](id => m.get(light(id))),
       ManagersApi.update.serverLogic[Identity]((id, in) => m.update(light(id), in)),
       ManagersApi.delete.serverLogic[Identity](id => m.delete(light(id))),
@@ -49,7 +50,7 @@ object ManagersRoutes:
       ManagersApi.addItem.serverLogic[Identity]((id, in) => m.addItem(light(id), in)),
       ManagersApi.patchItem.serverLogic[Identity]((id, item, in) => m.patchItem(light(id), item, in)),
       ManagersApi.hints.serverLogic[Identity]((id, all) => m.hints(light(id), all.contains(true))),
-      ManagersApi.addHint.serverLogic[Identity]((id, in) => m.addHint(light(id), in)),
+      ManagersApi.addHint.serverLogic[Identity]((id, in) => CreatorControllers.rest(in)(m.addHint(light(id), in))),
       ManagersApi.removeHint.serverLogic[Identity]((id, h) => m.deleteHint(light(id), h)),
       ManagersApi.events.serverLogic[Identity]((id, before, limit) =>
         m.events(light(id), before.map(b => ManagerRepo.EventCursor(b.value)), pageSize(limit.map(_.value)))
@@ -57,7 +58,7 @@ object ManagersRoutes:
       ManagersApi.action.serverLogic[Identity]((id, action, runs) =>
         m.action(light(id), ManagersControllers.Action(action.value), runs.map(ManagerInfo.PauseRuns(_)))
       ),
-      ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in))
+      ManagersApi.enqueue.serverLogic[Identity](in => CreatorControllers.rest(in)(m.enqueue(in)))
     ) ++ switches ++ acquisition ++ List(
       ManagersApi.focus.serverLogicSuccess[Identity](_ => m.focus),
       ManagersApi.setFocus.serverLogic[Identity](in => m.setFocus(in)),
@@ -65,7 +66,7 @@ object ManagersRoutes:
       ManagersApi.setScheduler.serverLogic[Identity](in => m.setScheduler(in)),
       ManagersApi.schedulerWhy.serverLogic[Identity](item => m.schedulerWhy(ManagerItem.Ref(item.value))),
       ManagersApi.digest.serverLogicSuccess[Identity](_ => m.digest),
-      ManagersApi.decideAll.serverLogic[Identity](in => m.decideAll(in))
+      ManagersApi.decideAll.serverLogic[Identity](in => CreatorControllers.rest(in)(m.decideAll(in)))
     ) ++ draining ++ List(
       ManagersApi.stalls.serverLogicSuccess[Identity](days =>
         m.stalls(days.map(d => AgentAutopilotConfig.StallDays(d.value)))

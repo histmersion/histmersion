@@ -239,19 +239,22 @@ object Cli:
         e.printJson(json)
         err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
         e.exitCode.exit()
-      case CommandLine.Outcome.Run(server, cmd, json) =>
-        finish(server, cmd.run, json)
+      case CommandLine.Outcome.Run(server, caller, cmd, json) =>
+        finish(server, caller.orElse(AgentIdentity.configured(Settings.app.cli.agent)), cmd.run, json)
 
-  private def finish(server: Option[Client.ServerUrl], run: Client => Either[Error, Unit], json: JsonOutput)(using
-      console: Console
-  ): Unit =
+  private def finish(
+      server: Option[Client.ServerUrl],
+      caller: AgentIdentity,
+      run: Client => Either[Error, Unit],
+      json: JsonOutput
+  )(using console: Console): Unit =
     val url = server.getOrElse(Client.ServerUrl(Settings.app.cli.serverUrl.value))
     val token = Client.Token.chosen(Option(System.getenv("HISTMERSION_TOKEN")), tokenFile) match
       case Right(t) => t
       case Left(p)  =>
         val e = Error(p)
         e.printJson(json); err.println(s"error: ${p.sentence}"); e.exitCode.exit()
-    run(new Client(url, token)) match
+    run(new Client(url, token, caller)) match
       case Right(())                     => ()
       case Left(e) if e.workingDirDenied =>
         e.printJson(json); err.println(WorkingDir.message); e.exitCode.exit()

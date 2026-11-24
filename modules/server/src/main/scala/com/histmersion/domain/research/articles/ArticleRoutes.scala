@@ -15,6 +15,7 @@ import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.Title
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The articles over HTTP: the REST routes of the compiled wiki, the rendered page at `/article/{slug}` and the
   * `/articles` redirect, in the order route matching needs (`…/export`, `…/versions` and `…/import` before `…/{slug}`).
@@ -44,7 +45,7 @@ object ArticleRoutes:
     val rest: List[ServerEndpoint[Any, Identity]] = List(
       Api.articles.serverLogicSuccess[Identity](q => articles.list(q)),
       Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs.map(s => ReviewGoal.Slug(s.value))),
-      Api.importArticle.serverLogic[Identity](req => articles.importNote(req)),
+      Api.importArticle.serverLogic[Identity](req => CreatorControllers.rest(req)(articles.importNote(req))),
       Api.exportArticle.serverLogic[Identity](slug =>
         read(slug).flatMap(articles.exportNote).map(n => Article.Export(n.value))
       ),
@@ -61,10 +62,14 @@ object ArticleRoutes:
         read(slug).flatMap(articles.get(_, ArticlesControllers.GetBrief(brief.value)))
       ),
       Api.putArticle.serverLogic[Identity]((slug, in, strict) =>
-        write(slug).flatMap(articles.put(_, in, domain.research.Article.StrictMode(strict.value)))
+        CreatorControllers.rest(in) {
+          write(slug).flatMap(articles.put(_, in, domain.research.Article.StrictMode(strict.value)))
+        }
       ),
       Api.patchArticle.serverLogic[Identity]((slug, p, strict) =>
-        write(slug).flatMap(articles.patch(_, p, domain.research.Article.StrictMode(strict.value)))
+        CreatorControllers.rest(p) {
+          write(slug).flatMap(articles.patch(_, p, domain.research.Article.StrictMode(strict.value)))
+        }
       ),
       Api.deleteArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.delete))
     )

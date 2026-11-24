@@ -50,6 +50,8 @@ import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.domain.automation.managers.ManagersControllers
 import com.histmersion.domain.Creator
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it
@@ -81,31 +83,33 @@ object AgentsTools:
         )
         .input[RunInput]
         .handle { in =>
-          in.modelFor.map(m => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(m))).partitionMap(identity) match
-            case (Nil, over) =>
-              a.startRun(
-                RunRequest(
-                  RunRequest.Pipeline(in.pipeline),
-                  RunRequest.Target(in.target),
-                  in.model.map(RunRequest.Model(_)),
-                  in.budgetUsd.map(RunRequest.BudgetUsd(_)),
-                  None,
-                  Option.when(in.fix)(RunRequest.Fix(true)),
-                  in.rounds.map(RunRequest.Rounds(_)),
-                  in.acquireItem.map(Queue.QueueItem.Id(_)),
-                  in.title.map(RunRequest.Title(_)),
-                  in.kind.map(RunRequest.Kind(_)),
-                  in.query.map(RunRequest.Query(_)),
-                  in.topics.map(RunRequest.Topics(_)),
-                  in.tags.map(RunRequest.Tags(_)),
-                  in.goal.map(Goal.Slug(_)),
-                  Option.when(in.dryRun)(RunRequest.DryRun(true)),
-                  over
-                )
-              ) match
-                case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
-                case Left(e)  => McpOut.error(e)
-            case (errs, _) => NonEmptyVector.from(errs.toVector).fold(McpOut.text(""))(McpOut.refused(_))
+          CreatorControllers.mcp(in) {
+            in.modelFor.map(m => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(m))).partitionMap(identity) match
+              case (Nil, over) =>
+                a.startRun(
+                  RunRequest(
+                    RunRequest.Pipeline(in.pipeline),
+                    RunRequest.Target(in.target),
+                    in.model.map(RunRequest.Model(_)),
+                    in.budgetUsd.map(RunRequest.BudgetUsd(_)),
+                    None,
+                    Option.when(in.fix)(RunRequest.Fix(true)),
+                    in.rounds.map(RunRequest.Rounds(_)),
+                    in.acquireItem.map(Queue.QueueItem.Id(_)),
+                    in.title.map(RunRequest.Title(_)),
+                    in.kind.map(RunRequest.Kind(_)),
+                    in.query.map(RunRequest.Query(_)),
+                    in.topics.map(RunRequest.Topics(_)),
+                    in.tags.map(RunRequest.Tags(_)),
+                    in.goal.map(Goal.Slug(_)),
+                    Option.when(in.dryRun)(RunRequest.DryRun(true)),
+                    over
+                  )
+                ) match
+                  case Right(r) => ToolResult.text(AgentsMarkdown.runLine(r))
+                  case Left(e)  => McpOut.error(e)
+              case (errs, _) => NonEmptyVector.from(errs.toVector).fold(McpOut.text(""))(McpOut.refused(_))
+          }
         }
 
     val status =
@@ -194,32 +198,34 @@ object AgentsTools:
         )
         .input[DecideInput]
         .handle { in =>
-          in.id match
-            case Some(id) =>
-              McpOut.of(
-                a.decide(
-                  DomainApproval.Id(id),
-                  DomainApproval.Outcome(in.decision),
-                  DecisionRequest(in.note.map(DecisionRequest.Note(_)))
-                )
-              )(x => AgentsMarkdown.approvalLine(x))
-            case None =>
-              McpOut.of(
-                a.managing
-                  .decideAll(
-                    ApprovalDigest
-                      .BulkDecide(
-                        ApprovalDigest.BulkDecide.Decision(in.decision),
-                        in.kind.map(ApprovalDigest.BulkDecide.Kind(_)),
-                        in.subject.map(ApprovalDigest.BulkDecide.Subject(_)),
-                        in.ids.map(ApprovalDigest.Open.Id(_)),
-                        in.note.map(ApprovalDigest.BulkDecide.Note(_)),
-                        ApprovalDigest.BulkDecide.DryRun(in.dryRun),
-                        in.limit.map(ApprovalDigest.BulkDecide.Limit(_)),
-                        Some(ApprovalDigest.BulkDecide.By("mcp"))
-                      )
+          CreatorControllers.mcp(in) {
+            in.id match
+              case Some(id) =>
+                McpOut.of(
+                  a.decide(
+                    DomainApproval.Id(id),
+                    DomainApproval.Outcome(in.decision),
+                    DecisionRequest(in.note.map(DecisionRequest.Note(_)))
                   )
-              )(ApprovalDigestMarkdown.bulk)
+                )(x => AgentsMarkdown.approvalLine(x))
+              case None =>
+                McpOut.of(
+                  a.managing
+                    .decideAll(
+                      ApprovalDigest
+                        .BulkDecide(
+                          ApprovalDigest.BulkDecide.Decision(in.decision),
+                          in.kind.map(ApprovalDigest.BulkDecide.Kind(_)),
+                          in.subject.map(ApprovalDigest.BulkDecide.Subject(_)),
+                          in.ids.map(ApprovalDigest.Open.Id(_)),
+                          in.note.map(ApprovalDigest.BulkDecide.Note(_)),
+                          ApprovalDigest.BulkDecide.DryRun(in.dryRun),
+                          in.limit.map(ApprovalDigest.BulkDecide.Limit(_)),
+                          Some(ApprovalDigest.BulkDecide.By("mcp"))
+                        )
+                    )
+                )(ApprovalDigestMarkdown.bulk)
+          }
         }
 
     val links =
@@ -231,29 +237,32 @@ object AgentsTools:
         )
         .input[GoalLinkInput]
         .handle { in =>
-          val kind = Goal.Plans.LinkKind.parse(Goal.Plans.LinkKind.Wire(in.kind))
-          val done =
-            kind
-              .toRight(
-                Api.Error(
-                  Problem.Invalid.Unknown.here(
-                    Problem.TypeName.of(Goal.Plans.LinkKind.Wire),
-                    Problem.Raw(in.kind),
-                    Goal.Plans.LinkKind.values.toVector.map(v => Problem.Raw.of(v.wire))
+          CreatorControllers.mcp(in) {
+            val kind = Goal.Plans.LinkKind.parse(Goal.Plans.LinkKind.Wire(in.kind))
+            val done =
+              kind
+                .toRight(
+                  Api.Error(
+                    Problem.Invalid.Unknown.here(
+                      Problem.TypeName.of(Goal.Plans.LinkKind.Wire),
+                      Problem.Raw(in.kind),
+                      Goal.Plans.LinkKind.values.toVector.map(v => Problem.Raw.of(v.wire))
+                    )
                   )
                 )
-              )
-              .flatMap { k =>
-                AgentsControllers.goalSlug(in.goal).flatMap { g =>
-                  if in.remove then a.removeGoalLink(g, k.wire, BGoalLinkRow.Ref(in.ref)).map(_ => ())
-                  else
-                    a.addGoalLink(
-                      g,
-                      Goal.Plans.LinkAdd(k, Goal.Plans.LinkAdd.Ref(in.ref), in.note.map(Goal.Plans.LinkAdd.Note(_)))
-                    ).map(_ => ())
+                .flatMap { k =>
+                  AgentsControllers.goalSlug(in.goal).flatMap { g =>
+                    if in.remove then a.removeGoalLink(g, k.wire, BGoalLinkRow.Ref(in.ref)).map(_ => ())
+                    else
+                      a.addGoalLink(
+                        g,
+                        Goal.Plans.LinkAdd(k, Goal.Plans.LinkAdd.Ref(in.ref), in.note.map(Goal.Plans.LinkAdd.Note(_)))
+                      ).map(_ => ())
+                  }
                 }
-              }
-          McpOut.of(done.flatMap(_ => AgentsControllers.goalSlug(in.goal).flatMap(a.goalView)))(AgentsMarkdown.goalView)
+            McpOut
+              .of(done.flatMap(_ => AgentsControllers.goalSlug(in.goal).flatMap(a.goalView)))(AgentsMarkdown.goalView)
+          }
         }
 
     val schedule =
@@ -269,45 +278,47 @@ object AgentsTools:
         )
         .input[ScheduleInput]
         .handle { in =>
-          val out = (in.goal, in.kind) match
-            case (Some(g), Some(k)) if in.remove =>
-              AgentsControllers
-                .goalSlug(g)
-                .flatMap(s => a.removeSchedule(s, ScheduleKind.Wire(k)))
-                .map(_ => AgentsMarkdown.schedules(a.schedules))
-            case (Some(g), Some(k)) =>
-              in.cron
-                .toRight(
-                  Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.CronGiven))
-                )
-                .flatMap(c =>
-                  AgentsControllers
-                    .goalSlug(g)
-                    .flatMap(slug =>
-                      a.setSchedule(
-                        slug,
-                        ScheduleKind.Wire(k),
-                        Goal.Plans.ScheduleSet(
-                          Goal.Plans.ScheduleSet.Cron(c),
-                          Goal.Plans.ScheduleSet.Enabled(in.enabled),
-                          in.budgetUsd.map(Goal.Plans.ScheduleSet.BudgetUsd(_))
+          CreatorControllers.mcp(in) {
+            val out = (in.goal, in.kind) match
+              case (Some(g), Some(k)) if in.remove =>
+                AgentsControllers
+                  .goalSlug(g)
+                  .flatMap(s => a.removeSchedule(s, ScheduleKind.Wire(k)))
+                  .map(_ => AgentsMarkdown.schedules(a.schedules))
+              case (Some(g), Some(k)) =>
+                in.cron
+                  .toRight(
+                    Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.CronGiven))
+                  )
+                  .flatMap(c =>
+                    AgentsControllers
+                      .goalSlug(g)
+                      .flatMap(slug =>
+                        a.setSchedule(
+                          slug,
+                          ScheduleKind.Wire(k),
+                          Goal.Plans.ScheduleSet(
+                            Goal.Plans.ScheduleSet.Cron(c),
+                            Goal.Plans.ScheduleSet.Enabled(in.enabled),
+                            in.budgetUsd.map(Goal.Plans.ScheduleSet.BudgetUsd(_))
+                          )
                         )
                       )
-                    )
-                    .map(s => AgentsMarkdown.scheduleLine(s))
+                      .map(s => AgentsMarkdown.scheduleLine(s))
+                  )
+              case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
+              case _            =>
+                Left(
+                  Api.Error(
+                    Problem.Invalid.Inconsistent
+                      .here(
+                        NonEmptyVector.of(Problem.Field("goal"), Problem.Field("kind")),
+                        Problem.Invalid.Exclusion.Together
+                      )
+                  )
                 )
-            case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
-            case _            =>
-              Left(
-                Api.Error(
-                  Problem.Invalid.Inconsistent
-                    .here(
-                      NonEmptyVector.of(Problem.Field("goal"), Problem.Field("kind")),
-                      Problem.Invalid.Exclusion.Together
-                    )
-                )
-              )
-          McpOut.ofText(out)
+            McpOut.ofText(out)
+          }
         }
 
     val models =
@@ -453,156 +464,158 @@ object AgentsTools:
         )
         .input[ManagerInput]
         .handle { in =>
-          val m = a.managing
-          val id = ManagerLight.Id(in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId))
-          def target = in.target
-            .map(_.trim)
-            .filter(_.nonEmpty)
-            .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("target"), Vector(Problem.Field(in.action)))))
-          val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
-            case "list"  => Right(ManagersMarkdown.list(m.list))
-            case "show"  => m.get(id).map(ManagersMarkdown.detail)
-            case "pause" =>
-              m.action(id, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs)))
-                .map(ManagersMarkdown.line)
-            case "resume" => m.action(id, ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
-            case "create" =>
-              m.create(
-                Managers.ManagerCreate(
-                  Managers.ManagerCreate.Kind(in.kind.getOrElse("")),
-                  in.goal.map(Goal.Slug(_)),
-                  cron = in.cron.map(Managers.ManagerCreate.Cron(_))
-                )
-              ).map(ManagersMarkdown.line)
-            case "enqueue" =>
-              target
-                .flatMap(t =>
-                  if in.id.exists(_.trim.nonEmpty) then
-                    m.addItem(
+          CreatorControllers.mcp(in) {
+            val m = a.managing
+            val id = ManagerLight.Id(in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId))
+            def target = in.target
+              .map(_.trim)
+              .filter(_.nonEmpty)
+              .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("target"), Vector(Problem.Field(in.action)))))
+            val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
+              case "list"  => Right(ManagersMarkdown.list(m.list))
+              case "show"  => m.get(id).map(ManagersMarkdown.detail)
+              case "pause" =>
+                m.action(id, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs)))
+                  .map(ManagersMarkdown.line)
+              case "resume" => m.action(id, ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
+              case "create" =>
+                m.create(
+                  Managers.ManagerCreate(
+                    Managers.ManagerCreate.Kind(in.kind.getOrElse("")),
+                    in.goal.map(Goal.Slug(_)),
+                    cron = in.cron.map(Managers.ManagerCreate.Cron(_))
+                  )
+                ).map(ManagersMarkdown.line)
+              case "enqueue" =>
+                target
+                  .flatMap(t =>
+                    if in.id.exists(_.trim.nonEmpty) then
+                      m.addItem(
+                        id,
+                        Managers.EnqueueRequest(
+                          Managers.EnqueueRequest.Kind(in.kind.getOrElse("")),
+                          Managers.EnqueueRequest.Target(t),
+                          in.priority.map(Managers.EnqueueRequest.Priority(_))
+                        )
+                      ).map(i => Managers.EnqueueResult(Managers.ManagerInfo.Id(id.value), List(i)))
+                    else
+                      m.enqueue(
+                        Managers.EnqueueRequest(
+                          Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
+                          Managers.EnqueueRequest.Target(t),
+                          in.priority.map(Managers.EnqueueRequest.Priority(_))
+                        )
+                      )
+                  )
+                  .map(ManagersMarkdown.enqueued)
+              case "hold" =>
+                target
+                  .flatMap(t =>
+                    m.patchItem(
                       id,
-                      Managers.EnqueueRequest(
-                        Managers.EnqueueRequest.Kind(in.kind.getOrElse("")),
-                        Managers.EnqueueRequest.Target(t),
-                        in.priority.map(Managers.EnqueueRequest.Priority(_))
-                      )
-                    ).map(i => Managers.EnqueueResult(Managers.ManagerInfo.Id(id.value), List(i)))
-                  else
-                    m.enqueue(
-                      Managers.EnqueueRequest(
-                        Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
-                        Managers.EnqueueRequest.Target(t),
-                        in.priority.map(Managers.EnqueueRequest.Priority(_))
+                      Managers.ManagerItem.Ref(t),
+                      Managers.ItemPatch(
+                        Managers.ItemPatch.Action("hold"),
+                        until = in.until.map(Managers.ItemPatch.Until(_)),
+                        untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
+                        reason = in.text.map(text => Managers.Rationale(s"$text"))
                       )
                     )
-                )
-                .map(ManagersMarkdown.enqueued)
-            case "hold" =>
-              target
-                .flatMap(t =>
-                  m.patchItem(
-                    id,
-                    Managers.ManagerItem.Ref(t),
-                    Managers.ItemPatch(
-                      Managers.ItemPatch.Action("hold"),
-                      until = in.until.map(Managers.ItemPatch.Until(_)),
-                      untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
-                      reason = in.text.map(text => Managers.Rationale(s"$text"))
+                  )
+                  .map(ManagersMarkdown.item)
+              case "hint" =>
+                in.text
+                  .map(_.trim)
+                  .filter(_.nonEmpty)
+                  .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("text"), Vector(Problem.Field("hint")))))
+                  .flatMap(t =>
+                    m.addHint(
+                      id,
+                      Managers.HintAdd(
+                        Managers.HintAdd.Text(t),
+                        in.item.map(Managers.HintAdd.Item(_)),
+                        Some(Managers.HintAdd.Once(in.once)),
+                        in.effect,
+                        Some(Managers.HintAdd.Author("mcp")),
+                        propose = Some(Managers.HintAdd.Propose(in.effect.isDefined)),
+                        suggest = Some(Managers.HintAdd.Suggest(in.suggest))
+                      )
                     )
                   )
-                )
-                .map(ManagersMarkdown.item)
-            case "hint" =>
-              in.text
-                .map(_.trim)
-                .filter(_.nonEmpty)
-                .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("text"), Vector(Problem.Field("hint")))))
-                .flatMap(t =>
-                  m.addHint(
-                    id,
-                    Managers.HintAdd(
-                      Managers.HintAdd.Text(t),
-                      in.item.map(Managers.HintAdd.Item(_)),
-                      Some(Managers.HintAdd.Once(in.once)),
-                      in.effect,
-                      Some(Managers.HintAdd.Author("mcp")),
-                      propose = Some(Managers.HintAdd.Propose(in.effect.isDefined)),
-                      suggest = Some(Managers.HintAdd.Suggest(in.suggest))
+                  .map(ManagersMarkdown.hint)
+              case "autopilot" =>
+                in.on match
+                  case None    => Right(autopilotPage(m.autopilot))
+                  case Some(b) =>
+                    m.setAutopilot(
+                      Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))
+                    ).left
+                      .map(Api.Error(_))
+                      .map(autopilotPage)
+              case "repair-acquire" =>
+                repairAcquire(RepairAcquire(in.dryRun))
+              case "drain" =>
+                m.drain(
+                  Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))
+                ).left
+                  .map(Api.Error(_))
+                  .map(autopilotPage)
+              case "mode" =>
+                in.mode
+                  .map(_.trim)
+                  .filter(_.nonEmpty)
+                  .toRight(
+                    Api.Error(
+                      Problem.Invalid.Unknown(
+                        Problem.TypeName.of(AgentMode.ModeSet.Mode),
+                        Problem.Raw(""),
+                        AgentMode.values.toVector.map(v => Problem.Raw.of(v.wire)),
+                        Vector(Problem.Field("mode"))
+                      )
                     )
                   )
-                )
-                .map(ManagersMarkdown.hint)
-            case "autopilot" =>
-              in.on match
-                case None    => Right(autopilotPage(m.autopilot))
-                case Some(b) =>
-                  m.setAutopilot(
-                    Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))
-                  ).left
-                    .map(Api.Error(_))
-                    .map(autopilotPage)
-            case "repair-acquire" =>
-              repairAcquire(RepairAcquire(in.dryRun))
-            case "drain" =>
-              m.drain(
-                Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))
-              ).left
-                .map(Api.Error(_))
-                .map(autopilotPage)
-            case "mode" =>
-              in.mode
-                .map(_.trim)
-                .filter(_.nonEmpty)
-                .toRight(
+                  .flatMap(md =>
+                    m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp"))))
+                  )
+                  .map(autopilotPage)
+              case "focus" =>
+                in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
+                  case None    => Right(AutopilotMarkdown.focus(m.focus))
+                  case Some(v) =>
+                    m.setFocus(
+                      Autopilot.FocusSet(
+                        Autopilot.FocusSet.Action(v),
+                        in.goal.map(Goal.Slug(_)),
+                        in.value.map(Autopilot.FocusSet.Value(_)),
+                        Some(Autopilot.FocusSet.By("mcp"))
+                      )
+                    ).map(AutopilotMarkdown.focus)
+              case other =>
+                Left(
                   Api.Error(
-                    Problem.Invalid.Unknown(
-                      Problem.TypeName.of(AgentMode.ModeSet.Mode),
-                      Problem.Raw(""),
-                      AgentMode.values.toVector.map(v => Problem.Raw.of(v.wire)),
-                      Vector(Problem.Field("mode"))
+                    Problem.Invalid.Unknown.here(
+                      Problem.TypeName.of(Agents.Action),
+                      Problem.Raw(other),
+                      Vector(
+                        "list",
+                        "show",
+                        "create",
+                        "pause",
+                        "resume",
+                        "enqueue",
+                        "hold",
+                        "hint",
+                        "autopilot",
+                        "mode",
+                        "drain",
+                        "repair-acquire",
+                        "focus"
+                      ).map(Problem.Raw(_))
                     )
                   )
                 )
-                .flatMap(md =>
-                  m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp"))))
-                )
-                .map(autopilotPage)
-            case "focus" =>
-              in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
-                case None    => Right(AutopilotMarkdown.focus(m.focus))
-                case Some(v) =>
-                  m.setFocus(
-                    Autopilot.FocusSet(
-                      Autopilot.FocusSet.Action(v),
-                      in.goal.map(Goal.Slug(_)),
-                      in.value.map(Autopilot.FocusSet.Value(_)),
-                      Some(Autopilot.FocusSet.By("mcp"))
-                    )
-                  ).map(AutopilotMarkdown.focus)
-            case other =>
-              Left(
-                Api.Error(
-                  Problem.Invalid.Unknown.here(
-                    Problem.TypeName.of(Agents.Action),
-                    Problem.Raw(other),
-                    Vector(
-                      "list",
-                      "show",
-                      "create",
-                      "pause",
-                      "resume",
-                      "enqueue",
-                      "hold",
-                      "hint",
-                      "autopilot",
-                      "mode",
-                      "drain",
-                      "repair-acquire",
-                      "focus"
-                    ).map(Problem.Raw(_))
-                  )
-                )
-              )
-          McpOut.ofText(out)
+            McpOut.ofText(out)
+          }
         }
 
     val scheduler =
@@ -776,8 +789,9 @@ object AgentsTools:
       tags: List[String] = Nil,
       goal: Option[String] = None,
       dryRun: Boolean = false,
-      modelFor: List[String] = Nil
-  ) derives JsonCodec
+      modelFor: List[String] = Nil,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object RunInput:
 
     given Schema[RunInput] = KindlingsSchema
@@ -894,8 +908,9 @@ object AgentsTools:
       kind: String,
       ref: String,
       note: Option[String] = None,
-      remove: Boolean = false
-  ) derives JsonCodec
+      remove: Boolean = false,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object GoalLinkInput:
 
     given Schema[GoalLinkInput] = KindlingsSchema
@@ -913,8 +928,9 @@ object AgentsTools:
       cron: Option[String] = None,
       enabled: Boolean = true,
       budgetUsd: Option[Double] = None,
-      remove: Boolean = false
-  ) derives JsonCodec
+      remove: Boolean = false,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object ScheduleInput:
 
     given Schema[ScheduleInput] = KindlingsSchema
@@ -977,8 +993,9 @@ object AgentsTools:
       subject: Option[String] = None,
       ids: List[Long] = Nil,
       dryRun: Boolean = false,
-      limit: Option[Int] = None
-  ) derives JsonCodec
+      limit: Option[Int] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object DecideInput:
 
     given Schema[DecideInput] = KindlingsSchema
@@ -1035,8 +1052,9 @@ object AgentsTools:
       dryRun: Boolean = false,
       focus: Option[String] = None,
       value: Option[Int] = None,
-      mode: Option[String] = None
-  ) derives JsonCodec
+      mode: Option[String] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object ManagerInput:
 
     given Schema[ManagerInput] = KindlingsSchema

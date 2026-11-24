@@ -13,8 +13,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, LocalDate}
 import com.histmersion.api.Api
-import com.histmersion.domain.Creator
-import com.histmersion.util.nonempty.NonEmptyVector
+import com.histmersion.domain.{Creator, CreatorControllers}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
@@ -113,26 +112,7 @@ object WorkListControllers:
 
   private val Imported: Creator.New = Creator.New.Manual(Creator.Surface.Rest)
 
-  private val surfaces: List[(Creation.Via, Creator.Surface)] =
-    List(
-      Creation.Rest -> Creator.Surface.Rest,
-      Creation.Cli -> Creator.Surface.Cli,
-      Creation.Web -> Creator.Surface.Web
-    )
-
-  def surfaceOf(via: Option[Creation.Via]): Either[Problem, Creator.Surface] =
-    via.fold(Right(Creator.Surface.Rest)) { v =>
-      surfaces
-        .collectFirst { case (w, s) if w == v => s }
-        .toRight(
-          Problem.Invalid.Unknown(
-            Problem.TypeName.of(Creation.Via),
-            Problem.Raw.of(v),
-            Creation.Vias.map(Problem.Raw.of(_)).toVector,
-            Vector(Problem.Field("via"))
-          )
-        )
-    }
+  def surfaceOf(via: Option[Creation.Via]): Either[Problem, Creator.Surface] = CreatorControllers.surfaceOf(via)
 
   def actorOf(raw: Option[Creation.Actor]): Either[Problem, Option[Creation.Actor]] =
     raw match
@@ -151,40 +131,7 @@ object WorkListControllers:
   def creatorOf(by: Option[Creation.By], surface: Creator.Surface): Either[Problem, Creator.New] =
     by match
       case None if surface == Creator.Surface.Mcp => Left(Problem.Invalid.Missing.here(Problem.Field("createdBy")))
-      case None                                   => Right(Creator.New.Manual(surface))
-      case Some(b)                                =>
-        for
-          plugin <- named(b.plugin, Problem.Field("plugin"))(Creator.Plugin.Name.from(_))
-          workflow <- named(b.workflow, Problem.Field("workflow"))(Creator.Workflow.Name.from(_))
-          agent <- agentOf(b)
-        yield Creator.New.Automated(plugin, workflow, agent, surface)
-
-  private def named[R, A](raw: Option[R], field: Problem.Field)(
-      check: R => Either[Newtype.Refusal, A]
-  ): Either[Problem, A] =
-    raw
-      .toRight(Problem.Invalid.Missing(field, Vector(CreatedByField)))
-      .flatMap(check(_).left.map(Problem.Invalid.malformed))
-
-  private val CreatedByField = Problem.Field("createdBy")
-
-  private def agentOf(b: Creation.By): Either[Problem, Creator.Agent] =
-    (b.agentDefinition, b.provider, b.model) match
-      case (None, None, None)          => Right(Creator.Agent.Code)
-      case (Some(d), Some(p), Some(m)) =>
-        for
-          definition <- Creator.Definition.Name.from(d).left.map(Problem.Invalid.malformed)
-          provider <- Creator.Provider.Name.from(p).left.map(Problem.Invalid.malformed)
-          model <- Creator.LanguageModel.Name.from(m).left.map(Problem.Invalid.malformed)
-        yield Creator.Agent.Model(definition, provider, model)
-      case _ =>
-        Left(
-          Problem.Invalid.Inconsistent(
-            NonEmptyVector.of(Problem.Field("agentDefinition"), Problem.Field("provider"), Problem.Field("model")),
-            Problem.Invalid.Exclusion.Together,
-            Vector(CreatedByField)
-          )
-        )
+      case _ => CreatorControllers.creatorOf(by, surface, Creator.New.Manual(surface))
 
   /** The code of a refusal for an item that is not there. */
   private val NotFound: Api.Error.Code = Api.Error.Code(Write.CodeNotFound)

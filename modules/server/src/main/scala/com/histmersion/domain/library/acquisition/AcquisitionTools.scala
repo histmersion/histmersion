@@ -40,6 +40,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.CandidateList
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Creation
+import com.histmersion.domain.CreatorControllers
 
 /** The acquisition's MCP tools. Every tool returns Markdown and delegates to the same [[AcquisitionControllers]] the
   * REST routes call, so the two surfaces cannot drift.
@@ -96,7 +98,7 @@ final class AcquisitionTools(
           "record those as `references` edges so `neighbors` can walk them. Input is a citekey or a DOI."
       )
       .input[RefsInput]
-      .handle(in => render(h.refs(RefsRequest(in.id, in.apply)))(AcquireMarkdown.refs))
+      .handle(in => CreatorControllers.mcp(in)(render(h.refs(RefsRequest(in.id, in.apply)))(AcquireMarkdown.refs)))
 
   private val assess =
     tool("assess")
@@ -114,25 +116,28 @@ final class AcquisitionTools(
       )
       .input[AssessInput]
       .handle { in =>
-        if in.updateRetractions.value then render(h.updateRetractions())(AcquireMarkdown.retractionsUpdate)
-        else if in.retractionsStatus.value then ToolResult.text(AcquireMarkdown.retractionsUpdate(h.retractionsStatus))
-        else
-          in.id.map(i => AssessRequest.Id(i.value.trim)).filter(_.value.nonEmpty) match
-            case Some(id) => render(h.assess(AssessRequest(id, in.apply, in.forceStatus)))(AcquireMarkdown.assessment)
-            case None     =>
-              McpOut.error(
-                Api.Error(
-                  Problem.Invalid.Inconsistent.here(
-                    NonEmptyVector.of(
-                      Problem.Field("id"),
-                      Problem.Field("updateRetractions"),
-                      Problem.Field("retractionsStatus")
-                    ),
-                    Problem.Invalid.Exclusion.AtLeastOne
-                  )
-                ),
-                "`id` is a citekey or a DOI; `updateRetractions: true` or `retractionsStatus: true` stand alone."
-              )
+        CreatorControllers.mcp(in) {
+          if in.updateRetractions.value then render(h.updateRetractions())(AcquireMarkdown.retractionsUpdate)
+          else if in.retractionsStatus.value then
+            ToolResult.text(AcquireMarkdown.retractionsUpdate(h.retractionsStatus))
+          else
+            in.id.map(i => AssessRequest.Id(i.value.trim)).filter(_.value.nonEmpty) match
+              case Some(id) => render(h.assess(AssessRequest(id, in.apply, in.forceStatus)))(AcquireMarkdown.assessment)
+              case None     =>
+                McpOut.error(
+                  Api.Error(
+                    Problem.Invalid.Inconsistent.here(
+                      NonEmptyVector.of(
+                        Problem.Field("id"),
+                        Problem.Field("updateRetractions"),
+                        Problem.Field("retractionsStatus")
+                      ),
+                      Problem.Invalid.Exclusion.AtLeastOne
+                    )
+                  ),
+                  "`id` is a citekey or a DOI; `updateRetractions: true` or `retractionsStatus: true` stand alone."
+                )
+        }
       }
 
   private val followups =
@@ -147,7 +152,9 @@ final class AcquisitionTools(
       )
       .input[FollowupsInput]
       .handle(in =>
-        render(h.followups(FollowupsRequest(in.id, in.since, in.limit, in.apply)))(AcquireMarkdown.followups)
+        CreatorControllers.mcp(in) {
+          render(h.followups(FollowupsRequest(in.id, in.since, in.limit, in.apply)))(AcquireMarkdown.followups)
+        }
       )
 
   private val ingestDoi =
@@ -169,7 +176,14 @@ final class AcquisitionTools(
       .handle(in =>
         render(
           h.ingestByAgent(
-            Ingest.Request(in.id, in.citekey, in.arxiv, in.refetch, Ingest.Request.LegalOnly(in.legalOnly.value))
+            Ingest.Request(
+              in.id,
+              in.citekey,
+              in.arxiv,
+              in.refetch,
+              Ingest.Request.LegalOnly(in.legalOnly.value),
+              in.createdBy
+            )
           )
         )(AcquireMarkdown.ingest)
       )
@@ -184,22 +198,28 @@ final class AcquisitionTools(
       )
       .input[ArchiveInput]
       .handle { in =>
-        (
-          in.query.map(q => AcquireApi.Query(q.value.trim)).filter(_.value.nonEmpty),
-          in.id.map(i => ArchiveImportRequest.Id(i.value.trim)).filter(_.value.nonEmpty)
-        ) match
-          case (_, Some(id)) if in.`import`.value =>
-            render(collections.archiveImport(Caller.Local, ArchiveImportRequest(id, in.citekey, in.format)))(
-              AcquireMarkdown.ingest
-            )
-          case (_, Some(id)) =>
-            render(collections.archiveInfo(Caller.Local, ArchiveId(id.value)))(AcquireMarkdown.archiveItem)
-          case (Some(q), _) =>
-            render(
-              collections
-                .archiveSearch(Caller.Local, Search.Query(q.value), in.rows.map(r => CollectionsService.Limit(r.value)))
-            )(AcquireMarkdown.archiveSearch)
-          case _ => oneOf(Problem.Field("query"), Problem.Field("id"))
+        CreatorControllers.mcp(in) {
+          (
+            in.query.map(q => AcquireApi.Query(q.value.trim)).filter(_.value.nonEmpty),
+            in.id.map(i => ArchiveImportRequest.Id(i.value.trim)).filter(_.value.nonEmpty)
+          ) match
+            case (_, Some(id)) if in.`import`.value =>
+              render(collections.archiveImport(Caller.Local, ArchiveImportRequest(id, in.citekey, in.format)))(
+                AcquireMarkdown.ingest
+              )
+            case (_, Some(id)) =>
+              render(collections.archiveInfo(Caller.Local, ArchiveId(id.value)))(AcquireMarkdown.archiveItem)
+            case (Some(q), _) =>
+              render(
+                collections
+                  .archiveSearch(
+                    Caller.Local,
+                    Search.Query(q.value),
+                    in.rows.map(r => CollectionsService.Limit(r.value))
+                  )
+              )(AcquireMarkdown.archiveSearch)
+            case _ => oneOf(Problem.Field("query"), Problem.Field("id"))
+        }
       }
 
   private val candidates =
@@ -215,24 +235,27 @@ final class AcquisitionTools(
       )
       .input[CandidatesInput]
       .handle { in =>
-        if in.sweep.value then
-          in.goal.map(_.value.trim).filter(_.nonEmpty) match
-            case Some(g) =>
-              render(
-                h.sweepCandidates(
-                  CandidateSweep.Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))
-                )
-              )(CandidatesMarkdown.sweep)
-            case None => McpOut.missing(Problem.Field("goal"))
-        else if in.mark.nonEmpty then
-          render(
-            h.markCandidates(
-              CandidateMark(in.mark, in.as.getOrElse(Source.Candidate.State(Candidates.State.Seen.wire.value)))
+        CreatorControllers.mcp(in) {
+          if in.sweep.value then
+            in.goal.map(_.value.trim).filter(_.nonEmpty) match
+              case Some(g) =>
+                render(
+                  h.sweepCandidates(
+                    CandidateSweep
+                      .Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))
+                  )
+                )(CandidatesMarkdown.sweep)
+              case None => McpOut.missing(Problem.Field("goal"))
+          else if in.mark.nonEmpty then
+            render(
+              h.markCandidates(
+                CandidateMark(in.mark, in.as.getOrElse(Source.Candidate.State(Candidates.State.Seen.wire.value)))
+              )
+            )(
+              CandidatesMarkdown.marked
             )
-          )(
-            CandidatesMarkdown.marked
-          )
-        else render(h.candidates(in.goal, in.state, in.limit, in.offset))(CandidatesMarkdown.list)
+          else render(h.candidates(in.goal, in.state, in.limit, in.offset))(CandidatesMarkdown.list)
+        }
       }
 
   val tools = List(discover, refs, assess, followups, ingestDoi, archive, candidates)
@@ -266,10 +289,9 @@ object AcquisitionTools:
       mark: List[Source.Candidate.Id] = Nil,
       as: Option[Source.Candidate.State] = None,
       sweep: CandidatesInput.Sweep = CandidatesInput.Sweep(false),
-      dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun(false)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+      dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object CandidatesInput:
     type Sweep = Sweep.T
@@ -277,20 +299,20 @@ object AcquisitionTools:
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
 
-  final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false))
-      derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+  final case class RefsInput(
+      id: RefsRequest.Id,
+      apply: RefsRequest.Apply = RefsRequest.Apply(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   final case class AssessInput(
       id: Option[AssessRequest.Id] = None,
       apply: AssessRequest.Apply = AssessRequest.Apply(false),
       forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false),
       updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions(false),
-      retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+      retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object AssessInput:
     type UpdateRetractions = UpdateRetractions.T
@@ -302,18 +324,18 @@ object AcquisitionTools:
       id: FollowupsRequest.Id,
       since: Option[FollowupsRequest.Since] = None,
       limit: Option[FollowupsRequest.Limit] = None,
-      apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+      apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   final case class IngestInput(
       id: Ingest.Request.Id,
       citekey: Option[Citekey] = None,
       arxiv: Option[Ingest.Request.Arxiv] = None,
       refetch: Ingest.Request.Refetch = Ingest.Request.Refetch(false),
-      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(true)
-  ) derives JsonCodec
+      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(true),
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec
   object IngestInput:
     type LegalOnly = LegalOnly.T
     object LegalOnly extends Newtype[Boolean, Pure]
@@ -334,10 +356,9 @@ object AcquisitionTools:
       `import`: ArchiveInput.Import = ArchiveInput.Import(false),
       citekey: Option[Citekey] = None,
       format: Option[ArchiveImportRequest.Format] = None,
-      rows: Option[AcquireApi.Limit] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        com.histmersion.api.json.Schema
+      rows: Option[AcquireApi.Limit] = None,
+      createdBy: Option[Creation.By] = None
+  ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ArchiveInput:
     type Import = Import.T

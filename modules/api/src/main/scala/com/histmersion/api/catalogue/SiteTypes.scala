@@ -6,6 +6,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
+import com.histmersion.api.automation.Creation
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
   * variant of `temple`), the GeoNames feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb),
@@ -801,10 +802,10 @@ object SiteTypes:
   final case class Request(
       dryRun: Request.DryRun = Request.DryRun(false),
       limit: Option[Request.Limit] = None,
-      refresh: Request.Refresh = Request.Refresh(false)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        Schema
+      refresh: Request.Refresh = Request.Refresh(false),
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, Schema
 
   object Request:
     type DryRun = DryRun.T

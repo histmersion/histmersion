@@ -9,7 +9,7 @@ import org.scalajs.dom
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.{Creation, Queue}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.Api
@@ -112,7 +112,8 @@ object UploadView:
           authors = d.authors.map(a => AuthorName(a.value)),
           year = year.toOption.flatten.map(y => api.catalogue.Year(y.toLong)),
           doi = doi.toOption.flatten.map(api.library.Doi(_)),
-          acquireItem = d.forItem.map(i => Ingest.Params.AcquireItem(i.id.value))
+          acquireItem = d.forItem.map(i => Ingest.Params.AcquireItem(i.id.value)),
+          via = Some(Creation.Web)
         )
       )
 

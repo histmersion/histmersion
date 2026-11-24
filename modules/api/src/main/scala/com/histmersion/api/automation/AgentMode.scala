@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Creation
 
 enum AgentMode(val wire: AgentMode.Wire) derives CanEqual:
   case Working extends AgentMode(AgentMode.Wire("working"))
@@ -61,10 +62,12 @@ object AgentMode:
         ((autopilotOn) == Step.Autopilot.On(true))
       )(Step.Autopilot(Step.Autopilot.On(false)))
 
-  final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+  final case class ModeSet(
+      mode: ModeSet.Mode,
+      by: Option[ModeSet.By] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object ModeSet:
     export AgentMode.Wire as Mode

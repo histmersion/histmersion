@@ -726,6 +726,12 @@
                   "items" : {
                     "$ref" : "#/$defs/Input1"
                   }
+                },
+                "createdBy" : {
+                  "$ref" : "#/$defs/By"
+                },
+                "via" : {
+                  "type" : "string"
                 }
               }
             },
@@ -808,6 +814,27 @@
                   "type" : "string"
                 }
               }
+            },
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "title" : "PutSourceInput",
@@ -826,6 +853,9 @@
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -877,6 +907,12 @@
                   "$ref" : "#/$defs/EdgesPatch"
                 },
                 "ifUpdatedAt" : {
+                  "type" : "string"
+                },
+                "createdBy" : {
+                  "$ref" : "#/$defs/By"
+                },
+                "via" : {
                   "type" : "string"
                 }
               }
@@ -1100,6 +1136,27 @@
                   "type" : "string"
                 }
               }
+            },
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "title" : "PatchSourceInput",
@@ -1118,6 +1175,9 @@
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -1127,6 +1187,29 @@
         "description" : "Give a source a NEW citekey — to correct a misleading one (e.g. a year that is not the publication year: page2024_history for a 1959 book → page1959_history). One transaction: the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) is rewritten in article bodies — each rewrite recorded as an article version — and in source notes/summaries. The old citekey stays an alias: every read and every write that names it (put, patch, delete, rename, a reference) goes to the record under its new citekey, and the answer names the new citekey. (get_source, neighbors, graph, export_source, /source/<old> and [[old]] included.) Refused when the new citekey is taken (by a source, or as an old citekey of another source) or is not link-shaped. Use it only to fix an identifier; to change metadata (year, title) use patch_source.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "RenameSourceInput",
           "type" : "object",
           "required" : [
@@ -1141,6 +1224,9 @@
             "newCitekey" : {
               "description" : "The citekey it should have from now on",
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -1339,6 +1425,12 @@
                   "items" : {
                     "$ref" : "#/$defs/Reason"
                   }
+                },
+                "createdBy" : {
+                  "$ref" : "#/$defs/By"
+                },
+                "via" : {
+                  "type" : "string"
                 }
               }
             },
@@ -1423,6 +1515,27 @@
                   "type" : "string"
                 }
               }
+            },
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "title" : "PutArticleInput",
@@ -1441,6 +1554,9 @@
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -1502,6 +1618,12 @@
                   "items" : {
                     "$ref" : "#/$defs/CritiqueReason"
                   }
+                },
+                "createdBy" : {
+                  "$ref" : "#/$defs/By"
+                },
+                "via" : {
+                  "type" : "string"
                 }
               }
             },
@@ -1656,6 +1778,27 @@
                   "type" : "string"
                 }
               }
+            },
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "title" : "PatchArticleInput",
@@ -1674,6 +1817,9 @@
             "strict" : {
               "description" : "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, a broken link). Default false: the write goes through and the problems are listed under 'Formatting'.",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -1901,6 +2047,29 @@
         "description" : "Curate a gazetteer place by hand, over what its source says — KIND (site | region | polity | people | feature) and/or PERIOD (`periodStart`/`periodEnd`, signed years, BCE negative; one side alone leaves the other open) and/or POINT (`pointLat`/`pointLon`, for a place known by a point whose stored point is wrong; `reason` must name the gazetteer value it comes from — a Pleiades representative point, a Wikidata coordinate — never an estimate). Every re-seed and re-import keeps it, and the place's findings are matched again at once (a site takes findings within the point tolerance; a region, polity or people known only by a point takes only the findings that name it). Use it when a source files a place wrongly — Pleiades' Regio XII of Rome as an urban site, one of 14 regiones. `reason` says what evidence the decision rests on. With `placeId` alone, or nothing, it LISTS the overrides (with what the source says); `reset: true` drops one and restores the source's kind, period and point. `mergeInto` (a place id) merges the place into the one it is the same as (findings, links and references move; its id resolves there) — for a duplicate a source withdrew; `remove: true` deletes a place nothing refers to. Neither comes back with a re-seed. Find the place id with `places` first.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "PlaceOverrideInput",
           "type" : "object",
           "properties" : {
@@ -1947,6 +2116,9 @@
               "description" : "Longitude of the corrected point (with pointLat)",
               "type" : "number",
               "format" : "double"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -1956,6 +2128,29 @@
         "description" : "Add a POINT place to the gazetteer that it does not have — only after `places` found nothing under any of its names (otherwise give the existing place a name with `place_names`). `source` is required and must say where the coordinates come from (a gazetteer or Wikidata id, a map, a publication): never estimate a point. `kind`: site | region | feature | polity; `names` are further names; `periodStart`/`periodEnd` are signed years (BCE negative) when the place existed only then. The place is this collection's own (`local_<label>` unless `id` is given), carried in a bundle and never touched by a re-seed. Refused when the id is taken.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "Add",
           "type" : "object",
           "required" : [
@@ -2004,6 +2199,12 @@
             "periodEnd" : {
               "type" : "integer",
               "format" : "int64"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
+            },
+            "via" : {
+              "type" : "string"
             }
           }
         }
@@ -2099,6 +2300,29 @@
         "description" : "Update fields of one EVENT without replacing it: label, kind, historicity, description, citekey (its primary source), parentId (the event it is part of), placeId (a gazetteer place id — where it happened), its own geometry (GeoJSON `geometry`, or a point as `lat`/`lon`), and `scale`: local (a battle — one place) | regional (an era, a migration — across a region) | auto (forget the stated scale; it is derived from the kind, then the place's kind). The map's playback draws a local event as a point and label at its site, a regional one as a label at the region's centre with its outline. `wikidata`: the Wikidata item the event is (Q…; \"\" clears it) — where `histmersion media import` reads its picture. On an event a CATALOGUE import created (GVP, NOAA, Wikidata) every changed field (label, kind, timeSpan, historicity, description, geometry) is recorded as a correction and KEPT across re-imports of that catalogue (retired once the catalogue agrees, flagged as a conflict when it changes to something else — `event_corrections`). Returns the event as `events` with `id` shows it.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "PatchEventInput",
           "type" : "object",
           "required" : [
@@ -2153,6 +2377,9 @@
             "wikidata" : {
               "description" : "The Wikidata item the event is (Q…); \"\" clears it",
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -2198,6 +2425,29 @@
         "description" : "Create a new attestation linking an entity to a specific passage in a source. Returns the created attestation with its generated id. Target types: finding|event|event_dating|place|edge.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "AttestationPutInput",
           "type" : "object",
           "required" : [
@@ -2263,6 +2513,9 @@
             },
             "note" : {
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -2318,6 +2571,29 @@
         "description" : "Create or replace a research goal. A goal tracks a research program: slug (kebab-case id), title, status (planned|seeding|compiled|reviewed|done), notes (progress), tags, regions, period.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "GoalPutInput",
           "type" : "object",
           "required" : [
@@ -2363,6 +2639,9 @@
             },
             "parentSlug" : {
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -2466,6 +2745,29 @@
         "description" : "OCR a PDF/EPUB into a source and keep its figures. Give EITHER `path` (a path the SERVER can see) OR `base64` (the document itself, for smaller files) plus a `citekey`. This returns immediately with a job id, because converting a long scan takes minutes: poll `job_status` until it is done|failed. `quality` runs the slow, accurate OCR path (use it for image-only scans); `force` accepts a file already stored under another citekey. When the citekey already exists only its body and figures are replaced — findings, tags and notes are left alone — so re-OCR never costs enrichment. Optional title/authors/year/doi are used ONLY when the source is being created. `acquireItem` names the acquisition-queue item this document fulfils: the job ticks it off (`ingested as [[citekey]]`) when it succeeds, and leaves it open when it fails. Without it, the job ticks off every open acquisition item that names the source's DOI, and lists items with a similar title in its progress as possible matches — those are never closed for you.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "IngestInput",
           "type" : "object",
           "required" : [
@@ -2519,6 +2821,9 @@
               "description" : "Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds",
               "type" : "integer",
               "format" : "int32"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -2574,6 +2879,29 @@
         "description" : "Pause, resume or cancel a job by `id` (`action`: pause | resume | cancel). A long background job — a picture or event import, a base-map download, an acquisition re-check, the init job's gazetteer loads — stops after the part it is on: paused it keeps what it did and, resumed, goes on with the parts it had not done; cancelled it is recorded as cancelled. An agent run takes its own pause, resume and cancel. Other jobs (an OCR, a vacuum) run as one piece and are refused. Only when the user asked for it.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "JobControlInput",
           "type" : "object",
           "required" : [
@@ -2586,6 +2914,9 @@
             },
             "action" : {
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -2736,6 +3067,29 @@
         "description" : "Search/show ASSET LINKS — semantic relationships between assets and entities. Filter by citekey, asset name, target_type (event/finding/place/source/article), target_id. With `create` fields, creates a new link instead.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "AssetLinksInput",
           "type" : "object",
           "properties" : {
@@ -2764,6 +3118,9 @@
             },
             "notes" : {
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -2887,6 +3244,29 @@
         "description" : "Health-check the corpus and get a Markdown report grouped by rule. 34 rules: dangling-edges, unresolved-short-citekeys, no-findings, no-period, no-regions, empty-summary, unassessed-status, duplicate-doi, duplicate-sha256, orphan-sources, stale-chunks, undated-findings, unlocated-findings, legacy-figure-links, dangling-article-links, non-canonical-tag, missing-year, year-citekey-mismatch, author-pipe, article-filler, article-uncited-paragraph, article-thin-summary, article-critique-pairing, superseded-without-edge, article-markdown, note-markdown, finding-geocode, finding-unplaced, place-kind, place-grid-point, place-imported-point-area, finding-placeholder, media-licence, event-correction-conflict. Run it after a batch of ingestion to find dead reference targets, un-enriched sources (no findings / period / regions / summary), sources still at status=unassessed, duplicate DOIs, non-canonical tags, year/citekey mismatches, article filler phrases, uncited paragraphs, findings that carry neither a date nor a place, and Markdown that will not display as written (article-markdown, note-markdown). Pass `rules` to run a subset, or `fix: true` to first apply the two safe repairs — unify unambiguous short citekey targets and rebuild missing full-text chunks (with `rules: [\"finding-geocode\"]`, also move the findings an older geocoder misplaced; with `rules: [\"finding-unplaced\"]`, give a point to the findings whose place name the gazetteer now knows; with `rules: [\"place-kind\"]`, reclassify the point-only regions that are peoples, provinces or settlements and merge withdrawn duplicates; with `rules: [\"place-grid-point\"]`, move atlas-grid-square points to their linked record's point; with `rules: [\"place-imported-point-area\"]`, remove the GeoNames/Wikidata regions and polities known only by a point — bounded per call: call again while `fixed` says some are still to remove) — and report the state afterwards. Pass `article` (a slug), `source` (a citekey) or `text` (Markdown not stored yet) instead to check just that one for FORMATTING problems, each with line, column, excerpt and what goes wrong; with `fix: true` the wording-safe repairs are applied to it (for `text`, the repaired text is returned). Use after ingestion, after writing an article, or to diagnose data integrity — not for searching.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "LintInput",
           "type" : "object",
           "properties" : {
@@ -2921,6 +3301,9 @@
                 "summary",
                 "notes"
               ]
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3092,6 +3475,29 @@
         "description" : "Link EVENTS to the corpus without guessing. With `id`: the sources that MAY discuss the event — their findings near it in time and space, passages of their text naming it (label, other names, aliases in other languages) — each scored, PROPOSED and unconfirmed. `confirm` writes an attestation (quote + character offsets) for a source ONLY from a passage that names the event; `reject` stops proposing one. Without `id`: LEADS — catalogue events (eruptions, earthquakes, battles… from the Smithsonian GVP, NOAA NCEI, Wikidata) that no source in the corpus discusses, with the corpus's findings around them counted and the commands to search the literature. A catalogue event is a research lead, never evidence: do not cite it in prose.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "EventLinksInput",
           "type" : "object",
           "properties" : {
@@ -3134,6 +3540,9 @@
             "limit" : {
               "type" : "integer",
               "format" : "int32"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3166,6 +3575,29 @@
         "description" : "Start an embedded agent pipeline on the SERVER (off unless the server has agents enabled). Pipelines: `enrich-source` <source> — read one source and propose its summary, classification, period, findings (each with a verbatim quote) and notes; code verifies and patches; `review-article` <article> — the adversarial review panel on one article (rules reviewer, cold reader, skeptic in parallel), merged by code into the article's review ledger, the skeptic ruling on each open pair of its critique checklist; with fix, a fixer revises it (code adds the citations a paragraph already names and guards closed findings), each reviewer verifies the findings it claims fixed and the edited passages, until no major finding remains — then a full panel confirms, deferring what it finds new to the next run; `plan-goal` <goal> — propose sub-goals, search queries and candidate works (DOIs checked upstream by code) for one goal; nothing is created until a person approves the plan; `compile-article` <article> — compile a new article, or a section to append to an existing one, from the sources a filter returns: verified claim table, evidence model, draft, code self-check, then a person approves before anything is written, and a review-article run with fix follows; `currency-check` <goal> — assess and followups over a goal's sources (no model): retractions applied as assess does, disagreement edges to sources in the corpus proposed for approval, citing papers outside it queued for acquisition; `acquisition-sweep` <goal> — discover new works for a goal's queries, a model ranks them against the goal, and the relevant ones become acquisition items — never one already in the corpus or the queue; a watcher that opted in ingests the legal open-access ones (capped per day, legal open access only); `infer-filter` <article> — propose the coverage filter (query, topics, tags) of an article that records none; code runs it against the corpus and the article's own citations, and a person approves it (agents.approvals.article-filter) before it is recorded; `hint-effect` <manager> — read one hint a person gave a process manager and propose the structured action it asks for (hold, prioritise or skip items, or a settings change); code checks the action names real items and settings, and it is applied only when a person approves it; `propose-articles` <goal> — propose the articles a research area should have, each with a slug, title and filter; code checks every slug is free, every filter returns enough sources and none overlaps an article of the area by half, and a person ALWAYS approves the plan before the seeding manager compiles them. Returns the run id at once; the run is checkpointed, budgeted and resumable. Check it with `run_status`. Use instead of doing the same steps yourself when the server's agents are on.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "RunInput",
           "type" : "object",
           "required" : [
@@ -3244,6 +3676,9 @@
               "items" : {
                 "type" : "string"
               }
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3388,6 +3823,29 @@
         "description" : "Approve or reject one open approval by `id`. Approving APPLIES the change through the ordinary source patch (status or edge), or lets the waiting run apply its plan or write its article; rejecting keeps it on record. Without `id`, a whole group at once: every open approval of `kind`, about `subject`, or in `ids` (they narrow together), the oldest first, at most `limit`; `dryRun: true` lists what it would decide. Decide only what the user asked you to, or what you have verified against the record yourself.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "DecideInput",
           "type" : "object",
           "required" : [
@@ -3431,6 +3889,9 @@
               "description" : "A group: at most this many, the oldest first",
               "type" : "integer",
               "format" : "int32"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3440,6 +3901,29 @@
         "description" : "Link a research goal to what it is about, or unlink it: a source (citekey), an article (slug), a literature search query (what the goal's acquisition sweep searches for), or a queue item (id). `remove: true` unlinks. Answers the goal with all its links and schedules.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "GoalLinkInput",
           "type" : "object",
           "required" : [
@@ -3467,6 +3951,9 @@
             "remove" : {
               "description" : "Unlink instead of link",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3476,6 +3963,29 @@
         "description" : "A research goal's schedules — the sweeps of its watcher manager `watch:<goal>` (created PAUSED: a person resumes it with the `manager` tool or the Managers window; it runs only while the server's agents are enabled): `currency` (assess + followups over the goal's sources; disagreement edges proposed for approval) and `acquisition` (search the goal's queries; a model picks what to add to the acquisition list). With `cron` (five fields in UTC, or @daily/@weekly/@monthly; the watcher's one cron, shared by both) sets one; `remove: true` takes it out of the watcher; with neither, lists every schedule. The daily/monthly cost caps are checked before each start.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "ScheduleInput",
           "type" : "object",
           "properties" : {
@@ -3503,6 +4013,9 @@
             "remove" : {
               "description" : "Delete the schedule",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3758,6 +4271,27 @@
                   "type" : "string"
                 }
               }
+            },
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "title" : "ManagerInput",
@@ -3842,6 +4376,9 @@
             },
             "mode" : {
               "type" : "string"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3918,6 +4455,29 @@
         "description" : "The reference list a paper DEPOSITED with Crossref, with each entry resolved to a stored source where we have it. Use it to see what a paper builds on, and with `apply: true` to record those as `references` edges so `neighbors` can walk them. Input is a citekey or a DOI.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "RefsInput",
           "type" : "object",
           "required" : [
@@ -3929,6 +4489,9 @@
             },
             "apply" : {
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3938,6 +4501,29 @@
         "description" : "Is this paper safe to rely on? Checks the local Retraction Watch mirror, Crossref's retraction/correction/expression-of-concern notices and the citation metrics, and returns a verdict: retracted | corrected | current | low-impact | unassessed. ALWAYS run this before citing a source you have not checked, and with `apply: true` to write the verdict into the source's `status` (a retraction becomes status=retracted). `apply` only overwrites an `unassessed` status — one already set (contested, foundational, …) is kept and reported — unless `forceStatus: true`; a retraction is always written. Input is a citekey or a DOI. `updateRetractions: true` instead starts a refresh of the whole Retraction Watch mirror (it runs in the background — call again to see whether it has finished); do that periodically, not per paper.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "AssessInput",
           "type" : "object",
           "properties" : {
@@ -3955,6 +4541,9 @@
             },
             "retractionsStatus" : {
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3964,6 +4553,29 @@
         "description" : "What came AFTER this paper — the citation graph forward. Returns the papers citing it with Semantic Scholar's citation intents, the influential-citation flag and the actual citation contexts, plus a proposed edge kind for each (confirms | challenges | refutes | supersedes | cites) read from those contexts. This is how you answer \"is this still accepted?\" and \"has it been debunked?\". `apply: true` records the proposed edges for the citing papers that are already in the corpus. `since` limits to papers published from that year on.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "FollowupsInput",
           "type" : "object",
           "required" : [
@@ -3983,6 +4595,9 @@
             },
             "apply" : {
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -3992,6 +4607,29 @@
         "description" : "Bring a paper INTO the corpus from its identifier: metadata from OpenAlex, then a LEGAL open-access PDF (Unpaywall → CORE → OpenAlex OA locations → Europe PMC/PMC → arXiv → repository landing pages resolved one step (Zenodo, an institutional repository's citation_pdf_url); else PMC's JATS full text), then the ingest job, then its reference edges, then an assessment. Idempotent: re-ingesting an existing citekey updates its metadata and never wipes enrichment; one with no original yet (metadata only) is fetched and converted, one that has its original keeps it unless `refetch: true`. When no open-access copy exists the source is still created from metadata and the report tells you where to drop the file in by hand. An agent's ingest asks the legal chain alone (never a fetcher the config marks unauthorised); `legalOnly: false` is refused unless a person allowed agents more. Input is a DOI or `arxiv:<id>`.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "IngestInput",
           "type" : "object",
           "required" : [
@@ -4013,6 +4651,9 @@
             "legalOnly" : {
               "description" : "The legal open-access chain only (the default) — never a fetcher the config marks unauthorised; false is refused unless a person allowed agents more",
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -4022,6 +4663,29 @@
         "description" : "Internet Archive — for the out-of-print scholarly books the open-access pipeline cannot reach. `query` searches, `id` shows one item's files, and `id` with `import: true` fetches it. PUBLIC items only: a lending-only scan is reported and refused, because borrowing it on archive.org is the only legitimate way to read it.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "ArchiveInput",
           "type" : "object",
           "properties" : {
@@ -4043,6 +4707,9 @@
             "rows" : {
               "type" : "integer",
               "format" : "int32"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -4052,6 +4719,29 @@
         "description" : "The NEW SOURCES found for the research goals by the deterministic search (no model): each goal's saved queries on OpenAlex, Crossref, Europe PMC, arXiv (and CORE with a key), the works citing its sources and its sources' authors' newer works, each read from the day it was last read, deduplicated by DOI against the corpus and the acquisition list. Default: the `new` (unseen) candidates of every goal, or of `goal`; `state` = new, seen, queued or dismissed. Filter them yourself: `mark` (candidate ids) with `as` = seen, queued or dismissed records your decision; `sweep: true` (with `goal`) reads the goal's watches now (`dryRun: true` stores nothing). Queue what is worth acquiring with the `queue` tool or `ingest_doi`.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "CandidatesInput",
           "type" : "object",
           "properties" : {
@@ -4084,6 +4774,9 @@
             },
             "dryRun" : {
               "type" : "boolean"
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }
@@ -4093,6 +4786,29 @@
         "description" : "The library's SOURCE COLLECTIONS — the user's Calibre library (`name`: calibre, the default) and archive.org (archive-org; use the `archive` tool for it). `action`: `list` (the collections and whether the server reaches them) · `search` (`query`, `limit`; `unlinked: true` = the entries no source links) · `import` (`id` into the corpus; `citekey`, `format`, `convert: false` = the record only) · `link` (`citekey` to entry `id`) · `push` (`citekey`'s stored original as a new entry; `replace: true` swaps the linked entry's file) · `update` (`citekey`'s entry from its record; without `citekey`, every linked entry — a dry run unless `apply: true`) · `set` (`id`, `fields` as `name:value`) · `audit` · `gaps` (sources with a fetched file not in Calibre) · `sync` (push the gaps; a dry run unless `apply: true`). Writes need the Calibre GUI closed.",
         "inputSchema" : {
           "$schema" : "https://json-schema.org/draft/2020-12/schema",
+          "$defs" : {
+            "By" : {
+              "title" : "By",
+              "type" : "object",
+              "properties" : {
+                "plugin" : {
+                  "type" : "string"
+                },
+                "workflow" : {
+                  "type" : "string"
+                },
+                "agentDefinition" : {
+                  "type" : "string"
+                },
+                "provider" : {
+                  "type" : "string"
+                },
+                "model" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "title" : "CollectionInput",
           "type" : "object",
           "required" : [
@@ -4138,6 +4854,9 @@
               "items" : {
                 "type" : "string"
               }
+            },
+            "createdBy" : {
+              "$ref" : "#/$defs/By"
             }
           }
         }

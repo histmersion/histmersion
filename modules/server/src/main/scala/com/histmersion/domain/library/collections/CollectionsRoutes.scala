@@ -8,6 +8,7 @@ import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
+import com.histmersion.domain.CreatorControllers
 
 /** The collections' endpoints bound to their controllers. Every request is the local person's until there are accounts.
   */
@@ -30,10 +31,10 @@ object CollectionsRoutes:
         )
       ),
       CollectionsApi.importItem.serverLogic[Identity]((name, req) =>
-        c.importItem(me, CollectionsService.CollectionName(name.value), req)
+        CreatorControllers.rest(req)(c.importItem(me, CollectionsService.CollectionName(name.value), req))
       ),
       CollectionsApi.link.serverLogic[Identity]((name, req) =>
-        c.link(me, CollectionsService.CollectionName(name.value), req)
+        CreatorControllers.rest(req)(c.link(me, CollectionsService.CollectionName(name.value), req))
       ),
       CollectionsApi.push.serverLogic[Identity]((name, req) =>
         c.push(me, CollectionsService.CollectionName(name.value), req)

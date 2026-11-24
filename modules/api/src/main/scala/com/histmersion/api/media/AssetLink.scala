@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.api.automation.Creation
 
 final case class AssetLink(
     id: AssetLink.Id,
@@ -74,7 +75,7 @@ object AssetLink:
       targetType: MediaTarget.TargetType,
       targetId: MediaTarget.TargetId,
       xywh: Option[Xywh] = None,
-      notes: Option[Notes] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
+      notes: Option[Notes] = None,
+      createdBy: Option[Creation.By] = None,
+      via: Option[Creation.Via] = None
+  ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema

@@ -18,6 +18,7 @@ import com.histmersion.domain.media.links.AssetLinksControllers
 import com.histmersion.domain.Creator
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.CreatorControllers
 
 /** Media's endpoints bound to its features' controllers, in the order route matching needs: `sources/{ck}/assets`
   * before `sources/{ck}`, the media paths that are fixed before `media/{uid}`.
@@ -62,15 +63,15 @@ object MediaRoutes:
               ti.map(x => AssetService.TargetId(x.value))
             )
       ),
-      Api.createAssetLink.serverLogic[Identity](in => links.create(in)),
+      Api.createAssetLink.serverLogic[Identity](in => CreatorControllers.rest(in)(links.create(in))),
       Api.deleteAssetLink.serverLogic[Identity](id => links.delete(AssetLinkService.LinkId(id.value))),
       // media from outside providers (#1446): the fixed paths before `media/{uid}`
       Api.mediaFacets.serverLogicSuccess[Identity](_ => assets.facets),
       Api.mediaProviders.serverLogicSuccess[Identity](_ => imports.providers),
-      Api.mediaImport.serverLogic[Identity](req => imports.importMedia(req)),
-      Api.mediaImportJob.serverLogic[Identity](req => imports.importJob(req)),
-      Api.mediaCovers.serverLogic[Identity](req => covers.covers(req)),
-      Api.mediaCoversJob.serverLogic[Identity](req => covers.coversJob(req)),
+      Api.mediaImport.serverLogic[Identity](req => CreatorControllers.rest(req)(imports.importMedia(req))),
+      Api.mediaImportJob.serverLogic[Identity](req => CreatorControllers.rest(req)(imports.importJob(req))),
+      Api.mediaCovers.serverLogic[Identity](req => CreatorControllers.rest(req)(covers.covers(req))),
+      Api.mediaCoversJob.serverLogic[Identity](req => CreatorControllers.rest(req)(covers.coversJob(req))),
       Api.putSourceCover.serverLogic[Identity]((p, bytes) => covers.putCover(p, AssetService.Bytes(bytes.value))),
       Api.fillFigureLicences.serverLogic[Identity](apply => figures.fillLicences(FigureService.Apply(apply.value))),
       Api.mediaList.serverLogicSuccess[Identity](q => assets.list(q)),
