@@ -73,7 +73,9 @@ object MergeApplyJob:
             bundle,
             planHash,
             elapsedMs,
-            problems = Some(NonEmptyVector.of(Problem.Run.Unrecorded(Problem.Conflict.Activity.MergeApply)))
+            problems = Some(
+              NonEmptyVector.of(Problem.Run.Stopped(Problem.Run.Stop.Unrecorded(Problem.Conflict.Activity.MergeApply)))
+            )
           )
         )(r =>
           MergeApplyJob(

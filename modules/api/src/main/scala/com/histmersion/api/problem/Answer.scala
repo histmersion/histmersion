@@ -140,7 +140,29 @@ object Answer:
 
   final case class Former(group: Group, `case`: Case)
 
-  val translations: Map[Former, Entry => Entry] = Map.empty
+  private def into(group: Group, name: Case, path: (String, String)*): Entry => Entry = entry =>
+    val data = path.foldRight(entry.data)((step, inner) => Json.obj(step._1 -> Json.obj(step._2 -> inner)))
+    Entry(group, name, data, entry.text)
+
+  private val runs = Group("Run")
+  private val stopped = Case("Stopped")
+
+  val translations: Map[Former, Entry => Entry] = Map(
+    Former(runs, Case("Stalled")) -> into(runs, stopped, "stop" -> "Stalled"),
+    Former(runs, Case("Silent")) -> into(runs, stopped, "stop" -> "Silent"),
+    Former(runs, Case("NoPipeline")) -> into(runs, stopped, "stop" -> "NoPipeline"),
+    Former(runs, Case("PipelineChanged")) -> into(runs, stopped, "stop" -> "PipelineChanged"),
+    Former(runs, Case("Reordered")) -> into(runs, stopped, "stop" -> "Reordered"),
+    Former(runs, Case("CheckpointUnread")) -> into(runs, stopped, "stop" -> "CheckpointUnread"),
+    Former(runs, Case("Vanished")) -> into(runs, stopped, "stop" -> "Vanished"),
+    Former(runs, Case("Overspent")) -> into(runs, stopped, "stop" -> "Over", "budget" -> "Usd"),
+    Former(runs, Case("OverTokens")) -> into(runs, stopped, "stop" -> "Over", "budget" -> "Tokens"),
+    Former(runs, Case("OverCap")) -> into(runs, stopped, "stop" -> "Over", "budget" -> "Capped"),
+    Former(runs, Case("MovedOn")) -> into(runs, stopped, "stop" -> "MovedOn"),
+    Former(runs, Case("Withdrawn")) -> into(runs, stopped, "stop" -> "Withdrawn"),
+    Former(runs, Case("GuardStopped")) -> into(runs, stopped, "stop" -> "Guard"),
+    Former(runs, Case("Unrecorded")) -> into(runs, stopped, "stop" -> "Unrecorded")
+  )
 
   extension (entry: Entry)
     def current: Entry = translations.get(Former(entry.group, entry.`case`)).fold(entry)(_(entry))

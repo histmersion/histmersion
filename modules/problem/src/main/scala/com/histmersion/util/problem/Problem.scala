@@ -1898,46 +1898,8 @@ object Problem:
     /** The model is not used: `role`'s chain does not fall from a plan pool to a paid key. */
     final case class PlanOnly(role: Role) extends Run
 
-    /** The run showed no sign of life at step `step` for `minutes` minutes, `times` times: the watchdog gave up. */
-    final case class Stalled(step: Count, minutes: Count, times: Count) extends Run
-
-    /** The run showed no sign of life at step `step` for `minutes` minutes: stall `stall` of the `of` the watchdog
-      * allows before it gives up.
-      */
-    final case class Silent(step: Count, minutes: Count, stall: Count, of: Count) extends Run
-
-    /** This build has no pipeline `pipeline`. */
-    final case class NoPipeline(pipeline: Raw) extends Run
-
-    /** The pipeline's version changed since the run started: a new run is started instead. */
-    case object PipelineChanged extends Run
-
-    /** Step `seq` was `recorded` in the run's checkpoint and is `now` now: the pipeline changed under the run. */
-    final case class Reordered(seq: Count, recorded: Step, now: Step) extends Run
-
-    /** Step `seq` (`step`)'s checkpoint no longer decodes: `reported`, the decoder's words. */
-    final case class CheckpointUnread(seq: Count, step: Step, reported: External.Reported) extends Run
-
-    /** The run is no longer recorded. */
-    case object Vanished extends Run
-
-    /** The run spent `spent` of its budget of `budget` (both in USD, as written). */
-    final case class Overspent(spent: Raw, budget: Raw) extends Run
-
-    /** The run used `used` of its `budget` budget tokens, cache reads counting `weight`. */
-    final case class OverTokens(used: Count, budget: Count, weight: Raw) extends Run
-
-    /** The agents' spend over `cap`'s period reached the setting's `amount` (USD). */
-    final case class OverCap(cap: Cap, amount: Raw) extends Run
-
-    /** Run `run` moved on while it was looked at: it is looked at again. */
-    final case class MovedOn(run: Raw) extends Run
-
     /** Run `run` is `status`, in which `control` does not apply. */
     final case class NotNow(run: Raw, status: Raw, control: Control) extends Run
-
-    /** An approval closed because its run was cancelled: it is rejected. */
-    case object Withdrawn extends Run
 
     /** Step `step` stopped: `why`, each problem. */
     final case class AtStep(step: Step, why: NonEmptyVector[Problem]) extends Run
@@ -1982,9 +1944,6 @@ object Problem:
     /** Article `article` has no body to review. */
     final case class NoBody(article: Raw) extends Run
 
-    /** The quota guard stopped a `claude -p` step: `why`, as the guard said it. */
-    final case class GuardStopped(why: Raw) extends Run
-
     /** A model whose runtime spends a plan cannot be offered: the plan's login is missing (`why`). */
     final case class NoLogin(why: Raw) extends Run
 
@@ -2002,14 +1961,32 @@ object Problem:
       */
     final case class CutShort(activity: Conflict.Activity) extends Run
 
-    /** `activity` finished, but its result was not recorded: its own listing tells what it did. */
-    final case class Unrecorded(activity: Conflict.Activity) extends Run
-
     /** `by` cancelled it. */
     final case class Cancelled(by: Actor) extends Run
 
     /** The autopilot drains (since `since`, when it is known); it resumes once the drain is lifted. */
     final case class Draining(since: Option[EpochMs]) extends Run
+
+    final case class Stopped(stop: Stop) extends Run
+
+    enum Stop derives CanEqual:
+      case Stalled(step: Count, minutes: Count, times: Count)
+      case Silent(step: Count, minutes: Count, stall: Count, of: Count)
+      case NoPipeline(pipeline: Raw)
+      case PipelineChanged
+      case Reordered(seq: Count, recorded: Step, now: Step)
+      case CheckpointUnread(seq: Count, step: Step, reported: External.Reported)
+      case Vanished
+      case Over(budget: Spending)
+      case MovedOn(run: Raw)
+      case Withdrawn
+      case Guard(why: Raw)
+      case Unrecorded(activity: Conflict.Activity)
+
+    enum Spending derives CanEqual:
+      case Usd(spent: Raw, budget: Raw)
+      case Tokens(used: Count, budget: Count, weight: Raw)
+      case Capped(cap: Cap, amount: Raw)
 
     enum PauseReason:
       case Requested
@@ -3048,19 +3025,8 @@ object Problem:
         )
       ),
       Run.PlanOnly(Run.Role("writer")),
-      Run.Stalled(Count(4L), Count(31L), Count(3L)),
-      Run.Silent(Count(4L), Count(31L), Count(1L), Count(3L)),
-      Run.NoPipeline(Raw("enrich-everything")),
-      Run.PipelineChanged,
-      Run.Reordered(Count(2L), Run.Step("extract"), Run.Step("enrich")),
-      Run.CheckpointUnread(Count(2L), Run.Step("extract"), External.Reported("missing required field 'claims'")),
-      Run.Vanished,
-      Run.Overspent(Raw("$1.2000"), Raw("$1.00")),
-      Run.OverTokens(Count(600001L), Count(600000L), Raw("0.1")),
-      Run.OverCap(Run.Cap.Daily, Raw("5.0")),
-      Run.MovedOn(Raw("0193f1c4")),
+      Run.Stopped(Run.Stop.Stalled(Count(4L), Count(31L), Count(3L))),
       Run.NotNow(Raw("0193f1c4"), Raw("done"), Run.Control.Resume),
-      Run.Withdrawn,
       Run.AtStep(Run.Step("enrich"), NonEmptyVector.of(Run.Unassigned(Run.Role("enricher"), Run.Asked.Call))),
       Run.AtModel(
         Run.Model("hello-ai:echo"),
@@ -3102,13 +3068,11 @@ object Problem:
       ),
       Run.NoText(Raw("anthony2007")),
       Run.NoBody(Raw("yamnaya")),
-      Run.GuardStopped(Raw("the quota-guard mod ended the turn")),
       Run.NoLogin(Raw("'claude auth status' says not logged in")),
       Run.ProbeUnread(Io.ExitCode(1), Some(External.Reported("Invalid API key"))),
       Run.Interrupted,
       Run.Restored,
       Run.CutShort(Conflict.Activity.MergeApply),
-      Run.Unrecorded(Conflict.Activity.MergeApply),
       Run.Cancelled(Run.Actor.Person),
       Run.Draining(Some(EpochMs(1762732800000L))),
       Content.Finding(Content.Flaw.HandWrittenSourcesCited),
@@ -3130,6 +3094,25 @@ object Problem:
       Sentence("merge apply crashed: NullPointerException").kept,
       Relayed(Sentence("the server is reindexing"))
     )
+
+  val variants: Vector[Problem] = Vector(
+    Run.Stopped(Run.Stop.Silent(Count(4L), Count(31L), Count(1L), Count(3L))),
+    Run.Stopped(Run.Stop.NoPipeline(Raw("enrich-everything"))),
+    Run.Stopped(Run.Stop.PipelineChanged),
+    Run.Stopped(Run.Stop.Reordered(Count(2L), Run.Step("extract"), Run.Step("enrich"))),
+    Run.Stopped(
+      Run.Stop.CheckpointUnread(Count(2L), Run.Step("extract"), External.Reported("missing required field 'claims'"))
+    ),
+    Run.Stopped(Run.Stop.Vanished),
+    Run.Stopped(Run.Stop.Over(Run.Spending.Usd(Raw("$1.2000"), Raw("$1.00")))),
+    Run.Stopped(Run.Stop.Over(Run.Spending.Tokens(Count(600001L), Count(600000L), Raw("0.1")))),
+    Run.Stopped(Run.Stop.Over(Run.Spending.Capped(Run.Cap.Daily, Raw("5.0")))),
+    Run.Stopped(Run.Stop.Over(Run.Spending.Capped(Run.Cap.Monthly, Raw("50.0")))),
+    Run.Stopped(Run.Stop.MovedOn(Raw("0193f1c4"))),
+    Run.Stopped(Run.Stop.Withdrawn),
+    Run.Stopped(Run.Stop.Guard(Raw("the quota-guard mod ended the turn"))),
+    Run.Stopped(Run.Stop.Unrecorded(Conflict.Activity.MergeApply))
+  )
 
   // ---- Problems: one or many ----------------------------------------------------------------------------------
 

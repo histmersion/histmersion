@@ -226,11 +226,13 @@ final class Engine(
         )
         val (step, minutes) = (Problem.Count(c.seq.toLong), Problem.Count(mins))
         c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
-          Halt.Fail(Problem.Run.Stalled(step, minutes, Problem.Count(n.toLong)))
+          Halt.Fail(Problem.Run.Stopped(Problem.Run.Stop.Stalled(step, minutes, Problem.Count(n.toLong))))
         else
           Halt.Pause(
             PauseReason.Stalled,
-            Problem.Run.Silent(step, minutes, Problem.Count(n.toLong), Problem.Count.of(cfg.watchdog.maxStalls)),
+            Problem.Run.Stopped(
+              Problem.Run.Stop.Silent(step, minutes, Problem.Count(n.toLong), Problem.Count.of(cfg.watchdog.maxStalls))
+            ),
             Some(
               java.time.Instant
                 .ofEpochMilli(now.value)
@@ -481,8 +483,9 @@ final class Engine(
           val outcome: Either[Halt, String] =
             try
               pipe match
-                case None                    => Left(Halt.Fail(Problem.Run.NoPipeline(Problem.Raw.of(run.pipeline))))
-                case Some(_) if !sameVersion => Left(Halt.Fail(Problem.Run.PipelineChanged))
+                case None =>
+                  Left(Halt.Fail(Problem.Run.Stopped(Problem.Run.Stop.NoPipeline(Problem.Raw.of(run.pipeline)))))
+                case Some(_) if !sameVersion => Left(Halt.Fail(Problem.Run.Stopped(Problem.Run.Stop.PipelineChanged)))
                 case Some(p)                 =>
                   val hooks = CliProcess.Hooks(
                     pr => { val _ = ctl.procs.add(pr) },
@@ -602,7 +605,7 @@ final class Engine(
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
   private[histmersion] def checkBudget(id: Run.Id): Either[Halt, Unit] =
     agents.runs.get(id) match
-      case None    => Left(Halt.Fail(Problem.Run.Vanished))
+      case None    => Left(Halt.Fail(Problem.Run.Stopped(Problem.Run.Stop.Vanished)))
       case Some(r) =>
         val (day, month) = agents.runs.spendDayMonth()
         val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
@@ -610,9 +613,13 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Run.Overspent(
-                Problem.Raw(AgentsMarkdown.usd(r.costUsd.value)),
-                Problem.Raw(AgentsMarkdown.usd(r.budgetUsd.value))
+              Problem.Run.Stopped(
+                Problem.Run.Stop.Over(
+                  Problem.Run.Spending.Usd(
+                    Problem.Raw(AgentsMarkdown.usd(r.costUsd.value)),
+                    Problem.Raw(AgentsMarkdown.usd(r.budgetUsd.value))
+                  )
+                )
               )
             )
           )
@@ -620,10 +627,14 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Run.OverTokens(
-                Problem.Count.of(r.usage.budgeted(weight)),
-                Problem.Count.of(r.budgetTokens),
-                Problem.Raw.of(cfg.budgets.cacheReadWeight)
+              Problem.Run.Stopped(
+                Problem.Run.Stop.Over(
+                  Problem.Run.Spending.Tokens(
+                    Problem.Count.of(r.usage.budgeted(weight)),
+                    Problem.Count.of(r.budgetTokens),
+                    Problem.Raw.of(cfg.budgets.cacheReadWeight)
+                  )
+                )
               )
             )
           )
@@ -631,14 +642,20 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Run.OverCap(Problem.Run.Cap.Daily, Problem.Raw.of(cfg.budgets.dailyUsd))
+              Problem.Run.Stopped(
+                Problem.Run.Stop
+                  .Over(Problem.Run.Spending.Capped(Problem.Run.Cap.Daily, Problem.Raw.of(cfg.budgets.dailyUsd)))
+              )
             )
           )
         else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Problem.Run.OverCap(Problem.Run.Cap.Monthly, Problem.Raw.of(cfg.budgets.monthlyUsd))
+              Problem.Run.Stopped(
+                Problem.Run.Stop
+                  .Over(Problem.Run.Spending.Capped(Problem.Run.Cap.Monthly, Problem.Raw.of(cfg.budgets.monthlyUsd)))
+              )
             )
           )
         else Right(())
@@ -674,7 +691,7 @@ final class Engine(
             RunState.Paused,
             error = Some(Stopped.Paused(PauseReason.Requested, Problem.Run.Unstarted).problem)
           )
-            .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
+            .toRight(conflict(Problem.Run.Stopped(Problem.Run.Stop.MovedOn(Problem.Raw.of(id)))))
             .flatMap(_ => get(id))
         case _ =>
           Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Pause)))
@@ -696,7 +713,7 @@ final class Engine(
           budgetTokens.map(t => JobRepo.TokenBudget(t.value))
         )
         transition(id, RunState.Paused, RunState.Queued)
-          .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
+          .toRight(conflict(Problem.Run.Stopped(Problem.Run.Stop.MovedOn(Problem.Raw.of(id)))))
           .flatMap { _ => submit(id); get(id) }
     }
 
@@ -708,9 +725,12 @@ final class Engine(
           Right(r)
         case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
           transition(id, s, RunState.Cancelled, error = Some(Problem.Run.Cancelled(Problem.Run.Actor.Person)))
-            .toRight(conflict(Problem.Run.MovedOn(Problem.Raw.of(id))))
+            .toRight(conflict(Problem.Run.Stopped(Problem.Run.Stop.MovedOn(Problem.Raw.of(id)))))
             .flatMap { _ =>
-              val withdrawn = agents.approvalStore.closeForRun(Job.Id.assume(id.value), Problem.Run.Withdrawn)
+              val withdrawn = agents.approvalStore.closeForRun(
+                Job.Id.assume(id.value),
+                Problem.Run.Stopped(Problem.Run.Stop.Withdrawn)
+              )
               if withdrawn != RowCount(0) then
                 scribe.info(s"agent run $id cancelled: $withdrawn open approval(s) withdrawn")
               get(id)

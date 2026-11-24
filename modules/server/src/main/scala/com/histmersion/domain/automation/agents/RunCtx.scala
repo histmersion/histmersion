@@ -124,7 +124,10 @@ final class RunCtx private[automation] (
       if recorded != name then
         Left(
           Halt.Fail(
-            Problem.Run.Reordered(Problem.Count.of(seq), Problem.Run.Step.of(recorded), Problem.Run.Step.of(name))
+            Problem.Run.Stopped(
+              Problem.Run.Stop
+                .Reordered(Problem.Count.of(seq), Problem.Run.Step.of(recorded), Problem.Run.Step.of(name))
+            )
           )
         )
       else
@@ -133,8 +136,10 @@ final class RunCtx private[automation] (
           .left
           .map(e =>
             Halt.Fail(
-              Problem.Run
-                .CheckpointUnread(Problem.Count.of(seq), Problem.Run.Step.of(name), External.Reported.of(s"$e"))
+              Problem.Run.Stopped(
+                Problem.Run.Stop
+                  .CheckpointUnread(Problem.Count.of(seq), Problem.Run.Step.of(name), External.Reported.of(s"$e"))
+              )
             )
           )
     }

@@ -112,19 +112,8 @@ class RenderSuite extends munit.FunSuite:
     "BelowAllowance" -> 409,
     "AllowanceUnread" -> 409,
     "PlanOnly" -> 409,
-    "Stalled" -> 409,
-    "Silent" -> 409,
-    "NoPipeline" -> 409,
-    "PipelineChanged" -> 409,
-    "Reordered" -> 409,
-    "CheckpointUnread" -> 409,
-    "Vanished" -> 409,
-    "Overspent" -> 409,
-    "OverTokens" -> 409,
-    "OverCap" -> 409,
-    "MovedOn" -> 409,
+    "Stopped" -> 409,
     "NotNow" -> 409,
-    "Withdrawn" -> 409,
     "AtStep" -> 409,
     "AtModel" -> 409,
     "Unsettled" -> 409,
@@ -138,7 +127,6 @@ class RenderSuite extends munit.FunSuite:
     "OutputCapped" -> 409,
     "NoText" -> 409,
     "NoBody" -> 409,
-    "GuardStopped" -> 409,
     "NoLogin" -> 409,
     "ProbeUnread" -> 409,
     "ApiKeyLogin" -> 503,
@@ -158,7 +146,6 @@ class RenderSuite extends munit.FunSuite:
     "Drained" -> 503,
     "Definition" -> 503,
     "CutShort" -> 409,
-    "Unrecorded" -> 409,
     "Finding" -> 422,
     "Proposal" -> 422,
     "Answer" -> 422,
@@ -560,29 +547,35 @@ class RenderSuite extends munit.FunSuite:
   test("a run's lifecycle keeps the words and hints it had before its cases were typed"):
     val step = Run.Step("enrich")
     Vector[(Problem, String)](
-      Run.Stalled(Count(4L), Count(31L), Count(3L)) ->
+      Run.Stopped(Run.Stop.Stalled(Count(4L), Count(31L), Count(3L))) ->
         "stalled 3 times at step 4 (no sign of life for 31 min each time; agents.watchdog)",
-      Run.Silent(Count(4L), Count(31L), Count(1L), Count(3L)) -> "no sign of life for 31 min at step 4 (stall 1 of 3)",
-      Run.NoPipeline(Raw("x")) -> "no pipeline 'x' in this build",
-      Run.PipelineChanged -> "the pipeline's version changed since this run started; start a new run",
-      Run.Reordered(Count(2L), Run.Step("extract"), step) ->
+      Run.Stopped(
+        Run.Stop.Silent(Count(4L), Count(31L), Count(1L), Count(3L))
+      ) -> "no sign of life for 31 min at step 4 (stall 1 of 3)",
+      Run.Stopped(Run.Stop.NoPipeline(Raw("x"))) -> "no pipeline 'x' in this build",
+      Run.Stopped(Run.Stop.PipelineChanged) -> "the pipeline's version changed since this run started; start a new run",
+      Run.Stopped(Run.Stop.Reordered(Count(2L), Run.Step("extract"), step)) ->
         "step 2 is 'extract' in the checkpoint but 'enrich' now — the pipeline changed; start a new run",
-      Run.CheckpointUnread(Count(2L), step, External.Reported("eof")) ->
+      Run.Stopped(Run.Stop.CheckpointUnread(Count(2L), step, External.Reported("eof"))) ->
         "step 2 (enrich): the checkpoint no longer decodes (eof)",
-      Run.Vanished -> "the run disappeared",
+      Run.Stopped(Run.Stop.Vanished) -> "the run disappeared",
       Run.Paused(Run.PauseReason.Requested, None) -> "paused on request",
-      Run.Overspent(Raw("$1.2000"), Raw("$1.00")) -> "the run spent $1.2000 of its $1.00 USD",
-      Run.OverTokens(Count(600001L), Count(600000L), Raw("0.1")) ->
+      Run.Stopped(
+        Run.Stop.Over(Run.Spending.Usd(Raw("$1.2000"), Raw("$1.00")))
+      ) -> "the run spent $1.2000 of its $1.00 USD",
+      Run.Stopped(Run.Stop.Over(Run.Spending.Tokens(Count(600001L), Count(600000L), Raw("0.1")))) ->
         "the run used 600001 of its 600000 budget tokens (cache reads count 0.1: agents.budgets.cache-read-weight)",
-      Run.OverCap(Run.Cap.Daily, Raw("5.0")) -> "today's agent spend reached agents.budgets.daily-usd (5.0)",
-      Run.OverCap(Run.Cap.Monthly, Raw("50.0")) ->
+      Run.Stopped(
+        Run.Stop.Over(Run.Spending.Capped(Run.Cap.Daily, Raw("5.0")))
+      ) -> "today's agent spend reached agents.budgets.daily-usd (5.0)",
+      Run.Stopped(Run.Stop.Over(Run.Spending.Capped(Run.Cap.Monthly, Raw("50.0")))) ->
         "this month's agent spend reached agents.budgets.monthly-usd (50.0)",
-      Run.MovedOn(Raw("r1")) -> "run r1 moved on; look again",
+      Run.Stopped(Run.Stop.MovedOn(Raw("r1"))) -> "run r1 moved on; look again",
       Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Pause) ->
         "run r1 is done; only a queued or running run can be paused",
       Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Resume) -> "run r1 is done; only a paused run can be resumed",
       Run.NotNow(Raw("r1"), Raw("done"), Run.Control.Cancel) -> "run r1 is done; it has already finished",
-      Run.Withdrawn -> "rejected: the run was cancelled",
+      Run.Stopped(Run.Stop.Withdrawn) -> "rejected: the run was cancelled",
       Run.AtStep(step, NonEmptyVector.of(Relayed(Sentence("a")), Relayed(Sentence("b")))) -> "enrich: a; b",
       Run.Unsettled(step, Count(16L)) ->
         "enrich: 16 attempts without an answer; the chain keeps running out mid-step",
@@ -679,7 +672,7 @@ class RenderSuite extends munit.FunSuite:
       Upstream.Replied(Upstream.Name("codex exec"), External.Reported("usage limit\nreached")) ->
         "codex exec: usage limit\nreached",
       Upstream.McpServer(Raw("failed")) -> "the agent MCP server is failed",
-      Run.GuardStopped(Raw("the quota-guard mod ended the turn")) ->
+      Run.Stopped(Run.Stop.Guard(Raw("the quota-guard mod ended the turn"))) ->
         "claude -p stopped by the quota guard: the quota-guard mod ended the turn",
       Run.NoLogin(Raw("not logged in")) -> "unavailable: no login — not logged in",
       Run.ProbeUnread(

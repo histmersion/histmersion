@@ -217,35 +217,37 @@ object Text:
         s"its allowance cannot be read (${each.mkString("; ")})"
       case Problem.Run.PlanOnly(role) =>
         s"not used — the chain does not fall from a plan to a paid key (histmersion agent quota fallthrough $role on)"
-      case Problem.Run.Stalled(step, minutes, times) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.Stalled(step, minutes, times)) =>
         s"stalled $times times at step $step (no sign of life for $minutes min each time; agents.watchdog)"
-      case Problem.Run.Silent(step, minutes, stall, of) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.Silent(step, minutes, stall, of)) =>
         s"no sign of life for $minutes min at step $step (stall $stall of $of)"
-      case Problem.Run.NoPipeline(pipeline) => s"no pipeline '$pipeline' in this build"
-      case Problem.Run.PipelineChanged      =>
+      case Problem.Run.Stopped(Problem.Run.Stop.NoPipeline(pipeline)) => s"no pipeline '$pipeline' in this build"
+      case Problem.Run.Stopped(Problem.Run.Stop.PipelineChanged)      =>
         "the pipeline's version changed since this run started; start a new run"
-      case Problem.Run.Reordered(seq, recorded, now) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.Reordered(seq, recorded, now)) =>
         s"step $seq is '$recorded' in the checkpoint but '$now' now — the pipeline changed; start a new run"
-      case Problem.Run.CheckpointUnread(seq, step, r)   => s"step $seq ($step): the checkpoint no longer decodes ($r)"
-      case Problem.Run.Vanished                         => "the run disappeared"
-      case Problem.Run.Overspent(spent, budget)         => s"the run spent $spent of its $budget USD"
-      case Problem.Run.OverTokens(used, budget, weight) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.CheckpointUnread(seq, step, r)) =>
+        s"step $seq ($step): the checkpoint no longer decodes ($r)"
+      case Problem.Run.Stopped(Problem.Run.Stop.Vanished)                                      => "the run disappeared"
+      case Problem.Run.Stopped(Problem.Run.Stop.Over(Problem.Run.Spending.Usd(spent, budget))) =>
+        s"the run spent $spent of its $budget USD"
+      case Problem.Run.Stopped(Problem.Run.Stop.Over(Problem.Run.Spending.Tokens(used, budget, weight))) =>
         s"the run used $used of its $budget budget tokens (cache reads count $weight: agents.budgets.cache-read-weight)"
-      case Problem.Run.OverCap(Problem.Run.Cap.Daily, amount) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.Over(Problem.Run.Spending.Capped(Problem.Run.Cap.Daily, amount))) =>
         s"today's agent spend reached agents.budgets.daily-usd ($amount)"
-      case Problem.Run.OverCap(Problem.Run.Cap.Monthly, amount) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.Over(Problem.Run.Spending.Capped(Problem.Run.Cap.Monthly, amount))) =>
         s"this month's agent spend reached agents.budgets.monthly-usd ($amount)"
-      case Problem.Run.MovedOn(run)                                   => s"run $run moved on; look again"
+      case Problem.Run.Stopped(Problem.Run.Stop.MovedOn(run))         => s"run $run moved on; look again"
       case Problem.Run.NotNow(run, status, Problem.Run.Control.Pause) =>
         s"run $run is $status; only a queued or running run can be paused"
       case Problem.Run.NotNow(run, status, Problem.Run.Control.Resume) =>
         s"run $run is $status; only a paused run can be resumed"
       case Problem.Run.NotNow(run, status, Problem.Run.Control.Cancel) =>
         s"run $run is $status; it has already finished"
-      case Problem.Run.Withdrawn                 => "rejected: the run was cancelled"
-      case Problem.Run.AtStep(step, why)         => s"$step: ${why.toVector.map(_.sentence).mkString("; ")}"
-      case Problem.Run.AtModel(model, why)       => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
-      case Problem.Run.Unsettled(step, attempts) =>
+      case Problem.Run.Stopped(Problem.Run.Stop.Withdrawn) => "rejected: the run was cancelled"
+      case Problem.Run.AtStep(step, why)                   => s"$step: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.AtModel(model, why)                 => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.Unsettled(step, attempts)           =>
         s"$step: $attempts attempts without an answer; the chain keeps running out mid-step"
       case Problem.Run.ProviderDown(step, why) =>
         s"$step: ${why.toVector.map(_.sentence).mkString("; ")} — fix the provider, then resume"
@@ -263,17 +265,17 @@ object Text:
       case Problem.Run.OutputCapped(step, model, cap, sent, setting) =>
         s"$step: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise ${setting.said} " +
           "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
-      case Problem.Run.NoText(source)          => s"$source has no text — ingest or OCR it first"
-      case Problem.Run.NoBody(article)         => s"article '$article' has no body to review"
-      case Problem.Run.GuardStopped(why)       => s"claude -p stopped by the quota guard: $why"
-      case Problem.Run.NoLogin(why)            => s"unavailable: no login — $why"
-      case Problem.Run.ProbeUnread(exit, said) =>
+      case Problem.Run.NoText(source)                       => s"$source has no text — ingest or OCR it first"
+      case Problem.Run.NoBody(article)                      => s"article '$article' has no body to review"
+      case Problem.Run.Stopped(Problem.Run.Stop.Guard(why)) => s"claude -p stopped by the quota guard: $why"
+      case Problem.Run.NoLogin(why)                         => s"unavailable: no login — $why"
+      case Problem.Run.ProbeUnread(exit, said)              =>
         s"the probe printed no rate_limit_event (exit $exit${said.fold("")(m => s": $m")})"
-      case Problem.Run.Interrupted          => "interrupted by a restart"
-      case Problem.Run.Restored             => "interrupted by a restore, which replaced the database it was writing to"
-      case Problem.Run.CutShort(activity)   => activity.cutShort
-      case Problem.Run.Unrecorded(activity) => activity.unrecorded
-      case Problem.Run.Cancelled(by)        => s"cancelled by ${words(by.productPrefix)}"
+      case Problem.Run.Interrupted        => "interrupted by a restart"
+      case Problem.Run.Restored           => "interrupted by a restore, which replaced the database it was writing to"
+      case Problem.Run.CutShort(activity) => activity.cutShort
+      case Problem.Run.Stopped(Problem.Run.Stop.Unrecorded(activity)) => activity.unrecorded
+      case Problem.Run.Cancelled(by)                                  => s"cancelled by ${words(by.productPrefix)}"
       case Problem.Run.Draining(Some(since)) => s"stopped while the autopilot drains (since ${since.iso})"
       case Problem.Run.Draining(None) => "stopped while the autopilot drains: it resumes once the drain is lifted"
       case Content.Finding(cause)     => cause.said
