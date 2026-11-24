@@ -3,6 +3,7 @@ package util.database
 
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
+import com.histmersion.util.json.RawJson
 
 class StoredCreatorSuite extends munit.FunSuite:
 
@@ -121,3 +122,11 @@ class StoredCreatorSuite extends munit.FunSuite:
     val one = shown(run(Some(Creator.Definition.Name("enrich-notes"))).stored).flatMap(_.agent)
     assertEquals(one, Some(Creation.Agent(Creation.ByModel, Some(Creation.Definition("enrich-notes")))))
     assertEquals(shown(run(None).stored).flatMap(_.agent), Some(Creation.Agent(Creation.ByModel)))
+
+  test("a bundle's carried creator is written as it came, and one that is absent or not a creator as unrecorded"):
+    def json(text: String) = RawJson.parse(text).toOption
+    val carried = StoredCreator.carried(StoredCreator.document(Some(StoredCreator.write(reviewer.stored))))
+    assertEquals(StoredCreator.recorded(carried), Some(reviewer))
+    assertEquals(StoredCreator.carried(None), StoredCreator.write(Creator.unrecorded))
+    assertEquals(StoredCreator.carried(json("""{"x": 1}""")), StoredCreator.write(Creator.unrecorded))
+    assertEquals(StoredCreator.carried(json("[1]")), StoredCreator.write(Creator.unrecorded))

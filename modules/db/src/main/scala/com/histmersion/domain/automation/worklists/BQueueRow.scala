@@ -8,6 +8,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import BQueueRow.Rationale
+import com.histmersion.util.database.Jsonb
 
 /** A work list's item as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BQueueRow(
@@ -20,7 +21,8 @@ final private[histmersion] case class BQueueRow(
     reason: Option[Rationale],
     createdAt: BQueueRow.CreatedAt,
     doneAt: Option[BQueueRow.DoneAt],
-    updatedAt: BQueueRow.UpdatedAt
+    updatedAt: BQueueRow.UpdatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BQueueRow:

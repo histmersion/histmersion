@@ -8,6 +8,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Jsonb
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
 final private[events] case class BEventRow(
@@ -34,7 +35,8 @@ final private[events] case class BEventRow(
     wikidata: Option[BEventRow.Wikidata],
     central: Option[BEventRow.Central],
     plusMinus: Option[BEventRow.PlusMinus],
-    datingMethod: Option[BEventRow.DatingMethod]
+    datingMethod: Option[BEventRow.DatingMethod],
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BEventRow:

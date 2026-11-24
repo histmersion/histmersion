@@ -43,7 +43,8 @@ private[events] object EventBundleRepo:
                                   e.place_id, p.uid, e.description, e.citekey, s.uid, ${Timestamps.iso(
         sql"e.updated_at"
       )}, e.scale,
-                                  e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method
+                                  e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method,
+                                  e.creator::text
                            FROM events e LEFT JOIN events p ON p.id = e.parent_id
                            LEFT JOIN sources s ON s.citekey = e.citekey WHERE $w ORDER BY e.uid"""
       .query[BEventRow]
@@ -130,7 +131,8 @@ private[events] object EventBundleRepo:
         wikidata = r.wikidata.map(w => Bundle.Event.Wikidata(w.value)),
         central = r.central.map(c => Bundle.Event.Central(c.value)),
         plusMinus = r.plusMinus.map(p => Bundle.Event.PlusMinus(p.value)),
-        datingMethod = r.datingMethod.map(m => Bundle.Event.DatingMethod(m.value))
+        datingMethod = r.datingMethod.map(m => Bundle.Event.DatingMethod(m.value)),
+        creator = StoredCreator.document(r.creator)
       )
     }
 
@@ -256,8 +258,8 @@ private[events] object EventBundleRepo:
           placeHere(BPlaceRow.Id(p.value))
         )}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
               ${e.scale.flatMap(s => EventScale.parse(EventSummary.Scale(s.value)).flatten)},
-              ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod}, ${StoredCreator
-          .write(Creator.unrecorded)}::jsonb)
+              ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod},
+              ${StoredCreator.carried(e.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
               end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,

@@ -8,6 +8,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.Jsonb
 
 /** An article as a bundle reads it, its period in its three columns (Magnum maps a SELECT's columns positionally). */
 final private[articles] case class BArticleRow(
@@ -23,7 +24,8 @@ final private[articles] case class BArticleRow(
     pNull: BArticleRow.PNull,
     pLo: Option[BArticleRow.PLo],
     pHi: Option[BArticleRow.PHi],
-    updatedAt: BArticleRow.UpdatedAt
+    updatedAt: BArticleRow.UpdatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BArticleRow:

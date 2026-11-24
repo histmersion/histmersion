@@ -11,6 +11,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.Jsonb
 
 /** A source as the bundle reads it: its columns, its body's and its original's digests and its ISBNs. */
 final private[sources] case class BSourceRow(
@@ -39,7 +40,8 @@ final private[sources] case class BSourceRow(
     bodyBytes: Option[BSourceRow.BodyBytes],
     originalSha: Option[BSourceRow.OriginalSha],
     updatedAt: BSourceRow.UpdatedAt,
-    isbns: List[BSourceRow.Isbns]
+    isbns: List[BSourceRow.Isbns],
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BSourceRow:

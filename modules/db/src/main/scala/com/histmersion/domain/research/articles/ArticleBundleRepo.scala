@@ -25,12 +25,11 @@ import com.histmersion.util.database.StoredCreator
   * version's body as its blob arrives, and the links of what was written.
   */
 private[articles] object ArticleBundleRepo:
-
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
     sql"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
-                       ${rangeCols(sql"a.period")}, ${Timestamps.iso(sql"a.updated_at")}
+                       ${rangeCols(sql"a.period")}, ${Timestamps.iso(sql"a.updated_at")}, a.creator::text
                 FROM articles a WHERE ${where(scope, sql"a.uid", sql"a.updated_at")} ORDER BY a.uid"""
       .query[BArticleRow]
       .run()
@@ -50,14 +49,15 @@ private[articles] object ArticleBundleRepo:
             r.pLo.map(l => util.data.exchange.Bundle.RangeLower(l.value)),
             r.pHi.map(h => util.data.exchange.Bundle.RangeUpper(h.value))
           ),
-          Bundle.Article.UpdatedAt(r.updatedAt.value)
+          Bundle.Article.UpdatedAt(r.updatedAt.value),
+          creator = StoredCreator.document(r.creator)
         )
       }
 
   def versions(scope: BundleScope)(using DbCon): Vector[BVersionRow] =
     sql"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
                        octet_length(convert_to(v.body, 'UTF8'))::bigint, v.summary,
-                       ${Timestamps.iso(sql"v.updated_at")}, ${Timestamps.iso(sql"v.created_at")}
+                       ${Timestamps.iso(sql"v.updated_at")}, ${Timestamps.iso(sql"v.created_at")}, v.creator::text
                 FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE ${where(
         scope,
         sql"v.uid",
@@ -84,7 +84,8 @@ private[articles] object ArticleBundleRepo:
       Bundle.ArticleVersion.BodySha256(r.bodySha.value),
       r.summary.map(s => Bundle.ArticleVersion.Summary(s.value)),
       Bundle.ArticleVersion.VersionOf(r.versionOf.value),
-      Bundle.ArticleVersion.UpdatedAt(r.createdAt.value)
+      Bundle.ArticleVersion.UpdatedAt(r.createdAt.value),
+      creator = StoredCreator.document(r.creator)
     )
 
   /** The bytes of a version's body, written as a blob. */
@@ -144,7 +145,7 @@ private[articles] object ArticleBundleRepo:
             VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
               ${a.tags}::text[], ${a.regions}::text[],
               ${rangeLiteral(a.period)}::int8range,
-              ${a.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
+              ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
               kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
               regions = EXCLUDED.regions, period = EXCLUDED.period, updated_at = EXCLUDED.updated_at""".update.run()
@@ -156,7 +157,7 @@ private[articles] object ArticleBundleRepo:
         sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period, creator)
             VALUES (${a.uid}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary}, ${a.tags}::text[],
               ${a.regions}::text[],
-              ${rangeLiteral(a.period)}::int8range, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
+              ${rangeLiteral(a.period)}::int8range, ${StoredCreator.carried(a.creator)}::jsonb)
             ON CONFLICT (uid) DO NOTHING""".update.run(),
         Unused.Why.Idempotent
       )
@@ -200,9 +201,8 @@ private[articles] object ArticleBundleRepo:
           val v = w.once(versionsByUid)(u)
           sql"""INSERT INTO article_versions (uid, origin, slug, body, summary, updated_at, created_at, creator)
                 VALUES (${v.uid}, ${v.origin}, ${slugOf(v.articleUid)}, ${String(bytes, UTF_8)},
-                  ${v.summary}, ${v.versionOf}::timestamptz, ${v.updatedAt}::timestamptz, ${StoredCreator.write(
-              Creator.unrecorded
-            )}::jsonb)
+                  ${v.summary}, ${v.versionOf}::timestamptz, ${v.updatedAt}::timestamptz,
+                  ${StoredCreator.carried(v.creator)}::jsonb)
                 ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, slug = EXCLUDED.slug,
                   body = EXCLUDED.body, summary = EXCLUDED.summary,
                   updated_at = EXCLUDED.updated_at, created_at = EXCLUDED.created_at""".update.run(): Unit

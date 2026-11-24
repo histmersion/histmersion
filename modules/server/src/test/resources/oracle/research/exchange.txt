@@ -919,9 +919,9 @@
     "creator" : {
       "agent" : null,
       "job" : null,
-      "kind" : "unknown",
+      "kind" : "unattributed",
       "plugin" : null,
-      "surface" : null,
+      "surface" : "rest",
       "workflow" : null
     },
     "kind" : "concept",
@@ -990,9 +990,9 @@
     "creator" : {
       "agent" : null,
       "job" : null,
-      "kind" : "unknown",
+      "kind" : "unattributed",
       "plugin" : null,
-      "surface" : null,
+      "surface" : "rest",
       "workflow" : null
     },
     "kind" : "concept",
@@ -1113,9 +1113,9 @@
     "creator" : {
       "agent" : null,
       "job" : null,
-      "kind" : "unknown",
+      "kind" : "unattributed",
       "plugin" : null,
-      "surface" : null,
+      "surface" : "rest",
       "workflow" : null
     },
     "kind" : "timeline",
@@ -1244,13 +1244,13 @@
 == entities/sources.ndjson
 == entities/findings.ndjson
 == entities/articles.ndjson (4 lines)
-{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
-{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
-{   "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",   "kind" : "timeline",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_dynasty",   "tags" : [   ],   "title" : "Kings",   "uid" : "article:zr_dynasty",   "updatedAt" : "TS" }
-{   "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_lib_only",   "tags" : [   ],   "title" : "Lib's",   "uid" : "article:zr_lib_only",   "updatedAt" : "TS" }
+{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
+{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
+{   "body" : "## Timeline\n\nThe kings [[zrgamma1975_kings]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "timeline",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_dynasty",   "tags" : [   ],   "title" : "Kings",   "uid" : "article:zr_dynasty",   "updatedAt" : "TS" }
+{   "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_lib_only",   "tags" : [   ],   "title" : "Lib's",   "uid" : "article:zr_lib_only",   "updatedAt" : "TS" }
 == entities/article-versions.ndjson (2 lines)
-{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
-{   "articleUid" : "article:zr_harbour",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_harbour",   "bodySha256" : "DIGEST",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "origin" : "instance:lib",   "rev" : "DIGEST",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
 == entities/assets.ndjson
 == entities/asset-links.ndjson
 == entities/attestations.ndjson
@@ -1278,12 +1278,12 @@
 == entities/sources.ndjson
 == entities/findings.ndjson
 == entities/articles.ndjson (3 lines)
-{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
-{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
-{   "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_lib_only",   "tags" : [   ],   "title" : "Lib's",   "uid" : "article:zr_lib_only",   "updatedAt" : "TS" }
+{   "body" : "## The question\n\nWhen were the walls of Zrtown raised? The walls rose around 1490 BC, as lib reads it, [[zralpha1990_walls]]; the harbour\ntrade paid for them [[zrbeta2001_harbour]].\n\n## What the sources say\n\nAn older reading put the walls under the kings of Zrland [[zrgamma1975_kings]].\n\n## Unresolved\n\nWhether the gate is older than the walls [[zralpha1990_walls]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_walls",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "tags" : [     "zr-art"   ],   "title" : "The walls of Zrtown",   "uid" : "article:zr_walls",   "updatedAt" : "TS" }
+{   "body" : "## The story\n\nA hero [[zrbeta2001_harbour]]. See [[zr_walls]].\n\n## Unresolved\n\nWho [[zrbeta2001_harbour]].",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "myth",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_harbour",   "tags" : [   ],   "title" : "Harbour",   "uid" : "article:zr_harbour",   "updatedAt" : "TS" }
+{   "body" : "## Overview\n\nLib [[zralpha1990_walls]].\n",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "kind" : "concept",   "origin" : "instance:lib",   "regions" : [   ],   "rev" : "DIGEST",   "slug" : "zr_lib_only",   "tags" : [   ],   "title" : "Lib's",   "uid" : "article:zr_lib_only",   "updatedAt" : "TS" }
 == entities/article-versions.ndjson (2 lines)
-{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
-{   "articleUid" : "article:zr_harbour",   "bodySha256" : "DIGEST",   "origin" : "instance:lib",   "rev" : "DIGEST",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_walls",   "bodySha256" : "DIGEST",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "origin" : "instance:lib",   "rev" : "DIGEST",   "summary" : "When the walls rose [[zralpha1990_walls]].",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
+{   "articleUid" : "article:zr_harbour",   "bodySha256" : "DIGEST",   "creator" : {     "kind" : "unattributed",     "surface" : "rest"   },   "origin" : "instance:lib",   "rev" : "DIGEST",   "uid" : "UUID",   "updatedAt" : "TS",   "versionOf" : "TS" }
 == entities/assets.ndjson
 == entities/asset-links.ndjson
 == entities/attestations.ndjson
@@ -1472,7 +1472,7 @@
   "asOf" : "TS",
   "bundleId" : "UUID",
   "changes" : 4,
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "from" : {
     "id" : "instance:lib",
     "label" : null
@@ -1596,7 +1596,7 @@
   "asOf" : "TS",
   "bundleId" : "UUID",
   "changes" : 5,
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "from" : {
     "id" : "instance:lib",
     "label" : null

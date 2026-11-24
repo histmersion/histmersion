@@ -13,7 +13,6 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
@@ -27,7 +26,7 @@ private[assets] object AssetBundleRepo:
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
     sql"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
-                       ${rangeCols(sql"x.period")}, ${Timestamps.iso(sql"x.updated_at")}
+                       ${rangeCols(sql"x.period")}, ${Timestamps.iso(sql"x.updated_at")}, x.creator::text
                 FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE ${where(
         scope,
         sql"x.uid",
@@ -53,7 +52,8 @@ private[assets] object AssetBundleRepo:
         r.pLo.map(lo => util.data.exchange.Bundle.RangeLower(lo.value)),
         r.pHi.map(hi => util.data.exchange.Bundle.RangeUpper(hi.value))
       ),
-      Bundle.Asset.UpdatedAt(r.updatedAt.value)
+      Bundle.Asset.UpdatedAt(r.updatedAt.value),
+      creator = StoredCreator.document(r.creator)
     )
 
   /** The bytes of one asset, written as a blob. */
@@ -88,7 +88,7 @@ private[assets] object AssetBundleRepo:
               VALUES (${a.uid}, ${a.origin}, $ck, ${a.name}, ${a.mime}, $b, ${a.sha256}, ${a.width}, ${a.height},
                 ${a.kind}, ${a.caption}, ${a.license}, ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
                 ${rangeLiteral(a.period)}::int8range,
-                ${a.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
+                ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, name = EXCLUDED.name,
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, width = EXCLUDED.width,
                 height = EXCLUDED.height, kind = EXCLUDED.kind, caption = EXCLUDED.caption,

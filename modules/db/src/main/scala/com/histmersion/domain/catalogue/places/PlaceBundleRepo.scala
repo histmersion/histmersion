@@ -19,7 +19,6 @@ import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
@@ -46,7 +45,8 @@ private[places] object PlaceBundleRepo:
     val sel = if alsoIds.isEmpty then own
     else sql"(($own) OR p.id = ANY(${alsoIds.distinct}::text[]))"
     val rows = sql"""SELECT p.uid, p.origin, p.id, p.label, p.kind, encode(ST_AsEWKB(p.geom), 'hex'),
-                       ${rangeCols(sql"p.period")}, p.source, p.properties::text, ${Timestamps.iso(sql"p.updated_at")}
+                       ${rangeCols(sql"p.period")}, p.source, p.properties::text, ${Timestamps.iso(sql"p.updated_at")},
+                       p.creator::text
                 FROM places p WHERE $sel ORDER BY p.uid""".query[BPlaceRow].run()
     val ids = rows.map(_.id).toList
     if ids.isEmpty then Vector.empty
@@ -120,7 +120,8 @@ private[places] object PlaceBundleRepo:
                 t.citekey.map(c => Citekey(c.value))
               )
             ),
-          Bundle.Place.UpdatedAt(r.updatedAt.value)
+          Bundle.Place.UpdatedAt(r.updatedAt.value),
+          creator = StoredCreator.document(r.creator)
         )
       }
 
@@ -257,7 +258,7 @@ private[places] object PlaceBundleRepo:
       sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at, creator)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
               $range::int8range, ${p.source}, $props::jsonb, 'local',
-              ${p.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
+              ${p.updatedAt}::timestamptz, ${StoredCreator.carried(p.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label, kind = EXCLUDED.kind,
               geom = EXCLUDED.geom, period = EXCLUDED.period, source = EXCLUDED.source,
               properties = EXCLUDED.properties, dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

@@ -27,7 +27,9 @@ class ProvenanceSuite extends munit.FunSuite:
     val missing = inserts.filter(i => Records.contains(i.table)).filterNot(_.writesCreator).map(_.at)
     assertEquals(missing, Nil, "an INSERT into a record table names the creator column (ADR 0029 section 6)")
 
-  test("each one binds a creator the compiler demanded: the def's own, a waiting edge's, or a bundle's unrecorded"):
+  test(
+    "each one binds a creator the compiler demanded: the def's own, a waiting edge's, or a bundle's carried or unrecorded"
+  ):
     val unbound = inserts.filter(i => Records.contains(i.table) && i.writesCreator).filterNot(_.creatorBound).map(_.at)
     assertEquals(unbound, Nil)
 
@@ -38,11 +40,15 @@ class ProvenanceSuite extends munit.FunSuite:
         |    sql\"\"\"INSERT INTO sources (citekey, creator) VALUES ($x, ${StoredCreator.column(creator)}::jsonb)\"\"\"
         |  def bad(x: Int)(using DbCon): Unit =
         |    sql\"\"\"INSERT INTO public.findings (id) VALUES ($x)\"\"\"
+        |  def in(a: Bundle.Asset)(using DbCon): Unit =
+        |    sql\"\"\"INSERT INTO assets (uid, creator) VALUES (${a.uid}, ${StoredCreator.carried(a.creator)}::jsonb)\"\"\"
+        |  def guessed(a: Bundle.Asset)(using DbCon): Unit =
+        |    sql\"\"\"INSERT INTO assets (uid, creator) VALUES (${a.uid}, ${someone}::jsonb)\"\"\"
         |""".stripMargin.replace("\\\"", "\"")
     val found = Insert.of(Path.of("R.scala"), text)
-    assertEquals(found.map(_.table), List("sources", "findings"))
-    assertEquals(found.map(_.writesCreator), List(true, false))
-    assertEquals(found.map(_.creatorBound), List(true, false))
+    assertEquals(found.map(_.table), List("sources", "findings", "assets", "assets"))
+    assertEquals(found.map(_.writesCreator), List(true, false, true, true))
+    assertEquals(found.map(_.creatorBound), List(true, false, true, false))
 
 object ProvenanceSuite:
 
@@ -165,6 +171,9 @@ object ProvenanceSuite:
     def creatorBound: Boolean =
       signature.contains("Creator.New") || signature.contains(": Creator") ||
         statement.replaceAll("\\s+", "").contains("StoredCreator.write(Creator.unrecorded)") ||
+        statement
+          .replaceAll("\\s+", "")
+          .matches("(?s).*\\$\\{StoredCreator\\.carried\\(\\w+\\.creator\\)\\}::jsonb.*") ||
         statement.matches("(?s).*\\bcreator\\s+FROM\\s+(public\\.)?unresolved_edges\\b.*")
 
   object Insert:

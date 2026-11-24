@@ -7,6 +7,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Jsonb
 
 /** A goal's row as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BGoalRow(
@@ -26,7 +27,8 @@ final private[histmersion] case class BGoalRow(
     updatedAt: BGoalRow.UpdatedAt,
     plan: Option[BGoalRow.Plan],
     planApprovedAt: Option[BGoalRow.PlanApprovedAt],
-    budgetUsd: Option[BigDecimal]
+    budgetUsd: Option[BigDecimal],
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BGoalRow:

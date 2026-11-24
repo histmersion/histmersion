@@ -10,6 +10,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
+import com.histmersion.util.database.Jsonb
 
 /** A finding as the bundle reads it, with its source's uid. */
 final private[sources] case class BFindingRow(
@@ -28,7 +29,8 @@ final private[sources] case class BFindingRow(
     tags: List[BFindingRow.Tags],
     confidence: Option[Confidence],
     significance: Option[BFindingRow.Significance],
-    updatedAt: BFindingRow.UpdatedAt
+    updatedAt: BFindingRow.UpdatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BFindingRow:

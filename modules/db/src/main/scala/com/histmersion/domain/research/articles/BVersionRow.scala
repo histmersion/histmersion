@@ -5,6 +5,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.Jsonb
 
 /** An article's version as a bundle reads it: its body by digest and length, carried as a blob. */
 final private[articles] case class BVersionRow(
@@ -15,7 +16,8 @@ final private[articles] case class BVersionRow(
     bodyBytes: BVersionRow.BodyBytes,
     summary: Option[BVersionRow.Summary],
     versionOf: BVersionRow.VersionOf,
-    createdAt: BVersionRow.CreatedAt
+    createdAt: BVersionRow.CreatedAt,
+    creator: Option[Jsonb.JsonText] = None
 ) derives DbCodec
 
 object BVersionRow:

@@ -6,6 +6,7 @@ import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.augustnagro.magnum.{sql, Frag}
+import hearth.kindlings.jsoniterjson.Json
 import StoredCreator.Agent
 
 final private[histmersion] case class StoredCreator(
@@ -62,6 +63,14 @@ object StoredCreator:
   def write(creator: Creator): Jsonb.JsonText = Jsonb.write(of(creator), Jsonb.DropNulls(true))
 
   def column(creator: Creator.New): Jsonb.JsonText = write(creator.stored)
+
+  def document(stored: Option[Jsonb.JsonText]): Option[Json] = stored.flatMap(Jsonb.read[Json](_))
+
+  def carried(creator: Option[Json]): Jsonb.JsonText =
+    creator
+      .map(Jsonb.write(_))
+      .filter(t => Jsonb.read[StoredCreator](t).isDefined)
+      .getOrElse(write(Creator.unrecorded))
 
   final case class Recorded(
       kind: String,

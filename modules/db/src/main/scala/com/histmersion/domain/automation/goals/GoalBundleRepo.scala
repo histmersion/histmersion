@@ -35,7 +35,7 @@ private[goals] object GoalBundleRepo:
                        ${rangeCols(sql"g.period")}, p.uid, ${Timestamps.iso(sql"g.created_at")}, ${Timestamps.iso(
         sql"g.updated_at"
       )},
-                       g.plan::text, ${Timestamps.iso(sql"g.plan_approved_at")}, g.budget_usd
+                       g.plan::text, ${Timestamps.iso(sql"g.plan_approved_at")}, g.budget_usd, g.creator::text
                 FROM goals g LEFT JOIN goals p ON p.slug = g.parent_slug WHERE $w ORDER BY g.uid"""
       .query[BGoalRow]
       .run()
@@ -113,7 +113,8 @@ private[goals] object GoalBundleRepo:
               )
             )
           )
-          .filter(_.nonEmpty)
+          .filter(_.nonEmpty),
+        creator = StoredCreator.document(r.creator)
       )
     }
 
@@ -199,8 +200,8 @@ private[goals] object GoalBundleRepo:
             VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
               ${g.regions}::text[],
               ${rangeLiteral(g.period)}::int8range,
-              ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd, ${StoredCreator
-          .write(Creator.unrecorded)}::jsonb)
+              ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd,
+              ${StoredCreator.carried(g.creator)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
               status = EXCLUDED.status, notes = EXCLUDED.notes, tags = EXCLUDED.tags,
               regions = EXCLUDED.regions, period = EXCLUDED.period, created_at = EXCLUDED.created_at,
