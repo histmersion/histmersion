@@ -396,7 +396,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   }
 
   private final case class Extracted(planned: Planned, text: String, imports: List[String], start: Int, column: Int,
-      order: Int)
+      order: Int, outerPackage: Option[String])
 
   private lazy val extracted: List[Extracted] = {
     var order = 0
@@ -420,7 +420,8 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         }
         order += 1
         val imports = (neededImports(so, stat, p, definedHere) ++ rw.imports).distinct
-        Extracted(p, comments + body, imports, start, column(sd.text, start), order)
+        val outerPackage = sd.tree.collect { case pk: Pkg => pk.ref.syntax }.headOption
+        Extracted(p, comments + body, imports, start, column(sd.text, start), order, outerPackage)
       }
     }
   }
@@ -450,7 +451,9 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           case _ => false
         }
         sd.occurrences(n).map(o => o.symbol -> selected)
-    }.flatten.filter { case (sym, _) => sym.nonEmpty && !sym.startsWith("local") && !definedHere(sym) }
+    }.flatten.filter { case (sym, _) =>
+      sym.nonEmpty && !sym.startsWith("local") && !definedHere(sym) && !sym.contains(".(") && !sym.contains("[")
+    }
       .groupBy(_._1).map { case (k, v) => k -> v.forall(_._2) }
     val importers = sd.tree.collect { case i: Import => i }.filter(i => i.pos.end <= stat.pos.start)
       .filter(i => !i.parent.exists(_.is[Template]) || i.parent.exists(_ eq so.obj.templ))
@@ -468,10 +471,12 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         case _: Importee.Wildcard =>
           refs.keys.filter(r => strip(owner(r)) == strip(refSym)).toList
         case i: Importee.Name =>
-          val syms = sd.occurrences(i.name).map(s => strip(s.symbol)).toSet
-          refs.keys.filter(r => syms(strip(r))).toList
+          val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
+          refs.keys.filter(r =>
+            syms(strip(r)) || (lastName(r) == i.name.value && path(owner(r)) == imp.ref.syntax.replace("_root_.", ""))
+          ).toList
         case i: Importee.Rename =>
-          val syms = sd.occurrences(i.name).map(s => strip(s.symbol)).toSet
+          val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
           refs.keys.filter(r => syms(strip(r))).toList
         case _ => Nil
       }
@@ -487,7 +492,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           case Some(m) => out += targetRef(m.to)._2
           case None =>
             if (isPackage(o) && !o.startsWith("scala/") && !o.startsWith("java/lang/")) out += path(o) + "." + lastName(sym)
-            else if (o.endsWith(".") && so.symbol.startsWith(o)) out += path(o) + "." + lastName(sym)
+            else if (o.endsWith(".") && !o.startsWith("scala/") && !termOf(p.to).startsWith(o)) out += path(o) + "." + lastName(sym)
         }
       }
     }
@@ -501,11 +506,19 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     extracted.filter(_.planned.toplevel).groupBy(_.planned.file).foreach { case (file, members) =>
       require(file.nonEmpty, s"MoveOntoType: a toplevel move needs a file (${members.map(_.planned.name).mkString(", ")})")
       val pkg = path(members.head.planned.to)
+      val outer =members.head.outerPackage.filter(o => pkg.startsWith(o + "."))
+      val visible = pkg :: outer.toList
       val imports = members.flatMap(_.imports).distinct.filterNot { i =>
-        i.startsWith(pkg + ".") && !i.drop(pkg.length + 1).contains('.')
+        visible.exists(v => i.startsWith(v + ".") && !i.drop(v.length + 1).contains('.'))
       }
-      val body = members.sortBy(_.order).map(m => reindent(m.text, m.column, 0)).mkString("\n\n")
-      val content = s"package $pkg\n\n" + imports.map("import " + _).mkString("\n") +
+      val ordered = members.sortBy(_.order)
+      val body = ordered.zipWithIndex.map { case (m, i) =>
+        val pair = ordered.lift(i - 1).exists(prev =>
+          prev.planned.name == m.planned.name && prev.text.trim.startsWith("type ") && m.text.trim.startsWith("object "))
+        (if (i == 0) "" else if (pair) "\n" else "\n\n") + reindent(m.text, m.column, 0)
+      }.mkString
+      val header = outer.fold(s"package $pkg")(o => s"package $o\npackage ${pkg.drop(o.length + 1)}")
+      val content = s"$header\n\n" + imports.map("import " + _).mkString("\n") +
         (if (imports.isEmpty) "" else "\n\n") + body + "\n"
       val target = Paths.get(config.sourceroot).resolve(file)
       Files.createDirectories(target.getParent)
