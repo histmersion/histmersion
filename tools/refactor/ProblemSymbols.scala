@@ -14,7 +14,7 @@ object ProblemSymbols {
     mainMarker: String = "/src/main/",
     exclude: List[String] = List("modules/problem/src/main/scala/com/histmersion/util/problem/Text.scala"),
     ownFile: String = "modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala",
-    ownSkipped: List[String] = List("examples", "within", "inside"),
+    ownSkipped: List[String] = List("examples", "variants", "within", "inside"),
     edges: List[String] = List("modules/problem/src/main/scala/com/histmersion/util/problem/Problem.scala",
       "modules/problem/src/main/scala/com/histmersion/util/problem/Text.scala",
       "modules/api/src/main/scala/com/histmersion/api/problem/Answer.scala",
