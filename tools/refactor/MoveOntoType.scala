@@ -30,7 +30,8 @@ object MoveOntoType {
   }
 
   final case class Planned(symbols: Set[String], name: String, newName: String, to: String, form: String, file: String) {
-    def toplevel: Boolean = form == "toplevel"
+    def toplevel: Boolean = form == "toplevel" || form == "promote"
+    def promote: Boolean = form == "promote"
     def extension: Boolean = form == "extension"
   }
 
@@ -186,6 +187,10 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val whole = moves.find(_.member.isEmpty)
       val unknown = named.keySet -- o.templ.body.stats.flatMap(statName).map(_.value).toSet
       require(unknown.isEmpty, s"MoveOntoType: $objSym has no member ${unknown.mkString(", ")}")
+      val promotedTypes: Map[String, String] =
+        moves.filter(_.form == "promote").map(p => (p.to + p.member + ".") -> (objSym + p.member + "#")).toMap
+      def receiverOf(paramType: String, to: String): Boolean =
+        sameType(paramType, to) || promotedTypes.get(to).contains(paramType)
       val stats = o.templ.body.stats.map { stat =>
         val name = statName(stat)
         val move = name.flatMap(n => named.get(n.value)).orElse(whole)
@@ -193,7 +198,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           val form = m.form match {
             case "auto" if isPackage(m.to) => "toplevel"
             case "auto" => stat match {
-                case d: Defn.Def if firstExplicitParamType(sd, d).exists(sameType(_, m.to)) => "extension"
+                case d: Defn.Def if firstExplicitParamType(sd, d).exists(receiverOf(_, m.to)) => "extension"
                 case _ => "companion"
               }
             case "extension" if !stat.is[Defn.Def] => "companion"
@@ -508,14 +513,26 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val pkg = path(members.head.planned.to)
       val outer =members.head.outerPackage.filter(o => pkg.startsWith(o + "."))
       val visible = pkg :: outer.toList
-      val imports = members.flatMap(_.imports).distinct.filterNot { i =>
+      val promoted = members.filter(_.planned.promote).map(_.planned.name).distinct
+      val extras: Map[String, List[Extracted]] = promoted.map { x =>
+        x -> extracted.filter(e => !e.planned.toplevel && e.planned.to == members.head.planned.to + x + ".").sortBy(_.order)
+      }.toMap
+      val imports = (members ++ extras.values.flatten).flatMap(_.imports).distinct.filterNot { i =>
         visible.exists(v => i.startsWith(v + ".") && !i.drop(v.length + 1).contains('.'))
-      }
+      }.filterNot(i => promoted.exists(x => i == s"$pkg.$x"))
       val ordered = members.sortBy(_.order)
+      val companionOf: Map[String, Extracted] = ordered.filter(m => m.planned.promote && m.text.trim.startsWith("object ")).map(m => m.planned.name -> m).toMap
       val body = ordered.zipWithIndex.map { case (m, i) =>
         val pair = ordered.lift(i - 1).exists(prev =>
           prev.planned.name == m.planned.name && prev.text.trim.startsWith("type ") && m.text.trim.startsWith("object "))
-        (if (i == 0) "" else if (pair) "\n" else "\n\n") + reindent(m.text, m.column, 0)
+        val text = reindent(m.text, m.column, 0)
+        val more = extras.getOrElse(m.planned.name, Nil)
+        val withExtras =
+          if (!m.planned.promote || more.isEmpty) text
+          else if (companionOf.get(m.planned.name).exists(_ eq m)) withCompanionBody(text, more)
+          else if (companionOf.contains(m.planned.name)) text
+          else text + "\n\n" + withCompanionBody(s"object ${m.planned.name}", more)
+        (if (i == 0) "" else if (pair) "\n" else "\n\n") + withExtras
       }.mkString
       val header = outer.fold(s"package $pkg")(o => s"package $o\npackage ${pkg.drop(o.length + 1)}")
       val content = s"$header\n\n" + imports.map("import " + _).mkString("\n") +
@@ -525,6 +542,21 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       Files.write(target, content.getBytes(UTF_8))
     }
   }
+
+  private def withCompanionBody(objectText: String, more: List[Extracted]): String = {
+    val stats = objectText.parse[Stat].toOption.collect { case o: Defn.Object => o.templ.body.stats }.getOrElse(Nil)
+    if (stats.nonEmpty) {
+      val col = column(objectText, stats.head.pos.start)
+      val end = stats.last.pos.end
+      objectText.substring(0, end) + more.map(m => "\n\n" + (" " * col) + reindent(m.text, m.column, col)).mkString +
+        objectText.substring(end)
+    } else objectText + ":" + more.zipWithIndex.map { case (m, i) =>
+      (if (i == 0) "\n" else "\n\n") + "  " + reindent(m.text, m.column, 2)
+    }.mkString
+  }
+
+  private lazy val promotedTargets: Set[String] =
+    extracted.filter(_.planned.promote).map(e => e.planned.to + e.planned.name + ".").toSet
 
   override def afterComplete(): Unit = if (enabled && config.report.nonEmpty) {
     val lines = emptiedFiles.asScala.toList.sorted.map("emptied\t" + _) ++ reported.asScala.toList.sorted.map("lint\t" + _)
@@ -679,7 +711,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private def insertPatches(doc: SemanticDocument, text: String): (Patch, List[String]) = {
     implicit val d: SemanticDocument = doc
     val imports = mutable.ListBuffer.empty[String]
-    val patches = extracted.filterNot(_.planned.toplevel).groupBy(_.planned.to).toList.flatMap { case (to, members) =>
+    val patches = extracted.filterNot(e => e.planned.toplevel || promotedTargets(e.planned.to)).groupBy(_.planned.to).toList.flatMap { case (to, members) =>
       val ordered = members.sortBy(_.order)
       val obj = doc.tree.collect { case o: Defn.Object if sym(o.name) == termOf(to) => o }.headOption
       lazy val tpe = doc.tree.collect {

@@ -668,7 +668,9 @@ the type they are about. Each `moves` entry names `source` (the object's Semanti
 member no other entry names), `to` (an object symbol: the companion it joins; a type symbol `com/x/Mode#`: its
 companion, created when the file has none; a package symbol `com/x/` with `form = toplevel` and `file`: a new
 top-level file), `form` (`auto`: an extension when a def's first explicit parameter has the target's type, else a
-companion member; `companion`, `extension`, `toplevel`, `stay`) and `name` (a rename at the new place).
+companion member; `companion`, `extension`, `toplevel`, `stay`, and `promote`: a nested type becomes top-level in
+`file`, and the entries whose `to` is its new companion (`com/x/Issue.`) go into that companion in the same run) and
+`name` (a rename at the new place).
 
 The rule reads the moved objects' sources and current SemanticDB before it rewrites anything (`semanticdb` lists the
 directories, default `target/out`; a document whose md5 differs from its file is refused), so one pass moves the
