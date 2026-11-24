@@ -46,7 +46,10 @@ class ClientAddressSuite extends munit.FunSuite:
     assertEquals(of(marked(forwardedFor = List("100.101.102.103")), policy = noProxy), ClientAddress.Undeclared)
     assertEquals(of(marked(forwardedFor = List("100.101.102.103")), tailnet), ClientAddress.Undeclared)
     assertEquals(of(marked(forwarded = List("for=garbage")), tailnet), ClientAddress.Undeclared)
-    assertEquals(of(Forwarding.of(name => if name == "Via" then texts("1.1 p") else Nil), tailnet), ClientAddress.Undeclared)
+    assertEquals(
+      of(Forwarding.of(name => if name == "Via" then texts("1.1 p") else Nil), tailnet),
+      ClientAddress.Undeclared
+    )
 
   test("from a declared proxy: the client its chain reports"):
     assertEquals(of(marked(forwardedFor = List("100.101.102.103"))), ClientAddress.Forwarded(tailnet))
@@ -57,7 +60,10 @@ class ClientAddressSuite extends munit.FunSuite:
   test("chains: with only the nearest proxy declared, the hop before it is the client; with both, the original"):
     val chain = marked(forwardedFor = List("203.0.113.9, 192.0.2.1"))
     assertEquals(of(chain, policy = loopbackProxy), ClientAddress.Forwarded(at("192.0.2.1")))
-    assertEquals(of(chain, policy = policyWith("127.0.0.0/8", "192.0.2.1/32")), ClientAddress.Forwarded(at("203.0.113.9")))
+    assertEquals(
+      of(chain, policy = policyWith("127.0.0.0/8", "192.0.2.1/32")),
+      ClientAddress.Forwarded(at("203.0.113.9"))
+    )
 
   test("an IPv4-mapped peer is the declared proxy it maps, and a mapped report is its IPv4 address"):
     val mappedPeer = Inet6Address.getByAddress(null, Array.fill[Byte](10)(0) ++ Array[Byte](-1, -1, 127, 0, 0, 1), -1)

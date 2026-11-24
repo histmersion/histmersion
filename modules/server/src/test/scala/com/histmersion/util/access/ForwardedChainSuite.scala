@@ -141,7 +141,10 @@ class ForwardedChainSuite extends munit.FunSuite:
     ).foreach(v => assertEquals(hops(ForwardedChain.ofForwarded(v)), Left(Fault.Malformed), s"$v"))
 
   test("X-Real-IP: one address in one header line; anything else is malformed"):
-    assertEquals(hops(ForwardedChain.ofRealIp(texts("100.101.102.103"))), Right(Vector(Hop.Address(at("100.101.102.103")))))
+    assertEquals(
+      hops(ForwardedChain.ofRealIp(texts("100.101.102.103"))),
+      Right(Vector(Hop.Address(at("100.101.102.103"))))
+    )
     assertEquals(hops(ForwardedChain.ofRealIp(texts("unknown"))), Right(Vector(Hop.Hidden)))
     assertEquals(ForwardedChain.ofRealIp(Nil), None)
     List(texts("1.2.3.4, 5.6.7.8"), texts("1.2.3.4", "5.6.7.8"), texts(""), texts("junk"))
@@ -160,7 +163,11 @@ class ForwardedChainSuite extends munit.FunSuite:
     def client(chain: String, policy: AccessPolicy = loopbackProxy) =
       hops(ForwardedChain.ofForwardedFor(texts(chain))).flatMap(h => ForwardedChain.from(h)).flatMap(_.client(policy))
     assertEquals(client("100.101.102.103"), Right(at("100.101.102.103")))
-    assertEquals(client("203.0.113.9, 100.101.102.103"), Right(at("100.101.102.103")), "a forged entry is never reached")
+    assertEquals(
+      client("203.0.113.9, 100.101.102.103"),
+      Right(at("100.101.102.103")),
+      "a forged entry is never reached"
+    )
     assertEquals(client("100.101.102.103, 127.0.0.1, ::1"), Right(at("100.101.102.103")))
     assertEquals(client("127.0.0.1, ::1"), Right(at("127.0.0.1")), "all proxies: the leftmost")
     assertEquals(client("::ffff:127.0.0.1, 100.101.102.103"), Right(at("100.101.102.103")))
@@ -168,12 +175,17 @@ class ForwardedChainSuite extends munit.FunSuite:
     val twoProxies = policyWith("127.0.0.0/8", "192.0.2.2/32")
     val noProxy = policyWith()
     assertEquals(client("203.0.113.9, 192.0.2.1, 192.0.2.2", twoProxies), Right(at("192.0.2.1")))
-    assertEquals(client("203.0.113.9, 192.0.2.1, 192.0.2.2", policyWith("192.0.2.1/32", "192.0.2.2/32")), Right(at("203.0.113.9")))
+    assertEquals(
+      client("203.0.113.9, 192.0.2.1, 192.0.2.2", policyWith("192.0.2.1/32", "192.0.2.2/32")),
+      Right(at("203.0.113.9"))
+    )
     assertEquals(client("203.0.113.9, 192.0.2.1", noProxy), Right(at("192.0.2.1")))
 
   test("the walk: a hidden hop reached before the client fails; one beyond it is never read"):
     def client(chain: String) =
-      hops(ForwardedChain.ofForwarded(texts(chain))).flatMap(h => ForwardedChain.from(h)).flatMap(_.client(loopbackProxy))
+      hops(ForwardedChain.ofForwarded(texts(chain)))
+        .flatMap(h => ForwardedChain.from(h))
+        .flatMap(_.client(loopbackProxy))
     assertEquals(client("for=unknown"), Left(Fault.Hidden))
     assertEquals(client("for=100.101.102.103, for=_hidden"), Left(Fault.Hidden))
     assertEquals(client("for=_hidden, for=127.0.0.1"), Left(Fault.Hidden))
