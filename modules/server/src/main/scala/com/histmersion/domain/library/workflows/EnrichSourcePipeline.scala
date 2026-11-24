@@ -107,7 +107,7 @@ final class EnrichSourcePipeline(
       .flatMap { sw =>
         val s = sw.source
         val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
-        if body.isEmpty then Left(Problem.Run.NoText(Problem.Raw.of(ck)))
+        if body.isEmpty then Left(Problem.Run.Needs(Problem.Run.Need.Text(Problem.Raw.of(ck))))
         else
           Right(
             Loaded(

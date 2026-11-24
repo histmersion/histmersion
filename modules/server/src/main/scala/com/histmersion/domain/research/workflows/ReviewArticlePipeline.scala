@@ -481,7 +481,7 @@ final class ReviewArticlePipeline(
     site.articles.get(slug).left.map(_.problems).flatMap { v =>
       val a = v.article
       val body = unwritten.getOrElse(a.body)
-      if body.value.trim.isEmpty then Left(Problem.Run.NoBody(Problem.Raw.of(slug)))
+      if body.value.trim.isEmpty then Left(Problem.Run.Needs(Problem.Run.Need.Body(Problem.Raw.of(slug))))
       else
         val cut = body.value.length > cfg.review.articleChars.value
         val text = if cut then ReviewArticle.Fix.Body(body.value.take(cfg.review.articleChars.value)) else body

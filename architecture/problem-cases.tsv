@@ -97,17 +97,14 @@ Run.Failed	shape	list
 Run.Halted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
 Run.Interrupted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
 Run.LimitReached	shape	problem
-Run.NoBody	unjustified	-
-Run.NoLogin	unjustified	-
+Run.Needs	shape	choice
 Run.NoModel	shape	list
-Run.NoText	unjustified	-
 Run.NoValidAnswer	shape	list
 Run.NotNow	shape	choice
 Run.OutputCapped	shape	choice
 Run.PassedOver	shape	list
 Run.Paused	shape	choice, optional
 Run.PlanOnly	unjustified	-
-Run.ProbeUnread	shape	optional
 Run.ProviderDown	shape	list
 Run.Restored	unjustified	-
 Run.Stopped	shape	choice

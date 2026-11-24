@@ -125,10 +125,7 @@ class RenderSuite extends munit.FunSuite:
     "LimitReached" -> 409,
     "AllowanceReached" -> 409,
     "OutputCapped" -> 409,
-    "NoText" -> 409,
-    "NoBody" -> 409,
-    "NoLogin" -> 409,
-    "ProbeUnread" -> 409,
+    "Needs" -> 409,
     "ApiKeyLogin" -> 503,
     "Exposed" -> 503,
     "ProxyUndeclared" -> 503,
@@ -605,8 +602,8 @@ class RenderSuite extends munit.FunSuite:
         ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 8192) — raise " +
           "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens) (a thinking " +
           "model's reasoning counts toward it), restart the server, then resume the run"),
-      Run.NoText(Raw("anthony2007")) -> "anthony2007 has no text — ingest or OCR it first",
-      Run.NoBody(Raw("yamnaya")) -> "article 'yamnaya' has no body to review",
+      Run.Needs(Run.Need.Text(Raw("anthony2007"))) -> "anthony2007 has no text — ingest or OCR it first",
+      Run.Needs(Run.Need.Body(Raw("yamnaya"))) -> "article 'yamnaya' has no body to review",
       Run.AtModel(Run.Model("hello-ai:echo"), NonEmptyVector.of(Refused.Policy(Refused.Rule.PlanOutsideLocal))) ->
         ("hello-ai:echo: this provider is refused while the server listens beyond loopback: it spends your own " +
           "plan, and another client could spend it"),
@@ -674,12 +671,11 @@ class RenderSuite extends munit.FunSuite:
       Upstream.McpServer(Raw("failed")) -> "the agent MCP server is failed",
       Run.Stopped(Run.Stop.Guard(Raw("the quota-guard mod ended the turn"))) ->
         "claude -p stopped by the quota guard: the quota-guard mod ended the turn",
-      Run.NoLogin(Raw("not logged in")) -> "unavailable: no login — not logged in",
-      Run.ProbeUnread(
-        Io.ExitCode(1),
-        Some(External.Reported("x"))
+      Run.Needs(Run.Need.Login(Raw("not logged in"))) -> "unavailable: no login — not logged in",
+      Run.Needs(
+        Run.Need.Probe(Io.ExitCode(1), Some(External.Reported("x")))
       ) -> "the probe printed no rate_limit_event (exit 1: x)",
-      Run.ProbeUnread(Io.ExitCode(0), None) -> "the probe printed no rate_limit_event (exit 0)",
+      Run.Needs(Run.Need.Probe(Io.ExitCode(0), None)) -> "the probe printed no rate_limit_event (exit 0)",
       Io.Absent(Io.Held.CodexHome, Io.Path("/h/codex"), None) -> "no Codex home at /h/codex",
       Conflict.Busy(Conflict.Activity.CodexRun) -> "a Codex run is using the home — not now",
       Io.Process(Io.Tool("codex app-server"), Io.Ending.Unanswered(Raw("account/rateLimits/read"))) ->

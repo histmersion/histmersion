@@ -48,7 +48,7 @@ class ProblemCasesSuite extends munit.FunSuite:
     assertEquals(Register.branchOn("Io.Ending", branches), Some("y"))
     assertEquals(Register.branchOn("Io.File", branches), None)
     assertEquals(Register.shapeOf(Problem.Run.Draining(None)), List("optional"))
-    assertEquals(Register.shapeOf(Problem.Run.NoText(Problem.Raw("x"))), Nil)
+    assertEquals(Register.shapeOf(Problem.Refused.Misdirected(Problem.Raw("x"))), Nil)
 
   test("a row reads back from its cells"):
     assertEquals(
@@ -58,9 +58,9 @@ class ProblemCasesSuite extends munit.FunSuite:
 
 object ProblemCasesSuite:
 
-  val Cases: Int = 134
-  val Values: Int = 623
-  val Unjustified: Int = 36
+  val Cases: Int = 131
+  val Values: Int = 627
+  val Unjustified: Int = 33
 
   val RegisterFile: Path = Path.of("architecture/problem-cases.tsv")
 

@@ -1938,18 +1938,6 @@ object Problem:
       */
     final case class OutputCapped(step: Step, model: Model, cap: Count, sent: Count, setting: Ceiling) extends Run
 
-    /** Source `source` has no text to read: it is ingested or OCR'd first. */
-    final case class NoText(source: Raw) extends Run
-
-    /** Article `article` has no body to review. */
-    final case class NoBody(article: Raw) extends Run
-
-    /** A model whose runtime spends a plan cannot be offered: the plan's login is missing (`why`). */
-    final case class NoLogin(why: Raw) extends Run
-
-    /** The plan probe printed no rate-limit event: it exited with `exit`; `said`, what it printed, if anything. */
-    final case class ProbeUnread(exit: Io.ExitCode, said: Option[External.Reported]) extends Run
-
     /** A restart cut it short. */
     case object Interrupted extends Run
 
@@ -1982,6 +1970,14 @@ object Problem:
       case Withdrawn
       case Guard(why: Raw)
       case Unrecorded(activity: Conflict.Activity)
+
+    final case class Needs(need: Need) extends Run
+
+    enum Need derives CanEqual:
+      case Text(source: Raw)
+      case Body(article: Raw)
+      case Login(why: Raw)
+      case Probe(exit: Io.ExitCode, said: Option[External.Reported])
 
     enum Spending derives CanEqual:
       case Usd(spent: Raw, budget: Raw)
@@ -3066,10 +3062,7 @@ object Problem:
         Count(4096L),
         Run.Ceiling.StepMaxTokens
       ),
-      Run.NoText(Raw("anthony2007")),
-      Run.NoBody(Raw("yamnaya")),
-      Run.NoLogin(Raw("'claude auth status' says not logged in")),
-      Run.ProbeUnread(Io.ExitCode(1), Some(External.Reported("Invalid API key"))),
+      Run.Needs(Run.Need.Text(Raw("anthony2007"))),
       Run.Interrupted,
       Run.Restored,
       Run.CutShort(Conflict.Activity.MergeApply),
@@ -3111,7 +3104,10 @@ object Problem:
     Run.Stopped(Run.Stop.MovedOn(Raw("0193f1c4"))),
     Run.Stopped(Run.Stop.Withdrawn),
     Run.Stopped(Run.Stop.Guard(Raw("the quota-guard mod ended the turn"))),
-    Run.Stopped(Run.Stop.Unrecorded(Conflict.Activity.MergeApply))
+    Run.Stopped(Run.Stop.Unrecorded(Conflict.Activity.MergeApply)),
+    Run.Needs(Run.Need.Body(Raw("yamnaya"))),
+    Run.Needs(Run.Need.Login(Raw("'claude auth status' says not logged in"))),
+    Run.Needs(Run.Need.Probe(Io.ExitCode(1), Some(External.Reported("Invalid API key"))))
   )
 
   // ---- Problems: one or many ----------------------------------------------------------------------------------

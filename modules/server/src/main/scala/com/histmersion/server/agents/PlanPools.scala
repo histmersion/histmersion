@@ -233,7 +233,7 @@ final class PlanPools(
   def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(Problem.Run.NoLogin(Problem.Raw.of(why)))
+        case Login.Missing(why) => Some(Problem.Run.Needs(Problem.Run.Need.Login(Problem.Raw.of(why))))
         case _                  => None
     }
 
@@ -696,9 +696,11 @@ object PlanPools:
             .map(r => (r.text.value :: r.errors.map(_.value)).filter(_.nonEmpty).mkString("; "))
             .filter(_.nonEmpty)
           Left(
-            Problem.Run.ProbeUnread(
-              Problem.Io.ExitCode(run.exit.value),
-              said.orElse(Option(run.stderr.value).filter(_.nonEmpty)).map(External.Reported.of)
+            Problem.Run.Needs(
+              Problem.Run.Need.Probe(
+                Problem.Io.ExitCode(run.exit.value),
+                said.orElse(Option(run.stderr.value).filter(_.nonEmpty)).map(External.Reported.of)
+              )
             )
           )
 
