@@ -75,9 +75,9 @@ class YearsSuite extends munit.FunSuite:
       .foreach(h => assertEquals(Years.fromAstronomical(Years.toAstronomical(Year(h))), h))
 
   test("shift crosses the era boundary without a year 0"):
-    assertEquals(Years.shift(Years.ShiftH(-1), Years.Shift(1)), 1L)
-    assertEquals(Years.shift(Years.ShiftH(1), Years.Shift(-1)), -1L)
-    assertEquals(Years.shift(Years.ShiftH(-10), Years.Shift(30)), 21L)
+    assertEquals(Years.shift(Year(-1), Years.Shift(1)), 1L)
+    assertEquals(Years.shift(Year(1), Years.Shift(-1)), -1L)
+    assertEquals(Years.shift(Year(-10), Years.Shift(30)), 21L)
 
   test("ISO years are astronomical: parseIso and isoAstronomical"):
     assertEquals(Years.parseIso(Years.Iso.Wire("0000")), Some(-1L))

@@ -30,22 +30,20 @@ object Years:
   object Text extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
 
-  export com.histmersion.api.catalogue.Year as ShiftH
-
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromAstronomical(a: Astronomical): Year = if a.value <= 0 then Year((a).value - 1) else Year((a).value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def toAstronomical(h: Year): Astronomical = if (h).value < 0 then Astronomical((h).value + 1)
-  else if h.value == 0 then Astronomical((0).toLong)
-  else Astronomical((h).value)
+  def toAstronomical(h: Year): Astronomical =
+    if (h).value < 0 then Astronomical((h).value + 1)
+    else if h.value == 0 then Astronomical((0).toLong)
+    else Astronomical((h).value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def shift(h: Years.ShiftH, d: Shift): Year = fromAstronomical(Astronomical(toAstronomical(h).value + d.value))
+  def shift(h: Year, d: Shift): Year = fromAstronomical(Astronomical(toAstronomical(h).value + d.value))
 
   /** How a year is written: what a refusal shows. */
   private val Examples = Vector(Raw("1300 BCE"), Raw("530 CE"), Raw("-1300"))

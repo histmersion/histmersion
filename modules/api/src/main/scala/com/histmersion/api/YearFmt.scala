@@ -9,9 +9,6 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @movesTo(FeaturePlace.UtilCommon)
 object YearFmt:
-
-  export com.histmersion.api.catalogue.{Year as OpenPeriodEnd, Year as OpenPeriodStart}
-
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(v: Year): String =
@@ -26,10 +23,9 @@ object YearFmt:
       case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
       case _                  => ("")
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def openPeriod(
-      start: Option[YearFmt.OpenPeriodStart],
-      end: Option[YearFmt.OpenPeriodEnd],
+      start: Option[Year],
+      end: Option[Year],
       none: String = ("undated")
   ): String =
     (start, end) match
