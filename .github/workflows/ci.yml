@@ -347,7 +347,7 @@ jobs:
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the CLI's class path (from the replay)
         timeout-minutes: 20
-        run: $SBT cli/writeClasspath
+        run: $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" cli/writeClasspath
       - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
         run: just test-scripts
       - name: unit tests of the browser tests' tools (the shards, the budget comparison)
@@ -358,7 +358,9 @@ jobs:
 
   browser:
     # The browser tests but the budgets, against the server on the JVM from the build job's compile, in Chromium
-    # headless (WebGL in software: SwiftShader). Every shard loads every file; test/shard-preload.mjs registers only
+    # headless. The runner has no GPU: WebGL is drawn by SwiftShader, and HISTMERSION_TEST_GPU=1 has the pages told a
+    # GPU renderer so they take the GPU path (test/engine.mjs standInGpu); the no-GPU path has its own tests, in a
+    # browser without the stand-in. Every shard loads every file; test/shard-preload.mjs registers only
     # the shard's own tests (perf.test.mjs whole to shard 1, every other test by a hash of its name to shards 2…n)
     # and lists every test it saw with its shard (the manifest), so browser-shards can check the union.
     name: browser ${{ matrix.shard }}
@@ -373,6 +375,7 @@ jobs:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
       HISTMERSION_TEST_SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
       HISTMERSION_TEST_SHARD_PINS: perf.test.mjs=1
+      HISTMERSION_TEST_GPU: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -398,7 +401,7 @@ jobs:
       - name: the server's class path (from the replay)
         timeout-minutes: 20
         run: |
-          $SBT server/writeClasspath
+          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: throwaway PostgreSQL 18 + PostGIS
@@ -438,6 +441,7 @@ jobs:
           rc=0
           node --import ./test/shard-preload.mjs --test --test-concurrency=1 --test-force-exit --test-skip-pattern='^budgets: ' \
             --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=tap --test-reporter-destination="$out/browser.tap" \
             --test-reporter=junit --test-reporter-destination="$report" $files || rc=$?
           tests="$(grep -c '<testcase' "$report" || true)"
           skipped="$(grep -c '<skipped' "$report" || true)"
@@ -468,6 +472,7 @@ jobs:
           name: browser-logs-${{ matrix.shard }}
           path: |
             ${{ runner.temp }}/server.log
+            ${{ runner.temp }}/browser/browser.tap
             target/test-pg.log
           retention-days: 7
           if-no-files-found: ignore
@@ -524,7 +529,7 @@ jobs:
       - name: the server's class path (from the replay)
         timeout-minutes: 20
         run: |
-          $SBT server/writeClasspath
+          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: the merge base's server class path (a worktree of it, compiled from the same replay where unchanged)
@@ -533,7 +538,7 @@ jobs:
           base="$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-contracts3-pilot}")"
           echo "the merge base: $base (this change: $(git rev-parse HEAD))"
           git worktree add --detach "$RUNNER_TEMP/base" "$base"
-          (cd "$RUNNER_TEMP/base" && $SBT server/writeClasspath)
+          (cd "$RUNNER_TEMP/base" && $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath)
           cp="$(find "$RUNNER_TEMP/base/target/out" -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "BASE_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: throwaway PostgreSQL 18 + PostGIS (a database each)

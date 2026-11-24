@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { appendFileSync } from 'node:fs';
-import { configOverride, engineName, frameMode, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, wantsGpu } from './engine.mjs';
+import { configOverride, engineName, isChromium, isFirefox, launch, launchChromiumWithout, launchSoftwareChromium, renderMode, standInGpu, wantsGpu } from './engine.mjs';
 import { fullLoad, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
 import { LIBRARY_SOURCES, routeLibrary } from './library-fixtures.mjs';
 import { approvals, goal as researchGoal, routeResearch } from './research-fixtures.mjs';
@@ -17,18 +17,16 @@ assert.ok(baseURL, 'Set HISTMERSION_SERVER_URL to the test server');
 const origin = new URL(baseURL).origin;
 const consoleLog = process.env.HISTMERSION_TEST_CONSOLE_LOG;
 let browser;
-let mainThreadOnly = false;
+let gpuStoodIn = false;
 before(async () => {
   browser = await launch();
-  mainThreadOnly = await frameMode(browser, 'click-to-next-frame checks', 'the wait for the next frame');
+  gpuStoodIn = await renderMode(browser, 'click-to-next-frame checks');
 });
 after(async () => { await browser?.close(); });
 
 function answeredWithin(what, t, max = 100) {
   assert.ok(typeof t.syncMs === 'number' && t.syncMs < max, `${what}: the click's own work took ${t.syncMs?.toFixed(1)} ms`);
-  if (mainThreadOnly) {
-    if (t.ms >= max) console.log(`# ${what}: ${t.ms.toFixed(1)} ms to the next frame, over ${max}: reported, not held (virtual GPU)`);
-  } else assert.ok(t.ms < max, `${what} (${t.ms.toFixed(1)} ms)`);
+  assert.ok(t.ms < max, `${what} (${t.ms.toFixed(1)} ms)`);
 }
 
 /** `source`: the base-map family the page is told it has (`/api/config`'s resolved `ui.base-map-source`),
@@ -38,6 +36,7 @@ function answeredWithin(what, t, max = 100) {
 async function withPage(viewport, run, { source, outside, setup, path } = {}) {
   // Firefox has no mobile emulation: a narrow viewport with touch is its phone (the layout follows the width)
   const context = await browser.newContext({ viewport, isMobile: isChromium && viewport.width < 760, hasTouch: true });
+  if (gpuStoodIn) await standInGpu(context);
   try {
     const page = await context.newPage();
     const errors = [];

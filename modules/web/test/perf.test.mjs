@@ -17,8 +17,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { writeFileSync } from 'node:fs';
-import { engineName, frameMode, isChromium, launch, wantsGpu } from './engine.mjs';
-import { FRAME_BOUND } from './budget-figures.mjs';
+import { engineName, isChromium, launch, renderMode, wantsGpu } from './engine.mjs';
 import { cpuThrottle, inputToUpdate, memory, newPerfPage, quiet } from './perf-lib.mjs';
 import * as paths from './perf-paths.mjs';
 import { eventsIn, routeFixtures, routeFullLoad } from './perf-fixtures.mjs';
@@ -94,7 +93,6 @@ const BUDGETS = {
 };
 
 let browser;
-let mainThreadOnly = false;
 const recordTo = process.env.HISTMERSION_BUDGETS_RECORD;
 const recorded = {};
 const seen = {};
@@ -103,7 +101,7 @@ before(async () => {
   browser = await launch();
   console.log(`# budgets: CPU ${cpuThrottle() > 1 ? `throttled ${cpuThrottle()}×` : 'at full speed'}`);
   if (recordTo) console.log(`# budgets: recorded to ${recordTo}, none held here (compared with the merge base: budgets-compare.mjs)`);
-  else mainThreadOnly = await frameMode(browser, 'budgets', 'frame-bound figures');
+  else await renderMode(browser, 'budgets');
 });
 after(async () => {
   await browser?.close();
@@ -130,10 +128,6 @@ function within(name, measured, budget = BUDGETS[name]) {
     const v = get(measured, k);
     if (v === null && UNMEASURABLE.has(k.split('.').at(-1))) { if (report) console.log(`# ${name}.${k}: not measurable in ${engineName}`); continue; }
     assert.equal(typeof v, 'number', `${name}.${k} was measured (${JSON.stringify(measured)})`);
-    if (mainThreadOnly && FRAME_BOUND.has(k.split('.').at(-1))) {
-      if (v > max) console.log(`# ${name}.${k} = ${v}, over its budget of ${max}: reported, not held (frame-bound, virtual GPU)`);
-      continue;
-    }
     assert.ok(v <= max, `${name}.${k} = ${v}, over its budget of ${max} (${JSON.stringify(measured)})`);
   }
 }
