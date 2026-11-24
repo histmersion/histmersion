@@ -36,14 +36,15 @@ object SettingsCmd:
       reload: Boolean,
       consent: Boolean,
       json: Cli.JsonOutput,
-      c: Client
+      c: Client,
+      local: ConfigEdit.Write => Either[Cli.Error, ConfigEdit.Written]
   )(using console: Console): Either[Cli.Error, Unit] =
     val w = ConfigEdit.Write(
       List(ConfigEdit.Change(ConfigEdit.Change.Key(key), value.map(ConfigEdit.Change.Value(_)))),
       literalConsent = ConfigEdit.Write.LiteralConsent(consent),
       reload = ConfigEdit.Write.Reload(reload)
     )
-    val viaFile = Local.write(w).map(out => if reload then out.modify(_.reload).setTo(c.configReload.toOption) else out)
+    def viaFile = local(w).map(out => if reload then out.modify(_.reload).setTo(c.configReload.toOption) else out)
     val done = if onlyLocal then viaFile else orLocal(c.writeSettings(w), viaFile)
     done.map(out => Output.emit(json, out)(ConfigEditMarkdown.written))
 
@@ -141,10 +142,12 @@ object SettingsCmd:
     case Unset(key: String, onlyLocal: Boolean, nr: Boolean, json: Cli.JsonOutput)
     case Restart(json: Cli.JsonOutput)
 
-    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
+    def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c, Local.write)(this)
 
   /** Carries out Command commands against one server. */
-  final private[cli] class Perform(c: Client)(using console: Console):
+  final private[cli] class Perform(c: Client, local: ConfigEdit.Write => Either[Cli.Error, ConfigEdit.Written])(using
+      console: Console
+  ):
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Get(key, prefix, onlyLocal, json) =>
@@ -165,8 +168,8 @@ object SettingsCmd:
               case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
           }
         case Command.SetCmd(key, value, onlyLocal, nr, consent, json) =>
-          change(key, Some(value), onlyLocal, !nr, consent, json, c)
+          change(key, Some(value), onlyLocal, !nr, consent, json, c, local)
         case Command.Unset(key, onlyLocal, nr, json) =>
-          change(key, None, onlyLocal, !nr, consent = false, json, c)
+          change(key, None, onlyLocal, !nr, consent = false, json, c, local)
         case Command.Restart(json) =>
           c.restartServer.map(r => Output.emit(json, r)(ConfigEditMarkdown.restart))
