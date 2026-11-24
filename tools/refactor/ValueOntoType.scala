@@ -19,6 +19,7 @@ object ValueOntoType {
       sinks: List[String] = Nil,
       sinkImport: String = "",
       sinkPackage: String = "",
+      sinkRequires: String = "",
       report: String = ""
   )
   object Config {
@@ -191,6 +192,7 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
 
     val used = scala.collection.mutable.Set.empty[Tree]
     var sinkUsed = false
+    val patches = scala.collection.mutable.ListBuffer.empty[Patch]
     def dropValue(sel: Term.Select, why: String): Patch = {
       used += sel
       rewritten.add(s"$path:${sel.pos.startLine + 1}\t$why")
@@ -212,7 +214,27 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
     def sinkSymbol(sym: String): Boolean = sym.nonEmpty && sinkPatterns.exists(_.pattern.matcher(sym).matches)
     def outsideCompanion(t: Tree, nt: String): Boolean = !enclosingNewtypes(t).contains(nt)
 
-    val patches = scala.collection.mutable.ListBuffer.empty[Patch]
+    /** The companion `obj` gives an instance of `typeClass` for its own type (a given in its body). */
+    def hasInstance(obj: String, typeClass: String): Boolean = infoS(obj).map(_.signature).exists {
+      case cs: s.ClassSignature => cs.declarations.toList.flatMap(_.symlinks).flatMap(infoS).exists { i =>
+        (i.properties & s.SymbolInformation.Property.GIVEN.value) != 0 && (i.signature match {
+          case v: s.ValueSignature => Some(v.tpe)
+          case m: s.MethodSignature if m.parameterLists.forall(_.symlinks.forall(p =>
+                infoS(p).exists(pi => (pi.properties & s.SymbolInformation.Property.GIVEN.value) != 0))) => Some(m.returnType)
+          case _ => None
+        }).map(dealias(_)).exists {
+          case r: s.TypeRef => r.symbol == typeClass && r.typeArguments.headOption.flatMap(newtypeOf).contains(obj)
+          case _ => false
+        }
+      }
+      case _ => false
+    }
+    def toSink(sel: Term.Select, nt: String, why: String): Unit =
+      if (config.sinkRequires.isEmpty || hasInstance(nt, config.sinkRequires)) {
+        sinkUsed = true
+        patches += dropValue(sel, s"$why:$nt")
+      } else missing.add(s"${config.sinkRequires}\t$nt\t$path:${sel.pos.startLine + 1}")
+
     doc.tree.traverse {
       // X(x.value) of x: X → x
       case a: Term.Apply if config.roundTrips && !inImport(a) && a.argClause.values.size == 1 &&
@@ -247,15 +269,9 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
           case _ =>
         }
         if (config.sinks.nonEmpty && sinkSymbol(i.op.symbol.value))
-          i.argClause.values.flatMap(valueSelect).foreach { case (sel, nt) =>
-            sinkUsed = true
-            patches += dropValue(sel, s"sink:${i.op.value}:$nt")
-          }
+          i.argClause.values.flatMap(valueSelect).foreach { case (sel, nt) => toSink(sel, nt, s"sink:${i.op.value}") }
       case a: Term.Apply if config.sinks.nonEmpty && isSink(a.fun) =>
-        a.argClause.values.flatMap(valueSelect).foreach { case (sel, nt) =>
-          sinkUsed = true
-          patches += dropValue(sel, s"sink:$nt")
-        }
+        a.argClause.values.flatMap(valueSelect).foreach { case (sel, nt) => toSink(sel, nt, "sink") }
     }
     val pkg = doc.tree.collect { case p: Pkg => p.ref.syntax }.mkString(".")
     val imported = doc.tree.collect { case i: Import => i.importers.map(_.syntax) }.flatten.contains(config.sinkImport)

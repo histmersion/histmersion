@@ -16,4 +16,5 @@ object Uses:
   def bridged(title: Title): Name = Name(title.value)
   def shown(title: Title): String = Dom.span(title)
   def plain(text: String): String = Dom.span(text)
+  def undisplayed(name: Name): String = Dom.span(name.value)
   def earlier(a: Year, b: Year): Boolean = a < b
