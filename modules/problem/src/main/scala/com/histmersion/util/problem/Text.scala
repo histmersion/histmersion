@@ -192,31 +192,34 @@ object Text:
       case Plugin.Vault(vault, failure)       => s"secret vault $vault failed: ${failure.said}"
       case Plugin.Said(plugin, claim, text)   => s"$plugin (${words(claim.productPrefix)}): $text"
       case Problem.Run.Paused(Problem.Run.PauseReason.Requested, None) => "paused on request"
-      case Problem.Run.Paused(reason, at)    => s"paused for ${words(reason.productPrefix)}${until(at)}"
-      case Problem.Run.Halted(cause, why)    => s"${cause.word}: ${why.sentence}"
-      case Problem.Run.Unstarted             => "paused before it started"
-      case Problem.Run.UploadUnheld          => "the upload is no longer held by this process"
-      case Problem.Run.NoModel(role, passed) =>
+      case Problem.Run.Paused(reason, at) => s"paused for ${words(reason.productPrefix)}${until(at)}"
+      case Problem.Run.Halted(cause, why) => s"${cause.word}: ${why.sentence}"
+      case Problem.Run.Unstarted          => "paused before it started"
+      case Problem.Run.UploadUnheld       => "the upload is no longer held by this process"
+      case Problem.Run.NoModel(role, Problem.Run.Shortfall.Unusable, passed) =>
         s"no model of the $role chain can run${if passed.isEmpty then "" else s": ${passedOver(passed)}"}"
-      case Problem.Run.Exhausted(role, floor, frees, passed) =>
+      case Problem.Run.NoModel(role, Problem.Run.Shortfall.Exhausted(floor, frees), passed) =>
         s"all models for role $role are ${floor.said}; ${frees.said} (${passedOver(passed)})"
-      case Problem.Run.PassedOver(model, why) => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
-      case Problem.Run.Unassigned(role, Problem.Run.Asked.Call) =>
+      case Problem.Run.NoModel(role, Problem.Run.Shortfall.Unassigned(Problem.Run.Asked.Call), _) =>
         s"no model for the $role role — set agents.roles.$role " +
           s"(HISTMERSION_AGENTS_ROLE_${s"$role".toUpperCase(java.util.Locale.ROOT).replace('-', '_')}) to " +
           s"provider:model[ > provider:model …], save one with `histmersion agent models set $role <provider:model>…`, " +
           "or pass one"
-      case Problem.Run.Unassigned(role, Problem.Run.Asked.Listing) =>
+      case Problem.Run.NoModel(role, Problem.Run.Shortfall.Unassigned(Problem.Run.Asked.Listing), _) =>
         s"no model — set agents.roles.$role or `histmersion agent models set $role …`"
-      case Problem.Run.Cooling(until)            => s"its plan reported its usage limit; skipped until ${until.iso}"
-      case Problem.Run.BelowFloor(pool, reading) => s"the $pool is below its floor: $reading"
-      case Problem.Run.BelowAllowance(limits)    =>
+      case Problem.Run.Skipped(Problem.Run.Skip.Cooling(until)) =>
+        s"its plan reported its usage limit; skipped until ${until.iso}"
+      case Problem.Run.Skipped(Problem.Run.Skip.BelowFloor(pool, reading)) => s"the $pool is below its floor: $reading"
+      case Problem.Run.Skipped(Problem.Run.Skip.BelowAllowance(limits))    =>
         s"below its allowance: ${limits.toVector.map(l => s"${l.limit} (${l.used} used, reserve ${l.reserve})").mkString(", ")}"
-      case Problem.Run.AllowanceUnread(broken) =>
+      case Problem.Run.Skipped(Problem.Run.Skip.AllowanceUnread(broken)) =>
         val each = broken.toVector.map(b => s"${b.target}: ${b.why.toVector.map(_.sentence).mkString("; ")}")
         s"its allowance cannot be read (${each.mkString("; ")})"
-      case Problem.Run.PlanOnly(role) =>
+      case Problem.Run.Skipped(Problem.Run.Skip.PlanOnly(role)) =>
         s"not used — the chain does not fall from a plan to a paid key (histmersion agent quota fallthrough $role on)"
+      case Problem.Run.Skipped(Problem.Run.Skip.AllowanceReached(model)) =>
+        s"$model reached its allowance during the step; the chain's next model takes it"
+      case Problem.Run.PassedOver(model, why) => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
       case Problem.Run.Stopped(Problem.Run.Stop.Stalled(step, minutes, times)) =>
         s"stalled $times times at step $step (no sign of life for $minutes min each time; agents.watchdog)"
       case Problem.Run.Stopped(Problem.Run.Stop.Silent(step, minutes, stall, of)) =>
@@ -247,12 +250,10 @@ object Text:
       case Problem.Run.Stopped(Problem.Run.Stop.Withdrawn)               => "rejected: the run was cancelled"
       case Problem.Run.AtStep(_, declined: Problem.Run.Failure.Declined) => declined.said
       case Problem.Run.AtStep(step, failure)                             => s"$step: ${failure.said}"
-      case Problem.Run.AtModel(model, why)      => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
-      case Problem.Run.Failed(why)              => why.toVector.map(_.sentence).mkString("; ")
-      case Problem.Run.LimitReached(why, until) => s"${why.sentence} — skipped until ${until.iso}"
-      case Problem.Run.AllowanceReached(model)  =>
-        s"$model reached its allowance during the step; the chain's next model takes it"
-      case Problem.Run.Needs(Problem.Run.Need.Text(source))      => s"$source has no text — ingest or OCR it first"
+      case Problem.Run.AtModel(model, why)                  => s"$model: ${why.toVector.map(_.sentence).mkString("; ")}"
+      case Problem.Run.Failed(why)                          => why.toVector.map(_.sentence).mkString("; ")
+      case Problem.Run.LimitReached(why, until)             => s"${why.sentence} — skipped until ${until.iso}"
+      case Problem.Run.Needs(Problem.Run.Need.Text(source)) => s"$source has no text — ingest or OCR it first"
       case Problem.Run.Needs(Problem.Run.Need.Body(article))     => s"article '$article' has no body to review"
       case Problem.Run.Stopped(Problem.Run.Stop.Guard(why))      => s"claude -p stopped by the quota guard: $why"
       case Problem.Run.Needs(Problem.Run.Need.Login(why))        => s"unavailable: no login — $why"

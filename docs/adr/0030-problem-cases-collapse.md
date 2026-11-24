@@ -27,6 +27,17 @@ sentence; the sentence ledger proves it.
   on it, so its translation reads it as `Stored.Unrecognised` with the sentence it was stored with, rather than
   inventing a step.
 
+- **No model is one case.** `Run.NoModel(role, shortfall: Run.Shortfall, passed)` holds what were `NoModel`
+  (`Unusable`), `Exhausted(floor, frees)` and `Unassigned(asked)`. The two matches that read an exhausted chain
+  (`Stopped.exhaustedRole`, `PickFailure`) match `NoModel(_, Shortfall.Exhausted(..), _)`.
+- **Why a model is passed over is one case, and the list stays a case.** `Run.Skipped(skip: Run.Skip)` holds
+  `Cooling`, `BelowFloor`, `BelowAllowance`, `AllowanceUnread`, `PlanOnly` and `AllowanceReached`. They stay problems,
+  not values of a record, because they are written as problems: a model's state in the chain listing
+  (`ChainEntry.problems`), an attempt's row (`AllowanceReached`) and a pause (`Halted(PlanQuota, Skipped(Cooling))`).
+  `Run.PassedOver` stays a case, not the record the analysis proposed: `GET /api/agents/models` lists it among a
+  role's problems on its own. Its list of reasons justifies it. The CLI's exit code for a cooling model or a reached
+  allowance is unchanged (`Skipped(Cooling | AllowanceReached)` is "unavailable").
+
 ## Consequences
 
 The case count falls with each slice (`ProblemCasesSuite` pins it, and the register's unjustified count). A

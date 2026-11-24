@@ -255,7 +255,8 @@ class MigrateSquashSuite extends DbSuite with Bounded:
     assertEquals(Transactor(problems).read(ManagerRepo.running(ManagerInfo.Id("m1"))), RowCount(1), "the allowance")
     Transactor(problems).write {
       val planQuota = NonEmptyVector.of[Problem](
-        Problem.Run.Halted(Problem.Run.PauseCause.PlanQuota, Problem.Run.Cooling(Problem.EpochMs(0L)))
+        Problem.Run
+          .Halted(Problem.Run.PauseCause.PlanQuota, Problem.Run.Skipped(Problem.Run.Skip.Cooling(Problem.EpochMs(0L))))
       )
       sql"""INSERT INTO jobs (id, kind, status, error, manager_id, creator)
             VALUES ('run-q', 'agent', 'paused', $planQuota, 'm1', '{"kind": "unknown"}')""".update.run()

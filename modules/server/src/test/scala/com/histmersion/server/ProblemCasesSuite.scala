@@ -58,9 +58,9 @@ class ProblemCasesSuite extends munit.FunSuite:
 
 object ProblemCasesSuite:
 
-  val Cases: Int = 125
-  val Values: Int = 634
-  val Unjustified: Int = 31
+  val Cases: Int = 118
+  val Values: Int = 643
+  val Unjustified: Int = 27
 
   val RegisterFile: Path = Path.of("architecture/problem-cases.tsv")
 

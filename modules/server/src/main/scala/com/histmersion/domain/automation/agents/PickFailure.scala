@@ -17,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 enum PickFailure:
   case Unavailable(problems: Problems)
   case Exhausted(
-      message: Problem.Run.Exhausted,
+      message: Problem.Run.NoModel,
       freesAt: Option[Instant],
       reason: PauseReason = PauseReason.Allowance
   )

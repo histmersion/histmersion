@@ -587,7 +587,9 @@ final class RunCtx private[automation] (
                     use,
                     billing,
                     None,
-                    Some(Problem.Run.AllowanceReached(Problem.Run.Model.of(client.model.wire))),
+                    Some(
+                      Problem.Run.Skipped(Problem.Run.Skip.AllowanceReached(Problem.Run.Model.of(client.model.wire)))
+                    ),
                     started,
                     msgs,
                     served

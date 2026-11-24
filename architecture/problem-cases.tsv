@@ -80,30 +80,23 @@ Refused.Policy	shape	choice
 Refused.Space	shape	choice
 Refused.Unauthenticated	status	401, not 403
 Relayed	unjustified	-
-Run.AllowanceReached	unjustified	-
-Run.AllowanceUnread	shape	list
 Run.AtModel	shape	list
 Run.AtStep	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
-Run.BelowAllowance	shape	list
-Run.BelowFloor	unjustified	-
 Run.Cancelled	shape	choice
-Run.Cooling	unjustified	-
 Run.CutShort	shape	choice
 Run.Draining	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
-Run.Exhausted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
 Run.Failed	shape	list
 Run.Halted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
 Run.Interrupted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
 Run.LimitReached	shape	problem
 Run.Needs	shape	choice
-Run.NoModel	shape	list
+Run.NoModel	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
 Run.NotNow	shape	choice
 Run.PassedOver	shape	list
 Run.Paused	shape	choice, optional
-Run.PlanOnly	unjustified	-
 Run.Restored	unjustified	-
+Run.Skipped	shape	choice
 Run.Stopped	shape	choice
-Run.Unassigned	shape	choice
 Run.Unstarted	unjustified	-
 Run.UploadUnheld	unjustified	-
 Stored.Unrecognised	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala

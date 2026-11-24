@@ -144,13 +144,19 @@ object Answer:
     val data = path.foldRight(entry.data)((step, inner) => Json.obj(step._1 -> Json.obj(step._2 -> inner)))
     Entry(group, name, data, entry.text)
 
-  private def atStep(failure: String): Entry => Entry = entry =>
+  private def regroup(name: Case, kept: List[(String, Json)], param: String, choice: String): Entry => Entry = entry =>
     val fields = entry.data.asObject.getOrElse(JsonObject.empty)
-    if fields("failure").isDefined then entry
+    if fields(param).isDefined then entry
     else
-      val step = fields("step").toList.map("step" -> _)
-      val rest = Json.fromJsonObject(fields.remove("step"))
-      Entry(runs, Case("AtStep"), Json.obj(step :+ ("failure" -> Json.obj(failure -> rest))*), entry.text)
+      val stays = kept.map((key, absent) => key -> fields(key).getOrElse(absent))
+      val rest = Json.fromJsonObject(kept.foldLeft(fields)((left, k) => left.remove(k._1)))
+      Entry(runs, name, Json.obj(stays :+ (param -> Json.obj(choice -> rest))*), entry.text)
+
+  private def atStep(failure: String): Entry => Entry =
+    regroup(Case("AtStep"), List("step" -> Json.Null), "failure", failure)
+
+  private def noModel(shortfall: String): Entry => Entry =
+    regroup(Case("NoModel"), List("role" -> Json.Null, "passed" -> Json.arr()), "shortfall", shortfall)
 
   private def asStoredText: Entry => Entry = entry =>
     Entry(Group("Stored"), Case("Unrecognised"), Json.obj("text" -> entry.text.asJson), entry.text)
@@ -158,6 +164,7 @@ object Answer:
   private val runs = Group("Run")
   private val stopped = Case("Stopped")
   private val needs = Case("Needs")
+  private val skipped = Case("Skipped")
 
   val translations: Map[Former, Entry => Entry] = Map(
     Former(runs, Case("Stalled")) -> into(runs, stopped, "stop" -> "Stalled"),
@@ -184,7 +191,16 @@ object Answer:
     Former(runs, Case("BudgetSpent")) -> atStep("BudgetSpent"),
     Former(runs, Case("NoValidAnswer")) -> atStep("NoValidAnswer"),
     Former(runs, Case("OutputCapped")) -> atStep("OutputCapped"),
-    Former(runs, Case("Declined")) -> asStoredText
+    Former(runs, Case("Declined")) -> asStoredText,
+    Former(runs, Case("NoModel")) -> noModel("Unusable"),
+    Former(runs, Case("Exhausted")) -> noModel("Exhausted"),
+    Former(runs, Case("Unassigned")) -> noModel("Unassigned"),
+    Former(runs, Case("Cooling")) -> into(runs, skipped, "skip" -> "Cooling"),
+    Former(runs, Case("BelowFloor")) -> into(runs, skipped, "skip" -> "BelowFloor"),
+    Former(runs, Case("BelowAllowance")) -> into(runs, skipped, "skip" -> "BelowAllowance"),
+    Former(runs, Case("AllowanceUnread")) -> into(runs, skipped, "skip" -> "AllowanceUnread"),
+    Former(runs, Case("PlanOnly")) -> into(runs, skipped, "skip" -> "PlanOnly"),
+    Former(runs, Case("AllowanceReached")) -> into(runs, skipped, "skip" -> "AllowanceReached")
   )
 
   extension (entry: Entry)

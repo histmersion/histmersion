@@ -136,14 +136,13 @@ class HowJobsStopSuite extends munit.FunSuite:
     }
 
   test("a chain out of headroom names its role: typed, inside the step it stopped at, or in a master sentence"):
-    val exhausted = Problem.Run.Exhausted(
+    val exhausted = Problem.Run.NoModel(
       Problem.Run.Role("extractor"),
-      Problem.Run.Floor.Allowance,
-      Problem.Run.Frees.Never,
+      Problem.Run.Shortfall.Exhausted(Problem.Run.Floor.Allowance, Problem.Run.Frees.Never),
       Vector(
         Problem.Run.PassedOver(
           Problem.Run.Model("local:a"),
-          NonEmptyVector.of(Problem.Run.Cooling(Problem.EpochMs(1762732800000L)))
+          NonEmptyVector.of(Problem.Run.Skipped(Problem.Run.Skip.Cooling(Problem.EpochMs(1762732800000L))))
         )
       )
     )
