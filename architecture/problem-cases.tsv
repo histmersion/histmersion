@@ -1,0 +1,148 @@
+# case	justified	evidence — every Problem case and what justifies it (owner decision 8 of 2026-11-19, row 18 decision 1): a branch on it outside the edges (the first file), an HTTP status its group does not answer, or data with a shape (a list, an optional value, a nested choice, another problem); regenerate with HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *ProblemCasesSuite'
+Config.ApiKeyLogin	unjustified	-
+Config.BindRepeated	unjustified	-
+Config.Cycle	shape	list
+Config.Definition	shape	choice
+Config.Drained	shape	choice
+Config.Exposed	shape	choice
+Config.FloorsUnread	shape	choice, list
+Config.ProxyUndeclared	unjustified	-
+Config.ReadAt	shape	list
+Config.Setting	shape	choice
+Config.Unavailable	shape	choice
+Config.Unbuilt	shape	list
+Config.Unchanged	shape	problem
+Config.Unpriced	shape	optional
+Config.WildcardOverlap	unjustified	-
+Conflict.Aliased	unjustified	-
+Conflict.AlreadyExists	unjustified	-
+Conflict.Busy	status	503, not 409
+Conflict.Claimed	shape	choice
+Conflict.Collides	unjustified	-
+Conflict.Held	branch	modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleImporter.scala
+Conflict.Job	shape	choice
+Conflict.OldKey	shape	choice
+Conflict.Referenced	unjustified	-
+Conflict.Referred	shape	list
+Conflict.Renamed	unjustified	-
+Conflict.ServerHeld	unjustified	-
+Conflict.Stale	status	412, not 409
+Conflict.Undrained	status	503, not 409
+Conflict.WrongState	shape	list
+Content.Answer	shape	choice
+Content.Finding	shape	choice
+Content.NotProposed	shape	problem
+Content.Proposal	shape	choice
+Content.Undecoded	shape	choice, optional
+Internal.Unexpected	unjustified	-
+Invalid.Ambiguous	shape	list
+Invalid.Broken	shape	choice, list
+Invalid.Inconsistent	shape	list, choice
+Invalid.Inverted	shape	list
+Invalid.Malformed	shape	choice, list
+Invalid.Misplaced	shape	list
+Invalid.Missing	shape	list
+Invalid.OutOfRange	shape	choice, list
+Invalid.OutOfTime	shape	list
+Invalid.Reference	shape	choice, list
+Invalid.Repeated	shape	list
+Invalid.StoredOn	shape	list
+Invalid.Undeclared	shape	list
+Invalid.Unknown	shape	list
+Invalid.Unparsable	shape	choice, list
+Invalid.Unreadable	shape	list
+Invalid.Wrapped	shape	list
+Io.Absent	shape	choice, optional
+Io.Corrupt	branch	modules/db/src/main/scala/com/histmersion/domain/automation/agents/ModelSettingsRepo.scala
+Io.Database	shape	choice
+Io.Entry	shape	choice
+Io.Extract	shape	choice
+Io.File	shape	choice
+Io.Hashed	unjustified	-
+Io.Oversize	unjustified	-
+Io.Process	branch	modules/plugin-vaults/src/main/scala/com/histmersion/plugins/vaults/KeePassXcVault.scala
+Io.Wrong	shape	choice
+NotFound.Copy	branch	modules/core/src/main/scala/com/histmersion/domain/AcquireRecheck.scala
+NotFound.Dangling	shape	choice
+NotFound.Entity	unjustified	-
+NotFound.Listed	shape	choice
+NotFound.Name	shape	list
+NotFound.SetByHand	unjustified	-
+NotFound.Undownloaded	unjustified	-
+Plugin.Dependency	status	409, not 500
+Plugin.Load	shape	choice
+Plugin.Rejected	status	422, not 500
+Plugin.Said	status	503, not 500
+Plugin.Vault	shape	choice
+Refused.Disabled	shape	optional
+Refused.Misdirected	status	421, not 403
+Refused.Policy	shape	choice
+Refused.Space	shape	choice
+Refused.Unauthenticated	status	401, not 403
+Relayed	unjustified	-
+Run.AllowanceReached	unjustified	-
+Run.AllowanceUnread	shape	list
+Run.AtModel	shape	list
+Run.AtStep	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
+Run.BelowAllowance	shape	list
+Run.BelowFloor	unjustified	-
+Run.BudgetSpent	unjustified	-
+Run.Cancelled	shape	choice
+Run.CheckpointUnread	unjustified	-
+Run.Cooling	unjustified	-
+Run.CutShort	shape	choice
+Run.Declined	shape	list
+Run.Draining	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
+Run.Exhausted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
+Run.Failed	shape	list
+Run.GuardStopped	unjustified	-
+Run.Halted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
+Run.Interrupted	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
+Run.LimitReached	shape	problem
+Run.MovedOn	unjustified	-
+Run.NoBody	unjustified	-
+Run.NoLogin	unjustified	-
+Run.NoModel	shape	list
+Run.NoPipeline	unjustified	-
+Run.NoText	unjustified	-
+Run.NoValidAnswer	shape	list
+Run.NotNow	shape	choice
+Run.OutputCapped	shape	choice
+Run.OverCap	shape	choice
+Run.OverTokens	unjustified	-
+Run.Overspent	unjustified	-
+Run.PassedOver	shape	list
+Run.Paused	shape	choice, optional
+Run.PipelineChanged	unjustified	-
+Run.PlanOnly	unjustified	-
+Run.ProbeUnread	shape	optional
+Run.ProviderDown	shape	list
+Run.Reordered	unjustified	-
+Run.Restored	unjustified	-
+Run.Silent	unjustified	-
+Run.Stalled	unjustified	-
+Run.Unassigned	shape	choice
+Run.Unrecorded	shape	choice
+Run.Unsettled	unjustified	-
+Run.Unstarted	unjustified	-
+Run.UploadUnheld	unjustified	-
+Run.Vanished	unjustified	-
+Run.Withdrawn	unjustified	-
+Stored.Unrecognised	branch	modules/api/src/main/scala/com/histmersion/api/automation/Stopped.scala
+Unclassified	unjustified	-
+Upstream.BadReply	shape	choice, list
+Upstream.CallFailed	shape	problem
+Upstream.CallThrew	unjustified	-
+Upstream.Challenged	shape	list
+Upstream.Changed	unjustified	-
+Upstream.Http	branch	modules/plugin-api/src/main/scala/com/histmersion/plugin/Fetch.scala
+Upstream.Limited	branch	modules/server/src/main/scala/com/histmersion/domain/automation/agents/PluginAiClient.scala
+Upstream.McpServer	unjustified	-
+Upstream.Mislisted	unjustified	-
+Upstream.Offline	status	503, not 502
+Upstream.Rebuilt	unjustified	-
+Upstream.Replied	unjustified	-
+Upstream.Timeout	status	504, not 502
+Upstream.Unanswered	status	504, not 502
+Upstream.Unasked	status	500, not 502
+Upstream.Unreachable	shape	list
