@@ -9,8 +9,11 @@ import com.zaxxer.hikari.HikariDataSource
 import java.sql.SQLException
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The read-only `histmersion_query` role behind `POST /api/query`: its pool and its provisioning. */
+@atBoundary(BoundaryKind.Sql, "opens the read-only query pool and provisions its role")
 object QueryAccess:
 
   /** The READ-ONLY pool behind `POST /api/query` — the `histmersion_query` role of migration V011, which holds nothing
@@ -18,6 +21,8 @@ object QueryAccess:
     * ([[DbPoolConfig.Max.query]], which the bundled Postgres' connections are checked against too).
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pool(db: DbConfig, q: QueryConfig): HikariDataSource =
     Db.pooled(
       Db.JdbcUrl(db.url.value),
@@ -37,6 +42,7 @@ object QueryAccess:
     * `Left` when the application role may not `ALTER ROLE` (it is not a superuser and has no CREATEROLE). The caller
     * decides what to do about it; nothing here throws.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def provision(admin: DataSource, q: QueryConfig): Either[Problem, Unit] =
     val c = admin.getConnection
     try

@@ -8,8 +8,12 @@ import com.augustnagro.magnum.connect
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Research › Activity: what the agents, the server and the person did, one list, newest first. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationActivity)
 trait ActivityService:
   /** One page of `q`; the chips' counts are measured at `now`. */
   def page(q: ActivityQuery, now: Instant): Activity.Page
@@ -21,6 +25,7 @@ object ActivityService:
   def apply(ds: DataSource): ActivityService = Implementation(ds)
 
   final private class Implementation(ds: DataSource) extends ActivityService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(q: ActivityQuery, now: Instant): Activity.Page =
       connect(ds):
         val (entries, next) = ActivityRepo.page(q)

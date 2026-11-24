@@ -13,13 +13,16 @@ import com.histmersion.api.catalogue.Lpf
 
 import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The committed Pleiades seed and `lint --rule place-kind` agree (2026-10-09): `db/places/build.py` derives every kind
   * with the same type rules as [[PlaceReview]], so the lint proposes no change to a freshly seeded place — a re-seed
   * never undoes a fix — and no withdrawn duplicate is left to merge.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceSeedKindsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val pleiades: List[api.catalogue.Place.Input] =
     val root = Iterator
       .iterate(Path.of(sys.props("user.dir")).toAbsolutePath)(_.getParent)
@@ -33,6 +36,7 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       )
       .fold(e => fail(e.sentence), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def prop(in: api.catalogue.Place.Input, key: String): List[String] =
     in.place.properties
       .flatMap(p => RawJson.parse(p.value).toOption)

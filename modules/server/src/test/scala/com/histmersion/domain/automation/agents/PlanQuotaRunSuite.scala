@@ -53,6 +53,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Plan pools end to end against a `*_test` database (docs/research-plan-quotas.md §5): the pick with plan readings — a
   * window below its floor, a hold, a provider refusal — pauses a run with `plan-quota` until the reset instead of
@@ -60,6 +61,9 @@ import com.histmersion.util.database.TestCreators.given
   * keeps the newest; the quota-guard endpoint; the REST surface with a run token under an API key. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
@@ -70,7 +74,9 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = Citekey("zzplan2019_tin")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ApiTarget = RunRequest.Target(Ck.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runId(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
   private val Plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet"))
   private val Paid = ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("zzPaid"))
@@ -85,6 +91,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     java.nio.file.Files.writeString(h.resolve("auth.json"), "{}")
     h
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -130,6 +137,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
   private val finding =
     """{"claim":"The Uluburun ship carried copper and tin.","quote":"The Uluburun ship carried ten tons of copper and one ton of tin.",
       |"place":null,"start":null,"end":null,"periodName":null,"tags":[],"confidence":"high"}""".stripMargin
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enrichScripts(c: ScriptedClient): Unit =
     c.scripts ++= List(
       Seq(
@@ -141,6 +149,8 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
       Seq(text(s"""{"notes":"Tin by sea [[$Ck]]."}"""))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
@@ -181,6 +191,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     )
 
   private val now = () => System.currentTimeMillis()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def low(resetIn: Long = 3600000L) =
     List(
       Reading(
@@ -411,6 +422,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     assertEquals(q.plans.find(_.pool.value == "claude-plan").map(_.covers), Some(List("claude-code:*")))
 
   // #913: a plan model needs no price — before, an unpriced claude-code model was "not ready"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val unpricedPlan = baseCfg
     .modify(_.agents)
     .setTo(

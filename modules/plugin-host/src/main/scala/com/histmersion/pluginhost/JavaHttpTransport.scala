@@ -10,15 +10,19 @@ import java.util.Locale
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider URLs are already
   * percent-encoded). `timeoutSeconds` bounds the wait for an answer, `connectSeconds` (when given; else the same) the
   * connection.
   */
+@atBoundary(BoundaryKind.Http, "sends HTTP requests with java.net.http")
 final class JavaHttpTransport(
     timeoutSeconds: => HttpTransport.TimeoutSeconds,
     connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None
 ) extends HttpTransport: // by name: read per request
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private val client = HttpClient
     .newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
@@ -26,6 +30,7 @@ final class JavaHttpTransport(
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]

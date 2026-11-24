@@ -14,12 +14,14 @@ import util.problem.Problem.*
 import util.problem.Text.{sentence, word}
 import Answer.{current, entry, problem}
 import json.NewtypeCodecs.{problemCodec, vector}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the store holds, read back on the JVM. A column keeps every problem as its derived entry, in an array: every
   * case's entry, generated from the cases' examples, reads back as the case. A text a master version stored (a bare
   * string, in a column the migration converted or inside a record) reads through [[StoredShapes]]: the shapes a master
   * writer wrote as their case, any other text kept whole.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReadBackSuite extends munit.FunSuite:
 
   private val FrozenEntries = Path.of("modules/api/src/test/resources/problem/problem-entries-v1.json")
@@ -45,6 +47,7 @@ class ReadBackSuite extends munit.FunSuite:
     * 77–82: `<reason>: <detail>`, `interrupted`, the drain's sentence; `CandidateSearch` line 125: `not asked this
     * sweep — <why>`), each detail as its writer wrote it: a literal of [[StoredShapes.Details]], or the text as it was.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def masterText(p: Problem): Option[String] =
     def detail(why: Problem): Option[String] =
       StoredShapes.Details

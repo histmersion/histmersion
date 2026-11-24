@@ -6,6 +6,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 enum DriftKind(val wire: DriftKind.Wire) derives CanEqual:
   case Unplaced extends DriftKind(DriftKind.Wire("unplaced"))
@@ -14,13 +15,16 @@ enum DriftKind(val wire: DriftKind.Wire) derives CanEqual:
 
   case ReasonOutside extends DriftKind(DriftKind.Wire("reason-outside-filter"))
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object DriftKind:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
   given WireEnumValues[DriftKind]:
     def all: Array[DriftKind] = values
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire(e: DriftKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: WireEnumValues.Wire): Option[DriftKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given JsonValueCodec[DriftKind] = WireEnum.codec
   given Schema[DriftKind] = WireEnum.schema

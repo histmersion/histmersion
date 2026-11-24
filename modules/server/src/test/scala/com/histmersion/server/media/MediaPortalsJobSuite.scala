@@ -37,6 +37,7 @@ import com.histmersion.server.ServerPlugins
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The keyless portals (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * Pleiades ids and gazetteer ids places carry, the places on the map an id names, the Pleiades import's targets
@@ -45,6 +46,7 @@ import com.histmersion.util.database.TestCreators.given
   * (the config's URLs point at it) — no request leaves it. Fixtures: ids `zqmp_*` and `pleiades_9990000…`, names
   * `Zqmp…`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaPortalsJobSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -134,6 +136,7 @@ class MediaPortalsJobSuite extends DbSuite:
   private lazy val providerServer = provider()
   private lazy val providerUrl = s"http://127.0.0.1:${providerServer.getAddress.getPort}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     val m = base.media
@@ -186,6 +189,7 @@ class MediaPortalsJobSuite extends DbSuite:
     domain.catalogue.Place.Id("zqmp_region"),
     domain.catalogue.Place.Id("pleiades_99900002")
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val IdTexts: List[String] = Ids.map(_.value)
 
   private def clean(): Unit = connect(ds):
@@ -199,8 +203,10 @@ class MediaPortalsJobSuite extends DbSuite:
     val _ = sql"DELETE FROM place_links WHERE place_id = ANY($IdTexts::text[])".update.run()
     val _ = sql"DELETE FROM places WHERE id = ANY($IdTexts::text[])".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(lon: Longitude) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-42]}"""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()

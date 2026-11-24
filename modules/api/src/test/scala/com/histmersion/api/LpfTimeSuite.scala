@@ -11,6 +11,8 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.{Lpf, Period}
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LpfTimeSuite extends munit.FunSuite:
 
   private def json(s: String) = RawJson.parse(s).toOption.get

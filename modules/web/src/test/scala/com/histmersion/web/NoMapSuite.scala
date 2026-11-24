@@ -8,10 +8,13 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.web.map.{Capabilities, NoMap}
 import com.histmersion.web.map.maplibre.MapLibreEngine
 import com.histmersion.web.map.NoMapSurface
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map without WebGL 2: why it cannot be drawn, and what its place says. Pure (the DOM half is the browser test "no
   * WebGL 2").
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class NoMapSuite extends munit.FunSuite:
 
   test("MapLibre needs WebGL 2: WebGL off, or WebGL 1 only, is said as such; a software WebGL 2 draws"):

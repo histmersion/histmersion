@@ -11,11 +11,13 @@ import com.histmersion.domain.catalogue.places.BuiltinGazetteers
 import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.domain.catalogue.events.BuiltinCatalogues
 import com.histmersion.domain.media.imports.BuiltinMedia
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The plugin host refuses a plugin's contribution under a name of one of the server's own providers; it keeps those
   * names itself (the plugin testkit runs it without the server), so they must be the names the server's built-in
   * registries answer to.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReservedNamesSuite extends munit.FunSuite:
   test("the plugin host reserves exactly the names of the server's built-in providers"):
     assertEquals(ReservedNames.mediaCollections.map(_.value: String), BuiltinMedia.reserved.map(_.value: String))

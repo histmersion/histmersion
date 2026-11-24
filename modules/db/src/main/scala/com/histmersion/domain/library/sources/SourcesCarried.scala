@@ -28,6 +28,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.augustnagro.magnum.sql
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.
@@ -35,12 +36,14 @@ import com.histmersion.domain.Creator
   * The ranks are the import's order among every owner's steps: a source's rows, then what hangs off it; its body's
   * figure renames after the blobs; its chunks, finding places and parked edges in the derived step.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object SourcesCarried:
   type Stem = Stem.T
   object Stem extends Newtype[String, Pure]
 
   private val Library = DataOwner("library")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def rows(rank: ImportRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, rank, write)
 
   /** The bytes of a source's body, written as a blob. */
@@ -55,12 +58,15 @@ object SourcesCarried:
 
   /** The sources: the lines without their blobs are what a merge compares, the lines with them what an export writes.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sources(referrers: SourceReferrers)(using Creator.New): CarriedKind = new CarriedKind:
     val owner: DataOwner = Library
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val entry: BundleEntry = BundleEntry(Bundle.Kind.Source.file)
     override val record: Option[Bundle.Kind] = Some(Bundle.Kind.Source)
     override val table: Option[TableName] = Some(TableName("sources"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
       val rs = SourceBundleRepo.sources(scope).toList
       val bodies = rs.flatMap(r => r.bodySha.zip(r.bodyBytes).map((sha, n) => BlobOut(sha, n, body(r.uid))))
@@ -102,6 +108,7 @@ object SourcesCarried:
       RowsIn(ImportStage.Derived, ImportRank(200), SourceBundleRepo.derivedIn)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val findings: CarriedKind = CarriedKind.records[Bundle.Finding](
     Library,
     Bundle.Kind.Finding,
@@ -113,6 +120,8 @@ object SourcesCarried:
   )
 
   /** The entry of a set records own, by its file's stem. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def set(stem: Stem): BundleEntry = BundleEntry(s"entities/${stem.value}.ndjson")
 
   val edges: CarriedKind =
@@ -130,6 +139,7 @@ object SourcesCarried:
     (es, ls) => es.modify(_.unresolvedEdges).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val assessments: CarriedKind = CarriedKind.owned[Bundle.Assessment](
     Library,
     set(Stem("assessments")),
@@ -139,6 +149,7 @@ object SourcesCarried:
     (es, ls) => es.modify(_.assessments).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val aliases: CarriedKind =
     CarriedKind.owned[Bundle.Alias](
       Library,
@@ -150,5 +161,6 @@ object SourcesCarried:
     )
 
   /** Every kind of the library, in the order the registry has always listed them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def all(referrers: SourceReferrers)(using Creator.New): List[CarriedKind] =
     List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)

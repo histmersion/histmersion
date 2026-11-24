@@ -10,18 +10,23 @@ import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.api.automation.ModelChains
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Plan floors (docs/research-plan-quotas.md §5): the pick with plan readings — floors, a provider refusal, a missing
   * window, a stale reading, a hold, a window whose reset passed.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class PlanQuotaSuite extends munit.FunSuite:
 
   private val Now = 1_000_000_000L
   private val Min = 60_000L
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val NowAt = PlanQuota.Now(Now)
   private val FiveHour = Reading.Kind("five_hour")
   private val SevenDay = Reading.Kind("seven_day")
   private val Window10080 = Reading.Kind("10080m")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Rules0 = Rules(
     Floors(
       Map(
@@ -34,6 +39,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     Rules.StaleMs(10 * Min),
     PlanQuota.Rules.MarginPct(10)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def r(
       kind: Reading.Kind,
       used: Reading.UsedPct,
@@ -268,8 +274,11 @@ class PlanQuotaSuite extends munit.FunSuite:
 
   // ── a fresh reading before pausing (#989) ─────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Old = Reading.ObservedAt(Now - 60 * Min) // a reading older than stale-minutes (10)
   private val In = Login.Present(PlanQuota.Login.Present.Detail("logged in"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def decide(
       need: Option[RefreshNeed],
       login: Login = In,

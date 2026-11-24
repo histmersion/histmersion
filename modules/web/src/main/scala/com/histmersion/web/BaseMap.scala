@@ -10,6 +10,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"). `Readable` and `Physical` are the two vector
   * styles drawn from the server's own extracts ([[BaseMaps]]); `Standard`, `Muted` and `Dark` the ONLINE raster maps —
@@ -25,6 +26,7 @@ enum BaseMap(
   case Readable extends BaseMap(BaseMap.Wire("readable"), BaseMap.Label("Readable"), Some(VectorStyle.Readable), None)
   case Physical extends BaseMap(BaseMap.Wire("physical"), BaseMap.Label("Physical"), Some(VectorStyle.Physical), None)
   case Standard extends BaseMap(BaseMap.Wire("standard"), BaseMap.Label("Standard (online)"), None, None)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   case Muted
       extends BaseMap(
         BaseMap.Wire("muted"),
@@ -45,6 +47,7 @@ object BaseMap:
   type Url = Url.T
   object Url extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromWire(s: Wire): Option[BaseMap] =
     val w = s.value.trim.toLowerCase
     if w == "terrain" then Some(Readable) else values.find(_.wire.value == w)

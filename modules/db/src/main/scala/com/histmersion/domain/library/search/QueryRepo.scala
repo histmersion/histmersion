@@ -11,6 +11,8 @@ import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.Timer
 import com.histmersion.api.library.Query
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The read-only SQL escape hatch (`POST /api/query`, `histmersion query`, MCP `query`; plan §5.2 2.8), plus the live
   * `information_schema` shape the tool description is generated from.
@@ -30,6 +32,8 @@ import com.histmersion.api.library.Query
   * Written against plain JDBC rather than Magnum: the projection of an arbitrary statement is not known at compile
   * time, so there is no `DbCodec` to derive — the `ResultSetMetaData` is the schema.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the query tables and their row codecs")
 private[search] object QueryRepo:
   type MaxCellChars = MaxCellChars.T
   object MaxCellChars extends Newtype[Int, Pure]
@@ -41,6 +45,8 @@ private[search] object QueryRepo:
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def run(statement: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using
       con: DbCon,
       timer: Timer
@@ -48,6 +54,8 @@ private[search] object QueryRepo:
     check(Query.Statement(statement.value))
       .flatMap(text => exec(Statement(text.value), maxRows, maxCellChars))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def exec(text: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using
       con: DbCon,
       timer: Timer
@@ -71,6 +79,7 @@ private[search] object QueryRepo:
     catch case e: SQLException => Left(message(e))
 
   /** Postgres's own words, with the driver's stack noise stripped. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def message(e: SQLException): Problem =
     Problem.Unclassified(
       Legacy.Text(
@@ -81,6 +90,7 @@ private[search] object QueryRepo:
       )
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def read(
       rs: ResultSet,
       maxRows: MaxRows,
@@ -108,6 +118,7 @@ private[search] object QueryRepo:
   /** Every value is stringified — the only shape one static JSON schema can carry for an arbitrary projection. Long
     * values (an OCR body) are cut with an explicit marker rather than silently.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def cell(rs: ResultSet, i: Int, maxCellChars: MaxCellChars): Option[QueryResult.Rows] =
     val v = rs.getString(i)
     if v == null || rs.wasNull() then None
@@ -120,6 +131,7 @@ private[search] object QueryRepo:
   /** `information_schema` for the public schema, tables and views alike. Read at request time, which is the point: the
     * `query` tool's description can then name the tables that exist TODAY.
     */
+  @tolerated(LintRule.TotalOrder, "information_schema of one schema: a table's name and a column's position are a key")
   def tables(using con: DbCon): List[SchemaTable] =
     val c = con.connection
     locally:

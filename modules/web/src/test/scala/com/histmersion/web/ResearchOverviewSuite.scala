@@ -12,10 +12,12 @@ import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The overview's pure parts: what to read before a decision, the oldest first, a goal's progress and what blocks it,
   * the weekly allowance.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ResearchOverviewSuite extends munit.FunSuite:
 
   private def approval(

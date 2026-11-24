@@ -7,11 +7,13 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `resolve` end to end, offline: the test plugin `hello-deps` (its POM lists `hello-lib`) from the fixture repository
   * the build writes, a kit whose module list is the test's, a coursier cache of its own. The Scala library is in the
   * kit's excludes, so nothing is looked up beyond the fixture repository.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginResolverSuite extends munit.FunSuite:
 
   private def consoleFor(stdout: String => Unit, stderr: String => Unit): util.console.Console =
@@ -55,6 +57,7 @@ class PluginResolverSuite extends munit.FunSuite:
       Files.copy(published("histmersion-plugin-hello-deps_3", "pom"), plugins.resolve("hello-deps-0.1.0.pom"))
     Setup(kit, plugins, plugins.resolve("lib"), root.resolve("cache"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(s: Setup, extra: String*): (Int, List[String], List[String]) =
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]

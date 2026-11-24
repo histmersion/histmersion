@@ -7,11 +7,15 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One catalogue request answered as JSON, through the host's polite client: an answer that is no JSON says so, by the
   * catalogue's host, as the host's own client words it.
   */
+@atBoundary(BoundaryKind.Json, "fetches one catalogue answer and reads it as JSON")
 final class CatalogueJson(http: Plugin.Http):
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def apply(url: Plugin.Http.Url): Either[Problem, Json] =
     http
       .get(url)
@@ -33,5 +37,6 @@ object CatalogueJson:
   type Host = Host.T
   object Host extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def host(url: Plugin.Http.Url): Host =
     Host(scala.util.Try(java.net.URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value))

@@ -18,6 +18,7 @@ import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, Ti
 import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.annotation.nowarn
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
   * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by
@@ -35,6 +36,8 @@ import scala.annotation.nowarn
   * none is made for `retryAfterSeconds` — the page gets no tile there, quickly, and asks again later. `http`, `now` and
   * `sleep` are the seams a test substitutes.
   */
+@tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class OnDemandTiles(
     val store: Store,
     cfg: () => BasemapOnDemandConfig,
@@ -46,10 +49,12 @@ final class OnDemandTiles(
     transform: PmTiles.TileBytes => Either[Problem, Option[PmTiles.TileBytes]] = b => Right(Some(b))
 )(using clock: java.time.Clock):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def planetUrl(): RangeHttp.Url = source match
     case OnDemandTiles.Source.Planet(u)   => u()
     case OnDemandTiles.Source.Template(u) => RangeHttp.Url(u().value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val cache: DiskLru =
     DiskLru(store.sub(OnDemandTiles.Tiles), () => DiskLru.MaxBytes((cfg().cacheGb.value * 1e9).toLong), ext)(using
       clock
@@ -74,8 +79,11 @@ final class OnDemandTiles(
   private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
   private val inflight =
     ConcurrentHashMap[String, CompletableFuture[Either[Problem, Option[PmTiles.TileBytes]]]]()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val gate = Semaphore(cfg().concurrency.value.max(1), true)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def status: Basemap.OnDemand =
     val c = cfg()
     Basemap.OnDemand(
@@ -91,13 +99,16 @@ final class OnDemandTiles(
     )
 
   /** Whether `z` is one this serves (deeper than the extract's `extractMax`, to the configured depth). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def serves(z: PmTiles.Zoom, extractMax: BasemapFetch.Plan.MaxZoom): Boolean =
     cfg().enabled.value && z.value > extractMax.value && z.value <= cfg().maxZoom.value
 
   /** Whether it serves tile `z` at all (on, and not deeper than its configured depth) — outside the extract. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def servesAt(z: PmTiles.Zoom): Boolean = cfg().enabled.value && z.value >= 0 && z.value <= cfg().maxZoom.value
 
   /** One request to the provider: within the concurrency and the rate. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def request[A](f: => Either[Problem, A]): Either[Problem, A] =
     if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left(Problem.Conflict.Busy(Problem.Conflict.Activity.TileRequests))
     else
@@ -112,6 +123,7 @@ final class OnDemandTiles(
         f
       finally gate.release()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def remoteJson(r: Remote) = Json.obj(
     "url" -> Json.fromString(r.url.value),
     "size" -> Json.fromLong(r.file.size.value),
@@ -119,6 +131,7 @@ final class OnDemandTiles(
   )
 
   /** The planet's description: in memory, else from `remote/` (when it names the same URL), else read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def described(): Either[Problem, Remote] =
     val u = planetUrl()
     remote
@@ -192,6 +205,7 @@ final class OnDemandTiles(
     val _ = remoteFiles.deleteTree(Store.Key.Root)
   }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def leaf(r: Remote, e: PmTiles.Entry): Either[Problem, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset.value)).map(Right(_)).getOrElse {
       val f = Store.Key.applyUnsafe(s"leaf-${e.offset.value}-${e.length.value}.bin")
@@ -240,6 +254,7 @@ final class OnDemandTiles(
         case Some(e) => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def read(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
@@ -260,6 +275,7 @@ final class OnDemandTiles(
         ).map(_.map(b => PmTiles.TileBytes(b.value)))
     raw.flatMap(_.fold[Either[Problem, Option[PmTiles.TileBytes]]](Right(None))(transform))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readPlanet(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
@@ -285,6 +301,7 @@ final class OnDemandTiles(
   /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none (outside the
     * configured zooms, or the provider has none); `Left`: it could not be read now.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tile(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
@@ -337,9 +354,13 @@ object OnDemandTiles:
   type UrlTemplate = UrlTemplate.T
   object UrlTemplate extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Tiles = Store.Key.applyUnsafe("tiles")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Remote = Store.Key.applyUnsafe("remote")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val RemoteJson = Store.Key.applyUnsafe("remote.json")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Head = Store.Key.applyUnsafe("head.bin")
 
   /** The provider's file changed under a read (another ETag or size). */

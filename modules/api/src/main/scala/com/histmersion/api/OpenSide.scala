@@ -3,6 +3,9 @@ package api
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
+@movesTo(FeaturePlace.Kernel)
 enum OpenSide:
   case Start, End
 

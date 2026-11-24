@@ -42,6 +42,7 @@ import com.histmersion.api.automation.Autopilot
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the
@@ -62,6 +63,7 @@ import com.histmersion.domain.Creator
   * Off, the seeding managers and watchers it runs are paused (and remembered, so turning it on again resumes exactly
   * those). Every change is a manager event and a worklog line.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class AutopilotService(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -71,11 +73,13 @@ final class AutopilotService(
   private def acfg = cfg.autopilot
 
   /** Whether it is on (one row read). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def on: Boolean = agents.autopilotRow.row().enabled.value
 
   /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingestCap: AutopilotPolicy.Cap =
     if acfg.ingestPerDay.value <= 0 then AutopilotPolicy.Cap(0)
     else
@@ -86,6 +90,7 @@ final class AutopilotService(
         AutopilotPolicy.Cap(acfg.ingestCeiling.value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def backlogPending: AutopilotPolicy.Backlog =
     if acfg.ingestBacklogShare.value <= 0 then AutopilotPolicy.Backlog(0)
     else AutopilotPolicy.Backlog(agents.managerStore.backlogCounts().values.map(_._1.value).sum)
@@ -98,6 +103,7 @@ final class AutopilotService(
     else AutopilotPolicy.sharedIngestLeft(ingestCap, ingestedToday(now))
 
   /** The legal open-access ingests today: every watcher's, and the acquisition list's re-check's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingestedToday(now: Instant): AutopilotPolicy.IngestedToday =
     AutopilotPolicy.IngestedToday(
       agents.managerStore.countEventsAll(ManagerEvent.Kind(Feed.Ingested), ManagerPolicy.dayStart(now)).value +
@@ -112,6 +118,7 @@ final class AutopilotService(
   /** Turn it on (ensure and advance at once) or off (pause the seeding managers and watchers it runs). Idempotent; the
     * answer is the status with what it did.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def set(in: AutopilotSet, now: Instant = Instant.now(agents.clock))(using
       WritePermit
   )(using Creator.New): EngineStatus =
@@ -158,6 +165,7 @@ final class AutopilotService(
   /** One pass, from the managers' tick: nothing while off; on, ensure and advance when due, and the housekeeping when
     * due.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tick(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val row = agents.autopilotRow.row()
     if !row.enabled.value then Nil
@@ -171,6 +179,7 @@ final class AutopilotService(
         else Nil
       ensured ++ housekeeping(row, now)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rows(): List[ManagerRow] =
     agents.managerStore
       .light()
@@ -187,6 +196,7 @@ final class AutopilotService(
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings = AutopilotPolicy.Settings(
     AutopilotPolicy.Cron(acfg.watchCron.value),
     AutopilotPolicy.Cron(acfg.seedCron.value),
@@ -196,6 +206,7 @@ final class AutopilotService(
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ensureNow(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val goals = agents.goals.all()
     val planned = agents.goals.planned()
@@ -223,17 +234,22 @@ final class AutopilotService(
     if out.nonEmpty then agents.managers.nudge()
     out
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def next(cron: AutopilotPolicy.Cron, now: Instant): Option[Instant] =
     Cron.parse(Cron.Text(cron.value)).toOption.flatMap(_.next(now))
 
   /** The slug of a goal read from the database, as the domain types it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def slugOf(g: Goal): DomainGoal.Slug = DomainGoal.Slug.assume(g.slug.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def event(id: ManagerInfo.Id, text: String)(using WritePermit): Unit =
     agents.managerStore.event(id, None, None, ManagerEvent.Kind(Feed.Autopilot), ManagerEvent.Text(text))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemOf(goal: DomainGoal.Slug): ManagerItem.Target = ManagerItem.Target(goal.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyStep(s: Step, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
     s match
       case Step.CreateSeed(goal, cron, planFirst) =>
@@ -389,6 +405,7 @@ final class AutopilotService(
   /** Every goal's status moved on from the facts ([[AutopilotPolicy.advance]]), the deepest goals first so a parent
     * sees its sub-goals' new status in the same pass; one line per goal moved.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def advance(now: Instant)(using WritePermit): List[String] =
     val goals = agents.goals.all()
     val parentOf: Map[String, Option[String]] =
@@ -462,6 +479,7 @@ final class AutopilotService(
     * ([[AutopilotPolicy.nextArticle]]): its seeding manager's propose-articles item re-opened (the scheduler starts it;
     * the plan goes through the article-plan approvals). One line per goal.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nextArticles(now: Instant)(using WritePermit): List[String] =
     if acfg.nextArticleHours.value <= 0 then Nil
     else
@@ -511,6 +529,7 @@ final class AutopilotService(
     * minutes), one at a time. Recorded as started, so a failure is not retried every tick (the next try is a period
     * later); the outcome is a worklog line.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def housekeeping(row: AutopilotRepo.Row, now: Instant)(using WritePermit): List[String] =
     val backupDue = AutopilotPolicy.due(
       row.lastBackupAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
@@ -542,6 +561,7 @@ final class AutopilotService(
               .mkString(" and ") + " started"
           )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def backup(): Unit =
     val line = agents.host.backup() match
       case Left(e)    => s"autopilot: the scheduled backup failed: ${e.problems.sentences.mkString("; ")}"
@@ -562,6 +582,7 @@ final class AutopilotService(
               )}"
     log(line)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def lint(): Unit =
     val line = agents.host.lintFix() match
       case Left(e)  => s"autopilot: the scheduled lint --fix failed: ${e.problems.sentences.mkString("; ")}"
@@ -570,6 +591,7 @@ final class AutopilotService(
           (if r.remaining.value > 0 then s", ${r.remaining} left for the next run" else "")
     log(line)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(line: String): Unit =
     agents.workLists.logLine(
       QueueAdd(QueueItem.Text(line.take(1000))),
@@ -582,6 +604,7 @@ final class AutopilotService(
   /** Per goal: its stage, managers, counts, open approvals, last activity and pace — a few queries for every goal at
     * once (readable with agents off).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(now: Instant = Instant.now(agents.clock)): EngineStatus =
     val row = agents.autopilotRow.row()
     val goals = agents.goals.all()

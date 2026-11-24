@@ -29,6 +29,7 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.config.Limits
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The whole §1.8 path over real HTTP, with the converter STUBBED: upload → job → body + assets → the bytes served with
   * the right headers → the figure rendered as a lazy `<img>` → the absolute URLs MCP hands out. Skipped without
@@ -37,6 +38,8 @@ import com.histmersion.util.database.TestCreators.given
   * The stub is the point of `ConverterClient` being a trait: this suite proves the plumbing without a 5 GB OCR
   * container, and the real sidecar is verified end to end separately.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class IngestHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -111,6 +114,7 @@ class IngestHttpSuite extends munit.FunSuite:
       extends ConverterClient:
     @volatile var calls: List[(ConverterClient.Filename, ConverterClient.HighQuality)] = Nil
     def health = Right(ConverterClient.HealthSummary("ok"))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       beforeConvert()
       calls = calls :+ (filename, quality)
@@ -143,6 +147,7 @@ class IngestHttpSuite extends munit.FunSuite:
     Files.write(p, s"%PDF-1.4 $marker".getBytes("UTF-8"))
     p
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfg =
     val base = AppConfig.load()
     base
@@ -476,7 +481,9 @@ class IngestHttpSuite extends munit.FunSuite:
     val entered = CountDownLatch(1)
     val release = CountDownLatch(1)
     val conv = new ConverterClient:
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def health = Left(Problem.Unclassified(Legacy.Text("converter at http://sidecar did not finish within 5 s")))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
         entered.countDown()
         release.await(30, TimeUnit.SECONDS)

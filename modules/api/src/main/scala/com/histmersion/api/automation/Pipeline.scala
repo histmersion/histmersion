@@ -2,6 +2,8 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 enum Pipeline(
     val wire: Pipeline.Wire,
     val version: Pipeline.Version,
@@ -108,6 +110,7 @@ object Pipeline:
   type Describe = Describe.T
   object Describe extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[Pipeline] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** The pipeline a manager's item that starts no agent run of its own is counted under (the review's, as the managers

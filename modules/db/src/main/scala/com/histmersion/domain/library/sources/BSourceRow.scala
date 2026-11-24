@@ -47,6 +47,7 @@ final private[sources] case class BSourceRow(
 object BSourceRow:
   type Doi = Doi.T
   object Doi extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   type Authors = Authors.T
@@ -74,10 +75,13 @@ object BSourceRow:
   object Influential extends Newtype[Int, Pure]
   type AddedDate = AddedDate.T
   object AddedDate extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BodySha = Sha256
   val BodySha: Sha256.type = Sha256
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BodyBytes = ByteCount
   val BodyBytes: ByteCount.type = ByteCount
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OriginalSha = Sha256
   val OriginalSha: Sha256.type = Sha256
   type UpdatedAt = UpdatedAt.T

@@ -11,10 +11,12 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `get_source` as an agent calls it: no `fullText` (`section: "body"` says the same), and a body slice (`offset`,
   * `chars`, `heading`) without a section reads the body — the MCP tool would answer the summary and ignore the slice.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class AgentGetSourceInput(
     citekey: Citekey,
     section: Option[Source.Section.Wire] = None,
@@ -22,6 +24,7 @@ final case class AgentGetSourceInput(
     offset: Option[Offset] = None,
     chars: Option[SourcesControllers.Chars] = None
 ) derives JsonCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sectionOrBody: Option[Source.Section.Wire] =
     section
       .map(s => Source.Section.Wire(s.value.trim))
@@ -36,8 +39,11 @@ object AgentGetSourceInput:
   /** What a model typed as the citekey is looked up as it stands: a key that names no source answers "not found", not a
     * refused turn.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private given JsonValueCodec[Citekey] = JsonCodec.text[Citekey](_.value, s => Right(Citekey.assume(s)))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
   given Schema[AgentGetSourceInput] = KindlingsSchema
     .derived[AgentGetSourceInput]
     .schema

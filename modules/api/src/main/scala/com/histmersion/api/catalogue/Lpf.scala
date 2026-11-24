@@ -9,6 +9,8 @@ import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Reader/writer for the Linked Places Format (LPF v1.1) and plain GeoJSON `FeatureCollection`s.
   *
@@ -28,6 +30,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * usual property spellings (`title`/`name`/`NAME`/`ADMIN`, `period`/`start`/`end`, `parent`/`part_of`) and to the
   * `kind` the caller passed in.
   */
+@atBoundary(BoundaryKind.Json, "reads Linked Places Format JSON into place records")
 object Lpf:
   object Bound:
     type Wire = Wire.T
@@ -39,7 +42,9 @@ object Lpf:
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toIso(historicalYear: Year): Years.Astronomical = Years.toAstronomical(historicalYear)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def fromIso(isoYear: Years.Astronomical): Year = Years.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
@@ -83,10 +88,12 @@ object Lpf:
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def yearOf(j: Json): Option[Year] =
     Years.fromJson(j, t => parseYear(t.value))
 
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def bound(j: Json, wide: Bound.Wire, narrow: Bound.Wire): Option[Year] =
     j.asObject match
       case None      => (yearOf(j)).map(refactorValue22 => Year((refactorValue22).value))
@@ -97,6 +104,7 @@ object Lpf:
           .orElse(obj((narrow).value).flatMap(yearOf)))
           .map(refactorValue => Year((refactorValue).value))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
       val s = o("start").flatMap(bound(_, Bound.Wire("earliest"), Bound.Wire("latest")))
@@ -125,6 +133,7 @@ object Lpf:
             )
 
   /** Years in historical reckoning, the practical convention in WHG/Pleiades data. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def renderWhen(p: Period, open: Option[OpenSide] = None): Json =
     val (s, e) = OpenSide.bounds(Some(p), open)
     Json.obj(
@@ -136,6 +145,7 @@ object Lpf:
       )
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def parseKind(s: String): Option[Place.KindValue] =
     Place.Kind.parse(Place.Kind.ParseS(s)).map(k => Place.KindValue(k.value))
 
@@ -181,6 +191,7 @@ object Lpf:
         )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def readNames(f: JsonObject, props: JsonObject, label: String): List[Place.Name] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString
@@ -209,6 +220,7 @@ object Lpf:
   /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain
     * `part_of: [{parent_id, period_start, period_end}]` of hand-traced polygons.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def readRelations(id: String, f: JsonObject, props: JsonObject): List[Place.Relation] =
     val arrays = List(f("relations"), props("relations"), props("part_of"), props("partOf"), props("parents")).flatten
       .flatMap(_.asArray)
@@ -357,6 +369,8 @@ object Lpf:
         }
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def renderFeature(in: Place.Input): Json =
     val leftover = in.place.properties
       .flatMap(p => RawJson.parse(p.value).toOption)

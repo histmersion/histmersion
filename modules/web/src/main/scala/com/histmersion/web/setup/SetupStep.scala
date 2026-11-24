@@ -2,6 +2,7 @@ package com.histmersion
 package web.setup
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The first-run setup's seven steps, in order. */
 enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional(false))
@@ -14,6 +15,7 @@ enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = Se
   case Calibre extends SetupStep(SetupStep.Label("Calibre library"), optional = SetupStep.Optional(true))
   case Ready extends SetupStep(SetupStep.Label("Ready"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def number: SetupStep.Number = SetupStep.Number(ordinal + 1)
   def next: Option[SetupStep] = SetupStep.values.lift(ordinal + 1)
   def back: Option[SetupStep] = Option.when(ordinal > 0)(SetupStep.values(ordinal - 1))

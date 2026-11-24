@@ -8,9 +8,11 @@ import com.histmersion.util.storage.LineFiles
 import java.time.Instant
 
 import LogFiles.{dayOf, daysOf, fileOf, Problems}
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class LogFiles(files: LineFiles):
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def append(events: Vector[LogEvent]): Boolean =
     events.isEmpty ||
       files.append(
@@ -61,6 +63,7 @@ object LogFiles:
   val Problems = "problems-"
   val Suffix = ".jsonl"
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def fileOf(problem: Boolean, day: String): String = s"${if problem then Problems else Events}$day$Suffix"
 
   def dayOf(name: String): Option[String] =

@@ -7,6 +7,7 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where an import writes and what it reads of the map: media's own services in the server ([[MediaStore.apply]]); a
   * map in a test.
@@ -76,13 +77,16 @@ object MediaStore:
 
   /** The import's store over media's services: its pictures and their links, its checks and the map's facts. */
   def apply(assets: AssetService, imports: ImportService): MediaStore = new MediaStore:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
       assets.known(AssetService.Provider(provider.value), keys)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def save(a: ProviderAsset, firstTarget: (ImportService.TargetType, ImportService.TargetId))(using
         WritePermit
     )(using Creator.New) =
       assets.save(a, (AssetService.TargetType(firstTarget._1.value), AssetService.TargetId(firstTarget._2.value)))
     def refreshRights(uid: AssetService.AssetUid, r: Rights)(using WritePermit) = assets.refreshRights(uid, r)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def link(
         uid: AssetService.AssetUid,
         targetType: ImportService.TargetType,
@@ -114,6 +118,7 @@ object MediaStore:
         qid: Option[Wikidata.Id]
     )(using WritePermit) =
       imports.checked(provider, targetType, targetId, found, qid)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def linkBasis(
         uid: AssetService.AssetUid,
         targetType: ImportService.TargetType,

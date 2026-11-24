@@ -45,6 +45,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.plugin.CatalogueEvent
 import com.histmersion.api.TimeSpan
 import com.histmersion.upstreams.dating.CatalogDating
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media collections and event catalogues as plugins (docs/research-plugins.md §6, §19): the built-in ones registered
   * through the plugin host and switched off like any plugin; a third-party plugin's collection and catalogue registered
@@ -52,14 +53,18 @@ import com.histmersion.upstreams.dating.CatalogDating
   * licence and of a catalogue's record; and a reload that rebuilds a media/events plugin only when its own block
   * changed. No network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ProviderPluginsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def providers(
       registered: ListMap[Registries.EventCataloguesKey, EventCatalogue]
   ): ListMap[CatalogRecord.Provider, EventCatalogue] =
     registered.map((k, c) => CatalogRecord.Provider(k.value) -> c)
 
   private val offline = new Plugin.Http {
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
       Left(Problem.Unclassified(Legacy.Text("offline")))
   }
@@ -94,7 +99,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val title = EventCatalogue.Title("Zq quakes"); val licence = Licence("CC0-1.0");
     val citation = EventCatalogue.Citation("Zq (2026)");
     val home = EventCatalogue.Home("https://zq.example")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("all"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   private val portalOn = "histmersion.plugins.zq-plugin.enabled = true"
@@ -428,7 +435,9 @@ class ProviderPluginsSuite extends munit.FunSuite:
         def warn(m: Plugin.Log.Line) = ()
       }
       def env(n: EnvVar.Name) = None
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def secret(s: Secret) = Left(Problem.Unclassified(Legacy.Text("none")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def secretVaults = Registry.refusing(Problem.Unclassified(Legacy.Text("x")))
     assert(ctx.mediaCollections.add(Registry.AddId("x"), Collection(MediaItem.Role("object"))).isLeft)
     assert(ctx.eventCatalogues.add(Registry.AddId("x"), Catalogue).isLeft)
@@ -758,6 +767,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
       override def floorYear = Some(Year(-9700))
       def parts(q: CatalogueQuery) = Nil
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def read(p: EventCatalogue.ReadPart, q: CatalogueQuery, h: Plugin.Http) =
         Left(Problem.Unclassified(Legacy.Text("no")))
     val throws = new EventCatalogue:
@@ -765,6 +775,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
       override def floorYear = throw IllegalStateException("boom")
       def parts(q: CatalogueQuery) = Nil
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def read(p: EventCatalogue.ReadPart, q: CatalogueQuery, h: Plugin.Http) =
         Left(Problem.Unclassified(Legacy.Text("no")))
     import com.histmersion.upstreams.dating.CatalogDating.Limits

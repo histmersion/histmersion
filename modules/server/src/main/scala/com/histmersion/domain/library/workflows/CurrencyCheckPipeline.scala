@@ -31,6 +31,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always
@@ -42,6 +43,8 @@ import com.histmersion.domain.Creator
   *
   * Steps: load · assess · followups · close.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class CurrencyCheckPipeline(
     protected val site: LibrarySite,
     protected val goals: GoalService,
@@ -53,6 +56,7 @@ final class CurrencyCheckPipeline(
   val pipeline: Pipeline = Pipeline.CurrencyCheck
   import CurrencyCheckPipeline.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
@@ -71,6 +75,7 @@ final class CurrencyCheckPipeline(
       )
     yield PipelineDef.Summary(line)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(goal: Goal.Slug): List[Target] =
     goalSources(goal, GoalSweep.Limit(cfg.scheduler.currencySources.value))
       .map(site.sources.canonical)
@@ -83,6 +88,7 @@ final class CurrencyCheckPipeline(
           .map(s => Target(ck, s.source.doi.filter(_.value.trim.nonEmpty).flatMap(d => Doi.option(d.value.trim))))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def assess(ctx: RunCtx, ts: List[Target])(using WritePermit)(using Creator.New): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
       upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
@@ -94,6 +100,7 @@ final class CurrencyCheckPipeline(
     }
     Assessed(Assessed.Checked(results.flatten.size), results.flatten.collect { case (ck, true) => ck })
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def followups(ctx: RunCtx, goal: Goal.Slug, ts: List[Target])(using
       WritePermit
   )(using Creator.New): Followed =
@@ -150,6 +157,7 @@ object CurrencyCheckPipeline:
   object Assessed:
     type Checked = Checked.T
     object Checked extends Newtype[Int, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Retracted = Citekey
     val Retracted: Citekey.type = Citekey
   final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued)

@@ -12,6 +12,7 @@ import hearth.kindlings.optics.syntax.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class ResearchState:
   import ResearchState.*
@@ -55,6 +56,7 @@ final class ResearchState:
         case _               => ()
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def history(id: Queue.QueueItem.Id): HtmlElement =
     val r = historyOf(id)
     div(
@@ -94,6 +96,7 @@ final class ResearchState:
   private def opened(id: Queue.QueueItem.Id): Modifier[HtmlElement] =
     child.maybe <-- expanded.signal.map(e => Option.when(e.contains(id))(history(id)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def body(i: OpenItem): List[Modifier[HtmlElement]] = i match
     case OpenItem.Decision(a, _) =>
       List(
@@ -190,6 +193,7 @@ final class ResearchState:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def table: HtmlElement =
     val rows = filtered.map(_.fold(Vector.empty)(acquisitions))
     sectionTag(
@@ -247,6 +251,7 @@ object ResearchState:
 
   def pane: HtmlElement = ResearchState().element
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(i: OpenItem): String = i match
     case d: OpenItem.Decision    => s"decision-${d.approval.id}"
     case a: OpenItem.Acquisition => s"acquisition-${a.item}"
@@ -261,4 +266,5 @@ object ResearchState:
   def handedTo(t: OpenItem.Task): Creation.Actor =
     if t.actor == Who.Owner then Creation.Agents else Creation.Person
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def firstLine(text: Queue.QueueItem.Text): String = s"$text".linesIterator.nextOption().getOrElse("")

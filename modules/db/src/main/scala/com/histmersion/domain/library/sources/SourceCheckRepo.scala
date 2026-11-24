@@ -17,6 +17,7 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SQL half of the library's lint rules: what each rule reads of the sources, their findings and edges, and the
   * safe repairs.
@@ -31,6 +32,7 @@ import com.histmersion.api.library.AuthorName
   * No rule takes a parameter, so nothing here can be an injection vector; the statements are constant `sql"..."`
   * fragments.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[sources] object SourceCheckRepo:
 
   /** Rules that are one SQL statement. Ordered `citekey` so the report is stable. */
@@ -146,10 +148,13 @@ private[sources] object SourceCheckRepo:
   final case class Context(suggestions: Lint.ItemLimit, format: FormatChecker, geocode: GeocodeSettings)
 
   object Context:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(cfg: AppConfig, format: FormatChecker): Context =
       Context(Lint.ItemLimit(cfg.lint.suggestions.value), format, geocodeOf(cfg))
 
   /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geocodeOf(cfg: AppConfig): GeocodeSettings =
     GeocodeSettings(
       GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
@@ -159,6 +164,7 @@ private[sources] object SourceCheckRepo:
 
   // the graph inputs and the fetches several rules classify, read at most once per run
   private val StoredCitekeys = CheckInput(citekeysSql.query[String].run().toSet)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val EdgeRows = CheckInput(
     edgesSql
       .query[(String, String, String)]
@@ -170,21 +176,27 @@ private[sources] object SourceCheckRepo:
       )
       .toList
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val TagRows = CheckInput(
     arrays(tagsSql).map((ck, tags) => (Citekey(ck), tags.map(Lint.Tag(_))))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val YearRows = CheckInput(
     pairs(yearsSql).map((ck, y) => (Citekey(ck), Option(y).flatMap(_.toIntOption).map(i => Year(i.toLong))))
   ) // year is nullable
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val AuthorRows = CheckInput(
     arrays(authorsSql).map((ck, authors) => (Citekey(ck), authors.map(AuthorName(_))))
   )
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def storedCitekey(using run: CheckRun)(using DbCon): domain.library.Citekey => Boolean = ck =>
     run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(r: Rule, c: Context, maxItems: Lint.ItemLimit)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name.value match
       case DanglingEdges =>

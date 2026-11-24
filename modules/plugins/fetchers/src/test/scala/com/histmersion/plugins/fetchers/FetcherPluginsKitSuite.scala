@@ -9,11 +9,14 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.domain.CoreQuota
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own acquisition plugins run as any plugin author runs theirs: through the plugin testkit, which loads
   * a plugin from the class path as the server does (the host's own `histmersion.acquire` settings supplied to a
   * first-party plugin) and answers its requests from canned answers — never the network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class FetcherPluginsKitSuite extends munit.FunSuite:
 
   private val Pdf: Array[Byte] = ("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1")

@@ -16,12 +16,16 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region really is
   * ([[PlaceReview]]) — and `place-grid-point` — a better point than an atlas grid square's centre
   * ([[LocationPrecision]]). Both read the store and list; `--fix` applies exactly what they list, compare-and-set, and
   * re-matches the changed places' findings ([[FindingPlaceRepo.materialisePlaces]]).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the place review tables and their row codecs")
 private[places] object PlaceReviewRepo:
 
   final private case class Row(
@@ -48,6 +52,7 @@ private[places] object PlaceReviewRepo:
   object ItemRow:
     export DeepTime.{SignedYear as From, SignedYear as To}
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Candidate] = DbCodec.derived
 
   private def split(s: Option[String]): List[String] =
@@ -122,6 +127,7 @@ private[places] object PlaceReviewRepo:
     * changed places' `finding_places` rows are then matched again (a kind decides how a place takes findings), in the
     * same transaction. Returns (reclassified, merged).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def apply(ps: List[Proposal], toleranceKm: PointAreaRepo.Settings.ToleranceKm)(using DbCon): (RowCount, RowCount) =
     val todo = ps.filter(_.fixable)
     if todo.isEmpty then (RowCount(0), RowCount(0))
@@ -146,6 +152,7 @@ private[places] object PlaceReviewRepo:
       (RowCount(re.size), RowCount(mg.size))
 
   /** Merge place `from` into `into` in the caller's transaction. `false` when either is gone. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[places] def mergeIn(from: Place.Id, into: Place.Id)(using DbCon): Boolean =
     val both = sql"SELECT count(*)::int FROM places WHERE id = $from OR id = $into".query[Int].run().head
     if from == into || both < 2 then false
@@ -200,6 +207,8 @@ private[places] object PlaceReviewRepo:
       lon: Longitude,
       lat: Latitude
   ) derives DbCodec:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def km: Geocode.DistanceKm =
       Geocode.distanceKm(
         com.histmersion.api.catalogue.Longitude(fromLon.value),
@@ -209,10 +218,12 @@ private[places] object PlaceReviewRepo:
       )
 
     /** One line: id, label, the grid point, the better one and how far. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def describe: Relocation.Description =
       Relocation.Description(s"${id.value} ${detail.value}")
 
     /** The line without the id — a lint item, which carries the id beside it. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def detail: Relocation.Detail =
       Relocation.Detail(
         String.format(
@@ -262,6 +273,7 @@ private[places] object PlaceReviewRepo:
   /** Give each listed place the linked record's point — only while it still has the grid point the list was made from —
     * and match the moved places' findings again, in the same transaction. Returns the places moved.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def relocate(rs: List[Relocation], toleranceKm: PointAreaRepo.Settings.ToleranceKm)(using DbCon): RowCount =
     if rs.isEmpty then RowCount(0)
     else

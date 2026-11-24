@@ -17,6 +17,7 @@ import com.histmersion.web.{:=, given}
   */
 object MyLibrary:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def onList(r: Route): Boolean = r match
     case Route.Library(s) => s.isList
     case _                => false
@@ -33,6 +34,8 @@ object MyLibrary:
     case Route.Library(s) if s.isList => s
     case _                            => LibrarySection.Sources
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def count(s: Shelf): Signal[Option[RowCount]] = s match
     case Shelf.Everything => everything.signal
     case Shelf.Bookmarks  => MyItems.bookmarks.signal.map(bs => Some(RowCount(bs.size)))
@@ -40,6 +43,8 @@ object MyLibrary:
     case Shelf.Unread     => unread.signal
     case Shelf.Recent     => MyItems.marks.signal.map(ms => Some(RowCount(ms.values.count(_.openedAt.isDefined))))
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refresh(): Unit =
     LibraryLists.everything().foreach(n => everything.set(Some(n)))
     ApiClient
@@ -48,6 +53,8 @@ object MyLibrary:
       .foreach((s, a) => unread.set(Some(RowCount(s.total.value + a.total.value))))
 
   /** "My library", for the top of the filter panel. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def panelTop: HtmlElement =
     navTag(
       cls := "my-library",
@@ -77,6 +84,7 @@ object MyLibrary:
     )
 
   /** "Show these on the map", for the foot of the filter panel: Explore with the same filters. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def panelFoot: HtmlElement =
     a(
       cls := "btn btn--block show-on-map",

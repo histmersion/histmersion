@@ -3,11 +3,13 @@ package plugins.media
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `opencontext`: Open Context's excavation media. One search by the place's name answers the records with their
   * licences, creators, subjects and spatial coverage; a record to store is completed from its media item
   * ([[OpenContext]]). A record is tied by a shared gazetteer id first, else by its context path's names.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class OpenContextCollection(conf: CollectionSettings, licences: LicenceReader)
     extends MuseumCollection(
       conf,
@@ -15,6 +17,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
       MuseumCollection.Key("media.open-context")
     ):
   val title = MediaCollection.Title("Open Context media")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override val description = MediaCollection.Description(
     "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence " +
       "(read from the search record and again from the media item); tied to a place on the map by a shared " +
@@ -22,6 +25,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
       "as related to human remains are not shown"
   )
   val role = MediaCollection.Object
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def matchRule = MediaMatchRule.PlaceIds(Set(MediaMatchRule.PlaceIds.Deeper(OpenContext.Context.value)))
 
   def search(
@@ -32,6 +36,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
       .askJson(OpenContext.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => OpenContext.records(j, licences).unreadableEach)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def complete(item: MediaItem, http: Plugin.Http): Either[Problem, MediaItem] =
     http
       .askJson(OpenContext.itemUrl(conf.apiUrl, OpenContext.Uuid(item.key.value)))

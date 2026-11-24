@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MediaSample(
     targetType: MediaTarget.TargetType,
@@ -22,6 +23,7 @@ final case class MediaSample(
 
 object MediaSample:
   type TargetLabel = TargetLabel.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetLabel extends Newtype[String, Pure]
   type Key = Key.T
   object Key extends Newtype[String, Pure]

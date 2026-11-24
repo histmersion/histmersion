@@ -2,6 +2,7 @@ package com.histmersion
 package util.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A job that runs as checkpointed steps (an agent run): what its row records when it is created. Its `status`, `kind`
   * and `params` are the owner's words, stored as given; `citekey` is the source it works on, when it works on one.
@@ -36,9 +37,11 @@ object RunRow:
   object Pipeline extends Newtype[String, Pure]
   export domain.automation.Pipeline.Version as PipelineVersion
   type TargetKind = TargetKind.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetKind extends Newtype[String, Pure]
   type Target = Target.T
   object Target extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Citekey = domain.library.Citekey
   val Citekey: domain.library.Citekey.type = domain.library.Citekey
   type Model = Model.T

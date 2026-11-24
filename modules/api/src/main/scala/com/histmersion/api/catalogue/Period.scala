@@ -10,6 +10,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class Period(start: Year, end: Year):
   def isPoint: Boolean = (start == end)
 
@@ -67,6 +68,7 @@ object Period:
 
     case ImplausibleSpan
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Skip:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -79,6 +81,7 @@ object Period:
 
     given WireEnumValues[Skip]:
       def all: Array[Skip] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Skip): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
       def fromWire(s: WireEnumValues.Wire): Option[Skip] = values.find(wire(_) == s)
 

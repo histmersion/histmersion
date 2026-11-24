@@ -54,12 +54,16 @@ object EventCardTools:
     export Api.EventQuery.Kind
     export com.histmersion.api.catalogue.Historicity.Wire as Historicity
     export Place.Id as PlaceId
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type From = Year
     val From: Year.type = Year
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type To = Year
     val To: Year.type = Year
     export Filter.{Limit, Offset, Title}
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[EventsInput] = KindlingsSchema
       .derived[EventsInput]
       .schema
@@ -97,16 +101,23 @@ object EventCardTools:
     export EventSummary.{Historicity, Kind, Label, Scale}
     export Place.Id as PlaceId
     export EventGeometry.Geojson as Geometry
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Lat = Latitude
     val Lat: Latitude.type = Latitude
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Lon = Longitude
     val Lon: Longitude.type = Longitude
     export com.histmersion.api.catalogue.Event.Id as ParentId
     export EventSummary.Description
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Citekey = com.histmersion.api.library.Citekey
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
     export EventPatch.Wikidata
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PatchEventInput] = KindlingsSchema
       .derived[PatchEventInput]
       .schema
@@ -119,6 +130,8 @@ object EventCardTools:
       .modify(_.historicity)(_.description("attested|inferred|contested|legendary|mythic"))
       .modify(_.wikidata)(_.description("The Wikidata item the event is (Q…); \"\" clears it"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(events: EventsControllers, page: EventCardView) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val listTool =

@@ -20,6 +20,8 @@ import com.histmersion.upstreams.ArxivId
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.jats.Jats
 import com.histmersion.upstreams.ArchiveId
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** PURE parsers for the JSON the acquisition upstreams return (OpenAlex, Crossref, Unpaywall, CORE, Semantic Scholar,
   * Europe PMC, PMC Article Datasets, archive.org, Wikipedia).
@@ -28,6 +30,7 @@ import com.histmersion.upstreams.ArchiveId
   * captured JSON straight into these functions with no network involved. Everything is total: a missing or unexpected
   * field yields `None`/`Nil`, never an exception, because upstreams do change shape.
   */
+@atBoundary(BoundaryKind.Json, "reads Crossref, OpenAlex, Unpaywall and arXiv answers into work records")
 object AcquireParse:
   type PmcVersion = PmcVersion.T
   object PmcVersion extends Newtype[Int, Pure]
@@ -137,6 +140,8 @@ object AcquireParse:
     val rest = c.arr("locations").flatMap(l => l.cursor.str("pdf_url"))
     ((best ++ oa ++ rest).distinct).map(refactorValue18 => EuropePmcHit.PdfUrls((refactorValue18)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def arxivIdFromUrl(url: RepositoryLanding.Candidate.Url): Option[ArxivId] =
     if !(url).value.toLowerCase.contains("arxiv.org") then None
     else Identifiers.arxiv(Identifiers.ArxivText((url).value.split("/").lastOption.getOrElse("").stripSuffix(".pdf")))
@@ -144,6 +149,7 @@ object AcquireParse:
   /** Citing works from OpenAlex (`filter=cites:<id>`) — the fallback when Semantic Scholar is down or rate-limited.
     * OpenAlex has no citation intents, so every row has an empty context (the host classifies it as `cites`).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def openalexCitations(json: Json): List[FollowupRow] =
     openalexWorks(json).map { w =>
       FollowupRow(
@@ -161,6 +167,7 @@ object AcquireParse:
   // ── Crossref ────────────────────────────────────────────────────────────────────────────────
 
   /** A Crossref `works/{doi}` message → [[WorkRef]] (the metadata fallback when OpenAlex misses). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def crossrefWork(json: Json): WorkRef =
     val m = json.cursor.downField("message")
     val c = if m.succeeded then m else json.cursor
@@ -277,6 +284,7 @@ object AcquireParse:
   /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can match a correction
     * or a comment that cites it).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def europepmcHit(json: Json, doi: Doi): Option[EuropePmcHit] =
     val want = doiOf(doi.value)
     json.cursor
@@ -309,6 +317,8 @@ object AcquireParse:
   /** The newest version NCBI publishes of `pmcid`, from an S3 `ListObjectsV2` answer for the prefix `metadata/<pmcid>.`
     * (keys `metadata/PMC123.1.json`, `metadata/PMC123.2.json`, …).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pmcLatestVersion(listXml: Jats.Xml, pmcid: WorkKey.Pmcid): Option[PmcVersion] =
     if !PmcId.matches((pmcid).value) then None
     else
@@ -340,6 +350,8 @@ object AcquireParse:
   /** `s3://pmc-oa-opendata/PMC1.1/PMC1.1.pdf?md5=…` → the key and the MD5. Only the shapes the dataset uses are
     * accepted, so a record can never point a download outside an article's own folder.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pmcObject(s3: PmcObject.Key): Option[PmcObject] =
     S3Url
       .findFirstMatchIn((s3).value.trim)
@@ -386,6 +398,7 @@ object AcquireParse:
     * but never downloaded here. The Python tool refused at exactly this point and so do we — there is no DRM
     * circumvention anywhere in this pipeline.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def archiveItem(identifier: ArchiveId, json: Json): ArchiveItem =
     val c = json.cursor
     val m = c.downField("metadata")
@@ -438,6 +451,7 @@ object AcquireParse:
   /** Pick the best downloadable file: a clean text format (EPUB, or the OCR'd `_text.pdf`) beats the giant raw image
     * scan, unless the caller asks for a specific format. Returns the file name.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pickArchiveFile(files: List[ArchiveFile], want: Option[WantedFileKind]): Option[ArchiveFile] =
     def ext(f: ArchiveFile) = f.name.value.toLowerCase.split("\\.").lastOption.getOrElse("")
     val epubs = files.filter(ext(_) == "epub")
@@ -470,12 +484,16 @@ object AcquireParse:
   /** Harvest every DOI and arXiv id cited by a Wikipedia article's wikitext. Citations trail punctuation (`|`, `}}`,
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def wikiRefs(wikitext: Wikitext): (List[Doi], List[ArxivId]) =
     val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap(doiOf).distinct.sorted
     val arxiv = ArxivInText.findAllMatchIn((wikitext).value).map(_.group(1)).toList.distinct.sorted
     (dois, arxiv.map(ArxivId(_)))
 
   /** The Wikipedia page title of an article URL (`…/wiki/Late_Bronze_Age_collapse`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def wikiPageTitle(url: RepositoryLanding.Candidate.Url): Option[WorkKey.Title] =
     val s = (url).value.trim.stripSuffix("/")
     (Option(if s.contains("/wiki/") then s.split("/wiki/").last else s)

@@ -16,7 +16,10 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Paging
 import com.histmersion.api.GeoPick
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class MapViewSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()

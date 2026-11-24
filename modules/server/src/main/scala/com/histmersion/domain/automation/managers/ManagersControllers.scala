@@ -50,11 +50,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
   * changing a manager works with agents off (nothing starts until they are on).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class ManagersControllers(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -71,6 +73,8 @@ final class ManagersControllers(
     agents.maintenance.guard(op)(f)
 
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def runs(id: ManagerLight.Id, status: Option[Run.State.Wire], limit: Option[PageSize]): List[RunInfo] =
     val st = status.map(_.value.trim).filter(_.nonEmpty)
     agents.runs
@@ -79,14 +83,18 @@ final class ManagersControllers(
       .filter(r => st.forall(_ == r.status.value))
 
   private def error(problems: Problems): Api.Error = Api.Error(problems)
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def notFound(what: Problem) = Api.Error(what, Some(Api.Error.Code(Write.CodeNotFound)))
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def conflict(m: Problem) = Api.Error(m, Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
   /** A run id read back from the database. */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
 
   private def lightId(m: ManagerInfo): ManagerLight.Id = m.id.transformInto[ManagerLight.Id]
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def record(
       id: ManagerInfo.Id,
       item: Option[ManagerItem.Id],
@@ -107,6 +115,8 @@ final class ManagersControllers(
   private def backlogs(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] =
     kinds.foldLeft(Map.empty)(_ ++ _.backlog())
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def withEffective(
       m: ManagerInfo,
       backlog: => Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])]
@@ -127,6 +137,8 @@ final class ManagersControllers(
           e.copy(backlog = ManagerInfo.Backlog(n.value), backlogDays = days.map(d => ManagerInfo.BacklogDays(d.value)))
         )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def manager(id: ManagerLight.Id): Either[Api.Error, ManagerInfo] =
     agents.managerStore
       .get(ManagerInfo.Id(id.value.trim))
@@ -162,6 +174,8 @@ final class ManagersControllers(
   )(using Creator.New): Either[Api.Error, ManagerInfo] =
     held(WriteGate.OperationName("create_manager"))(createHeld(in, now))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def createHeld(in: ManagerCreate, now: java.time.Instant)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, ManagerInfo] =
@@ -264,6 +278,7 @@ final class ManagersControllers(
         yield out
 
   /** A new manager's first event: how it was created, its cron, and what resuming it starts. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def createdText(k: Kind, state: State, cron: Option[Cron]): String =
     s"created ${state.wire}" + cron.fold("")(x => s", cron `${x.text}` (UTC)") +
       (if state == State.Paused then
@@ -282,6 +297,8 @@ final class ManagersControllers(
     * per sweep, and their events; a failure of any of them leaves nothing behind. The run is handed to the engine after
     * the commit. The managers start as [[create]] starts them: paused, unless the autopilot is on.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def createArea(
       in: Goal.AreaCreate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
@@ -390,6 +407,8 @@ final class ManagersControllers(
       now: java.time.Instant = java.time.Instant.now(agents.clock)
   ): Either[Api.Error, ManagerInfo] = held(WriteGate.OperationName("update_manager"))(updateHeld(id, in, now))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def updateHeld(id: ManagerLight.Id, in: ManagerUpdate, now: java.time.Instant)(using
       WritePermit
   ): Either[Api.Error, ManagerInfo] =
@@ -422,6 +441,7 @@ final class ManagersControllers(
       out
 
   /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def checkCron(k: Kind, text: ManagerLight.Cron, now: java.time.Instant): Either[Api.Error, Cron] =
     if k == Kind.Enrich then
       Left(
@@ -440,6 +460,9 @@ final class ManagersControllers(
         .map(p => error(p))
 
   /** The rounds within the cap, every model override for a role the manager's pipelines use. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def validate(k: Kind, c: ManagerConfig): Either[Api.Error, Unit] =
     val roles = supervisor.roles(k)
     c.models
@@ -490,6 +513,7 @@ final class ManagersControllers(
   def delete(id: ManagerLight.Id): Either[Api.Error, Removed] =
     held(WriteGate.OperationName("delete_manager"))(deleteHeld(id))
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def deleteHeld(id: ManagerLight.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
       inFlight(lightId(m)).foreach(r => Unused(agents.engine.cancel(runIdOf(r.id)), Unused.Why.Idempotent))
@@ -510,6 +534,8 @@ final class ManagersControllers(
   )(using Creator.New): Either[Api.Error, ManagerInfo] =
     held(WriteGate.OperationName("manager_action"))(actionHeld(id, action, runs))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def actionHeld(
       id: ManagerLight.Id,
       action: ManagersControllers.Action,
@@ -582,6 +608,9 @@ final class ManagersControllers(
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def items(
       id: ManagerLight.Id,
       status: Option[domain.automation.ItemStatus.Wire],
@@ -611,6 +640,8 @@ final class ManagersControllers(
       ItemPage(withRuns(rows), ItemPage.Total(total.value), ItemPage.Offset(off.value), ItemPage.Limit(lim.value))
 
   /** The item an id or a target names, in manager `m` (its default item kind first, then the others). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def itemOf(m: ManagerInfo, ref: ManagerItem.Ref): Either[Api.Error, ManagerItem] =
     val r = ref.value.trim
     r.toLongOption
@@ -653,6 +684,9 @@ final class ManagersControllers(
       origin: ItemOrigin = ItemOrigin.Person
   ): Either[Api.Error, ManagerItem] = held(WriteGate.OperationName("add_manager_item"))(addItemHeld(id, in, origin))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def addItemHeld(id: ManagerLight.Id, in: EnqueueRequest, origin: ItemOrigin)(using
       WritePermit
   ): Either[Api.Error, ManagerItem] =
@@ -703,6 +737,8 @@ final class ManagersControllers(
   def enqueue(in: EnqueueRequest)(using Creator.New): Either[Api.Error, EnqueueResult] =
     held(WriteGate.OperationName("enqueue"))(enqueueHeld(in))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def enqueueHeld(in: EnqueueRequest)(using WritePermit)(using Creator.New): Either[Api.Error, EnqueueResult] =
     EnqueueKind.parse(in.kind) match
       case None =>
@@ -762,6 +798,8 @@ final class ManagersControllers(
   def patchItem(id: ManagerLight.Id, ref: ManagerItem.Ref, in: ItemPatch): Either[Api.Error, ManagerItem] =
     held(WriteGate.OperationName("patch_manager_item"))(patchItemHeld(id, ref, in))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def patchItemHeld(id: ManagerLight.Id, ref: ManagerItem.Ref, in: ItemPatch)(using
       WritePermit
   ): Either[Api.Error, ManagerItem] =
@@ -914,6 +952,7 @@ final class ManagersControllers(
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def hints(id: ManagerLight.Id, all: Boolean): Either[Api.Error, List[ManagerHint]] =
     manager(id).map(m => Transactor(ds).read(ManagerRepo.hints(m.id, live = !all)))
 
@@ -927,6 +966,9 @@ final class ManagersControllers(
   def addHint(id: ManagerLight.Id, in: HintAdd)(using Creator.New): Either[Api.Error, ManagerHint] =
     held(WriteGate.OperationName("add_hint"))(addHintHeld(id, in))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def addHintHeld(id: ManagerLight.Id, in: HintAdd)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, ManagerHint] =
@@ -1011,6 +1053,8 @@ final class ManagersControllers(
     * (or a tag, topic, goal, or the item the hint is about), a hold's date or source, a settings change that parses and
     * that the manager's kind accepts.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def checkEffect(
       m: ManagerInfo,
       e: HintEffect,
@@ -1074,6 +1118,8 @@ final class ManagersControllers(
         )
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def proposeEffect(
       m: ManagerInfo,
       hintId: ManagerHint.Id,
@@ -1103,6 +1149,8 @@ final class ManagersControllers(
     */
   def applyProposal(p: HintProposal): Either[Problems, String] = agents.maintenance.writing(applyProposalHeld(p))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def applyProposalHeld(p: HintProposal)(using WritePermit): Either[Problems, String] =
     for
       m <- manager(p.managerId.transformInto[ManagerLight.Id]).left.map(_.problems)
@@ -1153,6 +1201,8 @@ final class ManagersControllers(
       supervisor.nudge()
       s"${m.id} hint #${ht.id}: ${ManagersMarkdown.effect(e)}$w"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def applyEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect)(using
       WritePermit
   ): String =
@@ -1228,6 +1278,8 @@ final class ManagersControllers(
   def deleteHint(id: ManagerLight.Id, hint: ManagerHint.Id): Either[Api.Error, Removed] =
     held(WriteGate.OperationName("delete_hint"))(deleteHintHeld(id, hint))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def deleteHintHeld(id: ManagerLight.Id, hint: ManagerHint.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
       val gone = Transactor(ds).write(ManagerRepo.retireHint(m.id, hint))
@@ -1240,6 +1292,7 @@ final class ManagersControllers(
   /** A goal's schedules (every goal's: None) as the goal surfaces show them — its watcher's sweeps
     * ([[WatchSchedules.view]]), and any `goal_schedules` row the managers have not moved yet.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalSchedules(goal: Option[DomainGoal.Slug]): List[Goal.Plans.GoalSchedule] =
     agents.managerStore
       .list()
@@ -1262,6 +1315,8 @@ final class ManagersControllers(
   )(using Creator.New): Either[Api.Error, Goal.Plans.GoalSchedule] =
     held(WriteGate.OperationName("set_schedule"))(setScheduleHeld(goal, kind, in, now))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def setScheduleHeld(
       goal: DomainGoal.Slug,
       kind: Goal.Plans.ScheduleKind,
@@ -1356,6 +1411,8 @@ final class ManagersControllers(
   def removeSchedule(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
     agents.maintenance.writing(removeScheduleHeld(goal, kind))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def removeScheduleHeld(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind)(using
       WritePermit
   ): Goal.Plans.Removed =
@@ -1386,6 +1443,8 @@ final class ManagersControllers(
     Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerItem.Outcome)(using WritePermit): Unit =
     m.goal
       .flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value)))
@@ -1443,6 +1502,8 @@ final class ManagersControllers(
   def setMode(in: AgentMode.ModeSet)(using Creator.New): Either[Api.Error, Autopilot.EngineStatus] =
     held(WriteGate.OperationName("set_mode"))(setModeHeld(in))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def setModeHeld(
       in: AgentMode.ModeSet
   )(using WritePermit)(using Creator.New): Either[Api.Error, Autopilot.EngineStatus] =
@@ -1479,6 +1540,8 @@ final class ManagersControllers(
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def events(
       id: ManagerLight.Id,
       before: Option[ManagerRepo.EventCursor],

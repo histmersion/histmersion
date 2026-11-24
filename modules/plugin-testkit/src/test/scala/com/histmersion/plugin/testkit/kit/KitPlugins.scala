@@ -7,6 +7,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.lint.{LintRule, tolerated}
 
 // Test plugins, one per extension point, found by ServiceLoader on the test class path as a plugin
 // author's own plugin is in its tests.
@@ -29,6 +30,7 @@ final class KitFetcherPlugin extends Plugin:
             Registry.AddId("kit-fetcher"),
             new SourceFetcher:
               val access = Access.Open
+              @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
               def fetch(work: WorkKey, fc: Fetch.Context): Fetch =
                 work.doi match
                   case None =>
@@ -66,6 +68,7 @@ final class KitMediaPlugin extends Plugin:
           val title = MediaCollection.Title("Kit pictures")
           val role = MediaCollection.Image
           override def requestIntervalMs = MediaCollection.RequestIntervalMs(0)
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
           def search(place: MediaPlace, http: Plugin.Http) =
             http
               .get(Plugin.Http.Url(s"${c.baseUrl}/search?q=${place.label}"))
@@ -105,9 +108,11 @@ final class KitEventsPlugin extends Plugin:
         Registry.AddId("kit-events"),
         new EventCatalogue:
           val title = EventCatalogue.Title("Kit events"); val licence = Licence("CC0");
-          val citation = EventCatalogue.Citation("Kit"); val home = EventCatalogue.Home(c.baseUrl)
+          val citation = EventCatalogue.Citation("Kit"); @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+                                                         val home = EventCatalogue.Home(c.baseUrl)
           override def requestIntervalMs = EventCatalogue.RequestIntervalMs(0)
           def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("p1"))
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
           def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
             http
               .get(Plugin.Http.Url(s"${c.baseUrl}/$part"))
@@ -150,6 +155,7 @@ final class KitAiPlugin extends Plugin:
                     Problem.Config
                       .Setting(Problem.SettingKey("histmersion.plugins.kit-ai.api-key"), Problem.Config.Fault.Empty)
                   )
+              @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
               def turn(r: AiTurn.Request, http: AiHttp) =
                 http
                   .post(
@@ -175,6 +181,7 @@ final class KitVaultPlugin extends Plugin:
         Registry.AddId("kit-vault"),
         new Secret.Vault:
           val name = Secret.Vault.Name("kit-vault")
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
           def resolve(ref: Secret.Vault.ResolveRef) =
             c.entries
               .map(_.split("=", 2))
@@ -195,6 +202,7 @@ final class KitBrokenPlugin extends Plugin:
       .Said(Problem.Plugin.Id("kit-broken"), Problem.Plugin.Claim.Failed, External.PluginSaid("broken on purpose"))
   )
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class KitBaseConfigOrNothing() derives ConfigReader
 
 /** A plugin shipped without its defaults resource. */

@@ -5,8 +5,10 @@ import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class ModuleCoordinates(key: ModuleKey, version: ModuleVersion):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def toString: String = s"$key:${version.value}"
 
 object ModuleCoordinates:
@@ -18,6 +20,7 @@ object ModuleCoordinates:
   object Written extends Newtype[String, Match["[A-Za-z0-9_.\\-+]+:[A-Za-z0-9_.\\-+]+:[A-Za-z0-9_.\\-+]+"]]
 
   /** `group:artifact:version`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: Text): Either[Problems, ModuleCoordinates] = (raw).value.trim.split(':').toList match
     case List(g, a, v) =>
       ModuleKey.parse(ModuleKey.Text(s"$g:$a")).and(ModuleVersion.parse(v)).map(ModuleCoordinates(_, _))

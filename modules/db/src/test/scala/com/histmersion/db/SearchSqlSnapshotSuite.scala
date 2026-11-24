@@ -24,6 +24,7 @@ import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.Frag
 import com.augustnagro.magnum.sql
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and
@@ -106,6 +107,7 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val sorts: List[(String, Filter)] =
     Sort.values.toList.flatMap(s =>
       List(
@@ -170,6 +172,7 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def facets(f: Filter, scope: PlaceScope): List[(String, Frag)] =
     Facet.Field.values.toList.flatMap { ff =>
       List(
@@ -186,6 +189,7 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def snapshot: String =
     val out = StringBuilder()
     for (name, f) <- criteria ++ sorts ++ pages; (scopeName, scope) <- scopes do

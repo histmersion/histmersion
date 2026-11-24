@@ -6,8 +6,10 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** `histmersion rename <old> <new>`: a source's new citekey, parsed into [[RenameCmd.Args]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion rename`: declares its options, parses them into typed commands")
 object RenameArgs extends CommandLine.Entry:
   val name = "rename"
   def help: String = RenameCmd.Help

@@ -8,7 +8,9 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class LabelRenamed(
     entity: Bundle.Kind,
     from: LabelRenamed.From,

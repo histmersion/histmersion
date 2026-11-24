@@ -55,6 +55,7 @@ import com.histmersion.domain.library.acquisition.HttpPlugin
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What acquisition, ingest and the collections answer, recorded on the code before they moved into the library's
   * domain. A server on its own scratch database, every upstream a fixture on a loopback port (never the network), the
@@ -95,6 +96,7 @@ class AcquisitionOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-acquisition-oracle").toRealPath()
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_s10p", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -137,6 +139,7 @@ class AcquisitionOracleSuite extends DbSuite:
     def pdf(name: String): Array[Byte] = s"%PDF-1.4\n% zq fixture $name\n${"z" * 12288}\n%%EOF\n".getBytes(UTF_8)
 
     /** A synthetic OpenAlex work. */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def work(
         doi: String,
         title: String,
@@ -359,6 +362,7 @@ class AcquisitionOracleSuite extends DbSuite:
           Registry.AddId("zq-unauthorised"),
           new SourceFetcher:
             val access = Access.Unauthorised
+            @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
             def fetch(w: WorkKey, c: Fetch.Context) =
               unauthorisedAsked.incrementAndGet()
               Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("the zq fixture has no copy")))
@@ -376,6 +380,8 @@ class AcquisitionOracleSuite extends DbSuite:
           Registry.AddId("zq-shelf"),
           new SourceFetcher:
             val access = Access.Open
+            @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+            @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
             def fetch(w: WorkKey, c: Fetch.Context) =
               if w.doi.map(_.value).contains("10.5555/zq.licensed") then
                 Fetch.Found(
@@ -400,6 +406,7 @@ class AcquisitionOracleSuite extends DbSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       Right(
         ConvertedDoc(
@@ -486,6 +493,8 @@ class AcquisitionOracleSuite extends DbSuite:
       List("candidates.arxiv-api-url = https://export.arxiv.org/api/query")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def withServer[A](name: String, up: Upstreams, lib: CalibreFixture, allowUnauthorised: Boolean = false)(
       body: String => A
   ): A =
@@ -1053,6 +1062,7 @@ class AcquisitionOracleSuite extends DbSuite:
     "assets" -> "citekey, name, license"
   )
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def rows(ds: DataSource, port: Int): String =
     Tables
       .map { (t, cols) =>

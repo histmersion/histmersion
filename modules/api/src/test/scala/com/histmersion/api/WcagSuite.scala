@@ -2,7 +2,10 @@ package com.histmersion
 package api
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class WcagSuite extends munit.FunSuite:
 
   test("black on white is 21:1, a colour on itself 1:1, and the ratio is symmetric"):

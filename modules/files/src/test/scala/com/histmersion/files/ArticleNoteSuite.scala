@@ -15,10 +15,12 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing
   * research wiki actually writes — that is what "the 40+ existing articles import" means in the acceptance line.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleNoteSuite extends munit.FunSuite:
 
   // exactly the head of wiki/concepts/sea_peoples.md

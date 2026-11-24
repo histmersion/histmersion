@@ -17,6 +17,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.RowCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The facet counts travel in the [[FacetsHeader]] response header, so the JSON body stays the plain array older
   * clients read.
@@ -25,8 +26,10 @@ object ListFilters:
   type EncodedFacets = EncodedFacets.T
   object EncodedFacets extends Newtype[String, Pure]
   type FacetLine = FacetLine.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FacetLine extends Newtype[String, Pure]
   type FacetName = FacetName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FacetName extends Newtype[String, Pure]
   type OptionLabel = OptionLabel.T
   object OptionLabel extends Newtype[String, Pure]
@@ -40,14 +43,17 @@ object ListFilters:
 
   val FacetMax = 40
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def values(vs: List[Term]): List[Term] =
     (vs.flatMap((_).value.split(',')).map(_.trim).filter(_.nonEmpty).distinct).map(refactorValue => Term(refactorValue))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def words(groups: List[String]*): Option[Qualifier] =
     (Option(groups.filter(_.nonEmpty).map(_.mkString("/")).mkString(" "))
       .filter(_.nonEmpty))
       .map(refactorValue22 => Qualifier(refactorValue22))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def one(v: Option[Term]): Option[Term] =
     (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue2 => Term(refactorValue2))
 
@@ -61,11 +67,13 @@ object ListFilters:
   private def single[A](v: Option[A], lower: Boolean = false)(text: A => String, make: String => A): Option[A] =
     v.map(a => text(a).trim).filter(_.nonEmpty).map(s => make(if lower then s.toLowerCase else s))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def entry(key: String, v: Option[String]): (Term, Option[OptionLabel]) =
     Term(key) -> v.map(OptionLabel(_))
 
   export Approval.DecidedBy as DecidedBy
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ApprovalFilter(
       state: Option[ApprovalFilter.State] = None,
       kind: List[ApprovalFilter.Kind] = Nil,
@@ -73,6 +81,8 @@ object ListFilters:
       goal: Option[Goal.Slug] = None,
       decidedBy: List[ApprovalFilter.DecidedBy] = Nil
   ) derives CanEqual:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def normalized: ApprovalFilter =
       ApprovalFilter(
         single(state, true)(_.value, ApprovalFilter.State(_)),
@@ -82,6 +92,7 @@ object ListFilters:
         many(decidedBy, true)(_.value, ApprovalFilter.DecidedBy(_))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def qualifier: Option[Qualifier] =
       val n = normalized
       words(
@@ -89,6 +100,7 @@ object ListFilters:
         (n.kind).map(refactorValue3 => (refactorValue3).value)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def options: List[(Term, Option[OptionLabel])] =
       val n = normalized
       List(entry("state", n.state.map(_.value))) ++ n.kind.map(k => entry("kind", Some(k.value))) ++ List(
@@ -105,6 +117,7 @@ object ListFilters:
     object Subject extends Newtype[String, Pure]
     export Approval.DecidedBy.Wire as DecidedBy
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunFilter(
       status: List[RunFilter.Status] = Nil,
       pipeline: List[RunFilter.Pipeline] = Nil,
@@ -117,6 +130,7 @@ object ListFilters:
       until: Option[RunFilter.Until] = None,
       subject: Option[RunFilter.Subject] = None
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def qualifier: Option[Qualifier] = {
       val n = normalized;
       words(
@@ -124,6 +138,8 @@ object ListFilters:
         (n.pipeline).map(refactorValue27 => (refactorValue27).value)
       )
     }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def normalized: RunFilter =
       RunFilter(
         many(status, true)(_.value, RunFilter.Status(_)),
@@ -137,6 +153,7 @@ object ListFilters:
         single(until)(_.value, RunFilter.Until(_)),
         single(subject)(_.value, RunFilter.Subject(_))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def options: List[(Term, Option[OptionLabel])] =
       val n = normalized
       n.status.map(v => entry("status", Some(v.value))) ++ n.pipeline.map(v =>
@@ -178,6 +195,7 @@ object ListFilters:
       until: Option[JobFilter.Until] = None,
       subject: Option[JobFilter.Subject] = None
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def qualifier: Option[Qualifier] = {
       val n = normalized;
       words(
@@ -185,6 +203,8 @@ object ListFilters:
         (n.kind).map(refactorValue15 => (refactorValue15).value)
       )
     }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def normalized: JobFilter =
       JobFilter(
         many(status, true)(_.value, JobFilter.Status(_)),
@@ -193,6 +213,7 @@ object ListFilters:
         single(until)(_.value, JobFilter.Until(_)),
         single(subject)(_.value, JobFilter.Subject(_))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def options: List[(Term, Option[OptionLabel])] =
       val n = normalized
       n.status.map(v => entry("status", Some(v.value))) ++ n.kind.map(v => entry("kind", Some(v.value))) ++ List(
@@ -212,6 +233,7 @@ object ListFilters:
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val approvalQuery: EndpointInput[ApprovalFilter] =
     query[Option[String]]("state")
       .description("open (default), approved, rejected, failed or all")
@@ -244,6 +266,7 @@ object ListFilters:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val runQuery: EndpointInput[RunFilter] =
     query[List[String]]("status")
       .description(s"any of: ${Agents.RunState.values.map(_.wire).mkString(", ")}")
@@ -289,6 +312,7 @@ object ListFilters:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val jobQuery: EndpointInput[JobFilter] =
     query[List[String]]("status")
       .description(s"any of: ${JobState.values.map(_.wire).mkString(", ")}")
@@ -314,6 +338,8 @@ object ListFilters:
         (v.status.map(_.value), v.kind.map(_.value), v.since.map(_.value), v.until.map(_.value), v.subject.map(_.value))
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def known(what: FacetName, vs: List[Term], known: Seq[Term]): Either[Problem, List[Term]] =
     vs.find(v => !known.contains(v)) match
       case Some(v) =>
@@ -322,6 +348,9 @@ object ListFilters:
         )
       case None => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def timeBound(s: TimeBound, end: Boolean, now: Instant): Either[Problem, Instant] = s.instant(end, now)
 
   def range(
@@ -376,9 +405,13 @@ object ListFilters:
           case None    => (s).substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
       (new String(out.toByteArray, "UTF-8"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def encodeFacets(fs: List[(FacetName, List[(Term, RowCount)])]): EncodedFacets =
     EncodedFacets(fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(((v).value))}=$n")).mkString(","))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decodeFacets(s: EncodedFacets): List[(FacetName, List[(Term, RowCount)])] =
     val triples = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { t =>
       t.split('=') match
@@ -395,6 +428,8 @@ object ListFilters:
       )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facetLine(label: FacetName, counts: List[(Term, RowCount)]): FacetLine =
     if counts.isEmpty then FacetLine("")
     else

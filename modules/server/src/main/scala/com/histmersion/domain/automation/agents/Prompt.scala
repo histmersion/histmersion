@@ -5,16 +5,20 @@ import com.histmersion.util.problem.Text.sentence
 
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One LLM step's prompt. `system` is the step's prompt FILE(S) (bundled as resources, so one copy per prompt and its
   * hash recorded on every attempt); `user` carries the data.
   */
 final case class Prompt(system: Prompt.System, user: Prompt.User):
   /** sha256 of the system prompt — which prompt version produced a checkpoint. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def hash: Sha256 = Prompt.sha256(system.value)
 
 object Prompt:
   type UserText = UserText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object UserText extends Newtype[String, Pure]
 
   /** Untrusted text (an OCR'd body, an article under review) as DATA: fenced in tags the system prompt names, with any
@@ -57,6 +61,7 @@ object Prompt:
           "\nEverything else in it stands. Do not repeat your lookups: return the same answer with exactly " +
           "these points fixed.\n\n" + data("previous-answer", prev)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha256(s: String): Sha256 =
     Sha256.assume(
       java.security.MessageDigest

@@ -17,11 +17,13 @@ import com.histmersion.web.map.BaseMapSpec
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.basemap.BaseMapSource
 import com.histmersion.api.BBox
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's styles for the app's base maps ([[BaseMapSpec]]): the two vector styles are MapLibre style documents
   * in the web resources (`web/styles/<style>.json`, every value with the rule it follows, docs/research-map-styles.md),
   * their sources pointed at the server's tiles here; the online maps are a raster source.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object MapLibreStyles:
   type Origin = Origin.T
   object Origin extends Newtype[String, Pure]
@@ -29,6 +31,8 @@ object MapLibreStyles:
   private val docs = mutable.HashMap.empty[VectorStyle.Id, Future[js.Dynamic]]
 
   /** The style document of `s`, fetched once. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doc(s: VectorStyle): Future[js.Dynamic] =
     docs.getOrElseUpdate(
       s.id, {
@@ -47,6 +51,7 @@ object MapLibreStyles:
   /** A copy of a JSON value. */
   private def copy(v: js.Any): js.Dynamic = js.JSON.parse(js.JSON.stringify(v)).asInstanceOf[js.Dynamic]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def background(): String = ThemeTokens(ThemeTokens.Name("--bg")).value
 
   /** The page's own background and nothing else. */
@@ -65,6 +70,8 @@ object MapLibreStyles:
       )
       .asInstanceOf[js.Object]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def style(b: BaseMapSpec, origin: Origin): Future[js.Any] = b match
     case BaseMapSpec.Blank     => Future.successful(blank())
     case r: BaseMapSpec.Raster => Future.successful(raster(r))
@@ -83,6 +90,7 @@ object MapLibreStyles:
   /** The credits a style owes: each source's `attribution` that a layer drawn (not `visibility: none`) reads, once
     * each, in the style's order. Pure over the JSON.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def credits(s: js.Dynamic): Seq[BaseMapSpec.Raster.Attribution] =
     if js.isUndefined(s) || s == null || js.isUndefined(s.sources) || js.isUndefined(s.layers) then Nil
     else
@@ -124,11 +132,15 @@ object MapLibreStyles:
       out
 
   /** `{s}` → the subdomains a, b, c ([[BaseMapSource.Subdomains]], which the server's policy lists too). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expand(template: BasemapApi.TileTemplate): js.Array[String] =
     val t = template.value
     if t.contains("{s}") then js.Array(BaseMapSource.Subdomains.map(x => t.replace("{s}", x))*)
     else js.Array(t)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def raster(r: BaseMapSpec.Raster): js.Object =
     val paint = js.Dynamic.literal(`raster-opacity` = r.opacity.value)
     if r.dark.value then
@@ -160,16 +172,21 @@ object MapLibreStyles:
       )
       .asInstanceOf[js.Object]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def info(s: Basemap.Status, layer: String): Option[Basemap.LayerInfo] =
     s.layers.find(i => i.layer.value == layer && i.present.value && i.error.isEmpty)
 
   /** The relief, when it reaches deeper than the extract — a focus region, or the on-demand relief: what the contours
     * are traced from (the extract's relief alone is too coarse for them).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def deeperRelief(s: Basemap.Status): Option[Basemap.LayerInfo] =
     info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled.value))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drop(s: js.Dynamic, id: MapSurface.LayerId): Unit =
     js.special.delete(s.sources, id)
     s.layers =
@@ -183,6 +200,7 @@ object MapLibreStyles:
     * GPU); without `seaDepth` the layers drawing the sea floor are hidden (`visibility: none`: their tiles are not
     * asked for, and turning them on again is a diff of their layout).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(
       s: js.Dynamic,
       status: Basemap.Status,
@@ -277,6 +295,7 @@ object MapLibreStyles:
   // one contour source per relief version and depth (the library registers a page protocol for it)
   private val demSources = mutable.HashMap.empty[String, js.Dynamic]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def contours(s: js.Dynamic, status: Basemap.Status, origin: Origin): Future[Unit] =
     contourLib.map { lib =>
       val t = deeperRelief(status).get

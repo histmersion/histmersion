@@ -10,6 +10,8 @@ import java.time.Instant
 import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Goal schedules are research-area watchers since phase 3 (docs/research-process-managers.md §4 (c)): the pure half of
   * moving a `goal_schedules` row into its goal's `watch:<goal>` manager, and of showing a watcher as the schedules the
@@ -17,12 +19,16 @@ import io.github.iltotore.iron.constraint.any.Pure
   * watcher's sweep (`currency` ↔ `currency-check`, `acquisition` ↔ `acquisition-sweep`); a watcher has ONE cron for its
   * sweeps.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationScheduler)
 object WatchSchedules:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sweepOf(k: ScheduleKind): Sweep = k match
     case ScheduleKind.Currency    => Sweep.Currency
     case ScheduleKind.Acquisition => Sweep.Acquisition
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def kindOf(s: Sweep): ScheduleKind = s match
     case Sweep.Currency    => ScheduleKind.Currency
     case Sweep.Acquisition => ScheduleKind.Acquisition
@@ -51,6 +57,7 @@ object WatchSchedules:
     * The per-run budget is the acquisition schedule's (the currency check calls no model), else the currency one's,
     * unless the watcher has one. `now` only ranks two crons by how often they fire.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def migrate(existing: Option[Existing], schedules: List[GoalSchedule], now: Instant): Plan =
     val ordered = schedules.sortBy(_.kind.ordinal)
     val on = ordered.filter(_.enabled.value)
@@ -102,6 +109,8 @@ object WatchSchedules:
   /** A watcher as the goal surfaces show its schedules: one per sweep it runs, with its cron, its next firing, its last
     * run (the item's) and a note saying whether it is paused.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def view(m: ManagerInfo, items: List[ManagerItem]): List[GoalSchedule] =
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { s =>

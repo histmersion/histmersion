@@ -15,6 +15,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind stored with
   * only a point — what the importer no longer creates ([[Gazetteer.dropsPointArea]]). The listing reads; [[remove]]
@@ -24,6 +26,9 @@ import com.histmersion.util.database.Unused
   * A place an attestation or an asset link names, or one a person curated (`place_overrides`, `places set`), is listed
   * but never removed: that is a person's evidence or decision, and it is theirs to move or reset first.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the point area tables and their row codecs")
 private[places] object PointAreaRepo:
   type NameKey = NameKey.T
   object NameKey extends Newtype[String, Pure]
@@ -58,6 +63,7 @@ private[places] object PointAreaRepo:
       sources: Removal.Sources
   ):
     /** The line `lint --fix` reports it with. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def line: PointAreas.FixedLine =
       PointAreas.fixed(
         PointAreas.FixedRemoved(removed.value),
@@ -76,6 +82,7 @@ private[places] object PointAreaRepo:
     type Sources = Sources.T
     object Sources extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private val sources: List[Group.Source] =
     Gazetteer.PointAreaSources.map(s => Group.Source(s.value))
 
@@ -91,6 +98,8 @@ private[places] object PointAreaRepo:
       alone: Row.Alone,
       pinned: Row.Pinned
   ) derives DbCodec:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def listed: Listed =
       Listed(
         Listed.Id(id.value),
@@ -126,6 +135,7 @@ private[places] object PointAreaRepo:
     object Pinned extends Newtype[Int, Pure]
 
   /** The counts by source, kind and dating. */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def groupsIn(kinds: List[Place.Kind.Wire])(using DbCon): List[Group] =
     sql"""SELECT p.import_source, p.kind, coalesce(p.start_unknown, false),
                  coalesce(lower_inf(p.period), true), coalesce(upper_inf(p.period), true), count(*)::int
@@ -143,6 +153,7 @@ private[places] object PointAreaRepo:
   /** Every such place that holds a finding or that evidence names. `alone`: the findings it holds that hold no OTHER
     * place that would survive the removal.
     */
+  @tolerated(LintRule.TotalOrder, "a is a CTE of places: id is its key")
   def holdersIn(kinds: List[Place.Kind.Wire])(using DbCon): List[Listed] =
     sql"""WITH a AS MATERIALIZED (
             SELECT p.id, p.label, p.import_source, p.kind, coalesce(p.start_unknown, false) AS su,
@@ -171,6 +182,7 @@ private[places] object PointAreaRepo:
           ORDER BY a.id""".query[Row].run().toList.map(_.listed)
 
   /** The first `n` such places by id — the sample the listing ends with. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sampleIn(kinds: List[Place.Kind.Wire], n: PointAreas.ReportMaxItems)(using DbCon): List[Listed] =
     sql"""SELECT p.id, p.label, p.import_source, p.kind, coalesce(p.start_unknown, false),
                  coalesce(lower_inf(p.period), true), coalesce(upper_inf(p.period), true), 0, 0, 0
@@ -180,6 +192,7 @@ private[places] object PointAreaRepo:
           ORDER BY p.id LIMIT ${math.max(0, n.value)}""".query[Row].run().toList.map(_.listed)
 
   /** The rule's report. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def reportIn(rule: Lint.Rule, kinds: List[Place.Kind.Wire], maxItems: PointAreas.ReportMaxItems)(using
       DbCon
   ): Lint.LintRuleReport =
@@ -223,6 +236,7 @@ private[places] object PointAreaRepo:
   /** The ids of `source`'s places the importer no longer keeps: an area kind, only a point, and no evidence naming it
     * ([[GazetteerImport.Session.prune]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[places] def ofSourceIn(source: Group.Source, kinds: List[Place.Kind.Wire])(using DbCon): List[Place.Id] =
     sql"""SELECT p.id FROM places p
           WHERE p.import_source = $source AND p.kind = ANY($kinds::text[])
@@ -239,6 +253,7 @@ private[places] object PointAreaRepo:
     * point region, before "Bohemia"), and chooses the seed place once that is gone. Every other match an imported point
     * has is a finding ON it, which the place's own rows say.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def nameKeysIn()(using DbCon): Map[NameKey, Set[Citekey]] =
     val findings =
       sql"""SELECT DISTINCT citekey, btrim(region_name) FROM findings WHERE btrim(coalesce(region_name, '')) <> ''"""
@@ -276,6 +291,7 @@ private[places] object PointAreaRepo:
     * the places' names AND as an explicit-only seed place's ([[nameKeysIn]]): the geocoder may have chosen the removed
     * place for it, and now chooses the seed region, which takes the finding by its name ("Thrace").
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def removeIn(
       ids0: List[Place.Id],
       kinds: List[Place.Kind.Wire],

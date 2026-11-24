@@ -12,10 +12,12 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The refined types of the Wikidata sites on the map (those a finding or a picture is placed at): which are still to
   * be asked, and what each was found to be.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait SiteTypeService:
   /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine: never asked, or
     * (`refresh`) asked before `before` (epoch ms), by id.
@@ -38,6 +40,7 @@ object SiteTypeService:
   def apply(db: Transactor): SiteTypeService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends SiteTypeService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sitesToType(
         limit: PageSize,
         refresh: Refresh,
@@ -47,8 +50,10 @@ object SiteTypeService:
         .map((id, item, cls) =>
           (id, WikidataItem.Id(item.value), cls.map(c => CatalogRecord.Wikidata.ImportClass(c.value)))
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       db.read(SiteTypeRepo.countSitesToType(SiteTypeRepo.Refresh(refresh.value), before))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
       db.write(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))
 
@@ -56,6 +61,7 @@ object SiteTypeService:
   final class InMemory(state: AtomicReference[CatalogueState], now: () => HeldSite.CheckedAt) extends SiteTypeService:
     private val WikidataSite = "^wikidata_q[1-9][0-9]*$".r
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def toType(refresh: Refresh, before: Option[DeepTime.SignedYear])(s: HeldSite): Boolean =
       val asked = (refresh.value, before) match
         case (true, Some(ms)) => s.checkedAt.forall(_.value < ms.value)
@@ -63,6 +69,7 @@ object SiteTypeService:
         case _                => s.checkedAt.isEmpty
       WikidataSite.matches(s.id.value) && s.onMap.value && asked
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sitesToType(
         limit: PageSize,
         refresh: Refresh,
@@ -85,9 +92,11 @@ object SiteTypeService:
         )
         .toList
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       RowCount(state.get.sites.count(toType(refresh, before)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
       val at = now()
       val typed = types.map((id, t) => HeldSite.Id(id.value) -> t).toMap

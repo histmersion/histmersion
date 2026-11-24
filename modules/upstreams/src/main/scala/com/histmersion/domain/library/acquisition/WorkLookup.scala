@@ -17,6 +17,7 @@ import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.ArxivId
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A work's metadata by its DOI, as an ingest looks it up before asking the acquisition chain: OpenAlex first (richer,
   * keyless), Crossref as the fallback, with Unpaywall's open-access status when Crossref answered. `json` is the
@@ -29,6 +30,7 @@ object WorkLookup:
   type WorkFieldsValue = WorkFieldsValue.T
   object WorkFieldsValue extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val WorkFields: WorkFields =
     WorkFieldsValue(
       "id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
@@ -36,13 +38,19 @@ object WorkLookup:
     )
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def workUrl(cfg: UpstreamSettings, doi: Doi): Candidate.Url =
     Candidate.Url(s"${cfg.openalex.url}/works/https://doi.org/$doi")
 
   /** Crossref's record of a DOI. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def crossrefUrl(cfg: UpstreamSettings, doi: Doi): Candidate.Url =
     Url(Candidate.Url(cfg.crossref.url.value), Url.UrlPath(s"/works/$doi"), "mailto" -> cfg.mailto.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def meta(cfg: UpstreamSettings, json: Candidate.Url => Either[Problem, Json], log: Plugin.Log)(
       doi: Doi
   ): Either[Problem, WorkRef] =
@@ -62,6 +70,9 @@ object WorkLookup:
     * where OpenAlex's own OA data comes from — and leave the status unknown (`oaStatus = None`) when it cannot answer:
     * Unpaywall refuses a request without a contact e-mail.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withUnpaywall(
       cfg: UpstreamSettings,
       json: Candidate.Url => Either[Problem, Json],
@@ -84,6 +95,7 @@ object WorkLookup:
   /** Pure: what the acquisition chain is asked for one work — its identifiers and what its metadata record says of it.
     * A DOI that is none is not passed on.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(doi: Option[Doi], arxiv: Option[ArxivId], work: Option[WorkRef]): WorkKey =
     WorkKey(
       doi = doi.map(_.value.trim).filter(_.matches("10\\.[0-9]+/\\S+")).map(Doi(_)),

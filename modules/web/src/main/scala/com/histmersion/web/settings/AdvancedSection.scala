@@ -22,10 +22,14 @@ object AdvancedSection:
     given Display[T] = Display(_.value)
 
   /** Does a setting match what was typed in the filter (its key or its words)? Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(f: ConfigEdit.Field, q: Query): Boolean =
     val t = q.value.trim.toLowerCase
     t.isEmpty || f.relative.value.toLowerCase.contains(t) || f.doc.value.toLowerCase.contains(t)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def pane: HtmlElement =
     val draft = Draft()
     val query = Var("")
@@ -81,11 +85,15 @@ object AdvancedSection:
   )
 
   /** A block's name for a person. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sectionName(id: ConfigEdit.Section.Id): SectionName = SectionName(
     Names.getOrElse(id.value, Wording.humanize(Wording.Id(id.value)))
   )
 
   /** One block, folded until opened (or while the filter finds something in it). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[Query]): HtmlElement =
     val open = Var(false)
     val shown = s.fields.filter(_.credential.isEmpty)

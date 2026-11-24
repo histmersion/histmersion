@@ -11,6 +11,8 @@ import com.histmersion.plugin.*
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Smithsonian Open Access API (https://edan.si.edu/openaccess/apidocs/): `GET {api}/search?q=&rows=
   * &type=edanmdm&row_group=objects` with an api.data.gov key (sent as the `X-Api-Key` header, which api.data.gov
@@ -22,6 +24,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `indexedStructured.geoLocation` from its finest level down. Dates: `freetext.date` entries labelled as the object's
   * date (never an accession or collection date), read by [[FreeTextDates]]. Pure.
   */
+@atBoundary(BoundaryKind.Json, "reads the smithsonian collection's JSON answers into media records")
 object Smithsonian:
 
   /** The plugin's id: what its problems name. */
@@ -37,6 +40,8 @@ object Smithsonian:
   /** Pure: the query — the place's name as a phrase, objects with images only, none of the excluded units (`unit_code`,
     * a fielded term the API's `terms` endpoint lists).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def query(name: MediaPlace.Label, excludedUnits: List[Unit] = Nil): CollectionQuery.Text =
     val units = excludedUnits.map(_.value.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
     CollectionQuery.Text(
@@ -44,6 +49,8 @@ object Smithsonian:
         (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       api: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
@@ -111,6 +118,7 @@ object Smithsonian:
   /** Pure: one row of a search answer; a row of an excluded unit (a natural-history department's specimen) is withheld
     * with that reason, whatever its licence.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(json: Json, excludedUnits: List[Unit] = Nil): Either[Problem, MediaItem] =
     val c = json.cursor
     val cont = c.downField("content")

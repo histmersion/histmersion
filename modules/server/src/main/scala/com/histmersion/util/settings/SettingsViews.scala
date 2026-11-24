@@ -7,10 +7,14 @@ import com.histmersion.config.{PgBytes, PgParameter}
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
 import com.histmersion.api.settings.ReloadReport
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings as the wire shows them ([[SettingShown]]: a credential's value never crosses). */
 object SettingsViews:
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(s: SettingsSnapshot, restartable: Boolean): ConfigEdit.Page =
     val fields = s.readings.map(field(_, s.automatic))
     val sections = fields
@@ -33,12 +37,15 @@ object SettingsViews:
       ConfigEdit.Page.SetupDue(s.setupDue.value)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sectionDoc(id: String): String =
     SettingKey.either(s"${SettingKey.Root}.$id").toOption.fold("")(k => ConfigSchema.reference.blockDoc(k).value)
 
   /** One setting as the wire shows it; `automatic` (the bundled Postgres' sizes set to `auto`, and what each comes to
     * on this machine) gives the setting it sizes its `resolved` value.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def field(r: SettingReading, automatic: List[(PgParameter, PgBytes)] = Nil): ConfigEdit.Field =
     val s = SettingShown.of(r)
     ConfigEdit.Field(
@@ -65,6 +72,9 @@ object SettingsViews:
       }
     )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def written(
       o: WriteOutcome,
       reload: Option[ReloadReport],
@@ -85,6 +95,8 @@ object SettingsViews:
       ConfigEdit.Written.Restartable(restartable)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def error(e: SettingError): Api.Error =
     def refusal(code: String) = Api.Error(e.message, Some(Api.Error.Code(code)))
     e match

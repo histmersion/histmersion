@@ -23,12 +23,14 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once
   * ([[decideAll]]) — each approval through [[AgentsControllers.decide]], the very decision a person's click takes (a
   * waiting run is woken, a plan applied).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class ApprovalDigestService(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -45,6 +47,7 @@ final class ApprovalDigestService(
       )
 
   /** The digest as of `now`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def digest(now: Instant = Instant.now(agents.clock)): Digest =
     val open = agents.approvalStore.openLight()
     val wait = agents.focus.goalPlansWait()
@@ -60,6 +63,7 @@ final class ApprovalDigestService(
   /** From the managers' tick: once a UTC day (the tick's), after `digest-hour` (on the tick's time or on the digest's
     * clock, when it has one: [[AgentsControllers.digestClock]]), the digest's line goes to the worklog.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tick(now: Instant)(using WritePermit): List[String] =
     val hour = cfg.autopilot.digestHour.value
     val day = ManagerPolicy.dayStart(now)
@@ -83,6 +87,7 @@ final class ApprovalDigestService(
   /** Decide every open approval `b` matches (a kind, a subject, ids), oldest first; a refused one does not stop the
     * rest.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decideAll(b: BulkDecide)(using Creator.New): Either[Api.Error, BulkResult] =
     for
       d <- Decision

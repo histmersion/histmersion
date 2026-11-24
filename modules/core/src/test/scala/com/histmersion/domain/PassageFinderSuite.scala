@@ -13,7 +13,9 @@ import com.histmersion.api.catalogue.MatchSpan
 import com.histmersion.api.library.{PassageHit, PassageResult, PassagesMarkdown}
 import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PassageFinderSuite extends munit.FunSuite:
 
   private given Timer = new Timer {
@@ -65,6 +67,7 @@ class PassageFinderSuite extends munit.FunSuite:
       .fold(_.sentence, r => fail(s"expected an error, got $r"))
 
   /** The body slice `get_source {offset, chars}` would return. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def slice(segs: List[Chunk], offset: PassageHit.Offset, chars: Int): String =
     val b = PassageFinder.body(segs).value
     b.substring(offset.value, (offset.value + chars).min(b.length))

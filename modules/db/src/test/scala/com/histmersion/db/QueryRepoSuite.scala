@@ -26,6 +26,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Query
 import com.histmersion.config.QueryConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
@@ -33,11 +34,14 @@ import com.histmersion.config.QueryConfig
   * we wrote — so every refusal below is asserted to carry Postgres's own "read-only transaction" message, and the store
   * is checked afterwards to prove nothing changed.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class QueryRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val dbCfg = cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get))
 
   /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to migrate and to seed
@@ -60,6 +64,7 @@ class QueryRepoSuite extends DbSuite:
     Db.canConnect(q).left.foreach(m => fail(s"the read-only role cannot connect: ${m.sentence}"))
     q
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(sql: String, maxRows: Int = 100, timeoutMs: Int = 5000, maxCell: Int = 2000) =
     SearchFixtures.run(
       queryDs,
@@ -71,6 +76,7 @@ class QueryRepoSuite extends DbSuite:
 
   private val ck = "zzquery_probe"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeEach(context: BeforeEach): Unit =
     connect(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
     SourceFixtures.upsert(

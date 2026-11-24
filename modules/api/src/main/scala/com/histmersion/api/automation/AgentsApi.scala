@@ -10,7 +10,12 @@ import com.histmersion.api.Api
 import com.histmersion.api.research.ReviewGoal
 import scala.`package`.List
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the agents routes with their request and response bodies")
 object AgentsApi:
   type Actions = ActionsValue
   export Agents.Action as ActionsValue
@@ -26,6 +31,7 @@ object AgentsApi:
   lazy val models: PublicEndpoint[Unit, Api.Error, ModelsInfo, Any] =
     base.get.in("models").out(jsonBody[ModelsInfo])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val setChain: PublicEndpoint[(AgentRole.Wire, ModelChains.ChainSet), Api.Error, ModelChains.RoleChain, Any] =
     (writeBase.put
       .in("models" / path[String]("role"))
@@ -37,6 +43,7 @@ object AgentsApi:
         (((refactorEncoded)._1).value, (refactorEncoded)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val resetChain: PublicEndpoint[AgentRole.Wire, Api.Error, ModelChains.RoleChain, Any] =
     (writeBase.delete
       .in("models" / path[String]("role"))
@@ -48,6 +55,7 @@ object AgentsApi:
   lazy val setAllowance: PublicEndpoint[ModelChains.AllowanceSet, Api.Error, ModelChains.AllowanceStatus, Any] =
     writeBase.put.in("allowances").in(jsonBody[ModelChains.AllowanceSet]).out(jsonBody[ModelChains.AllowanceStatus])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeAllowance: PublicEndpoint[ReviewGoal.Slug, Api.Error, Goal.Plans.Removed, Any] =
     (writeBase.delete
       .in("allowances")
@@ -57,6 +65,8 @@ object AgentsApi:
         (refactorEncoded3: ReviewGoal.Slug) => (refactorEncoded3).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
   lazy val doctor: PublicEndpoint[Option[DoctorReport.Online], Api.Error, DoctorReport, Any] =
     (base.get
       .in("doctor")
@@ -74,6 +84,7 @@ object AgentsApi:
   lazy val startRun: PublicEndpoint[RunRequest, Api.Error, RunInfo, Any] =
     writeBase.post.in("runs").in(jsonBody[RunRequest]).out(jsonBody[RunInfo])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val runs: PublicEndpoint[
     (ListFilters.RunFilter, Option[Paging.Limit], Option[RunInfo.Status], Option[RunInfo.Pipeline]),
     Api.Error,
@@ -111,6 +122,7 @@ object AgentsApi:
           )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val run: PublicEndpoint[RunInfo.Id, Api.Error, RunDetail, Any] =
     (endpoint.get
       .in("api" / "agents" / "runs" / path[String]("id"))
@@ -120,6 +132,7 @@ object AgentsApi:
         (refactorEncoded6).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val compare: PublicEndpoint[List[RunInfo.Id], Api.Error, RunCompare.Comparison, Any] =
     (endpoint.get
       .in("api" / "agents" / "compare")
@@ -132,6 +145,7 @@ object AgentsApi:
         (refactorEncoded24).map(refactorElement30 => (refactorElement30).value)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val control: PublicEndpoint[
     (RunInfo.Id, Action, Option[RunRequest.BudgetUsd], Option[RunRequest.BudgetTokens]),
     Api.Error,
@@ -162,6 +176,7 @@ object AgentsApi:
 
   val Actions: List[Actions] = List(Action("pause"), Action("resume"), Action("cancel"))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val approvals: PublicEndpoint[
     (ListFilters.ApprovalFilter, Option[Paging.Limit], Option[Approval.State.Wire], Option[Approval.Kind.Wire]),
     Api.Error,
@@ -201,6 +216,7 @@ object AgentsApi:
           )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val decide: PublicEndpoint[(ApprovalInfo.Id, Decision.Wire, DecisionRequest), Api.Error, ApprovalInfo, Any] =
     (writeBase.post
       .in("approvals" / path[Long]("id") / path[String]("decision"))
@@ -216,6 +232,7 @@ object AgentsApi:
 
   private lazy val goalBase = endpoint.in("api" / "goals" / path[String]("slug")).errorOut(Api.problemOut)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val goalView: PublicEndpoint[ReviewGoal.Slug, Api.Error, GoalView, Any] =
     (goalBase.get
       .in("view")
@@ -224,6 +241,7 @@ object AgentsApi:
         (refactorEncoded11: ReviewGoal.Slug) => (refactorEncoded11).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val addGoalLink: PublicEndpoint[(ReviewGoal.Slug, LinkAdd), Api.Error, GoalLink, Any] =
     (goalBase.post
       .in("links")
@@ -233,6 +251,7 @@ object AgentsApi:
         (ReviewGoal.Slug((refactorDecoded12)._1), (refactorDecoded12)._2)
       )((refactorEncoded12: (ReviewGoal.Slug, LinkAdd)) => (((refactorEncoded12)._1).value, (refactorEncoded12)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeGoalLink: PublicEndpoint[(ReviewGoal.Slug, Goal.LinkKind.Wire, Citekey), Api.Error, Removed, Any] =
     (goalBase.delete
       .in("links")
@@ -249,6 +268,7 @@ object AgentsApi:
         (((refactorEncoded30)._1).value, ((refactorEncoded30)._2).value, ((refactorEncoded30)._3).value)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val setSchedule: PublicEndpoint[
     (ReviewGoal.Slug, api.automation.ScheduleKind.Wire, ScheduleSet),
     Api.Error,
@@ -270,6 +290,7 @@ object AgentsApi:
         (((refactorEncoded31)._1).value, ((refactorEncoded31)._2).value, (refactorEncoded31)._3)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeSchedule
       : PublicEndpoint[(ReviewGoal.Slug, api.automation.ScheduleKind.Wire), Api.Error, Removed, Any] =
     (goalBase.delete
@@ -293,6 +314,7 @@ object AgentsApi:
   lazy val quota: PublicEndpoint[Unit, Api.Error, PlanQuota.QuotaInfo, Any] =
     base.get.in("quota").out(jsonBody[PlanQuota.QuotaInfo])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val setPool: PublicEndpoint[(PlanQuota.PoolIdText, PlanQuota.PoolSet), Api.Error, PlanQuota.PoolStatus, Any] =
     (writeBase.put
       .in("quota" / path[String]("pool"))
@@ -304,6 +326,7 @@ object AgentsApi:
         (((refactorEncoded33)._1).value, (refactorEncoded33)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val setFallthrough
       : PublicEndpoint[(PlanQuota.PoolIdText, PlanQuota.FallthroughSet), Api.Error, PlanQuota.QuotaInfo, Any] =
     (writeBase.put

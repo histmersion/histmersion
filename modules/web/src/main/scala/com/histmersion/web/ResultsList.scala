@@ -24,6 +24,7 @@ import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.library.Title
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ResultsList:
   type Busy = Busy.T
@@ -31,6 +32,7 @@ object ResultsList:
   type InPanel = InPanel.T
   object InPanel extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type HitRowInPanel = InPanel
   val HitRowInPanel: InPanel.type = InPanel
 
@@ -72,6 +74,7 @@ object ResultsList:
   private val moreLabel = Var(Option.empty[UiLabels.Text])
   private val moreLoading = Var(false)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val element: HtmlElement =
     div(
       cls := "results-container",
@@ -105,16 +108,21 @@ object ResultsList:
       ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal.map(b => ResultsPaging.Loading(b)), () => more())
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def busy(on: Busy): Unit =
     isBusy.set(on.value)
     if on.value then isError.set(false)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def failed(msg: Problem): Unit =
     isError.set(true)
     isBusy.set(false)
     countText.set(UiLabels.Text(if msg.sentence.nonEmpty then msg.sentence
     else "failed to load — retrying on the next change"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def renderSources(result: SearchResult, opts: SourceRenderOpts): Unit =
     last = Some(LastSources(result, opts))
     val hits = result.hits
@@ -136,6 +144,8 @@ object ResultsList:
     * then its other dots (`others`: sites, events, pictures, each with its kind's icon), whose row opens what it is
     * ([[DotCluster]]: a site's or an event's card pinned under the row, a picture's popup on the map).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def pick(
       items: List[GeoHit],
       title: UiLabels.Text,
@@ -204,6 +214,7 @@ object ResultsList:
     moreLabel.set(None)
 
   /** A kind's icon at the head of a picked row, as a card's title has it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def pickIcon(icon: Glyphs.Name, kind: String): HtmlElement =
     span(
       cls := "cite-tip-icon pick-icon",
@@ -212,6 +223,8 @@ object ResultsList:
     )
 
   /** A picked dot that is not a finding: its icon, its name, its kind and years; a click or Enter opens it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def otherRow(entry: DotEntry, open: dom.Element => Unit): HtmlElement =
     div(
       cls := s"hit hit-dot hit-${entry.kind.one}",
@@ -233,6 +246,8 @@ object ResultsList:
   private val Marked = "\\*\\*(.+?)\\*\\*".r
 
   /** A search snippet: its text, each `**match**` the search marked as a `<mark>`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def snippetHtml(text: UiLabels.Text): Html =
     val cleaned = text.value.replaceAll("\\s+", " ").trim
     val marks = Marked.findAllMatchIn(cleaned).toList
@@ -244,6 +259,7 @@ object ResultsList:
         Html.text(cleaned.substring(from.last))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def countLine(): UiLabels.Text =
     val findings = pageOpts match
       case Some(o) if o.inView.value =>
@@ -261,14 +277,19 @@ object ResultsList:
     )
 
   /** The next page's size: the request's own limit (at least 20). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pageSize: Paging.Limit = Paging.Limit(pageParams.fold(20)(p => math.max(p.limit.value, 20)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def nextLabel(): Option[UiLabels.Text] =
     pageParams.flatMap(_ =>
       ResultsPaging.moreLabel(RowCount(pageTotal.value - pageHits.length), ResultsPaging.PageNumber(pageSize.value))
     )
 
   /** "show more": the next page from the server, appended; a failure says so in the count line. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def more(): Unit =
     pageParams.foreach { params =>
       moreLoading.set(true)
@@ -292,6 +313,9 @@ object ResultsList:
   /** A source's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window), what it is, why it matched, and "open in a new tab".
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[web] def hitRow(h: Hit, inPanel: HitRowInPanel = HitRowInPanel(false)): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
@@ -370,10 +394,13 @@ object ResultsList:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openSource(ck: Preview.Target.Source.Citekey, inPanel: InPanel): Unit =
     if inPanel.value then ResultsPanel.show(Preview.Target.Source(ck))
     else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def emptyState(): HtmlElement =
     val chips = UiState.activeChips()
     val causes = scala.collection.mutable.ListBuffer.empty[String]

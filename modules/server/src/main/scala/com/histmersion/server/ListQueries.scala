@@ -11,16 +11,22 @@ import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.agents.RunQuery
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The engine's list filters a client sent (core [[ListFilters]]: the approvals' and the runs'; the jobs' are
   * `util.jobs.JobListing.query`), checked and turned into the repos' queries: a value outside a closed vocabulary (a
   * state, a kind of approval, a pipeline, an origin) is a 400 naming the words that are allowed, and a time bound is
   * read once, here, against `now`. Free vocabularies (job kinds, managers, models) pass as they are. Pure.
   */
+@movesTo(FeaturePlace.AutomationApprovals)
 object ListQueries:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def bad(m: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(m)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def known(what: String, vs: List[String], allowed: Seq[String]): Either[Api.Error, List[String]] =
     ListFilters
       .known(ListFilters.FacetName(what), vs.map(ListFilters.Term(_)), allowed.map(ListFilters.Term(_)))
@@ -29,6 +35,8 @@ object ListQueries:
       .map(_.map(_.value))
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approvals(f: ApprovalFilter): Either[Api.Error, ApprovalQuery] =
     val n = f.normalized
     for
@@ -52,6 +60,8 @@ object ListQueries:
       by.flatMap(b => DecidedBy.parse(DecidedBy.Wire(b)))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runs(f: RunFilter, now: Instant): Either[Api.Error, RunQuery] =
     import com.histmersion.domain.automation.agents.RunQuery
     val n = f.normalized

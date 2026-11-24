@@ -7,9 +7,11 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema
+import com.histmersion.lint.{LintRule, tolerated}
 
 type ViewState = ViewState.T
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ViewState extends Newtype[String, Pure]:
   val MaxChars = 8192
   given JsonValueCodec[ViewState] =

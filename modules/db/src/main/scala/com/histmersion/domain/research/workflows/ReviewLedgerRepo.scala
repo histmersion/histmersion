@@ -12,10 +12,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The store of the review ledgers (V073): one JSON value per article, read at the start of a `review-article` run and
   * written after each of its passes.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the review ledger tables and their row codecs")
 private[workflows] object ReviewLedgerRepo:
   type ReviewId = ReviewId.T
   object ReviewId extends Newtype[String, Pure]
@@ -24,6 +27,7 @@ private[workflows] object ReviewLedgerRepo:
     * than start over and lose its history).
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(slug: Slug)(using DbCon): Either[Problem, Option[Ledger]] =
     sql"SELECT ledger::text FROM review_ledgers WHERE slug = $slug".query[String].run().headOption match
       case None       => Right(None)
@@ -41,6 +45,7 @@ private[workflows] object ReviewLedgerRepo:
           .map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def put(l: Ledger)(using DbCon)(using creator: Creator.New): Unit =
     val json = Jsonb.write(l)
     sql"""INSERT INTO review_ledgers (slug, ledger, updated_at, creator) VALUES (${l.slug}, $json::jsonb, now(), ${StoredCreator
@@ -50,6 +55,7 @@ private[workflows] object ReviewLedgerRepo:
   /** The articles that passed their review: a review ledger with no open MAJOR, and no open item of review manager
     * `reviewId` (a review queued or running is not passed yet).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def passedReview(reviewId: ReviewId)(using DbCon): Set[Slug] =
     sql"""SELECT l.slug FROM review_ledgers l
           WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e

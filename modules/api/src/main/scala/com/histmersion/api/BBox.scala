@@ -8,14 +8,19 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `minLon > maxLon`: the box crosses the antimeridian. */
+@movesTo(FeaturePlace.Kernel)
 final case class BBox(minLon: Longitude, minLat: Latitude, maxLon: Longitude, maxLat: Latitude)
     derives JsonCodec,
       KindlingsSchema,
       json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def crossesAntimeridian: Boolean = (minLon).value > (maxLon).value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contains(lon: Longitude, lat: Latitude): Boolean =
     val latOk = (lat).value >= (minLat).value && (lat).value <= (maxLat).value
     val lonOk = if crossesAntimeridian then (lon).value >= (minLon).value || (lon).value <= (maxLon).value
@@ -26,6 +31,7 @@ object BBox:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Text): Option[BBox] =
     val parts = (s).value.split(",").map(_.trim).toList
     parts.traverseDouble

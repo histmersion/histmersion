@@ -3,6 +3,7 @@ package domain.automation.autopilot
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's one row as [[AutopilotRowService.InMemory]] holds it: the switch and who turned it, the managers it
   * paused, its housekeeping times, a person's scheduler strategy, the digest's time and the drain.
@@ -35,6 +36,7 @@ object AutopilotRowState:
   type Strategy = Strategy.T
   object Strategy extends Newtype[String, Pure]
   type StrategyBy = StrategyBy.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object StrategyBy extends Newtype[String, Pure]
   type DrainBy = DrainBy.T
   object DrainBy extends Newtype[String, Pure]

@@ -25,11 +25,13 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `codex` and `opencode` providers against FAKE executables replaying recorded event streams on the generated
   * trees: the argument vector, the isolation environment (no API key, the run token, the generated homes), the empty
   * working directory, the typed answer, usage, the trace, a plan limit.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CliClientsSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk

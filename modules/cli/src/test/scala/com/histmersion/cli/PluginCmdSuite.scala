@@ -20,6 +20,7 @@ import com.histmersion.config.CliPluginsConfig
 import com.histmersion.config.RuntimeConfig
 import com.histmersion.config.UserPaths
 import com.histmersion.api.plugins.PluginSet
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion plugin …` against a TEMPORARY install and data directory: the kit's scripts are fakes
   * (`histmersion-relink --describe` prints the JSON the test chose, `--resolve` records its arguments and answers what
@@ -27,6 +28,9 @@ import com.histmersion.api.plugins.PluginSet
   * server, Maven to a fake repository it serves. Nothing touches ~/Applications/Histmersion or the user's data
   * directory.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class PluginCmdSuite extends munit.FunSuite:
 
   private def consoleFor(stdout: String => Unit, stderr: String => Unit): util.console.Console =

@@ -26,6 +26,7 @@ import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final private[exchange] case class MergeRow(
     id: UUID,
@@ -41,6 +42,7 @@ final private[exchange] case class MergeRow(
 ) derives DbCodec
 
 object MergeRow:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type BundleSha256 = Sha256
   val BundleSha256: Sha256.type = Sha256
   type FromLabel = FromLabel.T
@@ -51,6 +53,7 @@ object MergeRow:
   object PlanHash extends Newtype[String, Pure]
   type Backup = Backup.T
   object Backup extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type LedgerRows = RowCount
   val LedgerRows: RowCount.type = RowCount
   type Redirects = Redirects.T

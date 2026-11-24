@@ -4,11 +4,13 @@ package domain.library.sources
 import com.histmersion.domain.library.sources.referrers.DeleteReport
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What deleting a source does: the answer, plus what finding its stored original needs — its digest, and whether
   * another source still holds the same file (then the file stays). `keys` = the citekey and its old citekeys (the
   * acquisition spool is keyed by whichever one the file came in under); `report` is what the referrers said.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class SourceDeletePlan(
     deletion: Source.Deletion,
     sha256: Option[SourceDeletePlan.Sha256],

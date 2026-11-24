@@ -4,8 +4,10 @@ package plugin
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The media-collection and event-catalogue parts of the SPI (docs/research-plugins.md §6). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ProviderSpiSuite extends munit.FunSuite:
 
   private val offline = new Plugin.Http {
@@ -19,6 +21,8 @@ class ProviderSpiSuite extends munit.FunSuite:
   private object Portal extends MediaCollection:
     val title = MediaCollection.Title("Portal objects")
     val role = MediaCollection.Object
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def search(place: MediaPlace, http: Plugin.Http) =
       Right(
         List(
@@ -43,7 +47,10 @@ class ProviderSpiSuite extends munit.FunSuite:
   private object Quakes extends EventCatalogue:
     val title = EventCatalogue.Title("Quakes"); val licence = Licence("CC0-1.0");
     val citation = EventCatalogue.Citation("Q"); val home = EventCatalogue.Home("https://q.example")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parts(q: CatalogueQuery): List[EventCatalogue.ReadPart] = List(EventCatalogue.ReadPart(s"to:${q.to}"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def read(
         part: EventCatalogue.ReadPart,
         q: CatalogueQuery,

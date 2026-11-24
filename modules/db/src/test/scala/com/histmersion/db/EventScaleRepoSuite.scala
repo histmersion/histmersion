@@ -31,6 +31,7 @@ import com.histmersion.domain.catalogue.events.EventSelection
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.util.data.exchange.TestExchange
 import com.histmersion.util.storage.ContentStore
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the
@@ -38,23 +39,27 @@ import com.histmersion.util.storage.ContentStore
   * or the point-on-surface of an area), the outline of a REGIONAL event's area only, the unplaced count — and the
   * bundle carrying a stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventScaleRepoSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val Lat = -50.0
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(lon: Longitude) = Some(s"""{"type":"Point","coordinates":[${lon.value},$Lat]}""")
   // a 2°×2° square west of the sites; its point-on-surface is inside it
   private val Square = Some(
     """{"type":"Polygon","coordinates":[[[120,-51],[122,-51],[122,-49],[120,-49],[120,-51]]]}"""
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val places = List(
     Place.Input(
       Place(
@@ -85,6 +90,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ev(
       id: BEventRow.Id,
       kind: EventSummary.Kind,
@@ -170,9 +176,11 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
       )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def summary(id: BEventRow.Id): EventSummary =
     EventFixtures.get(ds, id).getOrElse(fail(s"no ${id.value}")).event
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def geo(): EventGeo.List =
     val all = EventFixtures.geo(
       ds,

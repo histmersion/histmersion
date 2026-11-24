@@ -10,11 +10,16 @@ import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs) and lays them
   * side by side; `billing` names how a configured model is paid for (a plan pool or a price — the server knows, from
   * its config). Nothing is judged: counts, tokens, times, and what one run produced that the others did not.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationAgents)
 object CompareRuns:
   type Similarity = Similarity.T
   object Similarity extends Newtype[Double, Pure]
@@ -35,6 +40,7 @@ object CompareRuns:
       cacheRead: Tokens.CacheRead = Tokens.CacheRead(0),
       cacheWrite: Tokens.CacheWrite = Tokens.CacheWrite(0)
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def +(o: Tokens): Tokens =
       Tokens(
         Tokens.Input(input.value + o.input.value),
@@ -65,6 +71,7 @@ object CompareRuns:
     object Model extends Newtype[String, Pure]
 
   /** A run as compared: what it ran on, its state, and the models it was given. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunHead(
       id: RunHead.Id,
       pipeline: RunHead.Pipeline,
@@ -133,6 +140,7 @@ object CompareRuns:
   // ── what a comparison says ───────────────────────────────────────────────────────────────────
 
   /** One run, in total. `seconds` = the sum of its steps' durations. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunSide(
       id: RunSide.Id,
       status: RunSide.Status,
@@ -158,6 +166,7 @@ object CompareRuns:
     object Failures extends Newtype[Int, Pure]
 
   /** One step of one run, every attempt summed. `billing` names how each configured model is paid for. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class StepSide(
       models: List[StepSide.Models],
       actual: List[StepSide.Actual],
@@ -181,6 +190,7 @@ object CompareRuns:
     export Step.{FirstCallTokens, Turns}
 
   /** One step name, and that step in each run (None = the run has no such step). */
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
 
   object StepRow:
@@ -279,8 +289,10 @@ object CompareRuns:
     type B = B.T
     object B extends Newtype[String, Pure]
     type AMajors = AMajors.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AMajors extends Newtype[Int, Pure]
     type BMajors = BMajors.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object BMajors extends Newtype[Int, Pure]
     type Shared = Shared.T
     object Shared extends Newtype[Int, Pure]
@@ -306,6 +318,7 @@ object CompareRuns:
   // ── comparing ────────────────────────────────────────────────────────────────────────────────
 
   /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def compare(
       runs: List[Run],
       billing: Step.Model => Option[StepSide.Billing],
@@ -371,6 +384,8 @@ object CompareRuns:
       .toList
 
   /** A step's duration in whole seconds (the store keeps seconds); 0 when a time is unreadable. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seconds(s: Step): Seconds =
     Seconds(
       (for
@@ -379,9 +394,11 @@ object CompareRuns:
       yield math.max(0L, b.getEpochSecond - a.getEpochSecond)).getOrElse(0L)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def costOf(steps: List[Step]): Step.CostUsd =
     Step.CostUsd(steps.foldLeft(0.0)((acc, s) => acc + s.costUsd.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def secondsOf(steps: List[Step]): Seconds = Seconds(steps.foldLeft(0L)((acc, s) => acc + seconds(s).value))
 
   private def failedIn(steps: List[Step]): Int =
@@ -389,6 +406,7 @@ object CompareRuns:
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stepSide(attempts: List[Step], billing: Step.Model => Option[StepSide.Billing]): StepSide =
     val models = attempts.flatMap(_.model).distinct
     StepSide(
@@ -406,6 +424,8 @@ object CompareRuns:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runSide(d: Run): RunSide =
     val r = d.run
     RunSide(
@@ -422,6 +442,9 @@ object CompareRuns:
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def output[O: JsonValueCodec](d: Run, name: CompareRuns.OutputName): Option[O] =
     d.steps
       .filter(s => s.name == name && s.status == automation.Step.Status.Done.wire)
@@ -429,6 +452,7 @@ object CompareRuns:
       .flatMap(_.output)
       .flatMap(o => RawJson.decode[O](o.value).toOption)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def words(s: String): Set[String] =
     ComparedText
       .normalise(ComparedText.NormaliseS(Option(s).getOrElse("")))
@@ -438,6 +462,8 @@ object CompareRuns:
       .toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def similarity(a: Text, b: Text): Similarity =
     val (x, y) = (words(a.value), words(b.value))
     Similarity(if x.isEmpty && y.isEmpty then 0.0 else x.intersect(y).size.toDouble / x.union(y).size)

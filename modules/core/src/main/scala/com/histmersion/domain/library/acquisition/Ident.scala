@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problem.{Invalid, Raw}
 
 import com.histmersion.domain.library.{ArxivId, Doi as DoiValue}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An identifier a person gives for a work: a DOI, an arXiv id, or the citekey of a source in the corpus. */
 enum Ident:
@@ -28,8 +29,11 @@ object Ident:
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
   /** DOIs are case-insensitive, so they are stored lower-case ([[DoiValue.normalize]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def doi(raw: Written): Option[domain.library.Doi] = DoiValue.normalize(raw.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def arxiv(raw: Written): Option[ArxivId] =
     Option(raw.value).map(_.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLowerCase match
@@ -40,6 +44,7 @@ object Ident:
             case _            => None
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: Written): Either[Problem, Ident] =
     val s = Option(raw.value).getOrElse("").trim
     if s.isEmpty then Left(Invalid.Broken.here(Invalid.Rule.IdentifierGiven))
@@ -53,5 +58,6 @@ object Ident:
   /** Deliberately permissive: the corpus holds hand-written keys and keys of older conventions that the generator would
     * not produce, so the store, not a regular expression, decides whether a citekey exists.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isCitekey(s: Citekey.Value): Boolean =
     s.value.nonEmpty && s.value.head.isLetter && !s.value.exists(_.isWhitespace) && !s.value.contains("/")

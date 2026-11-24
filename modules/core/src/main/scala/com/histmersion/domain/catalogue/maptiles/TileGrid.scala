@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a layer's items become a tile's features ([[com.histmersion.api.catalogue.TileLayer]]): below `maxZoom` a tile
   * holding more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at
@@ -13,6 +14,7 @@ final case class TileGrid private (
     cellUnits: TileGrid.CellUnits
 ):
   /** The most items `c` keeps as features of their own before it groups them by cell. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointsAt(c: TileCoord): TileGrid.MaxPoints =
     if c.z.value >= maxZoom.value then TileGrid.MaxPoints(Int.MaxValue) else maxPoints
 
@@ -36,6 +38,7 @@ object TileGrid:
   /** The grid of `ui.map-tiles`: tiles to `maxZoom`, groups above `maxPoints` items, cells of `cellPx` pixels (each
     * held to at least 1 and at most a tile).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(maxZoom: MaxZoom, maxPoints: MaxPoints, cellPx: CellPx): TileGrid =
     val px = cellPx.value.max(1).min(TilePx.value)
     new TileGrid(

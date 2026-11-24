@@ -17,6 +17,7 @@ object SettingsPages:
 
   /** What a section's page says under its title. Pure. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def lead(s: SettingsSection): Option[Lead] = s match
     case SettingsSection.General => Some(Lead("How Histmersion looks and where the map opens."))
     case SettingsSection.Finders => Some(Lead("Where Histmersion looks for the free, legal copy of a paper you add."))
@@ -29,6 +30,8 @@ object SettingsPages:
     case SettingsSection.Plugins => Some(Lead("What the plugins add, each on or off."))
     case _                       => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(ui: UiConfig, s: SettingsSection): HtmlElement =
     div(
       cls := "settings-page",

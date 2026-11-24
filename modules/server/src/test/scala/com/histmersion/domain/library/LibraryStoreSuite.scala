@@ -46,6 +46,7 @@ object LibraryStoreSuite:
   trait OnDatabase extends LibraryStoreSuite:
     private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s10c_${getClass.getSimpleName.toLowerCase.take(24)}",

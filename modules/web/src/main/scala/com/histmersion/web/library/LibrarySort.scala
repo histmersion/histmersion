@@ -3,6 +3,7 @@ package web.library
 
 import com.histmersion.api.library.Sort
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from Explore's:
   * the reader names an order of publication here, not a ranking of the map's results.
@@ -22,5 +23,6 @@ object LibrarySort:
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(wire: Option[Wire]): LibrarySort =
     wire.flatMap(w => values.find(_.wire.value == w.value.trim.toLowerCase)).getOrElse(Relevance)

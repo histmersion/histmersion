@@ -12,17 +12,20 @@ import com.histmersion.util.storage.{Blob, Location, MeasureBudget, Storage, Sto
 import java.time.Instant
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Storage part of About, from the registry: an entry for every store an owner registered and every place of the
   * install, where `storage` puts them, each measured with a bounded walk (`MeasureBudget`); the database's size and its
   * largest registered tables; the backups' usage. The leftovers of the data and cache directories — what no entry
   * covers — are listed too. [[StorageCache]] runs it in the background, so About itself never walks a disk.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class StorageFigures(registry: DataContributions):
 
   /** Every entry, in the order About lists them: the shown stores, the cache directory's other folders one by one, then
     * the rest of the data directory together. Reads the disk only to find those leftovers.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spots(storage: Storage, installed: List[Location]): List[StorageSpot] =
     val included = (registry.stores.map(_._2) ++ installed).toSet
     val named = ShownStore.values.toList
@@ -79,6 +82,7 @@ final class StorageFigures(registry: DataContributions):
     named ++ caches ++ rest
 
   /** The base-map files, one by one, an unfinished download (`.<layer>.part`), and the registered caches it holds. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def basemapDetail(store: Store, budget: MeasureBudget): Option[StorageSpot.Detail] =
     val parts = Basemap.Layer.values.toList.flatMap { l =>
       val file = Store.Key.applyUnsafe(l.file.value)
@@ -97,6 +101,9 @@ final class StorageFigures(registry: DataContributions):
     Option.when(parts.nonEmpty || caches.nonEmpty)(StorageSpot.Detail((parts ++ caches).mkString(" · ")))
 
   /** Measure every entry within `budget`; the database through `database` when there is one. */
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def measure(
       storage: Storage,
       installed: List[Location],

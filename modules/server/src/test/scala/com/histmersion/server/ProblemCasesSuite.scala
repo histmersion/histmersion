@@ -15,8 +15,8 @@ class ProblemCasesSuite extends munit.FunSuite:
   override val munitTimeout = Duration(20, "min")
 
   private lazy val rows: List[Row] =
-    val _ = GuidelineRatchetSuite.Inventory.findings
-    Row.parse(Files.readAllLines(GuidelineRatchetSuite.Inventory.ProblemSymbols, UTF_8).asScala.toList)
+    LedgerSites.ensure()
+    Row.parse(Files.readAllLines(LedgerSites.ProblemSymbols, UTF_8).asScala.toList)
 
   test("ProblemCaseBuilt: every case and every value of a problem's vocabulary is built in main code"):
     val built = rows.filter(_.kind == Kind.Build).map(_.name).toSet

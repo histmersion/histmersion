@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `plan-goal`: at most this many sub-goals, queries and works in one plan (a longer answer is sent back), each query
   * at most `queryChars` long.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentPlanConfig(
     maxSubGoals: AgentPlanConfig.MaxSubGoals,
     maxQueries: AgentPlanConfig.MaxQueries,

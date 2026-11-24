@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Histmersion installed on THIS machine, as the plugin commands see it: the bundle (`bin/`, `kit/`) and the data
   * directory (`plugins/`, `signing/`).
@@ -24,10 +25,13 @@ final case class LocalInstall(home: Path, data: Path):
 
   /** The Maven repository a plugin compiles against: the plugin API and the plugin platform (`maven/`). */
   def mavenRepo: Path = home.resolve("maven")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apiJar: Path =
     mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".jar").value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apiSources: Path =
     mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apiPom: Path =
     mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".pom").value)
 
@@ -35,6 +39,7 @@ final case class LocalInstall(home: Path, data: Path):
   def lib: Path = plugins.resolve("lib")
 
   /** What the scripts need to act on THIS install and data directory, whatever the caller's environment. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] =
     Map(
       LocalInstall.EnvVariable("HISTMERSION_HOME") -> LocalInstall.EnvSetting(home.toString),
@@ -51,6 +56,8 @@ object LocalInstall:
     * the `~/bin` symlink), else the platform default. It must hold the relink kit.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def locate(
       cfg: CliPluginsConfig,
       dataDir: RuntimeConfig.DataDir,

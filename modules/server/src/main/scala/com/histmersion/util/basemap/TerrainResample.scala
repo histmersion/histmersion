@@ -3,6 +3,7 @@ package util.basemap
 import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of zoom `z` that
   * neither the extract, a focus region nor the on-demand relief has is cut from its nearest ancestor that exists and
@@ -21,11 +22,15 @@ object TerrainResample:
   object ZoomDelta extends Newtype[Int, Pure]
 
   /** Terrarium's elevation of a pixel `0x??RRGGBB`, in metres. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def metres(p: Pixel): Metres = Metres(metresOf(p.value))
 
   private def metresOf(p: Int): Double = ((p >> 16) & 0xff) * 256.0 + ((p >> 8) & 0xff) + (p & 0xff) / 256.0 - 32768.0
 
   /** The terrarium pixel (`0xffRRGGBB`) of `m` metres. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def encode(m: Metres): Pixel = Pixel(encodeOf(m.value))
 
   private def encodeOf(m: Double): Int =
@@ -39,6 +44,8 @@ object TerrainResample:
   /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz` under it
     * covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resample(
       src: Png.Pixels,
       n: Vp8l.Image.Width,
@@ -77,5 +84,6 @@ object TerrainResample:
     Png.Pixels(out)
 
   /** A relief tile's pixels: a lossless WebP or a PNG. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def decode(bytes: Png.PngBytes): Either[Problem, Vp8l.Image] =
     if Png.isPng(bytes) then Png.decode(bytes) else Vp8l.decode(bytes)

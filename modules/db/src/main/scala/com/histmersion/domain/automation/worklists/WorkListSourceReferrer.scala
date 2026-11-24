@@ -8,10 +8,15 @@ import com.histmersion.domain.library.sources.referrers.*
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The work lists' items that mention a source (reported, never changed), and the log's entry of its deletion. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the work list rows that point at a deleted source")
 final class WorkListSourceReferrer extends SourceReferrer:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val needles = source.keys.map(_.value.toLowerCase)
     DeleteReport(mentions =
@@ -28,6 +33,7 @@ final class WorkListSourceReferrer extends SourceReferrer:
         }
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using
       DbCon,
       CreatedAt

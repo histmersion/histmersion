@@ -27,8 +27,11 @@ import com.histmersion.api.library.Search
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.library.Edge
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class MarkdownSuite extends munit.FunSuite:
 
   private val detail = Source.Detail(
@@ -228,6 +231,7 @@ class MarkdownSuite extends munit.FunSuite:
     assertEquals(result(1).merged, 10)
 
 /** The source page's two-way hops (UX item 4) and the article's de-duplicated footer (item 23). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MarkdownHopsSuite extends munit.FunSuite:
 
   private val src = Source.Detail(

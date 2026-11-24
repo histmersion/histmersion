@@ -10,12 +10,14 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.util.control.NonFatal
 import com.histmersion.plugin.UpstreamQuota
 import com.histmersion.domain.library.acquisition.CoreQuotaLend
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server's ONE budget for CORE ([[CoreQuota]]): the acquisition chain's `core` step and the new-source search's
   * `core` index both call CORE through it, across every plugin generation and config reload of the process — so a
   * reload does not reset it, and a restart reads it back from the store it was given ([[persistTo]]). `clock` and
   * `sleep` are parameters so a test does not wait.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Unit = ms => Thread.sleep(ms.value)):
 
   private val lock = Object()
@@ -32,6 +34,8 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
   /** Keep the budget in `s` from now on, starting from what it holds: the same day's spending and a block that has not
     * ended are kept (the larger count, the later block, when both sides have one).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def persistTo(s: CoreQuotaStore): Unit = lock.synchronized {
     val now = clock()
     val saved = attempt("read")(s.load()).flatten.map(CoreQuota.onDay(_, now))
@@ -63,6 +67,7 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
     * counted before it is sent, and waits its slot under the per-minute pace first; [[observe]] then reads what CORE
     * answered.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def take(limits: CoreQuota.Limits, purpose: CoreQuota.Purpose): Either[CoreQuota.Refusal, Unit] =
     val granted = lock.synchronized {
       CoreQuota.reserve(current.get, limits, purpose, clock()).map { g =>
@@ -100,10 +105,12 @@ object CoreBudget:
   val Upstream = UpstreamQuotaService.Upstream("core")
 
   /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def quotas(core: CoreBudget, limits: CoreQuota.Limits): HostServices.Quotas =
     name => if name == Upstream.value then core.lend(limits) else UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limits(c: CoreServiceConfig): CoreQuota.Limits =
     CoreQuota.Limits(
       CoreQuota.Limits.PerMinute(c.perMinute.value),

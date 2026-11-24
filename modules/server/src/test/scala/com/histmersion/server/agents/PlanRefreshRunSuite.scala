@@ -63,6 +63,7 @@ import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #989 against a `*_test` database: a pool paused only because its reading is stale takes a fresh one before it pauses
   * (the Claude probe, the ChatGPT app-server read) — once per stale-minutes, one at a time; a run paused on such a pool
@@ -70,6 +71,8 @@ import com.histmersion.util.database.TestCreators.given
   * unavailable and never offered; a pool with no reading is read before its first use; `agent quota refresh` over HTTP
   * against a FAKE `claude`. Every CLI is a stand-in: nothing is spent. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
@@ -85,6 +88,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private val Paid = ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("zzPaid"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -150,8 +154,10 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     @volatile var probeOut: List[String] = Nil
     @volatile var probeArgs: List[String] = Nil
     @volatile var auth: String = """{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}"""
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     @volatile var codex: Either[Problem, Json] = Left(Problem.Unclassified(Legacy.Text("no app-server here")))
     @volatile var hold: Option[(CountDownLatch, CountDownLatch)] = None
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def seams: PlanPools.Seams = PlanPools.Seams(
       (_, _, _) => { codexReads.incrementAndGet(); codex },
       (argv, _, stdin, _) =>
@@ -173,6 +179,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
   private val finding =
     """{"claim":"The Uluburun ship carried copper and tin.","quote":"The Uluburun ship carried ten tons of copper and one ton of tin.",
       |"place":null,"start":null,"end":null,"periodName":null,"tags":[],"confidence":"high"}""".stripMargin
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enrichScripts(c: ScriptedClient): Unit =
     c.scripts ++= List(
       Seq(
@@ -184,6 +191,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       Seq(text(s"""{"notes":"Tin by sea [[$Ck]]."}"""))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def handlers(
       clients: Map[ModelRef, LlmClient],
       reads: Reads,
@@ -233,6 +242,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
 
   /** 30% left of the 5-hour window (floor 25%), read an hour ago: stale, so it needs 35% — paused ONLY on its age.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def staleReading(): Unit =
     Transactor(ds).write(
       PlanQuotaRepo.record(

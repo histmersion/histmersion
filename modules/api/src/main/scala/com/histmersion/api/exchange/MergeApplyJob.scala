@@ -12,6 +12,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Left is always here and right always the bundle: JabRef's vocabulary (`keep-left`, `keep-right`, `both`), which the
   * resolution file uses. `problems`: every problem an apply that did not finish ended with, in order.
@@ -32,6 +33,7 @@ object MergeApplyJob:
 
   export api.exchange.Bundle.Name as OfBundle
   export MergePlan.PlanHash as OfPlanHash
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OfElapsedMs = ElapsedMs
   val OfElapsedMs: ElapsedMs.type = ElapsedMs
 
@@ -41,6 +43,7 @@ object MergeApplyJob:
   type ElapsedMs = ElapsedMs.T
   object ElapsedMs extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobKind = ExchangeJobKinds.MergeApply.kind.value
 
   /** Why a stored row failed: a restart cut it short (the store keeps that as its own problem), or it ended with
@@ -53,6 +56,8 @@ object MergeApplyJob:
   /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
   val InterruptedText: Problem = Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def of(
       id: SpatialHierarchyResult.Job.Id,
       status: JobState,

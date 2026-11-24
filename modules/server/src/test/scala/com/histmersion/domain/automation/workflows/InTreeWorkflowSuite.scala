@@ -5,6 +5,7 @@ import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.Creator
 import com.histmersion.plugin.Plugin
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class InTreeWorkflowSuite extends munit.FunSuite:
 
   test("every in-tree process is a model-free workflow of an in-tree contributor, each named once"):

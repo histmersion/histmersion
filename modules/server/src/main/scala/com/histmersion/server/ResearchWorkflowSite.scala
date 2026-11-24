@@ -10,10 +10,14 @@ import com.histmersion.domain.library.sources.{SourcesControllers, SourceService
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.domain.research.workflows.{ResearchSite, ReviewLedgerService}
 import com.histmersion.api.Api
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Research's workflows' site over the composition: research's and the library's wiring, the work lists and the goals
   * as the composition wires them.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Server)
 final class ResearchWorkflowSite(h: ServerWiring, deps: Deps) extends ResearchSite:
   def workLists: WorkListControllers = deps.workLists
   def queues: QueueService = deps.queues

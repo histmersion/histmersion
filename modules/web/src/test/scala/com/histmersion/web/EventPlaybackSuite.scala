@@ -11,13 +11,16 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events in playback (#1440): when an event shows and how strongly — 0 before its span, 1 inside it, a linear fade
   * after it measured in seconds of PLAYBACK — and the label it is drawn with: the point-only region label of
   * [[PlaceGlyph]], local (with a dot) or regional.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventPlaybackSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val kadesh = EventGeo(
     Event.Id("kadesh"),
     EventGeo.Label("Battle <of> Kadesh"),
@@ -31,6 +34,7 @@ class EventPlaybackSuite extends munit.FunSuite:
     (Some("p")).map(Place.Id.apply),
     Some(EventGeo.PlaceLabel("Kadesh"))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val migration = kadesh
     .modify(_.id)
     .setTo(Event.Id("m"))

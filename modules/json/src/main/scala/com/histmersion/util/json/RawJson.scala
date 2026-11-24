@@ -13,6 +13,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig
 }
 import hearth.kindlings.jsoniterjson.{Json, JsonNumber, JsonObject}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** JSON whose shape no record of ours describes (a model's answer, a tool's input schema, a place's properties, an
   * upstream's reply), as Kindlings' AST. A number keeps the text it was read with, so a document read and written again
@@ -20,6 +21,7 @@ import hearth.kindlings.jsoniterjson.{Json, JsonNumber, JsonObject}
   */
 // Every read and write here is jsoniter's reentrant one: a codec (a record read through raw JSON, a job's detail) calls
 // these from inside another read or write, and the plain ones share one reader and writer per thread.
+@atBoundary(BoundaryKind.Json, "reads and writes JSON no record describes, as text circe wrote")
 object RawJson:
 
   /** Two JSON values compare with `==` and `!=` (Kindlings' AST is case classes: structural equality), also under

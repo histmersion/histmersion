@@ -71,6 +71,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:
@@ -78,13 +79,17 @@ final class StubUpstream extends AgentUpstream:
   @volatile var citing: Map[String, List[FollowupRow]] = Map.empty
   @volatile var found: Map[String, List[WorkRef]] = Map.empty
   val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def meta(doi: Doi) = {
     calls.add(s"meta $doi");
     metas.get(doi.value).toRight(Problem.Unclassified(Legacy.Text(s"$doi: not found upstream")))
   }
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) = Left(
     Problem.Unclassified(Legacy.Text("not stubbed"))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) =
     calls.add(s"assess $citekey")
     Right(
@@ -103,6 +108,7 @@ final class StubUpstream extends AgentUpstream:
         Assessment.Recommendation("fine")
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using
       Creator.New
   ) =
@@ -118,14 +124,17 @@ final class StubUpstream extends AgentUpstream:
         rows
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def discover(query: Search.Query, limit: AgentUpstream.Limit) =
     calls.add(s"discover $query")
     val ws = found.getOrElse(query.value, Nil)
     Right(DiscoverResult(DiscoverResult.Query(query.value), DiscoverResult.Count(ws.size), ws))
 
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @volatile var onIngest: String => Either[Problem, Ingest.Report] = _ =>
     Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def ingestLegal(doi: Doi, by: domain.Creator.New) = {
     calls.add(s"ingest $doi"); onIngest(doi.value)
   }
@@ -133,6 +142,8 @@ final class StubUpstream extends AgentUpstream:
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
   @volatile var sweepFinds: Map[String, List[Source.Candidate]] = Map.empty
   private val marked = java.util.concurrent.ConcurrentHashMap[Source.Candidate.Id, Candidates.State.Wire]()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun)(using Creator.New) =
     calls.add(s"sweep $goal")
     sweepFinds
@@ -150,6 +161,7 @@ final class StubUpstream extends AgentUpstream:
           CandidateSweep.DryRun(dryRun.value)
         )
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def candidates(goal: DomainGoal.Slug, state: Candidates.State.Wire, limit: AgentUpstream.Limit) =
     Right(
       sweepFinds
@@ -160,15 +172,24 @@ final class StubUpstream extends AgentUpstream:
         .filter(_.state == Source.Candidate.State(state.value))
         .take(limit.value)
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
     ids.foreach(i => marked.put(i, state))
     Right(RowCount(ids.size))
 
 /** The domain ids of what the API answered with, for the suites that drive the engine and the repositories by hand. */
 object ApiIds:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def job(id: RunInfo.Id): Job.Id = Job.Id.assume(id.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def approval(id: ApprovalInfo.Id): Approval.Id = Approval.Id.assume(id.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manager(id: Managers.ManagerInfo.Id): ManagerLight.Id = ManagerLight.Id(id.value)
 
 /** The P3 pipelines that WAIT for a person, end to end against a `*_test` database with a scripted model: plan-goal
@@ -177,6 +198,7 @@ object ApiIds:
   * quotes, evidence, draft, the blocking approval, a new article written only after approval, the chained review run,
   * an extension dropped on 412, and the `auto` mode). Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -202,6 +224,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
@@ -326,6 +349,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     connect(ds)(AgentRepo.get(run.id)).get
 
   /** Why a run stopped where it did: its error and every failed attempt's note. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def why(r: RunInfo): String =
     (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
@@ -478,6 +502,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         quote
       )},"date":null,"place":null,"confidence":"high"}]}"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val newBody =
     s"""Tin reached the Aegean by sea [[$Ck]].
        |

@@ -30,6 +30,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.api.basemap.BasemapJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The terrain base map on this machine (docs/research-terrain-basemap.md): where its two extracts are, the fetch job
   * that downloads them, their removal, and the tiles served to the web page.
@@ -39,6 +40,7 @@ import com.histmersion.domain.Creator
   * each use, so a reload is followed; `seaFloor` is the grid the settings choose for the sea floor. `http` and
   * `freeSpace` are the seams a test substitutes for the network and the disk.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class BasemapService(
     config: () => BasemapConfig,
     storage: Storage,
@@ -58,14 +60,17 @@ final class BasemapService(
   /** The base map's files, where the configuration puts them now. */
   def files: Store = storage.store(Location.Basemap)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(l: Basemap.Layer): Store.Key = Store.Key.applyUnsafe(l.file.value)
 
   /** The unfinished download of a layer: its range requests, kept until it is assembled. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def work(l: Basemap.Layer): Store.Key = Store.Key.applyUnsafe(s".${l.wire}.part")
 
   private def done(written: Either[Store.Error, ?]): Unit =
     written.left.foreach(e => throw Raised(e.message))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def attribution(l: Basemap.Layer): BasemapFetch.Attribution = BasemapFetch.Attribution(l match
     case Basemap.Layer.Vector     => cfg.vector.attribution.value
     case Basemap.Layer.Terrain    => cfg.terrain.attribution.value
@@ -75,6 +80,7 @@ final class BasemapService(
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
   /** A stamp of the file as it is now (size, modification time): it changes with each fetch. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stamp(k: Store.Key, store: Store = files): Option[String] =
     store.stat(k).filter(_.isFile).map(f => s"${f.size.value.toHexString}${f.modified.toEpochMilli.toHexString}")
 
@@ -82,6 +88,7 @@ final class BasemapService(
   def reader(l: Basemap.Layer): Either[Problem, Option[PmTiles.File]] = readerAt(key(l))
 
   /** The archive `k` (a layer's, a focus region's), opened once and again only when the file changed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def readerAt(k: Store.Key): Either[Problem, Option[PmTiles.File]] =
     val store = files
     val p = store.where(k).value
@@ -111,6 +118,11 @@ final class BasemapService(
                     }
             }
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def info(l: Basemap.Layer): Basemap.LayerInfo =
     val p = key(l)
     val base = Basemap.LayerInfo(
@@ -168,6 +180,8 @@ final class BasemapService(
           else Basemap.droppedLayers(keepAll, drop)
         )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def status: Basemap.Status =
     val layers = Basemap.Layer.values.toList.map(info)
     def ok(l: Basemap.Layer) = layers.exists(i => i.layer == l.wire && i.present.value && i.error.isEmpty)
@@ -199,9 +213,11 @@ final class BasemapService(
   def focusDir: Store.Key = BasemapService.FocusDir
 
   /** The focus region `name`'s archive. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusKey(name: Basemap.Focus.Name): Store.Key = focusDir.child(Store.EntryName(s"${name.value}.pmtiles"))
 
   /** The focus regions' archives, by name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusFiles: List[(Basemap.Focus.Name, Store.Key)] =
     files
       .list(focusDir)
@@ -209,6 +225,8 @@ final class BasemapService(
       .map(f => (Basemap.Focus.Name(f.key.name.value.stripSuffix(".pmtiles")), f.key))
       .sortBy(_._1.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def focusInfo: List[Basemap.Focus] = focusFiles.flatMap { (name, p) =>
     readerAt(p).toOption.flatten.map { f =>
       val h = f.header
@@ -226,6 +244,7 @@ final class BasemapService(
   }
 
   /** The focus regions' files as they are now, in a few characters ("" with none). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusStamp: String =
     val all = focusFiles.flatMap((n, p) => stamp(p).map(n.value + _))
     if all.isEmpty then "" else "-" + Integer.toHexString(all.mkString("|").hashCode)
@@ -233,6 +252,7 @@ final class BasemapService(
   // the on-demand layers of the directory configured now (`basemap.dir` may change with a reload)
   @volatile private var demands = Map.empty[Basemap.Layer, OnDemandTiles]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def demandAt(l: Basemap.Layer, name: String)(make: Store => OnDemandTiles): OnDemandTiles =
     val at = files.sub(Store.Key.applyUnsafe(name))
     demands
@@ -247,6 +267,7 @@ final class BasemapService(
       })
 
   /** The on-demand relief and its cache (`terrain-cache/` beside the extract). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onDemand: OnDemandTiles =
     demandAt(Basemap.Layer.Terrain, "terrain-cache")(at =>
       OnDemandTiles(
@@ -278,6 +299,7 @@ final class BasemapService(
     )
 
   /** The sea floor outside the extract (#3760): one GET a tile, cached in `sea-cache/`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaOnDemand: OnDemandTiles =
     demandAt(Basemap.Layer.Bathymetry, "sea-cache")(at =>
       OnDemandTiles(
@@ -299,6 +321,7 @@ final class BasemapService(
   /** What the vector extract was thinned with — so a tile read on demand matches it: its own drop list, or none when it
     * was kept whole; without an extract, the configured list.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vectorRules(): Map[Mvt.LayerName, Mvt.Rule] =
     val meta = reader(Basemap.Layer.Vector).toOption.flatten.map(_.metadata.cursor.downField("histmersion"))
     val keepAll = meta.flatMap(_.get[Boolean]("keepAll").toOption).getOrElse(false)
@@ -312,6 +335,7 @@ final class BasemapService(
   /** The planet the vector tiles are read from: the build the extract came from, else the configured one, else the
     * provider's newest. "" when none can be named (the read then fails, as offline).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vectorPlanet(): RangeHttp.Url =
     val fromExtract = reader(Basemap.Layer.Vector).toOption.flatten
       .flatMap(_.metadata.cursor.downField("histmersion").get[String]("build").toOption)
@@ -354,6 +378,7 @@ final class BasemapService(
     * that exists — a focus region's, else the extract's — cut and resampled in metres ([[TerrainResample]]) as a
     * terrarium PNG; `None` where no ancestor exists (outside every region).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fromAncestor(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
@@ -415,6 +440,7 @@ final class BasemapService(
   /** The deepest relief zoom anything here holds — the extract, a focus region, the on-demand relief: what the page's
     * elevation source asks for at most, and where the cutting from ancestors stops.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def deepestRelief(extractMax: BasemapFetch.Plan.MaxZoom): Int =
     val od = cfg.terrain.onDemand
     (extractMax.value :: (if od.enabled.value then List(od.maxZoom.value) else Nil) ++
@@ -437,6 +463,7 @@ final class BasemapService(
     * geometries asked for (and with `keys` only those properties); 204 where the extract (or the subset) has none.
     * Answers the bytes, their content type, their content encoding, the cache control and the status.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tile(
       layer: Basemap.Layer.Wire,
       z: Basemap.Zoom,
@@ -575,6 +602,8 @@ final class BasemapService(
 
   // ── removing ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def remove(q: Basemap.RemoveQuery): Either[Api.Error, Basemap.Removed] =
     val which = q.layer.value.trim
     val layers: Either[Problem, List[Basemap.Layer]] =
@@ -632,6 +661,7 @@ final class BasemapService(
     }
 
   /** The unfinished download of a focus region. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusWork(name: Basemap.Focus.Name): Store.Key = Store.Key.applyUnsafe(s".terrain-focus-${name.value}.part")
 
   // ── fetching ───────────────────────────────────────────────────────────────────────────────────
@@ -639,6 +669,7 @@ final class BasemapService(
   /** What the next fetch of these options will do, decided before the job starts: refused here when an option is out of
     * range, so the person learns it at once.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class Ask(
       layers: List[Basemap.Layer],
       bbox: BBox,
@@ -649,6 +680,8 @@ final class BasemapService(
       focus: Option[(Basemap.Focus.Name, BBox)] = None
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ask(q: Basemap.FetchQuery): Either[Problems, Ask] =
     def zoom(z: Int, what: Problem.Field): Either[Problem, BasemapFetch.Plan.MaxZoom] =
       Either.cond(
@@ -697,6 +730,7 @@ final class BasemapService(
       focus
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fetch(q: Basemap.FetchQuery)(using Creator.New): Either[Api.Error, JobInfo] =
     jobs.guarded(BasemapJobs.Operation("basemap/fetch")):
       ask(q).left.map(e => BasemapService.invalid(e)).flatMap { a =>
@@ -733,6 +767,7 @@ final class BasemapService(
       case None            => layers(a, note)
 
   /** A focus region's relief: zooms deeper than the extract, into `terrain-focus/<name>.pmtiles`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusFetch(
       a: Ask,
       name: Basemap.Focus.Name,
@@ -770,6 +805,7 @@ final class BasemapService(
           ).map(s => s"focus '${name.value}': $s")
     yield out
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def layers(a: Ask, note: BasemapFetch.Note => Unit): Either[Problem, String] =
     a.layers
       .foldLeft[Either[Problem, List[String]]](Right(Nil)) { (acc, l) =>
@@ -777,17 +813,20 @@ final class BasemapService(
       }
       .map(_.mkString("; "))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pace = BasemapFetch.Pace(
     BasemapFetch.Pace.GapMs(cfg.requestGapMs.value.toLong),
     ByteCount.applyUnsafe(cfg.maxRequestMb.value.toLong * 1024 * 1024),
     BasemapFetch.Pace.Overfetch(cfg.overfetch.value)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def minFree: ByteCount = ByteCount.applyUnsafe((cfg.minFreeGb.value * 1e9).toLong)
 
   /** The source of a layer: the vector build named by the config ("latest": the newest in the provider's list — unless
     * an unfinished download of an earlier one is there to finish), or the terrain URL.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       l: Basemap.Layer,
       a: Ask,
@@ -831,6 +870,7 @@ final class BasemapService(
           )
 
   /** The source an unfinished download of the same region and depth was reading. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resumable(l: Basemap.Layer, a: Ask, extra: BasemapFetch.Note): Option[BasemapFetch.Source] =
     files
       .get(work(l).child(Store.EntryName("state.json")))
@@ -856,6 +896,7 @@ final class BasemapService(
         )
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def zoomOf(l: Basemap.Layer, a: Ask): BasemapFetch.Plan.MaxZoom = l match
     case Basemap.Layer.Vector     => a.vectorZoom
     case Basemap.Layer.Terrain    => a.terrainZoom
@@ -872,6 +913,8 @@ final class BasemapService(
       case _ => ranged(a, l, note)
 
   /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ranged(
       a: Ask,
       l: Basemap.Layer,
@@ -893,6 +936,7 @@ final class BasemapService(
         else download(l, plan, rules, extra, h, note, a.keepAll)
     yield out
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def download(
       l: Basemap.Layer,
       plan: BasemapFetch.Plan,
@@ -962,6 +1006,7 @@ final class BasemapService(
     * tiles: no range requests), kept in a work directory as they come — so an interrupted fetch resumes — then written
     * as `bathymetry.pmtiles`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bathymetry(a: Ask, note: BasemapFetch.Note => Unit): Either[Problem, String] =
     val bc = cfg.bathymetry
     // every tile of the region, in tile-id order (the archive's)
@@ -1049,6 +1094,7 @@ final class BasemapService(
     * work directory (resumed when interrupted), then made into the tiles of zooms 0…`bathymetry.gebco.max-zoom`,
     * written as `bathymetry.pmtiles`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def gebco(a: Ask, note: BasemapFetch.Note => Unit): Either[Problem, String] =
     val bc = cfg.bathymetry
     val sea =
@@ -1100,6 +1146,7 @@ final class BasemapService(
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and written as
     * `labels.pmtiles` (about 1.4 MB for the default region) — no range requests, nothing to resume.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def labels(a: Ask, note: BasemapFetch.Note => Unit): Either[Problem, String] =
     val lc = cfg.labels
     val files = lc.files.map(f => f -> lc.url.value.replace("{file}", f.value))
@@ -1176,19 +1223,26 @@ object BasemapService:
   type TileKeys = TileKeys.T
   object TileKeys extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def invalid(problems: Problems): Api.Error = Api.Error(problems, Some(Api.Error.Code(Write.CodeInvalid)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notFound(problem: Problem): Api.Error = Api.Error(problem, Some(Api.Error.Code(Write.CodeNotFound)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def human(n: Long): String = Backup.humanBytes(com.histmersion.api.ByteCount(n))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bboxText(b: BBox): String =
     s"${b.minLon.value},${b.minLat.value},${b.maxLon.value},${b.maxLat.value}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bboxText(h: PmTiles.Header): String =
     s"${h.minLon.value},${h.minLat.value},${h.maxLon.value},${h.maxLat.value}"
 
   /** The header of a PNG archive of zooms 0…`maxZoom` over `b`: the writer fills in the offsets. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pngHeader(maxZoom: Int, b: BBox): PmTiles.Header =
     PmTiles.Header(
       ByteOffset.applyUnsafe(0L),
@@ -1220,6 +1274,8 @@ object BasemapService:
   /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea outside the
     * extract is read from it on demand and the extract is another's.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaCredit(
       extract: Option[BasemapFetch.Attribution],
       etopo1: BasemapFetch.Attribution,
@@ -1239,6 +1295,8 @@ object BasemapService:
     * `--bbox`), or — the relief alone, with a region and deeper than the extract — one named after its box, so a deep
     * regional fetch never replaces the broad extract. Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusOf(
       focus: Option[Basemap.Focus.Name],
       bbox: Option[BBox],
@@ -1267,6 +1325,8 @@ object BasemapService:
         )
 
   /** What a fetch would add: the physical names to an extract that has the map but not them. Pure. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hints(vector: Boolean, labels: Boolean, narrow: Boolean = false): List[Basemap.Status.Hints] =
     (Option
       .when(narrow)(
@@ -1283,6 +1343,7 @@ object BasemapService:
         .toList).map(Basemap.Status.Hints(_))
 
   /** What to run when some styles lack layers the download left out. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lackingHint(states: List[Basemap.StyleState]): List[Basemap.Status.Hints] =
     val lacking = states.filter(_.missing.nonEmpty)
     Option
@@ -1303,6 +1364,7 @@ object BasemapService:
     case _          => xs.init.mkString(", ") + " and " + xs.last
 
   /** The names archive's metadata: its layers, credit, and where and when it came from. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelsMetadata(
       lc: BasemapLabelsConfig,
       b: BBox,
@@ -1329,13 +1391,16 @@ object BasemapService:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobKind: Job.Kind =
     Job.Kind.applyUnsafe(BasemapJobKinds.BasemapFetch.kind.value)
 
   /** Where the focus regions' relief archives are, in the base map's store. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val FocusDir: Store.Key = Store.Key.applyUnsafe("terrain-focus")
 
   /** Whether tile `z/x/y` lies in an archive's bounds (any part of it). Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inside(h: PmTiles.Header, z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow): Boolean =
     val b = BBox(
       Longitude(h.minLon.value),
@@ -1347,6 +1412,7 @@ object BasemapService:
     x.value >= x0.value && x.value <= x1.value && y.value >= y0.value && y.value <= y1.value
 
   /** Two regions the same to within rounding. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def near(a: BBox, b: BBox): Boolean =
     List(
       a.minLon.value - b.minLon.value,
@@ -1356,6 +1422,7 @@ object BasemapService:
     ).forall(d => math.abs(d) < 1e-6)
 
   /** The provider's builds, oldest first: `[{key, size}, …]` → `(key, size)`. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def builds(json: JsonText): Either[Problem, List[(BuildName, Long)]] =
     RawJson
       .parse(json.value)
@@ -1392,6 +1459,7 @@ object BasemapService:
   /** A stored vector tile cut to `rules` (layer → geometries and kinds; none = all) and, given `props`, to those
     * properties; gzip-compressed; empty when nothing is left. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def subset(
       stored: PmTiles.TileBytes,
       c: PmTiles.Compression,
@@ -1418,6 +1486,7 @@ object BasemapService:
       .map(t => PmTiles.TileBytes(if t.value.isEmpty then t.value else PmTiles.gzip(t).value))
 
   /** The drop list as the MVT filter's rules: a layer dropped whole, only some kinds, or all but some. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mvtRules(rules: List[Basemap.DropRule]): Map[Mvt.LayerName, Mvt.Rule] =
     rules
       .map(r =>
@@ -1433,6 +1502,7 @@ object BasemapService:
   /** A vector tile without the dropped layers and kinds (every other layer kept as it is): stored again gzip-compressed
     * (as the source stores it), or dropped when nothing is left. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def thin(
       stored: PmTiles.TileBytes,
       c: PmTiles.Compression,
@@ -1448,6 +1518,8 @@ object BasemapService:
     }
 
   /** One line for a planned layer: requests and bytes. Pure. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(l: Basemap.Layer, p: BasemapFetch.Plan, dryRun: Boolean): String =
     val verb = if dryRun then "would download" else "downloaded"
     s"${l.wire} (${p.source.label.value}, zoom ${p.header.minZoom.value}–${p.maxZoom.value}): ${p.tiles.size} tiles, $verb " +

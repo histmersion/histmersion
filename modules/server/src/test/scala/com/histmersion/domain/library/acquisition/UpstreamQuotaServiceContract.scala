@@ -7,10 +7,12 @@ import com.histmersion.domain.CoreQuota
 
 import java.time.{Instant, LocalDate}
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A metered upstream's budget, the same on the database and in memory: read back as it was saved but its recent call
   * slots (kept in memory only), and replaced by the next save.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
 
   stest("a budget is read back as it was saved but its call slots; the next save replaces it") { s =>

@@ -5,10 +5,12 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.api.Offset
 import com.histmersion.api.RowCount
 import com.histmersion.web.ErrorLine
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One page of a Library list as the server answered it: its rows, where it starts, and how many the filter selects in
   * all; `loading` while a newer page is on its way, `error` when the last one failed.
   */
+@tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
 final case class ListPage[Row](
     rows: List[Row] = Nil,
     offset: Offset = Offset(0),
@@ -18,11 +20,15 @@ final case class ListPage[Row](
     error: Option[Problem] = None
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hasPrevious: Boolean = offset.value > 0
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hasNext: Boolean = offset.value + rows.size < total.value
 
   /** Where the page before and after this one start, for pages of `size` rows. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def previousOffset(size: Int): Offset = Offset(math.max(0, offset.value - size))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nextOffset(size: Int): Offset = Offset(offset.value + size)
 
 object ListPage:
@@ -34,6 +40,8 @@ object ListPage:
     (if n < 0 then "-" else "") + groups.mkString(",")
 
   /** Pure: the line over the table — `1–50 of 1,026`; `No sources` for an empty answer, `Loading…` before the first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def rangeLine(p: ListPage[?], noun: String): String =
     if !p.loaded then "Loading…"
     else if p.total.value == 0 || p.rows.isEmpty then s"No $noun"

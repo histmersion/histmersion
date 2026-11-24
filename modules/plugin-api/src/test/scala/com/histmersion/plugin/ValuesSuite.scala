@@ -2,10 +2,13 @@ package com.histmersion
 package plugin
 
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SPI's own newtypes: what each accepts, at compile time for a literal and at run time for a value read from a
   * provider; and the SPI generation compiled into the plugin.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentPure, "pending G44 (a Pure newtype's option/either never fails)")
 class ValuesSuite extends munit.FunSuite:
 
   test("a year is any integer, BCE negative"):

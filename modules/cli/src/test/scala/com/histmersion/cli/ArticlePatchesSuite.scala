@@ -16,10 +16,12 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Citekey
 import com.histmersion.cli.Cli
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticlePatchesSuite extends munit.FunSuite:
 
   private def build(

@@ -3,11 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The `opencode` provider: `opencode run --agent <role> --format json` on the generated config. `chatgptLogin`: its
   * `openai/…` models are signed in with a ChatGPT plan, so they draw on the same plan pool as Codex (otherwise they are
   * metered).
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class OpencodeConfig(
     command: OpencodeConfig.Command,
     timeoutSeconds: OpencodeConfig.TimeoutSeconds,

@@ -7,6 +7,7 @@ import com.histmersion.util.storage.Blob
 
 import java.time.Duration
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The seam between the server and the Python OCR sidecar (plan §1.8).
   *
@@ -30,6 +31,7 @@ trait ConverterClient:
   /** A thumbnail of an image, no side longer than `maxPx` (the sidecar's Pillow — the native server has no working
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
     */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def thumbnail(
       bytes: ConverterClient.DocumentBytes,
       filename: ConverterClient.Filename,
@@ -75,6 +77,7 @@ object ConverterClient:
     * that to be more — a scanned page at the scanned rate (the quality path OCRs everything at its own rate). Unknown
     * pages ⇒ the configured timeout.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def timeoutFor(cfg: ConverterSettings, count: Option[PageCount], quality: HighQuality): Duration =
     val perPage = cfg.perPage.value
     val scaled = count

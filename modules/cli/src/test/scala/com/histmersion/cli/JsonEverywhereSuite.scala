@@ -7,7 +7,9 @@ import com.histmersion.api.problem.Answer
 import com.histmersion.api.problem.Answer.decoded
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class JsonEverywhereSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

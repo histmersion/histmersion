@@ -8,12 +8,14 @@ import com.histmersion.api.plugins.PluginSet
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.jar.{JarEntry, JarOutputStream}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The plugin set inside a binary (docs/research-plugins.md §7.3): `META-INF/histmersion/plugin-set.json` in a small
   * generated jar that a relink (and the JVM launcher) puts on the class path. The jar carries its own reachability
   * metadata registering that resource, as any plugin jar does, so the native image keeps it. A stock image has none:
   * first-party plugins only.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 object PluginSetResource:
   private val MetadataPath = "META-INF/native-image/com.histmersion/plugin-set/reachability-metadata.json"
   private val Metadata = s"""{\n  "resources": [ { "glob": "${PluginSet.Resource}" } ]\n}\n"""

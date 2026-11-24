@@ -8,6 +8,8 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `met`: The Metropolitan Museum of Art Collection API (https://metmuseum.github.io/), no key. Search is
   * `/v1.1/search` (the Solr-backed `/v1/search` was retired on 2026-10-01: it answers 410), paged by `limit`, by the
@@ -15,6 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `isPublicDomain: true` and are released under CC0 — any other object is refused. The Met's years are astronomical
   * (`-1399` is 1400 BCE, as its "ca. 14th–13th century BCE" shows), so a year ≤ 0 is moved one back.
   */
+@atBoundary(BoundaryKind.Json, "reads the met collection collection's JSON answers into media records")
 final class MetCollection(conf: CollectionSettings)
     extends MuseumCollection(
       conf,
@@ -26,6 +29,7 @@ final class MetCollection(conf: CollectionSettings)
     MediaCollection.Description("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
   val role = MediaCollection.Object
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(
       place: MediaPlace,
       http: Plugin.Http
@@ -58,6 +62,7 @@ object MetCollection:
     "--dry-run lists the matches with their reasons"
 
   /** Pure: the search for objects with images from a place: `q` and `geoLocation` both the name. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       api: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
@@ -67,6 +72,7 @@ object MetCollection:
       s"${api.value.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.value.enc}&q=${name.value.enc}&limit=${limit.value.max(1)}"
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def objectUrl(api: CollectionSettings.ApiUrl, id: ObjectId): Plugin.Http.Url =
     Plugin.Http.Url(s"${api.value.stripSuffix("/")}/v1/objects/$id")
 
@@ -89,6 +95,7 @@ object MetCollection:
       )
 
   /** Pure: astronomical year → the corpus' signed year (0 → 1 BCE = -1, -1399 → -1400). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def year(astronomical: Year): Year = if astronomical.value <= 0 then Year(astronomical.value - 1) else astronomical
 
   /** The geography fields, most specific first. */
@@ -98,6 +105,7 @@ object MetCollection:
     )
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(json: Json): Either[Problem, MediaItem] =
     val c = json.cursor
     c.long("objectID")

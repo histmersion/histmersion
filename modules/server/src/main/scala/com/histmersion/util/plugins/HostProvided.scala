@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.PluginHost
 import hearth.kindlings.sconfigderivation.ConfigReader
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A first-party plugin the host still supplies itself, with settings `C` decoded from its block by `C`'s reader: the
   * command-line AI runtimes, which read the host's own settings at each use. Its defaults resource
@@ -34,6 +35,7 @@ object HostProvided:
   val Release: Plugin.Info.Version = Plugin.Info.Version("0.1.0")
 
   /** A host-supplied plugin with no settings of its own beyond the host's `enabled`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(
       id: util.plugins.Plugin.Id,
       contribute: Plugin.Context => Either[Problem, Unit]

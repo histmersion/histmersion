@@ -3,13 +3,16 @@ package domain.catalogue.evidence
 
 import com.histmersion.domain.library.sources.referrers.SourceKeys
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #969: which attestations of other sources lose their target when a source is deleted. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AttestationSourceReferrerSuite extends munit.FunSuite:
 
   private val Ck = Citekey("beckman2011_ahhiyawa")
   private val source = SourceKeys(Ck, List(Ck), _ => Map.empty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def target(raw: String): BAttestationFullRow.TargetId = BAttestationFullRow.TargetId(raw)
 
   test("attestations of its findings, of edges FROM it and of its datings go; of edges TO it they stay"):

@@ -6,6 +6,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the browser can draw: `software` when its WebGL is rasterised on the CPU (SwiftShader, llvmpipe…) — the GL map
   * then breaks the interaction budgets (docs/research-map-styles.md §3.2) and the app draws its cheapest map.
@@ -30,6 +31,8 @@ object Capabilities:
   type Webgl2 = Webgl2.T
   object Webgl2 extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def withoutWebgl2(c: Capabilities): Option[Problem] =
     if !c.webgl.value then
       Some(
@@ -44,10 +47,12 @@ object Capabilities:
   /** A renderer name that hides the GPU (Chromium's and Safari's answer to `RENDERER`): ask the debug extension
     * instead. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def genericRenderer(renderer: Renderer): Boolean =
     val r = renderer.value.trim.toLowerCase
     r.isEmpty || r == "webkit webgl" || r == "webgl" || r.startsWith("mozilla")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isSoftware(renderer: Renderer): Boolean =
     val r = renderer.value.toLowerCase
     List("swiftshader", "llvmpipe", "softpipe", "software", "basic render", "mesa offscreen", "lavapipe").exists(

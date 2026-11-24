@@ -14,8 +14,12 @@ import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Process, "runs external programs for plugins")
 final class SystemProcesses extends Processes:
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def run(
       argv: List[Processes.RunArgv],
       env: Map[EnvVar.Name, EnvVar.Value],
@@ -84,6 +88,7 @@ final class SystemProcesses extends Processes:
     def alive: Boolean = proc.isAlive
 
     /** Write one line to the tool's stdin. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def send(line: Processes.Session.SendLine): Either[Problem, Unit] =
       try { in.write((line.value + "\n").getBytes(UTF_8)); in.flush(); Right(()) }
       catch
@@ -91,12 +96,14 @@ final class SystemProcesses extends Processes:
           Left(Problem.Io.Process(Problem.Io.Tool(s"$tool"), Problem.Io.Ending.NotStarted(External.Reported.of(e))))
 
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def awaitOut(timeout: FiniteDuration)(
         ready: Processes.Result.Out => Boolean
     ): Boolean =
       await(timeout, () => ready(out))
 
     /** Wait until stderr has grown past `length` characters, the tool has exited, or `timeout` passed. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def awaitErr(length: Processes.Session.AwaitErrLength, timeout: FiniteDuration): Unit = {
       val _ = await(timeout, () => err.value.length > length.value)
     }
@@ -135,6 +142,7 @@ final class SystemProcesses extends Processes:
       }
 
   object Session:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def start(
         argv: List[Processes.StartArgv],
         env: Map[EnvVar.Name, EnvVar.Value]
@@ -222,6 +230,7 @@ final class SystemProcesses extends Processes:
       env: Map[EnvVar.Name, EnvVar.Value]
   ): Either[Problem, Processes.Session] = Session.start(argv, env)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def capture(argv: List[Processes.CaptureArgv]): Either[Problem, Result] =
     val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
     Try {

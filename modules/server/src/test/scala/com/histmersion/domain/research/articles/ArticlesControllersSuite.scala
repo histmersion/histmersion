@@ -42,12 +42,14 @@ import com.histmersion.domain.library.sources.SourceDeletePlan
 import com.histmersion.util.time.SystemTimer
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The articles' controllers over the in-memory services, with no source stored: a slug that is not one and a strict
   * write refused by the formatting check, an old slug followed by every read and write, a coverage with no source, a
   * note imported (stale, under an old slug, fresh), the versions of no article, and every write refused while the
   * maintenance lock is held.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticlesControllersSuite extends munit.FunSuite:
 
   /** The library's reads as a database with no source answers them. */
@@ -86,6 +88,8 @@ class ArticlesControllersSuite extends munit.FunSuite:
     def find(plan: SourceDeletePlan): List[SourceOriginals.FoundFile] = Nil
     def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemovedFile] = Nil
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def controllers(gate: WriteGate = WriteGate()): ArticlesControllers =
     val sourceStore =
       SourceService.InMemory(
@@ -94,11 +98,14 @@ class ArticlesControllersSuite extends munit.FunSuite:
         () => LibraryStoreSuite.Settings
       )
     val media = new MediaSources:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def current(citekey: Citekey): Option[MediaSources.Current] =
         sourceStore.current(citekey).map(c => MediaSources.Current(c.value))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def lookup(citekey: Citekey): Either[MediaSources.Error, MediaSources.Key] =
         if sourceStore.load(citekey).isDefined then Right(MediaSources.Key(citekey.value))
         else Left(MediaSources.Error.NotFound)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def markdown(citekey: Citekey): MediaSources.Markdown = MediaSources.Markdown(sourceStore.markdown(citekey).value)
     val figures = AssetsControllers(
       AssetService.InMemory(AtomicReference(MediaState.empty), MediaStoreSuite.Ticking()),

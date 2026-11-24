@@ -4,10 +4,12 @@ package config
 import io.github.iltotore.iron.constraint.numeric.{Multiple, Positive}
 
 import scala.util.Try
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** A memory size of the bundled Postgres, in bytes: a whole number of kilobytes, the smallest unit Postgres reads a
   * size in, so every value is written exactly ([[written]]).
   */
+@movesTo(FeaturePlace.UtilDatabase)
 type PgBytes = PgBytes.T
 
 object PgBytes extends Newtype[Long, Positive & Multiple[1024L]]:

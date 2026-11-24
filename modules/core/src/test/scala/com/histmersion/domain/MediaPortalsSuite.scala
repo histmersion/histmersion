@@ -9,11 +9,13 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host's half of the keyless portals (#1446): licences given as Creative Commons URLs, gazetteer ids in their URI
   * forms and the id a place id carries, and the rule that ties a record to a place by its own place id. The real Open
   * Context records' matches (#2571) run over the plugin's parser in the media plugins' suites.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaPortalsSuite extends munit.FunSuite:
 
   // ── licences and ids ─────────────────────────────────────────────────────────────────────────
@@ -64,6 +66,7 @@ class MediaPortalsSuite extends munit.FunSuite:
     Set(MediaMatch.PlaceInfo.Keys("petra")),
     DeepTime.span(DeepTime.SignedYear(-300L), DeepTime.SignedYear(400L))
   )
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def rec(
       ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)],
       geo: List[(MediaRecord.Geography.Field, MediaRecord.Geography.Value)],
@@ -81,8 +84,10 @@ class MediaPortalsSuite extends munit.FunSuite:
       period,
       ids
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def gp(field: String, value: String) =
     (MediaRecord.Geography.Field(field), MediaRecord.Geography.Value(value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ext(scheme: String, id: String) = (ExternalIds.Scheme(scheme), ExternalIds.ExternalId(id))
   private val idsOnMap: MediaMatch.ResolveId = Map(
     ext("pleiades", "697725") -> Set(MediaMatch.PlaceInfo.Id("pleiades_697725")),

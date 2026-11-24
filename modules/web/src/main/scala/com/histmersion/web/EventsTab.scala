@@ -21,6 +21,7 @@ import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.library.Title
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Markdown
+import com.histmersion.lint.{LintRule, tolerated}
 
 object EventsTab:
   type When = When.T
@@ -30,6 +31,8 @@ object EventsTab:
     * to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past the first.
     */
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val tab = FilterTab[Api.EventQuery, EventSummary](
     name = FilterTab.Name("events"),
     singular = Plural.Noun.Singular("event"),
@@ -56,14 +59,20 @@ object EventsTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val total: Signal[Option[RowCount]] =
     tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`), else its
     * four-point span.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def when(e: EventSummary): When = When(e.datingNote.getOrElse(YearFmt.span(e.timeSpan)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(
       cls := "event-row",

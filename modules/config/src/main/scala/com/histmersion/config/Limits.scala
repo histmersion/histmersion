@@ -3,7 +3,10 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.Config)
 final case class Limits(
     /** HARD cap on any caller-supplied `limit`, everywhere. */
     maxPage: Limits.MaxPage,
@@ -26,11 +29,13 @@ final case class Limits(
     passages: PassageLimits
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def snippetWords: Limits.SnippetWords = Limits.SnippetWords(math.max(1, snippetChars.value / 6))
 
   /** Clamp a caller's `limit` into `[1, maxPage]`; `<= 0` means "the caller gave none" and yields `dflt` (itself
     * capped). ONE definition, so no surface can forget the cap.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(limit: Option[PageSize], dflt: PageSize): PageSize =
     val cap = math.max(1, maxPage.value)
     PageSize.applyUnsafe(

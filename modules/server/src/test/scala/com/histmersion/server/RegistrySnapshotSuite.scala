@@ -13,6 +13,7 @@ import com.histmersion.server.agents.ServerEngineSite
 import com.histmersion.domain.library.collections.CollectionsControllers
 import com.histmersion.domain.library.collections.CollectionsService
 import com.histmersion.domain.library.collections.RefusingCollectionLibrary
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the composition registers, written as text to `src/test/resources/oracle/registries/` and compared byte for
   * byte, recorded on the code before the transition adapters and `Handlers` went (slice 12, part 2): every owner's data
@@ -23,6 +24,8 @@ import com.histmersion.domain.library.collections.RefusingCollectionLibrary
   * `HISTMERSION_UPDATE_ORACLE=1` rewrites it. No database: the composition runs over one that refuses every connection,
   * as `ContractSnapshotSuite`'s does.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class RegistrySnapshotSuite extends munit.FunSuite:
 
   private val dir = Path.of("modules/server/src/test/resources/oracle/registries")

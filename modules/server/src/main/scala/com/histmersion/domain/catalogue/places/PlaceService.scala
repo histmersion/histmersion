@@ -30,6 +30,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
   * place is the library's; what these answer about findings counts the places' matches (`finding_places`).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait PlaceService:
   def count(): RowCount
 
@@ -59,6 +60,7 @@ trait PlaceService:
   ): List[Place.Summary]
 
   /** The hierarchy at `asOf` as a depth-tagged pre-order walk, from `root` or from every place that heads it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hierarchy(
       asOf: Option[DeepTime.SignedYear],
       root: Option[DPlace.Id],
@@ -148,6 +150,7 @@ object PlaceService:
       ).toList
     def get(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], modernFrom: DeepTime.SignedYear): Option[Place.Entry] =
       db.read(PlaceRepo.get(id, asOf, modernFrom))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def children(
         id: DPlace.Id,
         asOf: Option[DeepTime.SignedYear],
@@ -155,6 +158,7 @@ object PlaceService:
         modernFrom: DeepTime.SignedYear
     ): List[Place.Summary] =
       db.read(PlaceRepo.children(id, asOf, PlaceRepo.Limit(limit.value), modernFrom)).toList
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def hierarchy(
         asOf: Option[DeepTime.SignedYear],
         root: Option[DPlace.Id],
@@ -176,16 +180,19 @@ object PlaceService:
     def footprints(id: DPlace.Id, asOf: Option[DeepTime.SignedYear]): List[Place.Footprint] =
       db.read(PlaceRepo.footprints(id, asOf)).toList
     def links(id: DPlace.Id): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def scopeFor(values: List[ScopeForValues], period: Option[Period]): PlaceScope =
       db.read(PlaceRepo.scopeFor(values.map(v => PlaceRepo.ScopeForValues(v.value)), period))
     def gazetteer(placeIds: List[DPlace.Id]): (List[RegionNode], List[Place.Relation]) =
       db.read(TreeRepo.gazetteer(placeIds))
     def rename(from: DPlace.Id, to: DPlace.Id)(using WritePermit): Either[Api.Error, Unit] =
       db.write(PlaceRepo.rename(from, to))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def addName(id: DPlace.Id, name: Place.Name.Value, lang: Place.Name.Lang)(using
         WritePermit
     ): Either[Api.Error, Place.NameChanged] =
       db.write(PlaceRepo.addName(id, PlaceRepo.Name(name.value), PlaceRepo.Lang(lang.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def removeName(id: DPlace.Id, name: Place.Name.Value, lang: Place.Name.Lang)(using
         WritePermit
     ): Either[Api.Error, Place.NameChanged] =
@@ -197,18 +204,21 @@ object PlaceService:
         PlaceRepo.addPlace(in)
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       db.read(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setOverride(
         id: DPlace.Id,
         edit: Place.OverrideEdit,
         toleranceKm: GeocodeSettings.ToleranceKm
     )(using WritePermit)(using Creator.New): Either[Api.Error, Place.OverrideChanged] =
       db.write(PlaceOverrideRepo.set(BPlaceRow.Id(id.value), edit, toleranceKm))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def merge(
         from: DPlace.Id,
         into: DPlace.Id,
         toleranceKm: GeocodeSettings.ToleranceKm
     )(using WritePermit): Either[Api.Error, Place.Gone] =
       db.write(PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), toleranceKm))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def remove(id: DPlace.Id, reason: Option[PlaceRationale])(using WritePermit): Either[Api.Error, Place.Gone] =
       db.write(
         PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason)
@@ -223,18 +233,25 @@ object PlaceService:
 
     private def places: Vector[HeldPlace] = state.get.places
     private def find(id: Place.Id): Option[HeldPlace] = places.find(_.id == id)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def apiId(id: DPlace.Id): Place.Id = Place.Id(id.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def parentIs(r: Place.Relation, id: Place.Id): Boolean = r.parentId.value == id.value
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def parentOf(r: Place.Relation): Place.Id = Place.Id(r.parentId.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def notFound(id: String): Api.Error =
       Api.Error(
         Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")),
         Some(Api.Error.Code(Write.CodeNotFound))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def invalid(problem: Problem): Api.Error = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def count(): RowCount = RowCount(places.size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def importPlaces(batch: List[Place.Input], dataset: Dataset)(using
         WritePermit
     )(using Creator.New): Place.ImportResult =
@@ -307,6 +324,8 @@ object PlaceService:
             .take(20)
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def search(
         q: Option[SearchQ],
         asOf: Option[DeepTime.SignedYear],
@@ -359,6 +378,7 @@ object PlaceService:
           )
         }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def parentsOf(p: HeldPlace, asOf: Option[DeepTime.SignedYear]): List[Place.Summary] =
       p.parents
         .filter(r => HeldPlace.covers(r.period, asOf))
@@ -369,11 +389,13 @@ object PlaceService:
         .toList
         .map(_.summary)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def kidsOf(id: Place.Id, asOf: Option[DeepTime.SignedYear]): Vector[HeldPlace] =
       places
         .filter(c => c.parents.exists(r => parentIs(r, id) && HeldPlace.covers(r.period, asOf)) && c.validAt(asOf))
         .sortBy(c => (c.place.label.value, c.id.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: DPlace.Id, asOf: Option[DeepTime.SignedYear], modernFrom: DeepTime.SignedYear): Option[Place.Entry] =
       find(apiId(id)).map { p =>
         Place.Entry(
@@ -388,6 +410,7 @@ object PlaceService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def children(
         id: DPlace.Id,
         asOf: Option[DeepTime.SignedYear],
@@ -396,6 +419,8 @@ object PlaceService:
     ): List[Place.Summary] =
       kidsOf(apiId(id), asOf).take(limit.value).toList.map(_.summary)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def hierarchy(
         asOf: Option[DeepTime.SignedYear],
         root: Option[DPlace.Id],
@@ -432,9 +457,11 @@ object PlaceService:
         .take(limit.value)
 
     def footprints(id: DPlace.Id, asOf: Option[DeepTime.SignedYear]): List[Place.Footprint] = Nil
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def links(id: DPlace.Id): List[Place.Link] =
       find(apiId(id)).toList.flatMap(_.links).sortBy(l => (l.scheme.value, l.externalId.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def scopeFor(values: List[ScopeForValues], period: Option[Period]): PlaceScope =
       val s = state.get
       val wanted = values.map(_.value.trim).filter(_.nonEmpty).distinct
@@ -462,6 +489,7 @@ object PlaceService:
             .toMap
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def gazetteer(placeIds: List[DPlace.Id]): (List[RegionNode], List[Place.Relation]) =
       @tailrec def up(frontier: List[Place.Id], seen: Vector[Place.Id]): Vector[Place.Id] = frontier match
         case Nil       => seen
@@ -487,6 +515,7 @@ object PlaceService:
       val edges = ids.flatMap(find).flatMap(_.parents).filter(r => ids.exists(_.value == r.parentId.value)).toList
       (nodes, edges)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(from: DPlace.Id, to: DPlace.Id)(using WritePermit): Either[Api.Error, Unit] =
       val (o, n) = (Place.Id(from.value.trim), Place.Id(to.value.trim))
       val aliasOf = state.get.placeAliases.get(CatalogueState.PlaceAliasesKey(n.value))
@@ -521,6 +550,7 @@ object PlaceService:
         )
         Right(())
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def addName(id: DPlace.Id, name: Place.Name.Value, lang: Place.Name.Lang)(using
         WritePermit
     ): Either[Api.Error, Place.NameChanged] =
@@ -550,6 +580,7 @@ object PlaceService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def removeName(id: DPlace.Id, name: Place.Name.Value, lang: Place.Name.Lang)(using
         WritePermit
     ): Either[Api.Error, Place.NameChanged] =
@@ -593,6 +624,7 @@ object PlaceService:
           )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def manualNames(id: Option[DPlace.Id]): List[ManualPlaceName] =
       places
         .filter(p => id.forall(_.value == p.id.value))
@@ -611,6 +643,7 @@ object PlaceService:
         .sortBy(m => (m.placeId.value, m.name.value, m.lang.value))
         .toList
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def add(in: Place.Input)(using WritePermit)(using Creator.New): Either[Api.Error, Place.Summary] =
       val id = in.place.id
       val s = state.get
@@ -630,6 +663,7 @@ object PlaceService:
           .map(_.summary)
           .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw.of(id))))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       state.get.placeOverrides
         .filter(o => id.forall(_ == o.placeId))
@@ -654,6 +688,8 @@ object PlaceService:
           }
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def setOverride(
         id: DPlace.Id,
         edit: Place.OverrideEdit,
@@ -755,6 +791,7 @@ object PlaceService:
         }
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def merge(
         from: DPlace.Id,
         into: DPlace.Id,
@@ -808,6 +845,7 @@ object PlaceService:
             )
           )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def remove(id: DPlace.Id, reason: Option[PlaceRationale])(using WritePermit): Either[Api.Error, Place.Gone] =
       find(apiId(id)).toRight(notFound(id.value)).flatMap { p =>
         val s = state.get
@@ -846,6 +884,7 @@ object PlaceService:
     val RootKinds: Set[String] = Set("region", "polity", "continent")
 
     /** An override's sides as a closed period (an open side reads as the widest year). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def periodOf(sides: (Option[HeldOverride.Bound.Start], Option[HeldOverride.Bound.End])): Option[Period] =
       sides match
         case (None, None) => None
@@ -854,5 +893,6 @@ object PlaceService:
     def isPoint(geojson: String): Boolean =
       RawJson.parse(geojson).toOption.flatMap(_.cursor.downField("type").as[String].toOption).contains("Point")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def timestamp(at: Instant): HeldOverride.UpdatedAt =
       HeldOverride.UpdatedAt(at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString)

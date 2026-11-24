@@ -3,8 +3,10 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** How a paper's illustration is chosen among its figures (`media.illustrations`). */
+@movesTo(FeaturePlace.Media)
 final case class MediaIllustrationsConfig(
     minSide: MediaIllustrationsConfig.MinSide,
     minArea: MediaIllustrationsConfig.MinArea,

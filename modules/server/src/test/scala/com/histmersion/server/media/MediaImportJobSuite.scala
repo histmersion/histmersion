@@ -35,6 +35,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1491: a media import over a few hundred places/events is a JOB, through the real server — the request answers at
   * once with the job, the job reports `n/total` as it goes, a picture that cannot be fetched is a line in its summary
@@ -43,11 +44,13 @@ import com.histmersion.util.database.TestCreators.given
   * (HISTMERSION_TEST_DB_URL; skipped otherwise). Fixtures: events `0zqmj_*` (sorting before every other event, so a
   * `limit` job takes exactly these), pictures `File:Zqmj *`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaImportJobSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val N = 300
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def id(i: Int) = BEventRow.Id(f"0zqmj_$i%03d")
   private def qid(i: Int) = s"Q${9_100_000 + i}"
   private def idx(q: String): Int = q.stripPrefix("Q").toInt - 9_100_000
@@ -137,6 +140,7 @@ class MediaImportJobSuite extends DbSuite:
   private lazy val providerServer = provider()
   private lazy val providerUrl = s"http://127.0.0.1:${providerServer.getAddress.getPort}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base
@@ -189,6 +193,7 @@ class MediaImportJobSuite extends DbSuite:
     val _ = sql"DELETE FROM media_checks WHERE target_id LIKE '0zqmj%'".update.run()
     val _ = sql"DELETE FROM events WHERE id LIKE '0zqmj%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
@@ -210,6 +215,7 @@ class MediaImportJobSuite extends DbSuite:
       clean()
       providerServer.stop(0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(url: String, jid: JobInfo.Id): JobInfo =
     val (s, b) = get(s"$url/api/jobs/$jid")
     assertEquals(s, 200, b)

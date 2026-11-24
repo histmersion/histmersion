@@ -13,10 +13,12 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Facet
 import com.histmersion.api.jobs.JobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The list filters' pure parts: the multi-valued parameters, the time bounds, who decided an approval, the facet
   * header and its round trip, and what a heading or a next-page line says.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ListFiltersSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-23T12:00:00Z")

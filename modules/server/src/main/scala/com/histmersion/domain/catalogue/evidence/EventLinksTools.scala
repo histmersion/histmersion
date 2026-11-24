@@ -26,6 +26,7 @@ import com.histmersion.domain.CreatorControllers
 object EventLinksTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class EventLinksInput(
       id: Option[com.histmersion.api.catalogue.Event.Id] = None,
       recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false),
@@ -38,6 +39,8 @@ object EventLinksTools:
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec
   object EventLinksInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[EventLinksInput] = KindlingsSchema
       .derived[EventLinksInput]
       .schema
@@ -53,6 +56,8 @@ object EventLinksTools:
       .modify(_.to)(_.description("Leads: events overlapping up to this signed year"))
       .modify(_.kind)(_.description("Leads: a kind (eruption, battle…) or natural | human"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(links: EventLinksControllers) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val linksTool =

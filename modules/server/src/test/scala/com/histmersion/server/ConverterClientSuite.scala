@@ -15,6 +15,7 @@ import java.nio.file.Files
 import java.time.Duration
 import com.histmersion.config.ConverterConfig
 import com.histmersion.util.jobs.Job
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A whole book legitimately converts for far longer than an article: the client asks the sidecar for the page count
   * and allows `pages × seconds-per-page` when that beats the configured timeout.
@@ -124,6 +125,7 @@ class ConverterClientSuite extends munit.FunSuite:
     try f(s"http://127.0.0.1:${srv.getAddress.getPort}")
     finally srv.stop(0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def convert(url: String) =
     val file = Files.createTempFile("book", ".pdf")
     try

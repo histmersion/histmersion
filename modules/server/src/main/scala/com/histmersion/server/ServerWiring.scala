@@ -110,12 +110,15 @@ import com.histmersion.domain.research.ResearchData
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP
   * tools ([[McpTools]]) bind the same controllers; the CLI reaches them over HTTP. Nothing here implements an
   * operation.
   */
+@movesTo(FeaturePlace.Server)
 final class ServerWiring(deps: Deps, converter: ConverterClient):
 
   /** The ordinary construction: the OCR sidecar client comes from config. The two-argument form is the seam an HTTP
@@ -158,6 +161,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val media: MediaWiring = MediaWiring(deps, converter)
 
   /** The library's ingest: the OCR job queue, the ingest surface, the hand-over of a fetched copy, the seed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val ingest: IngestWiring = IngestWiring(
     deps,
     converter,
@@ -186,6 +190,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val basemap: BasemapService = BasemapWiring.service(deps)
 
   /** The portable bundle — instance identity, export, verify, import (docs/research-merge-import.md). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val bundles: BundleControllers =
     import com.histmersion.util.data.exchange.{
       BundleControllers,
@@ -241,6 +246,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     LogControllers(LogService(deps.transactor, deps.logFiles), () => Instant.now(deps.clock))
 
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   lazy val jobControl: JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
     def run(id: Job.Id, a: JobAction)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
@@ -296,6 +303,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Settings: the settings file read and changed (never the database), reloaded into this server; the restart for what
     * only a restart applies.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val settings: SettingsControllers =
     import com.histmersion.util.settings.{RestartService, SettingsControllers, SettingsService}
     SettingsControllers(
@@ -359,12 +367,14 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
     * trip.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mentionedIn(citekey: Citekey): SourcesControllers.Markdown =
     SourcesControllers.Markdown(research.articles.mentionedIn(citekey))
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
   /** The catalogue's events, their catalogues and links, and the refinement of site types. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val catalogue: CatalogueWiring =
     CatalogueWiring(
       deps,
@@ -427,6 +437,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   def siteTypes: SiteTypesControllers = catalogue.siteTypes
 
   /** The events' operations; an event's card joins the articles citing its sources. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val events: EventsControllers =
     EventsControllers(
       eventStore,
@@ -451,6 +462,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── attestations (plan §1.3) ──────────────────────────────────────────────────────────────
 
   /** What attests a data point: the attestations' operations. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val attestations: AttestationsControllers =
     new AttestationsControllers(
       AttestationService(deps.transactor, deps.clock),
@@ -478,6 +490,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     places.geocode(name, hint, at)
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val tiles: MapTileService =
     MapTileService(
       deps.transactor,
@@ -508,6 +521,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeCounts(id: domain.catalogue.Place.Id): Place.Counts =
     val f = Filter(places = List(Filter.Places(id.value)))
     library.search.selectionCounts(f)
@@ -515,6 +529,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── the goals and the agents' state (plan §1.5) ────────────────────────────────────────────
 
   /** The goals' operations; an old slug answers as the goal it was renamed to (#1799). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val goals: GoalsControllers =
     GoalsControllers(
       GoalService(deps.transactor, deps.clock),
@@ -551,6 +566,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── checks, upkeep and this instance ─────────────────────────────────────────────────────────
 
   /** The registered checks, reported in `Lint.names`' order and fixed by their ranks. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val checks: CheckControllers =
     import com.histmersion.util.data.checks.{CheckControllers, CheckOrder, CheckRunner}
     CheckControllers(
@@ -599,6 +615,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     SeedControllers(deps, ingest.seed)
 
   /** This server: its version, health, About, the web page's settings and counters, the config reload. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val instance: InstanceControllers =
     InstanceControllers(
       deps,
@@ -662,6 +679,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   // ── research ─────────────────────────────────────────────────────────────────────────────────
 
   /** Research's articles: their services, controllers and page, and its review ledgers. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val research: ResearchWiring =
     ResearchWiring(
       deps,

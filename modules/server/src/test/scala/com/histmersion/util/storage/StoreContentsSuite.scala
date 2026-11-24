@@ -5,15 +5,18 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The stored originals over a store, on disk and in memory alike: found by digest, stored only when the content is its
   * name, under a safe extension, never half written.
   */
 class StoreContentsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha(b: ByteSource.Content) =
     ContentStore.hex(ContentStore.Digest(java.security.MessageDigest.getInstance("SHA-256").digest(b.value)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cases(name: String, store: () => Store): Unit =
     test(s"$name: content-addressed — stored only when the content is its name, found by digest"):
       val s = store()

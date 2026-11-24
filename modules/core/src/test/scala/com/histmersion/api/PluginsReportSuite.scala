@@ -25,9 +25,12 @@ import com.histmersion.api.plugins.{
 }
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.plugins.PluginDescription
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginsReportSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val vault = PluginStatus(
     PluginStatus.Id("keepassxc"),
     PluginStatus.Version("0.1.0"),
@@ -40,6 +43,7 @@ class PluginsReportSuite extends munit.FunSuite:
       PluginSetting(PluginSetting.Key("password"), PluginSetting.Value("env:KP_PASSWORD"))
     )
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val off = PluginStatus(
     PluginStatus.Id("bitwarden"),
     PluginStatus.Version("0.1.0"),
@@ -47,6 +51,7 @@ class PluginsReportSuite extends munit.FunSuite:
     enabled = PluginStatus.Enabled(false),
     PluginState.Wire(PluginState.Disabled.wire.value)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val broken = PluginStatus(
     PluginStatus.Id("portal"),
     PluginStatus.Version("2.0.0"),
@@ -63,6 +68,7 @@ class PluginsReportSuite extends munit.FunSuite:
       Problem.Plugin.Vault(Problem.Plugin.Id("keepassxc"), Problem.Plugin.Retrieval.NoVault)
     )
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val alien = PluginStatus(
     PluginStatus.Id("old"),
     PluginStatus.Version("0.0.1"),

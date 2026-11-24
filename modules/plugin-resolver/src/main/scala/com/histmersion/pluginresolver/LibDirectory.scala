@@ -7,11 +7,14 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
 import scala.jdk.CollectionConverters.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The plugins directory's `lib/`: the dependency jars of the installed plugins, and three files. `classpath` lists the
   * jars in class-path order, `inputs` the plugin jars and POMs they were resolved from (`<sha256> <file>`), and
   * `repositories` the repositories they were resolved from.
   */
+@atBoundary(BoundaryKind.Process, "reads and writes the plugin lib directory and its list files")
 object LibDirectory:
   export Resolver.Sha256 as Sha256Result
 
@@ -34,6 +37,8 @@ object LibDirectory:
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def write(
       lib: Path,
       deps: List[Dependency],
@@ -60,6 +65,7 @@ object LibDirectory:
     try s.iterator().asScala.filter(p => Files.isRegularFile(p) && p.getFileName.toString.endsWith(".jar")).toList
     finally s.close()
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def sha256(p: Path): LibDirectory.Sha256Result =
     val md = MessageDigest.getInstance("SHA-256")
     val in = Files.newInputStream(p)

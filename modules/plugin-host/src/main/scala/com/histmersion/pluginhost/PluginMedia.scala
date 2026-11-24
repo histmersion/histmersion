@@ -16,16 +16,21 @@ import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plugin's media collection as the host reads it: its polite HTTP, its answers guarded, each item turned into the
   * host's [[MediaRecord]] with its licence READ BY THE HOST, and the host's judgement of whether a record may be kept
   * at all. Pure but for [[http]].
   */
+@atBoundary(BoundaryKind.Spi, "turns a plugin's media items into the host's media records")
 object PluginMedia:
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def polite(
       http: HttpTransport,
       media: MediaConfig,
@@ -43,6 +48,8 @@ object PluginMedia:
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host cannot read, a
     * licence family not in `allow` (the collection's allowlist), no image — or `None`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def refusal(rec: MediaRecord, allow: LicencePolicy, provider: Provider): Option[Refusal] =
     rec.rights match
       case _ if rec.withheld.isDefined =>
@@ -83,7 +90,9 @@ object PluginMedia:
   /** The run's polite client as the plugin's HTTP: its pace, its User-Agent, Retry-After honoured, a challenge the end
     * of the request.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def http(polite: Polite): Plugin.Http = new Plugin.Http:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       polite
         .get(
@@ -116,6 +125,9 @@ object PluginMedia:
     * makes the record unreadable (its rights a `Left` naming the value, so it is never kept), as does a record the host
     * cannot read at all (a plugin built against another SPI).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def record(it: MediaItem): MediaRecord =
     val key = it.key.value.trim
     val period: Either[Problem, Option[com.histmersion.Period]] =
@@ -151,6 +163,8 @@ object PluginMedia:
     * carry a credit line. The family decided here is what the allowlist is checked against: the plugin states, the host
     * judges.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def rights(r: MediaRights): Either[Problem, Attribution] =
     val stated =
       try Option(r.licence).map(l => SpiValues.licenceOf(l).value).getOrElse("").trim

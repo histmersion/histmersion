@@ -45,6 +45,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.config.UserPaths.pathEquality
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The files a run of the server leaves in its directories, as a smoke run makes them: one scratch root holding the
   * settings file, the data directory, the converter's and the acquisition's spools, the backups and bundles directories
@@ -154,6 +155,7 @@ class DataTreeOracleSuite extends DbSuite:
     }
 
   /** The base map over fixture archives, as the base-map suite fetches it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def basemapRun(): Unit =
     val src = Files.createTempDirectory("histmersion-data-tree-src")
     val v = BasemapFixtures.LocalRange(
@@ -239,13 +241,17 @@ class DataTreeOracleSuite extends DbSuite:
           )
       )
     val router = new RangeHttp:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       private def pick(url: RangeHttp.Url) = if url.value.startsWith("fake://v") then v else t
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def text(url: RangeHttp.Url) =
         if url.value == "fake://ne/ranges.geojson" then Right(BasemapServiceSuite.Ranges)
         else if url.value == "fake://ne/rivers.geojson" then Right(BasemapServiceSuite.Rivers)
         else v.text(url)
       def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = pick(url).bytes(url, o, l)
       def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = pick(url).download(url, o, l, to)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       override def file(url: RangeHttp.Url) =
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
         url.value match
@@ -286,6 +292,7 @@ class DataTreeOracleSuite extends DbSuite:
     )
 
   /** A file the acquisition spools for the converter. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spoolRun(): Unit =
     val base =
       AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.sentences.mkString("; ")), identity).config

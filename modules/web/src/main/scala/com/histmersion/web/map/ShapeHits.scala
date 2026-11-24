@@ -5,15 +5,19 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.Geo
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which shape is under a point: pure geometry over GeoJSON, so finding what the pointer is over never depends on what
   * the library has rendered yet.
   */
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object ShapeHits:
   /** Is (`lat`, `lon`) inside the polygon or multipolygon `g` (even–odd over every ring: holes are outside)? Points and
     * lines contain nothing. Pure.
     */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contains(g: js.Dynamic, lat: Geo.Latitude, lon: Geo.Longitude): Boolean =
     if js.isUndefined(g) || g == null then false
     else

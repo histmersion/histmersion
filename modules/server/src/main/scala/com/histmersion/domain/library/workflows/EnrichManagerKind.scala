@@ -35,11 +35,13 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a
   * person asked.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends ManagerKindDefinition:
   val kind: Kind = Kind.Enrich
   val creator: domain.Creator.New =
@@ -48,6 +50,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     ReviewSettings.defaultsFor(kind.transformInto[Manager.Kind], m)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = itemKind.value match
     case SourceEnrich => Pipeline.EnrichSource
     case _            => Pipeline.Fallback
@@ -58,6 +61,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     StepFacts.Finished(Item.Outcome("enriched"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def target(
       m: ManagerInfo,
       itemKind: ManagerContext.ItemKind,
@@ -79,6 +84,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def expand(
       c: ManagerContext,
       raw: ManagerItem.Target
@@ -129,6 +136,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       }
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Rationale] =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption match
       case None      => Some(AutoEnrich.Rationale.NoSource)
@@ -141,6 +149,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
         )
 
   /** The earlier non-dry `enrich-source` runs of a source, as [[AutoEnrich]] reads them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def priorRuns(c: ManagerContext, ck: Citekey): List[AutoEnrich.PriorRun] =
     c.runsFor(Pipeline.EnrichSource, ManagerContext.ItemTarget(ck.value))
       .toList
@@ -157,6 +166,9 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     * already is or one is on its way) — an item of the enrich manager while the managers are on, else a run of its own.
     * Answers the ingest job's progress note (None: not asked for).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def autoEnrich(citekey: Citekey)(using WritePermit)(using Creator.New): Option[AutoEnrich.Note] =
     def cfg = a.config
     try
@@ -198,6 +210,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** With the managers on: the ingested source becomes an item of the enrich manager (created paused if missing).
     * Answers the ingest job's progress note.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit)(using Creator.New): AutoEnrich.Note =
     val enrichId = ManagerLight.Id(EnrichId)
     Unused(c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
@@ -223,6 +236,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       Manager.State.Wire(c.state(enrichId).fold(State.Paused.wire.value)(_.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dispatch(
       c: ManagerContext,
       m: ManagerInfo,

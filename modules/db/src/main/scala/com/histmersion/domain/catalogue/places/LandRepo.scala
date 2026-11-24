@@ -7,11 +7,13 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** Real land, for drawing polities on it rather than over the sea (V025). `land` holds Natural Earth land + minor
   * islands cut into small pieces; `places.geom_clipped` is each polity ∩ land, which a trigger keeps current when a
   * polity changes and [[reclip]] recomputes when the land changes.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the land tables and their row codecs")
 private[places] object LandRepo:
 
   /** Vertices per stored piece: small pieces make the index narrow a clip to a handful of rows. */

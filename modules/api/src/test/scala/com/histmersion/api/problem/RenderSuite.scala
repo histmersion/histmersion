@@ -11,12 +11,14 @@ import util.problem.Problem.*
 import Answer.{answer, decoded, entry, problem, retryAfter, status}
 import util.problem.Text.{label, sentence, sentences}
 import json.NewtypeCodecs.{list, problemCodec}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every case of [[Problem]], through every renderer the api owns: its HTTP status, its English sentence and its JSON
   * entry (which decodes back to the case; a stored column keeps the same entry). The renderers' matches name every
   * case, so a new case does not compile until each renderer has an answer for it; this table then fails until the case
   * has a row.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RenderSuite extends munit.FunSuite:
 
   /** Each case's status. */

@@ -4,6 +4,8 @@ package domain
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The ONE outbound-HTTP policy (#1946): how every request the server makes to a third party — the acquisition APIs,
   * the media and event catalogues, the gazetteer downloads — identifies itself and what it does with a "slow down"
@@ -21,6 +23,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *     PEM file's ([[trust]]). Roots are only ever ADDED: every certificate chain is still verified, and the host name
   *     checked, by the JDK; nothing here can switch that off.
   */
+@movesTo(FeaturePlace.LibraryAcquisition)
 object HttpPolicy:
   type MaxRetries = MaxRetries.T
   object MaxRetries extends Newtype[Int, Pure]
@@ -73,6 +76,7 @@ object HttpPolicy:
     case Failed(code: StatusCode)
 
     /** The account as the log shows it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String = this match
       case SlowDownStatus(code)    => s"HTTP $code"
       case SlowedDown(word)        => s"$word"
@@ -95,6 +99,8 @@ object HttpPolicy:
     * comment) removed — so a setting that once carried a contact can never put it on the wire. A blank result falls
     * back to `fallback`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def userAgent(configured: UserAgent, fallback: UserAgent = UserAgent("Histmersion")): UserAgent =
     val cleaned = Option(configured.value)
       .getOrElse("")
@@ -106,9 +112,12 @@ object HttpPolicy:
     if cleaned.isEmpty then fallback else UserAgent(cleaned)
 
   /** The wait before asking again after the `attempt`-th (0-based) slow-down: 1, 2, 4 … s. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def backoffMs(attempt: Attempt): Step.Wait.Ms = Step.Wait.Ms((1L << attempt.value.max(0).min(10)) * 1000L)
 
   /** A `Retry-After` value — delay seconds or an HTTP date — as milliseconds from `now`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def retryAfterMs(v: Option[RetryAfter], now: Instant): Option[Step.Wait.Ms] =
     v.map(_.value.trim)
       .filter(_.nonEmpty)
@@ -127,6 +136,8 @@ object HttpPolicy:
   /** The next step after the `attempt`-th (0-based) answer. `slowDown` says the answer asks to slow down although its
     * code does not (MediaWiki's `maxlag` comes back as a 200), named `why`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decide(
       code: StatusCode,
       retryAfter: Option[RetryAfter],
@@ -193,6 +204,8 @@ object HttpPolicy:
   /** The trust sources of a configuration on an OS (`os.name`): the JDK's always; the system's when `systemTrust`
     * (macOS keychains, else the Linux bundles); a PEM file when one is named.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def trust(systemTrust: SystemTrust, extraCaFile: Option[Trust.PemFile.Path], osName: OsName): List[Trust] =
     val mac = osName.value.toLowerCase(java.util.Locale.ROOT).contains("mac")
     val system =
@@ -205,6 +218,8 @@ object HttpPolicy:
   /** The DER bytes of every certificate in a PEM text, in order; anything else (keys, comments, `security`'s chatter, a
     * block that is not base64) is skipped.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pemCertificates(text: PemText): List[PemCertificate] =
     PemCert.findAllMatchIn(Option(text.value).getOrElse("")).toList.flatMap { m =>
       scala.util

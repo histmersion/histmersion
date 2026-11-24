@@ -1,9 +1,13 @@
 package com.histmersion
 package api
 
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 /** A minimal RFC 4180 reader (quoted fields, doubled quotes, embedded commas and newlines, CRLF): enough for the
   * Retraction Watch export.
   */
+@atBoundary(BoundaryKind.Json, "reads CSV text (the Retraction Watch export) into rows")
+@movesTo(FeaturePlace.UtilCommon)
 object Csv:
 
   def parse(text: String): List[List[String]] =

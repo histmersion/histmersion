@@ -9,11 +9,13 @@ import com.histmersion.plugin.Secret
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.Registry
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One of the collections that need a key of the user's own: OFF by default, its key a secret reference in its block
   * (`api-key`). Registered without a key, the collection is listed and its import says what is missing; it is never
   * asked.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends MediaPlugin(id.value):
   type Config = KeyedPlugin.Config
 
@@ -24,6 +26,7 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       ctx: Plugin.Context
   ): MediaCollection
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Problems, Unit] =
     c.apiKey
       .fold[Either[Problems, Option[KeyedCollection.Key]]](Right(None))(s =>

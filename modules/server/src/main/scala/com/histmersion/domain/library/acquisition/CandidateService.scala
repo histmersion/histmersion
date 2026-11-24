@@ -17,10 +17,12 @@ import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The new-source search's records: each goal's watches with their watermarks, and the candidates found, one per goal
   * and DOI.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait CandidateService:
   /** A goal's watches as they were last read, by kind, subject and index. */
   def watches(goal: Goal.Slug): List[CandidateWatch]
@@ -75,6 +77,7 @@ object CandidateService:
     def upsert(candidate: Source.Candidate)(using WritePermit)(using Creator.New): Boolean =
       db.write(CandidateRepo.upsert(candidate))
     def dois(goal: Goal.Slug): Set[Doi] = db.read(CandidateRepo.dois(goal))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         goal: Option[Goal.Slug],
         state: Source.Candidate.State,
@@ -92,16 +95,19 @@ object CandidateService:
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends CandidateService:
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
     private def now: String = Stamp.format(clock.instant())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(s =>
       Source.Candidate.State(s.wire.value)
     )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def watches(goal: Goal.Slug): List[CandidateWatch] =
       state.get.watches.values
         .filter(_.goal.value == goal.value)
         .toList
         .sortBy(w => (w.kind.value, w.subject.value, w.index.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def recordWatch(
         watch: CandidateWatch,
         watermark: Option[CandidateWatch.Watermark],
@@ -129,6 +135,7 @@ object CandidateService:
         }
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def upsert(candidate: Source.Candidate)(using WritePermit)(using Creator.New): Boolean =
       val at = now
       var created = false
@@ -169,9 +176,11 @@ object CandidateService:
       }
       created
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def dois(goal: Goal.Slug): Set[Doi] =
       state.get.candidates.filter(_.goal.value == goal.value).map(c => Doi.assume(c.doi.value)).toSet
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         goal: Option[Goal.Slug],
         st: Source.Candidate.State,
@@ -183,6 +192,7 @@ object CandidateService:
         .sortBy[Long](_.id.value)
         .slice(offset.value, offset.value + limit.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def counts(goal: Option[Goal.Slug]): List[CandidateCount] =
       state.get.candidates
         .filter(c => goal.forall(_.value == c.goal.value))
@@ -191,6 +201,7 @@ object CandidateService:
         .sortBy((s, _) => Order.indexOf(s) match { case -1 => Order.size; case i => i })
         .map((s, cs) => CandidateCount(s, CandidateCount.Count(cs.size)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def marked(pick: Source.Candidate => Boolean, to: Source.Candidate.State): RowCount =
       var n = 0
       val _ = state.updateAndGet { st =>
@@ -202,6 +213,7 @@ object CandidateService:
     def mark(ids: List[Source.Candidate.Id], st: Source.Candidate.State)(using WritePermit): RowCount =
       if ids.isEmpty then RowCount(0) else marked(c => ids.contains(c.id), st)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markDois(goal: Goal.Slug, dois: List[Doi], st: Source.Candidate.State)(using WritePermit): RowCount =
       if dois.isEmpty then RowCount(0)
       else marked(c => c.goal.value == goal.value && dois.exists(_.value == c.doi.value), st)

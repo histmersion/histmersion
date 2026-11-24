@@ -18,15 +18,21 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"
   * collation); and written in by an import: the renames the other side made, the rows, the versions a merge records, a
   * version's body as its blob arrives, and the links of what was written.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the article rows for bundle export and import")
 private[articles] object ArticleBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
     sql"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
                        ${rangeCols(sql"a.period")}, ${Timestamps.iso(sql"a.updated_at")}, a.creator::text
@@ -54,6 +60,7 @@ private[articles] object ArticleBundleRepo:
         )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def versions(scope: BundleScope)(using DbCon): Vector[BVersionRow] =
     sql"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
                        octet_length(convert_to(v.body, 'UTF8'))::bigint, v.summary,
@@ -65,6 +72,7 @@ private[articles] object ArticleBundleRepo:
       )} ORDER BY v.uid""".query[BVersionRow].run()
 
   /** Old article slugs (V042) of the articles in scope. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def articleAliases(scope: BundleScope)(using DbCon): Vector[Bundle.ArticleAlias] =
     sql"""SELECT x.alias, a.uid, ${Timestamps.iso(sql"x.created_at")}
                 FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE ${where(
@@ -76,6 +84,8 @@ private[articles] object ArticleBundleRepo:
       .run()
       .map(Bundle.ArticleAlias.apply)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def versionLine(r: BVersionRow): Bundle.ArticleVersion =
     Bundle.ArticleVersion(
       r.uid,
@@ -110,6 +120,8 @@ private[articles] object ArticleBundleRepo:
     sql"SELECT slug FROM articles WHERE uid = $u".query[Slug].run().head
 
   /** Rename what the other side renamed (the same uid, a new slug), through the ordinary rename path. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def articleRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     given Creator.New = Creator.New.FromBundle
@@ -130,6 +142,7 @@ private[articles] object ArticleBundleRepo:
   /** The articles: the text a merge replaces kept as a version first, the rows, and an article kept beside one here
     * (`both`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def articlesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.merged.snapshots.toList.filter(w.writes).foreach { u =>
@@ -169,6 +182,7 @@ private[articles] object ArticleBundleRepo:
     }
 
   /** Old slugs, as old citekeys: never one that is a slug here, never one another article has. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def articleAliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.articleAliases.foreach { a =>
@@ -183,6 +197,7 @@ private[articles] object ArticleBundleRepo:
     }
 
   /** The versions a merge records beside the article texts it wrote. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def mergedVersionsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.merged.versions.foreach { v =>
@@ -197,6 +212,7 @@ private[articles] object ArticleBundleRepo:
     }
 
   /** A version's text into its row. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def blobIn(use: BlobUse, w: BundleImport.Writer): Option[BlobSink] =
     given DbCon = w.transaction
     use match
@@ -216,6 +232,7 @@ private[articles] object ArticleBundleRepo:
   /** The links of the articles written — of every article when a new source can turn an `[[x]]` that named nothing into
     * a source link.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def articleLinksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val relink =

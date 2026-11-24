@@ -1,10 +1,12 @@
 package com.histmersion
 package api.library
 import com.histmersion.api.checks.Lint.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The citations' lint rules: edges to no stored source, and short citekeys an edge never resolved. */
 object CitationLint:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def danglingEdges(edges: List[Edge], citekeys: Set[Citekey], maxSuggestions: ItemLimit): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))
@@ -25,6 +27,7 @@ object CitationLint:
         LintItem(e.src, LintItem.Detail(s"${Edge.Kind.wireOf(e.kind)} → ${e.dst.value.toString} ($what)$tail"))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[Citekey], maxSuggestions: ItemLimit): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))

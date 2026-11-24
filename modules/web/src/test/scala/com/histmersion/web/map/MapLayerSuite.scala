@@ -2,10 +2,12 @@ package com.histmersion
 package web.map
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map layer's own logic on the fake engine ([[FakeSurface]]): clustering, what is drawn in view, the projection's
   * round trip, geometry bounds, and the software-renderer test.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MapLayerSuite extends munit.FunSuite:
 
   test("clustering: a point joins the nearest group whose first point is within the radius, else starts one"):

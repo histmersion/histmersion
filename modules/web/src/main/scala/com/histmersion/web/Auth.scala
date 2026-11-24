@@ -6,6 +6,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Whether this page must send the API key. A page opened from a network the server trusts (this machine, by default)
   * never needs it; from any other, the server answers nothing but the page itself without `Authorization: Bearer <key>`
@@ -20,6 +21,7 @@ object Auth:
   private val required = Var(false)
 
   /** Pure: writes can be attempted when the server wants no key, or when one is held. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def canWrite(required: Boolean, key: Option[String]): Boolean = !required || key.exists(_.trim.nonEmpty)
 
   /** Pure: the `Authorization` header a write carries — only when a key is held. */
@@ -28,6 +30,7 @@ object Auth:
 
   def requiredSignal: Signal[Boolean] = required.signal
   def writable: Signal[Boolean] = required.signal.combineWith(UiState.apiKey.signal).map(canWrite)
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def writableNow: Boolean = canWrite(required.now(), UiState.apiKey.now())
 
   /** The header for the next request — read by [[ApiClient]] and the map's own requests ([[mapRequest]]). */
@@ -66,6 +69,8 @@ object Auth:
   private var started = false
 
   /** The page is up, with what `/api/config` said: a refusal from now on opens the key window. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(keyRequired: UiConfig.KeyRequired): Unit =
     started = true
     required.set(keyRequired.value)

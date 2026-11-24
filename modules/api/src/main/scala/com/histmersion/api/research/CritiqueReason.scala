@@ -12,6 +12,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class CritiqueReason(
     src: Citekey,
@@ -25,6 +26,8 @@ object CritiqueReason:
 
   export api.automation.Activity.Actor as By
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
   given Schema[CritiqueReason] = KindlingsSchema
     .derived[CritiqueReason]
     .schema
@@ -48,6 +51,7 @@ object CritiqueReason:
   type Spec = Spec.T
   object Spec extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Spec): Either[Problem, CritiqueReason] =
     val text = s"$s"
     val i = text.indexOf('=')
@@ -64,6 +68,7 @@ object CritiqueReason:
         .parse(CritiqueRef.Wire(text.take(i)))
         .map(r => CritiqueReason(r.src, r.dst, Coverage.Rationale(text.drop(i + 1).trim)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tidy(r: CritiqueReason): Either[Problem, CritiqueReason] =
     val text = Option(r.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then

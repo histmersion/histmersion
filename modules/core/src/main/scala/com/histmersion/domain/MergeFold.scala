@@ -16,6 +16,8 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.json.RawJson.equality
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
   * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's
@@ -25,6 +27,9 @@ import com.histmersion.util.json.RawJson.equality
   *
   * Left is this collection, right the bundle — as everywhere in the merge.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.UtilDataExchange)
 object MergeFold:
   type ArticleBody = ArticleBody.T
   object ArticleBody extends Newtype[String, Pure]
@@ -38,6 +43,7 @@ object MergeFold:
   /** The richer of two spellings of one value: more words (a subtitle), then more letters outside ASCII (diacritics
     * kept), then more capitals (title case); a tie keeps the left.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def richer[A](l: A, r: A)(text: A => String): A =
     def score(a: A) =
       val s = text(a)
@@ -55,16 +61,19 @@ object MergeFold:
     (l ++ r.filterNot(x => seen(key(x)))).distinctBy(key)
 
   /** Tags compared after the canonical-tag normaliser (`non-canonical-tag`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unionTags[A](l: List[A], r: List[A])(text: A => String): List[A] =
     union(l, r, a => Lint.normaliseTag(Lint.Tag(text(a))).value)
 
   /** Topics and regions compared folded. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unionNames[A](l: List[A], r: List[A])(text: A => String): List[A] =
     union(l, r, a => Fingerprint.fold(Fingerprint.FoldS(text(a).trim)).value)
 
   private def trimmed[A](o: Option[A])(text: A => String): Option[String] = o.map(a => text(a).trim).filter(_.nonEmpty)
 
   /** The smallest range covering both; an open bound stays open. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hull(a: Bundle.Range, b: Bundle.Range): Bundle.Range =
     Bundle.Range(
       a.start.zip(b.start).map((x, y) => if x <= y then x else y),
@@ -78,6 +87,7 @@ object MergeFold:
     }
 
   /** The narrower of two ranges (an open one is the widest); a missing one is no choice. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def narrower(a: Option[Bundle.Range], b: Option[Bundle.Range]): Option[Bundle.Range] =
     def width(r: Bundle.Range): Long = r.start.zip(r.end).map((s, e) => e.value - s.value).getOrElse(Long.MaxValue)
     (a, b) match
@@ -91,6 +101,8 @@ object MergeFold:
     * ([[keepLocalSchedules]]), the run cap ours unless we have none, and the plan as [[planOutcome]] says —
     * `planDecision` answers a [[IssueKind.GoalPlanDiffers]].
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def foldGoal(
       l: Bundle.Goal,
       r: Bundle.Goal,
@@ -144,6 +156,7 @@ object MergeFold:
   /** "Newer approved wins" (#881): equal or one missing is no question; two different plans are decided by their
     * approval times when both have one and they differ, else they are a question.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def planOutcome(l: Bundle.Goal, r: Bundle.Goal): PlanOutcome =
     (l.plan, r.plan) match
       case (_, None)                    => PlanOutcome.Ours
@@ -159,6 +172,8 @@ object MergeFold:
     * stable order; `l`'s schedules, and `r`'s of a kind `l` has none of — this collection's schedules are kept (#881),
     * differences are reported by the plan. Absent when empty.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keepLocalSchedules(l: Bundle.Goal, r: Bundle.Goal): Bundle.Goal =
     def key(k: Bundle.GoalLink) = (k.kind, k.target)
     val ls = l.links.getOrElse(Nil)
@@ -172,6 +187,7 @@ object MergeFold:
       .setTo(Option(schedules).filter(_.nonEmpty))
 
   /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def scheduleDifferences(
       l: Bundle.Goal,
       r: Bundle.Goal
@@ -183,10 +199,14 @@ object MergeFold:
   // ── queue items ─────────────────────────────────────────────────────────────────────────────
 
   /** A queue item's text as compared: folded, whitespace collapsed. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def queueKey(t: Bundle.QueueItem.Text): QueueKey =
     QueueKey(Fingerprint.fold(Fingerprint.FoldS(t.value)).value.trim.replaceAll("\\s+", " "))
 
   /** One queue item out of two: `done` anywhere is done. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def foldQueue(l: Bundle.QueueItem, r: Bundle.QueueItem): Bundle.QueueItem =
     val done = l.status.value == Queue.Done || r.status.value == Queue.Done
     l.modify(_.status)
@@ -225,16 +245,20 @@ object MergeFold:
   object ArticleOutcome:
     object Merged:
       export MergeFold.ArticleBody as Body
+      @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
       type BaseSha = Sha256
       val BaseSha: Sha256.type = Sha256
     object Conflict:
       export MergeFold.ConflictCount as Conflicts
+      @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
       type BaseSha = Sha256
       val BaseSha: Sha256.type = Sha256
 
   /** `localHistory` is this collection's recorded versions of the article (sha256 of the body, the body), newest first;
     * `foreignHistory` the sha256s of the bundle's. The common base is the newest of ours the bundle's history also has.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleOutcome(
       localBody: ArticleBody,
       localHistory: List[(Sha256, ArticleBody)],
@@ -257,12 +281,16 @@ object MergeFold:
           if m.clean then ArticleOutcome.Merged(ArticleBody(m.text.value), sha)
           else ArticleOutcome.Conflict(ConflictCount(m.conflicts.value), sha)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shaOf(body: ArticleBody): Sha256 =
     Sha256.assume(BundleFormat.sha256Hex(body.value).value)
 
   /** The fields of an article folded around a chosen body: left's title and kind, the summary that is there, tags and
     * regions unioned.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def foldArticle(l: Bundle.Article, r: Bundle.Article, body: ArticleBody): Bundle.Article =
     l.modify(_.body)
       .setTo(Bundle.Article.Body(body.value))

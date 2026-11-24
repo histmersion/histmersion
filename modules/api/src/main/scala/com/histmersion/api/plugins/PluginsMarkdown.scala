@@ -4,8 +4,11 @@ package api.plugins
 import com.histmersion.api.Plural
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 object PluginsMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line(p: PluginStatus): String =
     val what = PluginState.parse(p.state) match
       case Some(PluginState.Registered) =>
@@ -15,6 +18,8 @@ object PluginsMarkdown:
       case _                         => p.state.value
     (s"${p.id} ${p.version} — $what")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(r: PluginsReport): List[String] =
     val enabled = r.plugins.count((refactorCallback2 => ((refactorCallback2.enabled) == PluginStatus.Enabled(true))))
     val head =
@@ -24,6 +29,8 @@ object PluginsMarkdown:
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
       r.warnings.map(w => s"  - warning: $w"))).map(refactorValue => (refactorValue))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(Boolean, String)] = Nil): String =
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))

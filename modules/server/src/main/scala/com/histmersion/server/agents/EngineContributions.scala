@@ -19,13 +19,18 @@ import com.histmersion.api.automation.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.server.views.AutopilotView
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the domains register into the engine, in the order the engine has always listed them: the library's
   * contribution ([[LibraryWorkflows]]: its three workflows, the enrich and watch kinds, its tools), research's
   * ([[ResearchWorkflows]]: its four workflows, the review and seed kinds, its measure of a goal and its tools), and the
   * engine's own pipelines ([[PipelineWorkflow]]); the tools in the toolbox's order ([[ToolboxOrder]]).
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Server)
 object EngineContributions:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def of(deps: Deps, w: ServerWiring, a: AgentsControllers): Contributions =
     def cfg = deps.cfg.agents
     val ds = deps.ds
@@ -62,20 +67,24 @@ object EngineContributions:
     )
 
   /** The enrich kind of `a`'s registry (its auto-enrich after an ingest). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def enrich(a: AgentsControllers): EnrichManagerKind =
     a.workflows.managerKinds
       .collectFirst { case e: EnrichManagerKind => e }
       .getOrElse(throw IllegalStateException("no enrich manager kind is registered"))
 
   /** The acquisition work the watch kind of `a`'s registry holds. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def work(a: AgentsControllers): AcquisitionWork = watch(a).work
 
   /** The watch kind of `a`'s registry. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def watch(a: AgentsControllers): WatchManagerKind =
     a.workflows.managerKinds
       .collectFirst { case w: WatchManagerKind => w }
       .getOrElse(throw IllegalStateException("no watch manager kind is registered"))
 
   /** The autopilot's page over `a`: its status with the watch kind's upstreams and acquisition list's re-check. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def autopilot(a: AgentsControllers): AutopilotView =
     AutopilotView(a.managing, watch(a).upstreams, work(a).acquireRecheck.status, a.clock)

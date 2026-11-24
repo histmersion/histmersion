@@ -15,6 +15,9 @@ import com.histmersion.domain.{CreatedAt, Creator}
 /** The attestations that name a source: those it makes (they go with it), and those of other sources whose target is
   * one of its findings, an edge from it or a dating it gives (they lose their target).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the attestation rows that point at a deleted source")
 final class AttestationSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
@@ -71,6 +74,7 @@ object AttestationSourceReferrer:
     * dating it gives. An edge TO it is parked, not deleted, so its attestations stay.
     */
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goes(
       targetType: BAttestationFullRow.TargetType,
       targetId: BAttestationFullRow.TargetId,

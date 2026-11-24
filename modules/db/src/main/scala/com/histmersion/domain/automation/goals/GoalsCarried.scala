@@ -9,18 +9,22 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the goals: the goals (with their links and schedules) and their old slugs.
   *
   * The ranks are the import's order among every owner's steps: every rename before the rows that carry the new label;
   * the goals before their old slugs.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object GoalsCarried:
 
   private val Automation = DataOwner("automation")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val goals: CarriedKind = CarriedKind.records[Bundle.Goal](
     Automation,
     Bundle.Kind.Goal,
@@ -31,6 +35,7 @@ object GoalsCarried:
     (es, ls) => es.modify(_.goals).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val aliases: CarriedKind =
     CarriedKind.owned[Bundle.GoalAlias](
       Automation,

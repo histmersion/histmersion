@@ -24,11 +24,13 @@ import com.histmersion.config.AppConfig
 import com.histmersion.config.CodexConfig
 import com.histmersion.util.storage.Location
 import com.histmersion.domain.automation.workflows.ToolName
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The canonical definitions and the per-runtime trees generated from them (docs/research-agent-runtimes.md §2):
   * parsing, placeholders, the system prompt every runtime gets, the trees' restrictions, the writer — and that the
   * checked-in `plugin/` is the generator's output. Pure (no database).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AgentGeneratorSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk
@@ -37,6 +39,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private lazy val defs = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
   private lazy val d = Generated.defs()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
 
   test("every pipeline step has a definition that parses, and every bundled file is in the index"):
@@ -399,6 +402,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
 /** The checked-in `plugin/` and `.claude-plugin/marketplace.json` are the generator's interactive Claude Code flavour,
   * file for file. Out of date: `just plugin`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginTreeSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk

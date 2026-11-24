@@ -15,12 +15,16 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ActivityRulesSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-30T12:00:00Z")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(min: Int) = Entry.At(now.minusSeconds(min * 60L).toString)
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private val entries = List(
     Entry(
       Entry.Key("run:r1"),

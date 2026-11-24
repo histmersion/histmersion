@@ -12,6 +12,7 @@ import javax.sql.DataSource
 import scala.util.Try
 import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.util.database.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A suite that owns the connection pools it opens: one per database and role it asks for ([[testPool]],
   * [[testQueryPool]]), opened on first use and closed when the suite is done — after its own clean-up ([[afterSuite]]),
@@ -26,11 +27,13 @@ abstract class DbSuite extends munit.FunSuite:
   private val owned = scala.collection.mutable.LinkedHashMap.empty[(String, String), HikariDataSource]
 
   /** The application pool on `cfg`'s database, this suite's own. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def testPool(cfg: DbConfig): DataSource = owned.synchronized {
     owned.getOrElseUpdate((cfg.url.value, cfg.user.value), Db.pool(cfg))
   }
 
   /** The read-only role's pool on `db`'s database, this suite's own. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def testQueryPool(db: DbConfig, q: QueryConfig): DataSource = owned.synchronized {
     owned.getOrElseUpdate((db.url.value, q.user.value), QueryAccess.pool(db, q))
   }
@@ -54,6 +57,7 @@ abstract class DbSuite extends munit.FunSuite:
       } finally c.close()
 
     /** The URL of database `name` on `cfg`'s server. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def urlOf(name: String): DbConfig.Url = DbConfig.Url(cfg.url.value.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))
 
     private lazy val template: String =

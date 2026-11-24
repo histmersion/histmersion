@@ -10,14 +10,18 @@ import java.nio.file.Files
 import java.time.Instant
 import scala.util.Using
 import com.histmersion.util.basemap.PmTiles
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What every [[Store]] does, run on a store on disk and on one in memory: the in-memory store is what tests of the
   * code given a store run on, so it must answer as the disk does.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 abstract class StoreContractSuite extends munit.FunSuite:
   def fresh(): Store
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(s: String) = Store.Key.applyUnsafe(s)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def utf(s: String) = ByteSource.Content(s.getBytes(UTF_8))
 
   test("put, get, stat, list and walk"):
@@ -158,6 +162,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
     assertEquals(s.get(key("d/x.dump")).map(_.text()), Some("dump"))
     assertEquals(s.names(key("d")), List("x.dump"))
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DiskStoreSuite extends StoreContractSuite:
   def fresh(): Store =
     Storage(_ => Some(Files.createTempDirectory("histmersion-store")), () => Files.createTempDirectory("t"))
@@ -205,6 +210,7 @@ class DiskStoreSuite extends StoreContractSuite:
     assert(storage.find(Location.Plugins).isEmpty)
     intercept[IllegalStateException](storage.store(Location.Plugins))
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MemoryStoreSuite extends StoreContractSuite:
   def fresh(): Store = Storage.InMemory().store(Location.Basemap)
 

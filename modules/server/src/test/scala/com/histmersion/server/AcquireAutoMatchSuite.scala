@@ -29,6 +29,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #970 over real HTTP, the converter stubbed: an import that names no acquisition item closes the open items that name
   * its DOI (whatever case, prefix or punctuation they write it with), and only LISTS the items that resemble it — a
@@ -67,6 +68,8 @@ class AcquireAutoMatchSuite extends DbSuite:
 
   private object Stub extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       Right(
         ConvertedDoc(
@@ -76,6 +79,7 @@ class AcquireAutoMatchSuite extends DbSuite:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val base = AppConfig.load()
     base

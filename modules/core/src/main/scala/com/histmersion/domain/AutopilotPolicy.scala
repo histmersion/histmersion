@@ -11,12 +11,16 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
   * decide an approval without a person, the rule that moves a research goal's status on from the facts, the managers
   * every goal must have, the spread of their crons, when an article is extended with new sources, and when the
   * housekeeping is due. No I/O: the supervisor reads the facts and applies the result.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationAutopilot)
 object AutopilotPolicy:
   type ApprovedToday = ApprovedToday.T
   object ApprovedToday extends Newtype[Int, Pure]
@@ -71,12 +75,16 @@ object AutopilotPolicy:
     * person (or for tomorrow, when only a daily cap stood in the way).
     */
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CapTextBase = Base
   val CapTextBase: Base.type = Base
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CapTextBacklog = Backlog
   val CapTextBacklog: Backlog.type = Backlog
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CapTextShare = Share
   val CapTextShare: Share.type = Share
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CapTextCeiling = Cap
   val CapTextCeiling: Cap.type = Cap
   type NotePrefix = NotePrefixValue
@@ -99,6 +107,7 @@ object AutopilotPolicy:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
     type SlugFree = SlugFree.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SlugFree extends Newtype[Boolean, Pure]
     type Hits = Hits.T
     object Hits extends Newtype[Int, Pure]
@@ -107,6 +116,7 @@ object AutopilotPolicy:
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
     * is a person's.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articlePlan(
       articles: List[PlannedFacts],
       minSources: MinSources,
@@ -173,6 +183,8 @@ object AutopilotPolicy:
     * drafts a day. A failed check rejects it (the seeding manager compiles again); a reached cap leaves it for
     * tomorrow.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articlePublish(d: DraftFacts, minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
     if !d.filterRecorded.value then Verdict.Reject(Rationale("the run records no coverage filter"))
     else if d.hits.forall(_.value < minSources.value) then
@@ -223,6 +235,8 @@ object AutopilotPolicy:
   /** A `goal-plan`: approved when it proposes something, and sub-goals only for a goal less than `maxDepth` deep —
     * within `cap` plans a day.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlan(p: GoalPlanFacts, maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
     if p.subGoals.value + p.queries.value + p.works.value == 0 then
       Verdict.Reject(Rationale("the plan proposes nothing"))
@@ -247,6 +261,9 @@ object AutopilotPolicy:
     * when its goal is one of the active goals and its unfinished sub-goals (`openSubGoals`, every level below it) plus
     * the `proposed` new ones stay within `limit`; else why it waits for a person.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlanFocus(
       goal: Goal.Slug,
       active: Boolean,
@@ -270,6 +287,8 @@ object AutopilotPolicy:
     * (`agents.autopilot.max-open-sub-goals`); else why it waits for a person. Queries and works alone are always within
     * it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlanSubGoals(
       goal: Goal.Slug,
       openSubGoals: OpenCount,
@@ -286,6 +305,7 @@ object AutopilotPolicy:
   /** The goals with an approved plan that are not finished yet (neither reviewed nor done): what a new goal plan would
     * add to. `goals` = every goal's slug and status.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unfinishedPlanned(goals: List[(Goal.Slug, Goal.Status.Wire)], planned: Set[Goal.Slug]): Unfinished =
     Unfinished(goals.count((slug, status) => planned(slug) && !finished(status)))
 
@@ -293,6 +313,8 @@ object AutopilotPolicy:
     * (0 = no limit). While so, no plan-goal run starts for an unplanned goal and code decides no open goal plan; a
     * person still may.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlansWait(unfinished: Unfinished, limit: Limit): Option[Description] =
     Option.when(limit.value > 0 && unfinished.value > limit.value)(
       Description(
@@ -306,6 +328,8 @@ object AutopilotPolicy:
   /** A daily cap scaled to the backlog (#3762 proposal 3): `share` ≤ 0 keeps `base`; else
     * `max(base, ⌈backlog × share⌉)`, never above `ceiling` (when it is above 0) — and never below 0.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scaledCap(base: Base, backlog: Backlog, share: Share, ceiling: Cap): Cap =
     val b = math.max(0, base.value)
     if share.value <= 0 then Cap(b)
@@ -314,6 +338,8 @@ object AutopilotPolicy:
       Cap(if ceiling.value > 0 then math.min(scaled, math.max(b, ceiling.value)) else scaled)
 
   /** The cap as the status shows it: `5 a day`, or `5 a day, 22 today for a backlog of 64 (at most 50)`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def capText(base: CapTextBase, backlog: CapTextBacklog, share: CapTextShare, ceiling: CapTextCeiling): Description =
     val n = scaledCap(base, backlog, share, ceiling)
     Description(
@@ -352,6 +378,8 @@ object AutopilotPolicy:
   /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while the goal
     * still has unfinished articles); None when they are all done (or it has none).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articlesInProgress(unreviewed: NextFacts.Unreviewed, compileOpen: NextFacts.CompileOpen): Option[Description] =
     Option.when(unreviewed.value > 0 || compileOpen.value > 0)(
       Description(
@@ -368,6 +396,8 @@ object AutopilotPolicy:
     * least `cooldownHours` ago (0 = never). A person's goal status `done` ends it. The proposal then goes through the
     * approvals policy like any other (`article-plan`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: CooldownHours): Option[Description] =
     val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
     val cooled =
@@ -384,18 +414,25 @@ object AutopilotPolicy:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def depthText(d: GoalPlanFacts.Depth): String =
     if d.value == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps count).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val NotePrefix: NotePrefix = NotePrefixValue(Approval.DecidedBy.AutopilotNote)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def note(v: Verdict): Option[Note] = v match
     case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — $r"))
     case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — $r"))
     case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def depth(
       slug: research.Slug,
       parentOf: research.Slug => Option[research.Slug]
@@ -439,6 +476,7 @@ object AutopilotPolicy:
     type Reviewed = Reviewed.T
     object Reviewed extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def rank(s: Goal.Status.Wire): Int = Goal.Status.all.indexOf(s)
 
   /** The status the facts support, when it is FURTHER than the goal's own (never back; `done` and an unknown status are
@@ -446,6 +484,8 @@ object AutopilotPolicy:
     * compiled) and nothing is left to compile; reviewed once every article passed its review and every sub-goal is
     * reviewed. With why, for the log.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def advance(f: GoalFacts): Option[(Goal.Status.Wire, Rationale)] =
     val cur = rank(f.status)
     if cur < 0 || f.status.value == Goal.Status.Done then None
@@ -503,7 +543,9 @@ object AutopilotPolicy:
   object ManagerRow:
     type Id = Id.T
     object Id extends Newtype[String, Pure]:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def seed(goal: Goal.Slug): Id = Id(s"seed:${goal.value}")
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def watch(goal: Goal.Slug): Id = Id(s"watch:${goal.value}")
     type AutoIngest = AutoIngest.T
     object AutoIngest extends Newtype[Boolean, Pure]
@@ -577,6 +619,8 @@ object AutopilotPolicy:
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finished(status: Goal.Status.Wire): Boolean =
     status.value == Goal.Status.Reviewed || status.value == Goal.Status.Done
 
@@ -586,6 +630,7 @@ object AutopilotPolicy:
     * paused stays paused — only the ones in `pausedByAutopilot` are resumed. A manager's settings a person chose are
     * kept (only an unset cron, auto-ingest or extend threshold is filled).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ensure(
       goals: List[GoalRow],
       managers: List[ManagerRow],
@@ -641,11 +686,15 @@ object AutopilotPolicy:
   // ── crons spread per goal ──────────────────────────────────────────────────────────────────────
 
   /** A stable non-negative hash of `key` (the same on every machine and every run). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spread(key: ManagerRow.Id): Int = key.value.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
 
   /** `@daily`, `@weekly` and `@monthly` as five fields at a minute, hour (and weekday or day of the month) of `key`'s
     * own, so dozens of managers with the same cron do not fire in the same minute; any other cron is kept as given.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stagger(base: Cron, key: ManagerRow.Id): Cron =
     val h = spread(key)
     val (min, hour, day) = (h % 60, (h / 60) % 24, h / 1440)
@@ -660,6 +709,8 @@ object AutopilotPolicy:
   /** Why an article is extended now, if it is: its filter returns at least `min` sources it neither cites nor gives a
     * reason for, and it was not extended in the last `cooldownDays`. `min` 0 = never.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extendDue(
       newSources: NewSources,
       min: Settings.ExtendMinNew,
@@ -680,16 +731,21 @@ object AutopilotPolicy:
   // ── caps, housekeeping, throughput ─────────────────────────────────────────────────────────────
 
   /** What is left today of the ingests all watchers share (None: no shared cap). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sharedIngestLeft(cap: Cap, ingestedToday: IngestedToday): Option[Left] =
     Option.when(cap.value > 0)(Left(math.max(0, cap.value - math.max(0, ingestedToday.value))))
 
   /** Is a housekeeping job due: never run, or `everyHours` passed since (0 = never). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def due(last: Option[Instant], everyHours: EveryHours, now: Instant): Boolean =
     everyHours.value > 0 && last.forall(l => !l.plus(Duration.ofHours(everyHours.value.toLong)).isAfter(now))
 
   /** Days until `open` items are done at the pace of the last week (`doneLast7` items); None when nothing is open or
     * nothing was done.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def etaDays(open: OpenCount, doneLast7: DoneLast7): Option[Days] =
     Option.when(open.value > 0 && doneLast7.value > 0)(
       Days(math.max(1, math.ceil(open.value * 7.0 / doneLast7.value).toInt))

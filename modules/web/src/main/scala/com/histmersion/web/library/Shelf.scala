@@ -2,6 +2,7 @@ package com.histmersion
 package web.library
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A shelf of My library: everything the filters select, the person's bookmarks, their notes, what they have not marked
   * read, and what they opened lately.
@@ -20,4 +21,5 @@ object Shelf:
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[Shelf] = values.find(_.wire.value == s.value.trim.toLowerCase)

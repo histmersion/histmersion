@@ -15,10 +15,13 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.Store
 import com.histmersion.config.edit.SettingPolicy
 import com.histmersion.config.edit.SettingValue
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings editor over each place a settings file is kept: the command line's file on its own disk, the server's
   * in the store of its directory. Both must change a file exactly alike.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit.FunSuite:
 
   private val K = SettingKey.ParseRaw
@@ -318,6 +321,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
 
 class LocalConfigFileWriterSuite extends ConfigFileWriterSuite(LocalSettingsFile(_))
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StoredConfigFileWriterSuite
     extends ConfigFileWriterSuite(f =>
       StoredSettingsFile(

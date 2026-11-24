@@ -3,26 +3,36 @@ package config
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.problem.{Problem, Problems}
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
   * them (every node that depends on one, transitively), and in which order. The server's `hot.HotGraph` builds and
   * swaps the values; this decides what and in which order.
   */
+@movesTo(FeaturePlace.Config)
 object HotPlan:
 
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keyMatches(changed: ConfigReload.Key, key: ConfigReload.Key): Boolean =
     changed == key || changed.value.startsWith(key.value + ".") || key.value.startsWith(changed.value + ".")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def depNames(n: HotNode): List[HotNode.Name] = n.deps.map(d => HotNode.Name(d.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def keyNames(n: HotNode): List[ConfigReload.Key] = n.keys.map(k => ConfigReload.Key(k.value))
 
   /** The nodes in an order where every node comes after the nodes it depends on (declaration order among independent
     * ones). Refused: a name used twice, a dependency on no node, a cycle (named).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def order(nodes: List[HotNode]): Either[Problems, List[HotNode.Name]] =
     val names = nodes.map(_.name)
     val known = names.toSet

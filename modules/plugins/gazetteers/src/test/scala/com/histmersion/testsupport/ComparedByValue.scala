@@ -3,6 +3,7 @@ package testsupport
 
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same
   * shape — the same type constructor, or one a subtype of the other (`Option` and `Some`, `Seq` and `List`, `Either`
@@ -54,6 +55,7 @@ object ComparedByValue:
   /** `X` and `Y` are one type, or one is a subtype of the other. */
   final class Related[X, Y]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   trait RelatedSupertype:
     given relatedSupertype: [X, Y] => (Y <:< X) => Related[X, Y] = Related()
 

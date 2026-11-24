@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A collection that needs a key of the user's own: registered with its key resolved from its secret reference, or
   * none. Without one its import is refused with what to set, and the API is not asked.
@@ -26,18 +27,24 @@ abstract class KeyedCollection(
     needs: KeyedCollection.Needs,
     settings: KeyedCollection.Settings
 ) extends MediaCollection:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def perPlace: MediaCollection.PerPlace = MediaCollection.PerPlace(conf.perPlace.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def requestIntervalMs: MediaCollection.RequestIntervalMs =
     MediaCollection.RequestIntervalMs(conf.requestIntervalMs.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMs] =
     conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMs(ms.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def latestYear: Option[Year] = conf.latestYear.map(y => Year(y.value))
   val role = MediaCollection.Object
 
   /** What `histmersion media providers` says of it: its description, and that it is not asked without a key. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def described(text: String): MediaCollection.Description =
     MediaCollection.Description(text + (if key.isEmpty then " — NO KEY SET: not asked" else ""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def check: Either[Problem, Unit] =
     if !conf.enabled.value then
       Left(
@@ -63,6 +70,7 @@ abstract class KeyedCollection(
   protected def apiKey: KeyedCollection.Key = key.getOrElse(KeyedCollection.Key(""))
 
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def explain(e: Problem): Problem = e.answered.filter(_.refusesAccess) match
     case Some(status) =>
       Problem.Config.Setting(

@@ -38,7 +38,12 @@ object QueueRows:
   /** `item` written over its row straight, with no read before it: false when the row was gone (G94). */
   def writeOver(ds: DataSource, item: QueueItem): Boolean = transact(ds)(QueueRepo.update(item))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def repoId(id: QueueItem.Id): QueueRepo.QueueItemId = QueueRepo.QueueItemId(id.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def notFound(id: QueueItem.Id): Api.Error =
     Api.Error(
       Problem.Unclassified(Legacy.Text(s"No queue item #${id.value}")),

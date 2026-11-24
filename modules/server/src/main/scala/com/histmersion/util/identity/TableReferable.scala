@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, Referable}
 import com.histmersion.util.database.Transactor
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A [[Referable]] over the owner's tables: each kind's [[RecordTable]], read on a connection of its own. */
 abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends Referable:
@@ -11,6 +12,8 @@ abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends
 
   val kinds: Set[ItemKind] = byKind.keySet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def resolve(kind: ItemKind, key: ItemKey): Either[Problem, ItemRef] =
     byKind
       .get(kind)

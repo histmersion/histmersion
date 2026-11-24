@@ -7,10 +7,13 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One item of a collection as a listing shows it (a Calibre book): its id, title, authors, year, publisher, tags,
   * identifiers by scheme and its files.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionEntry(
     id: CollectionEntry.Id,
     title: Title,

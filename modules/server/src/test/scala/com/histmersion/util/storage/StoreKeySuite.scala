@@ -2,7 +2,9 @@ package com.histmersion
 package util.storage
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StoreKeySuite extends munit.FunSuite:
 
   test("relative names of plain segments are keys; the empty name is the store itself"):

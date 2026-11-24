@@ -53,6 +53,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.EventSelection
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1449 end to end against FAKE catalogues (recorded answers, no socket) and a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise): a dry run stores nothing; GVP then NOAA merge the same eruption into one event; a second run
@@ -62,6 +63,8 @@ import com.histmersion.util.database.TestCreators.given
   * refreshes the event; `rederive` recomputes a pre-V088 row from what is stored with NO request, a correction by hand
   * kept.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class EventImportSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -117,6 +120,7 @@ class EventImportSuite extends DbSuite:
   private lazy val cfg = loaded.config
   private lazy val plugins =
     ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -142,6 +146,7 @@ class EventImportSuite extends DbSuite:
   private val Hekla = BEventRow.Id("gvp_12724")
   private val Thera = BEventRow.Id("gvp_13879")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(
       h: CatalogueWiring,
       provider: CatalogRecord.Provider,

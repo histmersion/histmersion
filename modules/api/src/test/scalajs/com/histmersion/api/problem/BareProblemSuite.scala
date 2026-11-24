@@ -8,12 +8,14 @@ import hearth.kindlings.jsoniterjson.Json
 import util.problem.Problem
 import util.problem.Problem.*
 import json.NewtypeCodecs.{list, problemCodec}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** In the browser a problem written bare is outside text, kept as it came ([[Problem.Relayed]]), even a text a master
   * version stored in one of the shapes the JVM reads as a case: the page reads no stored shape ([[StoredShapes]] is the
   * JVM's and the database's), as the server sends every problem typed. A typed entry reads as its case on both
   * platforms (TypedEntrySuite).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BareProblemSuite extends munit.FunSuite:
 
   /** Texts in the master shapes, which the JVM reads as cases. */

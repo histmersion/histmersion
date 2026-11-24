@@ -15,12 +15,15 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status
   * transitions and the insertion order the export depends on —, a done item keeps its first done time, and every scope
   * reads in id order.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class QueueServiceContract(name: String) extends DbSuite:
 
   /** A new, empty kernel; None when this run has no such store. */
@@ -30,6 +33,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     test(title)(fresh(title).foreach(body))
 
   /** Small, but it exercises every shape the real files use. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val acquireFile = Queue.FileText(
     """# 📥 ACQUIRE — the acquisition queue
       |
@@ -51,6 +55,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
       |""".stripMargin
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val logFile = Queue.FileText(
     """# 📓 LOG — project worklog
       |
@@ -82,6 +87,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
 
   private def put(q: QueueService, kind: Kind, in: QueueAdd): QueueItem = q.add(kind, in, ByPerson)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def importFile(q: QueueService, kind: Kind, text: Queue.FileText): (Int, Int) =
     val c = q.replace(kind, Queue.parse(kind, text), ImportMode.Replace, ByPerson)
     (c.written.value, c.removed.value)
@@ -89,7 +95,9 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   private def exported(q: QueueService, kind: Kind) = Queue.render(kind, q.list(kind, QueueScope.All))
   private def open(q: QueueService, kind: Kind) = q.list(kind, QueueScope.Open)
   private def every(q: QueueService, kind: Kind) = q.list(kind, QueueScope.All)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def id(i: QueueItem) = QueueItemId(i.id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(raw: String) = QueueItem.Status(raw)
 
   // ── CRUD ─────────────────────────────────────────────────────────────────────────────────────

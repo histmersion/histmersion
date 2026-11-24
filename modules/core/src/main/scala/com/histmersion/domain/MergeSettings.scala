@@ -3,7 +3,9 @@ package domain
 
 import com.histmersion.util.data.exchange.MatchWeights
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
+@movesTo(FeaturePlace.UtilDataExchange)
 final case class MergeSettings(
     autoMerge: MergeSettings.AutoMerge,
     newAtMost: MergeSettings.NewAtMost,

@@ -80,6 +80,8 @@ object RepairAcquire:
   val Remove = "remove"
   val Keep = "keep"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(r: RepairResult): Markdown =
     val verb = if (r.dryRun) == RepairRequest.DryRun(true) then "would " else ""
     val head = s"# Repair of the acquisition list${

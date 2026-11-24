@@ -49,6 +49,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.media.assets.MediaThumbRow
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pictures from outside providers (V082, #1446) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * the reshaped `assets` key (a source's figures keep `(citekey, name)` and their links; a provider's picture has no
@@ -56,17 +57,21 @@ import com.histmersion.domain.media.assets.MediaThumbRow
   * and events an import asks about, the list, facets and media-layer filters, the figure-licence fill and the
   * `media-licence` lint rule. Fixtures: ids and citekeys start with `zqmd`, at 130°E 40°S.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class MediaRepoSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val P = MediaProvider.Commons
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Prov = MediaItemRow.Provider(P)
   private val Lic = "CC-BY-SA-9.9" // a licence no other suite stores, so the filters can be checked exactly
 
@@ -81,8 +86,10 @@ class MediaRepoSuite extends DbSuite with Bounded:
     val _ = sql"DELETE FROM events WHERE id LIKE 'zqmd%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqmd%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(lon: Double) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,-40]}"""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
@@ -184,6 +191,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
       )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def asset(
       key: ProviderAsset.Key,
       license: ProviderAsset.License = ProviderAsset.License(Lic),
@@ -784,6 +792,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
 
   // ── #1446 second slice: equivalents, items, sources' pictures ──────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def eqFixtures(): Unit =
     val _ = PlaceFixtures.upsertPlaces(
       ds,

@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.{AiProvider, Plugin, Spi}
 import com.histmersion.plugin.Registry
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One of Histmersion's own HTTP AI providers as a plugin: on by default (its defaults resource), switched off by
   * `histmersion.plugins.<id>.enabled = false`; it registers ONE provider under `name`, built from the host's
@@ -11,6 +12,7 @@ import com.histmersion.plugin.Registry
   */
 trait AiHttpPlugin(id: String, name: String) extends Plugin:
   type Config = HostAi
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val info: Plugin.Info =
     Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(AiHttpPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
 
@@ -20,6 +22,7 @@ trait AiHttpPlugin(id: String, name: String) extends Plugin:
   /** The provider over `settings`. */
   def provider(settings: ProviderSettings): AiProvider
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: HostAi, ctx: Plugin.Context): Either[Problems, Unit] =
     settings(c.agents.providers)
       .toRight(

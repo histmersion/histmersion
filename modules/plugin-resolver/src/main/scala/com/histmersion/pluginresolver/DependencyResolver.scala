@@ -11,6 +11,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The dependencies of user plugins, resolved together with what the server ships — run from the relink kit by
   * `histmersion-relink --resolve` (which `histmersion plugin add` and `rm`, the relink's pre-flight and the JVM
@@ -26,12 +27,15 @@ import com.histmersion.util.console.Console
   * each, and of everything it depends on, is on the class path already. What remains goes into `lib/`. Exit codes: 0
   * done, 1 usage, 2 refused, 3 failed (a repository, a download, a file).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @main def pluginResolver(args: String*): Unit = sys.exit(
   (DependencyResolver
     .exitCode((args.toList).map(refactorValue3 => Resolver.Argument(refactorValue3)))(using Console.system))
     .value
 )
 
+@tolerated(LintRule.CanEqualHome, "pending G67 (a foreign type's CanEqual in one file; its users share no module yet)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object DependencyResolver:
   private given CanEqual[Path, Path] = CanEqual.derived
 
@@ -48,6 +52,7 @@ object DependencyResolver:
   private val Usage =
     "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def exitCode(args: List[DependencyResolver.ExitCodeArgs])(using console: Console): DependencyResolver.ExitCodeResult =
     try run(args)(using console)
     catch
@@ -55,6 +60,8 @@ object DependencyResolver:
         console.errorLine(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
         DependencyResolver.ExitCodeResult(3)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def run(args: List[DependencyResolver.RunArgs])(using console: Console): DependencyResolver.RunResult = args match
     case refactorPattern :: rest if (refactorPattern.value == "resolve") =>
       parse(rest) match
@@ -63,6 +70,9 @@ object DependencyResolver:
     case _ => console.errorLine(Usage); DependencyResolver.RunResult(1)
 
   /** Pure: the request the arguments make. */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def parse(args: List[DependencyResolver.ParseArgs]): Either[Problems, ResolveRequest] =
     @annotation.tailrec
     def loop(
@@ -93,8 +103,12 @@ object DependencyResolver:
     }
 
   /** The options `resolve` takes, as an unknown one names them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Options = Vector("--kit", "--lib", "--histmersion-repo", "--repo", "--check").map(o => Problem.Raw(s"$o"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def resolve(r: ResolveRequest)(using console: Console): DependencyResolver.ResolveResult =
     val outcome = for
       server <- serverModules(r.kit)
@@ -138,6 +152,7 @@ object DependencyResolver:
   )(using console: Console): Either[Resolver.ExitCode, List[Dependency]] =
     if roots.isEmpty then Right(Nil) else resolveSome(roots, server, coursier)(using console)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolveSome(
       roots: List[(PluginArtifact, ModuleCoordinates)],
       server: ServerModules,
@@ -171,6 +186,7 @@ object DependencyResolver:
                 Resolution.report(deps, provided).foreach(console.writeLine)
                 Right(deps)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def serverModules(kit: Path): Either[Problems, ServerModules] =
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
@@ -186,6 +202,7 @@ object DependencyResolver:
         .map(_.at(Problem.Field(s"$modules")))
 
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inputs(
       jars: List[Path]
   ): List[(Resolver.FileName, Resolver.Sha256)] =

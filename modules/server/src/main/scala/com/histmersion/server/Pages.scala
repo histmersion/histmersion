@@ -21,21 +21,35 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.checks.FormatReport
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Edge
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@movesTo(FeaturePlace.ResearchArticles)
 object Pages:
   type Anchor = Anchor.T
   object Anchor extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def display(s: String): String = Label.display(Label.Text(s)).value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sourceRef(r: Source.Ref, label: String): Html = HtmlRender.sourceRef(r, HtmlRender.Label(label))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readable(r: Source.Ref): String = HtmlRender.readable(r).value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def articleRef(a: Article.Ref, label: String): Html = HtmlRender.articleRef(a, HtmlRender.Label(label))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dangling(label: String): Html = HtmlRender.dangling(HtmlRender.Label(label))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chips(field: ChipField, values: List[String]): Html =
     HtmlRender.chips(field, values.map(HtmlRender.Label(_)))
 
@@ -43,6 +57,8 @@ object Pages:
 
   // ── prose ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linkProse(
       md: FullText.Shown.Markdown,
       links: WikiLinks.Occurrence.Target => Option[LinkTarget],
@@ -72,6 +88,8 @@ object Pages:
   private val NotUsed = """(?im)^#{1,6}\s*not used\b.*$""".r
 
   /** Citation numbers by first appearance in `md` (the argument part of an article). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def numbering(
       md: FullText.Shown.Markdown,
       links: WikiLinks.Occurrence.Target => Option[LinkTarget]
@@ -90,6 +108,7 @@ object Pages:
     * where, what goes wrong, the offending text. Unobtrusive on purpose (a reader came for the article); nothing at all
     * when the text is clean.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def formatNotice(issues: List[FormatIssue], what: String, slug: Option[Article.Slug]): Html =
     if issues.isEmpty then Html.empty
     else
@@ -121,6 +140,10 @@ object Pages:
 
   // ── source page ──────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def source(p: SourcePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Html =
     val r = p.ref
     val period = YearFmt.period(
@@ -193,9 +216,13 @@ object Pages:
           html"""<ul class="citations">${Html.concat(cs.map(citation))}</ul>"""
     block(Anchor("cites"), "Cites", cites) ++ block(Anchor("cited-by"), "Cited by", citedBy)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kindLabel(kind: Edge.Kind.Wire): Html =
     html"""<span class="edge-kind">${display(kind.value)}</span> """
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citation(c: Citation): Html = c match
     case Citation.ToSource(r, kind) =>
       html"""<li>${kindLabel(kind)}${sourceRef(r, readable(r))} <i>${r.title.value}</i> """ ++
@@ -207,6 +234,8 @@ object Pages:
 
   // ── article page ─────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def article(p: ArticlePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Html =
     val a = p.article
     val body0 = a.body.value.trim
@@ -249,6 +278,9 @@ object Pages:
   // ── review ───────────────────────────────────────────────────────────────────────────────────
 
   /** An article's review state as a badge, its meaning on hover. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def reviewBadge(b: ReviewBadge): Html =
     html"""<span class="job-state review-state state-${b.state.wire}" title="${b.detail.value}">""" ++
       html"""${Wording.capitalize(b.label.value)}</span>"""
@@ -256,6 +288,9 @@ object Pages:
   /** A research goal's stage as the goals list draws it, linked to the goal's page (in the web UI a plain click opens
     * its window).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def goalBadgeLink(g: ReviewGoal): Html =
     val status = g.status.value
     val meaning =
@@ -271,6 +306,7 @@ object Pages:
     case other                       => other
 
   /** Under the title: the review badge, and the research goals that link the article. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def reviewLine(r: Article.ReviewView): Html =
     val goals =
       if r.goals.isEmpty then Html.empty
@@ -282,6 +318,10 @@ object Pages:
   /** Every finding the review panel raised, run by run and round by round, with what became of it; collapsed, its
     * summary saying how many there were and how many are open.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G5TextBranch, "counts the review findings whose outcome is open: the same String vocabulary")
   def reviewHistory(r: Article.ReviewView): Html =
     if r.rounds.isEmpty then Html.empty
     else
@@ -314,6 +354,7 @@ object Pages:
   /** The footer's entries: every numbered source (in number order), then the article's other cited sources — including
     * a stored citekey that is not in the corpus, shown as such.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citedEntries(
       cited: List[CitedSource],
       numbers: Map[Citekey, Int],
@@ -362,6 +403,8 @@ object Pages:
       )
     numbered ++ rest
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def sourcesCited(entries: List[CitedEntry]): Html =
     if entries.isEmpty then Html.empty
     else
@@ -385,6 +428,7 @@ object Pages:
       html"""<h2 id="sources-cited">Sources cited (${entries.size})</h2>""" ++
         html"""<ol class="sources-cited">${Html.concat(items)}</ol>"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def backlinks(rows: List[Backlink]): Html =
     if rows.isEmpty then Html.empty
     else

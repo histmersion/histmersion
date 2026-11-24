@@ -16,11 +16,13 @@ import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.util.storage.SafePath
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the definitions: parsing a definition and a skill, the placeholders, and the system prompt a
   * headless run of a definition gets (the same function for every runtime, so the generated Claude Code agent and the
   * prompt the engine sends the API cannot drift).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object AgentDefinitions:
   type FragmentBody = FragmentBody.T
   object FragmentBody extends Newtype[String, Pure]
@@ -51,6 +53,7 @@ object AgentDefinitions:
   /** `text` as `keep` reads it: a part marked for an audience not in `keep` is removed, a kept one loses its markers.
     * Removing a part never leaves more than one blank line behind.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def forAudience(text: AgentDef.Body, keep: Set[Audience]): AgentDef.Body =
     if !text.value.contains("<!-- only:") then text
     else
@@ -63,6 +66,7 @@ object AgentDefinitions:
 
   /** Audience markers that do not pair up or name no audience — a part that would leak into the wrong prompt.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markerProblems(text: AgentDef.Body): List[Problem.Config.Flaw] =
     val ms = Marker.findAllMatchIn(text.value).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
@@ -87,6 +91,7 @@ object AgentDefinitions:
   private val Placeholder = """\{\{tool:([a-z_]+|\*)\}\}""".r
 
   /** `{{tool:x}}` → the runtime's name for tool `x`; `{{tool:*}}` → every Histmersion tool. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(text: String, style: ToolStyle): String =
     Placeholder.replaceAllIn(
       text,
@@ -104,6 +109,7 @@ object AgentDefinitions:
     Placeholder.findAllMatchIn(text).map(_.group(1)).filter(_ != "*").toList.distinct
 
   /** `---\n<yaml>\n---\n<body>` → (yaml, body); the body keeps its leading newline, as written. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def split(md: Markdown): Either[Problem.Config.Flaw, (String, String)] =
     val t = md.value.replace("\r\n", "\n")
     if !t.startsWith("---\n") then Left(Problem.Config.Flaw.NoHeader)
@@ -122,6 +128,7 @@ object AgentDefinitions:
         Left(Problem.Config.Flaw.HeaderUnparsable(External.Reported.of(Option(e.getMessage).getOrElse(""))))
 
   /** A header field that holds a list: none, or its items; `field` names it when it holds something else. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def strings(field: String, v: Any): Either[Problem.Config.Flaw, List[String]] =
     Option(v).map(_.asMatchable) match
       case None                              => Right(Nil)
@@ -130,10 +137,13 @@ object AgentDefinitions:
       case Some(other) => Left(Problem.Config.Flaw.NotList(Problem.Field(field), Problem.Raw(s"$other")))
 
   /** The file a definition, a skill or a fragment is, as the prompts name it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[agents] def agentFile(name: AgentDef.Name): Problem.Raw = Problem.Raw(s"agents/$name.md")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def skillFile(name: SkillDef.Name): Problem.Raw = Problem.Raw(s"skills/$name/SKILL.md")
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(name: AgentDef.Name, md: Markdown, known: List[ToolName]): Either[Problem, AgentDef] =
     val file = agentFile(name)
     def fail[A](flaw: Problem.Config.Flaw): Either[Problem, A] = Left(Problem.Config.Definition(file, flaw))
@@ -221,6 +231,7 @@ object AgentDefinitions:
     }
 
   /** Parse one skill (`skills/<name>/SKILL.md`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseSkill(name: SkillDef.Name, md: Markdown): Either[Problem, SkillDef] =
     val file = skillFile(name)
     split(md)
@@ -241,6 +252,7 @@ object AgentDefinitions:
     * and Codex cannot open a skill without a shell, so inlining is what every runtime has in common (§2.3, §3a).
     * Placeholders rendered for `style`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def system(
       d: AgentDef,
       fragments: Map[FragmentName, FragmentBody],
@@ -274,6 +286,7 @@ object AgentDefinitions:
       case Some(problems) => Left(problems)
 
   /** Who a headless run of `d` is: a step — and the writer when it includes the whole writing guide. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def headlessAudience(d: AgentDef): Set[Audience] =
     if d.include.exists(_.value == WritingGuide) then Set(Audience.Headless, Audience.Writer)
     else Set(Audience.Headless)
@@ -290,6 +303,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
   val tools: List[ToolName] = roster.tools
 
   /** Every bundled file, relative to `agents/`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def index: List[AgentDefinitions.ResourcePath] =
     prompts
       .bundledText(SafePath.Candidate("index.txt"))
@@ -297,19 +311,24 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
       .toList
       .flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty).map(AgentDefinitions.ResourcePath(_)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def agentNames: List[AgentDef.Name] =
     index
       .map(_.value)
       .filter(r => !r.contains('/') && r.endsWith(".md"))
       .map(r => AgentDef.Name(r.stripSuffix(".md")))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def skillNames: List[SkillDef.Name] =
     index.map(_.value).collect { case r if r.startsWith("skills/") => SkillDef.Name(r.split('/')(1)) }.distinct
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fragmentNames: List[AgentDefinitions.FragmentName] =
     index.map(_.value).collect {
       case r if r.startsWith("_shared/") =>
         AgentDefinitions.FragmentName(r.stripPrefix("_shared/").stripSuffix(".md"))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def agent(name: AgentDef.Name): Either[Problem, AgentDef] =
     prompts
       .load(SafePath.Candidate(s"$name.md"))
@@ -329,12 +348,15 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
           )
         )
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def agent(s: StepAgent): Either[Problem, AgentDef] = agent(AgentDef.Name(s.wire.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def skill(name: SkillDef.Name): Either[Problem, SkillDef] =
     prompts
       .load(SafePath.Candidate(s"skills/$name/SKILL.md"))
       .flatMap(text => AgentDefinitions.parseSkill(name, AgentDefinitions.Markdown(text)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fragments: Either[Problems, Map[AgentDefinitions.FragmentName, AgentDefinitions.FragmentBody]] =
     all(fragmentNames)(n =>
       prompts

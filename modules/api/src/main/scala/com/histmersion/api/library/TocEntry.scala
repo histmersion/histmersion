@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars)
     derives JsonCodec,
@@ -24,6 +25,7 @@ object TocEntry:
   type Chars = Chars.T
   object Chars extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(entries: List[TocEntry]): Markdown =
     if entries.isEmpty then Markdown("_(no headings in body)_")
     else

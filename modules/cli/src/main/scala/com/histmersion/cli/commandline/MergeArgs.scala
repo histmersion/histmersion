@@ -30,8 +30,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[MergeCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion merge`: declares its options, parses them into typed commands")
 object MergeArgs:
   object MergeEntry extends CommandLine.Entry:
     val name = "merge"
@@ -55,6 +58,7 @@ object MergeArgs:
     private val all_ = flag("all", "List every default, info line and match, not only the first few")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       MergeCmd.Command.Plan(file_(), flags_(), template_.toOption, all_.getOrElse(false), json_())
     )
@@ -72,6 +76,7 @@ object MergeArgs:
       value[String]("plan", "Apply only this plan (the hash merge plan printed); refused if the plan is now another")
     private val yes_ = flag("yes", "Do not ask for confirmation")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       MergeCmd.Command.Apply(file_(), flags_(), expected_.toOption, yes_.getOrElse(false))
     )

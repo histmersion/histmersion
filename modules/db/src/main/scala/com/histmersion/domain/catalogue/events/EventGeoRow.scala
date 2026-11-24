@@ -6,8 +6,11 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.LeadFacts
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One event on the map before its outline is read (the map's events). */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
 final private[events] case class EventGeoRow(
     row: EventRow,
     lat: Latitude,
@@ -19,6 +22,8 @@ final private[events] case class EventGeoRow(
     magnitude: Option[EventGeoRow.Magnitude]
 ) derives DbCodec:
   /** The event as the map draws it, without its outline. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toGeo: EventGeo =
     val e = row.toSummary
     EventGeo(

@@ -18,11 +18,14 @@ import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.maintenance.VacuumPlan
 import com.histmersion.api.library.Acquire
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every kind of background job the server runs, each registered by its owner, in the order the jobs window has always
   * listed them (as `Api.all` lists the features' endpoints): what the server, the web page and the CLI name a job by;
   * and the fields of a job's detail, each declared by its owner, in the order the detail has always shown them.
   */
+@movesTo(FeaturePlace.Api)
 object RegisteredJobKinds:
   val all: JobKinds = JobKinds(
     List(

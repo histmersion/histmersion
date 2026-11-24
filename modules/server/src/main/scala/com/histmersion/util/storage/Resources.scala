@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 trait Resources:
   def text(name: Resources.ResourceName): Either[Problem, Blob.Text]
@@ -13,6 +14,7 @@ object Resources:
   object ResourceName extends Newtype[String, Pure]
 
   def classpath(loader: ClassLoader): Resources = new Resources:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text(name: ResourceName): Either[Problem, Blob.Text] =
       Option(loader.getResourceAsStream(name.value))
         .toRight(Problem.Io.Wrong(Problem.Io.Path.of(name), Problem.Io.Kind.Present))

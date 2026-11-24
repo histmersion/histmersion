@@ -8,10 +8,12 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion queue …`: each list and each verb is a subcommand (`queue acquire add "…"`, `queue done 3`, `queue
   * acquire recheck`), parsed into [[QueueCmd]].
   */
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class OpsArgsSuite extends munit.FunSuite:
 
   private val json = Cli.JsonOutput(false)

@@ -19,6 +19,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
   * [[com.histmersion.api.library.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it
@@ -30,10 +32,14 @@ import com.histmersion.util.database.StoredCreator
   * (the referrers). The `sources` row's tombstone (V031) is written by its trigger, so a bundle merge does not bring
   * the source back.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the source delete tables and their row codecs")
 private[sources] object SourceDeleteRepo:
   /** Delete `requested`, unless something refuses it. `files` names the stored originals the service removes after the
     * commit (they are part of the answer and the log line); `logTopic` is the log entry's heading (today's date).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def applyIn(
       requested: Citekey,
       logTopic: SourceReferrers.Day,
@@ -69,14 +75,19 @@ private[sources] object SourceDeleteRepo:
   ) derives DbCodec
 
   object Row:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = domain.Title
     val Title: domain.Title.type = domain.Title
     type CalibreId = CalibreId.T
     object CalibreId extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def keysOf(ck: Citekey, keys: List[Citekey])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def planIn(requested: Citekey, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
     sql"SELECT citekey, title, calibre_id, sha256 FROM sources WHERE citekey = $requested"
       .query[Row]
@@ -143,6 +154,8 @@ private[sources] object SourceDeleteRepo:
   private def n(q: Frag)(using DbCon): RowCount = RowCount(q.query[Int].run().headOption.getOrElse(0))
 
   /** What of the library goes with the source. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def counts(ck: Citekey, aliases: RowCount, edgesIn: RowCount)(using DbCon): List[DeleteCount] =
     import com.histmersion.api.library.DeletePart.*
     List(
@@ -157,6 +170,7 @@ private[sources] object SourceDeleteRepo:
                                WHERE s.citekey = $ck""")
     ).collect { case (p, rows) if rows.value > 0 => DeleteCount(p, DeleteCount.Rows(rows.value)) }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def deleteNow(p: SourceDeletePlan, source: SourceKeys, referrers: SourceReferrers)(using
       DbCon
   )(using creator: Creator.New): Unit =

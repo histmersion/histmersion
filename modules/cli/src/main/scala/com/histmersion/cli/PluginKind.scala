@@ -3,6 +3,7 @@ package cli
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The extension point a new plugin contributes to: its name on the command line, the suffix of the contributed class's
   * name, and what `histmersion plugin add` reports it provides.
@@ -48,5 +49,6 @@ object PluginKind:
   object Provides extends Newtype[String, Pure]
 
   val names: String = values.map(_.name).mkString(", ")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(raw: String): Either[String, PluginKind] =
     values.find(_.name.value == raw.trim).toRight(s"unknown plugin kind '$raw' (one of: $names)")

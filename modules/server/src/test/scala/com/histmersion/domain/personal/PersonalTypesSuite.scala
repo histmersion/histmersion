@@ -16,7 +16,9 @@ import java.util.UUID
 import com.histmersion.api.personal.Bookmark
 import com.histmersion.api.personal.Note
 import com.histmersion.api.ItemKind
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PersonalTypesSuite extends munit.FunSuite:
 
   test("times are kept and written to the microsecond, as Postgres keeps them"):
@@ -24,6 +26,7 @@ class PersonalTypesSuite extends munit.FunSuite:
     assertEquals(MarkTime.at(Instant.parse("2026-10-30T12:00:00Z")).iso, "2026-10-30T12:00:00.000000Z")
     assertEquals(MarkTime.parse(MarkTime.Iso("2026-10-30T12:00:00.123456Z")).iso, "2026-10-30T12:00:00.123456Z")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ref = ItemRef(MarkTarget.itemKind(MarkKind.Source), ItemKey("zz"), Some(ItemUid(UUID.randomUUID())))
 
   test("a title: the item's now, else the one kept, else its key or its kind"):

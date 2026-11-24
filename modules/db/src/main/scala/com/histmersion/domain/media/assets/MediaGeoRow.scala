@@ -5,7 +5,9 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final private[assets] case class MediaGeoRow(
     citekey: Option[Citekey],
     name: MediaGeoRow.Name,
@@ -45,6 +47,7 @@ object MediaGeoRow:
   type SourceUrl = SourceUrl.T
   object SourceUrl extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
   object Author extends Newtype[String, Pure]

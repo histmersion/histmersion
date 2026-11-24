@@ -10,9 +10,11 @@ import com.histmersion.util.data.exchange.BundleEntities
 import java.util.UUID
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 class PeriodPlanSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(
       id: Bundle.Period.Id,
       label: Bundle.Period.Label,

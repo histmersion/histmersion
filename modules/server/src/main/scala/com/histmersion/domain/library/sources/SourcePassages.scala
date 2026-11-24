@@ -8,12 +8,14 @@ import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReade
 import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources' bodies as the catalogue's evidence reads them: by their current citekey, searched chunk by chunk, and
   * the sources that name a phrase (the full-text index's phrase search, a mechanism over SQL).
   */
 final class SourcePassages(db: Transactor)(using timer: Timer) extends Passage.Source:
   def canonical(citekey: Citekey): Option[Citekey] = db.read(SourceRepo.canonical(citekey))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def naming(name: Title, limit: PageSize): List[Citekey] =
     db.read(SourceRepo.naming(SourceRepo.Name(name.value), SourceRepo.Limit(limit.value)))
   def reader(citekey: Citekey): PassageReader = SourcePassages.Text(db, citekey)
@@ -22,6 +24,7 @@ object SourcePassages:
 
   final private class Text(db: Transactor, citekey: Citekey)(using timer: Timer) extends PassageReader:
     private lazy val chunks = db.read(SourceRepo.bodyChunks(citekey))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def find(
         query: PassageReader.Query,
         regex: PassageReader.Regex,

@@ -11,12 +11,19 @@ import com.histmersion.domain.media.imports.Target
 import com.histmersion.domain.media.assets.AssetInfoRow
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the asset link tables and their row codecs")
 private[links] object AssetLinkRepo:
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[AssetLink] = DbCodec.derived
 
   def list(
@@ -34,6 +41,7 @@ private[links] object AssetLinkRepo:
           ORDER BY id""".query[AssetLink].run().toList
 
   /** Whether the figure a link names is stored. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def figureExists(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
@@ -45,5 +53,6 @@ private[links] object AssetLinkRepo:
           RETURNING id""".query[AssetLink.Id].run().head
     AssetLink(id, in.citekey, in.assetName, in.relation, in.targetType, in.targetId, in.xywh, in.notes)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def delete(id: AssetLink.Id)(using DbCon): Boolean =
     sql"DELETE FROM asset_links WHERE id = $id".update.run() > 0

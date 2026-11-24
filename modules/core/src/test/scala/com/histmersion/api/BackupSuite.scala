@@ -15,10 +15,12 @@ import com.histmersion.domain.given
 import java.time.Instant
 import java.util.Locale
 import com.histmersion.api.backup.{Backup, RestoreResult}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pure half of backup/restore (plan §1.10): the file naming, the path-traversal gate and the JDBC-URL → `pg_dump`
   * argument translation. No database, no `pg_dump`, runs in CI in milliseconds.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BackupSuite extends munit.FunSuite:
 
   // ── the timestamp format ─────────────────────────────────────────────────────────────────────

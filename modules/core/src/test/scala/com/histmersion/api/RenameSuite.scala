@@ -16,10 +16,12 @@ import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the old key, how
   * finding ids and composite ids move, and the link rewrite that must change the link target and nothing else.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RenameSuite extends munit.FunSuite:
 
   test("validate: a valid, link-shaped, different key passes (trimmed)"):

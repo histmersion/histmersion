@@ -9,6 +9,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class CritiquePair(
     src: CritiqueSide,
@@ -29,6 +30,7 @@ final case class CritiquePair(
 
   def bearing: Boolean = (((open) == (true)) && ((criticised.cited) == CritiqueSide.Cited(true)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line: String = (s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]")
 
 object CritiquePair:

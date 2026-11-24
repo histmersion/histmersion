@@ -29,12 +29,14 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** G90, G89 and G123 on the `*_test` database: one server per database, enforced at start; a restore that waits for the
   * writes in flight, refuses the writes and connections asked while it runs, holds every registered worker and has each
   * reconcile with the restored rows. The restore's body here is the test's own (the real `pg_restore` path is
   * BackupRestoreSuite's): what is asserted is the gate around it. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RestoreSafetySuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -49,6 +51,8 @@ class RestoreSafetySuite extends DbSuite:
 
   private object NoConverter extends ConverterClient:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -61,6 +65,7 @@ class RestoreSafetySuite extends DbSuite:
   private val Kind = Job.Kind("zz-restore-safety")
 
   /** A job row of `Kind`, moved to `state` (queued, or running). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobIn(state: JobState): Job.Id =
     val j = Transactor(pool).write(JobRepo.create(Kind, None, None))
     val id = Job.Id.applyUnsafe(j.id.value)
@@ -68,6 +73,7 @@ class RestoreSafetySuite extends DbSuite:
       assert(Transactor(pool).write(JobRepo.transition(id, JobState.Queued, JobState.Running)).isDefined)
     id
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def statusOf(id: Job.Id): JobInfo = Transactor(pool).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
 
   override protected def afterSuite(): Unit =

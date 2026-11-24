@@ -15,8 +15,12 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.{Latitude, Longitude, UserId, Year}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A note as the person sees it: what it is left on as that shows now, and what that is called. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Note(
     id: com.histmersion.api.personal.Note.Id,
     target: MarkTarget,
@@ -26,9 +30,13 @@ final case class Note(
     updatedAt: MarkTime
 ):
   /** Its text, its item's title and its item's key hold every word. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def matches(words: SearchWords): Boolean =
     words.matches(text.value, title.value, target.itemRef.fold("")(_.key.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def wire: WireNote = WireNote(
     id,
     target.wire,
@@ -42,6 +50,7 @@ object Note:
 
   /** The id a client sent, checked here, once: a note's id is a lower-case UUID. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def idOf(raw: WireNote.Id): Either[Problem, WireNote.Id] =
     val id = Option(raw).fold("")(_.value.trim.toLowerCase)
     Either.cond(
@@ -70,6 +79,7 @@ object Note:
     def holds(note: StoredNote): Boolean = note.target.itemRef.exists(r => r.key == key || r.uid.exists(uids))
 
   /** A live note as the table answers it. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final private[notes] case class Row(
       id: com.histmersion.api.personal.Note.Id,
       kind: ItemKind.Wire,

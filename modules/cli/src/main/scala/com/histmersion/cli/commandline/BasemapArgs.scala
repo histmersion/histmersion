@@ -11,8 +11,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[BasemapCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion basemap`: declares its options, parses them into typed commands")
 object BasemapArgs:
   object BasemapEntry extends CommandLine.Entry:
     val name = "basemap"
@@ -90,6 +93,7 @@ object BasemapArgs:
       "The caches of tiles read on demand (the deeper relief, the map and the sea floor outside the region)"
     )
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       BasemapCmd.Command.Rm(layer_.toOption, focus_.toOption, cache_.getOrElse(false))
     )

@@ -28,6 +28,7 @@ object KeysSection:
 
   /** The ways a reference is written: its scheme, the name shown, what the entry box asks for. */
   type ReferenceEntry = ReferenceEntry.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ReferenceEntry extends Newtype[String, Pure]
 
   enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint) derives CanEqual:
@@ -62,6 +63,9 @@ object KeysSection:
     def of(scheme: Scheme): Form = values.find(_.scheme == scheme).getOrElse(Env)
 
   /** The reference a form and its entry write, or why not. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def reference(form: Form, entry: ReferenceEntry): Either[Problem, Reference] =
     val t = entry.value.trim
     if t.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"Write ${form.hint}.")))
@@ -84,6 +88,8 @@ object KeysSection:
   /** A credential's name for a person: its plugin and what it is (`1Password: service account token`), or what it
     * opens. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def name(relative: ConfigEdit.Field.LocalKey): Name =
     relative.value.split('.').toList match
       case "plugins" :: id :: rest if rest.nonEmpty =>
@@ -93,6 +99,8 @@ object KeysSection:
       case _ => Name(Named.getOrElse(relative.value, Wording.humanize(Wording.Id(relative.value.replace('.', ' ')))))
 
   /** How a credential is held, in words. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def state(c: ConfigEdit.Credential): State = c.form.value match
     case "unset" => State("Not set")
     case "env"   => State("Set · from an environment variable")
@@ -103,6 +111,8 @@ object KeysSection:
     case "value" => State("Set · the value is written in the settings file")
     case _       => State("Set")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def pane: HtmlElement =
     div(
       cls := "settings-section keys-section",
@@ -163,6 +173,8 @@ object KeysSection:
       SettingsStore.notice
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def envRow(f: ConfigEdit.Field): HtmlElement =
     div(
       cls := "setting-row key-row",
@@ -176,6 +188,9 @@ object KeysSection:
       f.envVar.map(v => p(cls := "muted", s"Environment variable: $v"))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def referenceRow(f: ConfigEdit.Field): HtmlElement =
     val form = Var(Form.Env)
     val entry = Var("")

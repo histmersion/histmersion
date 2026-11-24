@@ -17,6 +17,7 @@ import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.sources.SourcesControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the library contributes to the workflow engine: its three pipelines as workflows (enrich-source,
   * currency-check, acquisition-sweep), the enrich and watch manager kinds, its agent tools, and the acquisition work
@@ -35,6 +36,7 @@ final class LibraryWorkflows(
   private val upstream: () => AgentUpstream = () => work.acquisition
 
   /** How a source's proposed status or edge goes through the approvals (research's review proposes them too). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val proposals: SourceProposals = new SourceProposals(
     SourceApprovalService(transactor, a.approvalStore, a.clock),
     cfg().agents,

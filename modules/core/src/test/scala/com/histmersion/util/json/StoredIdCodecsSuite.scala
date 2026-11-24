@@ -6,8 +6,10 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.PlanGoal.ProposedWork
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Rows stored when ids were plain text still load, whatever the id looks like. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StoredIdCodecsSuite extends munit.FunSuite:
 
   test("a stored proposal with an id that is not a citekey decodes"):

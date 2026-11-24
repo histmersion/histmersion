@@ -5,19 +5,25 @@ package domain.catalogue.maptiles
   * Pure.
   */
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object TileFeatures:
   import com.histmersion.api.catalogue.{EventGeo, SiteTile, TileProps as P}
 
   /** A text property; none when there is no value. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text(k: String, v: String): Seq[(TilePoint.PropKey, TileValue)] = Seq(
     prop(k, TileValue.Text(TileValue.Text.Value(v)))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text(k: String, v: Option[String]): Seq[(TilePoint.PropKey, TileValue)] =
     v.toSeq.map(s => prop(k, TileValue.Text(TileValue.Text.Value(s))))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def prop(k: String, v: TileValue): (TilePoint.PropKey, TileValue) = TilePoint.PropKey(k) -> v
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def real(k: String, v: Double): (TilePoint.PropKey, TileValue) =
     prop(k, TileValue.Real(TileValue.Real.Value(v)))
 
@@ -26,12 +32,17 @@ object TileFeatures:
     v.toSeq.map(n => prop(k, TileValue.Whole(n)))
 
   /** How many of a cell's items (or whether an item) have no known date: left out when none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def undated(c: TileCell): Seq[(TilePoint.PropKey, TileValue)] =
     Option
       .when(c.undated.value > 0)(prop(P.Undated, TileValue.Whole(TileValue.Whole.Value(c.undated.value.toLong))))
       .toSeq
 
   /** A cell of several items: its key, count, dates' range and box. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def cell(c: TileCell): TilePoint =
     TilePoint(
       c.x,
@@ -48,6 +59,9 @@ object TileFeatures:
         )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def site(c: TileCell, s: SiteTile): TilePoint =
     TilePoint(
       c.x,
@@ -66,6 +80,9 @@ object TileFeatures:
         undated(c)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def event(c: TileCell, e: EventGeo): TilePoint =
     TilePoint(
       c.x,
@@ -102,6 +119,8 @@ object TileFeatures:
   /** The features of a tile of zoom `zoom`: each cell of several as a cell, each item with its record (`record` by the
     * item's key; an item whose record is gone since its cell was read is left out), every one with the tile's zoom.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of[A](
       zoom: TileCoord.Z,
       cells: Seq[TileCell],

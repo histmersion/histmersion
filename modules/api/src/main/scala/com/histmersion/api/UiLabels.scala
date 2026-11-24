@@ -9,16 +9,20 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The label the UI shows for an identifier of any of the vocabularies — job types, wait codes, strategies, job kinds,
   * approval kinds, pipelines, manager kinds, statuses and states — else the identifier humanised.
   */
+@movesTo(FeaturePlace.ApiUi)
 object UiLabels:
   export Wording.Id as Key
   type Text = Text.T
   object Text extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val known: Map[Key, Text] =
     (Wording.schedulerJobTypes.toList.map((k, v) => (k.value: String) -> v) ++
       AgentScheduler.waitCodes.toList.map((k, v) => (k.value: String) -> v) ++
@@ -34,4 +38,6 @@ object UiLabels:
       .map((k, v) => Key(k) -> Text(v))
       .toMap
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def label(id: Key): Text = known.getOrElse(Key((id).value.trim), Text(Wording.humanize(id)))

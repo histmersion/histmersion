@@ -9,12 +9,14 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of events from catalogues: the providers' identities and terms, the mapping of their datings onto the
   * four-point time-span, and how records from several catalogues and the events already stored are merged into ONE
   * event.
   */
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object CatalogMerge:
 
   /** What matched a record to an event, or why it is new: the account of the merge's decision, not a failure. */
@@ -41,14 +43,21 @@ object CatalogMerge:
     case New(eventId: Event.Id, why: Rationale)
     def eventId: Event.Id
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def outer(ts: TimeSpan): Option[(Year, Year)] = ts.outer
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def point(e: StoredEvent): (Option[Latitude], Option[Longitude]) =
     (e.lat.map(l => Latitude(l.value)), e.lon.map(l => Longitude(l.value)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def outerYears(ts: TimeSpan): Option[(Long, Long)] = outer(ts).map((a, b) => (a.value, b.value))
 
   /** Pure: do two spans overlap once widened by `years`? An undated one overlaps nothing. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def overlaps(a: TimeSpan, b: TimeSpan, years: Tolerance.Years): Boolean =
     (outer(a), outer(b)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
@@ -59,6 +68,7 @@ object CatalogMerge:
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def near(
       a: (Option[Latitude], Option[Longitude]),
       b: (Option[Latitude], Option[Longitude]),
@@ -71,6 +81,7 @@ object CatalogMerge:
   /** Two kinds are the same thing when their canonical kinds are equal (a siege is no battle here: Wikidata lists both
     * for one fight only when it says so through the item).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def canonical(kind: String): EventSummary.Kind =
     EventTaxonomy.canonical(EventSummary.Kind(kind))
 
@@ -91,10 +102,13 @@ object CatalogMerge:
     object Km extends Newtype[Double, Pure]
     export Event.Id
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given Ordering[Fit] =
       Ordering.by((f: Fit) => (-f.score.value, f.years.value: Double, f.km.value: Double, f.id.value: String))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[Latitude], lon: Option[Longitude], id: Fit.Id): Fit =
     val (score, years) = (outerYears(r.timeSpan), outerYears(ts)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
@@ -120,6 +134,7 @@ object CatalogMerge:
     * rule finds several candidates the best [[Fit]] wins (overlap, then |Δt|, then distance, then id) — never the first
     * in the list. The answer keeps the order of `records`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def place(records: List[CatalogRecord], stored: List[StoredEvent], tol: Tolerance): List[(CatalogRecord, Placement)] =
     val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).groupMap(_._1)(_._2).view.mapValues(_.min).toMap
     val byWd = stored.flatMap(e => e.wikidata.map(_ -> e)).groupMap(_._1)(_._2)

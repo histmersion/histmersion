@@ -42,6 +42,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait SourceService:
 
   /** The citekey a source has now: `id` itself, or the source an old citekey was renamed to. */
@@ -178,17 +179,20 @@ object SourceService:
       db.read(SourceRepo.resolveAliases(targets))
     def toc(citekey: Citekey): List[TocEntry] = db.read(SourceRepo.toc(citekey))
     def bodyText(citekey: Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.bodyText(citekey))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bodyUnderHeading(citekey: Citekey, heading: Heading): FullSourceRow.OcrMarkdown =
       db.read(SourceRepo.bodyUnderHeading(citekey, FilterSql.SnippetRow.Heading(heading.value)))
     def bodyChunks(citekey: Citekey): List[Chunk] = db.read(SourceRepo.bodyChunks(citekey))
     def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.markdown(citekey))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def put(source: Source, caller: Caller)(using WritePermit)(using Creator.New): Source.UpdatedAt =
       val s = settings()
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         SourceRepo.putIn(source, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(requested: Citekey, patch: Source.Patch, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Source.UpdatedAt] =
@@ -197,9 +201,11 @@ object SourceService:
         given CreatedAt = CreatedAt.now(clock)
         SourceRepo.patchIn(requested, patch, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def toleranceKm(s: SourceSettings): FindingPlacement.Implementation.ToleranceKm =
       FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(from: Citekey, to: Citekey, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Rename.Counts] =
@@ -234,17 +240,21 @@ object SourceService:
       if citekeys.isEmpty then Map.empty else db.read(SourceRepo.sha256s(citekeys))
     def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller)(using WritePermit): Unit =
       db.write(SourceRepo.setSha256(citekey, sha256))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def licence(citekey: Citekey): Option[Licence] =
       db.read(SourceRepo.licenceOf(citekey))
         .map(l => Licence.Id(l.value.trim))
         .filter(_.value.nonEmpty)
         .map(Licence.classify)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller)(using WritePermit): Boolean =
       val v = licence.value.trim
       v.nonEmpty && db.write(SourceRepo.recordLicence(citekey, Licence.Id(v)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def calibreGaps(limit: Option[PageSize]): List[CalibreGap] =
       db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
     def calibrePushMeta(citekey: Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller)(using
         WritePermit
     ): Either[Api.Error, Unit] =
@@ -262,10 +272,15 @@ object SourceService:
     private val Token = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)
     private def token(at: Instant): String = Token.format(at)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def sk(ck: Citekey): LibraryState.SourcesKey = LibraryState.SourcesKey(ck.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ak(ck: Citekey): LibraryState.AliasesKey = LibraryState.AliasesKey(ck.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def av(ck: Citekey): LibraryState.AliasesValue = LibraryState.AliasesValue(ck.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def tk(ck: Citekey): LibraryState.AliasTombstones = LibraryState.AliasTombstones(ck.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def fk(id: Finding.Id): LibraryState.Stored.FindingUidsKey = LibraryState.Stored.FindingUidsKey(id.value)
 
     /** A citekey this library is handed (an api source's) or holds (a key of its state), parsed: one that is none is
@@ -277,26 +292,36 @@ object SourceService:
       * a key that is no citekey is raised as its problem ([[Raised]]), as the database would refuse the row.
       */
     private def heldKey(raw: String): Citekey = held(raw).fold(problem => throw Raised(problem), identity)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def apiKey(ck: Citekey): ApiCitekey = ApiCitekey(ck.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def invalid(problem: Problem): Api.Error = Api.Error(problem, Some(Api.Error.Code(Write.CodeInvalid)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def currentIn(st: LibraryState, id: Citekey): Option[Citekey] =
       if st.sources.contains(sk(id)) then Some(id) else st.aliases.get(ak(id)).map(v => heldKey(v.value))
 
     def current(id: Citekey): Option[Citekey] = currentIn(state.get, id)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def aliasOf(citekey: Citekey): Option[Citekey] = state.get.aliases.get(ak(citekey)).map(v => heldKey(v.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def aliasesOf(citekey: Citekey): Set[Citekey] =
       state.get.aliases.collect { case (a, ck) if ck.value == citekey.value => heldKey(a.value) }.toSet
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def aliases: List[Source.Alias] =
       state.get.aliases.toList
         .sortBy[String](_._1.value)
         .map((alias, citekey) => Source.Alias(Source.Alias.Value(alias.value), ApiCitekey(citekey.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def citekeys: List[Citekey] = state.get.sources.keys.toList.sortBy[String](_.value).map(k => heldKey(k.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def updatedAtMillis: Map[Citekey, CitekeyMillis.Millis] =
       state.get.sources.map((k, x) => heldKey(k.value) -> CitekeyMillis.Millis(x.updatedAt.toEpochMilli))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def calibreId(citekey: Citekey): Option[FullSourceRow.CalibreId] =
       state.get.sources.get(sk(citekey)).flatMap(_.source.calibreId).map(c => FullSourceRow.CalibreId(c.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(citekey: Citekey): Option[(Source.Detail, List[Finding.Row])] =
       state.get.sources.get(sk(citekey)).map { st =>
         val s = st.source
@@ -339,6 +364,7 @@ object SourceService:
         (detail, findings)
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def loadIn(st: LibraryState, citekey: Citekey): Option[Source] =
       st.sources.get(sk(citekey)).map { stored =>
         val edges = (st.edges.toList ++ st.parked.toList)
@@ -355,6 +381,7 @@ object SourceService:
 
     def load(citekey: Citekey): Option[Source] = loadIn(state.get, citekey)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(citekeys: List[Citekey]): List[Source.Ref] =
       val st = state.get
       citekeys.distinct
@@ -375,6 +402,7 @@ object SourceService:
         )
 
     /** The precedence of the database's resolution: the citekey itself, an old citekey, a short form. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def resolveIn(
         st: LibraryState,
         targets: List[WikiLinks.Occurrence.Target]
@@ -402,6 +430,7 @@ object SourceService:
 
     private def chunksOf(citekey: Citekey): List[Chunk] = state.get.sources.get(sk(citekey)).fold(Nil)(_.chunks)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toc(citekey: Citekey): List[TocEntry] =
       chunksOf(citekey)
         .filter(_.heading.isDefined)
@@ -416,11 +445,13 @@ object SourceService:
         )
         .sortBy[Int](_.ord.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bodyText(citekey: Citekey): FullSourceRow.OcrMarkdown =
       chunksOf(citekey) match
         case Nil => markdown(citekey)
         case cs  => FullSourceRow.OcrMarkdown(cs.sortBy[Int](_.ord.value).map(_.body.value).mkString("\n\n"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bodyUnderHeading(citekey: Citekey, heading: Heading): FullSourceRow.OcrMarkdown =
       val lower = heading.value.trim.toLowerCase
       FullSourceRow.OcrMarkdown(
@@ -431,6 +462,7 @@ object SourceService:
           .mkString("\n\n")
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bodyChunks(citekey: Citekey): List[Chunk] =
       chunksOf(citekey) match
         case Nil =>
@@ -440,6 +472,7 @@ object SourceService:
             .toList
         case cs => cs.sortBy[Int](_.ord.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown =
       FullSourceRow.OcrMarkdown(state.get.sources.get(sk(citekey)).flatMap(_.source.ocrMarkdown).fold("")(_.value))
 
@@ -448,6 +481,7 @@ object SourceService:
     /** The source written under its citekey: its findings kept by id, its edges routed by their targets, the parked
       * edges that named it promoted.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def written(st: LibraryState, s: Source, at: Instant): LibraryState =
       val ck = heldKey(s.citekey.value)
       st.aliases.get(ak(ck)).foreach { now =>
@@ -491,6 +525,7 @@ object SourceService:
           .using(_.filterNot(_.src == s.citekey))
       promoted(edgesInserted(cleared, s.edges.map(_.modify(_.src).setTo(s.citekey)).distinct), ck)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def edgesInserted(st: LibraryState, edges: List[Edge]): LibraryState =
       @tailrec def loop(rest: List[Edge], resolved: Set[Edge], parked: Set[Edge]): LibraryState =
         rest match
@@ -501,15 +536,18 @@ object SourceService:
           case Nil => st.modify(_.edges).setTo(resolved).modify(_.parked).setTo(parked)
       loop(edges, st.edges, st.parked)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def promoted(st: LibraryState, citekey: Citekey): LibraryState =
       val (waiting, rest) = st.parked.partition(_.dst.value == citekey.value)
       st.modify(_.edges).using(_ ++ waiting).modify(_.parked).setTo(rest)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def put(source: Source, caller: Caller)(using WritePermit)(using Creator.New): Source.UpdatedAt =
       val at = clock.instant()
       val _ = state.updateAndGet(written(_, source, at))
       Source.UpdatedAt(token(at))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(requested: Citekey, patch: Source.Patch, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Source.UpdatedAt] =
@@ -536,6 +574,7 @@ object SourceService:
       }
       answer
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(from: Citekey, to: Citekey, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Rename.Counts] =
@@ -554,6 +593,7 @@ object SourceService:
           answer
         }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def renamedIn(
         st: LibraryState,
         from: Citekey,
@@ -599,6 +639,7 @@ object SourceService:
                   else st
                 Right(renamedNow(unaliased, from, to, at))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def renamedNow(st: LibraryState, from: Citekey, to: Citekey, at: Instant): (LibraryState, Rename.Counts) =
       val fromApi = apiKey(from)
       val toApi = apiKey(to)
@@ -680,9 +721,12 @@ object SourceService:
 
     // ── delete ───────────────────────────────────────────────────────────────────────────────
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def doiKey(doi: Option[com.histmersion.api.library.Doi]): Option[String] =
       doi.map(_.value.trim.toLowerCase.replaceFirst("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)", "")).filter(_.nonEmpty)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def planIn(st: LibraryState, requested: Citekey): Either[Api.Error, SourceDeletePlan] =
       st.sources.get(sk(requested)) match
         case None =>
@@ -737,6 +781,7 @@ object SourceService:
 
     def deletion(citekey: Citekey): Either[Api.Error, SourceDeletePlan] = planIn(state.get, citekey)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(
         citekey: Citekey,
         day: SourceReferrers.Day,
@@ -767,6 +812,7 @@ object SourceService:
       }
       answer
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def resolveEdges(caller: Caller)(using WritePermit)(using Creator.New): RowCount =
       var moved = 0
       val _ = state.updateAndGet { st =>
@@ -789,12 +835,14 @@ object SourceService:
 
     def exists(citekey: Citekey): Boolean = state.get.sources.contains(sk(citekey))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def citekeyOfDoi(doi: Doi): Option[Citekey] =
       val d = doi.value.trim.toLowerCase
       state.get.sources.toList.sortBy[String](_._1.value).collectFirst {
         case (ck, x) if x.source.doi.exists(_.value.toLowerCase == d) => heldKey(ck.value)
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def doiIndex: Map[Doi, Citekey] =
       state.get.sources.toList
         .sortBy[String](_._1.value)
@@ -806,6 +854,7 @@ object SourceService:
         )
         .toMap
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def addEdges(edges: List[Edge], caller: Caller)(using WritePermit)(using Creator.New): RowCount =
       val es = edges.distinct
       if es.isEmpty then RowCount(0)
@@ -822,6 +871,7 @@ object SourceService:
 
     def original(citekey: Citekey): Option[Sha256] = stored(citekey).flatMap(_.sha256)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def holderOf(sha256: Sha256): Option[Citekey] =
       state.get.sources.toList.sortBy[String](_._1.value).collectFirst {
         case (ck, x) if x.sha256.contains(sha256) => heldKey(ck.value)
@@ -839,6 +889,7 @@ object SourceService:
     def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller)(using WritePermit): Unit =
       val _ = updated(citekey)(_.modify(_.sha256).setTo(Some(sha256)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def licence(citekey: Citekey): Option[Licence] =
       stored(citekey)
         .flatMap(_.licence)
@@ -846,6 +897,7 @@ object SourceService:
         .filter(_.value.nonEmpty)
         .map(Licence.classify)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller)(using WritePermit): Boolean =
       val v = licence.value.trim
       val open = stored(citekey).exists(_.licence.forall(_.value.trim.isEmpty))
@@ -853,6 +905,7 @@ object SourceService:
         _.modify(_.licence).setTo(Some(LibraryState.Stored.Licence(v))).modify(_.updatedAt).setTo(clock.instant())
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def gapOf(x: LibraryState.Stored): CalibreGap =
       val s = x.source
       CalibreGap(
@@ -868,6 +921,7 @@ object SourceService:
         s.calibreId.filter(_.value.nonEmpty)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def calibreGaps(limit: Option[PageSize]): List[CalibreGap] =
       state.get.sources.toList
         .sortBy[String](_._1.value)
@@ -878,6 +932,7 @@ object SourceService:
 
     def calibrePushMeta(citekey: Citekey): Option[CalibreGap] = stored(citekey).map(gapOf)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller)(using
         WritePermit
     ): Either[Api.Error, Unit] =

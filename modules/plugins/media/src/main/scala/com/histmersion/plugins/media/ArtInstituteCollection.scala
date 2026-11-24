@@ -8,12 +8,15 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `aic`: the Art Institute of Chicago API (https://api.artic.edu/docs/), no key. A search answers the fields asked
   * for; `is_public_domain` marks the works whose images are released under CC0 — any other is refused. Images come from
   * its IIIF server, `{iiif}/{image_id}/full/{w},/0/default.jpg` (843 px is the size it caches and recommends). The
   * place field is `place_of_origin`; years are signed already.
   */
+@atBoundary(BoundaryKind.Json, "reads the art institute collection collection's JSON answers into media records")
 final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstituteCollection.ThumbPx)
     extends MuseumCollection(
       conf,
@@ -26,6 +29,7 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
   )
   val role = MediaCollection.Object
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(
       place: MediaPlace,
       http: Plugin.Http
@@ -62,6 +66,7 @@ object ArtInstituteCollection:
     "credit_line"
   ).mkString(",")
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       api: Plugin.Http.Url,
       name: CollectionQuery.Text,
@@ -71,6 +76,7 @@ object ArtInstituteCollection:
       s"${api.value.stripSuffix("/")}/artworks/search?q=${name.value.enc}&limit=${limit.value.max(1)}&fields=$Fields"
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def imageUrl(iiif: Plugin.Http.Url, imageId: ImageId, width: Width): MediaItem.ImageUrl =
     MediaItem.ImageUrl(s"${iiif.value.stripSuffix("/")}/${imageId.value.enc}/full/${width.value.max(1)},/0/default.jpg")
 
@@ -90,6 +96,7 @@ object ArtInstituteCollection:
         )
       case Some(rows) => Right(rows.toList.map(r => record(r, iiif, displayPx, thumbPx)))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(
       json: Json,
       iiif: Plugin.Http.Url,

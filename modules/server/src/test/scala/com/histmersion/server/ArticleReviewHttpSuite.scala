@@ -23,12 +23,14 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An article's review state and history over every surface: the badge on each `GET /api/articles` row (derived from
   * the review manager's item and the ledger counted in SQL), `GET /api/articles/{slug}/review` (the history from the
   * ledger, the goals linking the article, the approvals waiting), the `/article/{slug}` page and the `article_review`
   * MCP tool. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleReviewHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

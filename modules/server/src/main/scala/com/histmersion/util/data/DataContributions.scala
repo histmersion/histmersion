@@ -9,6 +9,7 @@ import com.histmersion.util.data.maintenance.{CacheSpec, MaintenanceTask}
 import com.histmersion.util.storage.Location
 import com.histmersion.util.data.mirror.Mirror
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The registry: every owner's contribution, in the order they were registered, which is the order every operation runs
   * them in. An owner contributes once and a table has one owner.
@@ -35,6 +36,8 @@ object DataContributions:
 
   /** The registry, or what makes it inconsistent: an owner registered twice, a table claimed by two owners. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def of(contributions: List[DataContribution]): Either[List[Problem], DataContributions] =
     val owners = contributions.map(_.owner.value)
     val twice =

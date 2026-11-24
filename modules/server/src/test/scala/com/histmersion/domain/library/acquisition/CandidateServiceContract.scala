@@ -11,13 +11,17 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the new-source search's store answers, the same on the database and in memory: a watch read keeps its watermark
   * when a read failed, a candidate found again keeps its state and gathers every watch that found it, a page in id
   * order, the counts in the states' order, a mark by id and by DOI.
   */
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class CandidateServiceContract extends AcquisitionStoreSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def candidate(goal: Source.Candidate.Goal, doi: Doi, by: Source.Candidate.FoundBy) =
     Source.Candidate(
       Source.Candidate.Id(0),

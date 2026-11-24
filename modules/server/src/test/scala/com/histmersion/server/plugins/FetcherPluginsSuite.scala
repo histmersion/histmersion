@@ -23,23 +23,31 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.plugin.Doi
 import com.histmersion.config.ConfigReload
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own acquisition plugins, found on the class path and registered through the plugin host like any
   * plugin, with the host's `histmersion.acquire` settings supplied: on by default in today's order, each one switched
   * off by config.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FetcherPluginsSuite extends munit.FunSuite:
 
   private val cfg = AppConfig.load().acquire
 
   /** Never asked: registering opens nothing. */
   private object Offline extends Http:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       fail(s"asked $url")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Problem, Http.Text] = fail(s"asked $url")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -64,11 +72,13 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   private val HostContact = "histmersion.acquire.contact-email = \"host@example.org\"\n"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fetchers(g: Generation) =
     scala.collection.immutable.ListMap.from(
       g.registries.sourceFetchers.iterator.map((k, v) => util.plugins.Plugin.Id.assume(k.value) -> v)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chain(g: Generation): List[String] =
     FetchChain
       .of(
@@ -80,6 +90,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
       .plan
       .map(_._1.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def state(g: Generation, id: String): Option[String] =
     g.report.plugins.find(_.id.value == id).map(_.state.value)
 
@@ -125,20 +136,24 @@ class FetcherPluginsSuite extends munit.FunSuite:
   /** Records every request; Unpaywall and CORE answer with no OA location, so nothing is downloaded. */
   final private class Recording extends Http:
     var asked: List[(String, Map[String, String])] = Nil // a test double's record of calls
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def record(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Unit =
       asked = asked :+ (url.value -> headers.map((k, v) => k.value -> v.value))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       record(url, headers); Right(Json.obj())
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def text(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Problem, Http.Text] = Left(Problem.Unclassified(Legacy.Text("no")))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Problem, HttpAnswer.Body] =
       record(url, headers); Right(HttpAnswer.Body("{}".getBytes("UTF-8")))
     // CORE is asked once, not retried, through its budget
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       record(url, headers);
       Right(HttpAnswer(HttpAnswer.Code(200), Map.empty, HttpAnswer.Body("{}".getBytes("UTF-8"))))
@@ -330,6 +345,8 @@ class FetcherPluginsSuite extends munit.FunSuite:
     */
   final private class Indexes(c: AcquireConfig) extends Http:
     var asked: List[String] = Nil // a test double's record of calls
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def answer(request: Http.Url): Either[Problem, HttpAnswer.Body] =
       val url = request.value
       asked = asked :+ url
@@ -348,8 +365,11 @@ class FetcherPluginsSuite extends munit.FunSuite:
         .map(b => HttpAnswer.Body(b.getBytes("UTF-8")))
         .toRight(Problem.Unclassified(Legacy.Text(s"$url: HTTP 404")))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       text(url, headers).flatMap(t =>
         RawJson
@@ -361,6 +381,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
   /** The index steps and the landing step of a generation built over `http`, run in today's order with one memo for the
     * work, as an ingest runs them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runIndexes(user: String, http: Indexes, hostSettings: String = HostContact): Generation =
     val g = generation(hostSettings + user, http = http)
     val steps = List("unpaywall", "openalex", "landing").flatMap(id =>
@@ -375,7 +396,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
     )
     g
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unpaywallAsked(h: Indexes) = h.asked.filter(_.startsWith(s"${host.unpaywall.url}/"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openalexAsked(h: Indexes) = h.asked.filter(_.startsWith(s"${host.openalex.url}/"))
   private def pagesRead(h: Indexes) = h.asked.filter(u => Set(UpPage, OaPage, DcPage)(u))
 
@@ -466,6 +489,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     assertEquals(Plugins.carried(g, Nil).keySet.size, 7)
 
   private object Ctx extends Fetch.Context:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = compute
     val log: Plugin.Log = new Plugin.Log {
       def info(m: Plugin.Log.Line) = (); def warn(m: Plugin.Log.Line) = ()

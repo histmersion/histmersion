@@ -21,6 +21,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.media.MediaItem
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pictures' controllers over the in-memory service: a figure's URL under an old citekey, an upload to a source
   * that is not there or that does not decode, a picture's uid that is not one, and every write refused while the
@@ -29,9 +30,11 @@ import com.histmersion.util.database.TestCreators.given
 class AssetsControllersSuite extends munit.FunSuite:
 
   private val sources = new MediaSources:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def current(citekey: Citekey): Option[MediaSources.Current] = if citekey == Citekey("zqold") then
       Some(MediaSources.Current("zqnew2001_x"))
     else Some(MediaSources.Current(citekey.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def lookup(citekey: Citekey): Either[MediaSources.Error, MediaSources.Key] =
       if citekey == Citekey("zqnew2001_x") then Right(MediaSources.Key(citekey.value))
       else Left(MediaSources.Error.NotFound)
@@ -41,6 +44,7 @@ class AssetsControllersSuite extends munit.FunSuite:
     val assets = AssetService.InMemory(AtomicReference(MediaState.empty), MediaStoreSuite.Ticking())
     (AssetsControllers(assets, sources, () => AppConfig.load(), gate), assets)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val png = AssetInput(
     Bundle.Asset.FileName("a.png"),
     Bundle.Asset.MimeText("image/png"),

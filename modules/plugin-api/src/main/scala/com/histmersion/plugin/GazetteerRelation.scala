@@ -2,6 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One edge of the place hierarchy, with its own validity: a time-slice of a polity is part of the polity, a city part
   * of a province while it was.
@@ -18,6 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param open
   *   the end of [[period]] the dataset does not know, if one
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final case class GazetteerRelation(
     childId: GazetteerRelation.ChildId,
     parentId: GazetteerRelation.ParentId,

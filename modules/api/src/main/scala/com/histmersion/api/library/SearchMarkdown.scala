@@ -7,19 +7,25 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.YearFmt
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object SearchMarkdown:
 
   /** `ts_headline` marks hits with `**` already. */
   export Histogram.Unit as TreeUnit
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def yearLabel(v: Long): String = fmtYear(Year(v))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def located(region: Option[String], lat: Option[Latitude], lon: Option[Longitude]): String =
     (lat, lon) match
       case (Some(la), Some(lo)) => s"${region.map(_ + " ").getOrElse("")}($la, $lo)"
       case _                    => region.getOrElse("")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def snippet(h: SearchHit): String =
     h.snippet.map(_.value.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
       case None    => ("")
@@ -27,6 +33,7 @@ object SearchMarkdown:
         val head = h.matchedHeading.map(_.value.trim).filter(_.nonEmpty).map(x => s"_${x}_ — ").getOrElse("")
         (s"\n  > $head$s")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchResults(hits: Vector[SearchHit]): String =
     if hits.isEmpty then ("_No matching sources._")
     else
@@ -44,6 +51,8 @@ object SearchMarkdown:
       }
       (s"### ${hits.size} result(s)\n\n${body.mkString("\n")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchResults(result: SearchResult): String =
     if result.hits.isEmpty then ("_No matching sources._")
     else
@@ -75,6 +84,8 @@ object SearchMarkdown:
       val footer = OffsetPage.footer(result.page)
       (s"$header\n\n${body.mkString("\n")}$footer")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def briefResults(result: SearchResult): String =
     if result.hits.isEmpty then ("_No matching sources._")
     else
@@ -93,6 +104,10 @@ object SearchMarkdown:
       val footer = OffsetPage.footer(result.page)
       (s"$header\n\n${body.mkString("\n")}$footer")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def facets(field: Facet.FieldText, rows: Vector[Facet]): String =
     if rows.isEmpty then (s"_No $field in the current filter._")
     else
@@ -102,6 +117,8 @@ object SearchMarkdown:
       )
       (s"### $field (${rows.size})\n\n${items.mkString("\n")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geoPage(p: GeoHitPage): String =
     if p.hits.isEmpty then
       OffsetPage.markdown(p.page, ("finding(s)"), ("_No findings match that place/time._"), Nil)(_ => ("")).value
@@ -109,6 +126,7 @@ object SearchMarkdown:
       val body = geoResults(p.hits.toVector)
       OffsetPage.header(p.page, ("finding(s)")) + (body).dropWhile(_ != '\n') + OffsetPage.footer(p.page)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geoResults(hits: Vector[GeoHit]): String =
     if hits.isEmpty then ("_No findings match that place/time._")
     else
@@ -128,6 +146,8 @@ object SearchMarkdown:
         }
       s"### ${hits.size} finding(s)\n\n${blocks.mkString("\n")}"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def histogram(h: TimeHistogram, unit: Histogram.Unit): String =
     val span = s"${yearLabel(h.from.value)} → ${yearLabel(h.to.value)}"
     if h.buckets.isEmpty then (s"_No time buckets for $span._")
@@ -167,6 +187,8 @@ object SearchMarkdown:
     type Merged = Merged.T
     object Merged extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def collapseHistogram(buckets: List[TimeBucket]): List[CollapsedBucket] =
     if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, CollapsedBucket.Merged(1)))
     else
@@ -181,6 +203,9 @@ object SearchMarkdown:
         .reverse
       runs
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def tree(h: TimeHistogram, unit: SearchMarkdown.TreeUnit): String =
     val span = s"${yearLabel(h.from.value)} → ${yearLabel(h.to.value)}"
     if h.tree.isEmpty then (s"_No $unit to group for $span._")
@@ -191,6 +216,9 @@ object SearchMarkdown:
         "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
       ((List(head, "", treeLines(h.tree, unit, (0)).mkString("\n"), "", note)).mkString("\n"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private[api] def treeLines(buckets: List[Bucket], unit: Histogram.Unit, depth: Int): List[String] =
     val pad = "  " * (depth)
     buckets.flatMap { b =>
@@ -205,5 +233,7 @@ object SearchMarkdown:
       line :: (kids ++ samps)
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def childNoun(b: Bucket): String =
     if b.children.exists(_.kind == Bucket.Kind(Tree.KindTime)) then ("period") else ("subregion")

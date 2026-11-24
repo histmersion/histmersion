@@ -2,11 +2,13 @@ package com.histmersion
 package domain.personal
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The words a search over marks asks for, lower-cased, each to be found (case does not matter). */
 final case class SearchWords(words: List[SearchWords.Words]):
   def isEmpty: Boolean = words.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(texts: String*): Boolean =
     val all = texts.mkString(" ").toLowerCase
     words.forall(w => all.contains(w.value))
@@ -20,5 +22,6 @@ object SearchWords:
 
   val Everything: SearchWords = SearchWords(Nil)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(q: Option[Query]): SearchWords =
     SearchWords(q.toList.flatMap(_.value.toLowerCase.split("\\s+").toList).map(_.trim).filter(_.nonEmpty).map(Words(_)))

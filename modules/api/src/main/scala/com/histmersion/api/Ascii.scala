@@ -1,7 +1,10 @@
 package com.histmersion
 package api
 
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 /** Lower-casing that touches only `A`–`Z`, the same on the JVM and in the browser (no locale). */
+@movesTo(FeaturePlace.Kernel)
 private[api] object Ascii:
 
   def lower(s: String): String =

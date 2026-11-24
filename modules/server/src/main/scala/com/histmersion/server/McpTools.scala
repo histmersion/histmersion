@@ -76,6 +76,8 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
+@movesTo(FeaturePlace.Server)
 final class McpTools(
     h: ServerWiring,
     acquire: AcquisitionControllers,
@@ -86,18 +88,22 @@ final class McpTools(
 
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def refusedValue(what: String, raw: String, code: String): Api.Error =
     Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what '$raw'")), Some(Api.Error.Code(code)))
 
   private def invalidValue(what: String, raw: String): Api.Error =
     refusedValue(what, raw, Write.CodeInvalid)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def noSuchJob(raw: String): Api.Error =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw(s"$raw")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ping =
     tool("ping")
       .description("Liveness check for the Histmersion MCP server")
@@ -105,6 +111,7 @@ final class McpTools(
       .handle(_ => ToolResult.text(s"${h.instance.version.name} ${h.instance.version.version} — ok"))
 
   // ── ingest, as a JOB (plan §1.8) ────────────────────────────────────────────────────────────
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ingest =
     tool("ingest")
       .description(
@@ -149,6 +156,7 @@ final class McpTools(
         }
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val jobStatus =
     tool("job_status")
       .description(
@@ -195,6 +203,7 @@ final class McpTools(
             )
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val jobControlTool =
     tool("job_control")
       .description(
@@ -216,6 +225,7 @@ final class McpTools(
         }
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val activityTool =
     tool("activity")
       .description(
@@ -254,6 +264,8 @@ final class McpTools(
   /** The config reload (docs/research-plugins.md §3.5): an agent that edited the user's config file on request applies
     * it without a restart.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private val configTool =
     tool("config")
       .description(
@@ -351,6 +363,7 @@ final class McpTools(
   // POST /api/sources/{ck}/delete (#969) is deliberately NOT an MCP tool either, for the same reason:
   // removing a source, its findings and its stored original is a person's decision, made with
   // `histmersion delete <citekey> --apply` after reading the dry run.
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val goalsToolRead =
     tool("goals")
       .description(
@@ -378,6 +391,8 @@ final class McpTools(
             ToolResult.text(GoalsMarkdown.goalList(h.goals.list(q)))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val putGoalTool =
     tool("put_goal")
       .description(
@@ -416,6 +431,8 @@ final class McpTools(
         }
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val patchGoalTool =
     tool("patch_goal")
       .description("Update specific fields of a goal without replacing the whole row.")
@@ -448,6 +465,7 @@ final class McpTools(
           case Left(e) => McpOut.error(e)
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val agentStateTool =
     tool("agent_state")
       .description(
@@ -474,6 +492,7 @@ final class McpTools(
             ToolResult.text(AgentStateMarkdown.agentStateList(h.agentState.list()))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val deleteAgentStateTool =
     tool("delete_agent_state")
       .description("Delete an agent state key.")
@@ -484,6 +503,8 @@ final class McpTools(
           case Left(e)  => McpOut.error(e)
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val mergePlanTool =
     tool("merge_plan")
       .description(
@@ -516,6 +537,7 @@ final class McpTools(
               case Left(e)  => McpOut.error(e)
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val mergesTool =
     tool("merges")
       .description(
@@ -559,6 +581,7 @@ final class McpTools(
               .fold(McpOut.error, l => ToolResult.text(MergeMarkdown.ledger(l)))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val renameLabel =
     tool("rename_label")
       .description(
@@ -604,6 +627,7 @@ final class McpTools(
       }
 
   // Declared LAST: every tool above must be initialised before the list is built.
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val server = McpEdge.server(
     limits = limits,
     tools = List(
@@ -681,6 +705,8 @@ object McpTools:
   export util.mcp.ToolInputs.given
 
   // JSON codec + tapir Schema both derived from each input by Kindlings → matching by construction.
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PingInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   /** The `config` tool's input: what to do with the server's configuration. */
@@ -692,6 +718,8 @@ object McpTools:
       literalConsent: Option[Boolean] = None
   ) derives JsonCodec
   object ConfigInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ConfigInput] = KindlingsSchema
       .derived[ConfigInput]
       .schema
@@ -703,9 +731,11 @@ object McpTools:
         _.description("set: a credential may be written as value:… (the key itself in the file)")
       )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class BackupInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   // ── ingest / jobs / assets (plan §1.8). Declared LAST, for the same reason `PlacesInput` was. ──
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class IngestInput(
       citekey: String,
       path: Option[String] = None,
@@ -722,6 +752,8 @@ object McpTools:
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec
   object IngestInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
       .schema
@@ -740,6 +772,7 @@ object McpTools:
   final case class JobControlInput(id: String, action: String, createdBy: Option[Creation.By] = None)
       extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class ActivityInput(
       show: Option[String] = None,
       since: Option[String] = None,
@@ -760,6 +793,7 @@ object McpTools:
       until: Option[String] = None,
       subject: Option[String] = None
   ) derives JsonCodec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def filter: ListFilters.JobFilter =
       ListFilters.JobFilter(
         status.toList.map(ListFilters.JobFilter.Status(_)),
@@ -769,6 +803,8 @@ object McpTools:
         subject.map(ListFilters.JobFilter.Subject(_))
       )
   object JobStatusInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[JobStatusInput] = KindlingsSchema
       .derived[JobStatusInput]
       .schema
@@ -793,6 +829,8 @@ object McpTools:
       offset: Option[Int] = None
   ) derives JsonCodec
   object GoalsInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GoalsInput] = KindlingsSchema
       .derived[GoalsInput]
       .schema
@@ -812,6 +850,8 @@ object McpTools:
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives StrictJson
   object GoalPutInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GoalPutInput] = KindlingsSchema
       .derived[GoalPutInput]
       .schema
@@ -833,6 +873,8 @@ object McpTools:
       budgetUsd: Option[Double] = None
   ) derives StrictJson
   object GoalPatchInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GoalPatchInput] = KindlingsSchema
       .derived[GoalPatchInput]
       .schema
@@ -850,6 +892,8 @@ object McpTools:
       value: Option[String] = None
   ) derives JsonCodec
   object AgentStateInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[AgentStateInput] = KindlingsSchema
       .derived[AgentStateInput]
       .schema
@@ -858,12 +902,15 @@ object McpTools:
 
   final case class DeleteAgentStateInput(key: String) derives JsonCodec
   object DeleteAgentStateInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[DeleteAgentStateInput] = KindlingsSchema
       .derived[DeleteAgentStateInput]
       .schema
       .modify(_.key)(_.description("State key to delete"))
 
   /** Input of the `merge_plan` tool (docs/research-merge-import.md §6, M3). */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class MergePlanInput(
       bundle: String,
       resolve: Map[String, String] = Map.empty,
@@ -871,6 +918,8 @@ object McpTools:
       all: Boolean = false
   ) derives StrictJson
   object MergePlanInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[MergePlanInput] = KindlingsSchema
       .derived[MergePlanInput]
       .schema
@@ -898,6 +947,8 @@ object McpTools:
       limit: Option[Int] = None
   ) derives StrictJson
   object MergesInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[MergesInput] = KindlingsSchema
       .derived[MergesInput]
       .schema
@@ -909,6 +960,8 @@ object McpTools:
   /** Input of the `rename_label` tool (V042, V053, V055). */
   final case class RenameLabelInput(kind: String, from: String, to: String) derives StrictJson
   object RenameLabelInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RenameLabelInput] = KindlingsSchema
       .derived[RenameLabelInput]
       .schema

@@ -11,6 +11,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
 import com.histmersion.plugin.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's
   * memo by the index steps and the landing step of every open-access index plugin.
@@ -33,9 +34,11 @@ final class OaRecords(
   lazy val handle: Option[Plugin.Http.Url] = OaRecords.handleUrl(cfg, http, log, doi)
 
 object OaRecords:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Doi = plugin.Doi
   val Doi: plugin.Doi.type = plugin.Doi
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.Url] =
     http.json(
       Url(
@@ -48,6 +51,7 @@ object OaRecords:
       case Left(e)  =>
         log.info(Plugin.Log.Line(s"doi handles: no URL for ${doi.value} ($e)")); None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.Url] =
     http.json(
       Url(RepositoryLanding.Candidate.Url(cfg.datacite.url.value), Url.UrlPath(s"/dois/${doi.value}")).value

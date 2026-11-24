@@ -26,6 +26,8 @@ import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.Environment
 import com.histmersion.util.plugins.PluginKit
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
   * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).
@@ -44,6 +46,7 @@ import com.histmersion.util.plugins.PluginKit
   * directory under "Application Support" can exceed. The converter is restarted with backoff when it dies; both stop in
   * reverse order when the server does.
   */
+@movesTo(FeaturePlace.Server)
 object Supervisor:
 
   final case class Layout(home: Path, data: Path):
@@ -60,6 +63,9 @@ object Supervisor:
     def initData: Path = home.resolve("db")
 
   /** Where the bundle and its data live. Pure: `exe` is this executable, `env` the environment. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[server] def layout(
       rc: RuntimeConfig,
       exe: Option[Path],
@@ -86,6 +92,8 @@ object Supervisor:
   /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and the memory
     * settings ([[pgSettings]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def pgOptions(
       port: RuntimeConfig.PgPort,
       settings: List[(String, String)] = Nil
@@ -95,6 +103,8 @@ object Supervisor:
         settings.map((k, v) => s"-c $k=$v")).mkString(" ")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def pgStart(
       l: Layout,
       port: RuntimeConfig.PgPort,
@@ -119,6 +129,8 @@ object Supervisor:
     * empty), then `max_connections`. Every value is a typed size or count written by this code, so nothing can ride
     * along into the `-o` string.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def pgSettings(t: PgTuning, ramBytes: Option[ByteCount]): List[(String, String)] =
     t.sizes(ramBytes).map((p, bytes) => p.name -> s"${bytes.written}") :+
       ("max_connections" -> s"${t.maxConnections}")
@@ -126,6 +138,8 @@ object Supervisor:
   /** The machine's physical memory, when the platform says: `hw.memsize` on macOS, `MemTotal` on Linux. Read once, by
     * the entry point ([[SystemContext.memory]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def physicalMemory(osName: UserPaths.OsName): Option[ByteCount] =
     scala.util
       .Try {
@@ -152,6 +166,8 @@ object Supervisor:
       .flatten
       .flatMap(ByteCount.option(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def pgStop(l: Layout): List[ProcessLaunch.Command] =
     List(
       ProcessLaunch.Command(l.pgBin.resolve("pg_ctl").toString),
@@ -163,6 +179,8 @@ object Supervisor:
       ProcessLaunch.Command("stop")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def initdb(l: Layout, user: DbConfig.User, pwFile: Path): List[ProcessLaunch.Command] =
     List(
       ProcessLaunch.Command(l.pgBin.resolve("initdb").toString),
@@ -177,6 +195,8 @@ object Supervisor:
       ProcessLaunch.Command("--locale=C")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def converterCmd(l: Layout, port: RuntimeConfig.ConverterPort): List[ProcessLaunch.Command] =
     List(
       ProcessLaunch.Command(l.python.toString),
@@ -194,6 +214,9 @@ object Supervisor:
     * (`server.host`): loopback only unless the config file or `HISTMERSION_BIND` (comma-separated) lists others, such
     * as a tailnet address.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def configure(cfg: AppConfig, l: Layout): AppConfig =
     val dbName = Backup
       .parseJdbc(Backup.JdbcUrl(cfg.db.url.value))
@@ -307,6 +330,7 @@ object Supervisor:
       written.left.foreach(_ => scala.util.Try(Files.deleteIfExists(scratch)))
       written
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def attempt[A](op: Problem.Io.Access)(run: => A): Either[Problem, A] =
       try Right(run)
       catch case e: java.io.IOException => Left(Problem.Io.File(op, Problem.Io.Path(s"$file"), External.Reported.of(e)))
@@ -321,6 +345,8 @@ object Supervisor:
     * the converter starts and before a shutdown hook is registered — that hook would stop the Postgres the other server
     * runs on.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(cfg: AppConfig, paths: UserPaths, memory: Option[ByteCount], holds: InstanceLock.Holds): AppConfig =
     cfg.runtime.postgres.admits(cfg.db.pool).left.foreach(p => throw IllegalStateException(p.sentence))
     val exe = currentExecutable
@@ -379,6 +405,9 @@ object Supervisor:
     * opens on it — once its pool is known to fit in the connections the running Postgres was started with (`started`'s,
     * [[PgTuning.admits]]). `started` is the config [[start]] was given.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def reloadSource(
       started: AppConfig,
       read: () => Either[Problems, LoadedConfig],
@@ -401,6 +430,8 @@ object Supervisor:
           )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def initCluster(l: Layout, user: DbConfig.User, password: DbConfig.Password): Unit =
     val pw = Files.createTempFile("histmersion-pw", "")
     try
@@ -412,6 +443,8 @@ object Supervisor:
     finally { val _ = Files.deleteIfExists(pw) }
 
   /** `CREATE DATABASE` on first run (the cluster starts with only `postgres`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ensureDatabase(cfg: AppConfig): Unit =
     val target =
       Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).fold(e => throw IllegalStateException(e.sentence), identity)
@@ -430,6 +463,8 @@ object Supervisor:
   /** Run the converter; when it exits unexpectedly, restart it after 1, 2, 4 … 60 s (reset once a run has lasted a
     * minute).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def superviseConverter(l: Layout, port: RuntimeConfig.ConverterPort): Unit =
     val t = Thread.ofPlatform().daemon(true).name("histmersion-converter").unstarted { () =>
       var backoffMs = 1000L
@@ -461,6 +496,7 @@ object Supervisor:
     }
     t.start()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def shutdown(l: Layout): Unit =
     stopping.set(true)
     converter.get().foreach { p =>
@@ -471,6 +507,7 @@ object Supervisor:
     if rc != 0 then scribe.error(s"Histmersion: postgres stop failed (exit $rc): ${out.mkString("; ")}")
 
   /** Run a Postgres tool with the bundle's environment; returns (exit code, output lines). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(cmd: List[ProcessLaunch.Command], l: Layout): (Int, List[String]) =
     processes
       .run(

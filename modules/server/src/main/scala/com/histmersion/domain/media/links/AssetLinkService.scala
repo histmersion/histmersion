@@ -26,6 +26,8 @@ import java.time.Clock
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AssetLinkService:
   def list(
       citekey: Option[Citekey],
@@ -48,6 +50,8 @@ object AssetLinkService:
 
   private def named(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def noFigure(in: AssetLink.Put): Api.Error =
     Api.Error(
       Problem.Unclassified(Legacy.Text(s"No asset '${in.citekey}/${in.assetName}'")),
@@ -71,6 +75,7 @@ object AssetLinkService:
       )
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink] =
       db.write:
         given CreatedAt = CreatedAt.now(clock)
@@ -80,10 +85,12 @@ object AssetLinkService:
         if !exists then Left(noFigure(in))
         else Right(AssetLinkRepo.insert(in))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: LinkId)(using WritePermit): Boolean = db.write(AssetLinkRepo.delete(AssetLink.Id(id.value)))
 
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         citekey: Option[Citekey],
         asset: Option[AssetService.AssetUid],
@@ -106,6 +113,7 @@ object AssetLinkService:
         .toList
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink] =
       if !state.get.assets.exists(a =>
           a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value
@@ -128,6 +136,7 @@ object AssetLinkService:
         }
         Right(after.assetLinks.last)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: LinkId)(using WritePermit): Boolean =
       val before = state.getAndUpdate(_.modify(_.assetLinks).using(_.filterNot(_.id.value == id.value)))
       before.assetLinks.exists(_.id.value == id.value)

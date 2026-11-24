@@ -38,6 +38,7 @@ import com.histmersion.domain.library.acquisition.RetractionWatchClient
 import com.histmersion.domain.Caller
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
   * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,
@@ -45,12 +46,14 @@ import com.histmersion.util.database.TestCreators.given
   * network. The transcript is `traffic/archive.txt`, compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites
   * it): moving archive.org behind the library's collections changes no request.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArchiveTrafficSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Transcript = Path.of("modules/server/src/test/resources/traffic/archive.txt")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch =
     val b = AppConfig.load()
     ScratchDatabases("archive_traffic", b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -58,6 +61,7 @@ class ArchiveTrafficSuite extends DbSuite:
 
   private val ContentType = CoreQuota.HeaderName("content-type")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def json(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -66,6 +70,7 @@ class ArchiveTrafficSuite extends DbSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notFound: Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -77,6 +82,7 @@ class ArchiveTrafficSuite extends DbSuite:
 
   final private class Wire(routes: PartialFunction[String, Either[Problem, HttpAnswer]]) extends HttpTransport:
     val out = StringBuilder()
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -87,6 +93,7 @@ class ArchiveTrafficSuite extends DbSuite:
       out ++= s"  -> ${answer.fold(e => s"error ${e.sentence}", a => a.code.toString)}\n"
       answer
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def routes(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     val base = c.archiveOrg.url
     {
@@ -204,6 +211,7 @@ object ArchiveTrafficSuite:
       importItem: ArchiveImportRequest => Either[Api.Error, Ingest.Report]
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def surface(app: AppConfig, ds: javax.sql.DataSource, g: Generation, wire: HttpTransport): Surface =
     val (chain, _) =
       FetchChain.of(
@@ -213,26 +221,33 @@ object ArchiveTrafficSuite:
         plugins = g.registered.flatMap(i => Plugin.Id.option(i.value))
       )
     val none = new DiscoveryClient:
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def search(
           query: Search.Query,
           since: Option[Year],
           sort: Option[DiscoveryClient.SearchSort],
           limit: DiscoveryClient.SearchLimit
       ) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def references(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def updates(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not used")))
     val deps = Deps(app, ds)
     val h = AcquisitionTesting.controllers(
       deps,
       none,
       new CitationsClient {
+        @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
         def citing(w: WorkRef, s: Option[Year], l: CitationsClient.CitingLimit) =
           Left(Problem.Unclassified(Legacy.Text("not used")))
       },
       chain,
-      new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used"))) },
-      new RetractionWatchClient { def csv() = Left(Problem.Unclassified(Legacy.Text("not used"))) },
+      new WikiClient { @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+                       def refs(url: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used"))) },
+      new RetractionWatchClient { @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+                                  def csv() = Left(Problem.Unclassified(Legacy.Text("not used"))) },
       AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:

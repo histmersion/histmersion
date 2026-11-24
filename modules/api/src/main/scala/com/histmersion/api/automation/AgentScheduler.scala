@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 object AgentScheduler:
   /** Why the scheduler started, keeps waiting or holds an item: the narration of its decision, not a failure. */
@@ -48,6 +49,7 @@ object AgentScheduler:
     type Target = Target.T
     object Target extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Waiting(
       item: Waiting.Item,
       manager: Waiting.Manager,
@@ -224,6 +226,7 @@ object AgentScheduler:
     val Paused = "paused"
 
   /** What a scheduler's wait code means, as the managers' view says it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val waitCodes: Map[Waiting.Code, String] = Map(
     { val refactorTuple14 = "capacity" -> "No free place"; (Waiting.Code(refactorTuple14._1), (refactorTuple14._2)) },
     { val refactorTuple15 = "pool" -> "Plan is full"; (Waiting.Code(refactorTuple15._1), (refactorTuple15._2)) },

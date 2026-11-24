@@ -7,6 +7,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode, QuotaGuard}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The per-runtime trees, as pure functions from the canonical definitions to `relative path → text`
   * (docs/research-agent-runtimes.md §2.2). Nothing here touches the disk; [[AgentTrees]] writes.
@@ -39,6 +40,9 @@ object AgentGenerator:
   /** Problems that would make a generated tree lie: an include or skill that does not exist, a placeholder naming no
     * MCP tool (`known`), a skill whose name or description runtimes reject.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def check(d: Defs, known: Set[String]): List[Problem] =
     def definition(file: String, flaw: Problem.Config.Flaw): Problem =
       Problem.Config.Definition(Problem.Raw(file), flaw)
@@ -77,10 +81,16 @@ object AgentGenerator:
   /** A skill as a runtime reads it: placeholders rendered; `allowed-tools` kept only for the person's own Claude Code
     * (permissions belong to the agent role everywhere else).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def skillFile(s: SkillDef, style: ToolStyle, keepAllowedTools: Boolean): String =
     val header = s.header.filter(l => keepAllowedTools || !l.value.startsWith("allowed-tools:"))
     render(s"---\n${header.mkString("\n")}\n---\n${s.body}", style)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def skills(d: Defs, prefix: String, style: ToolStyle, keepAllowedTools: Boolean): Map[String, String] =
     d.skills.values.map(s => s"$prefix/${s.name}/SKILL.md" -> skillFile(s, style, keepAllowedTools)).toMap
 
@@ -89,6 +99,7 @@ object AgentGenerator:
   // ── Claude Code ────────────────────────────────────────────────────────────────────────────────
 
   /** The built-in tools a role gets besides Histmersion's MCP tools. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def claudeWebTools(w: WebAccess): List[String] = w match
     case WebAccess.WebSearch => List("WebSearch", "WebFetch")
     case WebAccess.Fetch     => List("WebFetch")
@@ -100,12 +111,16 @@ object AgentGenerator:
   val ClaudeAnswerTool = "StructuredOutput"
 
   /** Claude Code's turns for an agent's `max-turns`: one more for the [[ClaudeAnswerTool]] call. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeTurns(maxTurns: AgentDef.MaxTurns): AgentDef.MaxTurns =
     AgentDef.MaxTurns(math.max(1, maxTurns.value) + 1)
 
   /** A headless agent: the role's MCP tools and the answer tool, nothing else; the prompt with its includes and skills
     * inlined (a main-thread `--agent` gets no `skills:` preload, §3a).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeAgent(d: Defs, a: AgentDef): String =
     val tools =
       a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
@@ -116,6 +131,8 @@ object AgentGenerator:
   /** The settings layer of one role's run: deny-by-default permissions. NOT `disableAllHooks` — it also turns the
     * quota-guard mod off (§3a P5); the person's own hooks stay out through `--setting-sources ""` instead.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeSettings(a: AgentDef): String =
     val allow =
       a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
@@ -175,6 +192,9 @@ object AgentGenerator:
     * built-in tools) and the body as written — it still speaks the `histmersion` CLI the interactive panel runs in
     * Bash.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def interactiveAgent(a: AgentDef): Option[String] =
     a.interactive.filter(_ => a.runsOn(AgentRuntime.Interactive)).map { i =>
       s"---\nname: ${a.name}\ndescription: ${a.description}\nmodel: ${i.model}\ntools: ${i.tools.mkString(", ")}\n---\n" +
@@ -182,6 +202,9 @@ object AgentGenerator:
     }
 
   /** The interactive plugin (the repo's `plugin/`, and `claude-code/histmersion/` under the data dir). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def interactivePlugin(d: Defs, s: GenSettings): Map[String, String] =
     Map(".claude-plugin/plugin.json" -> pluginJson(InteractivePlugin, s.version.value, InteractiveDescription)) ++
       d.agents.flatMap(a => interactiveAgent(a).map(t => s"agents/${a.name}.md" -> t)) ++
@@ -190,6 +213,8 @@ object AgentGenerator:
       (if s.interactiveMod.value then modFiles(QuotaMod.Reporting) else Map.empty)
 
   /** The checked-in tree of the repository: `plugin/` and the root marketplace. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def repoPlugin(d: Defs): Map[String, String] =
     val s = GenSettings(
       GenSettings.AgentMcpUrl(""),
@@ -205,12 +230,17 @@ object AgentGenerator:
   enum QuotaMod derives CanEqual:
     case Guard, Reporting
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def modFiles(m: QuotaMod): Map[String, String] =
     Map(
       "hooks/hooks.json" -> "{ \"modules\": [\"./quota-guard.ts\"] }\n",
       "hooks/quota-guard.ts" -> QuotaGuard.source(m).value
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def claudeCode(d: Defs, s: GenSettings): Map[String, String] =
     val headless = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
     val hl = Map(
@@ -260,6 +290,9 @@ object AgentGenerator:
     * tool output — a code-mode `exec` batch of MCP calls — puts in the context; the models' catalog default is 10,000
     * tokens, and 211 of 1,012 batches hit it on 2026-10-16.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def codexBase(s: GenSettings): String =
     val outputLimit =
       if s.codexToolOutputTokens.value > 0 then s"tool_output_token_limit = ${s.codexToolOutputTokens}\n" else ""
@@ -306,6 +339,8 @@ object AgentGenerator:
   /** One role's profile (`codex -p <role>`): its prompt as developer instructions — includes and skills inlined, since
     * with the shell off the model cannot open a listed `SKILL.md` — and its tools.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def codexProfile(d: Defs, a: AgentDef): String =
     val web = a.web match
       case WebAccess.WebSearch | WebAccess.Fetch => "web_search = \"live\"\n"
@@ -323,6 +358,9 @@ object AgentGenerator:
       s"developer_instructions = ${tomlString(d.system(a, ToolStyle.Bare))}\n$web\n$mcp"
 
   /** The same role as a Codex custom agent, for interactive multi-agent use in a home that has it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def codexAgent(d: Defs, a: AgentDef): String =
     s"name = ${tomlString(a.name.value)}\ndescription = ${tomlString(a.description.value)}\n" +
       s"developer_instructions = ${tomlString(d.system(a, ToolStyle.Bare))}\n"
@@ -341,6 +379,8 @@ object AgentGenerator:
     * limit, each script is asked to declare it as its `// @exec` budget too (the `exec` description's own knob, default
     * 10,000).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def codexBaseInstructions(d: Defs, s: GenSettings): String =
     val text = d.fragments.getOrElse(
       AgentDefinitions.FragmentName(CodexBaseFragment),
@@ -354,6 +394,9 @@ object AgentGenerator:
       val at = base.indexOf("\n\n# Answer")
       (if at < 0 then s"$base\n\n$budget" else base.substring(0, at) + "\n" + budget + base.substring(at)) + "\n"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def codex(d: Defs, s: GenSettings): Map[String, String] =
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Codex))
     val home = Map("home/config.toml" -> codexBase(s)) ++
@@ -380,17 +423,22 @@ object AgentGenerator:
   // ── opencode ───────────────────────────────────────────────────────────────────────────────────
 
   /** The permission map of a role: deny everything, allow its tools (last match wins). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def opencodePermissions(a: AgentDef): List[(String, String)] =
     ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(ToolUse.Tool(t.value)) -> "allow") ++ (a.web match
       case WebAccess.WebSearch => List("webfetch" -> "allow", "websearch" -> "allow")
       case WebAccess.Fetch     => List("webfetch" -> "allow")
       case _                   => Nil)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def opencodeAgent(d: Defs, a: AgentDef): String =
     val perms = opencodePermissions(a).map((k, v) => s"  ${yamlString(k)}: $v").mkString("\n")
     s"---\ndescription: ${yamlString(a.description.value)}\nmode: primary\nsteps: ${a.maxTurns}\npermission:\n$perms\n---\n" +
       d.system(a, ToolStyle.Opencode) + "\n"
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def opencodeConfig(url: String, headless: Boolean): String =
     val server = Json
       .obj("type" -> "remote".asJson, "url" -> url.asJson, "enabled" -> Json.True)
@@ -409,6 +457,9 @@ object AgentGenerator:
         .deepMerge(if headless then Json.obj("permission" -> Json.obj("*" -> "deny".asJson)) else Json.obj())
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def opencode(d: Defs, s: GenSettings): Map[String, String] =
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Opencode))
     val runs = Map(
@@ -423,6 +474,7 @@ object AgentGenerator:
     (runs ++ interactive).map((k, v) => s"opencode/$k" -> v)
 
   /** Every tree for `runtimes`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def tree(d: Defs, s: GenSettings, runtimes: List[AgentRuntime]): Map[String, String] =
     runtimes.distinct
       .map {

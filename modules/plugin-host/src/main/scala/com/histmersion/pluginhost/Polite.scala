@@ -16,6 +16,7 @@ import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per host; every request
   * carries the configured User-Agent (the project and its repository — no e-mail, no personal data); slow-down answers
@@ -27,6 +28,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * slower) for the rest of the run. When the steps run out the 403 stands: the caller stops. Empty (the default): a 403
   * is final at once.
   */
+@tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class Polite(
     http: HttpTransport,
     cfg: MediaConfig,
@@ -43,15 +46,19 @@ final class Polite(
   private var count = 0
 
   /** The interval between two requests to `h` now, ms: the configured one, times its slow-down. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def intervalMs(h: Polite.Host): Polite.IntervalMs =
     Polite.IntervalMs(cfg.requestIntervalMs.value.toLong * slowdown.getOrElse(h, 1))
 
   /** Requests sent so far (retries included). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def requests: Polite.RequestCount = Polite.RequestCount(count)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def host(url: HttpTransport.Url): Polite.Host =
     Polite.Host(scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pace(h: Polite.Host): Unit =
     last.get(h).foreach { t =>
       val wait = t.value + intervalMs(h).value - clock().value
@@ -62,6 +69,7 @@ final class Polite(
   /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the configured one (a
     * plugin's request too).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
@@ -110,6 +118,7 @@ final class Polite(
   /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
     * an error line or a log may show).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def json(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
@@ -125,6 +134,7 @@ final class Polite(
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def file(
       url: HttpTransport.Url,
       fallbackMime: Polite.Mime

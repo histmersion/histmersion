@@ -23,10 +23,12 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `.hmx` bundle's content in memory: its entities (blob and dangling references, the event-catalogue sets, a
   * decode round trip) and the reader's problem reports.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleEntitiesSuite extends munit.FunSuite:
 
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
@@ -56,6 +58,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
 
   // ── tar ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tar(entries: (String, Array[Byte])*): Array[Byte] =
     val out = ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
@@ -63,6 +66,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     w.finish()
     out.toByteArray
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def untar(b: Array[Byte]): List[(String, String)] =
     val r = BundleTar.Reader(ByteArrayInputStream(b))
     Iterator

@@ -1,6 +1,8 @@
 package com.histmersion
 package web.map
 
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class MarkerMotionSuite extends munit.FunSuite:
 
   test("a cubic Bézier eases from 0 to 1, and linear is the identity"):

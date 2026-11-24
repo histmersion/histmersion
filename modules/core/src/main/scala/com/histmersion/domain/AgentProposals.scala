@@ -15,11 +15,15 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed disagreement edge — and
   * the pure rules that decide whether code applies one at once or records it for a person
   * (docs/research-embedded-agents.md §3 "Security", §5.2 "Approvals").
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryWorkflows)
 object AgentProposals:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
@@ -35,6 +39,7 @@ object AgentProposals:
     * from `citekey` to `target` (`superseded_by` from the older source to the newer). `quote` is the passage the
     * proposal rests on, already found in the record by code.
     */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Proposal(
       kind: Approval.Kind,
       citekey: library.Citekey,
@@ -47,6 +52,7 @@ object AgentProposals:
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: Description = kind match
       case Approval.Kind.StatusChange => Description(s"[[$citekey]] status → ${status.fold("?")(_.wire)}")
       case Approval.Kind.Edge         =>
@@ -55,6 +61,8 @@ object AgentProposals:
       case k => Description(s"${k.wire} (not a source change)")
 
     /** The one patch that applies it, on `citekey`. An edge is patched on its source. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def patch: Source.Patch = kind match
       case Approval.Kind.StatusChange =>
         Source.Patch(metadata = Some(MetadataPatch(status = status)))
@@ -93,6 +101,7 @@ object AgentProposals:
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
     * the edge mode.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
     p.kind match
       case Approval.Kind.StatusChange =>
@@ -109,6 +118,7 @@ object AgentProposals:
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
 
   /** A change a model proposes, as it states it. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ProposalAnswer(
       kind: ProposalAnswer.Kind,
       citekey: ProposalAnswer.Citekey,
@@ -132,6 +142,8 @@ object AgentProposals:
     type Quote = Quote.T
     object Quote extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ProposalAnswer] = KindlingsSchema
       .derived[ProposalAnswer]
       .schema
@@ -155,6 +167,8 @@ object AgentProposals:
     * the record of `citekey` or `target` (`text` gives a source's summary, findings and body). A proposal that cannot
     * be quoted is not a proposal.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(
       a: ProposalAnswer,
       isCitekey: library.Citekey => Boolean,

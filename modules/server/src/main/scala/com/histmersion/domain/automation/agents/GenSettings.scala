@@ -4,6 +4,7 @@ package domain.automation.agents
 import com.histmersion.server.agents.Codex
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the generated trees depend on besides the definitions: where the runtimes reach this server, and which optional
   * parts to write.
@@ -48,6 +49,8 @@ object GenSettings:
   type Version = Version.T
   object Version extends Newtype[String, Pure]
   type CodexToolOutputTokens = CodexToolOutputTokens.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CodexToolOutputTokens extends Newtype[Int, Pure]
   type CodexLeanBase = CodexLeanBase.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CodexLeanBase extends Newtype[Boolean, Pure]

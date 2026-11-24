@@ -8,7 +8,9 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.instance.MapStartConfig
 import com.histmersion.api.instance.MapStartMode
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MapStartSuite extends munit.FunSuite:
   private val anatolia = MapStartConfig(
     MapStartMode.Wire("last"),

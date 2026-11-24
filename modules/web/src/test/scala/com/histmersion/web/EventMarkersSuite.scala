@@ -30,11 +30,14 @@ import com.histmersion.web.map.LatLon
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.LeadFacts
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
   * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus
   * list the vocabularies, and an event card's sections.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 class EventMarkersSuite extends munit.FunSuite:
 
   test("the registry has an icon for every event kind and every site type, each a currentColor SVG"):
@@ -61,6 +64,7 @@ class EventMarkersSuite extends munit.FunSuite:
       assert(!Glyphs.inner.contains(n), n)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val battle = EventGeo(
     Event.Id("zz_b"),
     EventGeo.Label("Zz <battle>"),
@@ -73,6 +77,7 @@ class EventMarkersSuite extends munit.FunSuite:
     EventGeo.Anchor("event"),
     tier = EventGeo.Tier(EventTier.Attested)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val eruption = EventGeo(
     Event.Id("zz_e"),
     EventGeo.Label("Eruption of Zz"),
@@ -331,6 +336,7 @@ class EventMarkersSuite extends munit.FunSuite:
 
   // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hekla = eruption
     .modify(_.id)
     .setTo(Event.Id("gvp_12724"))
@@ -342,6 +348,7 @@ class EventMarkersSuite extends munit.FunSuite:
     .setTo(EventGeo.Precision(EventPrecision.Imprecise))
     .modify(_.dating)
     .setTo(Some(EventGeo.Dating("250 CE ± 2500 (tephrochronology)")))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val approx = eruption
     .modify(_.id)
     .setTo(Event.Id("zz_a"))

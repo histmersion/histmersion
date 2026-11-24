@@ -12,13 +12,19 @@ import java.util.zip.ZipInputStream
 import scala.annotation.tailrec
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The plain downloads the gazetteer, the land and PeriodO use: a generic User-Agent ([[HttpPolicy]]), never a personal
   * one; redirects followed by THIS connection (the JVM-wide default it used to flip as well changed every other
   * `HttpURLConnection` in the process).
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Http, "downloads a file over HTTP, following redirects")
+@movesTo(FeaturePlace.Server)
 final class HttpDownload(userAgent: HttpPolicy.UserAgent):
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def open(url: HttpDownload.Url, readTimeoutMs: Int): HttpURLConnection =
     val conn = URI.create(url.value).toURL.openConnection().asInstanceOf[HttpURLConnection]
     conn.setInstanceFollowRedirects(true)
@@ -28,6 +34,8 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
     conn
 
   /** `url`'s text; a `.zip` is opened and its first file read. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def text(url: HttpDownload.Url): Either[Problem, HttpDownload.Text] =
     try
       val conn = open(url, 120000)
@@ -41,6 +49,8 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
     catch case e: Exception => Left(Problem.Unclassified(Legacy.Text(s"download failed: ${e.getMessage}")))
 
   /** `url` into the file reserved for it. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   val file: GazetteerLoad.Download = (url, into, timeoutSeconds) =>
     try
       val conn = open(url, timeoutSeconds.value * 1000)
@@ -72,6 +82,7 @@ object HttpDownload:
     next()
     buf.toByteArray
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def unzip(data: Array[Byte]): Either[Problem, Text] =
     try
       val zis = new ZipInputStream(new java.io.ByteArrayInputStream(data))

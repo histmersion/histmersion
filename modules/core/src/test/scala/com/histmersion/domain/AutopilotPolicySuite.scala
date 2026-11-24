@@ -25,11 +25,13 @@ import com.histmersion.domain.automation.Pipeline
 import com.histmersion.domain.automation.Run
 import com.histmersion.api.automation.Managers
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's pure rules (docs/research-process-managers.md "As built: the autopilot"): the checked auto approvals
   * and their caps, the goal-status advance, the managers every goal has, the spread crons, the extend threshold, the
   * shared ingest cap, housekeeping and the pace.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AutopilotPolicySuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-19T12:00:00Z")
@@ -221,6 +223,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
 
   // ── goal status ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val g =
     GoalFacts(
       AutopilotPolicy.GoalFacts.Slug("g"),
@@ -838,11 +841,13 @@ class ScaledCapSuite extends munit.FunSuite:
     )
 
 /** #3763: new articles only once the current ones are done. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NextArticleSuite extends munit.FunSuite:
   import AutopilotPolicy.{articlesInProgress, nextArticle, NextFacts}
   import com.histmersion.domain.automation.{ItemStatus, Manager}
 
   private val now = java.time.Instant.parse("2026-10-24T12:00:00Z")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val done = NextFacts(
     NextFacts.Goal("g"),
     Goal.Status.Wire(Goal.Status.Reviewed),

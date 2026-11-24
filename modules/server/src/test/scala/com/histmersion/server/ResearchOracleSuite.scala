@@ -29,6 +29,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What research answers, on a crafted collection, recorded on the code before the articles moved into their own
   * domain:
@@ -54,6 +55,7 @@ import com.histmersion.util.database.TestCreators.given
   * Uids are written as the record they name, timestamps as `TS`, durations as `N`, today's date as `DAY`.
   * `HISTMERSION_UPDATE_ORACLE=1` rewrites the files. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ResearchOracleSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -64,6 +66,7 @@ class ResearchOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-research-oracle")
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_s11o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -71,6 +74,7 @@ class ResearchOracleSuite extends DbSuite:
 
   // ── the server ─────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfgFor(name: String): AppConfig =
     base
       .modify(_.db)
@@ -1019,6 +1023,7 @@ class ResearchOracleSuite extends DbSuite:
   private val MsRe = "· \\d+ ms".r
 
   /** uid → the record it names. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def names(ds: DataSource): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -1031,6 +1036,7 @@ class ResearchOracleSuite extends DbSuite:
     queries.flatMap(run).distinctBy(_._1).toMap
 
   /** uid → the record it names, over every database the exchange test made. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def xnames(dss: List[(String, DataSource)]): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -1172,6 +1178,7 @@ class ResearchOracleSuite extends DbSuite:
         .filter(c => have(c.takeWhile(ch => ch.isLetterOrDigit || ch == '_')))
         .mkString(", ")
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def rows(
       ds: DataSource,
       names: Map[String, String],

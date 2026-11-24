@@ -31,8 +31,12 @@ import com.histmersion.domain.Creator
   * decision is taken once; the lists' pages, filters and facets; the digest's, the autopilot's and the scheduler's
   * reads.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class ApprovalServiceContract extends EngineStoreSuite:
   private def a(s: EngineStores) = s.approvals
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def idOf(i: ApprovalInfo): Approval.Id = Approval.Id(i.id.value)
   private def propose(
       s: EngineStores,

@@ -14,14 +14,20 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.SearchHit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The filter's queries over sources: the search with its matched findings and passages, and the counts of what a
   * filter selects.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 private[search] object SearchRepo:
 
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
     RowCount(FilterSql.countQuery(filter, scope).query[Int].run().headOption.getOrElse(0))
 
@@ -30,12 +36,16 @@ private[search] object SearchRepo:
     * §1.6a). Built from the SHARED [[FilterSql]] fragments, so it is narrowed by exactly the same criteria as the map
     * feed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
     val q =
       sql"SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)"
     RowCount(q.query[Int].run().headOption.getOrElse(0))
 
   /** How many sources, findings, articles and events the filter selects ([[FilterSql.selectionCountsQuery]]). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Place.Counts =
     (FilterSql.selectionCountsQuery(filter, scope).query[(Int, Int, Int, Int)].run().head match
       case (s, f, a, e) =>
@@ -57,6 +67,8 @@ private[search] object SearchRepo:
     * computes `ts_headline` only for the page's citekeys — typically 10–25 instead of every matching source in the
     * corpus.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using
       DbCon
   ): SearchResult =

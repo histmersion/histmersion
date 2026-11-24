@@ -12,16 +12,22 @@ import com.histmersion.util.data.checks.CheckRule
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.automation.worklists.WorkListControllers
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** REST wiring for stream 2.8 — lint (the registered checks), the work lists (the automation's, a listing as its view
   * shows it) and the goals' export, each route delegating to the one controller MCP calls too. Appended to
   * [[HttpApi]]'s list; the `queue/items/{id}` routes come first so `items` can never be parsed as a list name.
   */
+@movesTo(FeaturePlace.Server)
 object OpsRoutes:
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def refused(what: String, raw: String): Api.Error =
     Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what '$raw'")), Some(Api.Error.Code(Write.CodeInvalid)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scoped[A](raw: Option[Queue.Wire], what: String)(
       either: String => Either[String, A]
   ): Either[Api.Error, Option[A]] =
@@ -29,6 +35,9 @@ object OpsRoutes:
       case None    => Right(None)
       case Some(v) => either(v).left.map(_ => refused(what, v)).map(Some(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def apply(w: ServerWiring): List[ServerEndpoint[Any, Identity]] = List(
     OpsApi.lint.serverLogic[Identity](rules =>
       w.checks.lint(rules.map(r => CheckRule.Name(r.value))).left.map(Api.Error(_))

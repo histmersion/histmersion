@@ -29,11 +29,13 @@ import com.histmersion.util.database.TestCreators
 /** The seed over a folder of notes, against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise): a note older
   * than the stored source is skipped and `force` overwrites it, and an exported note imports back to the same note.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SeedImportSuite extends DbSuite:
   private given TextFiles = new DiskTextFiles
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
@@ -43,8 +45,10 @@ class SeedImportSuite extends DbSuite:
     () => SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0)),
     TestCreators.clock
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val seed = SeedImport(sources, (_, figures) => RowCount(figures.size))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(dir: java.nio.file.Path, force: SeedImport.RunForce = SeedImport.RunForce(false)) =
     seed.run(SeedNoteFiles(dir, None), force, SeedFolder.MaxBytes(1 << 20))
 

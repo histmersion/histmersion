@@ -16,10 +16,12 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleMergeSuite extends munit.FunSuite:
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
   private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")

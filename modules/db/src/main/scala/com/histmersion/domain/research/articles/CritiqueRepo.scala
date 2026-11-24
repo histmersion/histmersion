@@ -17,17 +17,22 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the
   * connection it is given.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the critique tables and their row codecs")
 private[articles] object CritiqueRepo:
   type By = By.T
   object By extends Newtype[String, Pure]
 
   /** The article's reasons, by pair. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def list(slug: Slug)(using DbCon): List[CritiqueReason] =
     sql"""SELECT src, dst, reason, set_by FROM article_critique_reasons WHERE slug = $slug ORDER BY src, dst"""
       .query[(String, String, String, String)]
@@ -58,6 +63,8 @@ private[articles] object CritiqueRepo:
     * removes the pair's reason in either direction. `by` is the setter of a reason that names none. The first refusal
     * is the answer.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def check(reasons: List[CritiqueReason], by: By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
@@ -132,6 +139,7 @@ private[articles] object CritiqueRepo:
     * (the article's own write, if any) runs between the two, so a refused reason leaves nothing written. Returns how
     * many pairs changed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def applyIn(slug: Slug, reasons: List[CritiqueReason], by: By)(
       write: => Unit
   )(using DbCon): Either[Api.Error, RowCount] =

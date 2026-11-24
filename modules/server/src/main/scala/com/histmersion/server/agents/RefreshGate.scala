@@ -7,10 +7,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One refresh at a time per pool, and the time of its last attempt: a second caller WAITS for the one in flight and
   * then sees what it recorded (single flight), instead of reading again.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final class RefreshGate:
   private val locks = ConcurrentHashMap[PoolId, ReentrantLock]()
   private val last = ConcurrentHashMap[PoolId, java.lang.Long]()
@@ -18,6 +21,7 @@ final class RefreshGate:
   /** Run `body` alone for `p`, given the pool's last attempt. A `Right` is an attempt (successful or not), stamped `at`
     * for the throttle; a `Left` is "not taken", and leaves the stamp alone.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def exclusive[E, A](p: PoolId, at: => Long)(
       body: Option[RefreshGate.Instant] => Either[E, A]
   ): Either[E, A] =
@@ -29,6 +33,7 @@ final class RefreshGate:
       r
     finally lock.unlock()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lastAttempt(p: PoolId): Option[RefreshGate.Instant] =
     Option(last.get(p)).map(l => RefreshGate.Instant(l.longValue))
 

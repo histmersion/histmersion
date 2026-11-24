@@ -4,6 +4,7 @@ package plugins.events
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion.events.wikidata`: the query service, the pace, the classes read (`Q178561:battle,…`, the most specific
   * first) and the label languages.
@@ -15,6 +16,7 @@ final case class WikidataSettings(
     languages: WikidataSettings.Languages
 ) derives ConfigReader:
   /** The label languages, English always among them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelLanguages: WikidataSettings.LabelLanguage =
     WikidataSettings.LabelLanguage(
       (languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList :+ "en").distinct.mkString(",")

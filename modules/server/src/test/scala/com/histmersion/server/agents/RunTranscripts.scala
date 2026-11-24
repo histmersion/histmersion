@@ -11,6 +11,7 @@ import java.security.MessageDigest
 import javax.sql.DataSource
 import scala.collection.mutable
 import com.histmersion.db.TestDb
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The record of what each test of a scripted-model suite left in the database, compared with the one written on the
   * code before the automation engine moved: every row a test inserted or updated (its transaction id at or after the
@@ -167,6 +168,7 @@ object RunTranscripts:
     d.take(6).map(b => f"${b & 0xff}%02x").mkString
 
   /** `text` with what a run mints masked; a long one (with `long`) as its digest and length. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def maskText(text: String, long: Boolean = true): String =
     val t1 = Uuid.replaceAllIn(text, "UUID")
     val t2 = Stamp.replaceAllIn(t1, "TS")

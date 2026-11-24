@@ -19,10 +19,12 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
 import com.histmersion.util.storage.Blob
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Europe PMC / PMC Article Datasets step of the OA chain (#1523), against a fake upstream that answers from the
   * responses captured on 2026-10-11 — no network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PmcFetchSuite extends munit.FunSuite:
 
   private type Routes = PartialFunction[String, Either[String, Array[Byte]]]
@@ -39,6 +41,8 @@ class PmcFetchSuite extends munit.FunSuite:
       extends Http:
     var asked: List[(Http.Url, Map[CoreQuota.HeaderName, CoreQuota.HeaderValue])] =
       Nil // a test double: the simplest record of calls
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def answer(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -48,6 +52,7 @@ class PmcFetchSuite extends munit.FunSuite:
         .applyOrElse(url.value, (u: String) => Left(s"$u: offline"))
         .left
         .map(why => Problem.Unclassified(Legacy.Text(why)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -58,6 +63,8 @@ class PmcFetchSuite extends munit.FunSuite:
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Problem, Http.Text] =
       answer(url, headers).map(b => Http.Text(new String(b, "UTF-8")))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       text(url, headers).flatMap(s =>
         RawJson
@@ -68,6 +75,7 @@ class PmcFetchSuite extends munit.FunSuite:
 
   private def cfg = AppConfig.load().acquire.copy(contactEmail = AcquireConfig.ContactEmail("someone@example.org"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def routes(
       c: AcquireConfig,
       search: String,
@@ -87,10 +95,12 @@ class PmcFetchSuite extends munit.FunSuite:
   private def recordId(record: String) = if record.contains("manuscript") then "PMC6748862" else "PMC6091220"
 
   /** The record's MD5s are of the REAL files; the fake serves its own bytes, so swap in their MD5. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withMd5(record: String, bytes: Array[Byte], ext: String): String =
     val md5 = OaFetch.md5(OaFetch.Bytes(bytes)).getOrElse(fail("no MD5 in this runtime"))
     fixture(record).replaceAll("(\\." + ext + "\\?md5=)[0-9a-f]{32}", "$1" + md5)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fetch(c: AcquireConfig, http: Http, doi: Doi, arxiv: Option[ArxivId] = None) =
     OaFetch(
       loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""),

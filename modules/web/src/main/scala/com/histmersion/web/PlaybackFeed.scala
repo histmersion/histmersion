@@ -5,6 +5,7 @@ import com.histmersion.api.library.GeoHit
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The findings of a playback, fetched ahead in long stretches and cut to each frame's window locally (#3764). Playback
   * asked the server for the window's findings once per animation frame (~60 requests a second) and drew each answer as
@@ -19,6 +20,8 @@ object PlaybackFeed:
     * (`windowHalf` either side of the playhead).
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chunkYears(
       windowHalf: WindowHalfYears,
       yearsPerSecond: PlaybackBuckets.YearsPerSecond,
@@ -33,6 +36,7 @@ object PlaybackFeed:
     * from the window's start; then the next one once the window's end is within half a stretch of what is held; nothing
     * once the end is covered.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def next(
       coveredTo: Option[Years.Astronomical],
       ph: Years.Astronomical,
@@ -53,6 +57,7 @@ object PlaybackFeed:
     * answer may have been cut, so it covers only up to the year before its latest start (every finding starting earlier
     * is in it); a shorter one covers all it was asked for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def covered(
       asked: (Years.Astronomical, Years.Astronomical),
       got: Seq[GeoHit],
@@ -69,11 +74,13 @@ object PlaybackFeed:
   /** Pure: the findings dated within [`lo`, `hi`] (overlapping it, as the server's period filter does; an undated
     * finding is never in a window).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inWindow(points: Iterable[GeoHit], lo: Years.Astronomical, hi: Years.Astronomical): List[GeoHit] =
     points.iterator
       .filter(p => p.periodStart.exists(_.value <= hi.value) && p.periodEnd.exists(_.value >= lo.value))
       .toList
 
   /** Pure: what is worth keeping once the window starts at `lo` — every finding that ends at or after it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keep(points: Iterable[GeoHit], lo: Years.Astronomical): List[GeoHit] =
     points.iterator.filter(p => p.periodEnd.forall(_.value >= lo.value)).toList

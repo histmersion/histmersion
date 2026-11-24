@@ -5,10 +5,12 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 enum Sort:
   case Relevance, Cited, PeriodStart, Year, Oldest, Title
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object Sort:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
@@ -21,6 +23,7 @@ object Sort:
     case Oldest      => Wire("oldest")
     case Title       => Wire("title")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[Sort] = (s).value.trim.toLowerCase.replace("_", "") match
     case "relevance" | "rank"              => Some(Relevance)
     case "cited" | "citations"             => Some(Cited)
@@ -32,6 +35,8 @@ object Sort:
 
   val all: List[Wire] = values.toList.map(label)
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given JsonValueCodec[Sort] = JsonCodec.text[Sort](
     s => label(s).value,
     s => parse(Wire(s)).toRight(s"unknown sort '$s' (${all.mkString("|")})")

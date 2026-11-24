@@ -10,6 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 object NoMap:
   type MessageText = MessageText.T
@@ -37,6 +38,8 @@ object NoMap:
     def notifying: Boolean = false
 
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def message(why: Problem): (MessageText, MessageText) =
     (
       MessageText(s"The map cannot be drawn here: ${why.sentence}."),
@@ -47,6 +50,7 @@ object NoMap:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def html(why: Problem): Html =
     val (head, body) = message(why)
     markup"""<p class="map-unavailable-title">$head</p><p>$body</p>"""

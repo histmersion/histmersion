@@ -8,8 +8,10 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import java.time.Instant
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[HttpPolicy]] (#1946): one identity and one slow-down rule for every outbound request. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class HttpPolicySuite extends munit.FunSuite:
   import HttpPolicy.Step
 

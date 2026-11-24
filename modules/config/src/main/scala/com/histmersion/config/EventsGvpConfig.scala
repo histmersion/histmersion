@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `floorYear`: the earliest year a GVP dating may reach (the list is of HOLOCENE eruptions: a ± that runs before it is
   * held there).
   */
+@movesTo(FeaturePlace.CatalogueEvents)
 final case class EventsGvpConfig(
     url: EventsGvpConfig.Url,
     pageSize: EventsGvpConfig.PageSize,

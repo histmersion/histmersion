@@ -7,10 +7,12 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion bundle …`: the subcommands parse, and the manifest of a downloaded bundle is read locally (it is
   * printed after an export). No server.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

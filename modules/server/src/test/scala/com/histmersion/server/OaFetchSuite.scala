@@ -13,16 +13,20 @@ import com.histmersion.domain.library.acquisition.agent
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.config.LoadedConfig
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contact e-mail is a per-install setting: the repo's default is blank. Blank must mean "anonymous" — no
   * `(mailto:)` stub in the User-Agent, and no Unpaywall call, which Unpaywall would refuse without an e-mail — while a
   * configured one reaches every upstream as before.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class OaFetchSuite extends munit.FunSuite:
 
   /** Answers nothing, records every URL asked for. */
   final private class RecordingHttp extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def miss(url: Http.Url) = {
       urls = urls :+ url; Left(Problem.Unclassified(Legacy.Text(s"$url: offline")))
     }
@@ -44,6 +48,7 @@ class OaFetchSuite extends munit.FunSuite:
       .loadWithUserText(org.ekrich.config.ConfigFactory.empty, text)
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def asked(email: AcquireConfig.ContactEmail): List[Http.Url] =
     val cfg = acquire(email)
     val http = RecordingHttp()

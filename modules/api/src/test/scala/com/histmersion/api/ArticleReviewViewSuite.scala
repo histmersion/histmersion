@@ -11,10 +11,12 @@ import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding,
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.Activity
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The review view's words: reviewer names, a finding's fate, the Markdown every surface returns, and the wire shape of
   * the state.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleReviewViewSuite extends munit.FunSuite:
 
   private val rejected = ReviewFinding(

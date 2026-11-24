@@ -7,11 +7,13 @@ import com.histmersion.config.*
 import com.histmersion.api.Html
 import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 class HighlightSuite extends munit.FunSuite:
 
   private def page(markup: String): Html = Html.sanitize(markup)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def marked(html: Html, q: String): (Html, Int) =
     Highlight.pattern(Highlight.Term(q)).fold((html, 0))(Html.marked(html, _))
 

@@ -23,11 +23,14 @@ import com.histmersion.domain.library.sources.{
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.util.identity.AliasTable
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's services and controllers, built over one server's `deps`: the figures are media's, the gazetteer the
   * catalogue's, the formatting check and the "Mentioned in articles" part research's, the stored originals the
   * ingest's; what every domain keeps of a source follows a rename or a delete through `Deps.sourceReferrers`.
   */
+@movesTo(FeaturePlace.Server)
 final class LibraryWiring(
     deps: Deps,
     figures: AssetsControllers,
@@ -45,6 +48,7 @@ final class LibraryWiring(
   /** How a filter's page and places are read. */
   val filters: SearchFilters = SearchFilters(places, cfg)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val sources: SourcesControllers = new SourcesControllers(
     sourceStore,
     figures,
@@ -74,6 +78,7 @@ object LibraryWiring:
 
   /** What a source's write follows, read from the settings at each write (a reload changes them). */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings(cfg: AppConfig): SourceSettings = SourceSettings(
     SourceSettings.ChunkChars(cfg.limits.chunkChars.value),
     SourceSettings.ToleranceKm(cfg.places.pointToleranceKm.value)

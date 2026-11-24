@@ -8,8 +8,10 @@ import com.histmersion.domain.ItemKey
 import com.histmersion.api.personal.Note
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's notes, in memory and in the database. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NoteServiceContractSuite extends PersonalServiceContract("note"):
 
   both("notes: left on an item and on a point, found by the item's new key, edited with the time last seen, removed") {

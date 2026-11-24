@@ -28,15 +28,18 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Renaming a citekey (V027): the foreign keys cascade, every column without one is rewritten, finding ids move,
   * `[[links]]` in articles (versioned) and source notes follow, parked edges waiting for the new name are promoted, and
   * the old citekey keeps resolving as an alias. Against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RenameRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
@@ -50,6 +53,7 @@ class RenameRepoSuite extends DbSuite:
   private val Place = "zzrn_place"
   private val Event = "zzrn_event"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: Citekey,
       edges: List[Edge] = Nil,

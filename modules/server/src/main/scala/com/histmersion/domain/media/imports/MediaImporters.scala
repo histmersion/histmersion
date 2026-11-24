@@ -15,10 +15,14 @@ import com.histmersion.api.plugins.PluginDescription
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.config.MediaPluginCollectionsConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The collections `media import` can run, from the plugins' registry of the calling thread's generation: the
   * first-party ones and a third party's alike.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object MediaImporters:
   type ImporterKey = ImporterKey.T
   object ImporterKey extends Newtype[String, Pure]
@@ -26,6 +30,9 @@ object MediaImporters:
   /** Pure: the registered collection `asked` names (an alias resolved), or why none: unknown, or its plugin switched
     * off.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def lookup(
       asked: ImporterKey,
       collections: ListMap[Registries.MediaCollectionsKey, MediaCollection]
@@ -53,6 +60,8 @@ object MediaImporters:
     * says no (its `media.<provider>.enabled` off, no key set). Every collection is run by the host's own import under
     * the allowlist the host keeps for it ([[BuiltinMedia.licencesFor]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(
       asked: ImporterKey,
       collections: ListMap[Registries.MediaCollectionsKey, MediaCollection],
@@ -82,6 +91,8 @@ object MediaImporters:
   /** Every registered collection, as `histmersion media providers` lists it. `pluginOf` names the plugin that
     * registered a collection; `allowFor` the allowlist a third party's is judged by.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def infos(
       collections: ListMap[Registries.MediaCollectionsKey, MediaCollection],
       pluginOf: Registries.MediaCollectionsKey => Plugin.Info.Id,

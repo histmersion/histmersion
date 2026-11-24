@@ -21,10 +21,12 @@ import com.histmersion.plugin.Processes
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Secret
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The vaults against FAKE command-line tools: shell scripts in a temporary directory that the test context offers as
   * the whole PATH. No real vault, no real `keepassxc-cli`/`op`/`bw`, is ever run.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class VaultsSuite extends munit.FunSuite:
 
   private given LocalFiles = new DiskLocalFiles
@@ -49,10 +51,13 @@ class VaultsSuite extends munit.FunSuite:
         Left(Problem.Config.Unavailable(Problem.Config.Capability.Network))
     }
     val log = new Plugin.Log {
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def info(m: Plugin.Log.Line) = infos = infos :+ m.value
       def warn(m: Plugin.Log.Line) = ()
     }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def env(name: EnvVar.Name) = envVars.get(name.value).map(EnvVar.Value(_))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def secret(s: Secret) =
       secrets
         .get(s.ref)
@@ -65,6 +70,7 @@ class VaultsSuite extends munit.FunSuite:
           )
         )
     val secretVaults = new Registry[Secret.Vault]:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def add(id: Registry.AddId, a: Secret.Vault): Either[Problem, Unit] =
         if vaults.exists(_._1 == id.value) then
           Left(
@@ -72,6 +78,7 @@ class VaultsSuite extends munit.FunSuite:
           )
         else { vaults = vaults :+ (id.value -> a); Right(()) }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decode(p: Plugin, hocon: String): p.Config =
     val defs = ConfigFactory.parseResources(p.getClass.getClassLoader, p.defaultsResource.value).resolve()
     val c = ConfigFactory.parseString(hocon).withFallback(defs).withoutPath("enabled")

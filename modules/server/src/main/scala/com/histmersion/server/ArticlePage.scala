@@ -6,8 +6,10 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.research.{Backlink, CitedSource, Coverage}
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Everything an `/article/{slug}` page shows, typed. */
+@movesTo(FeaturePlace.ResearchArticles)
 final case class ArticlePage(
     article: Article.Row,
     backlinks: List[Backlink],

@@ -7,10 +7,12 @@ import com.histmersion.util.ocr.Chunk
 import java.time.Instant
 import java.util.UUID
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's records the in-memory services share: the sources (each with its findings, chunks and identity), the
   * old citekeys, the edges between stored sources and the edges parked until their target arrives.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class LibraryState(
     sources: Map[LibraryState.SourcesKey, LibraryState.Stored],
     aliases: Map[LibraryState.AliasesKey, LibraryState.AliasesValue],

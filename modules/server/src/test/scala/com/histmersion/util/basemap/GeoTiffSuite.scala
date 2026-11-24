@@ -9,13 +9,16 @@ import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 
 import java.nio.{ByteBuffer, ByteOrder}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The GeoTIFF reader over grids written the way GEBCO writes its own (little-endian, one band of uncompressed signed
   * 16-bit rows in strips, a tie point and a pixel scale), and the ones it refuses.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GeoTiffSuite extends munit.FunSuite:
   import GeoTiffSuite.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def parsed(b: Array[Byte]) =
     GeoTiffGrid.parse(
       RangeHttp.ResponseBytes(b.take(64)),
@@ -117,6 +120,8 @@ object GeoTiffSuite:
   /** A little-endian GeoTIFF of `width` × `height` signed 16-bit samples, one row a strip: the directory first, the
     * samples from [[DataAt]], the directory's arrays after them.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tiff(
       width: PixelCount,
       height: PixelCount,

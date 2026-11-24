@@ -16,8 +16,12 @@ import com.histmersion.util.database.{StoredCreator, Timestamps}
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the queue rows for bundle export and import")
 private[worklists] object QueueBundleRepo:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def queue(scope: BundleScope)(using DbCon): Vector[Bundle.QueueItem] =
     sql"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
                        ${Timestamps.iso(sql"q.created_at")}, ${Timestamps.iso(sql"q.done_at")}, ${Timestamps.iso(
@@ -42,6 +46,7 @@ private[worklists] object QueueBundleRepo:
         )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def queueItemsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.queue.filter(q => w.writes(q.uid)).foreach { q =>

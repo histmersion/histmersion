@@ -34,17 +34,24 @@ import com.histmersion.api.library.Doi
 import com.histmersion.domain.Licence
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the library's sources answer, the same on the database and in memory: a source written whole and in part, its
   * findings kept by id, its edges routed and promoted, its body read by part, renamed with its old citekey kept and its
   * links followed, deleted with what goes counted.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class SourceServiceContract extends LibraryStoreSuite:
 
   private val Me = Caller.Local
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def api(c: Citekey) = com.histmersion.api.library.Citekey(c.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(ck: Citekey, n: Int, claim: Finding.Claim, at: Option[GeoPoint] = None): Finding =
     Finding(
       Finding.Id(s"$ck#$n"),
@@ -58,6 +65,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       Some(Confidence.High)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def source(ck: Citekey, title: Title, findings: List[Finding] = Nil, edges: List[Edge] = Nil): Source =
     Source(
       api(ck),
@@ -87,7 +95,9 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
   private val A = Citekey("zqa1990_walls")
   private val B = Citekey("zqb2001_cove")
   private val C = Citekey("zqc1975_kings")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ShaA = Sha256.applyUnsafe("a" * 64)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ShaB = Sha256.applyUnsafe("b" * 64)
 
   stest("a source put and read back: its record, its findings in id order, its edges where their targets are") { s =>

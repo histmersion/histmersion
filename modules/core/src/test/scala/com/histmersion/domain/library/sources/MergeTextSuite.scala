@@ -12,8 +12,10 @@ import MergeText.AuthorAgreement
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.Isbn
 import com.histmersion.util.text.MinHash
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The matcher's normalisers, on names and titles shaped like the live corpus's. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergeTextSuite extends munit.FunSuite with Bounded:
 
   test("fold removes diacritics and the letters NFD cannot split"):

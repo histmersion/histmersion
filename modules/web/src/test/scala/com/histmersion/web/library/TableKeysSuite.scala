@@ -3,9 +3,11 @@ package web.library
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.personal.ItemKey
+import com.histmersion.lint.{LintRule, tolerated}
 
 class TableKeysSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val rows = List("a", "b", "c").map(ItemKey(_))
 
   test("↓ and ↑ move the choice by one row, held at the ends"):

@@ -12,10 +12,12 @@ import com.histmersion.api.maintenance.VacuumPlan
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.catalogue.Period
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A job's detail kept as its fields' JSON: the wire shows every registered field in the registry's order, a value read
   * back in any key order is written in its field's terms, and a detail holds only what differs from the defaults.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class JobDetailSuite extends munit.FunSuite:
 
   test("an empty detail shows every field with its default, in the registry's order"):

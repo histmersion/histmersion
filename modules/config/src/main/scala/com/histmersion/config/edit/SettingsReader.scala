@@ -6,14 +6,18 @@ import org.ekrich.config.{Config, ConfigObject, ConfigUtil}
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every setting as it stands, from the schema, the settings file as read and the merged settings it loaded into
   * (`merged`: environment > file > reference.conf, `histmersion { … }`). The keys a file writes in an open block (a
   * plugin's own settings) are listed too, after reference.conf's, and `extra` keys of open blocks the caller knows of
   * (each plugin's `enabled` and settings). Pure.
   */
+@movesTo(FeaturePlace.UtilSettings)
 object SettingsReader:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def read(
       schema: ConfigSchema,
       state: ConfigFileState,
@@ -30,6 +34,8 @@ object SettingsReader:
       .flatMap(schema.field)
     (known ++ open).map(reading(_, state, merged, env))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reading(field: SettingField, state: ConfigFileState, merged: Config, env: Config): SettingReading =
     val key = field.key
     val (inFile, locked) = ConfigTextEdit.written(state.parsed, key, state.here) match
@@ -53,6 +59,7 @@ object SettingsReader:
     SettingReading(field, inFile, effective, source, credential, shown, locked)
 
   /** The keys the file writes inside the open blocks (each plugin's own settings, …). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def openKeys(parsed: Config): List[SettingKey] =
     ConfigLayers.OpenBlocks
       .flatMap { block =>
@@ -62,6 +69,7 @@ object SettingsReader:
       .flatMap(ws => SettingKey.either(ws.mkString(".")).toOption)
       .distinct
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def leaves(o: ConfigObject, prefix: List[SettingKey.Segment]): List[List[SettingKey.Segment]] =
     Try(o.keySet.asScala.toList.sorted).getOrElse(Nil).flatMap { k =>
       Option(o.get(k)) match

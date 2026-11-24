@@ -46,6 +46,7 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #986 `agents.auto-enrich` against a `*_test` database, the converter stubbed: an ingest job that stores a source
   * queues exactly one `enrich-source` run for it and says so in its progress line; nothing is queued with the switch
@@ -53,6 +54,7 @@ import com.histmersion.util.database.TestCreators.given
   * model is a note on the job, never a failed ingest. The run pool is never started, so no model is called. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -65,6 +67,8 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
 
   private object Stub extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       Right(
         ConvertedDoc(
@@ -74,6 +78,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -133,6 +138,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
     p
 
   /** Ingest the fixture file and wait for its job to settle. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
       .ingest(

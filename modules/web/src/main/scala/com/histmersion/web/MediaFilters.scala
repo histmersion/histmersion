@@ -9,6 +9,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.media.MediaCount
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The media layer's two filter menus (#1446): provider and licence, each "all" or one value, their options the
   * server's counts (`/api/media/facets`, fetched once when the layer is first shown).
@@ -17,6 +18,7 @@ object MediaFilters:
   type ChoiceLabel = ChoiceLabel.T
   object ChoiceLabel extends Newtype[String, Pure]
   type FieldName = FieldName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FieldName extends Newtype[String, Pure]
 
   val providers: Var[List[MediaCount]] = Var(Nil)
@@ -24,6 +26,7 @@ object MediaFilters:
   // `var`: the facets are fetched once per page
   private var asked = false
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   private def ask(): Unit =
     if !asked then
       asked = true
@@ -37,6 +40,7 @@ object MediaFilters:
   /** Pure: a menu's options — "all", then each value with its count, the one chosen kept even when the counts no longer
     * list it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def options(
       counts: List[MediaCount],
       chosen: Option[MediaCount.Key],
@@ -46,6 +50,9 @@ object MediaFilters:
     val kept = chosen.filterNot(c => counts.exists(_.key == c)).map(c => c -> label(c)).toList
     (MediaCount.Key("") -> ChoiceLabel("all")) :: (listed ++ kept)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def select(
       name: FieldName,
       field: Field[Option[String]],

@@ -10,7 +10,9 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaGeoHit(
     citekey: Option[Citekey],
     assetName: Bundle.Asset.FileName,

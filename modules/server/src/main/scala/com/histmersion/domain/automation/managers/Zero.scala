@@ -21,6 +21,7 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 import javax.sql.DataSource
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One
@@ -58,6 +59,7 @@ import javax.sql.DataSource
   */
 
 /** What a guarded step answers when it failed. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[automation] case class Zero[A](value: A)
 private[automation] object Zero:
   given Zero[Unit] = Zero(())

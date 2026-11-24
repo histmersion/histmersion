@@ -24,10 +24,12 @@ import com.histmersion.api.Paging
 import com.histmersion.api.automation.Activity
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the endpoints answer, over the in-memory services: inputs checked, the codes the statuses come from, the
   * caller's own marks.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PersonalControllersSuite extends munit.FunSuite:
 
   /** A clock the test moves forward a minute at a time. */

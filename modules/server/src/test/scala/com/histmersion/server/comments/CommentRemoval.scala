@@ -2,6 +2,7 @@ package com.histmersion
 package server
 package comments
 
+import com.histmersion.lint.{LintRule, tolerated}
 final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
   import CommentRemoval.*
 
@@ -27,6 +28,7 @@ final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
       while e < lineEnd && (text.charAt(e) == ' ' || text.charAt(e) == '\t') do e += 1
       Span(comment.start, e, wholeLines = false)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private lazy val spans: Vector[Span] =
     chosen
       .flatMap(_.parts)
@@ -73,6 +75,7 @@ final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
 object CommentRemoval:
   val closers: List[String] = List("}", ")", "]")
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Span(start: Int, end: Int, wholeLines: Boolean)
 
   def lineCount(text: String): Int = if text.isEmpty then 0 else text.linesIterator.size

@@ -11,7 +11,9 @@ import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[agents] object AgentTreeWriter:
   private val Manifest =
     Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error.sentence), identity)
@@ -19,6 +21,9 @@ private[agents] object AgentTreeWriter:
   /** A store's own problem, carried out of the writing loop to be returned as it is. */
   final private case class Failed(problem: Problem) extends Exception(null, null, false, false)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using
       clock: Clock
   ): Either[Problem, GenerateResult] =

@@ -15,24 +15,30 @@ import com.histmersion.upstreams.wikidata.WikidataItem
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Wikidata's events of the configured classes (battles, sieges, wars, treaties …): the query service, one SPARQL query
   * per class. A part is a class, `class:<qid>`.
   */
+@atBoundary(BoundaryKind.Json, "reads the Wikidata answer into event records")
 final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   def title = EventCatalogue.Title("Wikidata")
   def licence = Licence("CC0-1.0")
   def citation = EventCatalogue.Citation("Wikidata (CC0), https://www.wikidata.org")
   def home = EventCatalogue.Home("https://www.wikidata.org")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def requestIntervalMs: EventCatalogue.RequestIntervalMs =
     EventCatalogue.RequestIntervalMs(cfg.requestIntervalMs.value)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def classes: List[(WikidataItem.Id, WikidataClasses.ClassLabel)] =
     WikidataClasses.parse(WikidataClasses.WikidataText(cfg.classes.value))
 
   def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] =
     classes.map((qid, _) => EventCatalogue.ReadPart(s"class:$qid"))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
@@ -62,6 +68,8 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
           .map(CataloguePage(_))
 
   /** The item read again from its `raw` (its rows of the query's answer), in the kind it is stored with. */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
       .flatMap(t => RawJson.parse(t.value).toOption)
@@ -89,6 +97,7 @@ object WikidataCatalogue:
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
     * the deaths.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sparql(
       qid: WikidataItem.Id,
       from: Option[CatalogDating.HistoricalYear],
@@ -116,6 +125,7 @@ object WikidataCatalogue:
        |}""".stripMargin
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sparqlUrl(endpoint: WikidataSettings.SparqlUrl, query: Query): Plugin.Http.Url =
     Plugin.Http.Url(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
 
@@ -123,6 +133,7 @@ object WikidataCatalogue:
     b.downField(k).get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
 
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def point(wkt: Wkt): Option[(JsonFields.Decimal, JsonFields.Decimal)] =
     "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt.value).flatMap { m =>
       for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption
@@ -133,6 +144,7 @@ object WikidataCatalogue:
     * location's; the most precise dating; the most deaths). Items with no label of their own (the label service then
     * answers the id) keep it.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parse(json: Json, kind: CatalogueEvent.Kind): Either[Problem, List[CatalogueEvent]] =
     json.cursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
       case None       => Left(Problem.Invalid.Missing.here(Problem.Field("results")))

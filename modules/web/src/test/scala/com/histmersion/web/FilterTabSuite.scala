@@ -8,11 +8,14 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 import com.histmersion.api.RowCount
 import com.histmersion.api.Plural
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[Latest]] and [[TabState]] (#1798 item 5): an older answer never overwrites a newer query's, a failed request ends
   * "Loading…" with an error, and "show more" reaches the rows past the first page by asking the server for the next
   * one. No browser, no server: promises complete by hand.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class FilterTabSuite extends munit.FunSuite:
 
   // answers are applied the moment a promise completes

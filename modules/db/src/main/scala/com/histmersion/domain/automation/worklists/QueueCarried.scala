@@ -8,9 +8,12 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the work lists: their items, written after every goal (rank 50). */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object QueueCarried:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val items: CarriedKind = CarriedKind.records[Bundle.QueueItem](
     DataOwner("automation"),
     Bundle.Kind.QueueItem,

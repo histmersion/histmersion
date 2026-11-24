@@ -20,6 +20,7 @@ import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *
@@ -33,6 +34,7 @@ import com.histmersion.api.exchange.Bundle.uidEquality
   * Then each bundle source is assigned at most one source here, best first (strong keys, then the highest score), and
   * classified: auto-merge, needs-decision, or new.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object SourceMatcher:
   /** A number written out in the evidence text: a weight or a similarity. */
   type Figure = Figure.T
@@ -57,7 +59,9 @@ object SourceMatcher:
   /** A source with the old citekeys (aliases) that still name it. */
   final case class Side(source: Bundle.Source, aliases: Set[Citekey]):
     def uid: UUID = source.uid
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def aliasLabels: Set[Side.Label] = aliases.map(a => Side.Label(a.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def labels: Set[Side.Label] = aliasLabels + Side.Label(source.citekey.value)
 
   object Side:
@@ -76,6 +80,7 @@ object SourceMatcher:
       authors: AuthorAgreement,
       parts: List[(Reason, Evidence.Weight)]
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def score: Evidence.Score = Evidence.Score(parts.map(_._2.value).sum)
     def strongKey: Boolean = strong.nonEmpty
     def why: List[Rationale] = strong.map(Rationale.StrongKey(_)) ++ parts.map((r, w) => Rationale.Part(r, w))
@@ -128,9 +133,11 @@ object SourceMatcher:
       case OldCitekey(label: Side.Label)
 
       /** The part of the score this comparison is: it adds `weight`. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       private[SourceMatcher] def weighs(weight: Double): (Reason, Weight) = (this, Weight(weight))
 
       /** The comparison as the evidence lists it. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def said: String = this match
         case TitleSame                 => "title the same"
         case MainTitleSame             => "main title the same, the subtitle differs"
@@ -162,13 +169,18 @@ object SourceMatcher:
       case Part(reason: Reason, weight: Weight)
 
       /** The line as the merge plan shows it. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def said: String = this match
         case StrongKey(key)       => s"$key equal (strong key)"
         case Part(reason, weight) => s"${reason.said} (${signed(weight)})"
 
   /** `x` with `places` decimals, a dot whatever the JVM's locale. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fixed(x: Figure, places: Decimals): Written = Written(s"%.${places}f".formatLocal(java.util.Locale.ROOT, x.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def signed(w: Evidence.Weight): Written =
     val s = if w.value == math.rint(w.value) then w.value.toLong.toString else fixed(Figure(w.value), Decimals(1)).value
     Written(if w.value >= 0 then s"+$s" else s)
@@ -178,13 +190,23 @@ object SourceMatcher:
   private val Year = "(1[0-9]{3}|20[0-9]{2})".r
 
   /** The letters of a citekey before its year (`guterbock1997_perspectives` → `guterbock`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citekeyStem(ck: Side.Label): Stem = Stem(ck.value.takeWhile(c => !c.isDigit).filter(_.isLetter))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def titleOf(s: Bundle.Source): Title = Title(s.title.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def titleText(s: Bundle.Source): MergeText.Text = MergeText.Text(s.title.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def authorsOf(s: Bundle.Source): List[AuthorName] = s.authors.map(a => AuthorName(a.value))
 
   /** The keys a pair must share one of to be compared. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blockingKeys(s: Side): Set[BlockingKey] =
     val src = s.source
     val keys: Set[String] =
@@ -195,10 +217,16 @@ object SourceMatcher:
         doi(src).map(d => "d:" + d.value) ++ sha(src).map(h => "h:" + h.value) ++ isbns(src).map(i => "i:" + i.value)
     keys.map(k => BlockingKey(k))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doi(s: Bundle.Source): Option[MergeText.DoiKey] =
     s.doi.flatMap(d => MergeText.doiKey(MergeText.WrittenDoi(d.value)))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha(s: Bundle.Source): Option[Sha256] =
     s.originalSha256.flatMap(h => Sha256.option(h.value.trim.toLowerCase))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def isbns(s: Bundle.Source): Set[Isbn] =
     s.isbns.getOrElse(Nil).flatMap(i => MergeText.isbn13(Isbn(i.value))).toSet
 
@@ -207,12 +235,16 @@ object SourceMatcher:
   /** Words that say a source is a reprint, an edition or a translation of an earlier work. */
   private val reprintWords = List("reprint", "edition", "transl", "neuauflage", "nachdruck", "facsimile")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def years(s: Side): Set[Long] =
     s.labels.flatMap(l => Year.findAllIn(l.value).map(_.toLong))
 
   /** One side says the other year: its citekey or an alias carries it, or the title/notes/venue speak of a reprint, an
     * edition or a translation.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def reprintHint(a: Side, b: Side): Boolean =
     def says(s: Side) =
       val text = MergeText.fold(
@@ -226,12 +258,16 @@ object SourceMatcher:
       years(b).contains(y.value)
     ) || says(a) || says(b)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def venueFingerprint(s: Bundle.Source): Option[Fingerprint] =
     s.venue.map(v => MergeText.fingerprint(MergeText.Text(v.value))).filter(_.value.nonEmpty)
 
   /** The evidence about `right` (the bundle's) and `left` (this collection's). `sketches` are the MinHash signatures of
     * OCR bodies by their sha256, when they were computed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidence(right: Side, left: Side, sketches: Map[Bundle.Source.BodySha256, MinHash], w: MatchWeights): Evidence =
     val (r, l) = (right.source, left.source)
     val strong =
@@ -341,6 +377,7 @@ object SourceMatcher:
   /** Pair every `right` with at most one `left`. `editions` answers the year-gap question for all: `Merge` drops the
     * flag, `Separate` makes such a pair two works.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assign(
       rights: List[Side],
       lefts: List[Side],

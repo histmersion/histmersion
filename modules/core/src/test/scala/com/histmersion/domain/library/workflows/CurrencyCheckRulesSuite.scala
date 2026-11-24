@@ -18,8 +18,11 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a currency check makes of a paper citing a source. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class CurrencyCheckRulesSuite extends munit.FunSuite:
 
   test(

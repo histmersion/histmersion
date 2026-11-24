@@ -9,6 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Timestamps
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** The web UI's toolbar notices (migration V083, core [[UiNotices]]): each watched list's count and newest change, read
   * in ONE statement; the per-window "seen" marks are the person's (`domain.personal.seen`). Stateless.
@@ -16,6 +17,7 @@ import com.histmersion.domain.automation.Run
   * A board's `latest` is the newest `updated_at` (or, for an approval, its proposal or decision) of the rows that still
   * exist; `note` blocks of a queue are export scaffolding and never count.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the ui tables and their row codecs")
 object UiRepo:
   /** UTC, microseconds, one fixed format — so two instants compare as strings ([[UiNotices.fresh]]). */
   private val Latest = Timestamps.iso(sql"b.latest")

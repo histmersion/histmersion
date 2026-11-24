@@ -26,6 +26,7 @@ import com.histmersion.config.AgentRolesConfig
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The New research area as one server operation (G105, review finding W2), against a `*_test` database: the goal is
   * created and never replaced, and the goal, its plan run, its seeding manager and its watcher are written together or
@@ -33,6 +34,7 @@ import com.histmersion.util.database.TestCreators.given
   * which replaces a goal that exists. Models are scripted and down; no provider is called. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ResearchAreaDbSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -44,6 +46,7 @@ class ResearchAreaDbSuite extends DbSuite:
   private val Seed = ManagerInfo.Id("seed:zzarea-tin")
   private val Watcher = ManagerInfo.Id("watch:zzarea-tin")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def config(enabled: Boolean): AppConfig =
     val b = AppConfig.load()
     val m = Model.wire
@@ -62,6 +65,7 @@ class ResearchAreaDbSuite extends DbSuite:
 
   private lazy val ds = testPool(config(enabled = true).db)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def handlers(enabled: Boolean = true): (AgentsControllers, ServerWiring) =
     val c = ScriptedClient(Model)
     c.fail = true

@@ -35,6 +35,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
 final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]])
@@ -53,6 +54,7 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
   val checks = scala.collection.mutable.LinkedHashMap
     .empty[(ImportService.Provider, ImportService.TargetId), ImportService.FoundCount]
   val refreshed = scala.collection.mutable.ListBuffer.empty[AssetService.AssetUid]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
     val wanted = keys.map(_.value).toSet
     saved.collect {
@@ -105,12 +107,14 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
   * collection import — what a dry run lists for a person to judge, what is refused and why, what a real run stores,
   * links (with the match's reason) and records as asked — and that no request leaves this machine.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CollectionsSuite extends munit.FunSuite:
 
   private val jpeg = Array[Byte](-1, -40, -1)
 
   final private class ThumbConverter extends ConverterClient:
     val calls = scala.collection.mutable.ListBuffer.empty[ConverterClient.Filename]
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -121,6 +125,7 @@ class CollectionsSuite extends munit.FunSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def thumbnail(
         bytes: ConverterClient.DocumentBytes,
         filename: ConverterClient.Filename,
@@ -177,6 +182,7 @@ class CollectionsSuite extends munit.FunSuite:
       Some(Latitude(35.0)),
       Some(Longitude(33.0))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val facts = List(mycenae, greece, cyprus).map(f => Place.Id.assume(f.id.value) -> f).toMap
   // Pleiades' and GeoNames' Mycenae are one site (3 km): the name resolves to it once
   private val named = Map(
@@ -184,6 +190,7 @@ class CollectionsSuite extends munit.FunSuite:
     ImportService.PlaceKey("greece") -> List(greece),
     ImportService.PlaceKey("cyprus") -> List(cyprus)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def target(f: PlaceFacts) =
     Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
@@ -196,6 +203,7 @@ class CollectionsSuite extends munit.FunSuite:
   private val DryOn = CollectionImport.DryRun(true)
   private val DryOff = CollectionImport.DryRun(false)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(
       col: SearchedCollection,
       http: FakeMediaHttp,
@@ -215,6 +223,7 @@ class CollectionsSuite extends munit.FunSuite:
   private def metObject(id: Long, f: String => String = identity): Either[String, HttpAnswer] =
     FakeMediaHttp.json(f(fx("met-object.json").replace("252448", id.toString)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def met(): FakeMediaHttp = FakeMediaHttp { url =>
     if url.contains("/v1.1/search?") then FakeMediaHttp.json(fx("met-search.json"))
     else if url.endsWith("/v1/objects/252448") then metObject(252448)

@@ -19,16 +19,21 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.media.CoversJobKinds
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources' pictures (#1446): their covers and illustrations as one run (a dry run from the database alone, or one
   * source at once) or as a job over every source; a cover the CLI read from the local Calibre library; the picture a
   * stored conversion brings.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
 
   /** The sources' pictures, one run: a dry run (from the database alone), or — for one `citekey` — done at once. A run
     * over every source is [[coversJob]].
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def covers(req: MediaCoversRequest)(using Creator.New): Either[Api.Error, MediaCoversReport] =
     // a dry run writes nothing, but runs the one path that may: under the gate too
     if req.dryRun.value then jobs.guarded(WriteGate.OperationName("media_covers"))(Right(pictures.run(req)))
@@ -44,6 +49,8 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
         jobs.exclusive(BackgroundJob.Work("media covers"))(Right(pictures.run(req)))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   def coversJob(req: MediaCoversRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     val what =
       List(
@@ -71,4 +78,5 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     pictures.afterIngest(citekey)
 
 object CoversControllers:
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   val CoversJobKind: Job.Kind = Job.Kind.assume(CoversJobKinds.MediaCovers.kind.value)

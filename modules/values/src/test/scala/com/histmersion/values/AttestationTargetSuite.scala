@@ -5,7 +5,9 @@ import com.histmersion.values.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.AttestationTarget
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AttestationTargetSuite extends munit.FunSuite:
 
   test("#3770: a target type is one of the five, trimmed and in any case; anything else is named with them"):

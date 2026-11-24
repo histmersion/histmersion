@@ -13,11 +13,15 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the review manager and the review ledgers record about articles, read for their review state: per article the
   * newest `article-review` item, the ledger's findings COUNTED in SQL (a ledger runs to hundreds of KB; a list page
   * never decodes one), the pass a running review is in, and the approvals about it that wait for a person.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the article review tables and their row codecs")
 private[review] object ArticleReviewRepo:
 
   final private case class FactsRow(
@@ -34,6 +38,7 @@ private[review] object ArticleReviewRepo:
   ) derives DbCodec
 
   object FactsRow:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Slug = domain.research.Slug
     val Slug: domain.research.Slug.type = domain.research.Slug
     type UpdatedAt = UpdatedAt.T
@@ -43,6 +48,7 @@ private[review] object ArticleReviewRepo:
       derives DbCodec
 
   object ApprovalRow:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Subject = domain.research.Slug
     val Subject: domain.research.Slug.type = domain.research.Slug
     export ManagerPolicy.ApprovalId as Id
@@ -53,6 +59,7 @@ private[review] object ArticleReviewRepo:
 
   object GoalRow:
     export Goal.Slug
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = domain.Title
     val Title: domain.Title.type = domain.Title
     export Goal.Status.Wire as Status
@@ -66,6 +73,7 @@ private[review] object ArticleReviewRepo:
   /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
     * ledgers know nothing of maps to empty facts.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def facts(
       slugs: List[domain.research.Slug]
   )(using DbCon): Map[domain.research.Slug, (Facts, Option[FactsRow.UpdatedAt])] =
@@ -113,6 +121,7 @@ private[review] object ArticleReviewRepo:
         r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
       }.toMap
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def approvals(
       slugs: List[domain.research.Slug]
   )(using DbCon): Map[domain.research.Slug, List[ReviewApproval]] =
@@ -136,6 +145,8 @@ private[review] object ArticleReviewRepo:
         .toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goals(slug: domain.research.Slug)(using DbCon): List[ReviewGoal] =
     sql"""SELECT g.slug, g.title, g.status FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
             WHERE l.kind = 'article' AND l.ref = $slug ORDER BY g.slug"""

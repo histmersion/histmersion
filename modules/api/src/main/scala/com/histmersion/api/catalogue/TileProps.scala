@@ -4,7 +4,9 @@ import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.library.Label
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object TileProps:
   val Zoom = "z"
   val Key = "k"

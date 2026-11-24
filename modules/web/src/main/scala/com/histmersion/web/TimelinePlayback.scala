@@ -17,6 +17,7 @@ import com.histmersion.api.Years
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 object TimelinePlayback:
 
@@ -40,6 +41,7 @@ object TimelinePlayback:
     * the whole years to move, the fraction carried). A whole year a frame at least played a century in about 100
     * frames, under 2 s, and a local event's 2.5 s fade in about 8 frames.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] val Speeds: List[Speed] = List(0.25, 0.5, 1.0, 2.0, 4.0).map(Speed(_))
   private[web] def wholeYears(carried: Double, yearsPerSecond: Double, seconds: Double): (Long, Double) =
     val due = carried + yearsPerSecond * seconds
@@ -47,6 +49,8 @@ object TimelinePlayback:
     (whole, due - whole)
 
   /** How a speed reads in the menu: in plain words. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def speedWords(s: Speed): UiLabels.Text = s.value match
     case 0.25 => UiLabels.Text("Very slow")
     case 0.5  => UiLabels.Text("Slow")
@@ -56,12 +60,16 @@ object TimelinePlayback:
     case _    => speedLabel(s)
 
   /** `0.25×`, `1×`: a speed's option value. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def speedLabel(s: Speed): UiLabels.Text =
     val v = s.value
     val n = if v == math.rint(v) then v.toLong.toString else BigDecimal(v).bigDecimal.stripTrailingZeros.toPlainString
     UiLabels.Text(s"$n×")
 
   /** The speed an option stands for; one that is not offered is refused. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def parseSpeed(label: UiLabels.Text): Option[Speed] =
     Speeds.find(speedLabel(_).value == label.value.trim)
 
@@ -75,6 +83,8 @@ object TimelinePlayback:
   // the events layer's settings (ui.events), from the config the element was built with
   private var eventsConfig: EventsUiConfig = null
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def element(config: UiConfig): HtmlElement =
     eventsConfig = config.events
     div(
@@ -136,6 +146,9 @@ object TimelinePlayback:
 
   private var overlayWasOn: Boolean = false
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def start(): Unit =
     val (sf, st) = TimelineView.currentSpan
     spanFrom = sf
@@ -161,6 +174,7 @@ object TimelinePlayback:
     playing.set(false)
     dom.window.cancelAnimationFrame(frameId)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def stop(): Unit =
     playing.set(false)
     playheadPos.set(None)
@@ -174,6 +188,8 @@ object TimelinePlayback:
     val (sf, st) = TimelineView.currentSpan
     App.restoreSpan(sf, st)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tick(ts: ResearchOverview.EpochMillis): Unit =
     if playing.now() then
       if lastTs.value == 0.0 then lastTs = ts
@@ -228,6 +244,8 @@ object TimelinePlayback:
       asking = false
       filter = None
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def frame(ph: Years.Astronomical, yearsPerSecond: PlaybackBuckets.YearsPerSecond): Unit =
       val half = windowHalf.now()
       val wh = PlaybackFeed.WindowHalfYears(half.value)
@@ -252,6 +270,9 @@ object TimelinePlayback:
           MapView.YearsPerSecond(yearsPerSecond.value)
         )
 
+    @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ask(f: Filter, period: (Years.Astronomical, Years.Astronomical)): Unit =
       asking = true
       val mine = generation

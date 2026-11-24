@@ -17,20 +17,24 @@ import com.histmersion.api.library.{MetadataPatch, Provenance, Source}
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
   * skipped otherwise.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ProvenanceRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val Prefix = "zzprov"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(ck: Citekey, provenance: Option[Source.Provenance]) = Source(
     citekey = api.library.Citekey(ck.value),
     title = api.library.Title(s"Title $ck"),

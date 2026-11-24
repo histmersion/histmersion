@@ -10,6 +10,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.{AuthorName, Citekey}
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pairing rule (docs/research-review-convergence.md §6.9), pure: the names a source is called by, the paragraphs
   * that name a disagreement partner they do not cite, which of them code may repair, the repair itself, the instruction
@@ -20,8 +21,10 @@ import com.histmersion.api.catalogue.Year
   * "Neither this paragraph nor Disagreement 4 cites [[latacz2004_troy]]" (S4) across runs, and a fourth (S3) whose
   * critic the article never names.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CritiquePairingSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val excerpt =
     Article.Body(scala.io.Source.fromResource("review/achilles-excerpt.md")(using scala.io.Codec.UTF8).mkString)
 
@@ -55,6 +58,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     Citekey("pache2020_homerguide") -> (List(AuthorName("Corinne Pache")), Year(2020))
   )
   private val work: Citekey => Option[Work] = ck => authors.get(ck).map((as, y) => Work(ck, names(ck, as), Some(y)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val resolve: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value)).filter(authors.contains)
 
   test("names: the authors' word that is the citekey's leading name, else the first author's last word"):

@@ -27,17 +27,20 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.time.SystemTimer
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `lint --rule place-imported-point-area` (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the listing (counts, every finding holder, evidence keeping a place) and `--fix` — bounded per call,
   * every dependent row gone, the affected findings matched again, a shape, a site and a seed place untouched. Fixtures
   * around 150°E 60°S, where no other suite has any; ids `wikidata_q9992…`, `geonames_9992…`, `zzpa…`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PointAreaRepoSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -66,6 +69,7 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
   private val Curated = "wikidata_q999200009" // a person set its kind (`places set`, V080 place_overrides)
   private val Mine = List(Region, Polity, Pinned, Shaped, GnArea, GnSite, Thrace, Thracia, Eastern, Curated)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(): Unit =
     val _ = PlaceFixtures.upsertPlaces(
       ds,
@@ -200,6 +204,7 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
       val _ = sql"""INSERT INTO attestations (citekey, target_type, target_id, quote, creator)
                     VALUES ('zzpa_src', 'place', $Pinned, 'here', jsonb_build_object('kind', 'unknown'))""".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(n: Int): Set[String] =
     PlaceFixtures
       .placesOf(ds, Finding.Id(s"zzpa_src#$n"))
@@ -208,10 +213,13 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
       .toSet
   private def exists(id: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val kinds =
     Gazetteer.DefaultPointAreaKinds.map(k => domain.catalogue.Place.Kind.Wire(k.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
   private lazy val geometry = PlaceGeometry(Transactor(ds))(using new SystemTimer)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings(batch: PointAreaRepo.Settings.Batch, budgetMs: PointAreaRepo.Settings.BudgetMs) =
     PointAreaRepo.Settings(
       kinds.map(k => PointAreaRepo.Settings.Kinds(k.value)),

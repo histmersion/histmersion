@@ -18,10 +18,13 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 trait CitationService:
   def neighbors(citekey: Citekey, kinds: List[Edge.Kind.Wire]): List[NeighborRow]
 
@@ -37,6 +40,7 @@ object CitationService:
   object Since extends Newtype[Long, Pure]
 
   /** The edge kinds that disagree. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val Disagreeing: Set[com.histmersion.api.library.Edge.Kind] =
     Set(
       com.histmersion.api.library.Edge.Kind.Challenges,
@@ -56,6 +60,7 @@ object CitationService:
       db.read(CitationRepo.neighbors(citekey, kinds)).toList
     def graph(citekey: Citekey, depth: Depth): Source.Graph =
       db.read(CitationRepo.graph(citekey, depth))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def contradictions(citekey: Option[Citekey], since: Option[Since]): ContradictionsResult =
       db.read(CitationRepo.contradictions(citekey, since.map(y => CitationRepo.Since(y.value))))
 
@@ -63,11 +68,17 @@ object CitationService:
     * article is stored, so a parked edge's target is unresolved.
     */
   final class InMemory(state: AtomicReference[LibraryState]) extends CitationService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def wire(kind: com.histmersion.api.library.Edge.Kind) =
       com.histmersion.api.library.Edge.Kind.wireOf(kind).value
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def stored(st: LibraryState, ck: com.histmersion.api.library.Citekey) =
       st.sources.get(LibraryState.SourcesKey(ck.value)).map(_.source)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def neighbors(citekey: Citekey, kinds: List[Edge.Kind.Wire]): List[NeighborRow] =
       val st = state.get
       val self = com.histmersion.api.library.Citekey(citekey.value)
@@ -88,6 +99,8 @@ object CitationService:
       }
       (out ++ parked ++ in).sortBy(r => (r.direction.value, wire(r.kind), r.citekey.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def graph(citekey: Citekey, depth: Depth): Source.Graph =
       val st = state.get
       val maxDepth = depth.value.max(0).min(4)
@@ -123,6 +136,8 @@ object CitationService:
           .sortBy(l => (l.source.value, l.target.value, wire(l.kind)))
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def contradictions(citekey: Option[Citekey], since: Option[Since]): ContradictionsResult =
       val st = state.get
       def row(

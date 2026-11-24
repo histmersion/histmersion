@@ -6,16 +6,20 @@ import com.histmersion.api.basemap.BasemapMarkdown
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion basemap status|fetch|rm` — the local base map's extracts on the SERVER's machine
   * (docs/user-guide/how-to/open-data.md): what is there (and which of the two styles it draws whole), downloading them
   * (a job, followed here), and removing them.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion basemap` arguments")
 object BasemapCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
     case Status(json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Fetch(
         layer: String,
         z: Option[Int],
@@ -26,12 +30,14 @@ object BasemapCmd:
         keepAll: Boolean,
         following: Cli.Following
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Rm(layer: Option[String], focus: Option[String], cache: Boolean)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Status(json) =>

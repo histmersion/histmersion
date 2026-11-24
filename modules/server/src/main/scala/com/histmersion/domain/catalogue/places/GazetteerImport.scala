@@ -11,7 +11,12 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
 import java.time.Clock
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[places] object GazetteerImport:
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def session(
       source: Gazetteer.SourceInfo.Key,
       version: Gazetteer.LoadCounts.Version,
@@ -25,6 +30,7 @@ private[places] object GazetteerImport:
     val repo = transactions.writeAutocommit(GazetteerRepo.session(source, version, windowYears, pointAreaKinds))
     new Session(repo, transactions, apply, clock)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final class Session private[GazetteerImport] (
       repo: GazetteerRepo.Session,
       transactions: Transactor.Session,
@@ -34,6 +40,7 @@ private[places] object GazetteerImport:
     private def write[A](work: DbCon ?=> A)(using WritePermit): A =
       if apply then transactions.write(work) else transactions.rollback(work)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def batch(records: List[GazRecord])(using WritePermit)(using Creator.New): Gazetteer.LoadCounts =
       @tailrec def dedupe(
           rest: List[GazRecord],
@@ -53,6 +60,7 @@ private[places] object GazetteerImport:
       transactions.writeAutocommit(repo.recordSeen(rows))
       counts.modify(_.skipped).setTo((duplicates ++ counts.skipped).take(20))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def prune(batch: Int)(using WritePermit): Session.Pruned =
       if !apply then Session.Pruned(0L)
       else

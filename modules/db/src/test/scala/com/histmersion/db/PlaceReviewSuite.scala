@@ -20,14 +20,17 @@ import com.histmersion.util.database.given
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `lint --rule place-kind` and `--rule place-grid-point` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the dry run lists people, polities, a settlement and a merge and
   * writes nothing; `--fix` changes the kinds, merges the duplicate (links, alias) and matches findings again; a
   * grid-square place moves to its linked record's real point, once. Fixtures: [[RegionCleanupFixtures]].
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceReviewSuite extends RegionCleanupFixtures:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mine(ps: List[Proposal]) =
     ps.filter(p => p.id.value.startsWith("pleiades_99910") || p.id.value.startsWith("zzrc"))
 

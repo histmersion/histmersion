@@ -16,10 +16,12 @@ import java.nio.file.{Files, Path}
 import java.util.jar.{JarEntry, JarFile, JarOutputStream}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.plugins.PluginDescription
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The relink kit's JVM tool against a REAL third-party plugin jar: modules/plugin-fixtures/hello, built by sbt and
   * never on the server's class path.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginToolSuite extends munit.FunSuite:
 
   private def consoleFor(stdout: String => Unit, stderr: String => Unit): util.console.Console =

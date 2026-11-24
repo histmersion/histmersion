@@ -17,6 +17,7 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `POST /api/maintenance/vacuum`: VACUUM of registered tables as a [[BackgroundJob]] (kind `vacuum`) — a vacuum of
   * `place_names` (3.7 GB) runs for minutes, past any request timeout. It answers at once with the job; `histmersion
@@ -40,12 +41,14 @@ final class VacuumJobs(
   def isRunning: Boolean = slot.isRunning
 
   /** The tables a vacuum may name: the registered ones the database has. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vacuumable: Set[Vacuum.Table] =
     transactor
       .read(VacuumRepo.tables)
       .intersect(registry.tables.map(t => t._2.name.value: String).toSet)
       .map(Vacuum.Table(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(in: Vacuum.Request)(using Creator.New): Either[Api.Error, JobInfo] =
     gate.guard(WriteGate.OperationName("maintenance/vacuum")):
       Vacuum.plan(in, defaults(), vacuumable).flatMap { plan =>
@@ -61,6 +64,8 @@ final class VacuumJobs(
         )((_, progress) => run(plan, progress))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def run(plan: VacuumPlan, progress: JobInfo.Progress => Unit)(using WritePermit): BackgroundJob.Outcome =
     @tailrec def loop(rest: List[(VacuumPlan.Tables, Int)], lines: List[String])(using
         WritePermit

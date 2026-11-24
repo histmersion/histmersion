@@ -6,10 +6,13 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.TimeBucket
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TimelineCurveSuite extends munit.FunSuite:
   import TimelineCurve.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def buckets(counts: Int*): List[TimeBucket] =
     counts.toList.zipWithIndex.map((c, i) =>
       TimeBucket(TimeBucket.Start(i * 10L), TimeBucket.End(i * 10L + 9), TimeBucket.Count(c))

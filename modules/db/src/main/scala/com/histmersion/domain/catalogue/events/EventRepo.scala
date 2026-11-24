@@ -42,6 +42,9 @@ import com.histmersion.api.automation.Creation
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
   * given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the event tables and their row codecs")
 private[events] object EventRepo:
   type EventCount = EventCount.T
   object EventCount extends Newtype[Long, Pure]
@@ -54,7 +57,9 @@ private[events] object EventRepo:
 
   def count()(using DbCon): EventCount = EventCount(sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong)
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[EventEdge] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[EventParticipant] = DbCodec.derived
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
@@ -69,6 +74,8 @@ private[events] object EventRepo:
   // ── reads ───────────────────────────────────────────────────────────────────────────────────
 
   /** The events `where` selects ([[EventSql.listWhere]]), one page of them. */
+  @tolerated(LintRule.TotalOrder, "e is events (EventSql.fromEvents): id is its key")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(where: Frag, limit: PageSize, offset: Offset)(using DbCon): EventList =
     val total = sql"SELECT count(*)::int FROM $fromEvents WHERE $where".query[Int].run().head
     val rows =
@@ -85,6 +92,8 @@ private[events] object EventRepo:
     * land-clipped shape, as the map draws it); a local one, or an area known only by a point, none. Two statements: the
     * rows with their scale, then the outlines of the regional ones alone.
     */
+  @tolerated(LintRule.TotalOrder, "e is events (EventSql.fromEvents): id is its key")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geo(listed: Frag, limit: PageSize, tolerance: GeoTolerance)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
@@ -144,6 +153,9 @@ private[events] object EventRepo:
             WHERE s.g IS NOT NULL AND """
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
+  @tolerated(LintRule.TotalOrder, "e is events (EventSql.fromEvents): id is its key")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def get(id: BEventRow.Id)(using DbCon): Option[EventEntry] =
     sql"""SELECT $summaryCols, ST_AsGeoJSON(e.geom)
           FROM $fromEvents WHERE e.id = $id""".query[EventDetailRow].run().headOption.map { r =>
@@ -209,12 +221,14 @@ private[events] object EventRepo:
     }
 
   /** The tier, other names and catalogue of one event. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def tierAndNames(id: BEventRow.Id)(using DbCon): Option[(Tier, List[BEventRow.Names], Option[BEventRow.Label])] =
     sql"""SELECT ${EventSql.TierSql}, e.names, e.catalogue FROM events e WHERE e.id = $id"""
       .query[(Tier, List[BEventRow.Names], Option[BEventRow.Label])]
       .run()
       .headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def exists(id: BEventRow.Id)(using DbCon): Boolean =
     sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
@@ -228,6 +242,8 @@ private[events] object EventRepo:
     * says is recorded as a correction, so the next import keeps it; one set back to the catalogue's value drops its
     * correction. An event compiled from sources (no catalogue) is never refreshed by an import: nothing to record.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def recordCorrections(id: BEventRow.Id, fields: Map[String, Json])(using DbCon)(using Creator.New): Unit =
     if fields.nonEmpty then
       EventImportRepo.upstreamOf(Event.Id.assume(id.value)).foreach { (provider, rec) =>
@@ -250,6 +266,8 @@ private[events] object EventRepo:
   /** Why PostGIS cannot read `geojson` as a geometry, in its own words — `None` when it can. Asked before a write, on a
     * connection of its own, so a bad geometry is a 400 rather than a failed statement.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geometryError(geojson: BEventRow.Geom)(using con: DbCon): Option[Problem] =
     try
       val st = con.connection.prepareStatement("SELECT ST_IsEmpty(ST_GeomFromGeoJSON(?))")
@@ -334,6 +352,8 @@ private[events] object EventRepo:
     * ([[recordCorrections]]): the next import of its catalogue keeps it (and retires it once the catalogue agrees, or
     * flags a conflict when the catalogue changes to something else).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patch(id: BEventRow.Id, p: EventPatch)(using DbCon)(using Creator.New): Either[Api.Error, Unit] =
     if !exists(id) then
       Left(
@@ -418,6 +438,7 @@ private[events] object EventRepo:
     * attestations and asset links that name it follow. What a bundle import does when an event was renamed on the other
     * side.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def rename(oldId: BEventRow.Id, newId: BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[BEventRow.Id].run().headOption
     if !exists(oldId) then
@@ -462,10 +483,13 @@ private[events] object EventRepo:
       Right(())
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def renamedTo(id: BEventRow.Id)(using DbCon): Option[BEventRow.Id] =
     EventAliasTable.table
       .renamedToIn(AliasTable.Id(id.value))
       .map(a => BEventRow.Id(a.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def delete(id: BEventRow.Id)(using DbCon): Boolean =
     sql"DELETE FROM events WHERE id = $id".update.run() > 0 // its corrections go (a trigger)

@@ -2,10 +2,12 @@ package com.histmersion
 package plugins.vaults
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** What KeePassXC's stderr says about a failed attempt: the one place its words are read (the process boundary), so
   * that [[YubiKey.failure]] branches on a case.
   */
+@atBoundary(BoundaryKind.Process, "reads KeePassXC's stderr into a message")
 enum KeePassXcMessage:
 
   /** The password, key file or YubiKey is wrong. */

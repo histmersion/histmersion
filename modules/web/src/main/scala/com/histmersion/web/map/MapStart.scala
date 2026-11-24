@@ -6,6 +6,7 @@ import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.Store
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the map opens (`ui.map-start`): where this browser last left it ("last", kept per browser under
   * [[StorageKey]]) or always at the configured place.
@@ -17,6 +18,8 @@ object MapStart:
   val StorageKey = "histmersion.mapView"
 
   /** The view kept in the browser, as stored: `lat,lon,zoom`. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def encode(at: LatLon, zoom: MapSurface.Zoom): Encoded =
     Encoded(s"${round(at.lat.value, 5)},${round(at.lon.value, 5)},${round(zoom.value, 2)}")
 
@@ -24,6 +27,8 @@ object MapStart:
   private def round(v: Double, places: Int): String =
     BigDecimal(v).setScale(places, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decode(s: Encoded): Option[(LatLon, MapSurface.Zoom)] =
     Option(s.value).map(_.split(',').map(_.trim).toList).collect { case List(a, b, c) => (a, b, c) }.flatMap {
       (a, b, c) =>
@@ -36,6 +41,8 @@ object MapStart:
 
   /** The view the map opens on: the browser's last one under "last" (if it kept one), else the configured place. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def initial(cfg: MapStartConfig, stored: Option[Encoded]): (LatLon, MapSurface.Zoom) =
     val place = (LatLon(LatLon.Lat(cfg.lat.value), LatLon.Lon(cfg.lon.value)), MapSurface.Zoom(cfg.zoom.value))
     MapStartMode.parse(cfg.mode) match
@@ -43,6 +50,8 @@ object MapStart:
       case MapStartMode.Place => place
 
   /** Keep the map's view for the next visit (only where the map opens where it was left). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def remember(cfg: MapStartConfig, at: LatLon, zoom: MapSurface.Zoom): Unit =
     if MapStartMode.parse(cfg.mode) == MapStartMode.Last then
       val _ = Try(Store.Browser.put(StorageKey, encode(at, zoom).value))

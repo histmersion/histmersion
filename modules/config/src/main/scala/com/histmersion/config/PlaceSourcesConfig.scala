@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer's external sources (#1064): where the pinned GeoNames / Wikidata extracts and the LPF drop folder are
   * (empty = under the data directory, [[UserPaths.dataDir]]), the manifest that pins the extracts (relative to
@@ -11,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * GeoNames or Wikidata place ([[PlaceDating.EndOnly]]), and the kinds whose point-only GeoNames/Wikidata records are
   * not kept as places ([[Gazetteer.dropsPointArea]]) with the batch and time budget of their removal.
   */
+@movesTo(FeaturePlace.CataloguePlaces)
 final case class PlaceSourcesConfig(
     dir: PlaceSourcesConfig.Dir,
     lpfDir: PlaceSourcesConfig.LpfDir,
@@ -24,6 +27,7 @@ final case class PlaceSourcesConfig(
     pointAreaFixSeconds: PlaceSourcesConfig.PointAreaFixSeconds
 ) derives ConfigReader:
   /** `point-area-kinds` as a set ([[Gazetteer.dropsPointArea]]); empty keeps every record. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointAreaKindSet: Set[PlaceSourcesConfig.PointAreaKind] =
     Option(pointAreaKinds.value).toList
       .flatMap(_.split(",").toList)

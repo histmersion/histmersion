@@ -7,6 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.Years
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** ONE layer of points of one kind (docs/map-layers.md): its points in the map's one cluster layer, diffed by key on
   * every [[show]] — new ones fade in, gone ones leave their bubble at once and fade out where they were drawn alone,
@@ -40,6 +41,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     LatLon(lat, lon)
 
   /** Show `items` for `span` (remembered while the layer is off). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def show(items: Iterable[A], span: (Years.Astronomical, Years.Astronomical)): Unit =
     last = Some((items, span))
     if attached then
@@ -78,6 +80,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       if reshaped then set().refresh() else if restyled then set().recolour()
 
   /** A point's marker, as the cluster layer draws it alone. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(d: Dot, fadeIn: PointLayer.FadeIn): DomMarker =
     val a = d.item.asInstanceOf[A]
     val (w, h) = kind.box
@@ -104,6 +107,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     m
 
   /** Its row in a bubble's list chosen. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def open(d: Dot, row: dom.Element): Unit = kind.open(PointKind.PointKey(d.key.value), d.item.asInstanceOf[A], row)
 
 object PointLayer:

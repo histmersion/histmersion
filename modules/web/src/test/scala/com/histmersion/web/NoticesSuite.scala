@@ -5,10 +5,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.instance.UiNotices.{Board, Counter}
 import com.histmersion.api.instance.UiNotices
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the toolbar's notices: which window watches which board, which open windows are marked read and at
   * what, and what a button says.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NoticesSuite extends munit.FunSuite:
 
   private val t1Latest = Counter.Latest("2026-10-11T08:00:00.000000Z")
@@ -16,6 +18,7 @@ class NoticesSuite extends munit.FunSuite:
   private val t1Seen = Counter.Seen("2026-10-11T08:00:00.000000Z")
   private val t2Seen = Counter.Seen("2026-10-11T09:00:00.000000Z")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def c(
       key: Board.Wire,
       latest: Option[Counter.Latest],

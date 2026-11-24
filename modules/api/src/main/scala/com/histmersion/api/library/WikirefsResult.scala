@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class WikirefsResult(
     article: WikirefsResult.Article,
@@ -24,6 +25,7 @@ object WikirefsResult:
   type Url = Url.T
   object Url extends Newtype[String, Pure]
   type DoiCount = DoiCount.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object DoiCount extends Newtype[Int, Pure]
   type Dois = Dois.T
   object Dois extends Newtype[String, Pure]

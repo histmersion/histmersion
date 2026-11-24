@@ -33,15 +33,22 @@ import com.histmersion.api.library.{Citekey, Finding}
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge
   * rules add (the catalogue's matched places and periods). [[MergePlanner]] is the pure rest; [[MergePlans]] puts the
   * two together.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@atBoundary(BoundaryKind.Sql, "reads this collection's records for a merge")
 object MergeState:
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def load(
       es: BundleEntities,
       m: Bundle.Manifest,
@@ -156,6 +163,8 @@ object MergeState:
   /** The plan's issues with their geometries (hex EWKB from the planner) turned into GeoJSON, which the review screen
     * draws — one query for every geometry of the plan.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def withGeoJson(p: MergePlan)(using DbCon): MergePlan =
     val hexes: List[String] =
       p.issues
@@ -192,6 +201,8 @@ object MergeState:
         )
 
   /** The uids, among `uids`, of rows that exist here, in the tables of the kinds a line can refer to. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private[histmersion] def liveUids(uids: List[UUID], tables: List[TableName])(using DbCon): Set[UUID] =
     if uids.isEmpty || tables.isEmpty then Set.empty
     else
@@ -207,6 +218,7 @@ object MergeState:
     * from one pass over its blobs. Only bodies of pairs whose score they can change are asked for
     * ([[MergePlanner.sketchesWanted]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sketches(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256], size: MinHash.Size)(using
       DbCon
   ): Map[Bundle.Source.BodySha256, MinHash] =
@@ -230,6 +242,7 @@ object MergeState:
   /** The OCR bodies `wanted` names (by sha256), as text: this collection's from the database, the bundle's from one
     * pass over its blobs ([[MergePlanner.bodiesWanted]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bodies(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256])(using
       DbCon
   ): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
@@ -250,6 +263,8 @@ object MergeState:
       val there = wanted -- here.keySet
       here ++ (if there.isEmpty then Map.empty else blobTexts(bundle, there))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def blobTexts(
       bundle: ByteSource,
       wanted: Set[Bundle.Source.BodySha256]
@@ -270,6 +285,8 @@ object MergeState:
       loop(Map.empty)
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def bundleSketches(
       bundle: ByteSource,
       wanted: Set[Bundle.Source.BodySha256],

@@ -44,6 +44,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow, AcquireCheckService}
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the
@@ -57,6 +58,7 @@ import com.histmersion.domain.Creator
   *   - [[reserved]], [[snapshot]]: what a sweep may still ingest, and the status lines' counts and days;
   *   - [[repair]]: the one-shot move of the acquisition items a sweep created for legal open-access works.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class OaBacklog(
     cfg: => AgentsConfig,
     lib: => LibraryAgentsConfig,
@@ -69,6 +71,7 @@ final class OaBacklog(
 
   private def watch = lib.managers.watch
   private def managerDefaults = ManagerDefaultsViews.defaults(cfg.managers)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def watchDefaults = WatchManagerDefaults(
     WatchManagerDefaults.MaxRuns(watch.maxRuns.value),
     WatchManagerDefaults.AutoIngestPerDay(watch.autoIngestPerDay.value)
@@ -81,6 +84,8 @@ final class OaBacklog(
     * goal added), or a new entry of `managerId` — nothing when the corpus has it or this watcher settled an entry for
     * it before (a person skipped it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def add(managerId: ManagerInfo.Id, goal: Goal.Slug, w: OaWork)(using WritePermit)(using Creator.New): Placement =
     val doi = Doi.assume(w.doi.value)
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
@@ -169,6 +174,7 @@ final class OaBacklog(
   // ── what is left, what waits ───────────────────────────────────────────────────────────────────
 
   /** The watchers whose backlog drains (active, auto-ingest on) → what is left of their own allowance today. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ownLeft(now: Instant): Map[ManagerLight.Id, IngestBacklog.Lane.LeftToday] =
     val today = agents.managerStore
       .countEventsBy(ManagerEvent.Kind(Feed.Ingested), ManagerPolicy.dayStart(now))
@@ -189,6 +195,7 @@ final class OaBacklog(
   /** What a sweep of watcher `managerId` reserves for the backlog: its own pending backlog items, and every pending
     * backlog item of a watcher that drains (the shared cap's).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reserved(managerId: ManagerLight.Id): (IngestBacklog.Lane.Backlog, IngestBacklog.TotalBacklog) =
     val counts = agents.managerStore.backlogCounts().map((k, v) => ManagerLight.Id(k.value) -> (v._1.value, v._2.value))
     val draining = agents.managerStore
@@ -205,6 +212,7 @@ final class OaBacklog(
     )
 
   /** The backlog per watcher and in all, with the days to drain it ([[OaBacklog.Snapshot]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def snapshot(
       now: Instant = Instant.now(agents.clock),
       extra: Map[ManagerLight.Id, IngestBacklog.Lane.Backlog] = Map.empty
@@ -257,6 +265,7 @@ final class OaBacklog(
     * tried again after the backoff (the acquisition list after `max-failures`). One worklog line per tick that did
     * something.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drain(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val pending = agents.managerStore.backlogPending()
     if pending.isEmpty then Nil
@@ -305,6 +314,8 @@ final class OaBacklog(
     case Retried
     case Lost
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def one(i: ManagerItem, holderGoal: Option[Goal.Slug], now: Instant)(using
       WritePermit
   )(using Creator.New): Drained =
@@ -433,6 +444,8 @@ final class OaBacklog(
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
     * every goal. None when the list refused it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def acquireOnce(goals: List[Goal.Slug], doi: Doi, w: OaWork)(using
       WritePermit
   )(using Creator.New): Option[Queue.QueueItem.Id] =
@@ -504,6 +517,8 @@ final class OaBacklog(
     * stay. Nothing a person added is touched. `dryRun` changes nothing. Each moved item is a manager event; the whole a
     * worklog line.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def repair(in: RepairRequest)(using WritePermit)(using Creator.New): RepairResult =
     val dryRun = in.dryRun.value
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
@@ -628,6 +643,7 @@ final class OaBacklog(
   /** A moved work's backlog entry: an existing open one of any watcher, else a new one of `managerId`; None when
     * `managerId` settled one for it before (a person's skip is not undone).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def addMoved(managerId: ManagerInfo.Id, w: OaWork)(using WritePermit): Option[ManagerItem.Id] =
     val doi = Doi.assume(w.doi.value)
     agents.managerStore.backlogOpenFor(doi).map(_.id).orElse {
@@ -644,6 +660,8 @@ final class OaBacklog(
       Option.when(isNew)(id)
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def joinGoal(itemId: ManagerItem.Id, goal: Goal.Slug)(using WritePermit): Unit =
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
     agents.managerStore.item(itemId).foreach { i =>
@@ -657,6 +675,7 @@ final class OaBacklog(
       then scribe.info(s"backlog item $itemId settled before goal $goal could join it")
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def removeAcquire(item: SweepAcquireItem.Item, goals: List[Goal.Slug])(using WritePermit): Unit =
     site.workLists.removeItem(QueueItemId(item.value))
     goals.foreach(g =>

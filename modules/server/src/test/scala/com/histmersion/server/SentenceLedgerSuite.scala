@@ -18,8 +18,8 @@ import com.histmersion.util.problem.Text.sentence
   * row whose place is gone is `removed`. The file is regenerated with `HISTMERSION_UPDATE_ARCHITECTURE=1 sbt
   * 'server/testOnly *SentenceLedgerSuite'`; until then any new place, changed sentence or dropped place fails here.
   *
-  * The places come from `tools/refactor/SentenceSites.scala`, which the guideline inventory's run also runs
-  * (`guideline-ratchet.conf`). A place is keyed by the SemanticDB symbol of the definition around it and its rank there
+  * The places come from `tools/refactor/SentenceSites.scala`, run with ProblemSymbols by [[LedgerSites]]
+  * (`ledger-sites.conf`). A place is keyed by the SemanticDB symbol of the definition around it and its rank there
   * (`<symbol>#<n>`): the key survives moved lines and moved files; a renamed definition keeps its rows when its places
   * are the same.
   */
@@ -29,7 +29,7 @@ class SentenceLedgerSuite extends munit.FunSuite:
   override val munitTimeout = Duration(20, "min")
 
   test("every place that builds a problem has its row, and every row says whether its sentence is the same"):
-    val _ = GuidelineRatchetSuite.Inventory.findings
+    LedgerSites.ensure()
     val sites = Site.parse(Files.readAllLines(SitesFile, UTF_8).asScala.toList)
     val listed =
       if Files.isRegularFile(LedgerFile) then Row.parse(Files.readAllLines(LedgerFile, UTF_8).asScala.toList) else Nil

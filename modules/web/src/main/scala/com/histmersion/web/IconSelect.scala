@@ -7,6 +7,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** THE menu with icons (a native `<select>` cannot show one): a button showing the current choice — its icon and label
   * — that opens a listbox of the options, each with the icon the map draws for it (an event kind's square badge, a site
@@ -17,6 +18,7 @@ import com.histmersion.api.Html
   * under the button, above it when there is no room, capped and scrolling when long. The value is a [[UiState]] field,
   * so the menu, the URL and the map cannot disagree.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object IconSelect:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
@@ -45,6 +47,7 @@ object IconSelect:
       given Display[T] = Display(_.value)
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def typeAhead(opts: List[Opt], from: Int, prefix: String): Option[Int] =
     val p = prefix.toLowerCase
     if p.isEmpty || opts.isEmpty then None
@@ -73,6 +76,9 @@ object IconSelect:
   /** `disabled`: the menu stays where it is but cannot be opened (its layer is off), and its title says `why` — a
     * control that comes and goes moves everything after it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def apply(
       name: Name,
       field: Field[Option[String]],

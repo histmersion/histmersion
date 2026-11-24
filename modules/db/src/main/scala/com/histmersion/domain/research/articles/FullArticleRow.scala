@@ -7,6 +7,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 final private[articles] case class FullArticleRow(
@@ -25,8 +26,10 @@ final private[articles] case class FullArticleRow(
 ) derives DbCodec
 
 object FullArticleRow:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Slug = domain.research.Slug
   val Slug: domain.research.Slug.type = domain.research.Slug
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   export Article.Kind

@@ -8,16 +8,19 @@ import com.histmersion.api.catalogue.CatalogProviderInfo
 import com.histmersion.plugin.*
 
 import scala.collection.immutable.ListMap
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own event catalogues — first-party plugins (`events-gvp`, `events-noaa`, `events-wikidata`), each
   * enabled by default and switched off by `histmersion.plugins.events-<catalogue>.enabled = false`, its settings
   * Histmersion's own `events.<catalogue>.*` — by the names they are imported under, which a plugin's catalogue may not
   * take. The records of one switched off since are still on the map.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object BuiltinCatalogues:
 
   /** A first-party catalogue: its plugin and the name it registers. */
   final case class Entry(plugin: util.plugins.Plugin.Id, name: CatalogProviderInfo.Id):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def title: String = CatalogProvider.info(name).fold(name.value)(_.title.value)
 
   val entries: List[Entry] = List(
@@ -40,6 +43,8 @@ object BuiltinCatalogues:
   val reserved: Set[CatalogProviderInfo.Id] = CatalogProvider.all.toSet ++ aliases.keySet
 
   /** Pure: the catalogue an import names — an alias resolved, else as given (lower case). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def canonical(asked: CatalogProviderInfo.Id): CatalogProviderInfo.Id =
     val s = CatalogProviderInfo.Id(asked.value.trim.toLowerCase(java.util.Locale.ROOT))
     aliases.getOrElse(s, s)
@@ -49,6 +54,8 @@ object BuiltinCatalogues:
     CatalogProvider.all.filter(registered.contains) ++ registered.filterNot(CatalogProvider.all.contains)
 
   /** The catalogue `asked` names among the registered ones, or why none: unknown, or its plugin off. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(
       asked: CatalogProviderInfo.Id,
       catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]
@@ -80,6 +87,8 @@ object BuiltinCatalogues:
   /** A catalogue's terms as the card and the list show them: a registered one's, else a first-party one's (records of a
     * catalogue switched off since are still on the map).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def info(
       name: CatalogProviderInfo.Id,
       catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]

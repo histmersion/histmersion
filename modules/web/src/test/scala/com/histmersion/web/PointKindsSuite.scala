@@ -22,11 +22,14 @@ import com.histmersion.api.catalogue.Event
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.catalogue.SiteTile
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions run over every
   * one of them, so they cannot drift apart — the marker's shape, glyph, fill and accessible name, what a bubble counts,
   * its row in a bubble's list. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class PointKindsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
@@ -36,6 +39,7 @@ class PointKindsSuite extends munit.FunSuite:
   /** One sample of each kind, of a KNOWN type, and one of an unknown type where a kind has types. */
   final private case class Sample[A](kind: PointKind[A], known: A, unknown: Option[A])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val finding = GeoHit(
     Citekey("zz2020_x"),
     GeoHit.Title("Zz paper"),
@@ -48,6 +52,7 @@ class PointKindsSuite extends munit.FunSuite:
     Some(Confidence.High),
     sourceKind = Some(GeoHit.SourceKind(Source.Kinds.Paper))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val site = SitePoint(
     Some(SitePoint.Id("zz_fort")),
     SitePoint.Label("Zz fort"),

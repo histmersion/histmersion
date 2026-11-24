@@ -12,15 +12,18 @@ import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite, Slug
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the review ledgers answer, the same on the database and in memory: a ledger written and read back, none for an
   * article never reviewed, refused for an article that does not exist, passed once no MAJOR is open, following its
   * article's rename and gone with its delete.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
 
   private val Me = Caller.Local
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def article(slug: Slug): Article =
     Article(
       Article.Slug(slug.value),
@@ -36,6 +39,7 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
       Map.empty
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(id: Finding.Id, severity: Severity) =
     Finding(
       id,

@@ -22,6 +22,7 @@ import com.histmersion.web.marks.SavedViews
 import com.histmersion.web.marks.NoteEditor
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.ui.Flash
+import com.histmersion.lint.{LintRule, tolerated}
 
 object App:
   /** Drops the answers to a superseded load ([[Latest]]). */
@@ -36,8 +37,12 @@ object App:
   private var cachedNonTimeKey: String = ""
 
   /** How many findings are kept for time-only redraws ([[Diagnostics]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keptFindings: BoundedCache.Stats.Entries = BoundedCache.Stats.Entries(cachedFindings.length)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def init(): Unit =
     dom.console.log("Histmersion: init")
     // the kept key goes with the first request: from a network the server does not trust, it answers nothing without
@@ -146,6 +151,7 @@ object App:
     }
 
   /** The pages the filter panel is shown on: Explore and Library's two lists. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def filtersShown(r: Route): Boolean = r match
     case Route.Explore    => true
     case Route.Library(s) => s.isList
@@ -158,6 +164,8 @@ object App:
   private def statusElement: HtmlElement =
     span(idAttr := "status", child.text <-- statusVar.signal)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadTagline(): Unit =
     ApiClient.sources(Filter(limit = Filter.Limit(1))).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
@@ -166,6 +174,7 @@ object App:
       }
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def paramsKey(): String =
     val f = UiState.toFilter()
     js.JSON.stringify(
@@ -186,6 +195,7 @@ object App:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def nonTimeParamsKey(): String =
     val f = UiState.toFilter()
     js.JSON.stringify(
@@ -204,11 +214,14 @@ object App:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def quickRender(): Unit =
     val a = Years.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))
     val b = Years.Astronomical(UiState.to.now().getOrElse(config.time.defaultTo.value))
     quickRenderRange(a, b)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def quickRenderRange(a: Years.Astronomical, b: Years.Astronomical): Unit =
     if cachedFindings.nonEmpty then
       val filtered = cachedFindings.filter { pt =>
@@ -216,6 +229,7 @@ object App:
       }
       MapView.render(filtered, (a, b))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def quickRenderIfCached(from: Years.Astronomical, to: Years.Astronomical): Unit =
     quickRenderRange(from, to)
 
@@ -223,6 +237,8 @@ object App:
     * windows: the findings, the legend's years, the tiled layers and the boundaries all of the whole span, as before it
     * played (with no findings held too: the layers still follow the span).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restoreSpan(from: Years.Astronomical, to: Years.Astronomical): Unit =
     MapView.render(
       cachedFindings.filter(pt =>
@@ -231,6 +247,7 @@ object App:
       (from, to)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def schedule(): Unit =
     val key = paramsKey()
     if lastParams.contains(key) then ()
@@ -249,6 +266,9 @@ object App:
           UiState.reloadDelay(UiState.ReloadDelayNormalMs(config.debounce.reloadMs.value)).value
         )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def load(): Unit =
     val mine = latest.start()
 

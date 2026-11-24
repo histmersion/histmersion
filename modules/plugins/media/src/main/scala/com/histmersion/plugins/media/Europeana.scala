@@ -12,6 +12,8 @@ import com.histmersion.plugin.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Europeana APIs (Search, Record and Thumbnail), with a user's personal key sent as the `X-Api-Key` header
   * (Europeana's preferred form; the `wskey` parameter is deprecated). Search:
@@ -24,6 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * keyless Thumbnail API v3 (400 px stored, 200 px the thumbnail; the media file's URL hashed with MD5, as the API
   * documents); the provider's file (`edmIsShownBy`) is recorded as the original. Pure.
   */
+@atBoundary(BoundaryKind.Json, "reads the europeana collection's JSON answers into media records")
 object Europeana:
 
   /** The plugin's id: what its problems name. */
@@ -69,6 +72,8 @@ object Europeana:
   /** Pure: the query — the place as Europeana's aggregated `where` field, without the excluded aggregators (`PROVIDER`)
     * and types (`proxy_dc_type`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def query(name: MediaPlace.Label, ex: Exclusions = Exclusions.none): CollectionQuery.Text =
     CollectionQuery.Text(
       s"where:(${phrase(name.value)})" + anyOf("PROVIDER", ex.providers.map(_.value)) + anyOf(
@@ -77,6 +82,8 @@ object Europeana:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       api: CollectionSettings.ApiUrl,
       name: MediaPlace.Label,
@@ -91,6 +98,7 @@ object Europeana:
   private def letters(s: String) = s.toLowerCase(Locale.ROOT).filter(_.isLetterOrDigit)
 
   /** Pure: why a record's aggregator or institution excludes it, or `None`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def excludedBy(
       providers: List[Exclusions.Providers],
       dataProviders: List[Exclusions.DataProviders],
@@ -109,16 +117,21 @@ object Europeana:
       )
 
   /** Pure: the first of a record's `dc:type` values that is excluded, or `None`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def excludedType(types: List[Exclusions.Types], ex: Exclusions): Option[Exclusions.Types] =
     val banned = ex.types.map(t => letters(t.value)).filter(_.nonEmpty).toSet
     types.find(t => banned(letters(t.value)))
 
   /** Pure: the Record API URL of a Europeana id (`/2058611/_kimbl_3_1`), each segment encoded. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def recordUrl(api: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.Url =
     val path = id.value.split("/").toList.filter(_.nonEmpty).map(s => s.enc.replace("+", "%20")).mkString("/")
     Plugin.Http.Url(s"${api.value.stripSuffix("/")}/record/v2/$path.json")
 
   /** Pure: the Thumbnail API v3 URL of a media file at `width` (200 or 400). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def thumbnailUrl(api: CollectionSettings.ApiUrl, media: Source, width: MediaRendition.Width): Plugin.Http.Url =
     val md5 =
       java.security.MessageDigest
@@ -131,6 +144,8 @@ object Europeana:
   /** Pure: the media URL a search's `edmPreview` (a Thumbnail API v2 URL) was made from — its `uri` parameter — or
     * `None` when it is not one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def previewSource(preview: Preview): Option[Source] =
     scala.util
       .Try(java.net.URI.create(preview.value.trim))
@@ -146,6 +161,8 @@ object Europeana:
       .map(Source(_))
 
   /** Pure: a licence's short name for the credit line (`CC-BY-SA-4.0` → `CC BY-SA 4.0`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def shortName(l: Licence.Read): Licence = l.family.value match
     case Licence.Read.Cc0          => Licence("CC0")
     case Licence.Read.PublicDomain => Licence("Public Domain Mark")
@@ -165,6 +182,7 @@ object Europeana:
     private def errorOf: Option[String] =
       Option(List(c.str("error"), c.str("message")).flatten.distinct.mkString(": ")).filter(_.nonEmpty)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def langValues(field: Field): List[String] =
       def ofJson(j: Json): List[String] =
         j.asString.toList ++ j.asArray.toList.flatten.flatMap(ofJson) ++ j.asObject.toList.flatMap { o =>
@@ -193,6 +211,7 @@ object Europeana:
 
   /** Pure: one search item; one of an excluded aggregator or institution ([[Exclusions]]) is withheld with that reason.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(
       json: Json,
       api: CollectionSettings.ApiUrl,
@@ -266,6 +285,8 @@ object Europeana:
     * (`webResourceEdmRights`), else from the provider's aggregation (`edmRights`): a missing or different licence
     * refuses it, and so does an excluded `dc:type` of any of its proxies.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def item(
       json: Json,
       rec: MediaItem,

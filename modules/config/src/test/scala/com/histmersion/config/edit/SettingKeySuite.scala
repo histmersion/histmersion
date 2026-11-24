@@ -2,7 +2,9 @@ package com.histmersion
 package config.edit
 
 import com.histmersion.config.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SettingKeySuite extends munit.FunSuite:
 
   test("a key with or without histmersion. is the same key"):

@@ -20,10 +20,13 @@ import com.histmersion.{Latitude, Longitude}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Event
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An event as the in-memory catalogue keeps it: the columns of its `events` row, with its datings, edges and
   * participants. `geometry` is its own GeoJSON geometry; `attested` whether an attestation names it (its tier).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class HeldEvent(
     id: HeldEvent.Id,
     label: HeldEvent.Label,
@@ -52,9 +55,14 @@ final case class HeldEvent(
   /** Its outer span: the earliest and the latest year it may cover. */
   def outer: Option[(Year, Year)] = timeSpan.outer
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uncertainty: Option[EventPrecision.Uncertainty] =
     EventPrecision.uncertainty(timeSpan, plusMinus.map(p => EventSummary.PlusMinus(p.value)))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def summary(attested: Boolean): EventSummary =
     EventSummary(
       Event.Id(id.value),
@@ -95,6 +103,7 @@ object HeldEvent:
   export BEventRow.DatingMethod
 
   /** The `type` of a GeoJSON geometry, upper case. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def typeOf(geojson: EventDetailRow.Geometry): Option[EventRow.GeometryType] =
     RawJson
       .parse(geojson.value)
@@ -103,6 +112,7 @@ object HeldEvent:
       .map(t => EventRow.GeometryType(t.toUpperCase))
 
   /** The point of a GeoJSON `Point`: (lat, lon). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointOf(geojson: EventDetailRow.Geometry): Option[(Latitude, Longitude)] =
     RawJson.parse(geojson.value).toOption.flatMap { j =>
       val c = j.cursor

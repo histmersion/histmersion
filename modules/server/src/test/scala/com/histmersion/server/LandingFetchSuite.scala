@@ -13,12 +13,14 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.acquisition.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Repository landing pages in the OA chain (#1580), against a fake upstream answering from records and pages captured
   * on 2026-10-16 (`acquire/landing/`; the publisher, journal and challenge pages are synthetic and say so) — no
   * network. Zenodo by its API; Apollo (DSpace 8) and TOBIAS-lib (DSpace 6, a DataCite DOI) by `citation_pdf_url`; a
   * publisher's page never read for one.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LandingFetchSuite extends munit.FunSuite:
 
   private def fixture(name: String) = scala.io.Source.fromResource(s"acquire/landing/$name").mkString
@@ -28,16 +30,21 @@ class LandingFetchSuite extends munit.FunSuite:
   /** Answers by URL, records every request. */
   final private class FakeUpstream(routes: PartialFunction[String, Either[String, Array[Byte]]]) extends Http:
     var asked: List[String] = Nil // a test double: the simplest record of calls
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def answer(url: Http.Url): Either[Problem, Array[Byte]] =
       asked = asked :+ url.value
       routes
         .applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404"))
         .left
         .map(why => Problem.Unclassified(Legacy.Text(why)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(HttpAnswer.Body(_))
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b, "UTF-8")))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       text(url, headers).flatMap(s =>
         RawJson
@@ -50,6 +57,7 @@ class LandingFetchSuite extends munit.FunSuite:
 
   private def bytes(s: String) = Right(s.getBytes("UTF-8"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openalexOf(c: AcquireConfig, doi: Doi) = s"${c.openalex.url}/works/https://doi.org/$doi"
 
   private def fetch(c: AcquireConfig, http: Http, doi: Doi, settings: String = "") =

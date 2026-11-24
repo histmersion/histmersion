@@ -10,8 +10,10 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where an import writes, once the citekey is known. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 enum ImportTarget:
   /** No record has this citekey yet. */
   case Create
@@ -37,12 +39,14 @@ object ImportTarget:
   private val VolumeText = """(?i)\b(?:volume\s*|vol\.\s*|vol\s+)([0-9]+|[ivxlc]+)\b""".r
 
   /** The volume a title names — `Volume I`, `Vol. 2`, `volume 3` — so two volumes of one work get two citekeys. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def volumeOf(title: Title): Option[Volume] =
     VolumeText
       .findFirstMatchIn(title.value)
       .flatMap(m => m.group(1).toIntOption.map(n => Volume(n)).orElse(roman(RomanNumeral(m.group(1)))))
       .filter(_.value > 0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def roman(s: RomanNumeral): Option[Volume] =
     val v = Map('i' -> 1, 'v' -> 5, 'x' -> 10, 'l' -> 50, 'c' -> 100)
     val ds = s.value.toLowerCase.toList.map(v)
@@ -51,6 +55,9 @@ object ImportTarget:
   /** The citekey an import generates: the library's convention plus `_v<n>` for a numbered volume. A key the library
     * would refuse is a problem, not a record.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def citekeyFor(item: CollectionItem): Either[Problem, Citekey] =
     val title = item.title.fold("")(_.value)
     val generated = Acquire
@@ -77,6 +84,8 @@ object ImportTarget:
     * @param existing
     *   `None` when no record has `ck`; otherwise that record's Calibre id
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def of(ck: Citekey, id: Id, explicit: OfExplicit, existing: Option[Option[Previous]]): Either[Problem, ImportTarget] =
     existing match
       case None                                           => Right(Create)
@@ -97,5 +106,6 @@ object ImportTarget:
   /** The summary an import writes: Calibre's description only fills an empty one, so a re-import never replaces a
     * summary an agent compiled. `None` leaves the record's summary alone.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(fromCollection: Option[Source.Summary], current: Option[Source.Summary]): Option[Source.Summary] =
     if current.exists(_.value.trim.nonEmpty) then None else fromCollection

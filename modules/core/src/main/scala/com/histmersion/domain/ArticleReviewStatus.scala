@@ -7,11 +7,15 @@ import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
 import com.histmersion.domain.automation.ItemStatus
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where an article stands with the review panel, derived from what the review manager and the review ledger record
   * about it — pure; the server reads the facts (one cheap query for a whole list page, the ledger itself for one
   * article's history).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.ResearchArticlesReview)
 object ArticleReviewStatus:
   type OutcomeSuffix = OutcomeSuffix.T
   object OutcomeSuffix extends Newtype[String, Pure]
@@ -72,6 +76,8 @@ object ArticleReviewStatus:
   /** The state, from the item first (a run going on, queued, stopped), then the ledger's open MAJOR findings. A
     * cancelled item counts as no item: what the ledger says stands.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def badge(f: Facts): ReviewBadge =
     val item = f.item.filter(_.status != ItemStatus.Cancelled)
     val counts = f.ledger.getOrElse(
@@ -138,10 +144,14 @@ object ArticleReviewStatus:
       f.round.filter(_ => state == ReviewState.InReview)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def soFar(c: LedgerFacts): Progress =
     if c.findings.value == 0 then Progress("")
     else Progress(s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor.")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def majorsLine(c: LedgerFacts): StatusLine =
     StatusLine(s"${Plural.count(Plural.CountN(c.openMajors.value.toLong), Plural.CountSingular("MAJOR finding"))} ${
         if c.openMajors.value == 1 then "is" else "are"
@@ -150,6 +160,7 @@ object ArticleReviewStatus:
   /** `: <outcome>.` after a sentence still open, or ` <lead><outcome>.` after a finished one; `none` when the manager
     * recorded no outcome. The manager's own leading `stopped:`/`failed:` is dropped.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def outcomeSuffix(outcome: Option[ItemFacts.Outcome], lead: String = "", none: String = "."): OutcomeSuffix =
     OutcomeSuffix(
       outcome
@@ -164,6 +175,9 @@ object ArticleReviewStatus:
     * (`runStarts`, run id → UTC time), a run whose record is gone before those, and otherwise in the order the ledger
     * first names them (it only ever appends).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def runOrder(l: Ledger, runStarts: Map[Run.Id, ArticleReviewStatus.RunStart]): List[Run.Id] =
     val named = l.entries.flatMap(e => e.run :: e.closed.map(_.run).toList).filter(_.value.nonEmpty).distinct
     named.zipWithIndex.sortBy((run, i) => (runStarts.get(run).map(_.value), i)).map(_._1)
@@ -171,6 +185,9 @@ object ArticleReviewStatus:
   /** The findings grouped by the pass that first raised them, in time order: run by run ([[runOrder]]), pass by pass,
     * each with what became of it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def history(l: Ledger, runStarts: Map[Run.Id, ArticleReviewStatus.RunStart]): List[ReviewRound] =
     val order = runOrder(l, runStarts)
     val number = order.zipWithIndex.map((r, i) => r -> (i + 1)).toMap
@@ -188,6 +205,8 @@ object ArticleReviewStatus:
         )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(e: Entry, number: Map[Run.Id, Int]): ReviewFinding =
     val f = e.finding
     ReviewFinding(

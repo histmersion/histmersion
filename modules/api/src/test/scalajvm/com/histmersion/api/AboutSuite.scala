@@ -10,6 +10,8 @@ import com.histmersion.api.jobs.{JobCounts, JobState}
 import com.histmersion.api.library.CorrespondingSource
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.backup.Backup
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AboutSuite extends munit.FunSuite:
 
   test("#718: a converter text maps to ok / busy / down, and wording never seen is unknown, not an error"):

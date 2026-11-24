@@ -51,6 +51,8 @@ import java.time.Clock
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait EventService:
   /** The events `selection` selects, by their earliest year then label, one page of them. */
   def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList
@@ -95,6 +97,7 @@ object EventService:
   def apply(db: Transactor, related: EventSourceFilter, clock: Clock): EventService =
     Implementation(db, related, clock)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def missing(id: Event.Id) =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id")),
@@ -106,9 +109,12 @@ object EventService:
       db.read(EventRepo.list(selection.sql(related), limit, offset))
     def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo] =
       db.read(EventRepo.geoOf(ids.map(i => BEventRow.Id(i.value)))).map((k, v) => Event.Id.assume(k.value) -> v)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Event.Id): Option[EventEntry] = db.read(EventRepo.get(BEventRow.Id(id.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
       db.read(EventRepo.tierAndNames(BEventRow.Id(id.value)))
         .map((tier, names, catalogue) =>
@@ -119,18 +125,23 @@ object EventService:
           )
         )
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def put(id: Event.Id, in: EventPut)(using WritePermit)(using Creator.New): Unit =
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         EventRepo.put(BEventRow.Id(id.value), in)
     def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       db.write(EventRepo.patch(BEventRow.Id(id.value), p))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit] =
       db.write(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def renamedTo(id: Event.Id): Option[Event.Id] =
       db.read(EventRepo.renamedTo(BEventRow.Id(id.value))).map(i => Event.Id.assume(i.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: Event.Id)(using WritePermit): Boolean = db.write(EventRepo.delete(BEventRow.Id(id.value)))
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone: no place is stored, so an
@@ -142,6 +153,7 @@ object EventService:
       selectedSources: Filter => Option[Set[Citekey]] = _ => None
   ) extends EventService:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def attested(s: CatalogueState, id: Event.Id): Boolean =
       s.attestations.exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
 
@@ -152,6 +164,7 @@ object EventService:
       field.exists(_.toLowerCase(Locale.ROOT).contains(t.toLowerCase(Locale.ROOT)))
 
     /** The part of the selection the library answers in the database: its sources, its period, its title. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def related(s: CatalogueState, e: HeldEvent, f: Filter): Option[Boolean] =
       val sources = selectedSources(f.sourceSet.modify(_.period).setTo(None))
       val title = f.title.map(_.value.trim).filter(_.nonEmpty)
@@ -166,6 +179,8 @@ object EventService:
         )
         Some(bySource && overlaps(e, f.period) && title.forall(t => containsText(Some(e.label.value), t)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     private def selects(s: CatalogueState, sel: EventSelection)(e: HeldEvent): Boolean =
       def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
       val tier = e.summary(attested(s, e.id)).tier.value
@@ -190,13 +205,16 @@ object EventService:
       clean(sel.historicity.map(_.value)).map(_.toLowerCase).forall(_ == e.historicity.value) &&
       sel.placeId.forall(p => e.placeId.contains(p))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ordered(es: Vector[HeldEvent]): Vector[HeldEvent] =
       es.sortBy(e =>
         (e.timeSpan.notBefore.orElse(e.timeSpan.beginBy).fold((1, 0L))(y => (0, y.value)), e.label.value, e.id)
       )
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     private def summaryOf(s: CatalogueState, e: HeldEvent): EventSummary = e.summary(attested(s, e.id))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =
       val s = state.get
       val all = ordered(s.events.filter(selects(s, selection)))
@@ -207,6 +225,7 @@ object EventService:
         UnreadPage.Offset(from)
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def drawn(s: CatalogueState, e: HeldEvent): Option[EventGeo] =
       e.geometry.flatMap(HeldEvent.pointOf).map { (lat, lon) =>
         val sum = summaryOf(s, e)
@@ -238,6 +257,7 @@ object EventService:
 
     private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_ <= EventPrecision.ApproximateUpTo)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
       val s = state.get
       val listed = ordered(s.events.filter(selects(s, selection)))
@@ -253,6 +273,7 @@ object EventService:
       val s = state.get
       s.events.filter(e => ids.contains(e.id) && preciseEnough(e)).flatMap(e => drawn(s, e).map(e.id -> _)).toMap
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Event.Id): Option[EventEntry] =
       val s = state.get
       s.events.find(_.id == id).map { e =>
@@ -278,12 +299,14 @@ object EventService:
         )
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
       val s = state.get
       s.events
         .find(_.id == id)
         .map(e => (summaryOf(s, e).tier, e.names.map(n => EventEntry.Names(n.value)), e.catalogue))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] =
       state.get.catalogueRecords
         .filter(_._1 == id)
@@ -306,6 +329,7 @@ object EventService:
           )
         }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       RawJson.parse(geojson.value) match
         case Left(e)  => Some(geometryUnreadable(External.Reported.of(e)))
@@ -327,6 +351,7 @@ object EventService:
       )
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def withCorrections(s: CatalogueState, id: Event.Id, fields: Map[String, Json]): CatalogueState =
       val upstream = for
         e <- s.events.find(_.id == id)
@@ -348,6 +373,7 @@ object EventService:
       }
 
     /** One field's correction recorded: none when the person's value is the catalogue's. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def corrected(
         s: CatalogueState,
         provider: HeldEvent.Catalogue,
@@ -378,6 +404,8 @@ object EventService:
           .modify(_.lastCorrectionId)
           .setTo(CatalogueState.LastCorrectionId(n))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def put(id: Event.Id, in: EventPut)(using WritePermit)(using Creator.New): Unit =
       val _ = state.updateAndGet { s =>
         val before = s.events.find(_.id == id)
@@ -412,6 +440,8 @@ object EventService:
         withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       if !state.get.events.exists(_.id == id) then Left(missing(id))
       else
@@ -469,6 +499,8 @@ object EventService:
         }
         Right(())
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit] =
       val (oldId, newId) = (from, to)
       val s = state.get
@@ -534,11 +566,13 @@ object EventService:
         }
         Right(())
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def renamedTo(id: Event.Id): Option[Event.Id] =
       val s = state.get
       if s.events.exists(_.id == id) then None
       else s.eventAliases.get(CatalogueState.EventAliasesKey(id.value)).map(v => Event.Id.assume(v.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: Event.Id)(using WritePermit): Boolean =
       val had = state.get.events.exists(_.id == id)
       val _ = state.updateAndGet(

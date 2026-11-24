@@ -8,6 +8,7 @@ import com.histmersion.config.DbConfig
 import java.sql.Connection
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One server per database: a session-level advisory lock, held on a connection of its own (never a pooled one, which
   * the pool may close and so release it) for as long as the server runs on the database. A second server finds it held
@@ -82,6 +83,7 @@ object InstanceLock:
     finally st.close()
 
   /** The session that holds the lock on `c`'s database: its name, address, process and connection time. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def holderOf(c: Connection): Problem.Raw =
     val st = c.prepareStatement(
       """SELECT coalesce(nullif(a.application_name, ''), 'a session with no name') || ', Postgres session ' || a.pid ||

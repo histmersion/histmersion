@@ -25,10 +25,14 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.StoredEvent
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.CatalogProviderInfo
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1449, the host's pure half: the kind taxonomy, the thresholds, and the merge of records into one event per thing.
   * The catalogues' own answers are their plugins' suites'.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class EventCatalogSuite extends munit.FunSuite:
 
   // ── taxonomy ────────────────────────────────────────────────────────────────────────────────
@@ -194,6 +198,7 @@ class EventCatalogSuite extends munit.FunSuite:
   // ── merging ─────────────────────────────────────────────────────────────────────────────────
 
   private val tol = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       p: CatalogRecord.Provider,
       id: CatalogRecord.ProviderId,

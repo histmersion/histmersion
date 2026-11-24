@@ -8,10 +8,12 @@ import com.histmersion.api.automation.ListFilters
 import io.github.iltotore.iron.constraint.any.Pure
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
   * the lists match any of their values.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class ApprovalQuery(
     state: Option[ApprovalState] = None,
     kinds: List[ApprovalKind] = Nil,

@@ -9,6 +9,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one bar at the top of every page: the logo's place, the four places (Explore · Library · Research · Settings) as
   * labelled links, one search field, what the research agents are doing, how many of their proposals wait for a person
@@ -26,6 +27,9 @@ object TopBar:
 
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def element(ui: UiConfig, host: Host = Host.App): HtmlElement =
     val inApp = host == Host.App
     val here: Signal[PlaceTab] = host match
@@ -71,12 +75,14 @@ object TopBar:
   /** A link to a page: in the app it moves without a reload on a plain click; on a standalone page it is an ordinary
     * link (the web UI loads there).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def link(r: Route, inApp: Boolean, mods: Modifier[HtmlElement]*): HtmlElement =
     if inApp then RouteLink(r, mods*) else a(href := r.path, mods)
 
   /** The search field: the full-text filter every list and the map follow. Typing on Explore or in Library filters at
     * once; Enter anywhere else shows the results in Library. `/` puts the cursor in it from anywhere on the page.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def search(inApp: Boolean): HtmlElement =
     div(
       cls := "top-search",
@@ -127,12 +133,15 @@ object TopBar:
     )
 
   /** The pages whose results follow the search as it is typed (the map and its lists, Library's lists). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def showsResults(r: Route): Option[Route] = r match
     case Route.Explore                                                   => Some(r)
     case Route.Library(LibrarySection.Sources | LibrarySection.Articles) => Some(r)
     case _                                                               => None
 
   /** What the agents are doing, linked to their activity; nothing where the server runs no agents. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def agentsPill(inApp: Boolean): Modifier[HtmlElement] =
     child.maybe <-- Notices.agents.map(_.map { g =>
       link(
@@ -148,6 +157,8 @@ object TopBar:
     })
 
   /** The only standing notice: the proposals that wait for a person, shown while there is one. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def decisionsPill(inApp: Boolean): Modifier[HtmlElement] =
     child.maybe <-- Notices
       .counter(UiNotices.Board.Approvals)

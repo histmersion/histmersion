@@ -6,21 +6,30 @@ import com.histmersion.api.automation.Creation
 
 object EventsMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[api] def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def eventLine(e: EventSummary): String =
     val ts = timeSpan(e.timeSpan)
     val ck = e.citekey.map(c => s" [[$c]]").getOrElse("")
     val prec = EventPrecision.label(e.precision).fold("")(l => s" · $l")
     (s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventList(result: EventList): String =
     OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine).value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def eventScale(e: EventSummary): String =
     (s"${e.scale} (${if (e.scaleStated) == EventSummary.ScaleStated(true) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def event(d: EventCard, pictures: List[String] = Nil): String =
     val e = d.event
     val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"

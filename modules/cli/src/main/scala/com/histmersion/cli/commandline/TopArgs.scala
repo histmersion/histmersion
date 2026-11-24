@@ -34,8 +34,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[Cli]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion top`: declares its options, parses them into typed commands")
 object TopArgs:
   object VersionEntry extends CommandLine.Entry:
     val name = "version"
@@ -180,6 +183,7 @@ object TopArgs:
     private val dir_ = arg[String]("dir", required = false)
     private val force_ = flag("force", "Overwrite rows newer than the files")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(Cli.TopCommand.Seed(dir_.getOrElse(""), force_.getOrElse(false)))
 
   final private class LeafReindex()
@@ -197,11 +201,13 @@ object TopArgs:
     private val q_ = arg[String]("query", required = false)
     private val group_ =
       value[String]("group", s"Group the results into a tree instead of listing them: ${Cli.GroupAxes.mkString(" | ")}")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private val depth_ = value[Int]("depth", s"Levels of nesting for --group (1-${Tree.MaxDepth})")
     private val asOf_ = value[Long](
       "as-of",
       "Signed year the gazetteer hierarchy is read at for --group region (default: the middle of the window)"
     )
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private val samples_ =
       value[Int]("samples", s"Sample sources listed under each leaf of the tree (0-${Tree.MaxSamples})")
     private val unit_ = value[String]("unit", "What --group counts: sources (default) | findings")
@@ -209,6 +215,7 @@ object TopArgs:
     private val f0_ = filterFlags()
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Cli.TopCommand.Search(
         q_.toOption,
@@ -254,6 +261,7 @@ object TopArgs:
     private val chars_ = value[Int]("chars", "Return at most this many characters of the body")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Cli.TopCommand.Get(
         ck_(),
@@ -280,6 +288,7 @@ object TopArgs:
     private val limit_ = value[Int]("limit", "Show at most this many passages (default 10, max 50)")
     private val context_ = value[Int]("context", "Characters of context around each match (default 600, max 3000)")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Cli.TopCommand.Passages(ck_(), q_(), regex_.getOrElse(false), limit_.toOption, context_.toOption)
     )
@@ -393,6 +402,7 @@ object TopArgs:
     private val remE_ = values[String]("remove-edge", "An edge FROM this source to drop, <kind>:<citekey> (repeatable)")
     private val strict_ = flag("strict", "Refuse the patch when its summary or notes have a formatting error")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Cli.TopCommand.Patch(
         ck_(),
@@ -432,6 +442,7 @@ object TopArgs:
       value[String]("meta-dir", "Where ACQUIRE.md/TASKS.md/LOG.md/GOALS.md go (default: <dir>/meta)")
     private val noMeta_ = flag("no-meta", "Do not write the bookkeeping queues and the research goals")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Cli.TopCommand.Export(
         dir_(),
@@ -468,6 +479,7 @@ object TopArgs:
     private val force_ = flag("force", "Overwrite a database that still holds sources")
     private val yes_ = flag("yes", "Do not ask for confirmation")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       Cli.TopCommand.Restore(file_(), force_.getOrElse(false), yes_.getOrElse(false))
     )

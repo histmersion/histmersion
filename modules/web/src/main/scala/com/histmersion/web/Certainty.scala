@@ -4,6 +4,7 @@ package web
 import com.histmersion.api.ConfidenceStyle
 import com.histmersion.api.library.Confidence
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How sure the map's dots for some findings are (#1946): a STATED confidence, or [[Certainty.Unstated]] — a finding
   * that states none. An unstated one is drawn in its own neutral look (its period colour turned grey, a dashed edge, a
@@ -32,6 +33,7 @@ object Certainty:
   /** Weakest first: `contested < low < medium < unstated < high`. An unstated finding never lets a group look high,
     * while a stated low or contested in the same group says more than "not stated" does.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rank(c: Certainty): Rank = c match
     case Stated(level) => Rank(2 * ConfidenceStyle.rank(level).value)
     case Unstated      => Rank(2 * ConfidenceStyle.rank(Confidence.High).value - 1)
@@ -47,6 +49,7 @@ object Certainty:
     * badges), turned to its luminance grey when unstated — the neutral look keeps the period ramp's lightness, so an
     * unstated dot still reads older or newer. Anything that is not an `rgb(…)` string comes back unchanged.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def desaturate(rgb: ConfidenceStyle.Rgb, c: Certainty): ConfidenceStyle.Rgb = c match
     case Stated(level) => ConfidenceStyle.desaturate(rgb, level)
     case Unstated      =>

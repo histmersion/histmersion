@@ -8,6 +8,8 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiTurn
 import com.histmersion.plugin.AiHttp
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One call to an OpenAI-compatible chat-completions API (`POST chat/completions`), its body as the API takes it: the
   * system prompt as the first message, the conversation (tool calls on the assistant's messages, their results as
@@ -15,12 +17,14 @@ import com.histmersion.plugin.AiHttp
   * the tools offered (in OpenAI's strict form, and marked `strict`, when `strictTools` is on) and the output cap as
   * `max_completion_tokens`. Unset fields and empty lists are left out; the schemas are sent exactly as given.
   */
+@atBoundary(BoundaryKind.Json, "builds an OpenAI-style chat completion request")
 final case class ChatRequest(json: Json):
   def body: AiHttp.PostBody = AiHttp.PostBody(json.noSpaces)
 
 object ChatRequest:
 
   /** The request for `r`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def of(r: AiTurn.Request, strictTools: ProviderSettings.StrictTools): ChatRequest =
     val system = Json.obj("content" -> Json.fromString(r.system.value), "role" -> Json.fromString("system"))
     val format =
@@ -64,6 +68,7 @@ object ChatRequest:
     ).collect { case (k, Some(v)) => k -> v }
     ChatRequest(Json.fromFields(fields))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def message(m: AiMessage): Json = m match
     case AiMessage.User(t) => Json.obj("content" -> Json.fromString(t.value), "role" -> Json.fromString("user"))
     case AiMessage.Assistant(t, calls) =>

@@ -14,8 +14,10 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agents' scratch state: a JSON value under a key, by key. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AgentStateService:
   def list(): List[AgentStateEntry]
   def get(key: AgentStateRecord.Key): Option[AgentStateEntry]
@@ -37,10 +39,13 @@ object AgentStateService:
 
   final private class Implementation(db: Transactor) extends AgentStateService:
     def list(): List[AgentStateEntry] = db.read(AgentStateRepo.list())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(key: AgentStateRecord.Key): Option[AgentStateEntry] =
       db.read(AgentStateRepo.get(AgentStateRepo.StateKey(key.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def set(key: AgentStateRecord.Key, value: SetValue)(using WritePermit): Unit =
       db.write(AgentStateRepo.set(AgentStateRepo.StateKey(key.value), AgentStateRepo.SetValue(value.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(key: AgentStateRecord.Key)(using WritePermit): Boolean =
       db.write(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
 
@@ -51,16 +56,19 @@ object AgentStateService:
     private val Updated = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC)
 
     /** `updated_at::text` in a UTC session: seconds, the fraction without its trailing zeros, the offset. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def updatedText(at: Instant): AgentStateEntry.UpdatedAt =
       val micros = at.getNano / 1000
       val fraction = if micros == 0 then "" else "." + f"$micros%06d".reverse.dropWhile(_ == '0').reverse
       AgentStateEntry.UpdatedAt(s"${Updated.format(at)}$fraction+00")
 
     /** jsonb's order of an object's keys: the shorter first, then by their UTF-8 bytes (unsigned, as `memcmp`). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def keyOrder(k: AgentStateRecord.Key): (Int, String) =
       val b = k.value.getBytes("UTF-8")
       (b.length, b.map(x => f"${x & 0xff}%02x").mkString)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def jsonb(j: Json): Json = j match
       case Json.Arr(a) => Json.fromValues(a.map(jsonb))
       case Json.Obj(o) =>
@@ -78,14 +86,17 @@ object AgentStateService:
         o.fields.map((k, v) => s"${Json.fromString(k).noSpaces}: ${print(v)}").mkString("{", ", ", "}")
       case other => other.noSpaces
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def entry(key: AgentStateRecord.Key, r: AgentStateRecord) = AgentStateEntry(
       AgentStateEntry.Key(key.value),
       AgentStateEntry.Value(r.value.value),
       Some(updatedText(r.updatedAt))
     )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(): List[AgentStateEntry] = state.get.agentState.toList.sortBy(_._1.value).map(entry)
     def get(key: AgentStateRecord.Key): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def set(key: AgentStateRecord.Key, value: SetValue)(using WritePermit): Unit =
       val j = value.json
         .fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)

@@ -10,11 +10,14 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An import: the record written (`source`), the item it is linked to, the entry it was linked to before
   * (`relinkedFrom`), the file taken (left in the collection, never modified), the cover, and the conversion queued
   * (`job`) or why it was not (`jobProblems`, with its `jobErrorCode`).
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionImported(
     citekey: Citekey,
     id: CollectionImported.Id,

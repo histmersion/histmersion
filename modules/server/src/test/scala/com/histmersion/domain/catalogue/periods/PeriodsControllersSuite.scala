@@ -13,14 +13,19 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.HistoricalPeriod
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The periods' controllers over the in-memory service, no server and no database: a PeriodO dump sent and fetched (one
   * collection, under one node per authority), the bundled seed missing, an unknown source and dataset refused, one
   * period shown with its parent and parts, and every write refused while the maintenance lock is held.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class PeriodsControllersSuite extends munit.FunSuite:
   private val dump = scala.io.Source.fromResource("periods/periodo_dump.json")(using scala.io.Codec.UTF8).mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def controllers(
       download: PeriodSources.PeriodoUrl => Either[Problem, PeriodImports.Document] = _ =>
         Right(PeriodImports.Document(dump)),

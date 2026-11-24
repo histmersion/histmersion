@@ -3,8 +3,10 @@ package domain.catalogue.places
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Gazetteer ids in the URI forms providers write them. Pure. */
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object ExternalIds:
   type Scheme = Scheme.T
   object Scheme extends Newtype[String, Pure]
@@ -24,6 +26,8 @@ object ExternalIds:
   private val WikidataUri = """^https?://(?:www\.)?wikidata\.org/(?:entity|wiki)/(Q[1-9][0-9]*)(?:[/#?].*)?$""".r
 
   /** Pure: `(scheme, id)` of a Pleiades, GeoNames or Wikidata URI; None for any other. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(uri: Uri): Option[(Scheme, ExternalId)] = Option(uri.value).map(_.trim).getOrElse("") match
     case PleiadesUri(id) => Some(Pleiades -> ExternalId(id))
     case GeoNamesUri(id) => Some(GeoNames -> ExternalId(id))
@@ -32,6 +36,9 @@ object ExternalIds:
 
   /** Pure: the id a gazetteer place id carries itself (`pleiades_570491`, `geonames_390903`, `wikidata_q132564`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def ofPlaceId(placeId: Place.Id): Option[(Scheme, ExternalId)] =
     val s = placeId.value.trim
     def num(prefix: String) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]+"))
@@ -42,4 +49,5 @@ object ExternalIds:
         com.histmersion.domain.catalogue.places.Wikidata.qidOfPlaceId(placeId).map(q => Wikidata -> ExternalId(q.value))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def show(id: (Scheme, ExternalId)): Shown = Shown(s"${id._1}:${id._2}")

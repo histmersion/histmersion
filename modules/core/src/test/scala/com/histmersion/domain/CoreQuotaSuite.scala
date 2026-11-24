@@ -9,10 +9,12 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.CoreQuota.*
 
 import java.time.{Instant, LocalDate}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** CORE's budget, pure: CORE's blocks (429, `Remaining` 0, its retry time), the per-minute pace, the daily budget and
   * the searches' share of it, and the day's rollover.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CoreQuotaSuite extends munit.FunSuite:
 
   private val limits = Limits(
@@ -27,6 +29,7 @@ class CoreQuotaSuite extends munit.FunSuite:
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
   private val fresh = State.fresh(LocalDate.of(2026, 10, 26))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def granted(s: State, p: Purpose = Purpose.Lookup, at: Instant = t0, l: Limits = limits): State =
     reserve(s, l, p, at).fold(r => fail(s"refused: ${r.describe}"), _.state)
 

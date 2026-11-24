@@ -5,6 +5,7 @@ import com.histmersion.api.automation.Queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What an acquisition item names, read best-effort from its text so that "Upload…" and "Link existing source…" start
   * from a filled-in form rather than a blank one. Everything it returns is a SUGGESTION the reader edits before
@@ -71,6 +72,8 @@ object QueueItemRef:
   )
 
   /** Pure: the parts of an item's first line, as far as they can be told. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(text: Queue.QueueItem.Text): Ref =
     val line = text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     line match
@@ -145,18 +148,22 @@ object QueueItemRef:
     Some(s.trim.stripPrefix("*").stripSuffix("*").trim).filter(_.nonEmpty)
 
   /** The DOI that OPENS a slot (`10.…`, `doi 10.…`, `JSTOR 10.…`), else none. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def leadingDoi(slot: String): Option[Ref.Doi] =
     QueueView
       .segments(UiLabels.Text(slot.trim.replaceFirst(DoiLead, "")))
       .headOption
       .collect { case QueueView.Seg.Doi(d) => d }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def firstDoi(s: String): Option[Ref.Doi] =
     QueueView.segments(UiLabels.Text(s)).collectFirst { case QueueView.Seg.Doi(d) => d }
 
   /** A citekey in the corpus's `surnameYEAR_word` shape, through [[UploadView.suggestCitekey]] so it is always a valid
     * one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citekey(r: Ref): Option[Preview.Target.Source.Citekey] =
     val surname = r.authors.headOption.flatMap(_.value.split("""\s+""").lastOption).map(_.replace(".", ""))
     val word = r.title.flatMap(t => words(t.value).find(w => w.length > 2 && !Stop(w.toLowerCase)))
@@ -173,6 +180,8 @@ object QueueItemRef:
       .filter(_.nonEmpty)
 
   /** The upload form filled in from an item, linked to it so the accepted upload ticks it off. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uploadDraft(item: Queue.QueueItem): UploadView.Draft =
     val r = parse(item.text)
     UploadView.Draft(
@@ -187,6 +196,8 @@ object QueueItemRef:
   /** What to search the corpus for when linking an item to a source already there: its title, else its first author,
     * else the start of its text.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchQuery(item: Queue.QueueItem): Api.Search.Text =
     val r = parse(item.text)
     Api.Search.Text(

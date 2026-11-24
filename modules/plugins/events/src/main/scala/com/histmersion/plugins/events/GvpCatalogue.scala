@@ -13,12 +13,15 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Smithsonian Global Volcanism Program's Holocene eruptions: its WFS
   * (`GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions`), CQL-filtered, one request per window of start years — the
   * service's paging took 45 s and more a page on 2026-10-14, a window of a thousand years a few seconds. A part is a
   * window, `years:<from>..<to>`.
   */
+@atBoundary(BoundaryKind.Json, "reads the Global Volcanism Program answer into event records")
 final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   // volcano.si.edu (its terms page) did not answer on 2026-10-14; the Smithsonian's general Terms of
   // Use allow non-commercial, educational use with attribution, and the GVP asks to be cited as below.
@@ -30,10 +33,13 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
         "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
     )
   def home = EventCatalogue.Home("https://volcano.si.edu")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def requestIntervalMs: EventCatalogue.RequestIntervalMs =
     EventCatalogue.RequestIntervalMs(cfg.gvp.requestIntervalMs.value)
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def floorYear: Option[Year] = Dated.year(CatalogDating.HistoricalYear(cfg.gvp.floorYear.value))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parts(query: CatalogueQuery): List[EventCatalogue.ReadPart] =
     GvpCatalogue
       .windows(
@@ -43,6 +49,7 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
       )
       .map((a, b) => EventCatalogue.ReadPart(s"years:${a.value}..${b.value}"))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(
       part: EventCatalogue.ReadPart,
       query: CatalogueQuery,
@@ -77,6 +84,8 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   /** The feature read again from its `raw`; a record stored before the central year and the ± were kept (V088, no
     * `raw`), read back from its span and the "dated by …" of its description.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
     stored.raw
       .flatMap(t => RawJson.parse(t.value).toOption)
@@ -97,6 +106,7 @@ object GvpCatalogue:
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   /** Pure: the eruptions that started in `from`…`to` (signed years, both inclusive), unpaged. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def url(base: GvpSettings.Url, from: Year, to: Year, max: GvpSettings.PageSize): Plugin.Http.Url =
     val cql = s"StartDateYear>=${from.value} AND StartDateYear<=${to.value}"
     Plugin.Http.Url(
@@ -105,6 +115,7 @@ object GvpCatalogue:
     )
 
   /** Pure: `from`…`to` cut into windows of `years` (the last one shorter). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def windows(from: Year, to: Year, years: GvpSettings.WindowYears): List[(Year, Year)] =
     if from > to || years.value <= 0 then Nil
     else
@@ -137,6 +148,7 @@ object GvpCatalogue:
     * The stated year and ± are kept (`central`, `plusMinus`), as is the dating method (`StartEvidenceMethod`) and the
     * feature itself (`raw`).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(f: Json): Option[CatalogueEvent] =
     import JsonFields.*
     val p = f.cursor.downField("properties")
@@ -206,6 +218,8 @@ object GvpCatalogue:
   /** Pure: a record stored before V088, its central year and ± read back from its span ([[CatalogDating.centralOf]])
     * and its dating method from the "dated by …" of its description.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def fromBefore088(r: CatalogueEvent): CatalogueEvent =
     val method = r.description.flatMap(d => Dated088.findFirstMatchIn(d.value).map(_.group(1).trim))
     val desc = r.description

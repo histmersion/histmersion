@@ -15,6 +15,7 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.map.MapSurface
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
   *
@@ -28,6 +29,7 @@ import com.histmersion.api.Html.html as markup
   * ([[BaseMapSpec]]); without a GPU ([[Capabilities.software]]) the vector styles are drawn without their relief — the
   * cheapest drawing — and a line of the notice says so.
   */
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object BaseMaps:
   val status: Var[Option[Basemap.Status]] = Var(None)
 
@@ -46,6 +48,7 @@ object BaseMaps:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The local style an extract draws best: Readable when it can draw it whole, else Physical. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultLocal(s: Option[Basemap.Status]): BaseMap =
     if s.exists(st => st.available.value && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then
       BaseMap.Readable
@@ -54,15 +57,20 @@ object BaseMaps:
   /** The base map drawn for the kept choice `b`: on a `local` page an online choice is the default local style, so a
     * browser's earlier choice never reaches another host. Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def effective(b: BaseMap, local: Boolean, s: Option[Basemap.Status]): BaseMap =
     if local && b.online then defaultLocal(s) else b
 
   /** The choices the menu offers: the two styles, and the online maps unless the page is `local`. Pure. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def choices(local: Boolean): List[BaseMap] = if local then BaseMap.vectors else BaseMap.values.toList
 
   /** A choice's label: a vector style says when the data is missing, or when the download left out layers it draws.
     * Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def optionLabel(b: BaseMap, s: Option[Basemap.Status]): String =
     if b.online then b.label.value
     else if !s.forall(_.available.value) then s"${b.label} — not downloaded"
@@ -104,6 +112,7 @@ object BaseMaps:
     * base-map spec (a setting) or a map style carries, so it goes through the allow-list: its links stay, of an allowed
     * scheme; nothing in it runs.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def creditsHtml(credits: Seq[BaseMapSpec.Raster.Attribution]): Html =
     Html.join(credits.map(_.value.trim).filter(_.nonEmpty).distinct.map(Html.sanitize), markup" · ")
 
@@ -142,6 +151,8 @@ object BaseMaps:
   )
 
   /** The online raster map of `b` (`ui.tiles` for Standard and Dark). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def raster(b: BaseMap, ui: UiConfig): BaseMapSpec.Raster =
     val osm = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors (ODbL)"
     val url = b.url.map(_.value).getOrElse(ui.tiles.value)
@@ -157,6 +168,9 @@ object BaseMaps:
   /** What is drawn for base map `b` (already [[effective]]), the server's status and the viewer's options: the spec,
     * the notice, and how deep the map zooms. Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plan(
       b: BaseMap,
       s: Option[Basemap.Status],
@@ -203,16 +217,22 @@ object BaseMaps:
   private var noticeEl: Option[dom.HTMLElement] = None
 
   /** Before the map is made: the page's `ui.base-map-source`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configure(config: UiConfig): Unit =
     ui = config
     localOnly.set(config.baseMapSource.value == BaseMapSource.Local)
 
   /** Ask the server again (on start, and when a vector style is chosen). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   def refresh(): Unit =
     ApiClient
       .basemap()
       .foreach(s => status.set(Some(s)))(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def install(m: MapSurface, config: UiConfig)(using Owner): Unit =
     surface = m
     ui = config
@@ -264,11 +284,13 @@ object BaseMaps:
   /** Pure: is the foot open — the reader's choice, else open until the first pan or zoom, and open whenever it says the
     * map is not (wholly) downloaded.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def footOpenNow(chosen: Option[Boolean], moved: Boolean, warns: Boolean): Boolean = chosen.getOrElse(warns || !moved)
 
   /** Pure: does the folded foot keep a credit in sight? The online OpenStreetMap tiles (and OSM France's) require
     * theirs to stay visible on the map.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def keepsOsmCredit(b: BaseMap): Boolean = b.online
 
   /** The first pan or zoom: the credits fold to the (i) button, unless the reader chose otherwise. */
@@ -279,6 +301,9 @@ object BaseMaps:
         dom.window.requestAnimationFrame((_: Double) => fitNotice())
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def drawFoot(): Unit =
     noticeEl.foreach(_.remove())
     noticeEl = None
@@ -409,6 +434,8 @@ object BaseMaps:
 
   private val onVector: Signal[Boolean] = shown.signal.map(_.vector.isDefined)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def baseSelect: HtmlElement =
     select(
       cls := "field map-base-select",
@@ -459,6 +486,7 @@ object BaseMaps:
     )
 
   /** The names' language unless the viewer chose one: `basemap.labels.language`, as the server reports it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def defaultLanguage: String =
     if ui == null || ui.mapLanguage.value.isEmpty then "en" else ui.mapLanguage.value
 
@@ -471,10 +499,13 @@ object BaseMaps:
   private def setPrefs(f: MapPrefs => MapPrefs): Unit = UiState.set(UiState.mapOptions := f(UiState.mapOptions.now()))()
 
   /** The relief as the server has it, when it can be drawn. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def relief(s: Option[Basemap.Status]): Option[Basemap.LayerInfo] =
     s.flatMap(_.layers.find(l => l.layer == Basemap.Layer.Terrain.wire && l.present.value && l.error.isEmpty))
 
   /** Relief deeper than the extract: a focus region downloaded, or the on-demand relief on. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def deeperRelief(i: Basemap.LayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled.value)
 
   /** The app zoom from which Physical draws its contours (its style's `contours` layer: MapLibre zoom 10). */
@@ -484,6 +515,8 @@ object BaseMaps:
     * deeper than the extract — a focus region (`basemap fetch --layer terrain --focus`) or the on-demand relief
     * (`basemap.terrain.on-demand`). Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b != BaseMap.Physical then Some("Physical draws contours")
     else if soft then Some("not drawn without a GPU")
@@ -498,6 +531,8 @@ object BaseMaps:
         case _ => None
 
   /** Do a region of the view and a focus region's box meet? Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def meets(v: GeoBounds, b: BBox): Boolean =
     v.south.value <= b.maxLat.value && v.north.value >= b.minLat.value && v.west.value <= b.maxLon.value && v.east.value >= b.minLon.value
 
@@ -505,6 +540,7 @@ object BaseMaps:
     * outside every focus region with the on-demand relief off (the contours there follow the extract's coarse relief).
     * `None`: they are drawn. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contoursNote(s: Option[Basemap.Status], z: Double, v: GeoBounds): Option[String] =
     relief(s).flatMap { i =>
       val inFocus = i.focus.exists(f => BBox.parse(f.bbox).exists(meets(v, _)))
@@ -520,6 +556,9 @@ object BaseMaps:
   /** Why the sea cannot be coloured by its depth, if it cannot: with a GPU, from the sea floor (`basemap fetch --layer
     * bathymetry`). Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
     else if soft then Some("not drawn without a GPU")
@@ -529,6 +568,7 @@ object BaseMaps:
     then Some(s"no sea floor downloaded — `${Basemap.FetchCommand} --layer bathymetry`")
     else None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def panel: HtmlElement =
     val why = shown.signal.combineWith(status.signal, software.signal).map(contoursWhy.tupled)
     val note = why.combineWith(status.signal, view.signal).map { (w, s, v) =>
@@ -649,6 +689,7 @@ object BaseMaps:
     * ([[MotionPref]]); and, when it follows the system and the system asks for reduced motion, a line that says why
     * nothing moves.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def motionOption: HtmlElement =
     div(
       cls := "map-option map-option-row map-option-motion",

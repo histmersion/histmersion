@@ -16,6 +16,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.Fetch
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `pmc` plugin's two fetchers, by DOI: `pmc`, the PDF — Europe PMC's free links, else the one NCBI's PMC Article
   * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it
@@ -27,8 +28,10 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
   private def http: Plugin.Http = client()
 
   /** The PMC hosts get the project's public identity — no contact e-mail, no `email` parameter. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pmcHeaders: Map[String, String] = Map("User-Agent" -> cfg.publicUserAgent.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pmcGetHeaders: Map[Header.Name, Header.Value] =
     pmcHeaders.map((k, v) => Header.Name(k) -> Header.Value(v))
 
@@ -41,7 +44,9 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     *   3. With no PDF anywhere, the record's JATS XML — the article's own full text — is the copy; the ingest renders
     *      it to Markdown instead of OCR.
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private class PmcLookup(doi: Doi, ctx: Fetch.Context):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     lazy val hit: Option[EuropePmcHit] =
       http.json(
         Url(
@@ -59,6 +64,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           ctx.log.info(Plugin.Log.Line(s"europepmc search failed ($e)"))
           None
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     lazy val record: Option[PmcRecord] =
       hit.flatMap(_.pmcid).flatMap { id =>
         http
@@ -85,6 +91,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           .flatMap(AcquireParse.pmcRecord)
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pdf: Iterator[Fetch] =
       hit.toList
         .flatMap(_.pdfUrls)
@@ -99,6 +106,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           )
           .map(Fetch.Found(_))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fullText: Iterator[Fetch] =
       record
         .flatMap(_.xml)
@@ -106,6 +114,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
         .iterator
         .map(Fetch.Found(_))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def dataset(o: PmcObject, ext: FetchedFile.Extension)(
         ok: FetchedFile.Bytes => Boolean
     ): Option[FetchedFile] =
@@ -122,6 +131,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           ctx.log.warn(Plugin.Log.Line(s"pmc: $url does not match the MD5 its record gives — skipping")); None
         case Right(b) => Some(FetchedFile(FetchedFile.Source("pmc"), Some(FetchedFile.Url(url)), b, ext))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def lookup(ctx: Fetch.Context, doi: Doi): PmcLookup =
     ctx.memo(Fetch.Context.MemoKey(s"pmc:lookup:$doi"))(PmcLookup(doi, ctx))
 

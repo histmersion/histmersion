@@ -25,11 +25,14 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.config.ClaudePlanConfig
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.config.CodexConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A fresh reading of a plan pool (#989) without a database or a real CLI: the probe's argument vector and environment,
   * its output read into readings, the single-flight gate, the login checks — and the probe end to end against a FAKE
   * `claude`. Nothing is spent.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class PlanRefreshSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk

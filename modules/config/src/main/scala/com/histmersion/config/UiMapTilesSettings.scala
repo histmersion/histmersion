@@ -3,11 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `ui.map-tiles`: the map's point layers as vector tiles — the deepest tile cut (MapLibre's zoom), the most items a
   * shallower tile keeps alone, the side of the cells it counts the rest by (pixels of a 512-pixel tile), the server's
   * tile cache, and playback's time buckets (seconds of playback).
   */
+@movesTo(FeaturePlace.CatalogueMaptiles)
 final case class UiMapTilesSettings(
     maxZoom: UiMapTilesSettings.MaxZoom,
     maxPoints: UiMapTilesSettings.MaxPoints,

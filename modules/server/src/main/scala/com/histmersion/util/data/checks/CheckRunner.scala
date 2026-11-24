@@ -5,6 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.{Transactor, WritePermit}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The lint runner over the registered checks: selects rules, runs them on one connection into the report, and applies
   * the safe fixes into one fix result.
@@ -14,13 +15,17 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
   /** Every registered rule, in report order. */
   val rules: List[CheckRule] = order.reported(registered)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def names: List[CheckRule.Name] = rules.map(r => CheckRule.Name(r.rule.name.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def named(name: String): Option[CheckRule] = rules.find(_.rule.name.value == name.trim.toLowerCase)
 
   /** The rules a request names, in the order it names them — all of them when it names none. An unknown name is
     * refused, so a typo never reads as a clean corpus.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def select(requested: List[CheckRule.Name]): Either[Problem, List[CheckRule]] =
     val wanted = requested.map(_.value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(rules)
@@ -43,6 +48,7 @@ final class CheckRunner(registered: List[CheckRule], order: CheckOrder, transact
   /** The safe fixes: every rule's that runs on every call, and those of the rules `requested` names (by name, ignoring
     * case; an unknown name selects nothing), in fix order.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fix(requested: List[CheckRule.Name], context: CheckContext)(using WritePermit): LintFixResult =
     def asked(rule: CheckRule) = requested.exists(_.value.trim.equalsIgnoreCase(rule.rule.name.value))
     val results = order.fixing(rules).flatMap { r =>

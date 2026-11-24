@@ -2,9 +2,13 @@ package com.histmersion
 package api
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Read from a FeatureCollection's own keys or a sidecar `<file>.meta.json`: an LP-TSV file has nowhere else to say it.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Kernel)
 final case class LpfDataset(
     title: Option[LpfDataset.Title],
     citation: Option[LpfDataset.Citation],

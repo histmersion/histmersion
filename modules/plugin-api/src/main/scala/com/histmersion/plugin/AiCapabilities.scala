@@ -2,6 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a provider can do. A provider without `tools` is offered no tools (a step that needs them should not chain its
   * models); without `structuredOutput` the schema still travels in the request.
@@ -14,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   model's name to a [[AiProvider.check]] refusal nor the model and an exception's name to an error; off, it adds
   *   them
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final case class AiCapabilities(
     tools: AiCapabilities.Tools = AiCapabilities.Tools(true),
     structuredOutput: AiCapabilities.StructuredOutput = AiCapabilities.StructuredOutput(false),
@@ -28,8 +30,10 @@ final case class AiCapabilities(
   )
 
 object AiCapabilities:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ApplyTools = Tools
   val ApplyTools: Tools.type = Tools
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ApplyStructuredOutput = StructuredOutput
   val ApplyStructuredOutput: StructuredOutput.type = StructuredOutput
 

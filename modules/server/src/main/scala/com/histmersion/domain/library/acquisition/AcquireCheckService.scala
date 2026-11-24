@@ -14,7 +14,9 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AcquireCheckService:
   def of(items: List[AcquireAttemptRow.Id]): Map[AcquireAttemptRow.Id, List[AcquireAttempt]]
 
@@ -56,6 +58,7 @@ object AcquireCheckService:
           all.updated(item, kept.keep((attempt :: all.getOrElse(item, Nil)).sortBy(_.at).reverse))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
       state.get.attempts.values.flatten
         .filter(a => !a.at.isBefore(since))
@@ -64,6 +67,7 @@ object AcquireCheckService:
         .view
         .mapValues(ws => RowCount(ws.size))
         .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held] =
       val wanted = dois.map(_.value.trim.toLowerCase).filter(_.nonEmpty).toSet
       sources.doiIndex

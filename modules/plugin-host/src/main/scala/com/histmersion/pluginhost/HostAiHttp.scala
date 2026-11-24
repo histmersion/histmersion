@@ -10,10 +10,13 @@ import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 import scala.concurrent.duration.DurationInt
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host's [[AiHttp]]: java.net.http over HTTP/1.1 (as every client of the server), the host's User-Agent (no e-mail
   * can reach it, [[HttpPolicy.userAgent]]), a timeout per call, and nothing sent or received logged.
   */
+@atBoundary(BoundaryKind.Http, "sends plugin AI providers' HTTP requests through java.net.http")
 final class HostAiHttp extends AiHttp:
   /** Built on the first call (an `HttpClient` starts a selector thread): a server that never calls a plugin provider
     * starts none.
@@ -32,6 +35,7 @@ final class HostAiHttp extends AiHttp:
 
   private def userAgent = HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (agents)"))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def post(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
@@ -45,6 +49,7 @@ final class HostAiHttp extends AiHttp:
       _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.value, StandardCharsets.UTF_8))
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def get(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
@@ -52,6 +57,7 @@ final class HostAiHttp extends AiHttp:
   ): Either[Problem, AiHttp.Response] =
     send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET())
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def send(
       url: String,
       headers: Map[String, String],

@@ -11,6 +11,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.text.WikiLinks
+import com.histmersion.lint.{LintRule, tolerated}
 
 object CritiquePairing:
   object Instruction:
@@ -38,6 +39,7 @@ object CritiquePairing:
   ) derives JsonCodec:
     def ref: CritiqueRef = CritiqueRef(cited, missing)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String =
       (s"paragraph \"$where\" names $named and cites [[$cited]] (${edges.mkString("; ")}) but not [[$missing]] — " +
         (if (mechanical).value then s"cite [[$missing]] there (fixable)"
@@ -61,6 +63,8 @@ object CritiquePairing:
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
   private def ascii(s: String): String = ((s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z'))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def names(citekey: Citekey, authors: List[AuthorName]): List[Work.Names] =
     val lead = (citekey).value.takeWhile(_.isLetter).toLowerCase(java.util.Locale.ROOT)
     val words = authors
@@ -90,6 +94,7 @@ object CritiquePairing:
   object Mention:
     export WikiLinks.Occurrence.Target as Key
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mention(text: String, name: Work.Names, year: Option[Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
     val ms = re.findAllMatchIn((text)).toList
@@ -102,11 +107,17 @@ object CritiquePairing:
       else if near.forall(_.nonEmpty) then Some(Mention.Conflict)
       else Some(Mention.Weak)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def targetsOf(u: Critiques.Block): List[WikiLinks.Occurrence.Target] =
     Article.Links.targets(WikiLinks.Body(u.text.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def edgeLine(e: Coverage.Edge): Hit.Edges = Hit.Edges(s"[[${e.from}]] ${e.kind} [[${e.to}]]")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hits(
       body: Article.Body,
       resolve: Mention.Key => Option[Citekey],
@@ -155,6 +166,8 @@ object CritiquePairing:
       }
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def repair(body: Article.Body, hs: List[Hit]): (Article.Body, List[Hit]) =
     val todo = hs
       .filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical(true))))
@@ -186,6 +199,8 @@ object CritiquePairing:
         done.sortBy(h => ((h.unit.value: Int), (h.missing.value: String)))
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def instruction(
       body: Article.Body,
       p: CritiquePair,
@@ -205,6 +220,7 @@ object CritiquePairing:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolver(citekeys: Set[Citekey], aliases: Map[Citekey, Citekey]): Mention.Key => Option[Citekey] =
     val sorted = citekeys.toVector.sorted
     t =>

@@ -14,17 +14,22 @@ import java.nio.file.{Files, Path}
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import com.histmersion.config.CodexConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A retention pass over a TEMPORARY Codex home (#2582) — never the live one: old transcripts go, new ones and the
   * login stay, the SQLite files are vacuumed through the configured command, and nothing happens while a run holds the
   * home.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class CodexHomeSuite extends munit.FunSuite:
 
   private val Day = 24L * 60 * 60 * 1000
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val now = CodexRetention.NowMs(System.currentTimeMillis())
   private val cfg = AppConfig.load().agents.providers.codex
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def home(): Path =
     val h = Files.createTempDirectory("histmersion-codex-home-")
     def file(rel: String, ageDays: Long, body: String = "x" * 100) =

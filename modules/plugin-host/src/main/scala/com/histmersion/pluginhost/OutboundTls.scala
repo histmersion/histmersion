@@ -15,6 +15,8 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.{SSLContext, TrustManagerFactory, X509TrustManager}
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The roots an acquisition request trusts (#1568, [[HttpPolicy.trust]]): the JDK's, and — only when `acquire.tls` asks
   * — the operating system's and a PEM file's, merged into ONE trust store behind the JDK's own PKIX trust manager. So a
@@ -25,6 +27,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * (`libosxsecurity`, which needs `libjava`) is not there — `UnsatisfiedLinkError` (measured with GraalVM 25.0.1).
   * `security find-certificate -a -p` prints the same roots as PEM and works in both.
   */
+@atBoundary(BoundaryKind.Process, "builds the TLS trust store from the JDK, the OS keychain and a PEM file")
 object OutboundTls:
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
@@ -80,6 +83,8 @@ object OutboundTls:
     Problems.of(missing.head, missing.tail*)
 
   /** The X.509 certificates in a PEM text; a block that does not parse is skipped. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def certificates(pem: HttpPolicy.PemText): List[X509Certificate] =
     val cf = CertificateFactory.getInstance("X.509")
     HttpPolicy
@@ -91,6 +96,8 @@ object OutboundTls:
       )
 
   /** The roots one source adds (none for [[HttpPolicy.Trust.Jdk]], which is the base). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def roots(
       t: HttpPolicy.Trust,
       run: Run = run,
@@ -151,6 +158,9 @@ object OutboundTls:
     * else the context and a line for the log. A source that cannot be read is named in the line and left out — a broken
     * opt-in never takes the JDK's own roots away.
     */
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def configure(
       cfg: TlsConfig,
       osName: HttpPolicy.OsName = HttpPolicy.OsName(System.getProperty("os.name", "")),
@@ -175,6 +185,8 @@ object OutboundTls:
       context(extra) -> Summary(s"acquire TLS trusts the JDK's roots + ${notes.mkString("; ")}")
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def describe(t: HttpPolicy.Trust): Summary = t match
     case HttpPolicy.Trust.Jdk          => Summary("the JDK")
     case HttpPolicy.Trust.Keychains(_) => Summary("the macOS system keychains")

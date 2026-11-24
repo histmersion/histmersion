@@ -8,22 +8,26 @@ import java.nio.file.Path
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using
     files: LocalFiles
 ) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
   val title: SourceCollection.Title = SourceCollection.Title("Calibre")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override val description: SourceCollection.Description =
     SourceCollection.Description(
       s"The Calibre library at ${library.library.value}: read with calibredb (sqlite3 while the GUI holds it)" +
         (if (writeBack).value then ", written back with calibredb" else ", read-only")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def capabilities: Set[CollectionCapability] =
     if (writeBack).value then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
     else Set(CollectionCapability.Read)
@@ -36,9 +40,11 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       Some(Problem.Refused.Effect.WritesLibrary)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def reach: Either[Problems, Unit] =
     CalibreCollection.reach(Path.of(library.library.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(query: CollectionQuery): Either[Problems, List[CollectionItem]] =
     (query.text match
       case Some(text) =>
@@ -46,18 +52,21 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       case None => query.limit.fold(calibre.all())(l => calibre.all(Calibre.AllLimit(l.value)))
     ).map(_.map(CalibreCollection.item))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(id: CollectionId): Either[Problems, Option[CollectionItem]] =
     id.value.trim.toIntOption
       .fold[Either[Problems, Option[CollectionItem]]](Right(None))(n =>
         calibre.byId(Calibre.Book.Id(n)).map(_.map(CalibreCollection.item))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def admits(item: CollectionItem): Either[Problems, Unit] =
     Calibre
       .guard(Calibre.Push.Title(item.title.fold("")(_.value)), item.authors.map(a => Calibre.Push.Authors(a.value)))
       .left
       .map(_.at(Problem.Field(s"Calibre id ${item.id}")))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def file(
       item: CollectionItem,
       format: Option[SourceCollection.FileFormat]
@@ -73,6 +82,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def original(item: CollectionItem, file: CollectionFile): Either[Problems, FetchedFile] =
     CalibreCollection
       .read(file.name)
@@ -85,6 +95,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def cover(item: CollectionItem): Either[Problems, Option[FetchedFile]] =
     item.cover.map(_.value.trim).filter(p => p.nonEmpty && files.isFile(Path.of(p))) match
       case None       => Right(None)
@@ -103,6 +114,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
             )
           )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def add(
       metadata: CollectionMetadata,
       file: FetchedFile
@@ -111,6 +123,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .staged(LocalFiles.StagedName(metadata.key.value), file)(p => calibre.add(p, CalibreCollection.push(metadata)))
       .map(id => CollectionId(id.value.toString))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def replace(
       id: CollectionId,
       key: SourceCollection.ReplaceKey,
@@ -130,6 +143,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .flatMap(calibre.update(_, CalibreCollection.push(metadata)))
       .map(_.map(CalibreCollection.change))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def updateAll(
       links: List[CollectionLink],
       apply: SourceCollection.UpdateAllApply
@@ -147,6 +161,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .updateAll(linked, Calibre.UpdateAllApply(apply.value))
       .map(_.map(CalibreCollection.entry))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def set(
       id: CollectionId,
       fields: List[(SourceCollection.FieldName, SourceCollection.FieldValue)]
@@ -157,6 +172,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
         calibre.set(_, fields.map((name, value) => (Calibre.Field.Name(name.value), Calibre.Field.Value(value.value))))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def audit(
       records: List[CollectionRecord]
   ): Either[Problems, List[CollectionFinding]] =
@@ -189,6 +205,7 @@ object CalibreCollection:
   val SearchLimit: Calibre.SearchLimit = Calibre.SearchLimit(20)
 
   /** A book as a collection item. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(b: Calibre.Book): CollectionItem =
     CollectionItem(
       id = CollectionId(b.id.value.toString),
@@ -206,6 +223,7 @@ object CalibreCollection:
     )
 
   /** An item back as the book it was read from. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def book(i: CollectionItem): Calibre.Book =
     Calibre.Book(
       id = Calibre.Book.Id(i.id.value.trim.toIntOption.getOrElse(0)),
@@ -221,6 +239,7 @@ object CalibreCollection:
       cover = i.cover.map(c => Calibre.Book.Cover(c.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def push(m: CollectionMetadata): Calibre.Push =
     Calibre.Push(
       Calibre.Push.Title(m.title.value),
@@ -233,6 +252,7 @@ object CalibreCollection:
       m.tags.map(t => Calibre.Push.Tags(t.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def change(c: Calibre.Change): CollectionChange =
     CollectionChange(
       CollectionChange.Field(c.field.name.value),
@@ -240,6 +260,7 @@ object CalibreCollection:
       CollectionChange.To(c.to.value)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entry(e: UpdateEntry): CollectionUpdateEntry =
     def all(cs: List[Calibre.Change]) = cs.map(change)
     val outcome = e.outcome match
@@ -258,6 +279,7 @@ object CalibreCollection:
       outcome
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finding(f: AuditFinding): CollectionFinding =
     CollectionFinding(
       CollectionId(f.calibreId.value.toString),
@@ -274,6 +296,7 @@ object CalibreCollection:
       CollectionFinding.Fixable(f.fixable)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def number(id: CollectionId): Either[Problems, Calibre.Book.Id] =
     IdText
       .checked(id.value.trim)
@@ -281,9 +304,11 @@ object CalibreCollection:
       .map(Problem.Invalid.malformed)
       .map(t => Calibre.Book.Id(t.value.toInt))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extension(name: CollectionFile.Name): FetchedFile.Extension =
     FetchedFile.Extension(name.value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def read(name: CollectionFile.Name)(using files: LocalFiles): Either[Problems, FetchedFile.Bytes] =
     Try(FetchedFile.Bytes(files.read(Path.of(name.value)).value)).toEither.left.map(e =>
       Problem.Io.File(Problem.Io.Access.Read, Problem.Io.Path(s"$name"), External.Reported.of(e))
@@ -292,6 +317,7 @@ object CalibreCollection:
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def staged[A](name: LocalFiles.StagedName, file: FetchedFile)(
       f: Path => Either[Problems, A]
   )(using files: LocalFiles): Either[Problems, A] =
@@ -302,6 +328,7 @@ object CalibreCollection:
       )(p => f(p))
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reach(dir: Path)(using files: LocalFiles): Either[Problems, Unit] =
     val db = dir.resolve("metadata.db")
     if !files.isDirectory(dir) && !files.exists(db) then

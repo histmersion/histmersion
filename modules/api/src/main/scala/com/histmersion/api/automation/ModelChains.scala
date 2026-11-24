@@ -13,6 +13,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ModelChains:
   object Chain:
@@ -24,6 +25,8 @@ object ModelChains:
   /** One model is a chain of one, so a `roles.*` setting written before chains existed still reads. A model id never
     * contains `>`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseChain(
       s: Chain.Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
@@ -35,6 +38,7 @@ object ModelChains:
         refactorError
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseModels(
       refs: List[ModelRef.Model.Spec],
       known: Set[ProviderKind.Plugin.Name] = Set.empty
@@ -55,19 +59,24 @@ object ModelChains:
     case Tokens extends Measure(Measure.Wire("tokens"))
     case Usd extends Measure(Measure.Wire("usd"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Measure:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Measure] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given WireEnumValues[Measure]:
       def all: Array[Measure] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Measure): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Measure] = parse(Wire((s).value))
     given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[Measure] = WireEnum.codec
     given Schema[Measure] = WireEnum.schema
 
   final case class Window(seconds: Window.Seconds):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text: String =
       if (seconds).value % 86400 == 0 then (s"${(seconds).value / 86400}d")
       else if (seconds).value % 3600 == 0 then (s"${(seconds).value / 3600}h")
@@ -77,6 +86,7 @@ object ModelChains:
     type MaxSecondsNumber = MaxSecondsNumber.T
     object MaxSecondsNumber extends Newtype[Long, Pure]
     type MaxSeconds = MaxSecondsValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type MaxSecondsValue = MaxSecondsNumber
     val MaxSecondsValue: MaxSecondsNumber.type = MaxSecondsNumber
 
@@ -86,8 +96,10 @@ object ModelChains:
     private val Unit = Map('m' -> 60L, 'h' -> 3600L, 'd' -> 86400L, 'w' -> 604800L)
     private val Names = Map("hour" -> 3600L, "day" -> 86400L, "week" -> 604800L, "month" -> 30L * 86400L)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val MaxSeconds: MaxSeconds = MaxSecondsNumber(90L * 86400L)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: LimitSpec.Window): Either[Problem, Window] =
       val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
       val secs = Names.get(t).orElse {
@@ -113,6 +125,7 @@ object ModelChains:
     def text: String = measure match
       case Measure.Tokens => (s"${Limit.compact(amount)} tokens/${window.text}")
       case Measure.Usd    => (s"${amount.bigDecimal.stripTrailingZeros.toPlainString} usd/${window.text}")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def spec: LimitSpec = LimitSpec(LimitSpec.Amount(amount.toDouble), measure, LimitSpec.Window(window.text))
 
   object Limit:
@@ -125,6 +138,7 @@ object ModelChains:
         .collectFirst { case (u, s) if a >= u && (a / u).isWhole => s"${(a / u).toBigInt}$s" }
         .getOrElse(a.bigDecimal.stripTrailingZeros.toPlainString))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def amount(raw: String): Either[Problem, BigDecimal] =
       val t = (raw).trim.stripPrefix("$")
       val (num, mult) = t.lastOption match
@@ -141,6 +155,7 @@ object ModelChains:
           Invalid.Unreadable.here(TypeName.of(LimitSpec.Amount), Raw(s"$raw"), Vector(Raw("500k"), Raw("5"), Raw("$5")))
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Spec): Either[Problem, Limit] =
       val t = (s).value.trim
       t.lastIndexOf('/') match
@@ -173,6 +188,7 @@ object ModelChains:
             )
           yield Limit(am._1, am._2, w)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromSpec(s: LimitSpec): Either[Problem, Limit] =
       val amt = s.amount.value
       for
@@ -194,6 +210,7 @@ object ModelChains:
     case Model(ref: ModelRef)
     case Provider(kind: ProviderKind)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire: Target.Wire = this match
       case Model(r)    => Target.Wire(r.wire.value)
       case Provider(k) => Target.Wire(s"${k.wire}:*")
@@ -208,6 +225,7 @@ object ModelChains:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Spec, known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Problem, Target] =
       val t = (s).value.trim
       if t.endsWith(":*") then
@@ -222,6 +240,7 @@ object ModelChains:
       else ModelRef.parse(ModelRef.Wire(t), known).map(Model(_))
 
   final case class Allowance(target: Target, limits: List[Limit], reservePct: Allowance.ReservePct):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text: String =
       ((limits.map(_.text) ++ Option.when((reservePct).value > 0)(s"reserve $reservePct%")).mkString(", "))
 
@@ -230,12 +249,14 @@ object ModelChains:
     object ReserveSpec extends Newtype[String, Pure]
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type OfReservePct = ReservePct
     val OfReservePct: ReservePct.type = ReservePct
 
     type ReservePct = ReservePct.T
     object ReservePct extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
       if (reservePct).value < 0 || (reservePct).value > 99 then
         Left(
@@ -249,6 +270,8 @@ object ModelChains:
           Left(Invalid.Repeated(TypeName.named[Limit], Raw(s"${windows.head.text}"), Vector(Field(s"${target.wire}"))))
         else Right(Allowance(target, limits, reservePct))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAllowances(
       s: Allowance.Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
@@ -274,6 +297,8 @@ object ModelChains:
         Problems.from(dup.toVector.map(d => Invalid.Repeated.here(TypeName.of(Target.Wire), Raw(s"$d")))).toLeft(as)
       case errs => Left(errs.reduce(_ ++ _))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAllowance(
       target: Target.Spec,
       items: List[Limit.Spec],
@@ -293,6 +318,8 @@ object ModelChains:
       a <- Allowance.of(t, ls, rs)
     yield a
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseReserve(s: Allowance.ReserveSpec): Either[Problem, Allowance.ReservePct] =
     (((s).value.trim
       .stripPrefix("=")
@@ -314,6 +341,7 @@ object ModelChains:
     type Tokens = Tokens.T
     object Tokens extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LimitState(
       limit: Limit,
       used: BigDecimal,
@@ -332,10 +360,14 @@ object ModelChains:
     type FreesAt = FreesAt.T
     object FreesAt extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def measureOf(s: Spend, m: Measure): BigDecimal = m match
     case Measure.Tokens => BigDecimal(s.tokens.value)
     case Measure.Usd    => s.usd
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limitState(limit: Limit, reservePct: Allowance.ReservePct, spends: Seq[Spend], now: LimitState.Now): LimitState =
     val windowMs = (limit.window.seconds).value * 1000L
     val inWindow = spends.filter(s => (s.at).value > (now).value - windowMs && (s.at).value <= (now).value).sortBy(_.at)
@@ -360,6 +392,7 @@ object ModelChains:
       (freesAt).map(refactorValue16 => LimitState.FreesAt(refactorValue16))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def states(a: Allowance, spends: Seq[Spend], now: LimitState.Now): List[LimitState] =
     a.limits.map(limitState(_, a.reservePct, spends, now))
 
@@ -368,11 +401,13 @@ object ModelChains:
     if blocked.isEmpty then ((true), None)
     else ((false), if blocked.exists(_.freesAt.isEmpty) then None else Some(blocked.flatMap(_.freesAt).max))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def headroom(ss: List[LimitState]): (Option[LimitState.FreesAt], Option[BigDecimal]) =
     val tok = ss.filter(_.limit.measure == Measure.Tokens).map(_.headroom).minOption.map(_.toLong)
     val usd = ss.filter(_.limit.measure == Measure.Usd).map(_.headroom).minOption
     ((tok).map(refactorValue5 => LimitState.FreesAt(refactorValue5)), usd)
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class LimitSpec(amount: LimitSpec.Amount, measure: Measure, window: LimitSpec.Window)
       derives JsonCodec,
         KindlingsSchema,
@@ -384,11 +419,13 @@ object ModelChains:
     type Window = Window.T
     object Window extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ChainSet(models: List[ChainSet.Models]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object ChainSet:
     export ChainEntry.Model as Models
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AllowanceSet(
       target: AllowanceSet.Target,
       limits: List[LimitSpec] = Nil,
@@ -410,6 +447,7 @@ object ModelChains:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LimitStatus(
       limit: LimitStatus.Limit,
       measure: Measure,
@@ -442,6 +480,7 @@ object ModelChains:
     type FreesAt = FreesAt.T
     object FreesAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AllowanceStatus(
       target: AllowanceStatus.Target,
       source: SettingSource.Wire,
@@ -465,6 +504,7 @@ object ModelChains:
     object Note extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ChainEntry(
       model: ChainEntry.Model,
       ready: ChainEntry.Ready,

@@ -28,6 +28,8 @@ import com.histmersion.api.exchange.PlanMatchKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 final case class Source(
     citekey: Citekey,
     title: Title,
@@ -61,8 +63,10 @@ object Source:
   type Body = Body.T
   object Body extends Newtype[String, Pure]
   type EdgePart = EdgePart.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object EdgePart extends Newtype[String, Pure]
   type EdgeRole = EdgeRole.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object EdgeRole extends Newtype[String, Pure]
   type Export = Export.T
   object Export extends Newtype[String, Pure]
@@ -98,6 +102,7 @@ object Source:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire: Status.Wire =
       Status.Wire(Ascii.lower(toString))
 
@@ -105,13 +110,16 @@ object Source:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromString(s: Wire): Status =
       values.find(_.toString.equalsIgnoreCase((s).value)).getOrElse(Unassessed)
 
     given WireEnumValues[Status]:
       def all: Array[Status] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Status): WireEnumValues.Wire =
         WireEnumValues.Wire((Wire(e.toString.toLowerCase)).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Status] =
         values.find(_.toString.equalsIgnoreCase((s).value))
 
@@ -120,6 +128,7 @@ object Source:
   object Alias:
     export com.histmersion.api.library.Citekey as Value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Candidate(
       id: Candidate.Id,
       goal: Candidate.Goal,
@@ -168,6 +177,8 @@ object Source:
 
     export Source.CalibreId as CalibreLineCalibreId
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def calibreLine(
         calibreId: Option[Delete.CalibreLineCalibreId],
         check: Option[CalibreEntryCheck]
@@ -193,6 +204,8 @@ object Source:
                   "remove it in Calibre if it is there and should go too."
               )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refusal(
         ck: Citekey,
         blockers: List[DeleteBlocker]
@@ -217,6 +230,8 @@ object Source:
           )
         )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def logText(d: Deletion): LogText =
       def short(p: DeletePart) = p match
         case DeletePart.EdgesIn => "edges in (parked)"
@@ -237,6 +252,8 @@ object Source:
           (if all.isEmpty then "" else ": " + all.mkString(", "))
       )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(d: Deletion, calibre: Option[CalibreEntryCheck] = None): Markdown =
       val head =
         if (d.applied) == Deletion.Applied(true) then s"# Deleted `${d.citekey}`"
@@ -299,6 +316,7 @@ object Source:
           mentions ++ calibreLines ++ tail).mkString("\n")
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class DeleteRequest(apply: DeleteRequest.Apply = Api.Apply(false))
       derives StrictJson,
         KindlingsSchema,
@@ -325,6 +343,7 @@ object Source:
         KindlingsSchema,
         api.json.Schema:
     def refused: Boolean = (blockers.nonEmpty)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def count(p: DeletePart): api.RowCount =
       counts.find(_.part == p).fold(api.RowCount(0))(c => api.RowCount(c.rows.value))
 
@@ -340,6 +359,7 @@ object Source:
     type Files = Files.T
     object Files extends Newtype[String, Pure]
     type FilesFailed = FilesFailed.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object FilesFailed extends Newtype[String, Pure]
     type Mentions = Mentions.T
     object Mentions extends Newtype[Int, Pure]
@@ -388,6 +408,7 @@ object Source:
     type DepthCount = DepthCount.T
     object DepthCount extends Newtype[Int, Pure]
     export com.histmersion.api.library.Citekey as Root
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Depth = DepthCount
     val Depth: DepthCount.type =
       DepthCount
@@ -402,6 +423,10 @@ object Source:
     val Thesis = "thesis"
     val Dataset = "dataset"
     val Unknown = "unknown"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     val all: List[Wire] = List(
       Wire(Book),
       Wire(Chapter),
@@ -416,9 +441,12 @@ object Source:
       */
     private val DataDoiPrefixes = List("10.5061/", "10.6084/", "10.17632/", "10.7910/")
 
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private val BookProvenance =
       Set("calibre", com.histmersion.api.library.Provenance.ExternalFile, "archive", "archive_org")
 
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(
         doi: Option[Doi],
         venue: Option[Venue],
@@ -450,6 +478,8 @@ object Source:
             then Wire(Book)
             else Wire(Unknown)
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def isbnDoi(doi: Doi): Option[Boolean] =
       val suffix = (doi).value.dropWhile(_ != '/').drop(1).toLowerCase(java.util.Locale.ROOT).stripPrefix("cbo")
       if !(suffix.startsWith("978") || suffix.startsWith("979")) then None
@@ -484,6 +514,7 @@ object Source:
     type Issue = Issue.T
     object Issue extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Matches: PlanMatchKind[Match] =
       new com.histmersion.api.exchange.PlanMatchKind(
         m => m.outcome != MatchOutcome.New,
@@ -491,6 +522,8 @@ object Source:
       )
 
     /** A source's match as the plan's Markdown lists it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def line(s: Match): Match.Line =
       val target = s.leftCitekey.fold("")(c => s" → `$c`")
       val score = s.score.fold("")(x => s" · score ${math.round((x).value * 10) / 10.0}")
@@ -610,9 +643,11 @@ object Source:
       title: Title,
       status: Status
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def idLabel: Ref.Label =
       Ref.Label(doi.map(_.value).getOrElse(citekey.value.toString))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shortCite: Ref.ShortCite =
       val auth = Ref.shortAuthors(authors)
       val yr = year.map(_.toString).getOrElse("n.d.")
@@ -627,11 +662,13 @@ object Source:
     type ShortCite = ShortCite.T
     object ShortCite extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def surname(full: AuthorName): AuthorSurname =
       val t = (full).value.trim
       if t.contains(",") then AuthorSurname(t.takeWhile(_ != ',').trim)
       else AuthorSurname(t.split("\\s+").lastOption.getOrElse(t))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shortAuthors(
         authors: List[AuthorName]
     ): ShortAuthors =
@@ -669,6 +706,7 @@ object Source:
     val Toc = "toc"
     val Body = "body"
     val All = "all"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[Wire] = List(
       Wire(Summary),
       Wire(Findings),
@@ -678,6 +716,8 @@ object Source:
       Wire(All)
     )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Wire] =
       val lower = (s).value.trim.toLowerCase
       all.find(_ == Wire(lower))
@@ -696,8 +736,12 @@ object Source:
     */
   object Write:
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def findingId(citekey: Citekey, n: Finding.Ordinal): Finding.Id = Finding.Id(s"$citekey#$n")
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def applyPut(
         citekey: Citekey,
         p: Put,
@@ -742,6 +786,8 @@ object Source:
         updatedAt = None
       )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def precondition(existing: Source, patch: Patch): Either[Problem, Unit] =
       patch.ifUpdatedAt match
         case None       => Right(())
@@ -764,6 +810,9 @@ object Source:
 
     private def refused[A](r: Either[Problem, A]): Either[Refusal, A] = r.left.map(Refusal(_))
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def applyPatch(existing: Source, patch: Patch): Either[Refusal, Source] =
       for
         _ <- refused(precondition(existing, patch))
@@ -808,12 +857,17 @@ object Source:
           else meta.calibreId.map(c => CalibreId(c.value.trim)).orElse(existing.calibreId)
         )
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def srcAliased(p: Patch, requested: Citekey, canonical: Citekey): Patch =
       if requested == canonical then p
       else
         def fix(e: Edge.Input) = if e.src.map(_.value.trim).contains(requested.value) then e.copy(src = None) else e
         p.copy(edges = p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def applyEdges(
         citekey: Citekey,
         current: List[Edge],
@@ -839,6 +893,8 @@ object Source:
         val gone = removed.toSet
         (current.map(_.copy(src = citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def edgeOf(
         citekey: Citekey,
         aliases: Set[Citekey],
@@ -858,6 +914,8 @@ object Source:
           )
         case _ => Right(Edge(citekey, Citekey(in.dst.value.trim), in.kind))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def metadataCheck(m: MetadataPatch): Either[Problem, Unit] =
       val both = m.clear.filter {
         case MetadataField.Year       => m.year.isDefined
@@ -887,6 +945,8 @@ object Source:
             )
           case _ => Right(())
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def applyFindings(citekey: Citekey, current: List[Finding], p: FindingsPatch): Either[Problem, List[Finding]] =
       for
         base <- p.replace.fold[Either[Problem, List[Finding]]](Right(current))(numbered(citekey, _))
@@ -895,9 +955,13 @@ object Source:
         added <- allocate(citekey, kept, p.add)
       yield kept ++ added
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def numbered(citekey: Citekey, inputs: List[Finding.Input]): Either[Problem, List[Finding]] =
       traverse(inputs.zipWithIndex)((in, i) => toFinding(citekey, findingId(citekey, Finding.Ordinal(i)), in))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def allocate(
         citekey: Citekey,
         existing: List[Finding],
@@ -915,6 +979,8 @@ object Source:
             loop(tail, used + id, toFinding(citekey, id, in) :: acc)
       traverse(loop(adds, existing.map(_.id).toSet, Nil))(identity)
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def toFinding(citekey: Citekey, id: Finding.Id, in: Finding.Input): Either[Problem, Finding] =
       val what = s"finding '${in.claim.value.take(40)}'"
       for
@@ -926,6 +992,7 @@ object Source:
           case _                  => None
         Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, conf, in.significance)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def confidenceOf(raw: Option[Confidence.Wire], what: String): Either[Problem, Option[Confidence]] =
       raw.map((_).value.trim).filter(_.nonEmpty) match
         case None    => Right(None)
@@ -943,6 +1010,7 @@ object Source:
             )
 
     /** Postgres rejects an inverted int8range. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def periodOf(start: Option[Year], end: Option[Year], what: String): Either[Problem, Option[Period]] =
       def sane(v: Year) = v >= Filter.Earliest && v <= Filter.Latest
       (start, end) match
@@ -967,6 +1035,7 @@ object Source:
             )
           )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private[api] def outOfRange(
         what: String,
         field: String,
@@ -979,6 +1048,7 @@ object Source:
         Vector(Problem.Field(s"$what"), Problem.Field(s"$field"))
       )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     private[api] def supersededEdgeCheck(
         status: Status,
         edges: List[Edge]

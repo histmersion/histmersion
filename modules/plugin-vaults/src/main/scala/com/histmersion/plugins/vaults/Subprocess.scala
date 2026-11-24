@@ -17,11 +17,14 @@ import io.github.iltotore.iron.constraint.string.StartWith
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.LocalFiles
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Running a vault's command-line tool: an argument vector, NEVER a shell (a reference cannot inject anything), a time
   * limit after which the process is killed, and the output kept in memory only. Error texts come from the tool's
   * stderr; its stdout — the secret — is never put into one.
   */
+@atBoundary(BoundaryKind.Process, "runs a vault's command-line tool with a time limit and captures its output")
 object Subprocess:
   type Plain = Plain.T
   object Plain extends Newtype[String, Pure]
@@ -39,6 +42,8 @@ object Subprocess:
   /** Pure: the executable for `tool` — a path as given (`/opt/kp/keepassxc-cli`), or a bare name looked up in `path`
     * (the PATH the server started with).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def locate(tool: Tool, path: Option[EnvVar.Value])(using
       files: LocalFiles
   ): Either[Problem, Vaults.Path] =
@@ -90,19 +95,25 @@ object Subprocess:
 
   extension (exit: Result.Exit)
     /** The tool's exit status, as a problem names it. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def code: Problem.Io.ExitCode = Problem.Io.ExitCode(exit.value)
 
   extension (err: Result.Err)
     /** Pure: the tool's own message — the first non-blank line it wrote to its standard error, bounded. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def firstLine: External.Stderr =
       External.Stderr.tail(s"$err".linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message"))
 
   /** Pure: what a tool printed, without the one line break it ends with (`op read`, `bw get` and `keepassxc-cli show`
     * all end their value with one). Nothing else is trimmed: a value may begin or end with a space.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def value(out: Result.Out): Value = Value(out.value.stripSuffix("\n").stripSuffix("\r"))
 
   /** Pure: an argument that would read as an option of the tool is refused rather than passed on. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def plain(what: Vaults.Operation, s: Text): Either[Problem, Plain] =
     Argument
       .checked((s).value)

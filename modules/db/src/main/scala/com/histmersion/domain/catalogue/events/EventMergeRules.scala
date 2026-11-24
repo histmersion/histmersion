@@ -12,10 +12,12 @@ import com.histmersion.util.data.exchange.MergeRules
 
 import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge treats events: lines of other kinds point at them by uid, the ledger names one by its id; a plan knows
   * which of the bundle's event ids and old ids name an event here.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object EventMergeRules extends MergeRules:
 
   override val planning: Option[PlanRules] = Some(CataloguePlan)
@@ -24,6 +26,7 @@ object EventMergeRules extends MergeRules:
   override val ledgerLabel: Option[Frag] = Some(sql"SELECT id FROM events WHERE uid = l.local_uid")
   override val referable: Boolean = true
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def gather(
       bundle: BundleEntities,
       localized: BundleEntities,

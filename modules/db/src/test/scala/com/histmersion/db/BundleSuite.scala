@@ -82,6 +82,7 @@ import com.histmersion.util.storage.ByteSource
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
   * (M0), a deterministic export (M1), and an import without matching — into an empty instance and back into its own —
@@ -91,11 +92,14 @@ import com.histmersion.util.database.TestCreators.given
   * afterwards), because an export reads the whole database and an "empty instance" must really be empty. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
 class BundleSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private val tmp = Files.createTempDirectory("histmersion-bundle-suite")
 
@@ -129,6 +133,7 @@ class BundleSuite extends DbSuite with Bounded:
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch =
     ScratchDatabases("histmersion_bundle", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
@@ -180,6 +185,7 @@ class BundleSuite extends DbSuite with Bounded:
     3
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: Citekey,
       body: Option[Source.OcrMarkdown],
@@ -229,6 +235,7 @@ class BundleSuite extends DbSuite with Bounded:
     * link and an attestation, events with a parent, an edge, datings and participants, goals with a parent, an
     * assessment, a stored original, and a Calibre id that must NOT travel.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def populate(ds: DataSource, originals: Path): Unit =
     put(ds, source(B0, None, 1))
     put(
@@ -475,6 +482,7 @@ class BundleSuite extends DbSuite with Bounded:
     * and one proposed, a check, a correction of an event and of a place (a JSON null value, a JSON null and an absent
     * refresh), and the site type of a gazetteer place.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def eventSets(ds: DataSource): Unit =
     exec(
       ds,
@@ -512,6 +520,7 @@ class BundleSuite extends DbSuite with Bounded:
       .fold(e => fail(e), identity)
     out.toByteArray
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def entries(bundle: Array[Byte]): List[(String, Array[Byte])] =
     val r = BundleTar.Reader(java.io.ByteArrayInputStream(bundle))
     Iterator
@@ -524,6 +533,7 @@ class BundleSuite extends DbSuite with Bounded:
   private def manifestOf(bundle: Array[Byte]): Bundle.Manifest =
     BundleFormat.parseManifest(entries(bundle).head._2).fold(e => fail(e.sentence), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def importInto(
       ds: DataSource,
       bundle: Array[Byte],
@@ -555,6 +565,7 @@ class BundleSuite extends DbSuite with Bounded:
   private def text(entries: List[(String, Array[Byte])], path: String): String =
     String(entries.find(_._1 == path).map(_._2).getOrElse(fail(s"no $path")), UTF_8)
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def count(ds: DataSource, q: String): Int =
     connect(ds)(sql"${SqlLiteral(q)}".query[Int].run().head)
 
@@ -772,6 +783,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
 
   /** The bundle with the event-catalogue files taken out, as a bundle written before they existed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withoutEventSets(bundle: Array[Byte]): Array[Byte] =
     val gone = Set(
       Bundle.Files.EventCatalogue,

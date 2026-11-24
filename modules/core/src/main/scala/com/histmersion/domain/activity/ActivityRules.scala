@@ -10,10 +10,14 @@ import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.util.time.TimeEquality.instantEquality
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the activity list's filters mean, entry by entry, and how a page of it is cut: the rules the database's query
   * follows in SQL, and the in-memory list follows here. Pure.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationActivity)
 object ActivityRules:
   /** The statuses of a run or job that is going now. */
   val RunningStates: Set[Entry.State] = Set(Entry.State("running"))
@@ -22,6 +26,7 @@ object ActivityRules:
   val ProblemStates: Set[Entry.State] = Set(Entry.State("failed"))
 
   /** Does `e` belong to what `show` shows? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def shows(show: Show, e: Entry): Boolean =
     val kind = e.entryKind
     show match
@@ -35,26 +40,35 @@ object ActivityRules:
       case Show.Yours    => kind.contains(EntryKind.Decision)
       case Show.Problems => isRunOrJob(e) && ProblemStates.contains(e.state)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def isRunOrJob(e: Entry): Boolean = e.entryKind.exists(k => k == EntryKind.Run || k == EntryKind.Job)
 
   /** Does `e` pass every filter of `q` but the page's place? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(q: ActivityQuery, e: Entry): Boolean =
     shows(q.show, e) && q.goal.forall(g => e.goal.exists(_.value == g.value)) && q.since.forall(s =>
       !instantOf(e).isBefore(s)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def instantOf(e: Entry): Instant = Instant.parse(e.at.value)
 
   /** Newest first; entries of one instant by key, descending. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val newestFirst: Ordering[Entry] =
     Ordering.by[Entry, (Instant, String)](e => (instantOf(e), e.key.value)).reverse
 
   /** Is `e` older than the cursor (after it in the list)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def after(c: ActivityCursor, e: Entry): Boolean =
     val at = instantOf(e)
     at.isBefore(c.at) || (at == c.at && e.key.value < c.key.value)
 
   /** The page `q` asks for out of `entries` (any order), with the cursor of the next one. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(entries: List[Entry], q: ActivityQuery, counts: Activity.Counts): Activity.Page =
     val kept = entries.filter(e => matches(q, e) && q.before.forall(after(_, e))).sorted(using newestFirst)
     val (rows, rest) = kept.splitAt(q.limit.value)
@@ -64,9 +78,12 @@ object ActivityRules:
       counts
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cursorOf(e: Entry): ActivityCursor = ActivityCursor(instantOf(e), ActivityCursor.Key(e.key.value))
 
   /** The chips' counts over `entries`: running now, and failed since `weekAgo`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counts(entries: List[Entry], weekAgo: Instant): Activity.Counts =
     @tailrec def loop(rest: List[Entry], running: Int, problems: Int): Activity.Counts = rest match
       case e :: tail =>
@@ -79,6 +96,7 @@ object ActivityRules:
   /** The query a client asked for, checked: `show` one of the chips' words, `since` a date, an instant or a time ago
     * (against `now`), `limit` within 1 … [[Activity.MaxLimit]], `before` a cursor this list gave.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def query(
       show: Option[Show.Wire],
       since: Option[ListFilters.TimeBound],

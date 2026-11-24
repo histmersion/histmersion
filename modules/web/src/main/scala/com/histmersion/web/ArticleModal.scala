@@ -8,6 +8,7 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ArticleModal:
   val element: HtmlElement =
@@ -31,9 +32,13 @@ object ArticleModal:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def open(id: Citekey, opts: Map[String, String] = Map.empty): Unit =
     WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(id.value)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def openSlug(slug: Article.Slug, opts: Map[String, String] = Map.empty): Unit =
     WindowManager.open(WindowKey.Article(WindowKey.Article.Slug(slug.value)))
 

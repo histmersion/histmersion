@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MediaTarget(
     targetType: MediaTarget.TargetType,
@@ -20,8 +21,10 @@ final case class MediaTarget(
 
 object MediaTarget:
   type TargetType = TargetType.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetType extends Newtype[String, Pure]
   type TargetId = TargetId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetId extends Newtype[String, Pure]
   type Role = Role.T
   object Role extends Newtype[String, Pure]

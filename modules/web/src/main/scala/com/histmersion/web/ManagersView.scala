@@ -36,6 +36,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.library.Facet
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Offset
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers (docs/research-process-managers.md §5): the managers window (each one's state — with what the
   * supervisor derived: starved, at capacity, idle — its items, runs in flight and last event) and one window per
@@ -105,6 +106,8 @@ object ManagersView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The badge of a manager: its person-set state, or — active — what the supervisor derived. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def badge(m: ManagerInfo): Badge =
     if m.state != State.Active.wire then Badge(m.state.value)
     else
@@ -119,6 +122,8 @@ object ManagersView:
   /** What a manager does, from its id (`review`, `enrich`, `seed:<goal>`, `watch:<goal>`); a tooltip on the runs
     * window's manager menu.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def managerMeaning(id: Managers.ManagerInfo.Id): Option[ManagerMeaning] =
     val goal = id.value.dropWhile(_ != ':').drop(1)
     Kind.parse(Kind.Wire(id.value.takeWhile(_ != ':'))).map {
@@ -135,6 +140,7 @@ object ManagersView:
     }
 
   /** What each status of a manager's item means; a tooltip on the items' filter buttons. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def itemStatusMeaning(s: ItemStatus): StatusMeaning = s match
     case ItemStatus.Pending => StatusMeaning("Waiting to start; the scheduler picks the order.")
     case ItemStatus.Held    =>
@@ -150,11 +156,13 @@ object ManagersView:
   /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not released by hand
     * (pin its goal instead).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def itemActionsFor(i: ManagerItem): List[ItemAction] =
     if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == ItemAction("release"))
     else itemActions(i.status)
 
   /** What a person can do to an item in this status. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def itemActions(status: api.automation.ItemStatus.Wire): List[ItemAction] =
     ItemStatus.parse(status) match
       case Some(ItemStatus.Pending) => List(ItemAction("hold"), ItemAction("priority"), ItemAction("skip"))
@@ -170,6 +178,7 @@ object ManagersView:
     Option(s.split(sep).toList.map(_.trim).filter(_.nonEmpty)).filter(_.nonEmpty)
 
   /** The settings form → a config (blank fields are the server's defaults). Left = what does not parse. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def config(f: Map[ConfigKey, ConfigText]): Either[ConfigText, ManagerConfig] =
     def g(k: String): String = f.getOrElse(ConfigKey(k), ConfigText("")).value.trim
     val bad = List(
@@ -250,6 +259,8 @@ object ManagersView:
     result.left.map(ConfigText(_))
 
   /** A config as the form shows it (blank = the default). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fields(c: ManagerConfig): Map[ConfigKey, ConfigText] =
     List(
       "maxRuns" -> c.maxRuns.fold("")(_.toString),
@@ -279,6 +290,7 @@ object ManagersView:
     ).map((k, v) => ConfigKey(k) -> ConfigText(v)).toMap
 
   /** The settings the form offers, with their labels. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Settings: List[(ConfigKey, ConfigText)] = List(
     "maxRuns" -> "runs at once",
     "maxOpen" -> "open runs (incl. paused)",
@@ -309,6 +321,8 @@ object ManagersView:
   /** What a manager's settings form offers: every setting, but a watcher's only to a watcher (and the review settings
     * not to one).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settingsFor(kind: Manager.Kind.Wire): List[(ConfigKey, ConfigText)] =
     val watchOnly = Set("sweeps", "autoIngest", "autoIngestPerDay")
     val reviewOnly = Set(
@@ -328,12 +342,15 @@ object ManagersView:
     else Settings.filterNot((k, _) => watchOnly(k.value))
 
   /** A watcher's sweeps as its events tell them: each settled sweep and each work it ingested, newest first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sweepEvents(es: List[ManagerEvent]): List[ManagerEvent] =
     es.filter(e => e.kind.value == Feed.Swept || e.kind.value == Feed.Ingested)
 
   /** The hint box → a hint. `action` none/prioritise/hold/skip; `targets` comma-separated slugs; `suggest`
     * = the server's model proposes the action (none chosen here; a person approves what it proposes).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hint(
       text: Managers.HintAdd.Text,
       item: Managers.HintAdd.Item,
@@ -374,10 +391,13 @@ object ManagersView:
 
   // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counted(n: Int, noun: String): String =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
   /** What an enqueue did, in one line: the items queued (and how many were skipped as enriched). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enqueuedNote(kind: EnqueueKind, r: EnqueueResult): EnqueuedNote =
     val what = kind match
       case EnqueueKind.Review => "queued for review"
@@ -395,6 +415,9 @@ object ManagersView:
   /** Buttons that hand a target to a manager (only where the server runs agents), with the line saying what was queued
     * and a link to the manager.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enqueueButtons(
       target: Managers.EnqueueRequest.Target,
       buttons: List[(EnqueueKind, Icon, ButtonLabel, Hint)]
@@ -441,6 +464,8 @@ object ManagersView:
   /** The article window: Review (the review manager, first in line), Extend (compile the new sources of its filter into
     * it, then review it) and Enrich (the sources it cites that are not enriched yet).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleActions(slug: Article.Slug): HtmlElement =
     enqueueButtons(
       EnqueueRequest.Target(slug.value),
@@ -469,6 +494,8 @@ object ManagersView:
   /** The goal window: Extend (its seeding manager proposes its next articles — a person approves the plan) and Enrich
     * (the sources linked to it that are not enriched yet).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalActions(slug: Goal.Slug): HtmlElement =
     enqueueButtons(
       EnqueueRequest.Target(slug.value),
@@ -491,6 +518,8 @@ object ManagersView:
   // ── the autopilot ───────────────────────────────────────────────────────────────────────────────
 
   /** One goal's line in the autopilot's table: its counts and its pace. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalLine(g: Autopilot.GoalProgress): GoalLine =
     GoalLine(
       s"${counted(g.sources.value, "source")} · ${counted(g.articles.value, "article")}" +
@@ -499,16 +528,21 @@ object ManagersView:
     )
 
   /** An active or queued goal's pace, in a line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusPace(g: Autopilot.FocusGoal): FocusPace =
     FocusPace(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)"))
 
   /** The goals that cannot use a focus slot now, by why, the commonest first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waitingSummary(ws: List[Autopilot.FocusWaiting]): WaitingSummary =
     WaitingSummary(
       ws.groupBy(_.code).toList.sortBy((c, xs) => (-xs.size, c.value)).map((c, xs) => s"${xs.size} $c").mkString(" · ")
     )
 
   /** The focus's heading: the cap and where it comes from, or why it is not in force. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusHead(f: Autopilot.FocusInfo): FocusHead =
     FocusHead(
       (if f.on.value then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
@@ -516,6 +550,8 @@ object ManagersView:
         (if f.held.value > 0 then s" · ${counted(f.held.value, "item")} held" else "")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def errorLine(message: Signal[Option[String]]): Modifier[HtmlElement] =
     ErrorLine(message.map(_.map((text => Problem.Unclassified(Legacy.Text(text))))))
 
@@ -523,6 +559,9 @@ object ManagersView:
     * next become active, and why the others cannot use a slot; pin / unpin a goal and set the cap (each behind the
     * write gate).
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusPanel(
       f: Autopilot.FocusInfo,
       changed: Autopilot.FocusInfo => Unit,
@@ -638,6 +677,8 @@ object ManagersView:
     )
 
   /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drainLine(d: Autopilot.DrainInfo): DrainLine =
     val line =
       if d.drained.value then
@@ -650,6 +691,7 @@ object ManagersView:
     DrainLine(line)
 
   /** The goals by stage, in the order a goal moves through them: how many in each. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stages(gs: List[Autopilot.GoalProgress]): Stages =
     Stages(
       Goal.Status.all
@@ -662,6 +704,8 @@ object ManagersView:
   /** The switch and the status: on/off (the click shows the new state at once; the server's answer follows), the
     * approval rules, today's ingests, and every goal's stage, counts and pace.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def autopilotSection: HtmlElement =
     val st = Var(Option.empty[AutopilotStatus])
     val pending = Var(Option.empty[Boolean])
@@ -807,6 +851,7 @@ object ManagersView:
   // ── the central scheduler ───────────────────────────────────────────────────────────────────────
 
   /** The waiting items a person's filters leave: any of the job types, any of the reasons, the target text. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def visibleWaiting(
       ws: List[AgentScheduler.Waiting],
       types: List[AgentScheduler.Waiting.JobType],
@@ -822,6 +867,8 @@ object ManagersView:
     )
 
   /** What each job type of the scheduler's queue is; a tooltip on its filter chip. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jobTypeMeaning(jobType: JobKinds.Wire): Option[JobTypeMeaning] = jobType.value match
     case "goal-plan" =>
       Some(JobTypeMeaning("Planning a research goal: its sub-goals, search queries and works (plan-goal runs)."))
@@ -847,6 +894,8 @@ object ManagersView:
     case _        => None
 
   /** Why an item waits, by its code (the queue's, and an item's own); a tooltip on the "why" chips. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waitMeaning(code: AgentScheduler.Waiting.Code): Option[WaitMeaning] = code.value match
     case "capacity" =>
       Some(
@@ -882,6 +931,7 @@ object ManagersView:
     case _                           => None
 
   /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facet(
       ws: List[AgentScheduler.Waiting],
       of: AgentScheduler.Waiting => Facet.Value
@@ -891,14 +941,22 @@ object ManagersView:
       .sortBy((v, n) => (-n, v.value))
       .map((v, n) => (v, Facet.Count(n)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def strategyLabel(name: AgentScheduler.StrategyLine.Name): StrategyLabel =
     StrategyLabel(Wording.strategies.getOrElse(name, Wording.humanize(Wording.Id(name.value))))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jobTypeLabel(t: JobKinds.Wire): UiLabels.Text =
     UiLabels.Text(Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(Wording.Id(t.value))))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waitLabel(code: AgentScheduler.Waiting.Code): WaitLabel =
     WaitLabel(AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(Wording.Id(code.value))))
 
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def schedulerHead(s: AgentScheduler.SchedulerStatus): SchedulerHead =
     SchedulerHead(
       s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom.value == "person"
@@ -915,6 +973,8 @@ object ManagersView:
     * (each opening its manager's runs in the runs window), and the queue — filtered by job type, reason and text like
     * the runs, jobs and approvals windows — with why each item waits and behind what.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def schedulerSection: HtmlElement =
     val st = Var(Option.empty[AgentScheduler.SchedulerStatus])
     val failure = Var(Option.empty[String])
@@ -1138,6 +1198,8 @@ object ManagersView:
 
   // ── the managers window ─────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stateBadge(m: ManagerInfo): HtmlElement =
     val b = badge(m).value
     span(
@@ -1146,6 +1208,8 @@ object ManagersView:
       Wording.capitalize(b)
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     val ms = Var(List.empty[ManagerInfo])
     val loaded = Var(false)
@@ -1204,6 +1268,8 @@ object ManagersView:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counts(c: ItemCounts): CountsText =
     val text = List(
       "pending" -> c.pending.value,
@@ -1217,6 +1283,9 @@ object ManagersView:
 
   // ── one manager ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def managerPane(id: Managers.ManagerInfo.Id): HtmlElement =
     val detail = Var(Option.empty[ManagerDetail])
     val page = Var(Option.empty[ItemPage])
@@ -1430,6 +1499,9 @@ object ManagersView:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def head(
       d: ManagerDetail,
       busy: Signal[Boolean],
@@ -1540,6 +1612,9 @@ object ManagersView:
       )
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemRow(
       mid: Managers.ManagerInfo.Id,
       i: ManagerItem,
@@ -1667,6 +1742,9 @@ object ManagersView:
   private val HintChoices: Choices[Option[HintEffect.Verb]] =
     Choices.optional(WireEnumValues.Wire.of(HintEffect.Verb.NoAction), HintEffect.Verb.Actions)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def hintBox(
       id: Managers.ManagerInfo.Id,
       busy: Signal[Boolean],
@@ -1806,6 +1884,9 @@ object ManagersView:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings(
       m: ManagerInfo,
       busy: Signal[Boolean],

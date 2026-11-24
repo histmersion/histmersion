@@ -3,11 +3,13 @@ package cli
 
 import com.histmersion.config.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatReport, FormatRule, FormatSeverity}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The formatting-lint commands parse (`article lint <slug> [--fix]`, `lint --source/--article/--file`, `--strict` on
   * the writes, `places rename`), and `lint --file` checks a note's BODY: its own frontmatter is the metadata
   * `article put` sends, not pasted text.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FormatCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

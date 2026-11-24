@@ -2,6 +2,7 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 enum ProviderKind(val wire: ProviderKind.Wire) derives CanEqual:
   case Anthropic extends ProviderKind(ProviderKind.Wire("anthropic"))
   case OpenAI extends ProviderKind(ProviderKind.Wire("openai"))
@@ -17,6 +18,7 @@ enum ProviderKind(val wire: ProviderKind.Wire) derives CanEqual:
   /** A provider a PLUGIN registered under this name (docs/research-plugins.md §22): metered, served through the host's
     * tool loop. Parsed only while such a provider is registered (`known`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   case Plugin(name: Plugin.Name) extends ProviderKind(ProviderKind.Wire(name.value))
 
   /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
@@ -41,6 +43,7 @@ object ProviderKind:
   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)
 
   /** A provider name: one of the host's, else one of the `known` plugin providers' (lower case). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire, known: Set[Plugin.Name] = Set.empty): Option[ProviderKind] =
     val t = (s).value.trim.toLowerCase
     values.find(_.wire == Wire(t)).orElse(Option.when(known(Plugin.Name(t)))(Plugin(Plugin.Name(t))))
@@ -49,6 +52,7 @@ object ProviderKind:
   def names(known: Set[Plugin.Name] = Set.empty): String = wires(known).mkString(", ")
 
   /** The wire names of the host's providers, then those of the plugins `known`, sorted. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wires(known: Set[Plugin.Name]): Vector[String] =
     (values.map(_.wire.value: String) ++ known.toList
       .map(n => n.value: String)

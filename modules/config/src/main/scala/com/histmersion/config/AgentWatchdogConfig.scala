@@ -3,10 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The stall watchdog (docs/research-process-managers.md §3.3). `stallMinutes` 0 = the longest provider timeout plus 5
   * minutes ([[stallMinutesFor]]).
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentWatchdogConfig(
     stallMinutes: AgentWatchdogConfig.StallMinutes,
     resumeMinutes: AgentWatchdogConfig.ResumeMinutes,
@@ -14,6 +17,7 @@ final case class AgentWatchdogConfig(
     heartbeatSeconds: AgentWatchdogConfig.HeartbeatSeconds,
     interruptedResumeMinutes: AgentWatchdogConfig.InterruptedResumeMinutes
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stallMinutesFor(p: AgentProvidersConfig): AgentWatchdogConfig.StallMinutes =
     if stallMinutes.value > 0 then stallMinutes
     else

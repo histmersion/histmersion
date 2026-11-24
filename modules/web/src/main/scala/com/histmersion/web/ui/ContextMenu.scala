@@ -62,6 +62,7 @@ object ContextMenu:
   def isOpen: Boolean = open.now().isDefined
 
   /** The menu key: the keyboard's own, or Shift+F10. Pure. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def isMenuKey(key: String, shift: Boolean): Boolean = key == "ContextMenu" || (shift && key == "F10")
 
   /** Where a menu of `w`×`h` opened at (`x`, `y`) stands so that it stays inside a `vw`×`vh` viewport (with a margin),
@@ -72,6 +73,8 @@ object ContextMenu:
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def show(
       title: ContextMenu.ShowTitle,
       entries: List[Entry],
@@ -81,6 +84,7 @@ object ContextMenu:
   ): Unit =
     open.set(Some(Open(title, entries, x, y, back)))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def close(returnFocus: Boolean = true): Unit =
     val was = open.now()
     open.set(None)
@@ -102,6 +106,9 @@ object ContextMenu:
     selected || Option(ev.target).collect { case e: dom.Element => e }.exists(_.closest(NativeHere) != null)
 
   /** A right click and the menu key on the element open its menu; `entries` is read when it opens. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def on(title: ContextMenu.OnTitle, entries: () => List[Entry]): Modifier[HtmlElement] =
     List(
       onContextMenu --> { ev =>
@@ -123,6 +130,9 @@ object ContextMenu:
     )
 
   /** The visible way in: a "⋯" button that opens the same menu under itself. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def button(
       title: ContextMenu.ButtonTitle,
       entries: () => List[Entry],
@@ -154,6 +164,8 @@ object ContextMenu:
       child.maybe <-- open.signal.map(_.map(menu))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def menu(o: Open): HtmlElement =
     div(
       cls := "context-menu",

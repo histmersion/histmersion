@@ -17,6 +17,7 @@ import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
 import com.histmersion.api.Paging
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 object TreeTab:
   private var config: Option[UiConfig] = None
@@ -33,6 +34,7 @@ object TreeTab:
   private val loading = Var(false)
   private val failed = Var(false)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tree-pane",
@@ -56,12 +58,14 @@ object TreeTab:
       case Some(_) => load()
       case None    => ()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def init(cfg: UiConfig): Unit =
     config = Some(cfg)
     UiState.signal.foreach { _ =>
       schedule()
     }(using unsafeWindowOwner)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def schedule(): Unit =
     if axis.isEmpty then ()
     else
@@ -73,10 +77,12 @@ object TreeTab:
         val ms = config.flatMap(c => Option(c.debounce.reloadMs)).map(_.value).getOrElse(0)
         timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(ms)).value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def paramsKey(): String =
     val f = UiState.toFilter()
     s"${axis.fold("")(_.value)}:${f.hashCode}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def load(): Unit =
     config match
       case None      => ()
@@ -88,6 +94,9 @@ object TreeTab:
           failed.set(false)
           doLoad(cfg, mine)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doLoad(cfg: UiConfig, mine: Int): Unit =
     val by = axis.getOrElse(Api.AggregateQuery.By("time"))
     val f = UiState.toFilter()
@@ -116,6 +125,8 @@ object TreeTab:
           )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showTree(data: TimeHistogram): Unit =
     lastData = Some(data)
     val roots = data.tree
@@ -139,6 +150,8 @@ object TreeTab:
   /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
     * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def countLine(data: TimeHistogram, roots: RowCount, from: Years.Astronomical, to: Years.Astronomical): UiLabels.Text =
     val groups =
       if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("region"))
@@ -153,9 +166,14 @@ object TreeTab:
       ) ++ data.asOf.map(a => UiLabels.Text(s"as of ${Fmt.yr(a)}"))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unitWord(n: Bucket.Count): Plural.Phrase =
     if n.value == 1 then Plural.Phrase("1 source") else Plural.Phrase(s"${n.value} sources")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def renderNode(b: Bucket, depth: Int, data: TimeHistogram): HtmlElement =
     val expanded = Var(false)
     val childrenFilled = Var(false)
@@ -220,6 +238,7 @@ object TreeTab:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def toggle(
       b: Bucket,
       depth: Int,
@@ -264,6 +283,8 @@ object TreeTab:
     else Nil
     kidElements.set(kidNodes ++ sampleNodes ++ empty)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderSample(s: Bucket.Sample, depth: Int): HtmlElement =
     div(
       cls := "tsample",
@@ -280,6 +301,9 @@ object TreeTab:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def subtree(b: Bucket, data: TimeHistogram): Future[TimeHistogram] =
     val cfg = config.getOrElse(throw new Exception("no config"))
     val f = UiState.toFilter()
@@ -306,6 +330,8 @@ object TreeTab:
           )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def act(b: Bucket): Unit =
     if b.kind.value == "time" then
       for a <- b.start; b2 <- b.end do UiState.set(UiState.from := Some(a.value), UiState.to := Some(b2.value))()

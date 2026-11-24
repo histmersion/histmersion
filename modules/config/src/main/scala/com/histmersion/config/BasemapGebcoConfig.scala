@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The GEBCO grid as a sea-floor source: `url`, one GeoTIFF of the grid's tiling (`tileDegrees` square) with `{north}`,
   * `{south}`, `{west}`, `{east}`; the extract's zooms 0…`maxZoom`; its credit line.
   */
+@movesTo(FeaturePlace.UtilBasemap)
 final case class BasemapGebcoConfig(
     url: BasemapGebcoConfig.Url,
     tileDegrees: BasemapGebcoConfig.TileDegrees,

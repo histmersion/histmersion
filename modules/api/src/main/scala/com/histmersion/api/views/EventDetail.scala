@@ -29,6 +29,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
 /** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventDetail(
     event: EventSummary,
     geometry: Option[EventGeometry.Geojson] = None,
@@ -52,6 +54,7 @@ final case class EventDetail(
     createdAt: Option[Creation.At] = None
 ) extends EventCard derives JsonCodec, KindlingsSchema, api.json.Schema:
   /** The page in Markdown, with its pictures. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown: EventDetail.Markdown =
     EventDetail.Markdown(EventsMarkdown.event(this, media.map(_.markdownLine.value)))
 

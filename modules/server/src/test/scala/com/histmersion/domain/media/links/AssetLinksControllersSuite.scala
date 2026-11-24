@@ -21,6 +21,7 @@ import com.histmersion.api.media.MediaTarget
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The figures' links' controllers over the in-memory services: a source and a target named by an old identifier are
   * resolved first; a link that is not there is not found; a held lock refuses every write.
@@ -33,6 +34,7 @@ class AssetLinksControllersSuite extends munit.FunSuite:
   )
   private def current(k: AliasKind, id: AliasTable.Id) = renamed.getOrElse((k, id), id)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def controllers(gate: WriteGate = WriteGate()) =
     val state = AtomicReference(MediaState.empty)
     val _ = AssetService

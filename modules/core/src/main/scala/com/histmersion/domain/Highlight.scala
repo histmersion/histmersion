@@ -2,7 +2,10 @@ package com.histmersion
 package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.LibrarySearch)
 object Highlight:
   type Term = Term.T
   object Term extends Newtype[String, Pure]
@@ -10,6 +13,8 @@ object Highlight:
   /** Terms worth highlighting, from a `websearch_to_tsquery` style query: `"quoted phrases"` stay phrases, `-excluded`
     * terms and the `or`/`and` operators are dropped. Longest first, so a phrase wins over its own words.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def terms(q: Term): List[Term] =
     val phrase = """(-?)"([^"]*)"""".r
     val src = Option(q).fold("")(_.value)
@@ -25,6 +30,8 @@ object Highlight:
 
   private val Operators = Set("or", "and", "not")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pattern(q: Term): Option[scala.util.matching.Regex] =
     terms(q) match
       case Nil => None

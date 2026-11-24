@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which certificate authorities an acquisition request trusts beyond the JDK's own (#1568). Both are opt-in and ADD
   * roots; neither turns verification off ([[HttpPolicy.trust]]).
@@ -13,7 +15,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param extraCaFile
   *   a PEM file of further roots (`~` expanded); "" = none
   */
+@movesTo(FeaturePlace.Config)
 final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsConfig.ExtraCaFile) derives ConfigReader:
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extraCa: Option[TlsConfig.ExtraCaFile] =
     Option(extraCaFile)
       .map(_.value.trim)
@@ -22,6 +27,7 @@ final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsC
       .map(TlsConfig.ExtraCaFile(_))
 
   /** Anything beyond the JDK's roots asked for? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def custom: Boolean = systemTrust.value || extraCa.isDefined
 
 object TlsConfig:

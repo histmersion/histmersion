@@ -19,14 +19,20 @@ object ManagersRoutes:
 
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def light(id: ManagerInfo.Id): ManagerLight.Id = id.transformInto[ManagerLight.Id]
 
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
   private def pageSize(limit: Option[Int]): Option[PageSize] = limit.flatMap(PageSize.option(_))
 
   /** `switches` and `draining`: the autopilot's page's routes (read it, switch it, its mode; the drain), which show the
     * library's part too; `acquisition`: the acquisition list's routes its domain binds (the repair and the legal
     * re-check). Each in its place among these.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def apply(
       m: ManagersControllers,
       switches: List[ServerEndpoint[Any, Identity]],

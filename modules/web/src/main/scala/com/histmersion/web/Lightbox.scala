@@ -6,6 +6,7 @@ import org.scalajs.dom
 import org.scalajs.dom.document
 import com.histmersion.api.{Href, Html}
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A picture opened full-screen: a figure in a page (its `/assets/` image), or a stored picture shown small on the map
   * or a card — any `<img>` that names its full size in `data-full` ([[attrs]]), shown with its title, who made it, its
@@ -32,6 +33,7 @@ object Lightbox:
   private val keys = List("title", "credit", "author", "license", "license-url", "source-url", "provider")
 
   /** Pure: the attributes of a thumbnail that opens `item` full size (escaped, each with a leading space). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def attrs(item: Item): Html =
     val vals = List(item.title, item.credit, item.author, item.license, item.licenseUrl, item.sourceUrl, item.provider)
     markup""" data-full="${item.src}"""" ++ Html.concat(
@@ -61,6 +63,8 @@ object Lightbox:
   /** Pure: the caption under the picture (escaped): its title, then the credit (and the author when the credit does not
     * name them), the licence's name linked to its text, and the provider's page.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def captionHtml(i: Item): Html =
     val title = i.title.map(t => markup"""<div class="lightbox-title">$t</div>""")
     val who = (i.credit, i.author) match
@@ -109,6 +113,7 @@ object Lightbox:
       take
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def open(item: Item): Unit =
     close()
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]

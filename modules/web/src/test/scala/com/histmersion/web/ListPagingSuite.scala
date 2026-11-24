@@ -12,12 +12,15 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Approval
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The paged list windows (jobs, runs, approvals): the heading's wording, when "Show older" is there, what a poll asks
   * for and how its answer, or an older page, lands.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ListPagingSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(id: Job.Id, state: JobState = JobState.Done) =
     JobInfo(id, JobKinds.Wire(Ingest.KindIngest), state.wire)
   private def page(

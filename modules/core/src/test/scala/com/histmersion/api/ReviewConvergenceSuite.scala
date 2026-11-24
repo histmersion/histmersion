@@ -25,6 +25,7 @@ import com.histmersion.domain.ReviewLedger
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Convergence of the review (docs/research-review-convergence.md §6.9), pure: the final pass that defers what it finds
   * new, the regression guard, a "fixed" check held to the checklist, the fixer's guards (the pairing repair, a claimed
@@ -32,6 +33,7 @@ import com.histmersion.api.catalogue.Year
   * with the live ledgers of 2026-10-19 as fixtures (`review/ledger-*.json`: the entries of three of the eight articles
   * that ended MAJOR).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReviewConvergenceSuite extends munit.FunSuite:
 
   private val minRatio = ReviewArticle.CritiqueRule.MinRatio(0.9)
@@ -301,8 +303,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       )
     )
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def together(b: ReviewArticle.Fix.Body, r: CritiqueRef) =
     Critiques.together(b, r, t => Some(Citekey(t.value)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cites(b: ReviewArticle.Fix.Body, ck: domain.library.Citekey) =
     AgentVerify.wikilinks(AgentVerify.Text(b.value)).exists(_.value == ck.value)
 
@@ -358,7 +362,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   )
 
   private val keys = Set("knapp2016_tin", "zz2024_iso", "zz2015_kull", "zz2011_west", "zz2020_new", "zz2021_crit")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val isKey = (ck: domain.library.Citekey) => keys(ck.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val isTarget = (s: Slug) => keys(s.value)
   private val corpus = BodyCorpus(isKey, isTarget, _ => Nil)
   private val edges = List(
@@ -378,6 +384,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Some(Year(2015))
     )
   ).get
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val resolve = (t: Article.Link.Target) => Some(t.value).filter(keys).map(Citekey(_))
   private def pairsOf(b: ReviewArticle.Fix.Body) = Critiques.build(b, resolve, edges, Nil)
   private def guards(l: Ledger) = FixGuards(

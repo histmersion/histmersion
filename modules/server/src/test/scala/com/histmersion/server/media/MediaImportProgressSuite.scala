@@ -14,12 +14,15 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.pluginhost.Polite
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1491: what a running media import job says — `n/total` asked — and which requests name ONE place or event (the only
   * real import the synchronous endpoint still runs). Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaImportProgressSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val r =
     MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),

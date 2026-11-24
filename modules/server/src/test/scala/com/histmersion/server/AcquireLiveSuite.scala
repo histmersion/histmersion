@@ -15,6 +15,7 @@ import com.histmersion.pluginhost.upstreamSettings
 import com.histmersion.pluginhost.HostLog
 import com.histmersion.domain.library.Doi
 import com.histmersion.upstreams.jats.Jats
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** ONE live call to the real upstreams, gated on `HISTMERSION_LIVE_APIS=1`.
   *
@@ -24,6 +25,9 @@ import com.histmersion.upstreams.jats.Jats
   *
   * {{{HISTMERSION_LIVE_APIS=1 sbt "server/testOnly *AcquireLiveSuite"}}}
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class AcquireLiveSuite extends munit.FunSuite:
 
   override def munitIgnore: Boolean = sys.env.get("HISTMERSION_LIVE_APIS") != Some("1")

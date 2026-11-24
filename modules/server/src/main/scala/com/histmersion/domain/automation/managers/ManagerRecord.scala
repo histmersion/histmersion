@@ -7,8 +7,10 @@ import com.histmersion.api.automation.Managers.ManagerConfig
 import java.time.Instant
 import com.histmersion.domain.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A manager as [[ManagerService.InMemory]] holds it. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class ManagerRecord(
     id: ManagerRecord.Id,
     kind: Manager.Kind,

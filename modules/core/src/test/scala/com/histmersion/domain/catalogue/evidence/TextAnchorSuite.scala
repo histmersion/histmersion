@@ -8,8 +8,10 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.util.text.Anchor
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Re-anchoring a quoted passage in another OCR run of the same text (TextQuoteSelector). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TextAnchorSuite extends munit.FunSuite:
 
   private val body =

@@ -17,13 +17,16 @@ import com.histmersion.api.library.{Aggregate, Filter, Finding, Source}
 import com.histmersion.util.database.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.config.Limits
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `periods` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. The bucketing itself is pure
   * and covered by `core/AggregateSuite`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AggregateRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))

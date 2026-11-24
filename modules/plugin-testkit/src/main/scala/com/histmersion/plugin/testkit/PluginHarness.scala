@@ -50,6 +50,7 @@ import com.histmersion.pluginhost.HostAiHttp
 import com.histmersion.config.AcquireConfig
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plugin loaded as the Histmersion server loads it — without the server, its database or Postgres — and run as the
   * server runs it.
@@ -131,6 +132,7 @@ final class PluginHarness private (
     * recorded and replayed with the rest. The contact e-mail of the user's config is never sent from a test (nor
     * recorded): the lookups are anonymous.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def workFromDoi(doi: Doi): Either[Problem, WorkKey] =
     val clean = doi.value.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
     def json(url: RepositoryLanding.Candidate.Url) = acquisition
@@ -163,6 +165,7 @@ final class PluginHarness private (
     * @param allowUnauthorised
     *   `histmersion.acquire.allow-unauthorised`; off, as on a stock server
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fetch(
       work: WorkKey,
       saveTo: Option[Path] = None,
@@ -206,6 +209,7 @@ final class PluginHarness private (
     * would keep completed (`complete`) and judged again. Tying a record to a place on the map is the server's and needs
     * the map: not run here.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchMedia(collection: Registries.MediaCollectionsKey, place: MediaPlace): MediaReport =
     registries.mediaCollections.get(collection) match
       case None =>
@@ -232,6 +236,7 @@ final class PluginHarness private (
         }
         MediaReport(verdicts, failure, logged, asked)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def judge(name: PluginMedia.Provider, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
       answered: Either[Problem, MediaItem]
   ): MediaVerdict =
@@ -264,6 +269,8 @@ final class PluginHarness private (
     * catalogue's polite client, each record checked and dated as the server stores it (a part is read once per run; the
     * server also skips parts an earlier import read).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def readCatalogue(catalogue: Registries.EventCataloguesKey, query: CatalogueQuery): CatalogueReport =
     registries.eventCatalogues.get(catalogue) match
       case None =>
@@ -344,6 +351,7 @@ final class PluginHarness private (
     * gazetteer client (its User-Agent and `places.fetch-*` timeouts), each place checked and converted as the server
     * stores it — without the store.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def readGazetteer(name: Registries.GazetteerSourcesKey): GazetteerReport =
     registries.gazetteerSources.get(name) match
       case None =>
@@ -380,6 +388,7 @@ final class PluginHarness private (
     * [[PluginHarness.liveAiHttp]] (the server's own client) to reach the real provider. (The server also refuses a
     * provider that spends the person's own plan while it listens beyond loopback; a test is on loopback.)
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def aiTurn(provider: Registries.AiProvidersKey, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
     registries.aiProviders.get(provider) match
       case None =>
@@ -398,6 +407,7 @@ final class PluginHarness private (
   /** `<vault>:<ref>` resolved by the plugin's secret vault `vault`, as the server resolves a secret reference in any
     * plugin's config.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolveSecret(
       vault: Secret.Ref.Vault.Value,
       ref: Secret.Ref.Vault.Ref
@@ -443,6 +453,8 @@ object PluginHarness:
     * @return
     *   the harness, or the server's own reason for not registering the plugin
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def load(
       id: Plugin.Info.Id,
       config: String | Path = "",
@@ -476,6 +488,7 @@ object PluginHarness:
       )
     yield harness
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def configText(config: String | Path): Either[Problem, String] = config match
     case p: Path =>
       if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8))
@@ -483,6 +496,7 @@ object PluginHarness:
     case s: String => Right(s)
 
   /** The plugin with this id among the providers ServiceLoader finds, or what is missing. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def discover(loader: ClassLoader, id: Plugin.Info.Id): Either[Problems, Plugin] =
     val services = s"META-INF/services/${classOf[Plugin].getName}"
     if !loader.getResources(services).hasMoreElements then
@@ -496,6 +510,7 @@ object PluginHarness:
         case _ => Left(Problem.Plugin.Load(Problem.Plugin.Id(s"$id"), Problem.Plugin.Fault.Duplicate))
 
   /** The plugin's defaults, which must exist: without them the server knows none of its settings. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def defaultsOf(p: Plugin): Either[Problem, String] =
     val loader = Option(p.getClass.getClassLoader).getOrElse(getClass.getClassLoader)
     Option(loader.getResource(p.defaultsResource.value)) match
@@ -516,6 +531,7 @@ object PluginHarness:
           )
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def testVaults(
       secrets: Map[Secret.Ref.ParseText, Secret.Resolved]
   ): Either[Problem, Option[Plugin]] =
@@ -533,6 +549,7 @@ object PluginHarness:
           .toMap
         Right(Option.when(byVault.nonEmpty)(TestVaults(TestVaultsId, byVault)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def userConfig(id: Plugin.Info.Id, text: String, withVaults: Boolean): Either[Problem, Config] =
     val path = s"${PluginHost.Root}.$id"
     scala.util
@@ -585,6 +602,7 @@ object PluginHarness:
     val literal = "value:([^\"\\s,}\\]]+)".r.findAllMatchIn(text).map(_.group(1)).toSet
     named ++ literal
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def register(
       id: Plugin.Info.Id,
       plugin: Plugin,
@@ -661,6 +679,7 @@ object PluginHarness:
         )
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def save(dir: Path, fetcher: FetchChain.Outcome.FoundBy, work: WorkKey, file: FetchedFile): Path =
     val ident =
       List(

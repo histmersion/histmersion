@@ -4,6 +4,8 @@ package server.agents
 import com.histmersion.domain.automation.agents.AgentGenerator
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The quota-guard mod (docs/research-agent-runtimes.md §2.5, §3a P3): a Claude Code mod module that POSTs every
   * rate-limit reading to Histmersion. In a headless run it carries the run token, and when Histmersion answers that the
@@ -11,10 +13,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   * request — the engine then reads `terminal_reason: "aborted_streaming"` as "stopped by the quota guard". The
   * interactive flavour only reports.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 object QuotaGuard:
   type SourceLabel = SourceLabel.T
   object SourceLabel extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def source(m: AgentGenerator.QuotaMod): SourceLabel =
     val guard = m == AgentGenerator.QuotaMod.Guard
     SourceLabel(

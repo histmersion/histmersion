@@ -8,6 +8,7 @@ import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class UiConfig(
     tiles: UiConfig.Tiles,
@@ -46,6 +47,7 @@ object UiConfig:
   type Tiles = Tiles.T
   object Tiles extends Newtype[String, Pure]
   type TilesMaxZoom = TilesMaxZoom.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TilesMaxZoom extends Newtype[Int, Pure]
   type MarkerRadius = MarkerRadius.T
   object MarkerRadius extends Newtype[Int, Pure]
@@ -54,10 +56,13 @@ object UiConfig:
   type PageSize = PageSize.T
   object PageSize extends Newtype[Int, Pure]
   type FacetSuggestions = FacetSuggestions.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FacetSuggestions extends Newtype[Int, Pure]
   type TreeDepth = TreeDepth.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TreeDepth extends Newtype[Int, Pure]
   type TreeSamples = TreeSamples.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TreeSamples extends Newtype[Int, Pure]
   type MaxBuckets = MaxBuckets.T
   object MaxBuckets extends Newtype[Int, Pure]
@@ -76,8 +81,10 @@ object UiConfig:
   type KeyRequired = KeyRequired.T
   object KeyRequired extends Newtype[Boolean, Pure]
   type AgentsEnabled = AgentsEnabled.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object AgentsEnabled extends Newtype[Boolean, Pure]
   type TilesTone = TilesTone.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends Newtype[String, Pure]:

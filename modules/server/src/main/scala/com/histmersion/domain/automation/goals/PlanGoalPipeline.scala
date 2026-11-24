@@ -43,6 +43,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up
@@ -54,6 +55,9 @@ import com.histmersion.domain.Creator
   * DRY run opens no approval (the plan is treated as approved) and `apply` records the plan it would apply instead of
   * applying it; the log line likewise.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class PlanGoalPipeline(
     host: AutomationHost,
     queues: QueueService,
@@ -71,9 +75,11 @@ final class PlanGoalPipeline(
   private def taken(s: domain.automation.Goal.Slug): Boolean =
     Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     DomainGoal.Slug.parse(ctx.run.target.value).left.map(Halt.failed).flatMap(runFor(ctx, _))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runFor(ctx: RunCtx, slug: DomainGoal.Slug)(using
       WritePermit
   )(using Creator.New): Either[Halt, PipelineDef.Summary] =
@@ -118,6 +124,8 @@ final class PlanGoalPipeline(
     yield PipelineDef.Summary(line)
 
   /** `agents.plan.*`, with the run's own sub-goal cap (the autopilot gives 0 at its depth limit). */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def caps(ctx: RunCtx): Caps =
     val c = cfg.plan.caps
     ctx.run.params.subGoals.fold(c)(n =>
@@ -126,6 +134,7 @@ final class PlanGoalPipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(slug: DomainGoal.Slug): Either[Problems, Loaded] =
     host.goal(slug).left.map(_.problems).map { g =>
       val links = goals.links(slug)
@@ -150,6 +159,7 @@ final class PlanGoalPipeline(
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def input(l: Loaded, caps: Caps): String =
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"${a.value} to ${b.value} (signed years, BCE negative)"
@@ -168,14 +178,17 @@ final class PlanGoalPipeline(
   /** Every DOI through the discover path (OpenAlex/Crossref). Offline, every work is dropped — a person never sees a
     * DOI code could not check.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def verify(ctx: RunCtx, p: Proposed, slug: DomainGoal.Slug)(using WritePermit): Plan =
     val plan = PlanGoal.verify(p, slug, host.workLookup)
     plan.dropped.foreach(d => ctx.warn(s"verify: ${d.value}"))
     plan
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(ctx: RunCtx, line: String): Either[Problems, String] =
     Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).map(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runId(ctx: RunCtx): Run.Id =
     Run.Id.assume(ctx.run.id.value)
 
@@ -183,6 +196,7 @@ final class PlanGoalPipeline(
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
     * finds what it made: goals are upserted, links are keyed, a DOI already in the queue is not added again).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided)(using
       WritePermit
   )(using Creator.New): Either[Problems, Applied] =
@@ -221,6 +235,8 @@ final class PlanGoalPipeline(
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def applyApproved(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan)(using
       WritePermit
   )(using Creator.New): Either[Problems, Applied] =

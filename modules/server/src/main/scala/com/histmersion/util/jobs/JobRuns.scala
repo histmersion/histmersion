@@ -14,11 +14,14 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
   * `jobs` table: created, moved from state to state by compare-and-set, marked alive, annotated, reconciled at a start.
   * Every operation is about the runs of one `kind`; the states are the owner's words, passed in.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 trait JobRuns:
   /** A new run; its id. */
   def create(run: RunRow)(using WritePermit)(using Creator.New): Run.Id
@@ -89,6 +92,7 @@ object JobRuns:
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit = db.write(JobRepo.runHeartbeat(kind, id))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       db.read(JobRepo.runsIn(kind, statuses))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def move(
         kind: Job.Kind,
         id: Run.Id,
@@ -99,8 +103,10 @@ object JobRuns:
         resumeAt: Option[Instant]
     )(using WritePermit): Boolean =
       db.write(JobRepo.moveRun(kind, id, from, to, error, progress, resumeAt.map(t => JobRepo.ResumeAt(t.toString))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       db.read(JobRepo.runsDue(kind, paused, JobRepo.DueAt(now.toString)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pausedWaiting(
         kind: Job.Kind,
         paused: RunRow.Status,
@@ -124,6 +130,7 @@ object JobRuns:
         except: List[Run.Id]
     )(using WritePermit): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
       db.write(JobRepo.runsReconciled(kind, running, paused, error, queued, except))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant)(using WritePermit): Boolean =
       db.write(JobRepo.runResumesAt(kind, id, paused, JobRepo.ResumeAt(at.toString)))
 
@@ -132,6 +139,7 @@ object JobRuns:
     */
   final class InMemory(state: AtomicReference[Map[Run.Id, JobRunState]], now: () => Instant) extends JobRuns:
     private val stamp = java.util.concurrent.atomic.AtomicLong(0L)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def touched(r: JobRunState): JobRunState =
       r.modify(_.updated).setTo(JobRunState.Updated(stamp.incrementAndGet())).modify(_.updatedAt).setTo(now())
     private def change(kind: Job.Kind, id: Run.Id)(f: JobRunState => JobRunState): Boolean = changeIf(id, of(kind))(f)
@@ -140,18 +148,21 @@ object JobRuns:
       val after = state.updateAndGet(m => m.get(id).filter(p).fold(m)(r => m.updated(id, f(r))))
       before.get(id) != after.get(id)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def of(kind: Job.Kind)(r: JobRunState): Boolean = r.row.kind.value == kind.value
 
     /** A run as it stands. */
     def get(id: Run.Id): Option[JobRunState] = state.get.get(id)
 
     /** Every run, in the order they were made. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def all: List[JobRunState] = state.get.values.toList.sortBy[Long](_.created.value)
 
     /** A run's row changed by its owner's own tables (a step recorded): stamped as the database's `updated_at = now()`.
       */
     def stamped(id: Run.Id): Unit = changeIf(id, _ => true)(touched): Unit
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def create(run: RunRow)(using WritePermit)(using Creator.New): Run.Id =
       val id = Run.Id.applyUnsafe(java.util.UUID.randomUUID().toString)
       val n = stamp.incrementAndGet()
@@ -181,10 +192,12 @@ object JobRuns:
     def trace(id: Run.Id): Option[LogEvent.Trace] = None
     def heartbeat(kind: Job.Kind, id: Run.Id)(using WritePermit): Unit =
       val _ = change(kind, id)(_.modify(_.heartbeatAt).setTo(Some(now())))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       RowCount(
         state.get.values.count(r => of(kind)(r) && (r.row.status == statuses._1 || r.row.status == statuses._2))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def move(
         kind: Job.Kind,
         id: Run.Id,
@@ -210,12 +223,14 @@ object JobRuns:
       }
     private def mine(kind: Job.Kind): List[(Run.Id, JobRunState)] =
       state.get.toList.filter((_, r) => of(kind)(r))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       mine(kind)
         .filter((_, r) => r.row.status == paused && r.resumeAt.exists(!_.isAfter(now)))
         .sortBy[(Instant, Long)]((_, r) => (r.resumeAt.get, r.created.value))
         .map(_._1)
         .toVector
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pausedWaiting(
         kind: Job.Kind,
         paused: RunRow.Status,
@@ -234,8 +249,10 @@ object JobRuns:
           )
         )
         .toVector
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress)(using WritePermit): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.progress).setTo(Some(JobRunState.Progress(text.value)))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText)(using WritePermit): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.warnings).using(_ :+ JobRunState.Warnings(warning.value))))
     def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget])(using
@@ -249,6 +266,7 @@ object JobRuns:
             .using(t => tokens.getOrElse(t))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reconcile(
         kind: Job.Kind,
         running: RunRow.Status,

@@ -3,6 +3,7 @@ package util.basemap
 import com.histmersion.util.problem.{External, Problem}
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A decoder of LOSSLESS WebP (the `VP8L` bitstream, RFC 9649) to ARGB pixels — the format the relief's terrarium tiles
   * are stored in (Mapterhorn's 512-pixel tiles, a focus region's, the on-demand cache's). The server reads elevation
@@ -35,9 +36,12 @@ object Vp8l:
     type Height = Height.T
     object Height extends Newtype[Int, Pure]
 
-    extension (i: Image) def isSquare: Boolean = i.width.value == i.height.value
+    extension (i: Image) @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+                         def isSquare: Boolean = i.width.value == i.height.value
 
   /** A WebP file (`RIFF … WEBP VP8L …`) or a bare `VP8L` bitstream, decoded. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decode(bytes: Bitstream): Either[Problem, Image] =
     val raw: Array[Byte] = bytes.value
     vp8lChunk(raw).flatMap { (off, len) =>
@@ -51,6 +55,7 @@ object Vp8l:
     }
 
   /** A stream that breaks the format, thrown out of the bit reader's loops and caught by [[decode]]. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private class Vp8lError(val problem: Problem) extends Exception(null, null, false, false):
     /** The VP8L stream breaks its layout: `flaw`. */
     def this(flaw: Problem.Io.Flaw) =
@@ -251,6 +256,7 @@ object Vp8l:
   final private class Decoder(b: Array[Byte], from: Int, until: Int):
     private val r = Bits(b, from, until)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def image(): Image =
       if r.read(8) != 0x2f then throw Vp8lError(Problem.Io.Flaw.NotVp8l)
       val w = r.read(14) + 1
@@ -499,6 +505,7 @@ object Vp8l:
     case 13 => clampHalf(average2(l, t), tl)
     case _  => 0xff000000 // modes 14 and 15 are not used; as 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def predict(t: Transform, px: Array[Int], h: Int): Unit =
     val w = t.width
     val bw = (w + (1 << t.bits) - 1) >> t.bits
@@ -523,6 +530,7 @@ object Vp8l:
 
   private def delta(t: Int, c: Int): Int = (t.toByte * c.toByte) >> 5
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def colour(t: Transform, px: Array[Int], h: Int): Unit =
     val w = t.width
     val bw = (w + (1 << t.bits) - 1) >> t.bits
@@ -543,6 +551,7 @@ object Vp8l:
         x += 1
       y += 1
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def unindex(t: Transform, px: Array[Int], h: Int): Array[Int] =
     val w = t.width
     val packed = (w + (1 << t.bits) - 1) >> t.bits

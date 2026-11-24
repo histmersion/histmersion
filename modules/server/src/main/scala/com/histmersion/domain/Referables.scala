@@ -1,6 +1,7 @@
 package com.histmersion
 package domain
 import com.histmersion.util.problem.{Legacy, Problem}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every domain's [[Referable]], by the kinds each owns: what a domain that points at records of any kind is given. */
 final class Referables(all: List[Referable]):
@@ -8,6 +9,8 @@ final class Referables(all: List[Referable]):
 
   def kinds: Set[ItemKind] = byKind.keySet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def resolve(kind: ItemKind, key: ItemKey): Either[Problem, ItemRef] =
     byKind
       .get(kind)

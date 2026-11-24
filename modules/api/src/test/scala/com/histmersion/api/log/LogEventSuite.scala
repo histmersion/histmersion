@@ -6,7 +6,9 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString
 import com.histmersion.api.log.LogEvent.{Subject, What}
 
 import java.time.Instant
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LogEventSuite extends munit.FunSuite:
   private def event(what: What) =
     LogEvent(

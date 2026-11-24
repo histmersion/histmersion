@@ -14,17 +14,25 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The MATERIALISATION of `finding_places` — the only place that decides which findings belong to which places: the
   * whole table rebuilt, one source's findings or some places' findings placed again inside the caller's transaction,
   * and the placeholder points that stand for a named place. The library reaches it through [[FindingPlacement]].
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the finding place tables and their row codecs")
 private[places] object FindingPlaceRepo:
   type PlaceholderAreaShare = PlaceholderAreaShare.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PlaceholderAreaShare extends Newtype[Double, Pure]
 
   import PlaceRepo.*
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def rebuildFindingPlaces(toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Place.RebuildResult =
     // Lock in a FIXED order — `findings` first, then `finding_places` — before touching anything.
     // Without it the INSERT…SELECT can see (in its snapshot) a finding another transaction has
@@ -57,6 +65,8 @@ private[places] object FindingPlaceRepo:
     * transaction, so the gazetteer assignment is never observable as missing. Same table order as
     * [[rebuildFindingPlaces]]: findings, then finding_places.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def materialiseFor(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
       DbCon
   ): RowCount =
@@ -74,6 +84,7 @@ private[places] object FindingPlaceRepo:
     * inserts as a rebuild, restricted to those places, so a fix takes seconds instead of a whole rebuild's half minute
     * (live 2026-10-09). Same table order as [[rebuildFindingPlaces]]. Returns the rows written.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def materialisePlaces(placeIds: List[BPlaceRow.Id], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
       DbCon
   ): RowCount =
@@ -146,6 +157,7 @@ private[places] object FindingPlaceRepo:
   /** The placeholder findings whose place name the geocoder does not resolve, or that have none — what
     * `lint --rule finding-placeholder` lists, as (citekey, line), by citekey and finding id.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, Placeholder.Detail)] =
     val ph =
       sql"$placeholderFindingsSql ORDER BY f.citekey, f.id".query[Placeholder].run().toList
@@ -162,6 +174,7 @@ private[places] object FindingPlaceRepo:
   /** Finding id → the place its name resolves to, for the placeholders that have a name the geocoder resolves (as a
     * region). One resolution per (name, period).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def resolve(ph: List[Placeholder])(using DbCon): List[(Placeholder.Id, BPlaceRow.Id)] =
     ph.flatMap(p => p.name.map(n => (n, p)))
       .groupBy((n, p) => (n, Geocode.periodOf(p.from, p.to)))
@@ -202,6 +215,8 @@ private[places] object FindingPlaceRepo:
     *     not to the Peloponnese — and not to areas merely covering the point; when it does not resolve, areas still
     *     take it by containment (`lint --rule finding-placeholder` lists those for a person).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def insertAssignments(
       citekey: Option[Citekey],
       toleranceKm: FindingPlacement.Implementation.ToleranceKm,
@@ -339,6 +354,7 @@ private[places] object FindingPlaceRepo:
     * readings ([[Geocode.attempts]]) is the name key of an explicit-only place are resolved at all, so a rebuild
     * resolves a few hundred names, not every finding's. Returns the rows inserted.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def byResolution(citekey: Option[Citekey], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using
       DbCon
   ): RowCount =

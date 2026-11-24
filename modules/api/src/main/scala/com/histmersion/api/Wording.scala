@@ -15,7 +15,11 @@ import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.AgentMode
 import com.histmersion.api.automation.ProviderKind
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@movesTo(FeaturePlace.UtilCommon)
 object Wording:
   object Decisions:
     type Open = Open.T
@@ -23,11 +27,15 @@ object Wording:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ManagerId = Id
   val ManagerId: Id.type = Id
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PluginId = Id
   val PluginId: Id.type = Id
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def humanize(id: Id): String =
     val words =
       (id).value.trim
@@ -41,12 +49,16 @@ object Wording:
   def capitalize(s: String): String =
     if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).substring(1))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def value(s: String): String = Label.display(Label.Text(s)).value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def heading(s: String): String =
     if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(Id((s)))))
     else capitalize(Label.display(Label.Text((s).trim)).value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")
     case Source.Status.Current      => ("Current")
@@ -56,11 +68,14 @@ object Wording:
     case Source.Status.Retracted    => ("Retracted")
     case Source.Status.Unassessed   => ("Not assessed")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusOf(wire: Api.GoalQuery.Status): String =
     Source.Status.values
       .find(_.wire == Source.Status.Wire((wire).value.trim.toLowerCase))
       .fold(humanize(Id((wire).value)))(status)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pipeline(p: Pipeline): String = p match
     case Pipeline.EnrichSource     => ("Enrich a source")
     case Pipeline.ReviewArticle    => ("Review an article")
@@ -72,6 +87,7 @@ object Wording:
     case Pipeline.HintEffect       => ("Turn a hint into an action")
     case Pipeline.ProposeArticles  => ("Propose articles")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def approvalKind(k: Approval.Kind): String = k match
     case Approval.Kind.StatusChange   => ("Change a source's status")
     case Approval.Kind.Edge           => ("Link two sources")
@@ -81,6 +97,7 @@ object Wording:
     case Approval.Kind.ArticlePlan    => ("Plan new articles")
     case Approval.Kind.HintEffect     => ("Act on a hint")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runState(s: Run.State): String = s match
     case Run.State.Queued          => ("Queued")
     case Run.State.Running         => ("Running")
@@ -90,18 +107,22 @@ object Wording:
     case Run.State.Failed          => ("Failed")
     case Run.State.Cancelled       => ("Cancelled")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def approvalState(s: Approval.State): String = s match
     case Approval.State.Open     => ("Needs a decision")
     case Approval.State.Approved => ("Approved")
     case Approval.State.Rejected => ("Rejected")
     case Approval.State.Failed   => ("Failed")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def managerKind(k: Manager.Kind): String = k match
     case Manager.Kind.Review => ("Review manager")
     case Manager.Kind.Seed   => ("Seeding manager")
     case Manager.Kind.Watch  => ("Watch manager")
     case Manager.Kind.Enrich => ("Enrich manager")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manager(id: ManagerId): String =
     val (kind, rest) = (id).value.span(_ != ':')
     Manager.Kind
@@ -110,6 +131,7 @@ object Wording:
         (managerKind(k)) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(Id(g))}")
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val schedulerJobTypes: Map[JobKinds.Wire, String] = Map(
     { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (JobKinds.Wire(refactorTuple23._1), (refactorTuple23._2)) },
     { val refactorTuple2 = "propose" -> "Propose articles"; (JobKinds.Wire(refactorTuple2._1), (refactorTuple2._2)) }, {
@@ -129,6 +151,7 @@ object Wording:
     { val refactorTuple9 = "review" -> "Review an article"; (JobKinds.Wire(refactorTuple9._1), (refactorTuple9._2)) }
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val strategies: Map[AgentScheduler.StrategyLine.Name, String] = Map(
     {
       val refactorTuple10 = "type-balanced" -> "Balance the kinds of work";
@@ -142,11 +165,15 @@ object Wording:
     }
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pool(id: AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
     case "claude-plan"  => ("Claude plan")
     case "chatgpt-plan" => ("ChatGPT plan")
     case other => ((humanize(Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allowanceWindow(kind: PlanQuota.WindowStatus.Kind): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
     def span(minutes: AllowanceWindow.Minutes): String = (minutes.value: Long) match
@@ -165,26 +192,37 @@ object Wording:
       case s if s.startsWith("five_hour_") => (s"5-hour limit (${humanize(Id(s.stripPrefix("five_hour_")))})")
       case other                           => ((humanize(Id(other))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def agentsState(autopilotOn: AgentMode.Step.Autopilot.On, draining: AgentMode.Step.Drain.On): String =
     if (draining).value then ("Agents: finishing current work, then pausing")
     else if (autopilotOn).value then ("Agents: working")
     else ("Agents: paused")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decisions(open: Decisions.Open): Option[String] =
     Option.when((open).value > 0)(if open == Decisions.Open(1) then ("1 needs your decision")
     else (s"$open need your decision"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decisionsShort(open: Decisions.Open): String =
     if open == Decisions.Open(1) then ("1 needs you") else (s"$open need you")
 
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(Id(k.value)))(_.name.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def jobKindOf(wire: JobKinds.Wire): String =
     RegisteredJobKinds.all.parse(wire).fold(humanize(Id(wire.value)))(_.name.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def jobState(s: JobState): String = s match
     case JobState.Queued    => ("Queued")
     case JobState.Running   => ("Running")
@@ -193,6 +231,8 @@ object Wording:
     case JobState.Paused    => ("Paused")
     case JobState.Cancelled => ("Cancelled")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plugin(id: PluginId): String =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
     pluginNames
@@ -203,6 +243,7 @@ object Wording:
       })
       .getOrElse(humanize(id))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val pluginNames: Map[ProviderKind.Plugin.Id, String] = Map(
     {
       val refactorTuple35 = "archive-org" -> "Internet Archive";

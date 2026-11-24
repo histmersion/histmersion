@@ -4,6 +4,8 @@ package api.jobs
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object JobActions:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]

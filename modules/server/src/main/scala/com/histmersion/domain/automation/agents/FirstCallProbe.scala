@@ -5,6 +5,7 @@ import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
 import scala.concurrent.duration.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The input of a step's FIRST model call — input + cache read + cache write tokens: the fixed part every turn re-sends
   * (the system prompt, the tool definitions) plus the step's own prompt. Measured per step attempt so a change to that
@@ -24,6 +25,7 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
 
   def report(tokens: Option[AgentRepo.StepRecord.FirstCallTokens]): Unit = state.set(Some(tokens))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
     val r = next
     val _ = state.compareAndSet(

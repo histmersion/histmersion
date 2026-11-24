@@ -30,6 +30,7 @@ import com.histmersion.domain.automation.goals.GoalSourceReferrer
 import com.histmersion.domain.automation.worklists.WorkListSourceReferrer
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The db suites' reads and writes of the library's sources on a database of their own, each in a transaction of its
   * own as the service runs them. A rename follows into every domain's records through the same referrers the server
@@ -48,6 +49,7 @@ object SourceFixtures:
     db(ds).write(SourceRepo.setSha256(citekey, sha))
   def sha256Of(ds: DataSource, citekey: Citekey): Option[Sha256] = db(ds).read(SourceRepo.sha256Of(citekey))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def put(
       ds: DataSource,
       s: Source,
@@ -62,6 +64,7 @@ object SourceFixtures:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def upsert(
       ds: DataSource,
       s: Source,
@@ -71,6 +74,7 @@ object SourceFixtures:
   ): Unit =
     val _ = put(ds, s, chunkChars, toleranceKm)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def patch(
       ds: DataSource,
       requested: Citekey,
@@ -87,6 +91,7 @@ object SourceFixtures:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reindexChunks(
       ds: DataSource,
       chunkChars: Limits.ChunkChars,

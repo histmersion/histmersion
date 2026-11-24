@@ -38,11 +38,14 @@ import com.histmersion.util.database.TestCreators
   * period seed — never the 16 000-place gazetteer, whose import re-materialises `finding_places` for the whole test
   * database other suites assert on.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class BootstrapSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
@@ -60,6 +63,7 @@ class BootstrapSuite extends DbSuite:
     Files.writeString(d.resolve("periods/periodo-seed.json"), seedText)
     d
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bootstrap(
       dir: Path,
       net: HttpDownload.Url => Either[Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))

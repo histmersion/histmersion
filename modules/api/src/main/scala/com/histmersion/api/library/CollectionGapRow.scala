@@ -7,10 +7,13 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One source the library lists as not in a collection: its push metadata, where its original is (`local`, `stored`,
   * `none`, `unknown`) and whether it counts as a gap (a record with no fetched file never does).
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 final case class CollectionGapRow(
     citekey: Citekey,
     title: Title,

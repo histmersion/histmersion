@@ -4,11 +4,14 @@ package domain.catalogue.places
 import com.histmersion.api.catalogue.Geocode
 import com.augustnagro.magnum.{DbCon, Frag}
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the places decide for the library: which places a source's findings belong to (`finding_places`), placed again
   * inside the library's own transaction whenever it writes the source, so a moved or new finding is located the moment
   * the write commits. `toleranceKm` is how near a finding's point must be to a place's to be its.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait FindingPlacement:
   def toleranceKm: FindingPlacement.Implementation.ToleranceKm
 

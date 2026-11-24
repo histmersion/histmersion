@@ -3,12 +3,14 @@ package plugins.media
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `smithsonian`: the Smithsonian's Open Access API (an api.data.gov key, sent as a header): one search by the place's
   * name answers the records; only a CC0 image media item is used ([[Smithsonian]]). The units in `exclude-providers`
   * (the natural-history departments' specimens) are left out of the search and refused if one still answers; an object
   * made after `max-year` is refused.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key])
     extends KeyedCollection(
       conf,
@@ -24,8 +26,10 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
       "natural-history units' specimens and objects made after media.smithsonian.max-year are refused; " +
       "needs an api.data.gov key (histmersion.plugins.media-smithsonian.api-key, a secret reference)"
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val units = CollectionSettings.items(conf.excludeProviders).map(i => Smithsonian.Unit(i.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(
       place: MediaPlace,
       http: Plugin.Http

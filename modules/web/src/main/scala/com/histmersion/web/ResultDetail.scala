@@ -15,6 +15,7 @@ import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.marks.ItemMenu
 import com.histmersion.web.marks.ItemActions
 import com.histmersion.web.marks.NoteList
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An item chosen in the results or on the map, shown in place of the results: "← Results" back to them, its card, "Pin
   * as window" (it floats over whatever is shown next) and "Open in a new tab"; for a place, what its record holds
@@ -24,6 +25,8 @@ object ResultDetail:
 
   /** Pure: an item's own page. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pageOf(t: Preview.Target): UiLabels.Text = t match
     case Preview.Target.Source(ck)    => UiLabels.Text(Route.Source(ck).path)
     case Preview.Target.Article(slug) => UiLabels.Text(Route.Article(slug).path)
@@ -31,12 +34,15 @@ object ResultDetail:
     case Preview.Target.Event(id)     => UiLabels.Text(Route.Event(id).path)
 
   /** Pure: what the item is, for the actions' names. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def kindOf(t: Preview.Target): UiLabels.Text = t match
     case _: Preview.Target.Source  => UiLabels.Text("source")
     case _: Preview.Target.Article => UiLabels.Text("article")
     case _: Preview.Target.Place   => UiLabels.Text("place")
     case _: Preview.Target.Event   => UiLabels.Text("event")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pin(t: Preview.Target, from: dom.Element): Unit = t match
     case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(ck.value)))
     case Preview.Target.Article(slug) => WindowManager.open(WindowKey.Article(WindowKey.Article.Slug(slug.value)))
@@ -44,6 +50,10 @@ object ResultDetail:
       val r = from.getBoundingClientRect()
       Preview.pin(t, () => Some(Preview.Anchor.At(Preview.Anchor.At.X(r.left - 360), Preview.Anchor.At.Y(r.top))))
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def element(t: Preview.Target): HtmlElement =
     val card = Var(Option.empty[Either[String, Preview.Card]])
     val record = Var(Option.empty[Place.Record])
@@ -112,6 +122,8 @@ object ResultDetail:
     )
 
   /** What a place's record holds beyond its card. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def recordView(r: Place.Record): HtmlElement =
     div(
       cls := "place-record",

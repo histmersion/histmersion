@@ -13,6 +13,7 @@ import javax.sql.DataSource
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.checks.Lint
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's and the articles' lint rules as the db suites run them: one connection for the lot, each rule by its
   * owner's repository; and the SQL each rule reads.
@@ -25,6 +26,7 @@ object SourceCheckFixtures:
   ): ReindexResult =
     SourceRepairs(Transactor(ds)).reindexStale(chunkChars, maxChars)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(
       ds: DataSource,
       rules: List[Rule],
@@ -41,4 +43,7 @@ object SourceCheckFixtures:
         else ArticleCheckFixtures.report(r, format, ArticleCheckFixtures.ReportMaxItems(maxItems.value))
       })
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def sqlOf(rule: Rule.Name): List[Frag] = SourceCheckRepo.sqlOf(rule.value) ++ ArticleCheckFixtures.sqlOf(rule.value)

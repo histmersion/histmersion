@@ -12,10 +12,14 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the goal link tables and their row codecs")
 object GoalLinkRepo:
   type ItemId = ItemId.T
   object ItemId extends Newtype[Int, Pure]
@@ -34,6 +38,7 @@ object GoalLinkRepo:
   /** A goal's links, each with the title of what it points at (`None` = it no longer exists; a query has no title).
     * Sources, then articles, queries, queue items; oldest first within a kind.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def links(goal: domain.automation.Goal.Slug)(using DbCon): List[GoalLink] =
     sql"""SELECT l.kind, l.ref, l.note,
                  CASE l.kind WHEN 'source'  THEN (SELECT s.title FROM sources s WHERE s.citekey = l.ref)
@@ -49,6 +54,7 @@ object GoalLinkRepo:
     }
 
   /** [[goalsOfItems]] on the caller's connection. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goalsOfItemsIn(
       items: List[ItemId]
   )(using DbCon): List[(ItemId, domain.automation.Goal.Slug, BGoalRow.Title)] =
@@ -65,6 +71,7 @@ object GoalLinkRepo:
           .flatMap((ref, slug, title) => ref.toIntOption.map(i => (ItemId(i), slug, title)))
 
   /** [[refs]] on the caller's connection. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def refsIn(goal: domain.automation.Goal.Slug, kind: LinkKind)(using DbCon): List[GoalLink.Ref] =
     sql"SELECT ref FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} ORDER BY created_at, ref"
       .query[GoalLink.Ref]
@@ -73,6 +80,7 @@ object GoalLinkRepo:
 
   /** Link (idempotent: an existing link keeps its note unless a new one is given). `false` = the goal does not exist.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def link(
       goal: domain.automation.Goal.Slug,
       kind: LinkKind,
@@ -87,6 +95,7 @@ object GoalLinkRepo:
         .run()
     exists
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def unlink(goal: domain.automation.Goal.Slug, kind: LinkKind, ref: GoalLink.Ref)(using
       DbCon
   ): Boolean =
@@ -118,6 +127,7 @@ object GoalLinkRepo:
   // ── plan and run cap ───────────────────────────────────────────────────────────────────────────
 
   /** The approved plan (its JSON) and the goal's run cap. `None` = no such goal. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def planAndBudget(
       goal: domain.automation.Goal.Slug
   )(using DbCon): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
@@ -129,6 +139,7 @@ object GoalLinkRepo:
   /** Record an approved plan, and when it was approved (V054: two collections' plans for one goal are merged by "the
     * one approved later wins").
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using DbCon): Unit =
     Unused(
       sql"""UPDATE goals SET plan = $planJson::jsonb, plan_approved_at = now(), updated_at = now()
@@ -136,6 +147,7 @@ object GoalLinkRepo:
       Unused.Why.Idempotent
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal])(using DbCon): Unit =
     Unused(
       sql"UPDATE goals SET budget_usd = $usd, updated_at = now() WHERE slug = $goal".update.run(),
@@ -161,6 +173,7 @@ object GoalLinkRepo:
               last_job, last_note
        FROM goal_schedules"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def toSchedule(r: ScheduleRow): Option[GoalSchedule] =
     ScheduleKind
       .parse(r.kind)
@@ -188,6 +201,7 @@ object GoalLinkRepo:
       .flatMap(toSchedule)
 
   /** One row here (a bundle's import, before the managers move it into its goal's watcher). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def schedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using
       DbCon
   ): Option[GoalSchedule] =
@@ -198,6 +212,7 @@ object GoalLinkRepo:
       .flatMap(toSchedule)
 
   /** A row here (tests, a bundle's import) before the managers move it into its goal's watcher. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setSchedule(
       goal: domain.automation.Goal.Slug,
       kind: ScheduleKind,
@@ -215,6 +230,7 @@ object GoalLinkRepo:
             ON CONFLICT (goal_slug, kind) DO UPDATE SET cron = EXCLUDED.cron, enabled = EXCLUDED.enabled,
               budget_usd = EXCLUDED.budget_usd, next_run_at = EXCLUDED.next_run_at, updated_at = now()""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using DbCon): Boolean =
     sql"DELETE FROM goal_schedules WHERE goal_slug = $goal AND kind = ${kind.wire}".update.run() > 0
 
@@ -231,6 +247,7 @@ object GoalLinkRepo:
   /** Take a goal's schedules OUT of the table, in the caller's transaction (the migration into its watcher): two
     * servers migrating at once cannot both get them.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def takeSchedulesIn(goal: domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
     sql"""DELETE FROM goal_schedules WHERE goal_slug = $goal RETURNING goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),

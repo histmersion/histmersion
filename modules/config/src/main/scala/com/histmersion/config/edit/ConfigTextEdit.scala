@@ -8,6 +8,8 @@ import org.ekrich.config.parser.ConfigDocumentFactory
 
 import scala.annotation.tailrec
 import scala.util.Try
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Changes to the config file's TEXT that keep everything else as it is: its comments, its order, its layout, its
   * includes and its unknown keys (sconfig's `ConfigDocument`, which edits the parsed text, not a rendering of the
@@ -15,9 +17,13 @@ import scala.util.Try
   * rewritten. Setting a value the file already holds changes nothing. Pure: `current` is the file as read with its
   * includes, unresolved, and `here` tells its own origins.
   */
+@atBoundary(BoundaryKind.Config, "edits the HOCON text of the config file, keeping comments and layout")
+@movesTo(FeaturePlace.UtilSettings)
 object ConfigTextEdit:
   private given CanEqual[ConfigObject, ConfigObject] = CanEqual.derived
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def apply(
       text: ConfigFileState.Text,
       current: Config,
@@ -91,6 +97,7 @@ object ConfigTextEdit:
   /** `doc` without the blocks taking `key` out left empty (`backups { }`), up to `histmersion` — unless a block holds a
     * comment, which stays where it was written.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def withoutEmptyBlocks(
       doc: org.ekrich.config.parser.ConfigDocument,
       key: SettingKey
@@ -175,6 +182,7 @@ object ConfigTextEdit:
   private def includes(text: String): Int = text.linesIterator.count(_.trim.startsWith("include"))
 
   /** Where the file (read with its includes, unresolved) writes `key`. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def written(current: Config, key: SettingKey, here: ConfigOrigin => Boolean): Written =
     @tailrec def down(obj: ConfigObject, path: List[SettingKey.Segment], seen: List[String]): Written =
       path match

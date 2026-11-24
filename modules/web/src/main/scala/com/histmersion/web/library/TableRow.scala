@@ -8,6 +8,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.ItemKey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One row of a Library table, as it reads: the item's key (a citekey or a slug), its title and the line under it (a
   * source's authors, an article's regions), its year, its status (a source) or kind (an article), its period, and its
@@ -27,12 +28,14 @@ final case class TableRow(
 object TableRow:
   /** The authors as the table shows them: the first three, then "et al.". */
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Key = ItemKey
   val Key: ItemKey.type = ItemKey
   def authors(names: List[String]): String =
     val named = names.map(_.trim).filter(_.nonEmpty)
     if named.size <= 3 then named.mkString(", ") else named.take(3).mkString(", ") + " et al."
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(h: Hit): TableRow =
     val s = h.source
     TableRow(
@@ -46,6 +49,8 @@ object TableRow:
       SourceLink.href(s.citekey)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def of(a: Article.Summary): TableRow =
     TableRow(
       Key(a.slug.value),

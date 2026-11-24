@@ -11,10 +11,12 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.instance.BuildId
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTMERSION_TEST_DB_URL) and hits every
   * surface. Skipped when no test DB is configured.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SmokeSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

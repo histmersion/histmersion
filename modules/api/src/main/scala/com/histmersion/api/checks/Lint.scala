@@ -12,7 +12,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Lint:
   type AbbreviationsText = AbbreviationsText.T
   object AbbreviationsText extends Newtype[String, Pure]
@@ -40,6 +42,7 @@ object Lint:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LintItem(citekey: Citekey, detail: LintItem.Detail)
       derives JsonCodec,
         KindlingsSchema,
@@ -60,6 +63,7 @@ object Lint:
         /** The matches of a filler detail, as [[filler]] wrote them. */
         def fillerMatches: String = d.value.stripPrefix(FillerMark)
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LintRuleReport(
       rule: LintRuleReport.Rule,
       description: LintRuleReport.Description,
@@ -74,10 +78,12 @@ object Lint:
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
       derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def total: IssueCount = IssueCount(rules.map(r => (r.count).value).sum)
 
   object LintReport:
@@ -85,6 +91,7 @@ object Lint:
     type Fixed = Fixed.T
     object Fixed extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LintFixResult(
       applied: List[LintFixResult.Applied],
       edgesResolved: LintFixResult.EdgesResolved,
@@ -171,6 +178,7 @@ object Lint:
   val MediaLicenceRule = "media-licence"
   val EventCorrectionConflict = "event-correction-conflict"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[Rule] = List(
     Rule(
       Rule.Name(DanglingEdges),
@@ -321,8 +329,11 @@ object Lint:
 
   val names: List[Rule.Name] = all.map(_.name)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rule(name: Rule.Name): Option[Rule] = all.find(_.name == Rule.Name((name).value.trim.toLowerCase))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def select(requested: List[Rule.Name]): Either[Problem, List[Rule]] =
     val wanted = requested.map((_).value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(all)
@@ -343,6 +354,8 @@ object Lint:
 
   def blank(s: Option[String]): Boolean = (s.forall((_).trim.isEmpty))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def suggest(target: Citekey, citekeys: Iterable[Citekey], max: ItemLimit): List[Suggestion] =
     val t = (target).value.trim.toLowerCase
     if t.isEmpty || (max).value <= 0 then Nil
@@ -369,8 +382,11 @@ object Lint:
         .take((max).value))
         .map(refactorValue3 => Suggestion((refactorValue3).value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def looksLikeCitekey(target: Citekey): Boolean = ("""\d{4}""".r.findFirstIn((target).value).isDefined)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def duplicates(rows: List[(Citekey, DuplicateKey)], label: String): List[LintItem] =
     rows
       .filter((_, key) => (key).value.trim.nonEmpty)
@@ -385,13 +401,18 @@ object Lint:
 
   private val CanonicalTag = """^[a-z0-9][a-z0-9_]*$""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isCanonicalTag(tag: Tag): Boolean = (CanonicalTag.matches((tag).value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normaliseTag(tag: Tag): Tag =
     Tag(
       (tag).value.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nonCanonicalTags(rows: List[(Citekey, List[Tag])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
@@ -401,6 +422,7 @@ object Lint:
 
   private val YearInCitekey = """(\d{4})""".r.unanchored
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def yearCitekeyMismatch(rows: List[(Citekey, Option[Year])]): List[LintItem] =
     rows
       .flatMap { (ck, yr) =>
@@ -414,6 +436,7 @@ object Lint:
       }
       .sortBy(i => (i.citekey).value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def authorPipe(rows: List[(Citekey, List[AuthorName])]): List[LintItem] =
     rows
       .flatMap { (ck, authors) =>
@@ -448,6 +471,7 @@ object Lint:
 
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sentenceCount(text: String): SentenceCount =
     val t = (text).trim
     if t.isEmpty then SentenceCount(0)
@@ -466,6 +490,8 @@ object Lint:
     val t = (text).trim
     (t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount((t)) == SentenceCount(1))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extractParagraphs(body: ProseBody): List[Paragraph] =
     val lines = (body).value.linesIterator.toList
     var inFence = false
@@ -501,6 +527,7 @@ object Lint:
 
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def formatItems(rows: List[(Citekey, FormatField, FormatItemDetail)], check: FormatChecker): List[LintItem] =
     rows.filter(r => (r._3).value.trim.nonEmpty).sortBy((id, f, _) => ((id).value, f.ordinal)).flatMap {
       (id, field, text) =>
@@ -508,9 +535,13 @@ object Lint:
           .map(i => LintItem(id, LintItem.Detail(FormatMarkdown.line(i).value)))
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(r: Rule, items: List[LintItem], maxItems: ItemLimit): LintRuleReport =
     LintRuleReport(r.name, r.description, LintRuleReport.Count(items.size), items.take(math.max(0, (maxItems).value)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(rep: LintReport): Markdown =
     val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
     val (clean, dirty) = rep.rules.partition(_.count == LintRuleReport.Count(0))

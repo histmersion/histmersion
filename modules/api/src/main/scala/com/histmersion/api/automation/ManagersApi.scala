@@ -9,7 +9,12 @@ import com.histmersion.api.given
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the managers routes with their request and response bodies")
 object ManagersApi:
   type Action = Action.T
   object Action extends Newtype[String, Pure]
@@ -25,6 +30,7 @@ object ManagersApi:
   lazy val create: PublicEndpoint[ManagerCreate, Api.Error, ManagerInfo, Any] =
     base.post.in(jsonBody[ManagerCreate]).out(jsonBody[ManagerInfo])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val get: PublicEndpoint[ManagerInfo.Id, Api.Error, ManagerDetail, Any] =
     (one.get
       .out(jsonBody[ManagerDetail]))
@@ -32,6 +38,7 @@ object ManagersApi:
         (refactorEncoded15: ManagerInfo.Id) => (refactorEncoded15).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val update: PublicEndpoint[(ManagerInfo.Id, ManagerUpdate), Api.Error, ManagerInfo, Any] =
     (one.put
       .in(jsonBody[ManagerUpdate])
@@ -42,6 +49,7 @@ object ManagersApi:
         (((refactorEncoded16)._1).value, (refactorEncoded16)._2)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val delete: PublicEndpoint[ManagerInfo.Id, Api.Error, Goal.Plans.Removed, Any] =
     (one.delete
       .out(jsonBody[Goal.Plans.Removed]))
@@ -49,6 +57,7 @@ object ManagersApi:
         (refactorEncoded3: ManagerInfo.Id) => (refactorEncoded3).value
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val items: PublicEndpoint[
     (
         ManagerInfo.Id,
@@ -96,6 +105,7 @@ object ManagersApi:
           )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val addItem: PublicEndpoint[(ManagerInfo.Id, EnqueueRequest), Api.Error, ManagerItem, Any] =
     (one.post
       .in("items")
@@ -105,6 +115,7 @@ object ManagersApi:
         (ManagerInfo.Id((refactorDecoded5)._1), (refactorDecoded5)._2)
       )((refactorEncoded5: (ManagerInfo.Id, EnqueueRequest)) => (((refactorEncoded5)._1).value, (refactorEncoded5)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val patchItem: PublicEndpoint[(ManagerInfo.Id, ManagerItem.Ref, ItemPatch), Api.Error, ManagerItem, Any] =
     (one.patch
       .in("items" / path[String]("item"))
@@ -116,6 +127,7 @@ object ManagersApi:
         (((refactorEncoded6)._1).value, ((refactorEncoded6)._2).value, (refactorEncoded6)._3)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val hints: PublicEndpoint[(ManagerInfo.Id, Option[Boolean]), Api.Error, List[ManagerHint], Any] =
     (one.get
       .in("hints")
@@ -127,6 +139,7 @@ object ManagersApi:
         (((refactorEncoded21)._1).value, ((refactorEncoded21)._2).map(refactorElement26 => (refactorElement26)))
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val addHint: PublicEndpoint[(ManagerInfo.Id, HintAdd), Api.Error, ManagerHint, Any] =
     (one.post
       .in("hints")
@@ -136,6 +149,7 @@ object ManagersApi:
         (ManagerInfo.Id((refactorDecoded8)._1), (refactorDecoded8)._2)
       )((refactorEncoded8: (ManagerInfo.Id, HintAdd)) => (((refactorEncoded8)._1).value, (refactorEncoded8)._2))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeHint: PublicEndpoint[(ManagerInfo.Id, ManagerHint.Id), Api.Error, Goal.Plans.Removed, Any] =
     (one.delete
       .in("hints" / path[Long]("hint"))
@@ -146,6 +160,7 @@ object ManagersApi:
         (((refactorEncoded23)._1).value, ((refactorEncoded23)._2).value)
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val events
       : PublicEndpoint[(ManagerInfo.Id, Option[EventPage.Before], Option[EventPage.Limit]), Api.Error, EventPage, Any] =
     (one.get
@@ -168,6 +183,7 @@ object ManagersApi:
         )
       )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val action: PublicEndpoint[(ManagerInfo.Id, Action, Option[Boolean]), Api.Error, ManagerInfo, Any] =
     (one.post
       .in(path[String]("action"))
@@ -209,6 +225,7 @@ object ManagersApi:
 
   private lazy val sched = endpoint.in("api" / "agents" / "scheduler").errorOut(Api.problemOut)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val scheduler: PublicEndpoint[Option[Scheduler.Limit], Api.Error, AgentScheduler.SchedulerStatus, Any] =
     (sched.get
       .in(query[Option[Int]]("limit"))
@@ -222,6 +239,7 @@ object ManagersApi:
   lazy val setScheduler: PublicEndpoint[AgentScheduler.SchedulerSet, Api.Error, AgentScheduler.SchedulerStatus, Any] =
     sched.post.in(jsonBody[AgentScheduler.SchedulerSet]).out(jsonBody[AgentScheduler.SchedulerStatus])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val schedulerWhy: PublicEndpoint[ManagerInfo.Id, Api.Error, AgentScheduler.WhyInfo, Any] =
     (sched.get
       .in("why" / path[String]("item"))
@@ -243,6 +261,7 @@ object ManagersApi:
       .in(jsonBody[ApprovalDigest.BulkDecide])
       .out(jsonBody[ApprovalDigest.BulkResult])
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val stalls: PublicEndpoint[Option[Stalls.Limit], Api.Error, Stalls.StallReport, Any] =
     (endpoint.get
       .in("api" / "agents" / "stalls")

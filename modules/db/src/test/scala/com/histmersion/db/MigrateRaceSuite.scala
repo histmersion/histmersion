@@ -11,17 +11,21 @@ import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Two servers migrating fresh databases of ONE cluster at the same moment (#828): the role V011 creates is
   * cluster-global, so both used to try to create it and the second failed. Works in databases of its own
   * (`histmersion_race_*_test`) and a throwaway role, both dropped afterwards. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MigrateRaceSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val role = Migrate.RoleName(s"histmersion_race_${java.lang.Long.toHexString(System.nanoTime)}")
 
   private def exec(ds: DataSource, stmt: String): Unit =
@@ -32,6 +36,7 @@ class MigrateRaceSuite extends DbSuite with Bounded:
       finally st.close()
     } finally c.close()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def roleExists(name: Migrate.RoleName): Boolean =
     val c = admin.getConnection
     try
@@ -53,6 +58,7 @@ class MigrateRaceSuite extends DbSuite with Bounded:
       pool.invokeAll(tasks.asJava, 4, TimeUnit.MINUTES).asScala.toList.map(_.get)
     finally pool.shutdownNow(): Unit
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def afterSuite(): Unit =
     if testDb.isDefined then
       created.foreach(n => exec(admin, s"DROP DATABASE IF EXISTS $n WITH (FORCE)"))

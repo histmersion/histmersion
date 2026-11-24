@@ -15,10 +15,12 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.research.Article
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Research's services and controllers, built over one server's `deps`: the sources, their filters and citations are
   * the library's, an article's event leads the catalogue's; its note as the mirror renders it is handed in.
   */
+@movesTo(FeaturePlace.Server)
 final class ResearchWiring(
     deps: Deps,
     library: LibraryWiring,

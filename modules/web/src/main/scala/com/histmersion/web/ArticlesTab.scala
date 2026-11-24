@@ -17,6 +17,7 @@ import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.library.Title
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Markdown
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ArticlesTab:
 
@@ -25,6 +26,8 @@ object ArticlesTab:
     * "show more" fetches past the first.
     */
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val tab = FilterTab[Api.ArticleQuery, Article.Summary](
     name = FilterTab.Name("articles"),
     singular = Plural.Noun.Singular("article"),
@@ -50,12 +53,16 @@ object ArticlesTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val total: Signal[Option[RowCount]] =
     tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window) and "open in a new tab".
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
@@ -95,6 +102,7 @@ object ArticlesTab:
     )
 
   /** The count line's per-kind counts: `200 concepts`, `3 indexes`, the largest first. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindCounts(kinds: List[Article.KindCount]): List[String] =
     Article.List
       .byKind(kinds)
@@ -109,10 +117,15 @@ object ArticlesTab:
       )
 
   /** An article's review state as a coloured badge, what it means on hover. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def reviewBadge(b: ReviewBadge): HtmlElement =
     span(cls := reviewClass(b.state), title := b.detail, Wording.capitalize(b.label.value))
 
   /** The badge's classes: the stylesheet colours each state (as the article page's badge). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reviewClass(state: ReviewState): String = s"job-state review-state state-${state.wire}"
 
   private def stripMd(s: String): String =

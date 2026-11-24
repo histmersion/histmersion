@@ -20,16 +20,21 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.RegionNode
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.library.Aggregate]].
   *
   * The DB only SELECTS periods; **bucketing happens in Scala** (pure, unit-tested) so the strip (§1.7) and the wave-2
   * "by time" tree (§1.6) cannot drift apart, and so no SQL has to know about adaptive bucket sizes.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the aggregate tables and their row codecs")
 private[search] object AggregateRepo:
   type Unit = Unit.T
   object Unit extends Newtype[String, Pure]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Period.Row] = DbCodec.derived
 
   /** The SQL behind [[periods]] — a **pure** value (plan §1.0/§2.2), so the predicate can be asserted on without a
@@ -47,6 +52,8 @@ private[search] object AggregateRepo:
     *     place/tag/bbox criterion, at least one finding must match it (so a source with no findings at all drops out,
     *     as it always has for places).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def periodsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     if unit.value == "findings" then
       sql"SELECT ${RangeSql.cols(sql"f.period")} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)}"
@@ -57,6 +64,7 @@ private[search] object AggregateRepo:
       sql"SELECT COALESCE(${RangeSql.start(sql"s.period")}, fp.min_start), COALESCE(${RangeSql.end(sql"s.period")}, fp.max_end) FROM sources s LEFT JOIN LATERAL (SELECT min(${RangeSql.start(sql"f.period")}) AS min_start, max(${RangeSql.end(sql"f.period")}) AS max_end, count(*) AS matched, count(*) FILTER (WHERE ${FilterSql.findingPeriodWhere(filter)}) AS in_window FROM findings f WHERE f.citekey = s.citekey AND ${FilterSql.findingPlaceWhere(filter, scope = scope)}) fp ON true WHERE ${FilterSql.sourceWhere(filter)}$gate AND ($ownPeriod OR fp.in_window > 0)"
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def periods(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
     periodsQuery(unit, filter, scope).query[Period.Row].run()
 
@@ -69,6 +77,8 @@ private[search] object AggregateRepo:
       periodEnd: Option[DeepTime.SignedYear],
       placeIds: List[TreeRowRaw.PlaceIds]
   ) derives DbCodec:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def toRow: Tree.TreeRow =
       Tree.TreeRow(
         Tree.TreeRow.Key(key.value),
@@ -105,6 +115,8 @@ private[search] object AggregateRepo:
     * Ordering is the caller's `sort=`, which is what makes `samples` under a leaf the *top* sources for that bucket
     * rather than an arbitrary few.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def treeRowsQuery(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Frag =
     if unit.value == "findings" then
       sql"SELECT f.id, f.citekey, s.title, ${RangeSql.cols(sql"f.period")}, ${placesOf(sql"f")} FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ${FilterSql.sourceWhere(filter)} AND ${FilterSql.findingWhere(filter, scope = scope)} ${FilterSql.orderBySql(filter)}"
@@ -117,5 +129,6 @@ private[search] object AggregateRepo:
   /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.Tree]], pure), hung off
     * the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def treeRows(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
     treeRowsQuery(unit, filter, scope).query[TreeRowRaw].run().map(_.toRow)

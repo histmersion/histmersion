@@ -26,10 +26,13 @@ import com.histmersion.api.catalogue.{
 import com.histmersion.api.library.ExternalId
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The external gazetteer sources' pure half (#1064), on the JVM (Lpf's year parser uses a look-behind Scala.js cannot
   * compile): identifiers, open time spans, the LPF and LP-TSV readers, name merging, and which place a record joins.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class GazetteerSourcesSuite extends munit.FunSuite:
 
   private def json(s: String) = RawJson.parse(s).fold(e => fail(e), identity)

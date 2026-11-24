@@ -9,19 +9,25 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the evidence: the attestations (after the bodies they point into, this collection's own
   * moved first where a merge kept another body), the sources that possibly discuss an event and when they were last
   * computed.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object EvidenceCarried:
 
   private val Catalogue = DataOwner("catalogue")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def afterBlobs(rank: Int)(write: BundleImport.Writer => Unit) =
     RowsIn(ImportStage.AfterBlobs, ImportRank(rank), write)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val attestations: CarriedKind = CarriedKind.records[Bundle.Attestation](
     Catalogue,
     Bundle.Kind.Attestation,
@@ -32,6 +38,7 @@ object EvidenceCarried:
     (es, ls) => es.modify(_.attestations).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val eventCandidates: CarriedKind = CarriedKind.owned[Bundle.EventCandidate](
     Catalogue,
     BundleEntry(Bundle.Files.EventCandidates),
@@ -41,6 +48,7 @@ object EvidenceCarried:
     (es, ls) => es.modify(_.eventCandidates).setTo(ls)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val eventChecks: CarriedKind = CarriedKind.owned[Bundle.EventCheck](
     Catalogue,
     BundleEntry(Bundle.Files.EventChecks),

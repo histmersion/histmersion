@@ -11,10 +11,12 @@ import com.histmersion.util.storage.{Location, Store}
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The library's ingest over one server's `deps`: the job queue over the converter and the originals' store, the ingest
   * surface, the hand-over an acquisition's fetched copy takes, and the seed. The figures are media's.
   */
+@movesTo(FeaturePlace.Server)
 final class IngestWiring(
     deps: Deps,
     converter: ConverterClient,

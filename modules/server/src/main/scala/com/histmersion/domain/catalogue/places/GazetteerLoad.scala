@@ -26,6 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).
@@ -44,6 +45,8 @@ import com.histmersion.domain.Creator
   * rolls every batch back and reports what it would have done. After a real run the source is recorded in
   * `gazetteer_sources` and `finding_places` is re-materialised.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object GazetteerLoad:
 
   /** Where things are: the extracts' store, the store they lived in before they moved to the cache directory (`<data
@@ -67,6 +70,8 @@ object GazetteerLoad:
     object ManifestAt extends Newtype[String, Pure]
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def locate(p: Stores, file: Gazetteer.SourceInfo.File): Option[(Store, Store.Key)] =
     Store.Key
       .of(file.value)
@@ -78,6 +83,8 @@ object GazetteerLoad:
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manifest(p: Stores): Either[Problem, Gazetteer.Manifest] =
     p.manifestText()
       .flatMap(text =>
@@ -93,6 +100,8 @@ object GazetteerLoad:
           )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pin(p: Stores, kind: Gazetteer.Kind): Either[Problem, Gazetteer.Extract] =
     manifest(p).flatMap(
       _.extracts
@@ -107,6 +116,8 @@ object GazetteerLoad:
   /** Is the file at `key` the pinned one? `Left` says why not — a missing file or a checksum mismatch, which is
     * REFUSED: an extract that is not the pinned one is never imported.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[Problem, Blob] =
     store.get(key) match
       case None    => Left(Problem.Io.Wrong(Problem.Io.Path.of(store.where(key)), Problem.Io.Kind.Present))
@@ -135,6 +146,8 @@ object GazetteerLoad:
     * pin has no download url (the extracts are not hosted) must be PUT at the exact path the import reads — named here
     * with its checksum and size, and the setting that moves it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def missing(p: Stores, x: Gazetteer.Extract): Problem =
     if x.sha256.value.trim.isEmpty || x.file.value.trim.isEmpty then
       Problem.Io.Extract(Problem.Raw.of(x.name), Problem.Io.Pinning.NotBuilt(Problem.Io.Path.of(p.manifestAt)))
@@ -157,6 +170,8 @@ object GazetteerLoad:
     * that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it is read where it is. Importing
     * is idempotent either way: what was imported stays imported.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: Store.Key): Either[Problem, Blob] =
     verify(old, key, x).map { found =>
       val moved =
@@ -185,6 +200,8 @@ object GazetteerLoad:
   /** The pinned extract (moved over from the legacy place once), fetched first when it is missing and its pin names a
     * url.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extract(
       p: Stores,
       x: Gazetteer.Extract,
@@ -218,11 +235,14 @@ object GazetteerLoad:
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def open(f: Blob): InputStream =
     val raw = f.open()
     if f.key.name.value.endsWith(".gz") then new GZIPInputStream(raw, 1 << 16) else raw
 
   /** Lines of a (gzip) text file, handed to `each` with their 1-based number. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def lines(f: Blob)(each: (String, Int) => Unit): Unit =
     Using.resource(new BufferedReader(new InputStreamReader(open(f), StandardCharsets.UTF_8), 1 << 16)) { r =>
       @tailrec def next(n: Int): Unit =
@@ -241,6 +261,8 @@ object GazetteerLoad:
       Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source(""), Gazetteer.LoadCounts.Version("")) // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def add(r: Either[Problem, GazRecord]): Unit = r match
       case Left(e) => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.sentence)).take(20))
       case Right(rec) =>
@@ -263,6 +285,7 @@ object GazetteerLoad:
   /** `rebuild`: re-materialise `finding_places` after a real run that changed something (a test turns it off: a full
     * rebuild touches every other suite's findings).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Settings(
       stores: Stores,
       batch: Settings.Batch,
@@ -299,6 +322,9 @@ object GazetteerLoad:
     )
 
   /** Import (or, `apply = false`, dry-run) one source kind. `note` reports progress on the job. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def load(
       db: Transactor,
       s: Settings,
@@ -348,6 +374,7 @@ object GazetteerLoad:
       cs
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def parseLine(
       line: String,
       n: Int,
@@ -372,6 +399,10 @@ object GazetteerLoad:
       )
 
   /** One source through one session: batches, then (when every line was read) the sweep. */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def run(
       db: Transactor,
       s: Settings,
@@ -412,6 +443,8 @@ object GazetteerLoad:
   private val LpfFile = """(?i).+\.(json|jsonld|geojson|ndjson|jsonl|tsv)(\.gz)?$""".r
 
   /** The data files of the drop folder, by name (a `*.meta.json` sidecar is not one). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lpfFiles(dir: Store): List[Blob] =
     dir
       .list()
@@ -421,12 +454,16 @@ object GazetteerLoad:
       .sortBy(_.key.name.value)
       .flatMap(f => dir.get(f.key))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sidecar(dir: Store, f: Blob): Option[JsonObject] =
     val name = f.key.name.value.replaceAll("(?i)\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
     dir
       .get(f.key.parent.child(Store.EntryName(name + ".meta.json")))
       .flatMap(m => RawJson.parse(m.text().value).toOption.flatMap(_.asObject))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loadLpf(
       db: Transactor,
       s: Settings,
@@ -441,6 +478,9 @@ object GazetteerLoad:
         acc.flatMap(done => loadLpfFile(db, s, f, apply, note).map(done :+ _))
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loadLpfFile(
       db: Transactor,
       s: Settings,
@@ -559,6 +599,9 @@ object GazetteerLoad:
   /** `GET /api/places/sources`: the pinned extracts, the LPF files in the drop folder, and what the store last imported
     * from each.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(db: Transactor, s: Settings): List[Gazetteer.SourceInfo] =
     val stored = db.read(GazetteerRepo.sources()).map(r => Gazetteer.SourceInfo.Key(r.key.value) -> r).toMap
     def withStored(i: Gazetteer.SourceInfo): Gazetteer.SourceInfo =

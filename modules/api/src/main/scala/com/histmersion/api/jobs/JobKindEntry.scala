@@ -2,6 +2,7 @@ package com.histmersion
 package api.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A kind of job as its owner registers it: its name and meaning for a person, whether a person may pause and cancel
   * its jobs, whether those go to the kind's own runner instead (an agent run's), and what one of its jobs is about,
@@ -18,8 +19,10 @@ final case class JobKindEntry(
 
 object JobKindEntry:
   export com.histmersion.api.jobs.JobKindMeaning as OfMeaning
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OfStoppable = Stoppable
   val OfStoppable: Stoppable.type = Stoppable
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OfOwnControl = OwnControl
   val OfOwnControl: OwnControl.type = OwnControl
 
@@ -28,6 +31,7 @@ object JobKindEntry:
   type OwnControl = OwnControl.T
   object OwnControl extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       kind: JobInfo.Kind,
       name: JobKinds.Wire,

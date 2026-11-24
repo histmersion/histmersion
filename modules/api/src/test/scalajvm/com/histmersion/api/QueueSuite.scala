@@ -10,10 +10,13 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The bookkeeping parser/renderer (plan §5.2 stream 2.8), tested against the REAL `meta/{ACQUIRE,TASKS,LOG}.md` from
   * the research workspace, copied verbatim into `src/test/resources/meta/`. Pure: no database, no server.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class QueueSuite extends munit.FunSuite:
 
   private def fixture(name: String): String =
@@ -23,6 +26,7 @@ class QueueSuite extends munit.FunSuite:
     finally is.close()
 
   /** Parsed rows as the database would hand them back: ids in insertion order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def store(kind: Kind, text: FileText): List[QueueItem] =
     Queue.parse(kind, text).zipWithIndex.map { (r, i) =>
       QueueItem(
@@ -37,6 +41,7 @@ class QueueSuite extends munit.FunSuite:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def roundTrip(kind: Kind, text: FileText): String = Queue.render(kind, store(kind, text)).value
 
   /** A readable line diff, so a failure says WHICH line moved rather than dumping 4 kB twice. */
@@ -369,6 +374,7 @@ class QueueSuite extends munit.FunSuite:
 
   // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(
       id: QueueItem.Id,
       list: QueueItem.List = QueueItem.List("acquire"),

@@ -9,16 +9,19 @@ import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 
 import javax.sql.DataSource
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's one row: the migration makes it, a read only reads (it runs in a read-only transaction, where an
   * insert fails), a database without the row reads as the row the migration makes and writes nothing, and the first
   * write makes it again. In a migrated database of its own beside HISTMERSION_TEST_DB_URL's, dropped afterwards;
   * skipped without it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AutopilotRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch =
     ScratchDatabases("histmersion_autopilot", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 

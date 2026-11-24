@@ -5,6 +5,7 @@ import io.netty.handler.codec.http.*
 
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Per-step run tokens (docs/research-agent-runtimes.md §2.4): each CLI step attempt gets a fresh random token bound to
   * its agent definition, and the agent MCP endpoint serves ONLY that agent's tools to it — the layer no runtime can
@@ -15,6 +16,7 @@ final class RunTokens(using wallClock: java.time.Clock):
   private val grants = ConcurrentHashMap[RunGrant.Token, RunGrant]()
   private val random = java.security.SecureRandom()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def issue(
       agent: AgentDef,
       scope: Option[RunScope],
@@ -40,6 +42,7 @@ final class RunTokens(using wallClock: java.time.Clock):
   def revoke(token: RunTokens.Token): Unit = { val _ = grants.remove(token) }
 
   /** The grant of a live token; an expired one is dropped. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(
       token: RunTokens.Token,
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
@@ -52,6 +55,7 @@ final class RunTokens(using wallClock: java.time.Clock):
     }
 
   /** The grant a `Bearer <token>` header carries. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bearer(
       header: String,
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
@@ -62,6 +66,7 @@ final class RunTokens(using wallClock: java.time.Clock):
       .map(_.stripPrefix("Bearer ").trim)
       .flatMap(t => check(RunGrant.Token(t), now))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def prune(now: PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt.value <= now.value)
 
 object RunTokens:

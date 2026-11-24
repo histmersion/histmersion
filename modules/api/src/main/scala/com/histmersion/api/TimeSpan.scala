@@ -6,7 +6,10 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.Kernel)
 final case class TimeSpan(
     notBefore: Option[Year] = None,
     beginBy: Option[Year] = None,
@@ -18,6 +21,7 @@ final case class TimeSpan(
       CanEqual:
 
   /** The outer span: the earliest and latest years stated, one known end standing for both; `None` when undated. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def outer: Option[(Year, Year)] =
     val start = notBefore.orElse(beginBy).orElse(endFrom).orElse(notAfter)
     val end = notAfter.orElse(endFrom).orElse(beginBy).orElse(notBefore)

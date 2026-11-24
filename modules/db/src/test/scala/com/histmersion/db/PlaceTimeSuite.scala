@@ -29,6 +29,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The time rule of the place views (2026-10-09, [[PlaceTimeBasis]]) against a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise), on every surface that reads places at a time: the map feed, search and suggestions, a place's
@@ -40,19 +41,24 @@ import com.histmersion.api.catalogue.EventSummary
   * window). Fixtures sit at 100–109°E, 55°S — a degree (≈ 64 km) apart, beyond the point tolerance — where no other
   * suite has any; ids start with `zqtv`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class PlaceTimeSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val Lat = Latitude(-55.0)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(i: Int) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[${100 + i}.0,$Lat]}"""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def place(
       id: Place.Id,
       kind: Place.KindValue,
@@ -74,6 +80,7 @@ class PlaceTimeSuite extends DbSuite with Bounded:
       List(Place.Relation(Place.Relation.ChildId(id.value), Place.Relation.ParentId("zqtv_root")))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val fixtures = List(
     Place.Input(
       Place(Place.Id("zqtv_root"), Place.Label("Zqtv root"), Place.KindValue(Place.Kind.Region)),
@@ -101,6 +108,7 @@ class PlaceTimeSuite extends DbSuite with Bounded:
     val _ = sql"DELETE FROM sources WHERE citekey LIKE 'zqtv%'".update.run()
     val _ = sql"DELETE FROM places WHERE id LIKE 'zqtv%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       clean()
@@ -159,24 +167,29 @@ class PlaceTimeSuite extends DbSuite with Bounded:
 
   private def year(asOf: Option[Long]): Option[DeepTime.SignedYear] = asOf.map(DeepTime.SignedYear.apply)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def onMap(kind: String, asOf: Option[Long]): Set[String] =
     Ours
       .findAllMatchIn(PlaceFixtures.geoJson(ds, Some(KindWire(kind)), year(asOf), PlaceFixtures.Limit(100000)).value)
       .map(_.group(1))
       .toSet
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def found(asOf: Option[Long]): Set[String] =
     PlaceFixtures
       .search(ds, Some(PlaceFixtures.SearchText("Zqtv")), year(asOf), PlaceFixtures.Limit(100))
       .map(_.id.value)
       .toSet
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kids(asOf: Option[Long]): Set[String] =
     PlaceFixtures.children(ds, PlaceId("zqtv_root"), year(asOf), PlaceFixtures.Limit(100)).map(_.id.value).toSet
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tree(asOf: Option[Long]): Set[String] =
     PlaceFixtures
       .hierarchy(ds, year(asOf), Some(PlaceId("zqtv_root")), PlaceFixtures.Depth(3), PlaceFixtures.Limit(100))
       .map(_.id.value)
       .toSet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val All: Set[String] = fixtures.map(_.place.id.value).toSet
 
   test("the fixtures' findings and event are where the cases need them"):

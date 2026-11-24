@@ -3,7 +3,9 @@ package web
 
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ComponentsSuite extends munit.FunSuite:
 
   test("a source link is labelled by DOI when present, else by citekey") {

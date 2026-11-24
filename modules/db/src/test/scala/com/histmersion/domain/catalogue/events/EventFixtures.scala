@@ -25,6 +25,7 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Event
 import com.augustnagro.magnum.Frag
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events' store as a db suite writes and reads it: each call on a connection, or in a transaction, of its own. */
 object EventFixtures:
@@ -33,6 +34,7 @@ object EventFixtures:
 
   private val related = FilterEventSources()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def listWhere(
       filter: Filter,
       scope: PlaceScope,
@@ -77,8 +79,10 @@ object EventFixtures:
   def put(ds: DataSource, id: BEventRow.Id, in: EventPut): Unit = transact(ds)(EventRepo.put(id, in))
   def patch(ds: DataSource, id: BEventRow.Id, p: EventPatch): Either[Api.Error, Unit] =
     transact(ds)(EventRepo.patch(id, p))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rename(ds: DataSource, from: BEventRow.Id, to: BEventRow.Id): Either[Api.Error, Unit] =
     transact(ds)(EventRepo.rename(BEventRow.Id(from.value.trim), BEventRow.Id(to.value.trim)))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def renameIn(from: BEventRow.Id, to: BEventRow.Id)(using com.augustnagro.magnum.DbCon): Either[Api.Error, Unit] =
     EventRepo.rename(from, to)
   def renamedTo(ds: DataSource, id: BEventRow.Id): Option[BEventRow.Id] = connect(ds)(EventRepo.renamedTo(id))

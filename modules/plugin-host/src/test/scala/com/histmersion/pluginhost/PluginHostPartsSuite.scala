@@ -17,6 +17,7 @@ import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiProvider
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plugin's settings, read by a derived reader. */
 final case class HelloSettings(greeting: String, contactEmail: String)
@@ -25,8 +26,11 @@ final case class HelloSettings(greeting: String, contactEmail: String)
 /** The parts of the host the server and the plugin testkit share: the media judgement, the catalogue paging, the AI
   * guards and the acquisition client's policy.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class PluginHostPartsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(
       licence: String,
       image: Option[MediaItem.ImageUrl] = Some(MediaItem.ImageUrl("https://x.example/1.jpg"))
@@ -70,7 +74,9 @@ class PluginHostPartsSuite extends munit.FunSuite:
   final private class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
     val title = EventCatalogue.Title("t"); val licence = Licence("l");
     val citation = EventCatalogue.Citation("c"); val home = EventCatalogue.Home("h")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parts(q: CatalogueQuery) = pages.keys.toList.map(EventCatalogue.ReadPart(_))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
       pages(part.value).left.map(text =>
         Problem.Upstream.Unreachable
@@ -140,10 +146,12 @@ class PluginHostPartsSuite extends munit.FunSuite:
   final private class Scripted(answers: Either[Problem, HttpAnswer]*) extends HttpTransport:
     private val left = scala.collection.mutable.Queue(answers*)
     val sent = List.newBuilder[Map[String, String]]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       sent += headers.map((k, v) => (k.value, v.value))
       left.dequeue()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def answer(code: HttpAnswer.Code, body: String, headers: (CoreQuota.HeaderName, CoreQuota.HeaderValue)*) =
     Right(HttpAnswer(code, headers.toMap, HttpAnswer.Body(body.getBytes("UTF-8"))))
 

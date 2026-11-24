@@ -12,12 +12,15 @@ import com.histmersion.pluginhost.HostCollection
 import java.nio.file.{Files, Path}
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `calibre` plugin over a fixture library (a fake `calibredb` over the fixture's books, the system's `sqlite3`
   * over its `metadata.db`): what it reads, what it writes and with which commands, the GUI's lock, write-back off, and
   * what the doctor check says about a library it cannot reach. Never the user's own library
   * ([[CalibreFixture.refuseRealLibrary]]).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class CalibreCollectionSuite extends munit.FunSuite:
 
   private given LocalFiles = new DiskLocalFiles
@@ -25,6 +28,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
   private def scratch(): Path =
     Files.createTempDirectory(Files.createDirectories(Path.of("target/calibre-plugin").toAbsolutePath), "lib-")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def library(f: CalibreFixture) =
     Calibre.Library(
       Calibre.Library.Value(f.dir.toString),
@@ -273,11 +277,13 @@ class CalibreCollectionSuite extends munit.FunSuite:
           )
       }
       def log = new Plugin.Log { def info(m: Plugin.Log.Line) = (); def warn(m: Plugin.Log.Line) = () }
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def env(name: EnvVar.Name) =
         Option.when(name.value == "HOME")(EnvVar.Value("/home/someone"))
       def secret(s: Secret) = Left(Problem.Plugin.Vault(Problem.Plugin.Id("none"), Problem.Plugin.Retrieval.NoVault))
       def secretVaults = Registry.refusing(Problem.Refused.Policy(Problem.Refused.Rule.RegistrationOver))
       override def sourceCollections = new Registry[SourceCollection]:
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def add(id: Registry.AddId, a: SourceCollection) = Right(added += id.value -> a)
     val settings = Calibre.Settings(
       Calibre.Settings.LibraryPath("~/Calibre Library"),

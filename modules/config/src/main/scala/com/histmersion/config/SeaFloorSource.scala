@@ -3,8 +3,11 @@ package config
 
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
+@movesTo(FeaturePlace.UtilBasemap)
 enum SeaFloorSource(val wire: SeaFloorSource.Wire):
   /** NOAA's ETOPO1 (1 arc-minute, ~1.8 km) through Mapzen's terrain tiles: one GET a tile. */
   case Etopo1 extends SeaFloorSource(SeaFloorSource.Wire("etopo1"))
@@ -16,6 +19,7 @@ object SeaFloorSource:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Either[Problem, SeaFloorSource] =
     values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))

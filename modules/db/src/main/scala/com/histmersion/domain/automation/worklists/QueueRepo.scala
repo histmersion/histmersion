@@ -14,6 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The store of the work lists (`queue_items`, migration `V009__queue.sql`): one table, every list in it by its `list`.
   * Every method runs on the connection it is given; the service ([[QueueService]], in the server) or the import that
@@ -22,6 +24,9 @@ import com.histmersion.api.automation.Creation
   * All the shape lives in the pure [[com.histmersion.api.automation.Queue]] parser and renderer. Timestamps go out as
   * the same UTC ISO-8601 strings the rest of the wire uses.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the queue tables and their row codecs")
 private[worklists] object QueueRepo:
   type QueueItemId = QueueItemId.T
   object QueueItemId extends Newtype[Int, Pure]
@@ -76,6 +81,8 @@ private[worklists] object QueueRepo:
   /** `open` (and, in a checkbox list, `done`) items — never `note` blocks, which are export-only scaffolding. `all`
     * includes everything, in id order, which is what the export renders.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def list(kind: Kind, all: Boolean)(using DbCon): Vector[QueueItem] =
     if all then items(sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} ORDER BY id""".query[Row].run())
     else items(sql"""SELECT $Cols FROM queue_items
@@ -84,6 +91,8 @@ private[worklists] object QueueRepo:
   /** The open (with `all`, every) items of `kind` that serve goal `goal`: their own goal, or one of `linked` (the
     * references of the goal's `queue-item` links, compared with the id as text).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def forGoal(kind: Kind, goal: GoalText, linked: List[Goal.Plans.GoalLink.Ref], all: Boolean)(using
       DbCon
   ): Vector[QueueItem] =
@@ -93,11 +102,13 @@ private[worklists] object QueueRepo:
             ORDER BY id""".query[Row].run())
 
   /** The items of `kind` (any status but notes) that agent run or background job `job` wrote or ticked off. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def forJob(kind: Kind, job: JobText)(using DbCon): Vector[QueueItem] =
     items(sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND (created_job = $job OR closed_job = $job)
             ORDER BY id""".query[Row].run())
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(id: QueueItemId)(using DbCon): Option[QueueItem] =
     items(sql"SELECT $Cols FROM queue_items WHERE id = $id".query[Row].run()).headOption
 
@@ -113,6 +124,8 @@ private[worklists] object QueueRepo:
     * backlog make right before adding one to the acquisition list (a sweep's snapshot of the list can be minutes old,
     * and another watcher's sweep may have added it since).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def naming(kind: Kind, doi: Doi)(using DbCon): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
@@ -143,6 +156,7 @@ private[worklists] object QueueRepo:
     * else clears it, so reopening an item leaves no misleading completion date behind. False when the row is gone
     * (removed since it was read).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def update(next: QueueItem)(using DbCon): Boolean =
     sql"""UPDATE queue_items
           SET text = ${next.text}, topic = ${next.topic}, status = ${next.status}, reason = ${next.reason},
@@ -151,9 +165,11 @@ private[worklists] object QueueRepo:
           WHERE id = ${next.id}""".update.run() > 0
 
   /** False when the row is gone (removed since it was read). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def delete(id: QueueItemId)(using DbCon): Boolean =
     sql"DELETE FROM queue_items WHERE id = $id".update.run() > 0
 
   /** Every row of `kind` removed; how many. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def deleteList(kind: Kind)(using DbCon): RowCount =
     RowCount(sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run())

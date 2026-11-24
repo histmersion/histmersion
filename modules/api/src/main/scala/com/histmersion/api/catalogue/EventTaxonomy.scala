@@ -3,10 +3,14 @@ package api.catalogue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventTaxonomy:
 
   val Natural = "natural"
   val Human = "human"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val groups: List[Kind.Group] = List(Kind.Group(Natural), Kind.Group(Human))
 
   final case class Kind(kind: EventSummary.Kind, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
@@ -46,6 +50,7 @@ object EventTaxonomy:
   val Founding = "founding"
   val HumanGeneric = "event"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val kinds: List[Kind] = List(
     Kind(EventSummary.Kind(Eruption), Kind.Group(Natural), Kind.Label("eruption"), Kind.Icon("mountain")),
     Kind(EventSummary.Kind(Earthquake), Kind.Group(Natural), Kind.Label("earthquake"), Kind.Icon("activity")),
@@ -82,6 +87,7 @@ object EventTaxonomy:
 
   private val byKind: Map[EventSummary.Kind, Kind] = kinds.map(k => k.kind -> k).toMap
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val aliases: Map[EventSummary.Kind, EventSummary.Kind] = Map(
     EventSummary.Kind("rebellion") -> EventSummary.Kind(Revolt),
     EventSummary.Kind("uprising") -> EventSummary.Kind(Revolt),
@@ -98,10 +104,13 @@ object EventTaxonomy:
     EventSummary.Kind("diplomatic_era") -> EventSummary.Kind(Era)
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def canonical(kind: EventSummary.Kind): EventSummary.Kind =
     val k = EventScale.normKind(kind)
     aliases.get(k).orElse(Option.when(k.value.endsWith("_era"))(EventSummary.Kind(Era))).getOrElse(k)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val labelRules: List[(ItemKind.Label.Pattern, EventSummary.Kind)] = List(
     (ItemKind.Label.Pattern("erupt|volcan"), EventSummary.Kind(Eruption)),
     (ItemKind.Label.Pattern("earthquake|seism|quake"), EventSummary.Kind(Earthquake)),
@@ -113,6 +122,8 @@ object EventTaxonomy:
     (ItemKind.Label.Pattern("famine"), EventSummary.Kind(Famine))
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refine(kind: EventSummary.Kind, label: EventSummary.Label): EventSummary.Kind =
     val k = canonical(kind)
     if k.value != NaturalGeneric then k
@@ -120,6 +131,9 @@ object EventTaxonomy:
       val l = (label).value.toLowerCase(java.util.Locale.ROOT)
       labelRules.collectFirst { case (re, sub) if (re).value.r.findFirstIn(l).isDefined => sub }.getOrElse(k)
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(kind: EventSummary.Kind): Kind =
     val k = canonical(kind)
     byKind.getOrElse(
@@ -127,14 +141,21 @@ object EventTaxonomy:
       byKind(EventSummary.Kind(HumanGeneric)).copy(kind = k, label = Kind.Label((k).value.replace('_', ' ')))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def group(kind: EventSummary.Kind): Kind.Group = of(kind).group
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def icon(kind: EventSummary.Kind): Kind.Icon = of(kind).icon
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isNatural(kind: EventSummary.Kind): Boolean = group(kind) == Kind.Group(Natural)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(filter: KindCondition.Filter, kind: EventSummary.Kind): Boolean =
     val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
     f.isEmpty || f == group(kind).value || canonical(EventSummary.Kind(f)) == canonical(kind)
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class KindCondition(kinds: List[EventSummary.Kind], negate: KindCondition.Negate)
 
   object KindCondition:
@@ -143,6 +164,7 @@ object EventTaxonomy:
     type Negate = Negate.T
     object Negate extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def condition(filter: Option[KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
       val natural = (kinds.filter(_.group == Kind.Group(Natural)).map(_.kind) ++

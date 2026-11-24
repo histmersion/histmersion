@@ -33,10 +33,13 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind and the
   * geometry; the point an event can be given; the years it covers on the map; the Markdown.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class EventScaleSuite extends munit.FunSuite:
 
   test("parse: local and regional are stored, auto clears, anything else is refused"):

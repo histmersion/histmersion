@@ -8,8 +8,10 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.domain.catalogue.Event
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The corrections by hand of what an importer wrote: a person's value for one field, kept over the catalogue's. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait CorrectionService:
   /** The corrections of `kind` (one target's with `id`), those in `status` (default: all but the retired), conflicts
     * first, with each event's label.
@@ -26,6 +28,7 @@ object CorrectionService:
   def apply(db: Transactor): CorrectionService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends CorrectionService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         kind: Correction.TargetKind,
         id: Option[Event.Id],
@@ -36,6 +39,7 @@ object CorrectionService:
       db.read(CorrectionRepo.list(kind, id.map(i => Correction.TargetId(i.value)), status, limit, offset))
 
   final class InMemory(state: AtomicReference[CatalogueState]) extends CorrectionService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         kind: Correction.TargetKind,
         id: Option[Event.Id],

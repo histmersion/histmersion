@@ -30,8 +30,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[ManagerCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion manager`: declares its options, parses them into typed commands")
 object ManagerArgs:
   /** `agent digest|decide-all|managers|manager|enqueue|autopilot|scheduler|stalls`, held by `agent`. */
   def leaves(): List[Subcommand] =
@@ -134,6 +137,7 @@ object ManagerArgs:
   // ── manager ────────────────────────────────────────────────────────────────────────────────────
 
   /** `agent manager <id>` shows one; `agent manager <id> <verb> …` steers it; `agent manager new …` creates one. */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   final private class LeafManager()
       extends Leaf(
         Agent,
@@ -265,6 +269,7 @@ object ManagerArgs:
     private val active_ = flag("active", "Start it active (default: paused — nothing is spent until you resume it)")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] =
       Right(
         ManagerCmd.Command.Create(

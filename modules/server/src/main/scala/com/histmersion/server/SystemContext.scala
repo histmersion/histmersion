@@ -9,11 +9,13 @@ import com.histmersion.util.time.SystemTimer
 import com.histmersion.util.time.Pause
 import com.histmersion.util.time.ThreadPause
 import com.histmersion.util.system.JvmHome
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** What the process reads from its surroundings, read once by the entry point and passed down: the clock, the
   * environment and the per-user paths that follow from it, and the machine's physical memory (`None` where the platform
   * does not say, and in a test), which the bundled Postgres' `auto` sizes come from.
   */
+@movesTo(FeaturePlace.Server)
 final case class SystemContext(
     clock: Clock,
     environment: Environment,

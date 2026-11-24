@@ -5,10 +5,12 @@ import java.time.Instant
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A picture as the in-memory store holds it: a row of `assets` — a source's figure (its `citekey`) or a provider's
   * picture (its `provider` and key) — with its point and inclusive span when it has them.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class HeldAsset(
     uid: AssetService.AssetUid,
     citekey: Option[Citekey],
@@ -49,6 +51,7 @@ object HeldAsset:
   type License = License.T
   object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
   object Author extends Newtype[String, Pure]

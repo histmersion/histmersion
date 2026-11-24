@@ -44,6 +44,10 @@ import com.histmersion.api.automation.Creation
   * WKT used for findings: Postgres does all the spatial work and the native image never needs a binary PostGIS JDBC
   * type.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the place tables and their row codecs")
 private[places] object PlaceRepo:
   type AccuracyMetres = AccuracyMetres.T
   object AccuracyMetres extends Newtype[Float, Pure]
@@ -70,11 +74,13 @@ private[places] object PlaceRepo:
   type RankLevel = RankLevel.T
   object RankLevel extends Newtype[String, Pure]
   type SearchText = SearchText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SearchText extends Newtype[String, Pure]
   type SiteType = SiteType.T
   object SiteType extends Newtype[String, Pure]
 
   export domain.catalogue.Place.Kind.Wire as GeoJsonQueryKind
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type GeoJsonQueryLimit = Limit
   val GeoJsonQueryLimit: Limit.type = Limit
   export DeepTime.SignedYear as GeoJsonQueryModernFrom
@@ -83,10 +89,15 @@ private[places] object PlaceRepo:
 
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
   given DbCodec[Place.Summary] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[Place.Hit] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[Place.TreeRow] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[ManualPlaceName] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[Place.Description] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[Place.Link] = DbCodec.derived
 
   export PlaceSql.{
@@ -116,11 +127,14 @@ private[places] object PlaceRepo:
 
   /** Every alternate name of `p`, comma-joined — the `names` column of a [[PlaceSummary]]. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def signed(y: Year): DeepTime.SignedYear = DeepTime.SignedYear(y.value)
 
   private def bounds(b: (Option[Year], Option[Year])): String =
     RangeSql.bounds(b._1.map(signed), b._2.map(signed))
 
+  @tolerated(LintRule.TotalOrder, "string_agg of DISTINCT names: equal names are one value")
   private val namesCol =
     sql"coalesce((SELECT string_agg(DISTINCT n.name, ', ' ORDER BY n.name) FROM place_names n WHERE n.place_id = p.id), '')"
 
@@ -170,6 +184,7 @@ private[places] object PlaceRepo:
   /** [[upsertPlaces]] in the CALLER's transaction. A place a person removed or merged away is left out of the batch
     * ([[suppressed]]).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def upsertIn(all: List[Place.Input], dataset: Dataset)(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): Place.ImportResult =
@@ -242,6 +257,9 @@ private[places] object PlaceRepo:
     * exact hits sort first, then prefixes, then the bundled seed before the imported sources (#1064), then the places
     * carrying the most findings. `q` empty lists the gazetteer by size.
     */
+  @tolerated(LintRule.TotalOrder, "LIMIT 1 of a name: rows tied on it read the same name")
+  @tolerated(LintRule.TotalOrder, "string_agg of DISTINCT names: equal names are one value")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(
       q: Option[SearchText],
       asOf: Option[DeepTime.SignedYear],
@@ -341,6 +359,8 @@ private[places] object PlaceRepo:
     * shape of its own (a continent is a hierarchy node, not a polygon) reports the UNION of its children's shapes,
     * which is what the web UI draws as its overlay.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def get(
       id: domain.catalogue.Place.Id,
       asOf: Option[DeepTime.SignedYear] = None,
@@ -396,6 +416,7 @@ private[places] object PlaceRepo:
   /** What place `id`'s own record says beyond its names and dates ([[PlaceRecord]]): `properties.date_source`, the
     * labels of `periods`, `heritage` and `registers` — whatever shape they have, anything unexpected read as none.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def recordOf(id: domain.catalogue.Place.Id)(using DbCon): Place.Record =
     val dateSource =
       sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
@@ -444,6 +465,8 @@ private[places] object PlaceRepo:
   /** What site `id` is (#1449), read as the map's layer reads it ([[SiteTypes.of]]): a stored refinement, else its
     * gazetteer's own fields — so its card shows the icon its marker has.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def siteTypeOf(id: domain.catalogue.Place.Id)(using DbCon): Option[SiteTypes.SiteType.Id] =
     sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class',
                  properties->>'p31'
@@ -466,6 +489,7 @@ private[places] object PlaceRepo:
   /** What place `id` IS, as its sources describe it (V074): English first, then the other languages; within one
     * language the best source first (an LPF dataset, then Wikidata, then GeoNames).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def descriptionsOf(id: domain.catalogue.Place.Id)(using DbCon): List[Place.Description] =
     sql"""SELECT text, lang, import_source FROM place_descriptions WHERE place_id = $id
           ORDER BY (lang = 'en') DESC, lang,
@@ -474,6 +498,7 @@ private[places] object PlaceRepo:
                    import_ref""".query[Place.Description].run().toList
 
   /** Parents valid at `asOf` (both the edge and the parent itself must be). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def parents(id: domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): Vector[Place.Summary] =
@@ -485,6 +510,7 @@ private[places] object PlaceRepo:
 
   /** `GET /api/places/{id}/children?asOf=` — with a time, only the children the time rule shows ([[inTimeSql]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def children(
       id: domain.catalogue.Place.Id,
       asOf: Option[DeepTime.SignedYear],
@@ -493,6 +519,8 @@ private[places] object PlaceRepo:
   )(using DbCon): Vector[Place.Summary] =
     kids(id, asOf, limit, modernFrom)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def kids(
       id: domain.catalogue.Place.Id,
       asOf: Option[DeepTime.SignedYear],
@@ -523,6 +551,7 @@ private[places] object PlaceRepo:
     * without the eligibility filter that level is 25 Pleiades rivers and mountains with the five continents lost among
     * them. Bounded by `maxDepth` (which is also what makes a cyclic edge harmless) and by `limit`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def hierarchy(
       asOf: Option[DeepTime.SignedYear],
       root: Option[domain.catalogue.Place.Id],
@@ -566,6 +595,7 @@ private[places] object PlaceRepo:
           ORDER BY t.path, t.depth LIMIT ${limit.value.max(1)}""").query[Place.TreeRow].run()
 
   /** The gazetteer places one finding was materialised into. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def placesOf(findingId: EventMatcher.NearFinding.Id)(using DbCon): Vector[Place.Summary] =
     sql"""SELECT $summaryCols FROM finding_places fp JOIN places p ON p.id = fp.place_id
           WHERE fp.finding_id = $findingId ORDER BY p.label, p.id"""
@@ -593,6 +623,8 @@ private[places] object PlaceRepo:
     * always a superset of the true circle.
     */
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[places] def geoJsonQuery(
       kind: Option[PlaceRepo.GeoJsonQueryKind],
       asOf: Option[DeepTime.SignedYear],
@@ -605,6 +637,8 @@ private[places] object PlaceRepo:
     * makes a range of areas pair its shapes the plain way ([[rangeShadowedSql]]) — the reference `PlaceGeoSuite` holds
     * the indexed pairing to.
     */
+  @tolerated(LintRule.TotalOrder, "rank(...) ends with the place's id")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def geoJsonTimeQuery(
       kind: Option[domain.catalogue.Place.Kind.Wire],
       time: GeoTime,
@@ -730,6 +764,7 @@ private[places] object PlaceRepo:
     * 650 000 times (80 ms). `smallIsLo`: the small tier's shape is the one shadowed (a sketch under a real dataset) or
     * the one shadowing (OHM over Cliopatria).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private[places] def rangePairsSql(rest: Frag, small: Int, partner: Frag, smallIsLo: Boolean): Frag =
     val (lo, hi) = if smallIsLo then (sql"s", sql"c") else (sql"c", sql"s")
     sql"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small, $lo.bb AS lbb, $hi.bb AS hbb FROM (SELECT * FROM live WHERE tier = ${small.literal}) s CROSS JOIN LATERAL (SELECT * FROM (SELECT p.id, $sourceTierSql AS tier, p.label_norm AS norm, p.shape_area AS area, p.shape_box AS bb FROM places p WHERE p.kind <> 'site' AND p.kind = s.kind AND p.period && s.per AND p.geom && s.bb::geometry AND $rest AND ($CuratedSql OR ($DatedImportSql AND EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id)))) c WHERE $partner) c"
@@ -745,6 +780,8 @@ private[places] object PlaceRepo:
     * together then both stay, as at a year. Cross-tier duplicates are gone already (`shadowed`, among shapes that
     * coexist), and different states may overlap: all are drawn.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def pickVersionSql(w: GeoTime.Within): Frag =
     val (lo, hi) = (sql"${w.from.literal}::bigint", sql"${w.to.literal}::bigint")
     val (edge, anchor) = if w.latest.value then (sql"ee", sql"max") else (sql"es", sql"min")
@@ -756,6 +793,7 @@ private[places] object PlaceRepo:
     * The limit applies after that, largest shapes first, so it drops the smallest rather than whatever sorts last by
     * name.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geoJson(
       kind: Option[domain.catalogue.Place.Kind.Wire],
       asOf: Option[DeepTime.SignedYear],
@@ -768,6 +806,7 @@ private[places] object PlaceRepo:
     * one version each ([[pickVersionSql]]), after the same cross-tier collapse among the shapes that coexist; the limit
     * still comes last, largest first.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geoJsonAt(
       kind: Option[domain.catalogue.Place.Kind.Wire],
       time: GeoTime,
@@ -893,6 +932,7 @@ private[places] object PlaceRepo:
     * Cheap by construction: no values ⇒ no query at all, and the closure is one recursive CTE per chip (there are never
     * many).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def scopeFor(values: List[ScopeForValues], period: Option[Period])(using DbCon): PlaceScope =
     val wanted = values.map(_.value.trim).filter(_.nonEmpty).distinct
     if wanted.isEmpty then PlaceScope.empty
@@ -941,6 +981,7 @@ private[places] object PlaceRepo:
 
   // ── temporal geography (V016) ──────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def footprints(placeId: domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): Vector[Place.Footprint] =
@@ -949,6 +990,7 @@ private[places] object PlaceRepo:
   /** A place's footprints valid at `asOf` (all of them without one) — [[footprints]] and the place detail read the same
     * rows.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def footprintsIn(placeId: domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): Vector[Place.Footprint] =
@@ -959,12 +1001,14 @@ private[places] object PlaceRepo:
             AND ($asOf::bigint IS NULL OR f.period @> $asOf::bigint)
           ORDER BY f.role, ${RangeSql.start(sql"f.period")}, f.id""".query[FootprintRow].run().map(_.toDto)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def links(placeId: domain.catalogue.Place.Id)(using DbCon): Vector[Place.Link] =
     sql"""SELECT place_id, scheme, external_id, relation FROM place_links
           WHERE place_id = $placeId ORDER BY scheme, external_id"""
       .query[Place.Link]
       .run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def types(placeId: domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): List[Place.Type] =
@@ -973,6 +1017,7 @@ private[places] object PlaceRepo:
   /** A place's types valid at `asOf` — [[types]] and the place detail read the same rows. An undated type (`(,)`, every
     * year) reads both bounds back as NULL: Postgres reads an infinite bound so.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def typesIn(placeId: domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
       DbCon
   ): List[Place.Type] =
@@ -989,6 +1034,8 @@ private[places] object PlaceRepo:
     * old id of another place; renaming back to an old id drops that alias. The caller's transaction (a bundle import
     * follows a rename made in the other collection, #888).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def renameIn(
       oldId: domain.catalogue.Place.Id,
       newId: domain.catalogue.Place.Id
@@ -1040,6 +1087,8 @@ private[places] object PlaceRepo:
       Right(())
 
   /** [[renameIn]] in a transaction of its own. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def rename(oldId: domain.catalogue.Place.Id, newId: domain.catalogue.Place.Id)(using
       DbCon
   ): Either[Api.Error, Unit] =
@@ -1050,9 +1099,12 @@ private[places] object PlaceRepo:
 
   // ── a person's edits (#987) ─────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def labelOf(id: domain.catalogue.Place.Id)(using DbCon): Option[Label] =
     sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption.map(Label(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def nameChanged(
       id: domain.catalogue.Place.Id,
       label: Label,
@@ -1075,6 +1127,8 @@ private[places] object PlaceRepo:
   /** Give place `id` the name `name` in `lang`, as a MANUAL name (V068): no import deletes it. A name the place already
     * has from an import becomes manual (so a later seed that drops it keeps it).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def addName(id: domain.catalogue.Place.Id, name: Name, lang: Lang)(using
       DbCon
   ): Either[Api.Error, Place.NameChanged] =
@@ -1108,6 +1162,8 @@ private[places] object PlaceRepo:
       }
 
   /** Remove a name a person added. An IMPORTED name is refused — the next seed would bring it back. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def removeName(id: domain.catalogue.Place.Id, name: Name, lang: Lang)(using
       DbCon
   ): Either[Api.Error, Place.NameChanged] =
@@ -1168,6 +1224,7 @@ private[places] object PlaceRepo:
   /** Create a person's own place (`dataset = local`, V052): refused when the id is taken — by a place or as an old id
     * of one (V055) — so `places add` can never overwrite seed data.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def addPlace(in: Place.Input)(using
       DbCon
   )(using Creator.New, CreatedAt): Either[Api.Error, Place.Summary] =
@@ -1212,6 +1269,7 @@ private[places] object PlaceRepo:
   def count()(using DbCon): RowCount =
     RowCount(sql"SELECT count(*)::int FROM places".query[Int].run().head)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def upsertFootprint(
       placeId: domain.catalogue.Place.Id,
       role: FootprintRole,
@@ -1228,12 +1286,14 @@ private[places] object PlaceRepo:
                   $p::int8range, $certainty, $accuracyM, $citekey)
           RETURNING id""".query[Int].run().head.pipe(RowCount(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def upsertLink(link: Place.Link)(using DbCon): Unit =
     sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
           VALUES (${link.placeId}, ${link.scheme}, ${link.externalId}, ${link.relation})
           ON CONFLICT (place_id, scheme, external_id) DO UPDATE SET
             relation = EXCLUDED.relation""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def upsertType(pt: Place.Type)(using DbCon): Unit =
     val p = RangeSql.always(pt.period)
     sql"""INSERT INTO place_types (place_id, type_label, period, citekey)

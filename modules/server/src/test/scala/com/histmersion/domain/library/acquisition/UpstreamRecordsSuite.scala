@@ -11,11 +11,15 @@ import com.histmersion.upstreams.identifiers.Identifiers
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The upstreams' records as the wire shows them: a work keyed by the citekey the corpus gives it, a citing work and a
   * reference with the wire's defaults; and the upstreams' identifier rules equal to the wire's own over the same
   * inputs.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class UpstreamRecordsSuite extends munit.FunSuite:
 
   private def fixture(name: String) =

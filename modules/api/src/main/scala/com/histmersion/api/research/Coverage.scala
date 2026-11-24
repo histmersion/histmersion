@@ -15,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class Coverage(
     slug: Article.Slug,
@@ -35,11 +36,13 @@ final case class Coverage(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def capped: Boolean = ((checked).value < (total).value)
   def unplaced: List[Citekey] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
 
   type FilterLine = FilterLine.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FilterLine extends Newtype[String, Pure]
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
@@ -63,6 +66,8 @@ object Coverage:
 
   final case class Reason(citekey: Citekey, reason: Rationale) derives JsonCodec
   object Reason:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[Reason] = KindlingsSchema
       .derived[Reason]
       .schema
@@ -76,6 +81,7 @@ object Coverage:
 
     val MaxChars = 500
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def merge(current: Map[Citekey, Rationale], stated: List[Reason]): Either[Problem, Map[Citekey, Rationale]] =
       stated.foldLeft[Either[Problem, Map[Citekey, Rationale]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
@@ -106,6 +112,7 @@ object Coverage:
         }
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(m: Map[Citekey, Rationale]): List[Reason] = m.toList.sortBy[String](_._1.value).map(Reason(_, _))
 
   final case class Source(

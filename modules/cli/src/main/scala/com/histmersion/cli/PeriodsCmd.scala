@@ -10,6 +10,8 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import com.histmersion.api.catalogue.PeriodsMarkdown
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion periods …` — named historical periods, the web timeline's presets (#719) — and `histmersion init`, the
   * first-run import (#720). Kept in its own file so the shared `Cli` only gains one line.
@@ -18,6 +20,7 @@ import com.histmersion.util.console.Console
   * install has no repo checkout to read them from. `--file` sends a PeriodO dataset from this machine instead (the
   * repo's `db/periods/periodo-seed.json`, or a dump).
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion periods` arguments")
 object PeriodsCmd:
 
   /** `histmersion init` — what a server does by itself on its first start, on demand. */
@@ -26,15 +29,19 @@ object PeriodsCmd:
   enum Command extends Cli.Command:
     case Search(q: Option[String], region: Option[String], from: Option[Long], to: Option[Long])
     case Show(id: String)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Seed(file: Option[String], replace: Boolean)
     case Import(file: String, cols: List[String], dataset: Dataset)
     case Fetch(source: String, cols: List[String])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Init(fetch: Boolean, following: Cli.Following)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Search(q, region, from, to) =>

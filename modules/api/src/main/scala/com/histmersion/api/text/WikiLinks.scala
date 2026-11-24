@@ -2,6 +2,8 @@ package com.histmersion
 package api.text
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object WikiLinks:
   type Alias = Alias.T
   object Alias extends Newtype[String, Pure]
@@ -47,6 +49,8 @@ object WikiLinks:
     type Target = Target.T
     object Target extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def occurrences(md: Body): List[Occurrence] =
     Link
       .findAllMatchIn((md).value)
@@ -64,6 +68,8 @@ object WikiLinks:
       .toList
 
   /** A link's target as it is stored: no label, no anchor, lower case; none for an in-page anchor or a file name. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normalize(raw: NormalizeRaw): Option[Occurrence.Target] =
     val noLabel = (raw).value.takeWhile(_ != '|')
     val noAnchor = noLabel.takeWhile(_ != '#')
@@ -71,6 +77,8 @@ object WikiLinks:
     if t.isEmpty || !SlugShape.matches(t) then None else Some(Occurrence.Target(t))
 
   /** The distinct targets a text links, in order; embeds are not links. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def targets(body: Body): List[Occurrence.Target] =
     (Link
       .findAllMatchIn((body).value)
@@ -83,6 +91,8 @@ object WikiLinks:
   /** Every link replaced by what `render` makes of its target, explicit label and written target; embeds and links to
     * no target are kept as written.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rewriteLinks(md: Body)(render: (Occurrence.Target, Option[Alias], Alias) => String): Body =
     Body(
       Link.replaceAllIn(
@@ -105,6 +115,8 @@ object WikiLinks:
     )
 
   /** The links whose target `to` moves pointed at the new target, labels and anchors kept; with how many moved. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def retarget(md: Body, to: Occurrence.Target => Option[Occurrence.Target]): (Body, RetargetCount) =
     def moved(m: scala.util.matching.Regex.Match): Option[Occurrence.Target] =
       if m.group(1).nonEmpty then None
@@ -129,5 +141,7 @@ object WikiLinks:
       (Body(out), RetargetCount(count))
 
   /** Whether a text links `ck` (any case). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def links(text: Body, ck: api.library.Citekey): Boolean =
     targets(text).exists(_.value.equalsIgnoreCase(ck.value))

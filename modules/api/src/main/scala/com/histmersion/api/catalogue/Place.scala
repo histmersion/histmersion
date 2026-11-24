@@ -61,6 +61,7 @@ object Place:
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type KindValue = KindValue.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object KindValue extends Newtype[String, Pure]
   type Geometry = Geometry.T
   object Geometry extends Newtype[String, Pure]
@@ -84,11 +85,15 @@ object Place:
     val Site = "site"
     val Feature = "feature"
     val People = "people"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[All] = List(All(Region), All(Polity), All(Site), All(Feature), All(People))
 
     /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind; `None` when
       * nothing recognisable is there, so the caller's default wins.
       */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
     def parse(s: ParseS): Option[Parsed] =
       val t = (s).value.trim.toLowerCase
       if t.isEmpty then None
@@ -135,6 +140,7 @@ object Place:
 
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type CellsMicro = CellsMicroValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type CellsMicroValue = CellsMicroNumber
     val CellsMicroValue: CellsMicroNumber.type = CellsMicroNumber
 
@@ -144,6 +150,7 @@ object Place:
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def gridCentre(lon: Longitude, lat: Latitude): Boolean =
       val x = math.round((lon).value * 1e6)
       val y = math.round((lat).value * 1e6)
@@ -158,11 +165,14 @@ object Place:
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
     val Approximate: Card.Note = Card.Note("approximate (atlas grid square)")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Precision] = values.find(_.wire.value == Ascii.lower(((s).value.trim)))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Precision): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Precision] = parse(Wire((s).value))
 
   final case class Add(
@@ -186,6 +196,9 @@ object Place:
     export Place.Source
     export Name.{Lang, Value as Names}
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[Add] = KindlingsSchema
       .derived[Add]
       .schema
@@ -217,6 +230,9 @@ object Place:
     def creator: Option[Creation]
     def createdAt: Option[Creation.At]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary.value)
 
     def shapeNote: Option[Card.Note] =
@@ -229,6 +245,7 @@ object Place:
         Precision.Approximate
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shapeNotes: List[Card.Note] = shapeNote.toList ++ locationNote.map(n => Card.Note(s"location: $n")).toList
 
     def datedByFindings: Boolean = (asOf.isDefined && timeBasis == TimeBasis.Findings)
@@ -264,26 +281,34 @@ object Place:
       case EndOnly => Dating.Wire("end-only")
       case Unknown => Dating.Wire("unknown")
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Dating:
     type Description = Description.T
     object Description extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Dating] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     given WireEnumValues[Dating]:
       def all: Array[Dating] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Dating): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Dating] = parse(Wire((s).value))
     given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[Dating] = WireEnum.codec
     given Schema[Dating] = WireEnum.schema
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe(dating: Dating, start: Option[Year], end: Option[Year]): Description = dating match
       case Unknown => Description("date unknown")
       case EndOnly => Description(end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown"))
       case Stated  => Description(YearFmt.openPeriod(start, end, none = ("")))
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   final case class Description(
       text: Description.Text,
       lang: Description.Lang = Name.Lang(""),
@@ -325,6 +350,8 @@ object Place:
     private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
     private val IdShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def name(raw: Name.Value): Either[Api.Error, Name.Value] =
       val n = (raw).value.trim.replaceAll("\\s+", " ")
       if n.isEmpty then Left(Write.invalid(Invalid.Missing.here(Field("name"))))
@@ -342,6 +369,7 @@ object Place:
 
     val MaxName = 200
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def lang(raw: Option[Name.Lang]): Either[Api.Error, Name.Lang] =
       raw.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
         case None                            => Right(Name.Lang(""))
@@ -354,9 +382,15 @@ object Place:
             )
           )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def defaultId(label: Label): Id =
       Id(LocalPrefix + Geocode.key(label.value).value.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
     def toInput(in: Add): Either[Api.Error, Input] =
       val label = in.label.value.trim.replaceAll("\\s+", " ")
       val kind = in.kind.value.trim.toLowerCase(java.util.Locale.ROOT)
@@ -431,6 +465,7 @@ object Place:
           names
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def csv(rows: List[ManualPlaceName]): Csv =
       def cell(s: String) =
         if (s).exists(c => c == ',' || c == '"' || c == '\n') then "\"" + (s).replace("\"", "\"\"") + "\"" else s
@@ -492,9 +527,11 @@ object Place:
   object Footprint:
 
     type Roles = RolesValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type RolesValue = Role
     val RolesValue: Role.type = Role
     type Certainties = CertaintiesValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type CertaintiesValue = Certainty
     val CertaintiesValue: Certainty.type = Certainty
 
@@ -528,6 +565,7 @@ object Place:
     type Into = Into.T
     object Into extends Newtype[String, Pure]
     type IntoLabel = IntoLabel.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object IntoLabel extends Newtype[String, Pure]
     type FindingsBefore = FindingsBefore.T
     object FindingsBefore extends Newtype[Int, Pure]
@@ -601,18 +639,23 @@ object Place:
         api.json.Schema
   object Link:
     type SchemeTitle = SchemeTitle.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SchemeTitle extends Newtype[String, Pure]
     type Url = Url.T
     object Url extends Newtype[String, Pure]
 
     type Schemes = SchemesValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type SchemesValue = Scheme
     val SchemesValue: Scheme.type = Scheme
     type Relations = RelationsValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type RelationsValue = Relation
     val RelationsValue: Relation.type = Relation
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type UrlScheme = Scheme
     val UrlScheme: Scheme.type = Scheme
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type UrlExternalId = ExternalId
     val UrlExternalId: ExternalId.type = ExternalId
 
@@ -628,6 +671,7 @@ object Place:
     val Relations: List[Relations] =
       List(Relation("close_match"), Relation("exact_match"), Relation("broad_match"), Relation("see_also"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def url(scheme: UrlScheme, externalId: UrlExternalId): Option[Url] =
       val id = (externalId).value.trim
       if id.isEmpty then None
@@ -641,6 +685,7 @@ object Place:
           case "commons"  => Some(Url(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}"))
           case _          => None
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def schemeTitle(scheme: Scheme): SchemeTitle = (scheme).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "wikidata" => SchemeTitle("Wikidata")
       case "geonames" => SchemeTitle("GeoNames")
@@ -665,6 +710,8 @@ object Place:
   final case class MergeIn(into: Id, reason: Option[Rationale] = None) derives StrictJson
   object MergeIn:
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[MergeIn] = KindlingsSchema
       .derived[MergeIn]
       .schema
@@ -685,6 +732,7 @@ object Place:
     type Lang = Lang.T
     object Lang extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None)
       derives StrictJson,
         KindlingsSchema,
@@ -695,6 +743,7 @@ object Place:
     object Name extends Newtype[String, Pure]
     export Place.Name.Lang
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class NameChanged(
       placeId: Id,
       label: NameChanged.Label,
@@ -719,6 +768,7 @@ object Place:
     type WasImported = WasImported.T
     object WasImported extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class NameRemove(name: NameRemove.Name, lang: Option[NameRemove.Lang] = None)
       derives StrictJson,
         KindlingsSchema,
@@ -754,12 +804,15 @@ object Place:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     type PeriodSet = PeriodSet.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object PeriodSet extends Newtype[Boolean, Pure]
     type SourceKind = SourceKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SourceKind extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class OverrideChanged(
       placeId: Id,
       label: OverrideChanged.Label,
@@ -790,6 +843,7 @@ object Place:
     type Unlocated = Unlocated.T
     object Unlocated extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   enum OverrideEdit derives CanEqual:
     case Reset
 
@@ -805,6 +859,7 @@ object Place:
       type Kind = Kind.T
       object Kind extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class OverrideSet(
       kind: Option[OverrideSet.Kind] = None,
       periodStart: Option[Year] = None,
@@ -822,6 +877,9 @@ object Place:
     type Reset = Reset.T
     object Reset extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[OverrideSet] = KindlingsSchema
       .derived[OverrideSet]
       .schema
@@ -840,6 +898,9 @@ object Place:
 
     val MaxReason = 500
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
     def edit(in: OverrideSet): Either[Api.Error, OverrideEdit] =
       val kind = in.kind.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
       val reason = in.reason.map(r => s"$r".trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
@@ -928,6 +989,7 @@ object Place:
           point
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reason(raw: Option[Rationale]): Either[Api.Error, Option[Rationale]] =
       val r = raw.map(x => s"$x".trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       Either.cond(
@@ -939,6 +1001,8 @@ object Place:
         )
       )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parsePoint(raw: PointText): Either[Problem, (Latitude, Longitude)] =
       (raw).value.split(",", -1).map(_.trim).toList match
         case List(a, b) =>
@@ -958,6 +1022,8 @@ object Place:
               Left(Invalid.Unreadable.here(TypeName.of(PointText), Raw(s"$raw"), Vector(Raw("37.95,58.21"))))
         case _ => Left(Invalid.Unreadable.here(TypeName.of(PointText), Raw(s"$raw"), Vector(Raw("37.95,58.21"))))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pointText(lat: Latitude, lon: Longitude): PointText =
       PointText(
         String.format(
@@ -970,6 +1036,7 @@ object Place:
         )
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def periodText(start: Option[Year], end: Option[Year]): Dating.Description =
       Dating.Description(YearFmt.openPeriod(start, end))
 
@@ -1017,6 +1084,7 @@ object Place:
     type Periods = Periods.T
     object Periods extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def dateSourceText(s: DateSource): DateSourceText = (s).value.trim.toLowerCase match
       case "wikidata-p580"                    => DateSourceText("Wikidata: its start and end time")
       case "wikidata-p571"                    => DateSourceText("Wikidata: its inception")
@@ -1025,6 +1093,7 @@ object Place:
       case other                              => DateSourceText(other)
 
   final case class Register(property: Register.Property, id: Register.Id) derives JsonCodec, KindlingsSchema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def name: Register.Name = Register.names.getOrElse(property, Register.Name((property).value))
 
   object Register:
@@ -1036,6 +1105,7 @@ object Place:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val names: Map[Property, Name] = Map(
       {
         val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)";
@@ -1054,6 +1124,7 @@ object Place:
       }
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Relation(
       childId: Relation.ChildId,
       parentId: Relation.ParentId,
@@ -1080,6 +1151,7 @@ object Place:
     val SameAs = "same_as"
     val VersionOf = "version_of"
     val CapitalOf = "capital_of"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[Kind] =
       List(
         Kind(PartOf),
@@ -1091,25 +1163,33 @@ object Place:
         Kind(VersionOf),
         Kind(CapitalOf)
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val partOfKinds: Set[Kind] = Set(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical))
 
   final case class RemoveIn(reason: Option[Rationale] = None) derives StrictJson, KindlingsSchema, api.json.Schema
 
   object Shape:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type IsAreaKind = Summary.Kind
     val IsAreaKind: Summary.Kind.type = Summary.Kind
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type PointOnlyAreaKind = IsAreaKind
     val PointOnlyAreaKind: IsAreaKind.type = IsAreaKind
     export Summary.Kind as IsPeopleKind
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def isArea(kind: IsAreaKind): Boolean =
       (kind == IsAreaKind(Kind.Region) || kind == IsAreaKind(Kind.Polity))
 
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def pointOnlyArea(kind: PointOnlyAreaKind, hasBoundary: Boolean): Boolean =
       (((isArea(kind)) == (true)) && !hasBoundary)
 
     val NoBoundaryNote: Card.Note = Card.Note("point only — boundary not yet available")
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def isPeople(kind: Shape.IsPeopleKind): Boolean = (kind == Shape.IsPeopleKind(Kind.People))
 
     val PeopleNote: Card.Note = Card.Note("a people or tribe — placed at a representative point, not an area")
@@ -1151,6 +1231,7 @@ object Place:
       case Grouping => TimeBasis.Wire("grouping")
       case Findings => TimeBasis.Wire("findings")
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object TimeBasis:
     type FindingsNoteText = FindingsNoteText.T
     object FindingsNoteText extends Newtype[String, Pure]
@@ -1163,19 +1244,25 @@ object Place:
     type OfKind = OfKind.T
     object OfKind extends Newtype[String, Pure]
     type FindingsNote = FindingsNoteValue
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type FindingsNoteValue = FindingsNoteText
     val FindingsNoteValue: FindingsNoteText.type = FindingsNoteText
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[TimeBasis] =
       values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     given WireEnumValues[TimeBasis]:
       def all: Array[TimeBasis] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: TimeBasis): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[TimeBasis] = parse(Wire((s).value))
     given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[TimeBasis] = WireEnum.codec
     given Schema[TimeBasis] = WireEnum.schema
 
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(kind: OfKind, modern: Boolean, imported: Boolean, undated: Boolean, hasGeometry: Boolean): TimeBasis =
       if !imported && (kind == OfKind(Kind.Feature) || (modern && kind == OfKind(Kind.Region)))
       then Timeless
@@ -1184,6 +1271,8 @@ object Place:
       else if undated then Findings
       else Dated
 
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def visible(
         basis: TimeBasis,
         hi: VisibleEnd,
@@ -1199,6 +1288,7 @@ object Place:
 
     val FindingsNote: FindingsNote = FindingsNoteText("dated by its findings — the place has no date of its own")
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class TreeRow(
       id: Id,
       label: TreeRow.Label,

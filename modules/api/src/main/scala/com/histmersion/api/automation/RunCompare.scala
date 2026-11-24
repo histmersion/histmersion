@@ -7,10 +7,15 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object RunCompare:
   import Agents.{ModelOverride, Usage}
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunSide(
       id: Agents.RunInfo.Id,
       status: RunSide.Status,
@@ -42,6 +47,7 @@ object RunCompare:
     type Failures = Failures.T
     object Failures extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class StepSide(
       models: List[StepSide.Models],
       actual: List[StepSide.Actual],
@@ -70,6 +76,7 @@ object RunCompare:
     type Turns = Turns.T
     object Turns extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
       derives JsonCodec,
         KindlingsSchema,
@@ -180,8 +187,10 @@ object RunCompare:
     type B = B.T
     object B extends Newtype[String, Pure]
     type AMajors = AMajors.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AMajors extends Newtype[Int, Pure]
     type BMajors = BMajors.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object BMajors extends Newtype[Int, Pure]
     type Shared = Shared.T
     object Shared extends Newtype[Int, Pure]

@@ -7,10 +7,12 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one alias rule's words (#1799): every kind's rename says the same thing, and an answer to a call that named an
   * old identifier says where it went.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AliasesSuite extends munit.FunSuite:
 
   test("the rule names the kind's identifier"):

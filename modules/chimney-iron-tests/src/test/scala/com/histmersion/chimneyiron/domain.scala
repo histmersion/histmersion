@@ -4,6 +4,7 @@ package chimneyiron.domain
 import com.histmersion.chimneyiron.{CitekeyRule, NonBlankCounted}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 type Citekey = Citekey.T
 object Citekey extends Newtype[String, CitekeyRule]
@@ -20,6 +21,7 @@ object Year extends Newtype[Int, Pure]
 type PageSize = PageSize.T
 object PageSize extends Newtype[Int, Pure]
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 enum SourceStatus:
   case Current
   case Contested(by: Citekey)

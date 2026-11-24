@@ -7,6 +7,7 @@ import com.histmersion.api.instance.BuildId
 import com.histmersion.domain.Title
 import com.histmersion.server.instance.WebBundle
 import com.histmersion.util.storage.{Blob, Resources}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`, with its own suites);
   * these read the served assets off the classpath — exactly as `Static.read` serves them — and assert the properties
@@ -15,8 +16,10 @@ import com.histmersion.util.storage.{Blob, Resources}
   * The precedent is `core`'s "no hardcoded ports in src/main" lint test: a grep over the real assets is a legitimate
   * test when the property IS textual.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WebAssetsSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def asset(name: String): String = Static.read(Static.ReadPath(s"web/$name")).value
 
   private val bundle = WebBundle(BuildId("0123456789abcdef0123456789abcdef"))

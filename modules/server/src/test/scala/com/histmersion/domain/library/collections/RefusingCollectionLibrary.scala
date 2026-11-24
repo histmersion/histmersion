@@ -18,9 +18,11 @@ import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A library a suite's collections write through that refuses everything; a suite overrides what it uses. */
 open class RefusingCollectionLibrary extends CollectionLibrary:
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def no = Left(Api.Error(Problem.Unclassified(Legacy.Text("not used in this suite"))))
   def source(citekey: Citekey): Either[Api.Error, Source.WithFindings] = no
   def create(citekey: Citekey, put: Source.Put)(using Creator.New): Either[Api.Error, Source.WithFindings] = no

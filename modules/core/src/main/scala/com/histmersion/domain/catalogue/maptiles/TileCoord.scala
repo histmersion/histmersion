@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Count, Invalid}
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One tile of the XYZ grid MapLibre asks for (Web Mercator; a tile's side is [[TileCoord.Extent]] units of the vector
   * tile format): zoom `z`, column `x` from the antimeridian eastwards, row `y` from the north. Only a tile inside the
@@ -11,9 +12,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final case class TileCoord private (z: TileCoord.Z, x: TileCoord.X, y: TileCoord.Y):
   /** Tiles a side at this zoom. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def side: TileCoord.TilesPerSide = TileCoord.TilesPerSide(1L << z.value)
 
   /** The tile's bounds in degrees: west, south, east, north. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bounds: (Double, Double, Double, Double) =
     val n = side.value.toDouble
     (
@@ -26,6 +29,7 @@ final case class TileCoord private (z: TileCoord.Z, x: TileCoord.X, y: TileCoord
   /** Where `lat`/`lon` falls in this tile, in tile units (0 at its west and north edges, [[TileCoord.Extent]] at the
     * east and south): outside the tile below 0 or at the extent and beyond. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unitsOf(lat: Latitude, lon: Longitude): (Double, Double) =
     val n = side.value.toDouble
     val (mx, my) = TileCoord.mercator(lat, lon)
@@ -56,6 +60,7 @@ object TileCoord:
   val MaxLat: MaxLat = MaxLatValue(85.0511287798)
 
   /** The tile `z`/`x`/`y`, when the grid has it and `z` is no deeper than `maxZoom`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(z: Z, x: X, y: Y, maxZoom: Z): Either[Problem, TileCoord] =
     if z.value < 0 || z > maxZoom then
       Left(Invalid.Broken.here(Invalid.Rule.ZoomWithin(Count.of(z), Count.of(maxZoom))))
@@ -66,9 +71,11 @@ object TileCoord:
   /** Pure: a point's place on the unit square of Web Mercator (0..1 east and south), its latitude held inside
     * [[MaxLat]] so a pole lands on the grid's edge.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mercator(lat: Latitude, lon: Longitude): (Double, Double) =
     val l = math.toRadians(math.max(-MaxLat.value, math.min(MaxLat.value, lat.value)))
     ((lon.value + 180) / 360, (1 - math.log(math.tan(l) + 1 / math.cos(l)) / math.Pi) / 2)
 
   /** Pure: the latitude of the unit square's row `v` (0 north, 1 south). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def latOf(v: Double): Latitude = Latitude.assume(math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * v)))))

@@ -16,11 +16,13 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.config.MediaConfig
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.RepairAcquire
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host's half of the media providers (#1446): how a stated licence is read and judged, the card's role order, the
   * counts, a gazetteer id that is a Wikidata item, the media config and the import report — no network, no database.
   * Commons' and Wikidata's answers are read by the media plugins and `upstreams`, in their own suites.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaProvidersSuite extends munit.FunSuite:
 
   import Licence.*

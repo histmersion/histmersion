@@ -8,6 +8,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Candidates:
   type AuthorId = AuthorId.T
@@ -20,6 +21,7 @@ object Candidates:
   object Watermark extends Newtype[String, Pure]
 
   type Indexes = IndexesValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type IndexesValue = Index
   val IndexesValue: Index.type = Index
 
@@ -31,6 +33,7 @@ object Candidates:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[WatchKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   enum State(val wire: State.Wire):
@@ -42,11 +45,13 @@ object Candidates:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   val Indexes: List[Indexes] =
     List(Index("openalex"), Index("crossref"), Index("europepmc"), Index("arxiv"), Index("core"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def since(watermark: Option[Watermark], today: java.time.LocalDate, lookbackDays: Lookback): java.time.LocalDate =
     watermark
       .flatMap(w => scala.util.Try(java.time.LocalDate.parse((w).value.take(10))).toOption)
@@ -60,6 +65,8 @@ object Candidates:
     type By = By.T
     object By extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(_.title)
       .setTo(a.title.orElse(b.title))
@@ -78,6 +85,8 @@ object Candidates:
       .modify(_.openalexId)
       .setTo(a.openalexId.orElse(b.openalexId))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def europepmcWorks(json: Json): List[WorkRef] =
     json.cursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
       val c = r.cursor
@@ -111,6 +120,7 @@ object Candidates:
     }
 
   /** CORE holds full texts, so a work with one is open access by CORE's nature. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def coreWorks(json: Json): List[WorkRef] =
     json.cursor.downField("results").values.toList.flatten.map { r =>
       val c = r.cursor
@@ -132,6 +142,7 @@ object Candidates:
       )
     }
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def arxivWorks(atom: String): List[WorkRef] =
     def tag(s: String, t: String): Option[String] =
       (s"(?s)<$t[^>]*>(.*?)</$t>".r
@@ -159,6 +170,7 @@ object Candidates:
       )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def openalexAuthorIds(json: Json): List[AuthorId] =
     (json.cursor
       .downField("authorships")

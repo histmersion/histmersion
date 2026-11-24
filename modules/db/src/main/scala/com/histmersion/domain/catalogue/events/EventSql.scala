@@ -12,10 +12,12 @@ import com.histmersion.domain.catalogue.Place
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The events' SQL other queries of the catalogue embed: an event's tier and anchor, the selection of the event list
   * (and of the map's events layer), the map's event tiles' candidates.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object EventSql:
 
   /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. The two
@@ -36,6 +38,7 @@ object EventSql:
   /** SQL: the box `km` around the point `pt` (an SQL expression) in degrees — what lets the findings' geometry index
     * answer before the exact geography distance is computed (a `::geography` cast cannot use it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def boxAround(pt: Frag, km: CatalogMerge.Tolerance.Km): Frag =
     val dy = (km.value / 111.32).literal
     sql"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
@@ -62,6 +65,8 @@ object EventSql:
     * the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),
     * kind, historicity, place and [[Narrow]].
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def listWhere(
       related: EventSourceFilter,
       filter: Filter,

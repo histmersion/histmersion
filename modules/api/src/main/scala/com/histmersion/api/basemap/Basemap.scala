@@ -14,6 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Basemap:
   object Tile:
     type Column = Column.T
@@ -34,6 +36,8 @@ object Basemap:
   /** Web Mercator's latitude limit. */
   val MaxLat = 85.0511287798066
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def validFocusName(s: Focus.Name): Either[Problem, Focus.Name] =
     val n = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
     Either.cond(
@@ -42,12 +46,16 @@ object Basemap:
       Invalid.Unreadable.here(TypeName.of(Focus.Name), Raw(s"$s"), Vector(Raw("aegean")))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusRegion(spec: Focus.Spec): Either[Problem, (Focus.Name, BBox)] =
     (spec).value.trim.split("\\s+", 2).toList match
       case n :: b :: Nil =>
         for name <- validFocusName(Focus.Name(n)); box <- validBBox(Focus.Bbox(b.replace(" ", ""))) yield (name, box)
       case _ => Left(Invalid.Unreadable.here(TypeName.of(Focus.Spec), Raw(s"$spec"), Vector(Raw("aegean 19,34,30,42"))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusNameOf(b: BBox): Focus.Name =
     def f(d: Double) = java.math
       .BigDecimal(d)
@@ -58,19 +66,26 @@ object Basemap:
       .replace(".", "p")
     Focus.Name(s"bbox-${f((b.minLon).value)}-${f((b.minLat).value)}-${f((b.maxLon).value)}-${f((b.maxLat).value)}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tileX(lon: Longitude, z: Zoom): Tile.Column =
     val n = 1L << (z).value
     Tile.Column(math.floor(((lon).value + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tileY(lat: Latitude, z: Zoom): Tile.Row =
     val n = 1L << (z).value
     val r = math.toRadians((lat).value.max(-MaxLat).min(MaxLat))
     val y = (1.0 - math.log(math.tan(r) + 1.0 / math.cos(r)) / math.Pi) / 2.0 * n
     Tile.Row(math.floor(y).toLong.max(0L).min(n - 1))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def tileRange(b: BBox, z: Zoom): ((Tile.Column, Tile.Column), (Tile.Row, Tile.Row)) =
     ((tileX(b.minLon, z), tileX(b.maxLon, z)), (tileY(b.maxLat, z), tileY(b.minLat, z)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tileCount(b: BBox, minZoom: Zoom, maxZoom: Zoom): LayerInfo.Tiles =
     LayerInfo.Tiles(((minZoom).value to (maxZoom).value).map { z =>
       val ((x0, x1), (y0, y1)) = tileRange(b, Zoom(z))
@@ -80,6 +95,8 @@ object Basemap:
   /** Web Mercator's ±85.05°: as far as web maps go. */
   val World: BBox = BBox(Longitude(-180.0), Latitude(-85.05), Longitude(180.0), Latitude(85.05))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def validBBox(s: Focus.Bbox): Either[Problem, BBox] =
     if (s).value.trim.equalsIgnoreCase("world") then Right(World)
     else
@@ -121,6 +138,8 @@ object Basemap:
     type Spare = Spare.T
     object Spare extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseDrop(s: DropRule.Spec): Either[Problems, List[DropRule]] =
     val parts = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
     val rules = parts.map { words =>
@@ -170,6 +189,8 @@ object Basemap:
 
   private val KindName = "[A-Za-z0-9_:.-]+".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseSubset(s: Subset.Spec): Either[Problem, Map[Layer.Wire, Read]] =
     val parts = (s).value.split(",").toList.map(_.trim).filter(_.nonEmpty)
     val parsed = parts.map { p =>
@@ -218,6 +239,7 @@ object Basemap:
         }.toMap
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def subsetParam(m: Map[Layer.Wire, Read], fromZoom: Map[Layer.Wire, Zoom] = Map.empty): Subset.Spec =
     Subset.Spec(
       m.toList
@@ -234,6 +256,8 @@ object Basemap:
         .mkString(",")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def subsetAt(s: Subset.Spec, z: Zoom): Subset.Spec =
     Subset.Spec(
       (s).value
@@ -262,6 +286,8 @@ object Basemap:
     LayerInfo.Dropped("transit")
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def droppedLayers(keepAll: FetchQuery.KeepAll, drop: Option[DropRule.Spec]): List[LayerInfo.Dropped] =
     if (keepAll).value then Nil
     else
@@ -274,6 +300,8 @@ object Basemap:
 
   val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keptLine(keepAll: FetchQuery.KeepAll, drop: Option[DropRule.Spec]): LayerInfo.Kept =
     if (keepAll).value then LayerInfo.Kept("everything (unfiltered)")
     else
@@ -282,6 +310,9 @@ object Basemap:
         case Some(d)                           => LayerInfo.Kept(s"all but: $d")
         case None => LayerInfo.Kept("earth, water and land cover only (fetched before the drop list)")
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   final case class FetchQuery(
       layer: FetchQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire("all"),
       maxZoom: Option[FetchQuery.MaxZoom] = None,
@@ -340,6 +371,7 @@ object Basemap:
     /** The relief's own tiles have the sea flat at 0; these carry its depth (ETOPO1 from NOAA, or the GEBCO grid). */
     case Bathymetry extends Layer(Layer.Wire("bathymetry"), Layer.Title("sea floor"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def file: LayerInfo.File = LayerInfo.File(s"$wire.pmtiles")
 
   object Layer:
@@ -350,8 +382,10 @@ object Basemap:
     type Title = Title.T
     object Title extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Layer] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parseMany(s: Wires): Either[Problem, List[Layer]] =
       (s).value.trim.toLowerCase(java.util.Locale.ROOT) match
         case "" | "all" => Right(values.toList)
@@ -366,6 +400,8 @@ object Basemap:
               )
             )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class LayerInfo(
       layer: LayerInfo.Layer,
       present: LayerInfo.Present,
@@ -389,6 +425,7 @@ object Basemap:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def deepest: Option[Focus.MaxZoom] =
       (maxZoom.toList ++ focus
         .map(_.maxZoom) ++ onDemand.filter(d => (d.enabled).value).map(_.maxZoom).toList).maxOption
@@ -451,6 +488,9 @@ object Basemap:
     export Focus.Name
     export BBox.Text as Bbox
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   final case class RemoveQuery(
       layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire("all"),
       focus: Option[RemoveQuery.Focus] = None,
@@ -472,6 +512,7 @@ object Basemap:
     type Value = Value.T
     object Value extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Status(
       available: Status.Available,
       dir: Status.Dir,

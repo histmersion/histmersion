@@ -3,10 +3,12 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `ui.events`: the events on the map in playback — how long a local and a regional event fade (seconds of playback),
   * the most one playback returns, and how far an area outline is simplified (degrees).
   */
+@movesTo(FeaturePlace.ServerInstance)
 final case class UiEventsSettings(
     localFadeSeconds: UiEventsSettings.LocalFadeSeconds,
     regionalFadeSeconds: UiEventsSettings.RegionalFadeSeconds,

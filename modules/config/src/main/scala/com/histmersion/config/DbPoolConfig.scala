@@ -3,11 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** `pool.max` sizes the HikariCP pool behind every [[com.histmersion.db.Db]] DataSource. Pooling is not a
   * micro-optimisation here: without it every repo call opened a fresh TCP connection and did the whole startup
   * handshake.
   */
+@movesTo(FeaturePlace.UtilDatabase)
 final case class DbPoolConfig(max: DbPoolConfig.Max) derives ConfigReader
 
 object DbPoolConfig:

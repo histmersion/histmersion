@@ -2,6 +2,7 @@ package com.histmersion
 package upstreams.jats
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object Jats:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
@@ -12,6 +13,7 @@ object Jats:
   sealed trait Node
   final case class Elem(name: Elem.Name, attrs: Map[String, String], children: Vector[Node]) extends Node:
     def kids(n: Elem.Name): Vector[Elem] = children.collect { case e: Elem if e.name == n => e }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def kid(n: Elem.Name): Option[Elem] = kids(Elem.Name((n).value)).headOption
     def attr(n: String): Option[String] = attrs.get(n)
     def elems: Vector[Elem] = children.collect { case e: Elem => e }
@@ -22,6 +24,8 @@ object Jats:
   final case class Text(s: String) extends Node
 
   /** The document starts — after an XML declaration, comments and a DOCTYPE — with `<article>`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isJats(xml: Xml): Boolean =
     (Prolog.findPrefixOf((xml).value.take(64 * 1024)).isDefined)
 
@@ -29,6 +33,10 @@ object Jats:
     """(?s)﻿?\s*(?:<\?.*?\?>\s*|<!--.*?-->\s*|<!DOCTYPE[^\[>]*(?:\[.*?\])?\s*>\s*)*<article[\s>/]""".r
 
   /** The document's root element (an empty `article` when the text has none). */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def parse(xml: Xml): Elem =
     final case class Frame(
         name: com.histmersion.upstreams.jats.Jats.Elem.Name,
@@ -136,6 +144,8 @@ object Jats:
   /** The article as Markdown: title, authors, abstract(s), the body's sections, the back matter (acknowledgements,
     * notes, appendices, references) and floating figures/tables.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toMarkdown(xml: Xml): Markdown =
     val article = parse(xml)
     val meta = article.kid(Elem.Name("front")).flatMap(_.kid(Elem.Name("article-meta")))
@@ -180,6 +190,7 @@ object Jats:
     )
 
   /** The block-level Markdown of an element's children, sections as headings from `level`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def blocks(e: Elem, level: Int): Vector[String] =
     // an element's own title is rendered by whoever owns it (sec, abstract, ack, caption)
     e.children.flatMap {
@@ -206,6 +217,8 @@ object Jats:
     "article-categories"
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def block(e: Elem, level: Int): Vector[String] = e.name.value match
     case "sec" | "app" | "boxed-text" | "glossary" | "notes" | "fn-group" | "app-group" | "sec-meta" =>
       val heading = (e.kid(Elem.Name("label")).map(runText).toList ++ e.kid(Elem.Name("title")).map(runText).toList)
@@ -274,9 +287,11 @@ object Jats:
   private val BlockInP =
     Set("list", "disp-quote", "fig", "table-wrap", "disp-formula", "boxed-text", "def-list", "supplementary-material")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def captionText(c: Elem): Vector[String] =
     (c.kid(Elem.Name("title")).map(runText).toVector ++ c.kids(Elem.Name("p")).map(runText)).filter(_.nonEmpty)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def table(t: Elem): Vector[String] =
     def rows(e: Elem): Vector[Elem] = e.elems.flatMap(c => if c.name == Elem.Name("tr") then Vector(c) else rows(c))
     val all = rows(t)
@@ -293,11 +308,14 @@ object Jats:
       val line = (r: Vector[String]) => r.mkString("| ", " | ", " |")
       Vector(((line(pad.head) +: line(Vector.fill(width)("---")) +: pad.tail.map(line)).mkString("\n")))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def formula(e: Elem): Option[String] =
     def find(x: Elem): Option[Elem] =
       if x.name == Elem.Name("tex-math") then Some(x) else x.elems.iterator.flatMap(find).nextOption()
     find(e).map(t => collapse(text(t)).stripPrefix("$").stripSuffix("$").trim).filter(_.nonEmpty)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refList(e: Elem, level: Int, parent: Option[String] = None): Vector[String] =
     val heading = e.kid(Elem.Name("title")).map(runText).filter(_.nonEmpty).getOrElse("References")
     val shown = Option.when(!parent.contains(heading))("#" * math.min(6, (level)) + " " + heading)
@@ -313,6 +331,8 @@ object Jats:
   /** A `mixed-citation` carries its own punctuation; an `element-citation` is bare fields, joined — a volume with its
     * issue and a page range read as one field (`522(7555):167–172`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def citation(c: Elem): String =
     if c.name != Elem.Name("element-citation") then runText(c)
     else
@@ -342,18 +362,23 @@ object Jats:
         case parts    => (parts.mkString("", ". ", "."))
 
   /** `Given Surname`, for the byline. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def byName(n: Elem): String =
     ((n.kid(Elem.Name("given-names")).map(runText).toList ++ n.kid(Elem.Name("surname")).map(runText).toList ++
       n.kid(Elem.Name("suffix")).map(runText).toList).filter(_.nonEmpty).mkString(" "))
 
   /** `Surname Given`, as references write it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def personName(n: Elem): String =
     ((n.kid(Elem.Name("surname")).map(runText).toList ++ n.kid(Elem.Name("given-names")).map(runText).toList ++
       n.kid(Elem.Name("suffix")).map(runText).toList).filter(_.nonEmpty).mkString(" "))
 
   /** An element's running text as one Markdown line. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def runText(e: Elem): String = collapse(inlineRaw(e))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def inlineRaw(e: Elem): String =
     e.children.map {
       case Text(s) => s
@@ -379,6 +404,7 @@ object Jats:
         (if (s).lastOption.exists(_.isWhitespace) then " " else "")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def text(e: Elem): String = (e.children.map {
     case Text(s) => s
     case c: Elem => text(c)

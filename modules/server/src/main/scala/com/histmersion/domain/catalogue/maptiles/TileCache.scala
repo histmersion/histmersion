@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The tiles a server keeps, by key, the least recently asked for going first once they hold more than `maxBytes`. A
   * tile's key carries the versions of what it was cut from, so a write makes the tiles it touched unreachable at once;
@@ -12,10 +13,12 @@ final class TileCache(maxBytes: () => ByteCount):
   // `var`: the bytes held
   private var held = 0L
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(key: MapTiles.TileKey): Option[VectorTileWriter.VectorTile] = synchronized(
     Option(tiles.get(key.value)).map(VectorTileWriter.VectorTile(_))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def put(key: MapTiles.TileKey, bytes: VectorTileWriter.VectorTile): Unit = synchronized:
     val raw = bytes.value
     Option(tiles.put(key.value, raw)).foreach(old => held -= old.length)
@@ -30,6 +33,7 @@ final class TileCache(maxBytes: () => ByteCount):
     tiles.clear()
     held = 0L
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stats: (TileCache.EntryCount, ByteCount) = synchronized(
     (TileCache.EntryCount(tiles.size), ByteCount.assume(held))
   )

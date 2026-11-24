@@ -10,6 +10,7 @@ import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
 import com.histmersion.api.backup.Backup
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Backups run as a JOB, not inside the HTTP request. A dump of the corpus takes minutes, and the request that started
   * it used to be cut at 60 s (by the server and by any proxy in between): the handler thread was interrupted and the
@@ -37,6 +38,8 @@ final class BackupJobs(
   def running: Boolean = current.get().exists(!_.result.isDone)
 
   /** Start a dump (or join the running one) and wait up to `waitSeconds` for it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def start(now: Instant): Either[Api.Error, Backup.Status] =
     val job = current.get() match
       case Some(j) if !j.result.isDone => Right(j)
@@ -68,6 +71,7 @@ final class BackupJobs(
   /** The running job, or the last one this server ran (`None` before the first). */
   def status: Option[Backup.Status] = current.get().map(statusOf)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def statusOf(j: Job): Backup.Status =
     val elapsed = Backup.Result.DurationMs((System.nanoTime() - j.started) / 1000000L)
     if !j.result.isDone then Backup.Status.running(Backup.Status.RunningFile(j.file.value), elapsed)

@@ -14,7 +14,9 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Target(
     kind: ItemKind,
     id: Option[ItemKey] = None,
@@ -29,8 +31,10 @@ final case class Target(
       api.json.Schema:
   def itemKey: Option[ItemKey] = Option.when(kind.isItem)(id).flatten
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def identity: Option[Target.Identity] = itemKey.map(k => Target.Identity(s"${kind.wire}:$k"))
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object Target:
   given JsonValueCodec[ItemKey] = ItemKey.given_JsonValueCodec_ItemKey
 
@@ -51,9 +55,12 @@ object Target:
   object DegreesMinus:
     inline def apply(v: String): String = v
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target =
     Target(kind, Some(ItemKey((key).value.trim)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(t: Target, allowed: Set[ItemKind], what: Field): Either[Problem, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a > b =>
@@ -117,6 +124,7 @@ object Target:
             else Right(Target(ItemKind.Period, from = t.from, to = t.to))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def where(t: Target): Where =
     val span = YearFmt.period(t.from, t.to)
     val at =

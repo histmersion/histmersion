@@ -4,6 +4,7 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The SQL of the list filters (core `ListFilters`): one ` AND …` fragment per filter, named, so a page applies them
   * all and a facet's count applies all but its own. Pure, but for [[facet]].
@@ -40,6 +41,8 @@ private[histmersion] object ListSql:
     * filters give theirs); NULLs are not a value. `from` = `FROM … WHERE …` with the filters; `count` = what is counted
     * (`count(DISTINCT id)` where a row can appear twice).
     */
+  @tolerated(LintRule.TotalOrder, "GROUP BY 1: column 1 is unique")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facetOn(from: Frag, expr: Frag, max: PageSize, count: Frag = sql"count(*)")(using
       DbCon
   ): List[(String, RowCount)] =

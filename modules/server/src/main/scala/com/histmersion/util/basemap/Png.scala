@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problem
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** PNG, as much as the relief needs: encoding RGB tiles, decoding 8-bit RGB(A) non-interlaced ones. Pure. */
 object Png:
@@ -19,11 +20,15 @@ object Png:
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isPng(b: PngBytes): Boolean =
     val a: Array[Byte] = b.value
     a.length >= 8 && a.take(8).sameElements(Signature)
 
   /** An RGB PNG of `px` (`0x??RRGGBB`, row-major, `w` × `h`), each row filtered by its left neighbour. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def encodeRgb(w: Width, h: Height, px: Pixels, level: CompressionLevel = CompressionLevel(4)): PngBytes =
     val width: Int = w.value
     val height: Int = h.value
@@ -84,6 +89,8 @@ object Png:
     out.write(java.nio.ByteBuffer.allocate(4).putInt(c.getValue.toInt).array())
 
   /** An 8-bit RGB or RGBA, non-interlaced PNG's pixels (`0xAARRGGBB`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decode(png: PngBytes): Either[Problem, Vp8l.Image] =
     if !isPng(png) then Left(Problem.Io.Damage.Foreign.in(Problem.Io.Format.Png, Problem.Where("the signature")))
     else

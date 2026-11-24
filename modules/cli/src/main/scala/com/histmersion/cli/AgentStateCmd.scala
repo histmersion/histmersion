@@ -11,7 +11,10 @@ import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.AgentStatePut
 import com.histmersion.util.console.Console
 import com.histmersion.api.Api
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion agent-state` arguments")
 object AgentStateCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
@@ -24,6 +27,7 @@ object AgentStateCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.ListCmd() =>

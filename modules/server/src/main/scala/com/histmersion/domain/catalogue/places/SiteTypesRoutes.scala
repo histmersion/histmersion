@@ -11,6 +11,7 @@ import com.histmersion.domain.CreatorControllers
 object SiteTypesRoutes:
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def apply(siteTypes: SiteTypesControllers): List[ServerEndpoint[Any, Identity]] =
     List(
       EventsApi.refineSiteTypes.serverLogic[Identity](req =>

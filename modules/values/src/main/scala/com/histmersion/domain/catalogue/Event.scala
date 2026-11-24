@@ -4,6 +4,7 @@ package domain.catalogue
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Event:
 
@@ -15,6 +16,7 @@ object Event:
 
   object Uid extends Newtype[java.util.UUID, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object EdgeKind:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -31,9 +33,12 @@ object Event:
     val Triggers = "triggers"
     val RespondsTo = "responds_to"
     val FallsWithin = "falls_within"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val allen: Set[Wire] =
       Set(Wire(Before), Wire(Meets), Wire(Overlaps), Wire(During), Wire(Starts), Wire(Finishes), Wire(Equals))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val causal: Set[Wire] = Set(Wire(Causes), Wire(Enables), Wire(Triggers), Wire(RespondsTo), Wire(FallsWithin))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[Wire] =
       List(
         Wire(Before),
@@ -57,4 +62,5 @@ object Event:
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[Wire] = List(Wire(Proposed), Wire(Confirmed), Wire(Rejected))

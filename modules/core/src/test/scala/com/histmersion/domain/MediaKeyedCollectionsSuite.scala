@@ -11,11 +11,14 @@ import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
 
 import com.histmersion.Period
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host's dates rule for the key-gated collections: a collection's latest year refuses a modern record, and an
   * ancient one is matched within the place's period up to it. The Smithsonian and Europeana parsers are the media
   * plugins' own suites.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class MediaKeyedCollectionsSuite extends munit.FunSuite:
 
   // ── relevance: modern objects ───────────────────────────────────────────────────────────────

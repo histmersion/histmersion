@@ -7,6 +7,8 @@ import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Named historical periods from ChronOntology (DAI).
   *
@@ -17,6 +19,7 @@ import com.histmersion.plugin.*
   * political, geological, etc.) and region associations. We map each to a place with kind derived from the period type
   * and the time span as its period.
   */
+@atBoundary(BoundaryKind.Json, "reads the ChronOntology answer into period records")
 object ChronOntology extends DownloadedGazetteer:
   val title = GazetteerSource.Title("ChronOntology named periods")
   override val description =
@@ -25,6 +28,8 @@ object ChronOntology extends DownloadedGazetteer:
   val rights: GazetteerRights =
     GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
     RawJson
       .parse(text.value)
@@ -45,6 +50,7 @@ object ChronOntology extends DownloadedGazetteer:
         results.map(_.flatMap(r => readResult(r).toOption))
       }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def readResult(j: Json): Either[Problem, GazetteerPlace] =
     j.asObject.toRight(Problem.Invalid.Missing(Problem.Field("object"), Vector(Problem.Field("result")))).flatMap {
       wrapper =>

@@ -7,6 +7,7 @@ import org.ekrich.config.Config
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One load of the plugins for one config: the registries and the report. Built by [[PluginHost.build]] as a pure
   * function of (plugins, user config, environment, host services) — no global state, no static cache — so a later
@@ -32,6 +33,7 @@ final case class Generation(
     secretValues: Map[Plugin.Info.Id, Map[Secret.Ref, PluginHost.SecretValue]] = Map.empty
 ):
   /** A plugin's status and contributions, to carry into the next generation unchanged. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def carry(id: Plugin.Info.Id): Option[(PluginStatus, Registries)] =
     report.plugins.find(_.id.value == id.value).map(st => st -> contributions.getOrElse(id, Registries.empty))
 
@@ -41,6 +43,7 @@ final case class Generation(
   /** The value of the secret the setting `key` of the registered plugin `pluginId` refers to, as this generation
     * resolved it for that plugin; `None` when the setting holds no secret reference (or the plugin is not registered).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def secret(pluginId: Plugin.Info.Id, key: PluginHost.ConfigPath): Option[PluginHost.SecretValue] =
     for
       block <- blocks.get(pluginId)

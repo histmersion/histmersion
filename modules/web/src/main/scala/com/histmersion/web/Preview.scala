@@ -31,6 +31,7 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.Paging
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.ImageSize
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
   * source) or `data-slug` (an article) — server-rendered anchors in a window or on a standalone page, and the web UI's
@@ -51,60 +52,87 @@ object Preview:
   type ScreenPixels = ScreenPixels.T
   object ScreenPixels extends Newtype[Double, Pure]
   type ViewportHeight = ViewportHeight.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ViewportHeight extends Newtype[Double, Pure]
   type ViewportWidth = ViewportWidth.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ViewportWidth extends Newtype[Double, Pure]
 
   /** What an element asks to preview. */
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PinUnderKeyboard = KeyboardDriven
   val PinUnderKeyboard: KeyboardDriven.type = KeyboardDriven
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ShowAtX = ScreenPixels
   val ShowAtX: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ShowAtY = ScreenPixels
   val ShowAtY: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MoveToX = ScreenPixels
   val MoveToX: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MoveToY = ScreenPixels
   val MoveToY: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointFitH = ElementSize
   val PointFitH: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointFitVh = ViewportHeight
   val PointFitVh: ViewportHeight.type = ViewportHeight
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderFitTop = ScreenPixels
   val UnderFitTop: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderFitBottom = ScreenPixels
   val UnderFitBottom: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderFitH = ElementSize
   val UnderFitH: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderFitVh = ViewportHeight
   val UnderFitVh: ViewportHeight.type = ViewportHeight
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointPlacementX = ScreenPixels
   val PointPlacementX: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointPlacementY = ScreenPixels
   val PointPlacementY: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointPlacementW = ElementSize
   val PointPlacementW: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointPlacementH = ElementSize
   val PointPlacementH: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointPlacementVw = ViewportWidth
   val PointPlacementVw: ViewportWidth.type = ViewportWidth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PointPlacementVh = ViewportHeight
   val PointPlacementVh: ViewportHeight.type = ViewportHeight
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementLeft = ScreenPixels
   val UnderPlacementLeft: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementTop = ScreenPixels
   val UnderPlacementTop: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementBottom = ScreenPixels
   val UnderPlacementBottom: ScreenPixels.type = ScreenPixels
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementWidth = ElementSize
   val UnderPlacementWidth: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementW = ElementSize
   val UnderPlacementW: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementH = ElementSize
   val UnderPlacementH: ElementSize.type = ElementSize
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementVw = ViewportWidth
   val UnderPlacementVw: ViewportWidth.type = ViewportWidth
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type UnderPlacementVh = ViewportHeight
   val UnderPlacementVh: ViewportHeight.type = ViewportHeight
 
@@ -120,6 +148,7 @@ object Preview:
 
   object Target:
     object Source:
+      @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
       type Citekey = api.library.Citekey
       val Citekey: api.library.Citekey.type = api.library.Citekey
     object Article:
@@ -131,6 +160,7 @@ object Preview:
       export Pages.EventId as Id
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def targetOf(ck: Option[Target.Source.Citekey], slug: Option[Item.Slug]): Option[Target] =
     ck.map(_.value.trim)
       .filter(_.nonEmpty)
@@ -174,6 +204,7 @@ object Preview:
     object Identifier extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type ChipKind = ChipKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ChipKind extends Newtype[String, Pure]
     type Where = Where.T
     object Where extends Newtype[String, Pure]:
@@ -222,6 +253,7 @@ object Preview:
   object Item:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = Target.Source.Citekey
     val Citekey: Target.Source.Citekey.type = Target.Source.Citekey
     export Article.Slug
@@ -234,6 +266,8 @@ object Preview:
 
   private val SummaryChars = 300
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def card(s: Source.Detail): Card =
     val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
     Card(
@@ -267,6 +301,8 @@ object Preview:
     )
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def card(sw: Source.WithFindings): Card =
     card(sw.source)
       .modify(_.media)
@@ -274,6 +310,8 @@ object Preview:
       .modify(_.icon)
       .setTo(Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role.value == MediaRole.Cover))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def card(a: Article.View): Card =
     Card(
       Card.Title(a.article.title.value),
@@ -291,6 +329,8 @@ object Preview:
   /** Where a place comes from, in words: the external source that brought it in, else the seed's own source line
     * ("Pleiades (pleiades.stoa.org), CC-BY").
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def datasetOf(p: Place.Summary): Option[LpfDataset.Title] =
     p.importSource
       .map { k =>
@@ -306,6 +346,8 @@ object Preview:
     * description), whether a region has a boundary yet, where it comes from with a link to that page, the places it is
     * part of, and what the corpus holds for it (the counts are what clicking it selects).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def card(d: PlaceDetail): Card =
     val p = d.place
     val contested =
@@ -357,6 +399,8 @@ object Preview:
     )
 
   /** An event's card: what it is, when, how sure, its description, and its picture (#1446). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def card(d: EventDetail): Card =
     val e = d.event
     val years = YearFmt.span(e.timeSpan) + EventGeo.missingEnd(e.timeSpan).fold("") {
@@ -400,6 +444,8 @@ object Preview:
     * imprecise one is not on the map at a year), and the fields corrected by hand (kept over the catalogue's on a
     * re-import).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventFacts(d: EventDetail, years: Years.Text): List[UiLabels.Text] =
     val e = d.event
     (Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
@@ -416,6 +462,9 @@ object Preview:
     * what the corpus holds around it, what may discuss it, where the catalogue record is from, and what to do next.
     * Empty sections are left out.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def eventSections(d: EventDetail): List[Section] =
     def km(x: EventFindingRef.Km) = s"${math.round(x.value)} km"
     List(
@@ -498,6 +547,9 @@ object Preview:
   /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a page), as the
     * licence asks for it to be shown.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def creditLine(t: MediaThumb): (MediaItem.Credit, Option[(MediaItem.License, Item.Href)]) =
     val lic = t.license.map(l =>
       l -> Item.Href(
@@ -509,12 +561,17 @@ object Preview:
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
   // one per kind, each bounded (#1949): a long session hovers thousands of links
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val sourceCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val articleCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val placeCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val eventCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
 
   /** The card caches' figures, for [[Diagnostics]]. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cacheStats: List[(UiLabels.Text, BoundedCache.Stats)] =
     List(
       "cards.source" -> sourceCache,
@@ -524,6 +581,7 @@ object Preview:
     ).map((n, c) => UiLabels.Text(n) -> BoundedCache.stats(c))
 
   /** A failed fetch is forgotten, so the next hover tries again. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def cached(cache: BoundedCache[CacheKey, Future[Card]], key: CacheKey)(fetch: => Future[Card]): Future[Card] =
     cache.getOrElseUpdate(
       key, {
@@ -536,8 +594,13 @@ object Preview:
     )
 
   /** Drop a source's cached card — it was just edited, and the next hover must show the edit. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def forget(ck: Target.Source.Citekey): Unit = { val _ = sourceCache.remove(CacheKey(ck.value)) }
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck) =>
       cached(sourceCache, CacheKey(ck.value))(
@@ -571,6 +634,7 @@ object Preview:
   var placeAsOf: () => Option[Years.Astronomical] = () => None
 
   /** Pure: what an element asks to preview, a place chip's id included (a source or an article first). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def targetOf(
       ck: Option[Target.Source.Citekey],
       slug: Option[Item.Slug],
@@ -582,6 +646,7 @@ object Preview:
     )
 
   /** Pure: the same, an event's id last. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def targetOf(
       ck: Option[Target.Source.Citekey],
       slug: Option[Item.Slug],
@@ -593,6 +658,7 @@ object Preview:
       event.map(_.value.trim).filter(_.nonEmpty).map(e => Target.Event(Target.Event.Id(e)))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def targetOfElement(el: dom.Element): Option[Target] =
     targetOf(
       Option(el.getAttribute("data-ck")).map(Target.Source.Citekey(_)),
@@ -624,6 +690,7 @@ object Preview:
           case _ => false
         if !inside then unpin(restoreFocus = RestoreFocus(false))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pinUnder(el: dom.Element, keyboard: PinUnderKeyboard): Unit =
     targetOfElement(el).foreach { t =>
       if isPinned(t) && !keyboard.value then unpin(restoreFocus = RestoreFocus(false))
@@ -653,6 +720,7 @@ object Preview:
   // `var`: installing twice (the app and a page entry point both call it) must not double-bind
   private var installed = false
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(): Unit =
     if !installed then
       installed = true
@@ -745,11 +813,13 @@ object Preview:
   private var atPoint: Option[Target] = None
 
   /** Is the card at the pointer showing `t`? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def showingAt(t: Target): Boolean = atPoint.contains(t) && tip.isDefined
 
   /** Float `t`'s card beside the viewport point (`x`, `y`) — the same card, the same cache. A second call for the
     * target already showing only moves it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def showAt(t: Target, x: ShowAtX, y: ShowAtY): Unit =
     if showingAt(t) then moveTo(x, y)
     else if isPinned(t) then hide() // its card is already up, pinned: no second, moving copy
@@ -775,11 +845,14 @@ object Preview:
       }
 
   /** Hide the card at the pointer if it is `t`'s — a card for another target stays. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hideAt(t: Target): Unit = if atPoint.contains(t) then hide()
 
   /** Beside the pointer, below and to the right; flipped to the other side when it would leave the viewport. The
     * position is data for `.cite-tooltip`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def moveTo(x: MoveToX, y: MoveToY): Unit =
     lastPoint = Some((x, y))
     tip.filter(_ => atPoint.isDefined).foreach { (box, _) =>
@@ -814,6 +887,7 @@ object Preview:
       Some(o)
 
   /** The card's width, and the height its content wants — not the height a cap gave it last time. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def naturalSize(box: dom.HTMLElement): (ElementSize, ElementSize) =
     val b = box.getBoundingClientRect()
     (ElementSize(b.width), ElementSize(box.scrollHeight.toDouble + (box.offsetHeight - box.clientHeight)))
@@ -821,6 +895,7 @@ object Preview:
   /** Put the card where `fit` says; a card taller than its room is capped there and scrolls (once pinned), and a capped
     * hover card fades out at the bottom to say there is more.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apply(box: dom.HTMLElement, fit: Fit, natural: ElementSize): Unit =
     box.style.setProperty("--tip-x", s"${fit.x}px")
     box.style.setProperty("--tip-y", s"${fit.y}px")
@@ -843,6 +918,8 @@ object Preview:
     * when it fits there, else on the roomier side, capped to that room so the content scrolls; with less than `MinRoom`
     * either side, the full viewport height.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verticalFit(
       top: ScreenPixels,
       bottom: ScreenPixels,
@@ -867,6 +944,8 @@ object Preview:
     * would be crossed, shifted to stay ≥ 10 px inside the viewport, and capped in height when neither side has room for
     * all of it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointFit(x: ScreenPixels, y: ScreenPixels, w: ElementSize, h: PointFitH, vw: ViewportWidth, vh: PointFitVh): Fit =
     val gap = 14.0
     val xx: Double = x.value
@@ -880,6 +959,8 @@ object Preview:
   /** Pure: centred 6 px under an element spanning (`left`, `top`)–(`left + width`, `bottom`), above it when there is no
     * room below, capped in height when neither side has room.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def underFit(
       left: ScreenPixels,
       top: UnderFitTop,
@@ -899,6 +980,7 @@ object Preview:
     Fit(ScreenPixels(x), y, maxH)
 
   /** Pure: the corner [[pointFit]] picks (kept for callers that only need the position). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pointPlacement(
       x: PointPlacementX,
       y: PointPlacementY,
@@ -911,6 +993,7 @@ object Preview:
     (f.x, f.y)
 
   /** Pure: the corner [[underFit]] picks. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def underPlacement(
       left: UnderPlacementLeft,
       top: UnderPlacementTop,
@@ -961,11 +1044,13 @@ object Preview:
   // `var`: at most one card is pinned
   private var pinned: Option[Pinned] = None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def isPinned(t: Target): Boolean = pinned.exists(p => sameCard(p.target, t))
 
   /** Pure: do two targets show the same card? A place is the same place whichever layer read it, at whichever year (the
     * map's span and the filter round its middle differently).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sameCard(a: Target, b: Target): Boolean = (a, b) match
     case (Target.Place(x, _), Target.Place(y, _)) => x == y
     case _                                        => a == b
@@ -974,6 +1059,8 @@ object Preview:
   /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the focus moves into
     * the card (its ✕ first, then its links), and back to `owner` when it closes.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pin(
       t: Target,
       anchor: () => Option[Anchor],
@@ -1016,6 +1103,8 @@ object Preview:
     }
 
   /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unpin(restoreFocus: RestoreFocus = RestoreFocus(true)): Unit =
     pinned.foreach { p =>
       pinned = None
@@ -1028,6 +1117,7 @@ object Preview:
       if restoreFocus.value || hadFocus then p.returnFocus.filter(_.isConnected).foreach(_.focus())
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def measure(p: Pinned): Unit =
     val maxW = math.min(360.0, window.innerWidth - 20)
     p.box.style.setProperty("--tip-maxw", s"${maxW}px")
@@ -1041,6 +1131,7 @@ object Preview:
       repositionAsked = true
       val _ = window.requestAnimationFrame { _ => repositionAsked = false; reposition() }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reposition(): Unit =
     pinned.foreach { p =>
       p.anchor() match
@@ -1057,6 +1148,7 @@ object Preview:
     }
 
   /** Under the link, flipped above it when it would leave the viewport, capped when it fits neither. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def place(anchor: dom.Element, box: dom.HTMLElement): Unit =
     val r = anchor.getBoundingClientRect()
     val maxW = math.min(440.0, window.innerWidth - 20)
@@ -1078,6 +1170,9 @@ object Preview:
       h
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[web] def cardView(c: Card): HtmlElement =
     div(
       div(
@@ -1123,6 +1218,8 @@ object Preview:
   /** One section of an event card: a source line is a source link (its own card on hover, its window on click); a
     * lead's discover action asks the existing literature search and lists what it found; a command can be copied.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sectionView(sec: Section): HtmlElement =
     div(
       cls := s"cite-tip-section section-${sec.kind}",
@@ -1131,6 +1228,9 @@ object Preview:
       ul(cls := "cite-tip-items", sec.items.map(itemView))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def itemView(it: Item): HtmlElement =
     li(
       cls := "cite-tip-item",
@@ -1148,6 +1248,8 @@ object Preview:
       it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def commandView(cmd: Item.Command): HtmlElement =
     span(
       cls := "cite-tip-command",
@@ -1164,6 +1266,9 @@ object Preview:
   /** Ask the literature search (`/api/discover`, OpenAlex) for `q`, works not in the corpus yet, and list the first few
     * under the button.
     */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def discoverButton(q: Api.Search.Text): HtmlElement =
     val found = Var[Option[Either[String, DiscoverResult]]](None)
     span(
@@ -1213,6 +1318,9 @@ object Preview:
     * credit line and the licence, linked to the licence's page. Its size is the stored thumbnail's, as `--w`/`--h`, so
     * the card does not jump when the image arrives.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def mediaView(t: MediaThumb): HtmlElement =
     val (credit, lic) = creditLine(t)
     figure(
@@ -1253,6 +1361,8 @@ object Preview:
   /** Pure: the attributes that open a card's picture full size ([[Lightbox]]): the stored file, its credit, licence and
     * the provider's page.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fullAttrs(t: MediaThumb): List[(UiLabels.Text, UiLabels.Text)] =
     val item = Lightbox.Item(
       MediaThumb.filePath(Bundle.Asset.Uid(t.uid.value)).value,
@@ -1275,6 +1385,8 @@ object Preview:
     vals.collect { case (k, Some(v)) if v.nonEmpty => UiLabels.Text(k) -> UiLabels.Text(v) }
 
   /** Pure: the thumbnail's stored size (`--w`/`--h` for `.cite-tip-media`), when it is known. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sizeOf(t: MediaThumb): Option[(ImageSize.Width, ImageSize.Height)] = (t.width, t.height) match
     case (Some(w), Some(h)) if w.value > 0 && h.value > 0 => Some((w, h))
     case _                                                => None

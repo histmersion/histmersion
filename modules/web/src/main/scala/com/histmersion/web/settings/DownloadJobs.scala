@@ -16,6 +16,7 @@ import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The downloads under way — the background map, the gazetteers, the event catalogues, the pictures — each with Pause,
   * Resume and Cancel in place (the jobs' own controls). Asked again while one is going.
@@ -39,9 +40,12 @@ object DownloadJobs:
   private var mounted = false
   private var pollMs = 1500.0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configure(ms: ConfigureMs): Unit = pollMs = math.max(500, ms.value).toDouble
 
   /** Read again now (after a download was started here). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   def refresh(): Unit =
     ApiClient
       .jobs(
@@ -58,8 +62,10 @@ object DownloadJobs:
       }
 
   /** Is a job of `kind` going now? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def busy(kind: JobInfo.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def panel: HtmlElement =
     div(
       cls := "download-jobs",

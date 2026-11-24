@@ -14,14 +14,19 @@ import com.histmersion.api.library.WorkRef
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A gold open-access work whose publisher refuses scripts, as an acquisition item: which works qualify and what the
   * item says.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 class BrowserDownloadSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val RefusingHosts = List("degruyter.com", "mdpi.com", "stockholmuniversitypress.se")
     .map(RepositoryLanding.HostPattern(_))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refusing(
       hosts: List[RepositoryLanding.HostPattern]
   ): BrowserDownload.Location => Option[BrowserDownload.Host] =

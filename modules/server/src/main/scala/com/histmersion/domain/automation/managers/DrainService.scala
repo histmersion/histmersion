@@ -17,6 +17,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Drain mode (#3762 proposal 4): `histmersion agent autopilot drain` stops the central scheduler from admitting
   * anything new — and the managers' tick from deciding approvals by code (a decision wakes a waiting run) and from
@@ -25,20 +26,25 @@ import com.histmersion.util.database.WritePermit
   * the restart. `undrain` (or turning the autopilot on) lifts it. This replaces switching the autopilot off for a
   * deploy, which paused every manager it ran; `off` still works as before.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class DrainService(
     ds: DataSource,
     cfg: => AgentsConfig,
     agents: AgentsControllers
 ):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val agentKind: Job.Kind = Job.Kind.assume(Agents.JobKind)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def occupied: RowCount =
     agents.jobRuns.count(
       agentKind,
       (RunRow.Status(Agents.RunState.Queued.wire.value), RunRow.Status(Agents.RunState.Running.wire.value))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def count(n: Int, noun: String): String =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
@@ -46,6 +52,7 @@ final class DrainService(
   def draining: Boolean = agents.autopilotRow.drain().isDefined
 
   /** The drain as shown (None: not draining). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def info(): Option[DrainInfo] =
     agents.autopilotRow.drain().map { (since, by, at) =>
       val active = occupied.value
@@ -59,6 +66,7 @@ final class DrainService(
     }
 
   /** Why nothing new starts (the scheduler's stop), while draining. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def block: Option[SchedulerPolicy.Block] =
     agents.autopilotRow
       .drain()
@@ -75,6 +83,7 @@ final class DrainService(
     * which stops after the item in flight — records it drained (a run that resumes by itself afterwards — an allowance,
     * a restart — makes it draining again).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tick(now: Instant)(using WritePermit): List[String] =
     agents.autopilotRow.drain() match
       case None                 => Nil
@@ -92,6 +101,10 @@ final class DrainService(
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def set(in: DrainSet, now: Instant = Instant.now(agents.clock))(using WritePermit): EngineStatus =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val changed = agents.autopilotRow.setDrain(in.on.value, AutopilotRepo.Row.ChangedBy(by))
@@ -106,6 +119,7 @@ final class DrainService(
     val _ = tick(now)
     agents.autopilot.status(now).copy(changes = List(EngineStatus.Changes(line)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(line: String): Unit =
     agents.workLists.logLine(
       QueueAdd(Queue.QueueItem.Text(line.take(1000))),

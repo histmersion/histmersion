@@ -35,6 +35,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.research.Coverage
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Representative values of every record an agent step stores as JSON (the run's checkpoints and the patches it
   * writes), every case and optional field among them. Their encodings are the golden files under `golden/checkpoints/`,
@@ -262,6 +263,7 @@ object CheckpointGolden:
       Evidence(library.Citekey("doe2001_tin"), None, Evidence.Quote("q"), Evidence.Ratio(1.0))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val reviewFindings: Golden[ReviewArticle.Finding] = Golden(
     "review-finding.ndjson",
     ReviewArticle.Finding(
@@ -384,7 +386,9 @@ object CheckpointGolden:
   )
 
 /** The patches `enrich-source` builds from its checkpoints: one that fills everything, one that fills nothing. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 private object EnrichSourceSamples:
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val loaded = EnrichSource.Loaded(
     library.Citekey("smith1987_tin"),
     EnrichSource.Loaded.Title("Tin"),

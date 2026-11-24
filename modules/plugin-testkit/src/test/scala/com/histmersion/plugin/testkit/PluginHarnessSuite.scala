@@ -16,10 +16,13 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The harness against the test plugins in `kit/`: loading as the server loads, each runner, and each HTTP mode against
   * a local server.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class PluginHarnessSuite extends munit.FunSuite:
 
   /** A body the host's PDF check accepts: `%PDF` and more than a KiB. */

@@ -7,7 +7,9 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class ArticleEventLead(
     eventId: Event.Id,
     label: ArticleEventLead.Label,
@@ -34,10 +36,12 @@ object ArticleEventLead:
   object FindingsNear extends Newtype[Int, Pure]
   export CatalogRecord.Provider
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mentioned(body: Body, names: List[EventEntry.Names]): Boolean =
     val b = (body).value.toLowerCase(java.util.Locale.ROOT)
     (names.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(leads: List[ArticleEventLead]): Markdown =
     if leads.isEmpty then Markdown("")
     else

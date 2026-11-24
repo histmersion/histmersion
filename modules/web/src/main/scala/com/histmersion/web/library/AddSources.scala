@@ -4,6 +4,7 @@ package web.library
 import com.histmersion.web.{LibrarySection, MergeView, Route, RouteLink, UploadView}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** "Add sources": the menu in Library's header, and the page each way of adding has — upload a file, add a work by its
   * DOI, merge another collection. A book bought elsewhere comes in from Calibre on the computer that holds the Calibre
@@ -22,6 +23,7 @@ object AddSources:
     )
 
   /** The header's button and the menu it opens. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def menu: HtmlElement =
     val open = Var(false)
     div(
@@ -54,6 +56,8 @@ object AddSources:
     )
 
   /** The page of one way of adding: the three as tabs, the way back to the lists, and its form. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(on: LibrarySection): HtmlElement =
     div(
       cls := "add-sources-page",

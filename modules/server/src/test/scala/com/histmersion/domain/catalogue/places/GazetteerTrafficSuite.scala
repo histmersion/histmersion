@@ -16,6 +16,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
   * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every
@@ -52,6 +53,8 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private def sourceUrl(name: Registries.GazetteerSourcesKey): String =
     val asked = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val probe = new HttpTransport:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = {
         asked.add(url.value); Left(Problem.Unclassified(Legacy.Text("probe")))
       }
@@ -64,6 +67,8 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
@@ -83,12 +88,14 @@ class GazetteerTrafficSuite extends munit.FunSuite:
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def normalised(s: String, name: Registries.GazetteerSourcesKey): String =
     val real = java.net.URI.create(sourceUrl(name))
     s.replace(loop.origin, "<origin>")
       .replace(s"${real.getScheme}://${real.getRawAuthority}", "<origin>")
       .replace(Version.version.value, "<version>")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def requests(name: Registries.GazetteerSourcesKey): String =
     loop
       .take()
@@ -104,6 +111,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
       }
       .mkString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(sb: StringBuilder, name: Registries.GazetteerSourcesKey, served: String, body: Array[Byte]): Unit =
     sb ++= s"## $name: $served\nsource: ${sourceUrl(name)}\n"
     loop.answerWith(200, body)

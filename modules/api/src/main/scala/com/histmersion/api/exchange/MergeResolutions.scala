@@ -10,6 +10,7 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MergeResolutions(
     resolve: List[MergeResolution] = Nil,
@@ -33,6 +34,8 @@ object MergeResolutions:
     type Template = Template.T
     object Template extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def flag(s: Flag): Either[Problem, MergeResolution] =
       (s).value.indexOf('=') match
         case i if i > 0 && i < (s).value.length - 1 =>
@@ -52,6 +55,8 @@ object MergeResolutions:
             )
           )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def template(p: MergePlan, current: MergeResolutions): Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap
       def opts(i: MergeIssue): String =
@@ -100,6 +105,8 @@ object MergeResolutions:
     /** YAML literal blocks: `|-` when the text has no final newline, `|` with one, `|+` with more, so the text reads
       * back exactly.
       */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def texts(current: MergeResolutions): List[String] =
       val withText = current.resolve.flatMap(r => r.text.map(r.issue -> _)).sortBy(_._1)
       if withText.isEmpty then Nil

@@ -9,6 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Autopilot:
 
   /** Why a goal is active, queued or waiting: the narration of the focus's decision, not a failure. */
@@ -28,6 +29,7 @@ object Autopilot:
     type By = By.T
     object By extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ManagerBrief(
       id: ManagerBrief.Id,
       kind: ManagerBrief.Kind,
@@ -46,6 +48,7 @@ object Autopilot:
     type Note = Note.T
     object Note extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class GoalProgress(
       slug: GoalProgress.Slug,
       title: GoalProgress.Title,
@@ -74,6 +77,7 @@ object Autopilot:
     type Articles = Articles.T
     object Articles extends Newtype[Int, Pure]
     type OpenApprovals = OpenApprovals.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object OpenApprovals extends Newtype[Int, Pure]
     type LastActivity = LastActivity.T
     object LastActivity extends Newtype[String, Pure]
@@ -84,6 +88,7 @@ object Autopilot:
     type EtaDays = EtaDays.T
     object EtaDays extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   final case class ApprovalRule(
       kind: ApprovalRule.Kind,
       mode: ApprovalRule.Mode,
@@ -174,6 +179,7 @@ object Autopilot:
     type Max = Max.T
     object Max extends Newtype[Int, Pure]
     type MaxFrom = MaxFrom.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object MaxFrom extends Newtype[String, Pure]
     type Queued = Queued.T
     object Queued extends Newtype[Int, Pure]
@@ -222,6 +228,7 @@ object Autopilot:
     type Drained = Drained.T
     object Drained extends Newtype[Boolean, Pure]
     type DrainedAt = DrainedAt.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object DrainedAt extends Newtype[String, Pure]
     type InFlight = InFlight.T
     object InFlight extends Newtype[Int, Pure]
@@ -271,14 +278,17 @@ object Autopilot:
     type By = By.T
     object By extends Newtype[String, Pure]
     type AgentsEnabled = AgentsEnabled.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AgentsEnabled extends Newtype[Boolean, Pure]
     type ManagersEnabled = ManagersEnabled.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ManagersEnabled extends Newtype[Boolean, Pure]
     type CronsEnabled = CronsEnabled.T
     object CronsEnabled extends Newtype[Boolean, Pure]
     type IngestedToday = IngestedToday.T
     object IngestedToday extends Newtype[Int, Pure]
     type IngestCap = IngestCap.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object IngestCap extends Newtype[Int, Pure]
     type MaxConcurrentRuns = MaxConcurrentRuns.T
     object MaxConcurrentRuns extends Newtype[Int, Pure]
@@ -291,8 +301,10 @@ object Autopilot:
     type Backlog = Backlog.T
     object Backlog extends Newtype[Int, Pure]
     type BacklogDays = BacklogDays.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object BacklogDays extends Newtype[Int, Pure]
     type GoalPlansWait = GoalPlansWait.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object GoalPlansWait extends Newtype[String, Pure]
 
     val CronsOff = "the managers' crons are off (agents.scheduler.enabled = false, HISTMERSION_AGENTS_SCHEDULER): " +

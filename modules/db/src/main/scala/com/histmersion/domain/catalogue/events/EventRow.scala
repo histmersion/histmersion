@@ -10,10 +10,13 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An `events` row as the reads select it, with what its scale is derived from (its place's kind, its geometry's type)
   * and its tier.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[events] case class EventRow(
     id: BEventRow.Id,
     label: EventRow.Label,
@@ -36,6 +39,9 @@ final private[events] case class EventRow(
     datingMethod: Option[EventRow.DatingMethod],
     uncertainty: Option[EventRow.Uncertainty]
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def toSummary: EventSummary =
     def year(y: Option[Long]) = y.map(Year(_))
     EventSummary(

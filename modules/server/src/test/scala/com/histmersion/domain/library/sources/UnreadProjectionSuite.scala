@@ -16,7 +16,9 @@ import com.histmersion.api.ItemKind
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import com.histmersion.domain.library.Source
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class UnreadProjectionSuite extends munit.FunSuite:
   private def render(item: UnreadItem) =
     val state = AtomicReference(PersonalState())

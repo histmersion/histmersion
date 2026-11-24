@@ -16,13 +16,17 @@ import com.histmersion.util.storage.{ByteSource, Reservation}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The on-demand relief: the bounded tile cache (eviction by last use, kept across a restart) and the reads from a fake
   * provider — once per tile, a missing tile remembered, nothing asked while offline, a replaced planet file read again,
   * the request rate kept. No network, no database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class OnDemandTilesSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfg(
       enabled: BasemapOnDemandConfig.Enabled = BasemapOnDemandConfig.Enabled(true),
       maxZoom: BasemapOnDemandConfig.MaxZoom = BasemapOnDemandConfig.MaxZoom(5),
@@ -70,10 +74,13 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val local = BasemapFixtures.LocalRange(file)
     @volatile var fail = false
     def text(url: RangeHttp.Url) = local.text(url)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) =
       if fail then Left(Problem.Unclassified(Legacy.Text(s"${url.value} unreachable"))) else local.bytes(url, o, l)
     def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = local.download(url, o, l, to)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def setup(c: BasemapOnDemandConfig = cfg()) =
     val src = Files.createTempDirectory("planet")
     val p = Provider(BasemapFixtures.terrainArchive(src.resolve("planet.pmtiles"), PmTiles.Zoom(5)))
@@ -233,11 +240,15 @@ class OnDemandTilesSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("ondemand-get")
     val gets = AtomicInteger(0)
     val http = new RangeHttp:
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def text(url: RangeHttp.Url) = Left(Problem.Unclassified(Legacy.Text("no")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) =
         Left(Problem.Unclassified(Legacy.Text("no range requests here")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) =
         Left(Problem.Unclassified(Legacy.Text("no")))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def file(url: RangeHttp.Url) =
         gets.incrementAndGet()
         Right(Option.when(!url.value.endsWith("/0/0.png"))(RangeHttp.ResponseBytes(url.value.getBytes)))

@@ -28,11 +28,14 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.Title
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The engine's [[AutomationHost]] over the composition: the goals through the automation's own controllers, a run's
   * target, options and links checked against the library's sources and research's articles, the plan's works looked up
   * through the library's upstream, the vocabulary of its labels, and the housekeeping of this server.
   */
+@movesTo(FeaturePlace.Server)
 final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream) extends AutomationHost:
   def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
   def goal(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
@@ -40,6 +43,8 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
     h.goals.put(slug, in)
   def patchGoal(slug: domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] =
     h.goals.patch(slug, patch)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def runTarget(
       p: Pipeline,
       raw: AutomationHost.RunTargetRaw
@@ -80,6 +85,8 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
 
   private def broken(rule: Problem.Invalid.Rule): Api.Error = Api.Error(Problem.Invalid.Broken.here(rule))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def runOptions(
       p: Pipeline,
       req: RunRequest,
@@ -137,6 +144,8 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def runRoles(p: Pipeline): List[Role] =
     (p.roles ++ (if p == Pipeline.CompileArticle then Pipeline.ReviewArticle.roles else Nil)).distinct
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def linkRef(kind: LinkKind, raw: AutomationHost.LinkRefRaw): Either[Api.Error, AutomationHost.CanonicalKey] =
     if kind == LinkKind.Article then
       Slug
@@ -162,6 +171,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
 
   def sameTitle(answered: Title, record: Title): Boolean = AgentVerify.sameTitle(answered, record)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def workLookup: PlanGoal.Lookup = doi =>
     upstream()
       .meta(doi)
@@ -176,6 +186,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           PlanGoal.Work.IsRetracted(w.isRetracted.value)
         )
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.Term] =
     h.library.labels
       .facets(Facet.Field.Wire(field.value), None, Filter())
@@ -186,6 +197,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       .flatten
       .sortBy(-_.count.value)
       .map(f => AutomationHost.Term(f.value.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def housekeepingBlock: Option[AutomationHost.HousekeepingBlock] =
     h.upkeep.housekeepingBlock.map(r => AutomationHost.HousekeepingBlock(r.sentence))
   def backup(): Either[Api.Error, Backup.Status] = h.upkeep.backup()

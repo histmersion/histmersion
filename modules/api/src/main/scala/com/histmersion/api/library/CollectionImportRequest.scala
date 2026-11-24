@@ -12,6 +12,8 @@ import com.histmersion.api.automation.Creation
   * collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off acquisition
   * item `acquireItem` when the conversion succeeds.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionImportRequest(
     id: CollectionImportRequest.Id,
     citekey: Option[Citekey] = None,
@@ -33,4 +35,5 @@ object CollectionImportRequest:
   type Cover = Cover.T
   object Cover extends Newtype[Boolean, Pure]
   type AcquireItem = AcquireItem.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object AcquireItem extends Newtype[Int, Pure]

@@ -18,11 +18,13 @@ import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.catalogue.evidence.passages.Passage
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The attestations' controllers over the in-memory service, no server and no database: an old citekey and an old place
   * id resolved before they are stored, an unknown target kind and a missing source refused, a finding id kept as given,
   * the list narrowed by an old id, the page size the limit makes, every write refused under the lock.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AttestationsControllersSuite extends munit.FunSuite:
   private val renamed: Map[(AliasKind, AttestationsControllers.Alias), AttestationsControllers.Alias] = Map(
     (AliasKinds.SourceRecords, AttestationsControllers.Alias("zzold1990_x")) -> AttestationsControllers.Alias(
@@ -37,6 +39,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
     def naming(name: Title, limit: PageSize): List[Citekey] = Nil
     def reader(citekey: Citekey): PassageReader = (_, _, _, _, _, _) => Left(Passage.Text("no text"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def controllers(gate: WriteGate = WriteGate()) =
     AttestationsControllers(
       AttestationService.InMemory(AtomicReference(CatalogueState.empty)),

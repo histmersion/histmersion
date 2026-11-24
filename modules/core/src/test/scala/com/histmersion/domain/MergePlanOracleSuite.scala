@@ -30,6 +30,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.IssueSide
 import com.histmersion.util.text.MinHash
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The merge plan's source and finding stages, recorded (`oracle/merge/plans.txt`, written on the code before the
   * library's rules of the plan left the planner): the crafted fixture under no resolutions, under a set that answers
@@ -42,6 +43,7 @@ import com.histmersion.api.library.Citekey
   * import cannot do, the old citekeys left out, the notes, what `merge apply` does, and every final line; with the
   * bodies the plan asks for. `HISTMERSION_UPDATE_ORACLE=1` rewrites the file.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergePlanOracleSuite extends munit.FunSuite with Bounded:
 
   private val rules: List[PlanRules] = List(CataloguePlan, AssetPlan, LibraryPlan, ResearchPlan)
@@ -59,6 +61,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
 
   private val At = "2026-10-01T09:00:00.000000Z"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(
       id: String,
       source: String,
@@ -87,12 +90,15 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       Bundle.Finding.UpdatedAt(At)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def answer(issue: Issue.Id, decision: MergeResolution.Decision): MergeResolution =
     MergeResolution(MergeResolution.Issue(issue.value), decision)
 
   private def resolve(pairs: (Issue.Id, MergeResolution.Decision)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => answer(i, d)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
   private def idOf(p: MergePlan, kind: Issue.Kind, right: IssueSide.Label): Issue.Id =
     p.issues
       .find(i => i.kind == kind && i.right.exists(_.label == right))
@@ -115,6 +121,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sorted
     s"sketches wanted: ${s.mkString(", ")}\nbodies wanted: ${b.mkString(", ")}\n"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def render(r: MergePlanner.Result): String =
     val a = r.apply
     val out = StringBuilder()
@@ -347,6 +354,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     src("e-ambiguous", "zzdurand2010_rites", "Rites of Hatti", List("Durand, J."), Some(2010))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val edgeAliases: List[Bundle.Alias] = List(
     Bundle.Alias(Bundle.Alias.Value("zzseeher_old"), uid("e-alias"), Bundle.Alias.CreatedAt(At))
   )
@@ -465,6 +473,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       .modify(_.ledger)
       .setTo(Map.empty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def edgeSketches: Map[Bundle.Source.BodySha256, MinHash] =
     List(bodyA, bodyB, bodyC)
       .map(t =>

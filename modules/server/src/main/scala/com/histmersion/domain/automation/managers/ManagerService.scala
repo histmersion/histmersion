@@ -18,11 +18,14 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
   * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,
   * the scheduler and the digest make.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait ManagerService:
   def get(id: ManagerInfo.Id): Option[ManagerInfo]
 
@@ -169,9 +172,11 @@ trait ManagerService:
   def forPerson(): RowCount
 
   /** Per goal: when it last progressed (an ISO instant). */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText]
 
   /** Every agent run that occupies a place: its pipeline and its manager's goal. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def occupyingRuns(): List[(Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])]
 
   /** Per goal: its items a person holds. */
@@ -199,6 +204,8 @@ object ManagerService:
     def items(managerId: ManagerInfo.Id, limit: PageSize): List[ManagerItem] =
       db.read(ManagerRepo.itemPage(managerId, None, Offset(0), limit))._1
     def light(): List[ManagerLight] = db.read(ManagerRepo.light())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def create(
         id: ManagerInfo.Id,
         kind: Kind,
@@ -227,6 +234,8 @@ object ManagerService:
         next: Option[Instant]
     )(using WritePermit): Boolean =
       db.write(ManagerRepo.setConfig(id, config, cron, next))
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def upsert(
         managerId: ManagerInfo.Id,
         kind: ManagerItem.Kind,
@@ -243,6 +252,8 @@ object ManagerService:
     def openFor(target: ManagerItem.Target): List[ManagerItem] = db.read(ManagerRepo.openFor(target))
     def openKeys(managerId: ManagerInfo.Id): List[(ManagerItem.Kind, ManagerItem.Target)] =
       db.read(ManagerRepo.openKeys(managerId))
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def openOf(
         managerId: ManagerInfo.Id,
         kinds: List[ManagerItem.Kind],
@@ -250,6 +261,7 @@ object ManagerService:
         focusHeld: Boolean
     ): RowCount =
       db.read(ManagerRepo.openOf(managerId, kinds, statuses, focusHeld))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def event(
         managerId: ManagerInfo.Id,
         itemId: Option[ManagerItem.Id],
@@ -297,8 +309,10 @@ object ManagerService:
     def focusReleaseAll()(using WritePermit): RowCount = db.write(ManagerRepo.focusReleaseAll())
     def focusHeldCount(): RowCount = db.read(ManagerRepo.focusHeldCount())
     def forPerson(): RowCount = db.read(ManagerRepo.forPerson())
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText] =
       db.read(ManagerRepo.lastProgress())
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def occupyingRuns(): List[(Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] =
       db.read(ManagerRepo.occupyingRuns())
     def personHeldByGoal(): Map[Goal.Slug, RowCount] = db.read(ManagerRepo.personHeldByGoal())
@@ -313,17 +327,23 @@ object ManagerService:
   final class InMemory(state: AtomicReference[AutomationState], jobs: JobRuns.InMemory, clock: Clock)
       extends ManagerService:
     private def now: Instant = Instant.now(clock)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def text(at: Instant): String = AutomationState.text(at).value
     private def managers: Vector[ManagerRecord] = state.get.managers
     private def items: Vector[ManagerItemRecord] = state.get.items
     private def events: Vector[ManagerEventRecord] = state.get.events
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def runs: List[JobRunState] = jobs.all.filter(_.row.kind.value == JobKind)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def manager(id: String): Option[ManagerRecord] = managers.find(_.id.value == id)
     private val Open = Set("pending", "held", "active")
     private val Settled = Set("done", "stopped", "failed", "cancelled")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def focusHeld(i: ManagerItemRecord): Boolean = i.status.value == "held" && i.hold.exists(_.focus.isDefined)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def personHeld(i: ManagerItemRecord): Boolean =
       i.status.value == "held" && i.hold.forall(h => h.focus.isEmpty && h.untilApproval.isEmpty)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def occupying(r: JobRunState): Boolean =
       r.row.status.value == "queued" || r.row.status.value == "running" ||
         (r.row.status.value == "paused" && (r.resumeAt.isDefined || r.error.exists(e =>
@@ -331,7 +351,9 @@ object ManagerService:
           cause.pausedOn(PauseReason.Allowance) || cause.pausedOn(PauseReason.PlanQuota)
         )))
     private def runOf(i: ManagerItemRecord): Option[JobRunState] = i.runId.flatMap(jobs.get)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def goalOf(i: ManagerItemRecord): Option[String] = manager(i.managerId.value).flatMap(_.goal).map(_.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def viewEvent(e: ManagerEventRecord): ManagerEvent =
       ManagerEvent(
         ManagerEvent.Id(e.id.value),
@@ -342,6 +364,7 @@ object ManagerService:
         ManagerEvent.Kind(e.kind.value),
         ManagerEvent.Text(e.text.value)
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def viewItem(i: ManagerItemRecord): ManagerItem =
       ManagerItem(
         ManagerItem.Id(i.id.value),
@@ -364,6 +387,8 @@ object ManagerService:
       )
     private def counted[K](ks: Iterable[K]): Map[K, Int] = ks.groupBy(identity).view.mapValues(_.size).toMap
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def get(id: ManagerInfo.Id): Option[ManagerInfo] =
       manager(id.value).map { m =>
         val day = now.atZone(ZoneOffset.UTC).toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant
@@ -401,8 +426,10 @@ object ManagerService:
           ManagerInfo.TokensToday(today.map(s => s.usage.input.value + s.usage.output.value).sum)
         )
       }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(): List[ManagerInfo] =
       managers.sortBy(m => (m.createdAt, m.id.value)).toList.flatMap(m => get(ManagerInfo.Id(m.id.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pending(managerId: ManagerInfo.Id): List[ManagerItem] =
       items
         .filter(i => i.managerId.value == managerId.value && i.status.value == "pending")
@@ -414,6 +441,7 @@ object ManagerService:
       case "pending" => 1
       case "held"    => 2
       case _         => 3
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def items(managerId: ManagerInfo.Id, limit: PageSize): List[ManagerItem] =
       items
         .filter(_.managerId.value == managerId.value)
@@ -429,6 +457,7 @@ object ManagerService:
         .take(math.max(1, limit.value))
         .toList
         .map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def light(): List[ManagerLight] =
       managers
         .sortBy(_.id.value)
@@ -445,6 +474,7 @@ object ManagerService:
             ManagerLight.PlanItem(items.exists(i => i.managerId.value == m.id.value && i.kind.value == PlanGoalItem))
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def create(
         id: ManagerInfo.Id,
         kind: Kind,
@@ -478,11 +508,13 @@ object ManagerService:
         )
         .managers
         .exists(_.id.value == id.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def changeManager(id: ManagerInfo.Id)(f: ManagerRecord => ManagerRecord): Boolean =
       state
         .getAndUpdate(_.modify(_.managers).using(_.map(m => if m.id.value == id.value then f(m) else m)))
         .managers
         .exists(_.id.value == id.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns)(using WritePermit): Boolean =
       val at = now
       changeManager(id)(
@@ -493,6 +525,7 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setConfig(
         id: ManagerInfo.Id,
         config: ManagerConfig,
@@ -510,6 +543,8 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def upsert(
         managerId: ManagerInfo.Id,
         kind: ManagerItem.Kind,
@@ -573,18 +608,24 @@ object ManagerService:
               s.modify(_.items).using(_.map(i => if i.id == old.id then again else i))
       }
       result
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def item(id: ManagerItem.Id): Option[ManagerItem] = items.find(_.id.value == id.value).map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def itemFor(managerId: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): Option[ManagerItem] =
       items
         .find(i => i.managerId.value == managerId.value && i.kind.value == kind.value && i.target.value == target.value)
         .map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openFor(target: ManagerItem.Target): List[ManagerItem] =
       items.filter(i => i.target.value == target.value && Open(i.status.value)).sortBy(-_.id.value).toList.map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openKeys(managerId: ManagerInfo.Id): List[(ManagerItem.Kind, ManagerItem.Target)] =
       items
         .filter(i => i.managerId.value == managerId.value && Open(i.status.value))
         .toList
         .map(i => (ManagerItem.Kind(i.kind.value), ManagerItem.Target(i.target.value)))
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openOf(
         managerId: ManagerInfo.Id,
         kinds: List[ManagerItem.Kind],
@@ -598,6 +639,7 @@ object ManagerService:
             (focusHeld || !this.focusHeld(i))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def event(
         managerId: ManagerInfo.Id,
         itemId: Option[ManagerItem.Id],
@@ -623,13 +665,16 @@ object ManagerService:
           .modify(_.lastEventId)
           .setTo(AutomationState.LastEventId(id))
       }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def lastEventOf(managerId: ManagerInfo.Id, kind: ManagerEvent.Kind): Option[ManagerEvent] =
       events
         .filter(e => e.managerId.value == managerId.value && e.kind.value == kind.value)
         .maxByOption[Long](_.id.value)
         .map(viewEvent)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def countEventsAll(kind: ManagerEvent.Kind, since: Instant): RowCount =
       RowCount(events.count(e => e.kind.value == kind.value && !e.at.isBefore(since)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def backlogCounts(): Map[ManagerInfo.Id, (RowCount, RowCount)] =
       items
         .filter(i => i.kind.value == OaIngest && (i.status.value == "pending" || i.status.value == "held"))
@@ -642,7 +687,9 @@ object ManagerService:
           )
         )
         .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def backlog(i: ManagerItemRecord): Boolean = i.kind.value == OaIngest && Open(i.status.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def backlogPending(): List[ManagerItem] =
       val active = managers
         .filter(m => m.kind == DomainManager.Kind.Watch && m.state == DomainManager.State.Active)
@@ -653,9 +700,12 @@ object ManagerService:
         .sortBy[(Int, Long)](i => (-i.priority.value, i.id.value))
         .toList
         .map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def backlogOpen(): List[ManagerItem] = items.filter(backlog).sortBy[Long](_.id.value).toList.map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def backlogOpenFor(doi: Doi): Option[ManagerItem] =
       items.filter(i => backlog(i) && i.target.value == doi.value).minByOption[Long](_.id.value).map(viewItem)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def backlogRetry(
         itemId: ManagerItem.Id,
         failures: ManagerItem.Failures,
@@ -675,9 +725,11 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def countEventsBy(kind: ManagerEvent.Kind, since: Instant): Map[ManagerInfo.Id, RowCount] =
       counted(events.filter(e => e.kind.value == kind.value && !e.at.isBefore(since)).map(_.managerId.value))
         .map((m, n) => ManagerInfo.Id(m) -> RowCount(n))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus])(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
@@ -687,6 +739,7 @@ object ManagerService:
     /** The acquisition items are the work lists', which this state does not hold: none. */
     def sweepAcquireItems(): List[SweepAcquireItem] = Nil
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pace(since: Instant): Map[ManagerInfo.Id, (RowCount, RowCount, Option[ManagerRepo.ProgressText])] =
       managers.map { m =>
         val mine = items.filter(i => i.managerId.value == m.id.value && i.kind.value != OaIngest)
@@ -700,6 +753,7 @@ object ManagerService:
       }.toMap
     private def changeItems(which: ManagerItemRecord => Boolean)(f: ManagerItemRecord => ManagerItemRecord): Int =
       state.getAndUpdate(_.modify(_.items).using(_.map(i => if which(i) then f(i) else i))).items.count(which)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def released(at: Instant)(i: ManagerItemRecord): ManagerItemRecord =
       i.modify(_.status)
         .setTo(ManagerItemRecord.Status(ItemStatus.Pending.wire.value))
@@ -707,6 +761,7 @@ object ManagerService:
         .setTo(None)
         .modify(_.updatedAt)
         .setTo(at)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def hold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && (i.status.value == "pending" || i.status.value == "held"))(
@@ -717,8 +772,10 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def release(itemId: ManagerItem.Id)(using WritePermit): Boolean =
       changeItems(i => i.id.value == itemId.value && i.status.value == "held")(released(now)) > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def settle(
         itemId: ManagerItem.Id,
         status: ItemStatus,
@@ -736,6 +793,7 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState)(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == ItemStatus.Pending.wire.value)(
@@ -750,6 +808,7 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def focusHold(itemId: ManagerItem.Id, h: Hold)(using WritePermit): Boolean =
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == "pending")(
@@ -760,13 +819,17 @@ object ManagerService:
           .modify(_.updatedAt)
           .setTo(at)
       ) > 0
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def focusRelease(ids: List[ManagerItem.Id])(using WritePermit): RowCount =
       RowCount(
         if ids.isEmpty then 0
         else changeItems(i => ids.exists(_.value == i.id.value) && focusHeld(i))(released(now))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def focusReleaseAll()(using WritePermit): RowCount = RowCount(changeItems(focusHeld)(released(now)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def focusHeldCount(): RowCount = RowCount(items.count(focusHeld))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forPerson(): RowCount =
       RowCount(
         items.count(i =>
@@ -775,6 +838,8 @@ object ManagerService:
               (i.status.value == "active" && runOf(i).exists(_.row.status.value == "waiting")))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def lastProgress(): Map[com.histmersion.api.automation.Goal.Slug, ManagerRepo.ProgressText] =
       val kinds = Set(Feed.Started, Feed.Settled, Feed.Evaluated, Feed.Ingested, Feed.Swept)
       val fromEvents = events
@@ -786,6 +851,8 @@ object ManagerService:
         .view
         .map((g, ts) => com.histmersion.api.automation.Goal.Slug(g) -> ManagerRepo.ProgressText(text(ts.map(_._2).max)))
         .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def occupyingRuns(): List[(Pipeline.Wire, Option[com.histmersion.api.automation.Goal.Slug])] =
       runs
         .filter(occupying)
@@ -798,8 +865,10 @@ object ManagerService:
               .map(g => com.histmersion.api.automation.Goal.Slug(g.value))
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def personHeldByGoal(): Map[Goal.Slug, RowCount] =
       counted(items.filter(personHeld).flatMap(goalOf)).map((g, n) => Goal.Slug.assume(g) -> RowCount(n))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def recentKinds(n: PageSize): List[ManagerItem.Kind] =
       runs
         .sortBy[(java.time.Instant, Long)](r => (r.createdAt, r.created.value))
@@ -810,8 +879,10 @@ object ManagerService:
             .map(i => ManagerItem.Kind(i.kind.value))
         )
         .take(math.max(0, n.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def running(id: ManagerInfo.Id): RowCount =
       RowCount(runs.count(r => r.row.managerId.exists(_.value == id.value) && occupying(r)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def runningByGoal(): Map[Goal.Slug, RowCount] =
       counted(
         items
@@ -821,6 +892,7 @@ object ManagerService:
           )
           .flatMap(goalOf)
       ).map((g, n) => Goal.Slug.assume(g) -> RowCount(n))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sweepOutcomes(): Map[Goal.Slug, ManagerItem.Outcome] =
       items
         .filter(i => i.kind.value == AcquisitionSweep && Set("done", "stopped", "failed")(i.status.value))

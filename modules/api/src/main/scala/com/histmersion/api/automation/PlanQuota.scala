@@ -12,6 +12,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A plan is spent by every client of the account, and the provider says how much is left only as a percentage of each
   * window plus its reset, so a plan is governed by floors rather than budgets.
@@ -26,17 +27,22 @@ object PlanQuota:
   type Now = Now.T
   object Now extends Newtype[Long, Pure]
   type PoolIdText = PoolIdText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PoolIdText extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type WindowStateNow = Now
   val WindowStateNow: Now.type = Now
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type VerdictNow = Now
   val VerdictNow: Now.type = Now
   export ModelChains.ChainEntry.Model as VerdictModel
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RefreshNeedNow = Now
   val RefreshNeedNow: Now.type = Now
   export ModelChains.ChainEntry.Model as RefreshNeedModel
   export RefreshInfo.LastAttempt as RefreshDecisionLastAttempt
   export Rules.MinGap as RefreshDecisionMinGapMs
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RefreshDecisionNow = Now
   val RefreshDecisionNow: Now.type = Now
 
@@ -53,6 +59,7 @@ object PlanQuota:
     object Title extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[PoolId] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
@@ -70,6 +77,8 @@ object PlanQuota:
     type OpencodeChatgpt = OpencodeChatgpt.T
     object OpencodeChatgpt extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
     case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey(true)) =>
       Some(PoolId.ClaudePlan)
@@ -79,6 +88,7 @@ object PlanQuota:
       Some(PoolId.ChatgptPlan)
     case _ => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def paid(m: ModelRef, logins: Logins): Boolean =
     (m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty)
 
@@ -99,6 +109,7 @@ object PlanQuota:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
@@ -129,7 +140,9 @@ object PlanQuota:
     export ModelChains.ChainEntry.Model
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text: Floors.Wire = Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(limit: Floors.OfLimit, kind: Floors.OfKind, default: Rules.DefaultFloor): Floors.Floor =
       byKind.get(Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(Floors.ByKindKey(kind.value))).getOrElse(default)
 
@@ -142,10 +155,12 @@ object PlanQuota:
 
     type ByKindKey = ByKindKey.T
     object ByKindKey extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ByKindValue = Floor
     val ByKindValue: Floor.type = Floor
 
     val Empty: Floors = Floors(Map.empty)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Either[Problems, Floors] =
       val items = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty)
       items
@@ -222,6 +237,7 @@ object PlanQuota:
     object Blocked:
       export Reading.ResetsAt as Until
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def current(readings: List[Reading], now: Now, model: Option[ModelChains.ChainEntry.Model] = None): List[Reading] =
     readings
       .filter(r => r.resetsAt.forall(_.value > now.value))
@@ -232,6 +248,8 @@ object PlanQuota:
       .toList
       .sortBy(r => (r.limit, r.kind))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def windowState(r: Reading, rules: Rules, now: WindowStateNow): WindowState =
     val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
     val left = (100.0 - (r.usedPct).value).max(0)
@@ -255,6 +273,8 @@ object PlanQuota:
       why.map(w => Rationale(s"$w"))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def verdict(
       readings: List[Reading],
       held: PoolStatus.Held,
@@ -292,6 +312,7 @@ object PlanQuota:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[RefreshMode] =
       values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -327,6 +348,8 @@ object PlanQuota:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def refreshNeed(
       readings: List[Reading],
       held: PoolStatus.Held,
@@ -351,9 +374,13 @@ object PlanQuota:
           RefreshNeed.StaleOnly
         )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def throttled(lastAttempt: Option[RefreshInfo.LastAttempt], minGapMs: Rules.MinGap, now: Now): Boolean =
     lastAttempt.exists(t => now.value - t.value < minGapMs.value)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def refreshDecision(
       need: Option[RefreshNeed],
       login: Login,
@@ -443,6 +470,7 @@ object PlanQuota:
     type Floors = Floors.T
     object Floors extends Newtype[String, Pure]
     type FloorsSource = FloorsSource.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object FloorsSource extends Newtype[String, Pure]
     type Held = Held.T
     object Held extends Newtype[Boolean, Pure]

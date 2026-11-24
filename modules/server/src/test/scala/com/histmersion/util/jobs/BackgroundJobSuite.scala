@@ -24,10 +24,13 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[BackgroundJob]] (#1946): the one runner of the server's long work. Pure parts always; the job rows on a test
   * database (gated on HISTMERSION_TEST_DB_URL).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class BackgroundJobSuite extends DbSuite:
   import BackgroundJob.Outcome
 
@@ -65,6 +68,7 @@ class BackgroundJobSuite extends DbSuite:
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
   private val testDb = TestDb.url
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
@@ -75,6 +79,7 @@ class BackgroundJobSuite extends DbSuite:
   private def dbTest(name: String)(body: => Unit): Unit =
     test(name)(if testDb.isEmpty then assume(false, "HISTMERSION_TEST_DB_URL is unset") else body)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def await(id: SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =
     val j = Transactor(ds)
       .read(JobRepo.get(Job.Id.applyUnsafe(id.value)))
@@ -154,6 +159,7 @@ class BackgroundJobSuite extends DbSuite:
   // ── the outcomes of its own writes (A6) ───────────────────────────────────────────────────────
 
   /** The row of job `id` now. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def row(id: SpatialHierarchyResult.Job.Id): JobInfo =
     Transactor(ds).read(JobRepo.get(Job.Id.applyUnsafe(id.value))).getOrElse(fail(s"no job $id"))
 

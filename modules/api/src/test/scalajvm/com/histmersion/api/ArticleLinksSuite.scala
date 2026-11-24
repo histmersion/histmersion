@@ -10,9 +10,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleLinksSuite extends munit.FunSuite:
 
   private val sources = Set("cline2014_year", "haak2015_massive")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val isSource: Article.Link.Target => Boolean = t => sources.contains(t.value)
 
   test("plain, aliased and anchored links all yield the bare target, once each"):
@@ -84,6 +87,7 @@ class ArticleLinksSuite extends munit.FunSuite:
     assertEquals(Article.Links.resolveMarkdown(Article.Links.ResolveMarkdownMd(md), isSource), md)
 
 /** Wikilink RESOLUTION (UX item 5): a citekey alias, an article slug, or nothing at all. Pure. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleLinkResolutionSuite extends munit.FunSuite:
 
   private val corpus = Map(

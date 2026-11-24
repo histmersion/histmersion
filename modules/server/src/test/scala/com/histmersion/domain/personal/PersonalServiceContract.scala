@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract a service of the person's keeps: it behaves the same in memory and in the database (a scratch database
   * of the suite's own, gated on HISTMERSION_TEST_DB_URL) — each scenario runs over both, the collection's sources
@@ -50,6 +51,7 @@ abstract class PersonalServiceContract(prefix: String) extends DbSuite:
       delete: String => Unit
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def inMemory: World =
     val state = AtomicReference(PersonalState())
     val sources = Referable.InMemory(source)
@@ -73,6 +75,7 @@ abstract class PersonalServiceContract(prefix: String) extends DbSuite:
     )
 
   private val testDb = TestDb.url
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases(prefix, AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
@@ -113,10 +116,12 @@ abstract class PersonalServiceContract(prefix: String) extends DbSuite:
       body(onDatabase(name.toLowerCase.replaceAll("[^a-z]+", "_").take(30)))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def item(kind: MarkKind, key: String): MarkTarget =
     MarkTarget.Item(ItemRef(MarkTarget.itemKind(kind), ItemKey(key), None))
 
   protected val point =
     MarkTarget.Point(Latitude(37.73), Longitude(22.75), Some(MapZoom(6.0)), Some(Year(-1300)), Some(Year(-1100)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def keyOf(t: MarkTarget): String = t.itemRef.fold("")(_.key.value)

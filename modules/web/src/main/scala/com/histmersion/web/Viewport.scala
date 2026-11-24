@@ -7,6 +7,7 @@ import org.scalajs.dom
 
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Which layout the page is in. At or below `ui.narrow-max-width-px` it is NARROW — the phone layout: the map first,
   * the sidebar a bottom sheet, windows full-screen. Wider, but at or below `ui.tablet-max-width-px`, it is TABLET — the
@@ -20,8 +21,10 @@ object Viewport:
   object MediaQuery extends Newtype[String, Pure]
 
   type ModeWidth = ModeWidth.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ModeWidth extends Newtype[Double, Pure]
   type ModeHeight = ModeHeight.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ModeHeight extends Newtype[Double, Pure]
 
   enum Mode(val wire: Mode.Wire) derives CanEqual:
@@ -36,6 +39,9 @@ object Viewport:
   /** Pure: the mode a viewport of `width` × `height` (CSS px) is in. Narrow when it is thin, or when it is short and
     * driven by touch — a phone held sideways, which is wide but has no room; else a tablet up to `tabletMaxWidth`.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mode(
       width: ModeWidth,
       height: ModeHeight,
@@ -49,10 +55,14 @@ object Viewport:
     else Mode.Wide
 
   /** The phone's rule as a media query, so the browser tells us when it flips. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def query(maxWidth: UiConfig.NarrowMaxWidthPx, maxHeight: UiConfig.NarrowMaxHeightPx): MediaQuery =
     MediaQuery(s"(max-width: ${maxWidth.value}px), (max-height: ${maxHeight.value}px) and (pointer: coarse)")
 
   /** The tablet's: every width up to its own limit (the phone's query is asked first). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tabletQuery(tabletMaxWidth: UiConfig.TabletMaxWidthPx): MediaQuery = MediaQuery(
     s"(max-width: ${tabletMaxWidth.value}px)"
   )
@@ -65,6 +75,9 @@ object Viewport:
   def tabletNow: Boolean = current.now() == Mode.Tablet
 
   /** Follow the viewport from now on. Called once by the composition root, with the config. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def init(ui: UiConfig): Unit =
     def apply(m: Mode): Unit =
       current.set(m)

@@ -24,6 +24,8 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
   /** Two uids compare with `==` and `!=`, also under `-language:strictEquality`: a uid names one entity across
@@ -60,6 +62,7 @@ object Bundle:
     def issueLetter: String = Kind.letterOf(this)
 
     /** The kind as a problem names the type of its record: a reader reads it as the kind's own name (`source`). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def typeName: Problem.TypeName = Problem.TypeName(s"Bundle.Kind.$productPrefix")
 
   object Kind:
@@ -108,19 +111,26 @@ object Bundle:
       case Place          => ("P")
       case Period         => ("N")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = Kind.fromWire(Wire((s).value))
   val Format = "histmersion-bundle"
   val FormatVersion = 2
   val Extension = ".hmx"
   val ManifestPath = "manifest.json"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blobPath(sha256: Sha256): String = (s"blobs/sha256/${(sha256).value.take(2)}/$sha256")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blobSha(path: String): Option[Sha256] =
     val prefix = "blobs/sha256/"
     (Option
@@ -172,6 +182,7 @@ object Bundle:
     type Rev = Rev.T
     object Rev extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ArticleAlias(alias: ArticleAlias.Alias, articleUid: UUID, createdAt: ArticleAlias.CreatedAt)
       derives JsonCodec
 
@@ -180,6 +191,7 @@ object Bundle:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ArticleVersion(
       uid: UUID,
       origin: UUID,
@@ -197,6 +209,7 @@ object Bundle:
     object BodySha256 extends Newtype[String, Pure]
     export api.research.Article.SummaryText as Summary
     type VersionOf = VersionOf.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object VersionOf extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
@@ -257,6 +270,7 @@ object Bundle:
     object Variant extends Newtype[String, Pure]
     type Name = Name.T
     object Name extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Mime = MimeText
     val Mime: MimeText.type = MimeText
     export api.media.ImageSize.{Height, Width}
@@ -272,6 +286,7 @@ object Bundle:
     type Rev = Rev.T
     object Rev extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AssetLink(
       uid: UUID,
       origin: UUID,
@@ -301,8 +316,10 @@ object Bundle:
       def of(uid: Option[UUID], id: TargetId): Target = uid.fold[Target](ById(id))(ByUid(_))
 
     type TargetType = TargetType.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetId extends Newtype[String, Pure]
     type Xywh = Xywh.T
     object Xywh extends Newtype[String, Pure]
@@ -394,6 +411,7 @@ object Bundle:
 
   object Correction:
     type TargetKind = TargetKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetKind extends Newtype[String, Pure]
     type TargetId = TargetId.T
     object TargetId extends Newtype[String, Pure]
@@ -404,8 +422,10 @@ object Bundle:
     type Upstream = Upstream.T
     object Upstream extends Newtype[String, Pure]
     type UpstreamValue = UpstreamValue.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object UpstreamValue extends Newtype[String, Pure]
     type UpstreamNow = UpstreamNow.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object UpstreamNow extends Newtype[String, Pure]
     export api.catalogue.EventCorrection.Status
     type CreatedAt = CreatedAt.T
@@ -495,6 +515,7 @@ object Bundle:
     type DatingMethod = DatingMethod.T
     object DatingMethod extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventAlias(alias: EventAlias.Alias, eventUid: UUID, createdAt: EventAlias.CreatedAt)
       derives JsonCodec
 
@@ -503,6 +524,7 @@ object Bundle:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventCandidate(
       eventUid: UUID,
       sourceUid: UUID,
@@ -527,6 +549,7 @@ object Bundle:
     type ComputedAt = ComputedAt.T
     object ComputedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventCatalogue(
       eventUid: UUID,
       provider: EventCatalogue.Provider,
@@ -552,6 +575,7 @@ object Bundle:
     type Provider = Provider.T
     object Provider extends Newtype[String, Pure]
     type ProviderId = ProviderId.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ProviderId extends Newtype[String, Pure]
     type Url = Url.T
     object Url extends Newtype[String, Pure]
@@ -577,12 +601,14 @@ object Bundle:
     type RetrievedAt = RetrievedAt.T
     object RetrievedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventCheck(eventUid: UUID, checkedAt: EventCheck.CheckedAt) derives JsonCodec
 
   object EventCheck:
     type CheckedAt = CheckedAt.T
     object CheckedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventDating(
       citekey: Citekey,
       sourceUid: Option[UUID],
@@ -608,6 +634,7 @@ object Bundle:
     type Note = Note.T
     object Note extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventEdge(
       dstUid: UUID,
       kind: EventEdge.Kind,
@@ -622,6 +649,7 @@ object Bundle:
     type Note = Note.T
     object Note extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventParticipant(
       actor: EventParticipant.Actor,
       role: EventParticipant.Role,
@@ -635,8 +663,11 @@ object Bundle:
     type Role = Role.T
     object Role extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object EventSets:
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def candidateStatus(here: EventCandidate.Status, there: EventCandidate.Status): EventCandidate.Status =
       if here == EventCandidate.Status("proposed") then there
       else here
@@ -724,6 +755,7 @@ object Bundle:
     type Region = Region.T
     object Region extends Newtype[String, Pure]
     type PeriodName = PeriodName.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object PeriodName extends Newtype[String, Pure]
     type Tags = Tags.T
     object Tags extends Newtype[String, Pure]
@@ -779,6 +811,7 @@ object Bundle:
     type BudgetUsd = BudgetUsd.T
     object BudgetUsd extends Newtype[Double, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class GoalAlias(alias: GoalAlias.Alias, goalUid: UUID, createdAt: GoalAlias.CreatedAt) derives JsonCodec
 
   object GoalAlias:
@@ -786,6 +819,7 @@ object Bundle:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class GoalLink(
       kind: GoalLink.Kind,
       ref: GoalLink.Ref,
@@ -815,6 +849,7 @@ object Bundle:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class GoalSchedule(
       kind: GoalSchedule.Kind,
       cron: GoalSchedule.Cron,
@@ -848,6 +883,7 @@ object Bundle:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def changed: ChangedCount = ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
 
   object ImportResult:
@@ -873,6 +909,7 @@ object Bundle:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class KindCounts(
       kind: Kind,
       inserted: KindCounts.Inserted = KindCounts.Inserted(0),
@@ -886,6 +923,7 @@ object Bundle:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def changed: ChangedCount = ChangedCount((inserted).value + (updated).value + (deleted).value)
 
   object KindCounts:
@@ -926,8 +964,10 @@ object Bundle:
     type Format = Format.T
     object Format extends Newtype[String, Pure]
     type FormatVersion = FormatVersion.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object FormatVersion extends Newtype[Int, Pure]
     type SchemaVersion = SchemaVersion.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SchemaVersion extends Newtype[String, Pure]
     type Since = Since.T
     object Since extends Newtype[String, Pure]
@@ -997,6 +1037,7 @@ object Bundle:
     type Rev = Rev.T
     object Rev extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PlaceAlias(alias: PlaceAlias.Alias, placeUid: UUID, createdAt: PlaceAlias.CreatedAt)
       derives JsonCodec
 
@@ -1005,6 +1046,7 @@ object Bundle:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PlaceLink(scheme: PlaceLink.Scheme, externalId: PlaceLink.ExternalId, relation: PlaceLink.Relation)
       derives JsonCodec
 
@@ -1015,6 +1057,7 @@ object Bundle:
     type Relation = Relation.T
     object Relation extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PlaceName(name: PlaceName.Name, lang: Option[PlaceName.Lang], period: Option[Range])
       derives JsonCodec
 
@@ -1024,6 +1067,7 @@ object Bundle:
     type Lang = Lang.T
     object Lang extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PlaceRelation(parentId: PlaceRelation.ParentId, kind: PlaceRelation.Kind, period: Option[Range])
       derives JsonCodec
 
@@ -1032,6 +1076,7 @@ object Bundle:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class PlaceType(typeLabel: PlaceType.TypeLabel, period: Option[Range], citekey: Option[Citekey])
       derives JsonCodec
 
@@ -1039,6 +1084,7 @@ object Bundle:
     type TypeLabel = TypeLabel.T
     object TypeLabel extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueueItem(
       uid: UUID,
       origin: UUID,
@@ -1090,10 +1136,12 @@ object Bundle:
     type Places = Places.T
     object Places extends Newtype[Int, Pure]
     type PlacesDigest = PlacesDigest.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object PlacesDigest extends Newtype[String, Pure]
     type Periods = Periods.T
     object Periods extends Newtype[Int, Pure]
     type PeriodsDigest = PeriodsDigest.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object PeriodsDigest extends Newtype[String, Pure]
 
   final case class SiteType(

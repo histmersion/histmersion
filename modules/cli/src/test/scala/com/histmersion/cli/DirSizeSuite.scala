@@ -5,7 +5,9 @@ import com.histmersion.api.given
 
 import java.nio.file.{Files, Path}
 import java.util.Comparator
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DirSizeSuite extends munit.FunSuite:
 
   private val tmp = FunFixture[Path](

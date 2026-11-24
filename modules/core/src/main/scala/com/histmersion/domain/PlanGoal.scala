@@ -20,12 +20,17 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,
   * DOIs, caps), looks every DOI up upstream, and only then shows the plan to a person. Nothing is created before the
   * person approves it.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationGoals)
 object PlanGoal:
   type AcquireText = AcquireText.T
   object AcquireText extends Newtype[String, Pure]
@@ -62,6 +67,8 @@ object PlanGoal:
     type Tags = Tags.T
     object Tags extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SubGoalAnswer] = KindlingsSchema
       .derived[SubGoalAnswer]
       .schema
@@ -70,11 +77,14 @@ object PlanGoal:
       .modify(_.notes)(_.description("What it should establish, in one or two sentences; null if obvious"))
       .modify(_.tags)(_.description("Tags from the corpus vocabulary (facets), not new ones"))
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class WorkAnswer(doi: WorkAnswer.Doi, why: Rationale) derives JsonCodec
   object WorkAnswer:
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[WorkAnswer] = KindlingsSchema
       .derived[WorkAnswer]
       .schema
@@ -93,6 +103,8 @@ object PlanGoal:
     type Queries = Queries.T
     object Queries extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PlanAnswer] = KindlingsSchema
       .derived[PlanAnswer]
       .schema
@@ -103,6 +115,7 @@ object PlanGoal:
 
   // ── checked (checkpointed before the upstream lookups) ──────────────────────────────────────────
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ProposedWork(doi: Doi, why: Rationale) derives JsonCodec
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
@@ -139,6 +152,9 @@ object PlanGoal:
     * proposed) send it back; things a retry cannot change (a slug that is already a goal, a query the goal already has,
     * a duplicate) are dropped with a note. On the last attempt what passed is kept and the problems become notes.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def check(
       a: PlanAnswer,
       goal: Goal.Slug,
@@ -255,6 +271,9 @@ object PlanGoal:
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
   type Lookup = Doi => Either[Problems, Work]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def verify(p: Proposed, goal: Goal.Slug, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
     val works = looked.collect {
@@ -288,6 +307,8 @@ object PlanGoal:
   /** The acquisition item a planned work outside the corpus becomes. The DOI is written as a resolver URL so
     * [[Scheduling.dois]] (and a person) find it again.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def acquireText(w: PlannedWork, goal: Goal.Slug): AcquireText =
     val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, w.year.map(y => s"($y)")).flatten.mkString(" ")
@@ -296,6 +317,8 @@ object PlanGoal:
     AcquireText(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why")
 
   /** The log line of an applied (or rejected) plan. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logLine(
       goal: Goal.Slug,
       plan: Plan,

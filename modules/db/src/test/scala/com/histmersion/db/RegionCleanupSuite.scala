@@ -15,6 +15,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.catalogue.places.GeocodeSettings
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Point-only seed regions (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   *   - a region, polity or people known only by a point, and any atlas grid square's centre, takes a finding only by an
@@ -24,6 +25,7 @@ import com.histmersion.domain.catalogue.places.GeocodeSettings
   *   - `places.location_precision` and its Scala twin agree; the geocoder ranks a grid point last.
   * Fixtures: [[RegionCleanupFixtures]].
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RegionCleanupSuite extends RegionCleanupFixtures:
 
   test("Rome's Regiones and the tribe Aiantis take findings only by an explicit match — on write and on rebuild"):

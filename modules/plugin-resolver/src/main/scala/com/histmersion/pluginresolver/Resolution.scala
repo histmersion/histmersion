@@ -3,6 +3,7 @@ package pluginresolver
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure decisions of a resolution: which of a plugin's modules conflict with the server's, which go into the
   * plugins directory's `lib/`, and the files that record the outcome.
@@ -23,6 +24,8 @@ object Resolution:
   /** The modules `plugin` resolves to on its own that the server ships at an OLDER version. An older version than the
     * server's is no conflict: resolved together, the server's is chosen, as Maven chooses the newest.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def conflicts(
       plugin: Resolution.ConflictsPlugin,
       resolved: List[ModuleCoordinates],
@@ -71,6 +74,7 @@ object Resolution:
     resolved.map(_.key).filter(k => !plugins.contains(k) && (server.provides(k))).distinct.sortBy(_.toString)
 
   /** `lib/classpath`: the dependency jars' file names, one per line, in class-path order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def classpathFile(deps: List[Dependency]): ClasspathFile = ClasspathFile(
     deps.map(_.libName).map((_).value + "\n").mkString
   )
@@ -78,10 +82,12 @@ object Resolution:
   /** `lib/inputs`: `<sha256>  <file name>` of every plugin jar and POM the resolution was made from, sorted by name —
     * what `histmersion-server-jvm` compares with the plugins directory to know whether `lib/` is still current.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inputsFile(files: List[(Resolver.FileName, Resolver.Sha256)]): InputsFile =
     InputsFile(files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString)
 
   /** The lines `plugin add` and the relink show. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(deps: List[Dependency], provided: List[ModuleKey]): List[ReportLine] =
     (deps.map(d =>
       s"dependency: ${d.coordinates}" + (if d.neededBy.isEmpty then "" else s" (for ${d.neededBy.mkString(", ")})")

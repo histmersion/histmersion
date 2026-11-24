@@ -15,11 +15,13 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.research.Article.Plans
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** propose-articles' code checks: the shape of each proposed article, then the seeding rules — a free slug, a filter
   * returning at least minSources, less than maxOverlap shared with any article of the area or with a proposal kept
   * before it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlanArticlesSuite extends munit.FunSuite:
 
   private def art(
@@ -29,8 +31,11 @@ class PlanArticlesSuite extends munit.FunSuite:
   ) =
     ArticleAnswer(slug, title, None, None, topics, Nil, Plans.ArticlePlan.Rationale("why"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def slug(s: String) = ArticleAnswer.Slug(s)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def topics(ts: String*) = ts.toList.map(ArticleAnswer.Topics(_))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def citekeys(ks: String*) = ks.map(Citekey.assume(_)).toSet
 
   test(

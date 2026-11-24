@@ -82,6 +82,7 @@ import com.histmersion.util.database.TestCreators
   * collection's name, a timestamp as `TS`, and a size the disk decides as `N`. `HISTMERSION_UPDATE_ORACLE=1` rewrites
   * the files. Skipped without HISTMERSION_TEST_DB_URL or the PostgreSQL client tools.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DataOracleSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   private val pgBinDir: Option[String] =
@@ -96,6 +97,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
   private val tmp = Files.createTempDirectory("histmersion-data-oracle")
   private lazy val base = AppConfig.load()
   private lazy val chunk = base.limits.chunkChars
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_s6o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -103,6 +105,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
 
   // ── the servers ────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfgFor(name: String): AppConfig =
     base
       .modify(_.db)
@@ -133,6 +136,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
   /** The servers' environment: a home and a cache directory of the suite's own (the cache holding a gazetteer folder),
     * so nothing of the machine's own directories reaches the record.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val system: SystemContext =
     val home = tmp.resolve("home")
     val cache = tmp.resolve("cache")
@@ -188,6 +192,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
 
   // ── the crafted pair ───────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def src(
       ck: Citekey,
       title: Title,
@@ -232,6 +237,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
       edges = edges.map((dst, kind) => Edge(ck, dst, kind))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def site(
       id: Place.Id,
       label: Place.Label,
@@ -250,12 +256,14 @@ class DataOracleSuite extends DbSuite with db.Bounded:
       List(Place.Name(name))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def png(n: Byte): NewFigure.Bytes =
     NewFigure.Bytes(Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n))
 
   /** Work's records: sources with findings, edges (one to a source nobody has), a body and a renamed citekey; two
     * articles; a goal; a place, a period and an event at the place; figures and a link; an attestation; work items.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def craftWork(ds: DataSource): Unit =
     Transactor(ds).write(BundleRepo.setLabel(Some(InstanceInfo.Label("work"))))
     SourceFixtures.upsert(
@@ -408,6 +416,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     )
 
   /** After home imported work once, both go on. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def editBoth(work: DataSource, home: DataSource): Unit =
     // changed findings at work: one claim rewritten, one added
     SourceFixtures.upsert(
@@ -512,6 +521,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
   private val ShortRe = "(?<![-\\w])[0-9a-f]{8}(?![-\\w])".r
 
   /** uid → the record it names, in every database the suite made. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def names(dss: List[(String, DataSource)]): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -627,6 +637,8 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     loop()
     out.toString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def rows(ds: DataSource, names: Map[String, String]): String =
     val leftOut = Deps.data.backups.flatMap(_._2.rowsLeftOut).map(t => s"$t").toSet
     val tables = connect(ds)(

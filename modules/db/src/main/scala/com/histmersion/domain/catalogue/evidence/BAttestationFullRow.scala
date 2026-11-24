@@ -34,8 +34,10 @@ final private[evidence] case class BAttestationFullRow(
 
 object BAttestationFullRow:
   type TargetType = TargetType.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetType extends Newtype[String, Pure]
   type TargetId = TargetId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetId extends Newtype[String, Pure]
   type Quote = Quote.T
   object Quote extends Newtype[String, Pure]

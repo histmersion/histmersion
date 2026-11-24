@@ -8,9 +8,12 @@ import com.histmersion.api.Api
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.mirror.MirrorPlacement
 import io.github.iltotore.iron.*
+import com.histmersion.lint.{LintRule, tolerated}
 final class Mirror(exports: List[Mirror.Export], notes: List[Mirror.Note]):
   def kinds: List[Mirror.Records] = exports.map(_.records)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def note(records: Mirror.Records, id: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] =
     exports
       .find(_.records == records)

@@ -6,22 +6,32 @@ import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.api.given
 import com.histmersion.api.ByteCount
 import com.histmersion.util.problem.Text.sentence
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object BundleMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def instance(i: InstanceInfo): String =
     (s"**Instance** ${i.id}" + i.label
       .map(l => s" · $l")
       .getOrElse(" · _(no label — `histmersion bundle instance --label <name>`)_") +
       s"  \n_created ${i.createdAt}_")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def who(i: Bundle.Instance): String = (i.label.fold(i.id.toString)(l => s"$l (${i.id})"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bytes(n: ByteCount): String =
     if (n).value < 1024 then (s"$n B")
     else if (n).value < 1024L * 1024 then (s"${(n).value / 1024} KB")
     else if (n).value < 1024L * 1024 * 1024 then (s"${(n).value / (1024L * 1024)} MB")
     else (s"${(n).value / (1024L * 1024 * 1024)} GB")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manifest(m: Bundle.Manifest): String =
     val files = m.files
       .filter(_.lines.value > 0)
@@ -33,12 +43,16 @@ object BundleMarkdown:
       if files.isEmpty then "_(no records)_" else ("| records | lines |" :: "|---|---:|" :: files).mkString("\n")
     ).mkString("\n\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verify(r: Bundle.VerifyResult): String =
     val head = if (r.ok) == Bundle.VerifyResult.Ok(true) then
       s"**OK** — every checksum, record and ${Plural.count(Plural.CountN(r.blobsChecked.value.toLong), Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(Plural.CountN((r.problems.size).toLong), Plural.CountSingular("problem"))}"
     (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems.map(_.sentence))).mkString("\n\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def importResult(r: Bundle.ImportResult): String =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"

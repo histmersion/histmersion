@@ -4,6 +4,9 @@ package api.catalogue
 import com.histmersion.api.{TimeSpan, YearFmt, Years}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventPrecision:
   type Uncertainty = Uncertainty.T
   object Uncertainty extends Newtype[Long, Pure]
@@ -12,6 +15,7 @@ object EventPrecision:
   val Approximate = "approximate"
   val Imprecise = "imprecise"
   val Undated = "undated"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[EventSummary.Precision] = List(
     EventSummary.Precision(Precise),
     EventSummary.Precision(Approximate),
@@ -19,10 +23,14 @@ object EventPrecision:
     EventSummary.Precision(Undated)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val PreciseUpTo: Uncertainty = Uncertainty((50).toLong)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val ApproximateUpTo: Uncertainty = Uncertainty((500).toLong)
 
   /** Widths are taken in astronomical years: historical years have no year 0. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uncertainty(ts: TimeSpan, plusMinus: Option[EventSummary.PlusMinus]): Option[Uncertainty] =
     ts.outer.map { (a, b) =>
       def a2(y: Year) = Years.toAstronomical(y)
@@ -34,6 +42,7 @@ object EventPrecision:
       Uncertainty(derived.max(plusMinus.fold(0L)(p => (p).value).max(0)))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(uncertainty: Option[Uncertainty]): EventSummary.Precision =
     uncertainty match
       case None                                => EventSummary.Precision(Undated)
@@ -41,19 +50,25 @@ object EventPrecision:
       case Some(u) if (u) <= (ApproximateUpTo) => EventSummary.Precision(Approximate)
       case _                                   => EventSummary.Precision(Imprecise)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def of(ts: TimeSpan, plusMinus: Option[EventSummary.PlusMinus]): EventSummary.Precision = of(
     uncertainty(ts, plusMinus)
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mapped(precision: EventSummary.Precision): Boolean =
     (precision != EventSummary.Precision(Imprecise) && precision != EventSummary.Precision(Undated))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def label(precision: EventSummary.Precision): Option[String] =
     (precision).value match
       case Imprecise   => Some(("imprecise date"))
       case Approximate => Some(("approximate date"))
       case _           => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def note(
       central: Option[EventSummary.Central],
       plusMinus: Option[EventSummary.PlusMinus],

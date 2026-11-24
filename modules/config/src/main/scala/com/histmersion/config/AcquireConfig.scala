@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Configuration for the acquisition & assessment toolset (plan §5.2, stream 2.6).
   *
@@ -16,6 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   server-side directory the fetched PDFs are written to before the ingest job picks them up; empty = the JVM's temp
   *   directory.
   */
+@movesTo(FeaturePlace.LibraryAcquisition)
 final case class AcquireConfig(
     contactEmail: AcquireConfig.ContactEmail,
     openalex: ServiceConfig,
@@ -49,6 +52,7 @@ final case class AcquireConfig(
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so a blank default
     * means "anonymous": no polite pool, and no Unpaywall, which refuses requests without an e-mail.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contact: Option[AcquireConfig.ContactEmail] =
     Option(contactEmail).map(_.value.trim).filter(_.nonEmpty).map(AcquireConfig.ContactEmail(_))
 
@@ -58,6 +62,7 @@ final case class AcquireConfig(
   /** The acquisition chain's order: the source-fetcher ids `chain` lists (comma-separated); fetchers it does not name
     * run after these, in plugin registration order.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chainIds: List[AcquireConfig.ChainId] = chain.entries.map(e => AcquireConfig.ChainId(e.value))
 
 object AcquireConfig:

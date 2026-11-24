@@ -11,11 +11,13 @@ import com.histmersion.api.library.Query.QueryResult
 import com.histmersion.domain.library.workflows.LibraryAgentTools
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.api.library.Query
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What one agent tool call may return (`agents.tools`): a cut is at a line and says how to read on, a source record
   * keeps its findings whole by shortening its notes first, UI chip links lose their targets, a query shows few rows.
   * Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ToolResultCapSuite extends munit.FunSuite:
 
   test("a result within the cap is untouched; a longer one is cut at a line and says so"):

@@ -14,11 +14,13 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The engine features' services over one store — the database's scratch copy or the shared in-memory state — and how a
   * contract makes the rows of other domains a feature reads (an article, a source) and runs a service's `…In` operation
   * in a transaction of its own.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 trait EngineStores:
   def sourceApprovals: SourceApprovalService
   def autopilot: AutopilotRowService

@@ -5,6 +5,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTMLElement):
   val canvas: dom.html.Canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]
@@ -216,6 +217,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
         templates(key) = first.filter(_ => validated.getOrElse(MarkerLook.shapeKey(key), false))
       }
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def paint(panes: () => List[List[DomMarker]]): Unit =
     lastPanes = panes
     dirty = false
@@ -270,6 +272,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
     if (focused ne null) && (focused.el.parentNode eq null) then focused = null
     if focused ne null then anchor(focused)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def motionOf(d: js.Dynamic, elapsed: Double, still: Boolean): MarkerMotion.Motion =
     MarkerMotion.motion(
       d.present.asInstanceOf[Set[String]],
@@ -284,6 +287,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
   private var hovered: DomMarker = null
   private var downAt: (Double, Double) = (Double.NaN, Double.NaN)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def placed(m: DomMarker): js.Dynamic =
     val r = frame.getBoundingClientRect()
     val d = info(m)
@@ -301,6 +305,7 @@ final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTM
       offscreen = m.offscreen
     )
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def hit(clientX: Double, clientY: Double): Option[DomMarker] =
     val r = frame.getBoundingClientRect()
     val (x, y) = (clientX - r.left, clientY - r.top)

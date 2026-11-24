@@ -6,6 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.RegisteredPlanMatches
 import sttp.tapir.Schema
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How each of the bundle's records of the kind that matches records across collections was matched, as a merge plan
   * lists it: kept as the kind's JSON ([[PlanMatchKind]]), which the kind writes and reads.
@@ -13,6 +14,7 @@ import sttp.tapir.Schema
 final case class PlanMatches(rows: List[Json]):
   def isEmpty: Boolean = (rows.isEmpty)
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object PlanMatches:
 
   val empty: PlanMatches = PlanMatches(Nil)

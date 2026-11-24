@@ -2,6 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What one call answered: text (the final answer is JSON matching the answer schema), the tools the model called (the
   * host runs them and calls again), why it stopped, its usage, and the model that actually served it, when the provider
@@ -48,6 +49,7 @@ object AiTurn:
   type ServedBy = ServedBy.T
   object ServedBy extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Request(
       model: Request.Model,
       system: Request.System,
@@ -83,16 +85,22 @@ object AiTurn:
     )
 
   object Request:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ApplyModel = Model
     val ApplyModel: Model.type = Model
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ApplySystem = System
     val ApplySystem: System.type = System
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ApplyAnswerSchema = AnswerSchema
     val ApplyAnswerSchema: AnswerSchema.type = AnswerSchema
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ApplyMaxTokens = MaxTokens
     val ApplyMaxTokens: MaxTokens.type = MaxTokens
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ApplyIteration = Iteration
     val ApplyIteration: Iteration.type = Iteration
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type ApplyMaxIterations = MaxIterations
     val ApplyMaxIterations: MaxIterations.type = MaxIterations
 
@@ -109,6 +117,7 @@ object AiTurn:
     type MaxIterations = MaxIterations.T
     object MaxIterations extends Newtype[Int, Pure]
     type AnswerSchemaRendered = AnswerSchemaRendered.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AnswerSchemaRendered extends Newtype[String, Pure]
     type AnswerDescription = AnswerDescription.T
     object AnswerDescription extends Newtype[String, Pure]

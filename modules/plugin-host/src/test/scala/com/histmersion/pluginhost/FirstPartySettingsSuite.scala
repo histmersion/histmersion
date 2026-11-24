@@ -5,10 +5,13 @@ import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 import com.histmersion.config.ConfigReload
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The one table of host settings the first-party plugins read: what each is supplied, and which changed keys rebuild
   * it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class FirstPartySettingsSuite extends munit.FunSuite:
 
   private val host = ConfigFactory.parseString(

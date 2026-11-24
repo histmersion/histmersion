@@ -7,10 +7,12 @@ import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.domain.research.ResearchPlan
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.{MergeRules, PlanRules}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge treats articles: other lines point at them by uid, the ledger names one by its slug, and an article the
   * merge writes links the bundle's sources by the citekeys they have here.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object ArticleMergeRules extends MergeRules:
 
   val owner: DataOwner = DataOwner("research")

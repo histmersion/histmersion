@@ -4,6 +4,7 @@ package web
 import com.histmersion.api.{Paging, UiLabels, Wording}
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.library.Facet
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The filter controls of the three list windows — approvals, agent runs, jobs (core `ListFilters`): a facet's values
   * as toggle chips with the server's counts (multi-select), a `<select>` for a facet with many values, a text box
@@ -34,12 +35,14 @@ object ListFilterBar:
   def date(s: String): Option[String] = typed(s).filter(_.matches("""\d{4}-\d{2}-\d{2}"""))
 
   /** `Review an article (223)` — a value and its count, as a `<select>` option reads. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def optionLabel(v: String, n: Int, show: String => String = v => UiLabels.label(UiLabels.Key(v)).value): String =
     if n > 0 then s"${show(v)} (${Paging.grouped(Paging.GroupSize(n.toLong))})" else show(v)
 
   /** Is any of these filters set (the "clear" button is offered then)? */
   def anySet(fields: List[Field[?]]): Boolean = fields.exists(f => f.encoded != f.codec.encode(f.default))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def reset[A](f: Field[A]): UiState.Assign = f := f.default
 
   /** Every one of `fields` back to its default, in one commit. */
@@ -60,6 +63,7 @@ object ListFilterBar:
     * value's label — by default the label dictionary's ([[UiLabels.label]]), never the raw identifier; `hint` its
     * meaning (with the identifier, its chip's tooltip), `about` what the group filters.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chips(
       label: String,
       counts: Signal[List[(Facet.Value, Facet.Count)]],
@@ -97,6 +101,7 @@ object ListFilterBar:
   /** A facet with many values (managers, models) as a `<select>`: `any <label>`, then each value with its count. `hint`
     * is a value's meaning (its option's tooltip), `about` what the menu filters.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def picker(
       label: String,
       counts: Signal[List[(Facet.Value, Facet.Count)]],

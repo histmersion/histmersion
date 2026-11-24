@@ -10,6 +10,7 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.{Agents, AgentsMarkdown, PlanQuota}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agent models window (docs/research-embedded-agents.md §15): each step role's model CHAIN — the models tried in
   * order, the one the next call would use, why the others are passed over — and each allowance (tokens/USD per rolling
@@ -23,10 +24,12 @@ object ModelsView:
 
   /** A chain as typed: `a > b > c` (commas also separate). */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chainInput(s: String): List[ChainEntry.Model] =
     s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty).map(ChainEntry.Model(_))
 
   /** Limits as typed: `2M tokens/5h, 5 usd/day` → their wire form, or the first problem. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limitsInput(s: String): Either[String, List[LimitSpec]] =
     s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(t => Limit.parse(Limit.Spec(t))).partitionMap(identity) match
       case (Nil, ls) => Right(ls.map(_.spec))
@@ -43,17 +46,23 @@ object ModelsView:
         .toRight(s"'$s' is not a reserve of 0 to 99 %")
 
   /** How much of a limit is used, 0..100 (a bar's width). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def usedPct(l: LimitStatus): Int =
     if l.amount.value <= 0 then 100
     else math.max(0, math.min(100, math.round(l.used.value / l.amount.value * 100).toInt))
 
   /** The state class of one chained model. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entryState(e: ChainEntry): String =
     if e.usable.value then "is-usable" else if !e.ready.value then "is-unready" else "is-paused"
 
   /** A plan window's bar: how much is used (0..100) and where its floor sits, as the share USED at which the floor is
     * reached (a floor of 25 % left sits at 75 %).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def windowBar(w: PlanQuota.WindowStatus): (Int, Int) =
     (math.max(0, math.min(100, math.round(w.usedPct.value).toInt)), math.max(0, math.min(100, 100 - w.floor.value)))
 
@@ -65,10 +74,14 @@ object ModelsView:
     else s"${seconds / 86400} d ago"
 
   /** The allowance's limits as one editable line (what [[limitsInput]] reads back). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def limitsText(a: AllowanceStatus): String = a.limits.map(_.limit.value).mkString(", ")
 
   // ── the window ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     val info = Var(Option.empty[ModelsInfo])
     val quota = Var(Option.empty[PlanQuota.QuotaInfo])
@@ -122,6 +135,8 @@ object ModelsView:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def body(m: ModelsInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
       Option.when(!m.enabled.value)(
@@ -161,6 +176,8 @@ object ModelsView:
     * came from, and the hold switch (behind the write gate).
     */
   /** `five_hour=25, seven_day=40` → `5-hour limit 25 %, this week's limit 40 %`: the floors as limits. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def floorsText(floors: PlanQuota.PoolStatus.Floors): String =
     floors.value
       .split(",")
@@ -175,6 +192,10 @@ object ModelsView:
       }
       .mkString(", ")
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
       cls := "plan-pools",
@@ -289,6 +310,9 @@ object ModelsView:
       )
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chainRow(c: RoleChain, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     val editing = Var(false)
     val draft = Var[String](c.models.map(_.model.value).mkString(" > "))
@@ -359,6 +383,9 @@ object ModelsView:
     case Measure.Tokens => Limit.compact(BigDecimal(math.round(v)))
     case Measure.Usd    => s"${AgentsMarkdown.usd(v)} USD"
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowanceRow(a: AllowanceStatus, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     li(
       cls := s"allowance ${if a.usable.value then "is-usable" else "is-paused"}",
@@ -416,6 +443,8 @@ object ModelsView:
     )
 
   /** Set an allowance: a new one (`None`), or change an existing one (prefilled). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowanceForm(
       of: Option[AllowanceStatus],
       busy: Signal[Boolean],
@@ -478,6 +507,8 @@ object ModelsView:
       child.maybe <-- problem.signal.map(_.map(m => p(cls := "form-error", role := "alert", m)))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doctorBlock(d: DoctorReport): HtmlElement =
     def level(l: CheckLevel) = span(cls := s"doctor-level level-${l.wire}", l.wire.value)
     def checks(cs: List[Agents.DoctorCheck]) =

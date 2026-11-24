@@ -3,11 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The sea floor: terrarium tiles at `url` (`{z}/{x}/{y}`), zooms 0…`maxZoom` of the region, one GET a tile,
   * `requestGapMs` apart; `onDemand`: the tiles outside the region, read as a page needs them (#3760). `source` picks
   * what the extract is made from: those tiles (ETOPO1), or the GEBCO grid (`gebco`).
   */
+@movesTo(FeaturePlace.UtilBasemap)
 final case class BasemapBathymetryConfig(
     url: BasemapBathymetryConfig.Url,
     maxZoom: BasemapGebcoConfig.MaxZoom,

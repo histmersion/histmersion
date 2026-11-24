@@ -17,19 +17,23 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
 import com.histmersion.domain.automation.{Goal, ItemStatus}
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's focus, pure (docs/research-process-managers.md "As built: the focus"): the selection order (closest
   * to done, depth-first, pins, a person's priority, ties), the sticky active set and what frees a slot (reviewed,
   * stuck, idle, waiting for a person), the parent rule, the holds, the fair order of the library-wide managers, the
   * goal-plan check and the Markdown.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GoalFocusSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def w(
       id: Work.ItemId,
       kind: ManagerItem.Kind = ManagerItem.Kind(ProposeArticles),
       status: ItemStatus.Wire = ItemStatus.Wire("pending")
   ) = Work(id, kind, status, Work.Target(s"t${id.value}"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def g(
       slug: Goal.Slug,
       parent: Option[Goal.Slug] = None,

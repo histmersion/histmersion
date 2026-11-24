@@ -7,7 +7,10 @@ import com.histmersion.api.json.TapirJson.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.Server)
 object Static:
   type Asset = Asset.T
   object Asset extends Newtype[String, Pure]:
@@ -15,6 +18,8 @@ object Static:
   type ReadPath = ReadPath.T
   object ReadPath extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def read(path: ReadPath): Asset =
     val is = Option(classOf[HttpApi].getClassLoader.getResourceAsStream(path.value))
       .getOrElse(throw new IllegalStateException(s"missing resource $path"))

@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import io.github.iltotore.iron.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where a new plugin project resolves the plugin API, the platform and the testkit from. */
 enum TemplateRepository:
@@ -14,6 +15,7 @@ enum TemplateRepository:
   case Remote(repository: PluginRepository)
 
   /** As `//> using repository` takes it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def directive: String = this match
     case MavenLocal   => "m2Local"
     case Remote(repo) => repo.value

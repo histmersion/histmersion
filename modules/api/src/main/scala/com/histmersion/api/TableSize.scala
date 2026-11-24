@@ -6,7 +6,10 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.Kernel)
 final case class TableSize(name: TableSize.Name, bytes: ByteCount) derives JsonCodec, KindlingsSchema, json.Schema
 
 object TableSize:

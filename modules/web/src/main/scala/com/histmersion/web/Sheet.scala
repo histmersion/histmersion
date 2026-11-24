@@ -8,6 +8,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How far the sidebar is pulled up in the narrow (phone) layout, where it is a bottom sheet: a strip, half the screen,
   * or all of it but the search bar. The heights are the stylesheet's.
@@ -23,6 +24,7 @@ object Sheet:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromWire(s: String): Option[Sheet] = values.find(_.wire == Wire(s.trim.toLowerCase))
 
   /** A tap on the handle: one step up, and from the top back down to the strip. */
@@ -34,6 +36,7 @@ object Sheet:
   /** Where a drag lets go: the state whose height is nearest to `fraction` of the screen, given the strip's and the
     * full sheet's fractions. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nearest(fraction: Fraction, peek: Fraction, full: Fraction): Sheet =
     List[(Sheet, Double)](Peek -> peek.value, Half -> 0.5, Full -> full.value)
       .minBy((_, f) => math.abs(f - fraction.value))

@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class AgentLeaseInfo(
     owner: AgentLeaseInfo.Owner,
@@ -16,6 +17,7 @@ final case class AgentLeaseInfo(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe: String =
     (s"$owner${if (thisServer).value then " (this server)" else ""} until $until${
         if (expired).value then " — expired" else ""

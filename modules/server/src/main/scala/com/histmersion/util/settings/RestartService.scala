@@ -5,6 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.api.settings.ConfigEdit
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Restarting the server for the settings only a restart applies: the process ends, and the service it runs under (the
   * LaunchAgent, the systemd unit) starts it again.
@@ -34,8 +35,10 @@ object RestartService:
     def restart(): Either[Problem, ConfigEdit.Notice] = stop.toRight(NotHere).map { s => s(); Started }
 
   /** Counts the restarts asked for instead of ending anything. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final class InMemory(val available: Boolean) extends RestartService:
     private val asked = AtomicInteger(0)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def restarts: RestartCount = RestartCount(asked.get)
     def restart(): Either[Problem, ConfigEdit.Notice] =
       if !available then Left(NotHere) else { asked.incrementAndGet(); Right(Started) }

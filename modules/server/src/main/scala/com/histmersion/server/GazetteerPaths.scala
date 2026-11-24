@@ -8,14 +8,18 @@ import java.nio.file.{Files, Path}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.config.UserPaths.pathEquality
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the gazetteer's files are, resolved from the config: the pinned extracts (a CACHE, rebuilt or copied, pinned
   * by sha256: the XDG cache directory), the Linked Places drop folder, the manifest of the pins, and `legacy`, where
   * the extracts lived before they moved to the cache directory (`<data dir>/gazetteer`, until 2026-10-17).
   */
+@movesTo(FeaturePlace.Server)
 final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None):
 
   /** The manifest's text, or why there is none. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manifestText(): Either[Problem, GazetteerPaths.ManifestText] =
     if !Files.isRegularFile(manifest) then
       Left(
@@ -41,6 +45,7 @@ object GazetteerPaths:
 
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(cfg: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): GazetteerPaths =
     val data = UserPaths
       .dataDir(cfg.runtime.dataDir, env, osName)

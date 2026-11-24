@@ -3,8 +3,10 @@ package util.problem
 
 import util.problem.Text.sentence
 import ProblemLog.line
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The log line of every case: its group and case, each of its fields by name, then its English sentence. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ProblemLinesSuite extends munit.FunSuite:
 
   Problem.examples.foreach { p =>

@@ -9,9 +9,11 @@ import com.histmersion.api.automation.PlanQuota.*
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a CLI client reports its readings to and asks mid-step: the plan pools ([[PlanPools]]), or a test's stand-in.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait PoolSink:
   def record(p: PoolId, rs: List[Reading])(using WritePermit): Unit
 

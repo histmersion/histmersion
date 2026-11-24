@@ -4,12 +4,16 @@ package plugin
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The AI-provider part of the SPI (docs/research-plugins.md §22). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AiProviderSpiSuite extends munit.FunSuite:
 
   private object Echo extends AiProvider:
     val title = AiProvider.Title("Echo")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def turn(r: AiTurn.Request, http: AiHttp) =
       r.messages
         .collectFirst { case AiMessage.User(t) => t }

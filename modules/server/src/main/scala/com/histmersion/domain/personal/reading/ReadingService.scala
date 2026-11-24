@@ -13,6 +13,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Whether a person has read a source or an article — only what they marked ("Mark as read") — and when they last
   * opened it, which marks nothing read. Marking unread keeps the row, with no read time. What is not read yet is the
@@ -59,6 +60,7 @@ object ReadingService:
     def list(user: UserId, kind: Option[ItemKind], show: ReadingShow, size: PageSize): List[ReadMark] =
       shown(db.read(ReadingRepo.list(user, kind, show, size)).map(_.stored(user)), items)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def readBack(user: UserId, r: ItemRef)(using com.augustnagro.magnum.DbCon): StoredMark =
       ReadingRepo
         .get(user, r)
@@ -101,6 +103,7 @@ object ReadingService:
     private def find(s: PersonalState, user: UserId, kind: ItemKind, key: ItemKey): Option[StoredMark] =
       mine(s, user).find(m => m.ref.kind == kind && m.ref.key == key)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(user: UserId, kind: Option[ItemKind], show: ReadingShow, size: PageSize): List[ReadMark] =
       val all = mine(state.get, user).filter(m => kind.forall(_ == m.ref.kind))
       val ordered = show match
@@ -111,6 +114,7 @@ object ReadingService:
         case ReadingShow.All => PersonalState.newestFirst(all)(_.updatedAt, _.ref.key.value)
       shown(ordered.take(size.value), items)
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
     private def upsert(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime)(
         change: StoredMark => StoredMark
     ): ReadMark =
@@ -126,6 +130,7 @@ object ReadingService:
       }
       shown(find(after, user, kind, key).toList, items).head
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setRead(
         user: UserId,
         kind: ItemKind,

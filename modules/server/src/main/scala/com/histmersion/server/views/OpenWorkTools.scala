@@ -12,10 +12,12 @@ import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.util.problem.Problem.{Raw, TypeName}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class OpenWorkTools(view: OpenWorkView):
   import OpenWorkTools.WhyInput
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tools =
     List(
       tool("research_state")

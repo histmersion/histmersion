@@ -5,7 +5,9 @@ import com.histmersion.util.problem.Problem.{Invalid, Raw}
 
 import com.histmersion.api.catalogue.CatalogProviderInfo
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object CatalogProvider:
 
   private val GvpName = "gvp"
@@ -50,9 +52,12 @@ object CatalogProvider:
     )
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def info(id: CatalogProviderInfo.Id): Option[CatalogProviderInfo] = infos.find(_.id == id)
 
   /** Pure: the provider a request names (`smithsonian` and `volcano` for gvp, `ncei` for noaa). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: CatalogProviderInfo.Id): Either[Problem, CatalogProviderInfo.Id] =
     s.value.trim.toLowerCase(java.util.Locale.ROOT) match
       case GvpName | "smithsonian" | "volcano" => Right(Gvp)

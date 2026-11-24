@@ -8,6 +8,8 @@ import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Polity polygons from the Seshat Cliopatria dataset.
   *
@@ -20,6 +22,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * parent concept `cliopatria_{slug}` (with no geometry, just the label), so the hierarchy query finds all slices. The
   * parents come first in [[fetch]]'s answer, so the slices' relations find them.
   */
+@atBoundary(BoundaryKind.Json, "reads the Cliopatria download into polity records")
 object Cliopatria extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
   object Ordinal extends Newtype[Int, Pure]
@@ -41,6 +44,8 @@ object Cliopatria extends DownloadedGazetteer:
   override def fetch(http: Plugin.Http): Either[Problem, List[GazetteerPlace]] =
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(text: DownloadedGazetteer.Text): Either[Problem, List[GazetteerPlace]] =
     RawJson
       .parse(text.value)
@@ -62,6 +67,7 @@ object Cliopatria extends DownloadedGazetteer:
         features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
       }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def readFeature(j: Json, ordinal: Ordinal): Either[Problem, GazetteerPlace] =
     j.asObject
       .toRight(Problem.Invalid.Missing(Problem.Field("object"), Vector(Problem.Field(s"feature #$ordinal"))))
@@ -123,6 +129,7 @@ object Cliopatria extends DownloadedGazetteer:
     * period it was "valid at every year" — 1 604 undated polities in every time-filtered view until 2026-10-09 (V076
     * dated the stored ones).
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parentConcepts(features: List[GazetteerPlace]): List[GazetteerPlace] =
     val spans = features.flatMap(_.relations).groupMapReduce(_.parentId)(_.period.toList)(_ ++ _)
     features

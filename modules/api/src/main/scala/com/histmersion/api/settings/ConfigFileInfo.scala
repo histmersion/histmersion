@@ -8,6 +8,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class ConfigFileInfo(
     path: Option[ConfigFileInfo.Path] = None,
@@ -25,6 +26,7 @@ object ConfigFileInfo:
   type UnknownKeys = UnknownKeys.T
   object UnknownKeys extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(c: ConfigFileInfo): String =
     c.path match
       case None    => ("none (no location: HOME is unset)")

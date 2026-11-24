@@ -8,7 +8,10 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[places] case class PlaceTypeRow(
     placeId: domain.catalogue.Place.Id,
     typeLabel: PlaceTypeRow.TypeLabel,
@@ -16,6 +19,8 @@ final private[places] case class PlaceTypeRow(
     periodEnd: Option[Year],
     citekey: Option[Citekey]
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toDto: Place.Type =
     Place.Type(
       Place.Id(placeId.value),

@@ -38,12 +38,14 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.workflows.LibraryAgentTools
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still
   * finds a quotation past the slice, and `query` shows few rows. Exactly what the agent MCP endpoint answers (it calls
   * the same tools). Skipped without HISTMERSION_TEST_DB_URL; writes only `zztool*` rows of a `*_test` database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AgentToolCapSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -55,6 +57,7 @@ class AgentToolCapSuite extends DbSuite:
     queryMaxRows = AgentToolsConfig.QueryMaxRows(5)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -68,6 +71,8 @@ class AgentToolCapSuite extends DbSuite:
     def health: Either[Problem, ConverterClient.HealthSummary] = Right(
       ConverterClient.HealthSummary("ok")
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -83,6 +88,7 @@ class AgentToolCapSuite extends DbSuite:
       sql"DELETE FROM source_aliases WHERE alias LIKE 'zztool%' OR citekey LIKE 'zztool%'".update.run()
       sql"DELETE FROM sources WHERE citekey LIKE 'zztool%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeEach(context: BeforeEach): Unit =
     clean()
     val put = Source.Put(

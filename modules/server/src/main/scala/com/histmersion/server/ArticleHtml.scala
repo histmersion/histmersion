@@ -9,8 +9,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import com.histmersion.server.instance.WebBundle
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pure helpers for the article pages. */
+@movesTo(FeaturePlace.Server)
 object ArticleHtml:
   type Url = Url.T
   object Url extends Newtype[String, Pure]
@@ -18,8 +21,12 @@ object ArticleHtml:
   type MatchNavMatches = MatchNavMatches.T
   object MatchNavMatches extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def esc(s: HtmlRender.Text): Html = HtmlRender.esc(s)
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sourceUrl(ck: Citekey, full: Boolean, fragment: Boolean, q: Option[HtmlRender.Query]): Url =
     val params = List(
       if full then Some("full=true") else None,
@@ -31,6 +38,9 @@ object ArticleHtml:
                                                                      else params.mkString("?", "&", ""))
     )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def toggle(ck: Citekey, full: Boolean, q: Option[HtmlRender.Query] = None): Html =
     val to = sourceUrl(ck, !full, fragment = false, q)
     if full then html"""<p class="toggle"><a href="$to">▲ hide full text</a></p>"""
@@ -40,6 +50,8 @@ object ArticleHtml:
     * point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and the control NAMES that shortcut,
     * because a keyboard shortcut nobody is told about is a shortcut nobody uses (item 14).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matchNav(matches: MatchNavMatches): Html =
     if matches.value <= 0 then Html.empty
     else
@@ -50,6 +62,7 @@ object ArticleHtml:
 
   private val nl = Html.text("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def page(title: Title, bodyHtml: Html, kind: PageKind, bundle: WebBundle): Html =
     Html.join(
       List(
@@ -67,6 +80,7 @@ object ArticleHtml:
 
   type Shell = (Title, Html, PageKind) => Html
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def shell(bundle: WebBundle): Shell = page(_, _, _, bundle)
 
   /** The reader's theme (the web UI's `Theme`, kept in `localStorage`), applied before the stylesheet paints so a page

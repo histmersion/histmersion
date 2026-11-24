@@ -32,6 +32,7 @@ import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.config.edit.SettingKind.valueTypeEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
   * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
@@ -53,6 +54,7 @@ object PluginHost:
   val Root = "histmersion.plugins"
 
   /** The SPI generation this host speaks: what a plugin the host supplies itself is built against. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val SpiGeneration: Plugin.Info.SpiVersion = Plugin.Info.SpiVersion(Spi.Version)
 
   /** Keys of `histmersion.plugins` that are the host's, not a plugin's block. */
@@ -71,6 +73,7 @@ object PluginHost:
   /** Every `Plugin` provider on the class path. A provider that cannot be instantiated is reported, not fatal (the
     * others still load).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def discover(loader: ClassLoader): (List[Plugin], List[Problem]) =
     val it = ServiceLoader.load(classOf[Plugin], loader).iterator
     // ServiceLoader's iterator is lazy and may throw per provider: walk it by hand, keeping going
@@ -102,6 +105,7 @@ object PluginHost:
   private val UnnamedProvider = "(a provider ServiceLoader did not name)"
 
   /** The provider class ServiceLoader names in the error it threw for one it could not instantiate. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def providerOf(e: Throwable): Option[Provider] = e match
     case e: java.util.ServiceConfigurationError =>
       Option(e.getMessage).collect { case ProviderClass(c) => Provider(c) }
@@ -110,6 +114,7 @@ object PluginHost:
   /** The plugin, once its [[Plugin.info]] could be read: a plugin built against an older SPI fails on it (SPI 1's
     * `Spi.Version` was read at run time, and SPI 2 has no such member).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def described(p: Plugin): Either[Throwable, Plugin] =
     try
       val _ = p.info.id
@@ -123,6 +128,7 @@ object PluginHost:
     * `Spi.Version`, which SPI 2 compiles into the plugin); `None` for another SPI type when the generation cannot be
     * told.
     */
+  @tolerated(LintRule.G5TextBranch, "a plugin that fails to link throws a NoSuchMethodError whose only description of the missing SPI member is the JVM's message")
   def foreignSpi(e: Throwable): Option[Option[Plugin.Info.SpiVersion]] = e match
     case e: (NoSuchMethodError | NoSuchFieldError | AbstractMethodError | IncompatibleClassChangeError) =>
       val message = Option(e.getMessage).getOrElse("").replace('/', '.')
@@ -132,6 +138,7 @@ object PluginHost:
     case e => Option(e.getCause).filter(_ ne e).flatMap(foreignSpi)
 
   /** Why a plugin built against another SPI generation did not load. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rebuild(built: Option[Plugin.Info.SpiVersion]): Problem.Plugin.Fault =
     val speaks = Problem.Raw(s"${Spi.Version}")
     built.fold(Problem.Plugin.Fault.ForeignSpi(speaks))(v =>
@@ -141,12 +148,14 @@ object PluginHost:
   /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the library it
     * belongs to was neither shipped with Histmersion nor installed with the plugin.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def missingClass(e: Throwable): Option[ClassName] = e match
     case e: NoClassDefFoundError   => Some(ClassName(Option(e.getMessage).getOrElse("?").replace('/', '.')))
     case e: ClassNotFoundException => Some(ClassName(Option(e.getMessage).getOrElse("?")))
     case e                         => Option(e.getCause).filter(_ ne e).flatMap(missingClass)
 
   /** Why plugin code threw: a foreign SPI and a missing class are told apart, anything else is what it threw. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def failure(e: Throwable): Problem.Plugin.Fault =
     foreignSpi(e)
       .map(rebuild)
@@ -171,6 +180,7 @@ object PluginHost:
     * is refused: which one the user meant cannot be known), an id that is no config key, or a key the host keeps for
     * itself.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(infos: List[Plugin.Info], spi: Plugin.Info.SpiVersion): Map[Plugin.Info.Id, Problem] =
     val dup = infos.groupBy(_.id).collect {
       case (id, is) if is.size > 1 =>
@@ -197,6 +207,7 @@ object PluginHost:
   /** Pure: registration order — the ids named in `histmersion.plugins.order` first, as listed, then the rest by id;
     * with a warning per listed id that is no plugin here.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def order(ids: List[Plugin.Info.Id], configured: List[Plugin.Info.Id]): (List[Plugin.Info.Id], List[Problem]) =
     val listed = configured.distinct
     val unknown =
@@ -215,6 +226,7 @@ object PluginHost:
   def digest(entries: List[(PluginJar.File, Sha256)]): PluginSet.Digest = PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configuredOrder(user: Config, env: Config): Either[Problem, List[Plugin.Info.Id]] =
     val path = s"$Root.$OrderKey"
     Try(user.withFallback(env).resolve(ConfigResolveOptions.noSystem)).toEither.left
@@ -236,6 +248,7 @@ object PluginHost:
   /** Pure: blocks under `histmersion.plugins` no plugin here claims — a typo, or a plugin left out of this binary. A
     * warning, never an error: removing a plugin must not break startup.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unknownBlocks(user: Config, ids: Set[Plugin.Info.Id]): List[Plugin.Info.Id] =
     if !Try(user.hasPath(Root)).getOrElse(false) then Nil
     else
@@ -250,6 +263,7 @@ object PluginHost:
     * only (never system properties: AGENTS.md). The environment's own keys are not part of the result. The report shows
     * the block without `host`: a plugin's settings are its own block's.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def block(
       user: Config,
       defaults: Config,
@@ -276,6 +290,7 @@ object PluginHost:
         Left(Problem.Config.Setting(Problem.SettingKey(path), Problem.Config.Fault.Unreadable(External.Reported.of(e))))
 
   /** Pure: `enabled` of an effective block — a boolean or a boolean string (env); absent = disabled. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enabled(block: Config, id: Plugin.Info.Id): Either[Problem, Boolean] =
     if !block.hasPath("enabled") then Right(false)
     else
@@ -297,6 +312,8 @@ object PluginHost:
     * arrive as strings); a key whose default is `null` (an optional value) takes any value and is left to the reader.
     * Keys the defaults do not have are reported as unknown.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def typeCheck(id: Plugin.Info.Id, user: Config, defaults: Config): List[Problem] =
     import ConfigValueType.*
     val path = s"$Root.$id"
@@ -334,6 +351,7 @@ object PluginHost:
       }
 
   /** Every leaf of a HOCON object (lists and nulls are leaves), with its path. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def leaves(obj: ConfigObject, prefix: List[ConfigPath]): List[(List[ConfigPath], ConfigValue)] =
     obj.keySet.asScala.toList.sorted.flatMap { k =>
       obj.get(k) match
@@ -343,6 +361,8 @@ object PluginHost:
 
   /** Pure: each decoding error as the setting it is at (`histmersion.plugins.<id>[.<key>]`) and what the reader said.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(id: Plugin.Info.Id, err: ConfigDecodingError): Problems = err match
     case ConfigDecodingError.Multiple(errs) =>
       errs.toList.map(describe(id, _)).reduce(_ ++ _)
@@ -358,6 +378,8 @@ object PluginHost:
   /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
     * plugin that will receive it, with no cast.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decode(p: Plugin, conf: Config): Either[Problems, p.Config] =
     try p.configReader.from(conf.withoutPath("enabled").root).left.map(e => describe(p.info.id, e))
     catch
@@ -381,6 +403,7 @@ object PluginHost:
     * strings unquoted, a literal `value:` secret masked. A secret is held in the config only as its reference, so
     * nothing else needs masking.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings(block: Config): List[PluginSetting] =
     leaves(block.root.withoutKey("enabled"), Nil).map { (keys, v) =>
       val shown = v.valueType match
@@ -401,6 +424,8 @@ object PluginHost:
     case other                                      => other
 
   /** The plugin's defaults resource, read through ITS class loader; absent = no defaults. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaults(p: Plugin): Either[Problem, Config] =
     try
       Right(
@@ -426,6 +451,8 @@ object PluginHost:
     * `<vault>:` asks the vault registered under that name. The problems name the setting, the variable or the vault and
     * the reference, never a value.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(
       ref: Secret.Ref,
       env: Config,
@@ -447,6 +474,7 @@ object PluginHost:
             catch case NonFatal(e) => Left(vaultThrew(e, s"$name"))
 
   /** The vault of this name threw instead of answering: logged under its problem's id. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vaultThrew(e: Throwable, vault: String): Problem =
     Problem.from(e, Problem.Where(s"secret vault $vault"), Problem.Internal.Id.mint())
 
@@ -455,6 +483,8 @@ object PluginHost:
     * that throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead,
     * so a throw fails only its own reference.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolveAll(
       name: Secret.Ref.Vault.Value,
       refs: List[Secret.Ref.Vault.Ref],
@@ -480,6 +510,8 @@ object PluginHost:
     catch case NonFatal(_) => asked.map(r => r -> one(r)).toMap
 
   /** The vaults of a generation's registries, by the name a reference gives them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def vaultsOf(regs: Registries): Map[Secret.Ref.Vault.Value, Secret.Vault] =
     regs.secretVaults.iterator.map((k, v) => Secret.Ref.Vault.Value(k.value) -> v).toMap
 
@@ -488,6 +520,7 @@ object PluginHost:
     * answer, value or error, is kept for this generation only (a reload resolves again; nothing outlives the build's
     * registrations).
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private class GenerationSecrets(env: Config, wanted: Map[Secret.Ref.Vault.Value, List[Secret.Ref.Vault.Ref]]):
     private val known = scala.collection.concurrent.TrieMap.empty[Secret.Ref, Either[Problems, SecretValue]]
 
@@ -536,6 +569,7 @@ object PluginHost:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[Registry.AddId, A] = ListMap.empty
     private var open = true
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def add(id: Registry.AddId, a: A): Either[Problem, Unit] =
       if !open then Left(Problem.Refused.Policy(Problem.Refused.Rule.RegistrationOver))
       else if committed.contains(id) || added.contains(id) then
@@ -569,18 +603,23 @@ object PluginHost:
     override def processes: Processes = services.processes
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def info(message: Plugin.Log.Line) =
         services.log(HostServices.PluginId(id.value), false, HostServices.Line(message.value))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def warn(message: Plugin.Log.Line) =
         services.log(HostServices.PluginId(id.value), true, HostServices.Line(message.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def env(name: EnvVar.Name) =
       Option(services.env.root.get(name.value))
         .flatMap(v => Option(v.unwrapped))
         .map(v => EnvVar.Value(v.toString))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def secret(s: Secret) =
       resolved(s)
         .map(v => Secret.Resolved(v.value))
     def secretVaults = vaults
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.Upstream(upstream.value))
     override def licences = HostLicences
     override def sourceFetchers = fetchers
@@ -590,6 +629,8 @@ object PluginHost:
     override def gazetteerSources = gazetteers
     override def sourceCollections = collections
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validFetcher(id: Registry.AddId, f: SourceFetcher): Option[Problem] =
     named(s"$id", Problem.Field(Registries.SourceFetcher))
 
@@ -597,6 +638,7 @@ object PluginHost:
     * or an alias of one, or a provider pictures are stored under — its pictures would be mistaken for theirs); its role
     * is one a collection's pictures may play. A first-party plugin's is the one the name is reserved for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validCollection(firstParty: Boolean)(id: Registry.AddId, c: MediaCollection): Option[Problem] =
     named(s"$id", Problem.Field(Registries.MediaCollection)).orElse {
       if firstParty then None
@@ -616,6 +658,7 @@ object PluginHost:
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the
     * first-party plugin the name is reserved for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validCatalogue(firstParty: Boolean)(id: Registry.AddId, c: EventCatalogue): Option[Problem] =
     named(s"$id", Problem.Field(Registries.EventCatalogue)).orElse(
       Option.when(
@@ -626,6 +669,7 @@ object PluginHost:
   /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not take the name
     * of one of the host's own providers (its models would be mistaken for theirs).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validAiProvider(firstParty: Boolean)(id: Registry.AddId, a: AiProvider): Option[Problem] =
     named(s"$id", Problem.Field(Registries.AiProvider)).orElse(
       Option.when(!firstParty && !a.isInstanceOf[HostOwned] && ReservedNames.aiProviders(ReservedNames.Name(id.value)))(
@@ -637,6 +681,7 @@ object PluginHost:
     * datasets `places fetch` and `init.fetch-sources` name), unless it is the first-party plugin the name is reserved
     * for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validGazetteer(firstParty: Boolean)(id: Registry.AddId, g: GazetteerSource): Option[Problem] =
     named(s"$id", Problem.Field(Registries.GazetteerSource)).orElse(
       Option.when(!firstParty && ReservedNames.gazetteerSources(ReservedNames.Name(id.value)))(
@@ -647,6 +692,7 @@ object PluginHost:
   /** A source collection: a kebab-case id; a plugin's may not take the name of one of Histmersion's own collections
     * (its items would be taken for theirs), unless it is the first-party plugin the name is reserved for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validSourceCollection(firstParty: Boolean)(id: Registry.AddId, c: SourceCollection): Option[Problem] =
     named(s"$id", Problem.Field(Registries.SourceCollection)).orElse(
       Option.when(!firstParty && ReservedNames.sourceCollections(ReservedNames.Name(id.value)))(
@@ -655,6 +701,8 @@ object PluginHost:
     )
 
   /** A vault: a kebab-case name that is no scheme of a reference (`value`, `env`), registered under its own name. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def validVault(id: Registry.AddId, v: Secret.Vault): Option[Problem] =
     if Set(Secret.Ref.ValueScheme, Secret.Ref.EnvScheme)(id.value) then
       Some(Problem.Conflict.AlreadyExists(Problem.TypeName.named[Secret.Vault], Problem.Raw(s"$id")))
@@ -670,6 +718,8 @@ object PluginHost:
       )
 
   /** A plugin's status in the report. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(
       p: Plugin,
       enabled: Boolean,
@@ -691,6 +741,7 @@ object PluginHost:
       error.fold(Nil)(_.toVector.toList)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def hasState(st: PluginStatus, state: PluginState): Boolean = st.state == state.wire
 
   /** Build one generation: check, order, layer, type-check, decode, resolve secrets, register.
@@ -699,6 +750,8 @@ object PluginHost:
     * vault plugin may sort after the plugins that use it); one still waiting when no pass registers anything more
     * fails, naming the vault. Every failure is that plugin's alone.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def build(
       plugins: List[Plugin],
       user: Config,
@@ -865,6 +918,9 @@ object PluginHost:
     )
 
   /** Resolve one prepared plugin's secrets and call its `register` with a staged context. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def register(
       pr: Prepared,
       regs: Registries,

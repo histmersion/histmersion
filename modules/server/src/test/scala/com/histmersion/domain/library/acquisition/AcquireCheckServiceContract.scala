@@ -18,12 +18,16 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
 
   private val T0 = Instant.parse("2026-10-20T10:00:00Z")
   private val Kept = AcquireAttempt.Kept(3)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(ck: Citekey, doi: Option[Doi], body: Option[Source.OcrMarkdown]) =
     Source(
       ck,
@@ -77,6 +81,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(s: AcquisitionStores, text: String): AcquireAttemptRow.Id =
     s.queues
       .add(

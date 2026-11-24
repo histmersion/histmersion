@@ -18,6 +18,7 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.{JobActions, JobKinds}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Research › Activity: ONE time-ordered list of agent runs, background jobs, worklog lines and the person's own
   * decisions ([[Activity]], merged and paged by the server), filtered by chips, each entry linked to what it touched.
@@ -32,6 +33,7 @@ object ActivityView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The row's first words: what is going on, or what it was and when (`hm` = the clock time it shows). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def when(e: Entry, hm: String): String = e.entryKind match
     case Some(EntryKind.Run | EntryKind.Job) =>
       Run.State.parse(e.state) match
@@ -46,11 +48,14 @@ object ActivityView:
     case _                        => s"Note · $hm"
 
   /** Does the row read as a problem (its first words in the attention colour)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def problem(e: Entry): Boolean = Run.State.parse(e.state).contains(Run.State.Failed)
 
   /** The actions a row offers: an agent run or a long background job that is going (pause, cancel), paused (resume,
     * cancel) or waiting its turn (cancel).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def actions(e: Entry): List[Api.JobControl.Action] =
     val controllable = e.entryKind.contains(EntryKind.Run) ||
       (e.entryKind.contains(EntryKind.Job) && JobActions.Stoppable.contains(JobKinds.Wire(e.what.value)))
@@ -63,13 +68,18 @@ object ActivityView:
         case _                                                  => Nil
 
   /** What the row says it is, in words: agent work, a background job, a note, a decision. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindOf(e: Entry): String = e.entryKind.fold(Wording.humanize(Wording.Id(e.kind.value)))(_.wording)
 
   /** The query string of a page of the list: its goal, kept from one chip to the next. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(goal: Option[Goal.Slug]): Pages.UrlQuery =
     Pages.UrlQuery(goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g.value)}"))
 
   /** A `name=value` of a page's query string (`?goal=…`), decoded; `None` when absent or blank. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def param(search: Pages.UrlQuery, name: ParamName): Option[ParamText] =
     Option(search.value)
       .getOrElse("")
@@ -99,10 +109,14 @@ object ActivityView:
 
   // ── one row ─────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalLink(g: Goal.Slug): HtmlElement =
     RouteLink(Route.Goal(g), cls := "goal-ref", Wording.humanize(Wording.Id(g.value)))
 
   /** What an entry touched, as links. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refs(e: Entry): List[Modifier[HtmlElement]] =
     val kind = e.entryKind
     List(
@@ -138,6 +152,8 @@ object ActivityView:
       e.approval.map(id => span(" · ", RouteLink(Route.Research(ResearchSection.Decisions), s"decision #$id")))
     ).flatten
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def headline(e: Entry): Modifier[HtmlElement] = e.entryKind match
     case Some(EntryKind.Decision) =>
       val what = Agents.ApprovalKind
@@ -159,6 +175,10 @@ object ActivityView:
       List[Modifier[HtmlElement]](strong(title), progress.map(p => span(cls := "muted", s" · ${p.take(160)}")))
 
   /** One entry: when, what, what it touched, and its controls. `changed` reloads the list after an action. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def row(e: Entry, changed: () => Unit): HtmlElement =
     val busy = Var(false)
     val failure = Var(Option.empty[String])
@@ -217,6 +237,7 @@ object ActivityView:
     val failure = Var(Option.empty[String])
     private var older = false
 
+    @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
     def first(): Unit =
       ApiClient.activity(Some(show.wire), None, goal, Some(limit), None).onComplete { r =>
         loaded.set(true)
@@ -228,6 +249,7 @@ object ActivityView:
         )
       }
 
+    @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
     def more(): Unit = next.now().foreach { c =>
       ApiClient
         .activity(Some(show.wire), None, goal, Some(limit), Some(c))
@@ -239,6 +261,7 @@ object ActivityView:
 
     def tick(): Unit = if !older then first()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def list(feed: Feed, empty: String): HtmlElement =
     div(
       child.maybe <-- feed.failure.signal
@@ -255,10 +278,13 @@ object ActivityView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def polled(feed: Feed): Modifier[HtmlElement] =
     List(onMountCallback(_ => feed.first()), EventStream.periodic(15000).drop(1) --> (_ => feed.tick()))
 
   /** The chips: each a link to its page, the goal kept; the running and the problems counted. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chips(
       ui: UiConfig,
       on: Option[ActivityTab],
@@ -290,6 +316,8 @@ object ActivityView:
     )
 
   /** The whole page: the chips, the list, and the detailed lists it sums up. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig, tab: ActivityTab, goal: Option[Goal.Slug]): HtmlElement =
     val feed = Feed(tab.show.getOrElse(Activity.Show.Everything), goal, Paging.Limit(Activity.DefaultLimit))
     div(
@@ -310,6 +338,8 @@ object ActivityView:
     )
 
   /** The detailed lists, for when one kind of work must be seen in full. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def details(ui: UiConfig): HtmlElement =
     p(
       cls := "muted activity-details",
@@ -321,16 +351,20 @@ object ActivityView:
     )
 
   /** The overview's few latest entries, linking to the whole list. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def short(limit: Paging.Limit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, None, limit)
     div(cls := "activity-short", polled(feed), list(feed, "Nothing has happened yet."))
 
   /** A goal's slice of the list. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def history(goal: Goal.Slug, limit: Paging.Limit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, Some(goal), limit)
     div(cls := "activity-history", polled(feed), list(feed, "Nothing has happened for this goal yet."))
 
   /** The overview's chips: each a link to the whole list, shown that way. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def shortChips(ui: UiConfig): HtmlElement =
     val counts = Var(Activity.Counts())
     div(

@@ -6,6 +6,7 @@ import com.histmersion.plugin.*
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the registered plugins contribute, one map per extension point, in registration order. Read by the rest of the
   * app; an immutable snapshot of one [[Generation]].
@@ -19,6 +20,7 @@ final case class Registries(
     gazetteerSources: ListMap[Registries.GazetteerSourcesKey, GazetteerSource] = ListMap.empty,
     sourceCollections: ListMap[Registries.SourceCollectionsKey, SourceCollection] = ListMap.empty
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def provides: List[Registries.RegistryKey] =
     secretVaults.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SecretVault}:$k")) ++
       sourceFetchers.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SourceFetcher}:$k")) ++

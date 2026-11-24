@@ -8,10 +8,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The refined site types of the Wikidata sites (`places.site_type`, `site_type_checked_at`). Every method runs on the
   * connection it is given.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the site type tables and their row codecs")
 private[places] object SiteTypeRepo:
   type Refresh = Refresh.T
   object Refresh extends Newtype[Boolean, Pure]
@@ -20,6 +23,8 @@ private[places] object SiteTypeRepo:
     * (`refresh`) asked before `before` (epoch ms — the start of this run).
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def toTypeWhere(refresh: Refresh, before: Option[DeepTime.SignedYear]): Frag =
     val asked = (refresh.value, before) match
       case (true, Some(ms)) =>
@@ -29,6 +34,8 @@ private[places] object SiteTypeRepo:
     sql"p.import_source = 'wikidata' AND p.id ~ '^wikidata_q[1-9][0-9]*$$' AND $asked AND (EXISTS (SELECT 1 FROM finding_places fp WHERE fp.place_id = p.id) OR EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'place' AND m.target_id = p.id))"
 
   /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sitesToType(
       limit: PlaceRepo.Limit,
       refresh: Refresh,
@@ -39,6 +46,7 @@ private[places] object SiteTypeRepo:
       .run()
       .toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear])(using DbCon): RowCount =
     RowCount(
       sql"SELECT count(*)::int FROM places p WHERE ${toTypeWhere(refresh, before)}"

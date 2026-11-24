@@ -16,7 +16,9 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.instance.MapStartMode
 import com.histmersion.api.plugins.PluginDescription
 import com.histmersion.web.SettingsSection
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SettingsWebSuite extends munit.FunSuite:
 
   test("a value as HOCON writes it, as a person types it"):

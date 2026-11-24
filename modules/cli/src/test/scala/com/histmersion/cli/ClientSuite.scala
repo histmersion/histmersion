@@ -6,7 +6,9 @@ import com.histmersion.util.problem.Text.sentence
 import java.io.InputStream
 import java.net.{InetAddress, ServerSocket}
 import java.nio.charset.StandardCharsets.US_ASCII
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ClientSuite extends munit.FunSuite:
 
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")

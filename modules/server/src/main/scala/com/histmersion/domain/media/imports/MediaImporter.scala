@@ -16,11 +16,14 @@ import com.histmersion.domain.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run
   * over a batch of targets. The one-run endpoint and the job share it, so every provider gets the same dry run,
   * `--limit/--place/--event/--refresh`, progress and per-item errors.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait MediaImporter:
   /** The name `media_checks` records it under (and the report's provider). */
   def check: MediaImporter.CheckName
@@ -75,6 +78,7 @@ object MediaImporter:
     * [[OwnImport]] for a collection of its targets' own pictures and by [[CollectionImport]] for one searched by a
     * place's name.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       name: ImporterName,
       col: MediaCollection,
@@ -95,6 +99,7 @@ object MediaImporter:
     new MediaImporter:
       val check = checkName
       val title = what
+      @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
       val over = MediaImporter.over(asks)
       def batch = cfg().importBatch
       def collection = col
@@ -117,6 +122,7 @@ object MediaImporter:
             since,
             pleiadesOnly = ImportService.PleiadesOnly(pleiades)
           )
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def pending(since: Option[ImportService.Since]) =
         if both then imports.pending(ImportService.Provider(check.value), since)
         else
@@ -126,6 +132,7 @@ object MediaImporter:
             since,
             pleiadesOnly = ImportService.PleiadesOnly(pleiades)
           )
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def start()(using WritePermit)(using Creator.New) =
         val media = cfg()
         // the collection's own pace, one host at a time, and its own patience with a refusal (#2561)

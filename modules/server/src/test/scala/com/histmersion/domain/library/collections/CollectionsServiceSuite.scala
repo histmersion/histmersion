@@ -22,6 +22,7 @@ import com.histmersion.api.library.{
   CollectionsMarkdown
 }
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The collections' rules on the in-memory service (the database one runs the same rules; the calibre commands' suite
   * runs it end to end): what a listing leaves out, what a push sends and records, what an update and an audit are
@@ -34,12 +35,14 @@ class CollectionsServiceSuite extends munit.FunSuite:
     CollectionItem(id, Some(title), List(CollectionItem.Authors("An Author")), Some(Year(2000)))
 
   /** A shelf of three books that records what it was asked to write. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private class Shelf(writes: Boolean) extends SourceCollection:
     val written = scala.collection.mutable.ListBuffer.empty[String]
     def title = SourceCollection.Title("Calibre")
     override def capabilities =
       if writes then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
       else Set(CollectionCapability.Read)
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     override def readOnlyReason = Problem.Unclassified(Legacy.Text("write-back is off"))
     private val books = List(
       book(CollectionId("1"), CollectionItem.Title("One")),
@@ -48,14 +51,18 @@ class CollectionsServiceSuite extends munit.FunSuite:
     )
     def search(query: CollectionQuery) = Right(books)
     def item(id: CollectionId) = Right(books.find(_.id == id))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def file(i: CollectionItem, format: Option[SourceCollection.FileFormat]) = Right(
       CollectionFile(CollectionFile.Name(s"/lib/${i.id.value}.pdf"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def original(i: CollectionItem, f: CollectionFile) = Right(
       FetchedFile(FetchedFile.Source("calibre"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def add(m: CollectionMetadata, f: FetchedFile) =
       written += s"add ${m.key} ${m.title} ${f.extension} ${f.bytes.value.length}"; Right(CollectionId("9"))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def updateAll(links: List[CollectionLink], apply: SourceCollection.UpdateAllApply) =
       written += s"updateAll ${links.map(l => s"${l.id.value}:${l.metadata.key}").mkString(",")} $apply"
       Right(
@@ -67,6 +74,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
           )
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def audit(records: List[CollectionRecord]) =
       Right(
         records
@@ -83,6 +91,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
           )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def gap(
       ck: Citekey,
       stored: Option[CalibreGap.StoredOriginal],
@@ -105,11 +114,14 @@ class CollectionsServiceSuite extends munit.FunSuite:
 
   final private class Library extends RefusingCollectionLibrary:
     val pushedIds = scala.collection.mutable.ListBuffer.empty[(Citekey, Source.CalibreId)]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def pushMeta(citekey: domain.library.Citekey) =
       Right(gap(Citekey(citekey.value), Some(CalibreGap.StoredOriginal(true)), id = Some(Source.CalibreId("2"))))
     override def pushed(req: CalibrePushRequest) =
       pushedIds += req.citekey -> req.calibreId;
       Right(CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     override def original(citekey: domain.library.Citekey) =
       if citekey.value == "zz_none" then
         Left(Api.Error(Problem.Unclassified(Legacy.Text(s"no original stored for '$citekey'"))))
@@ -131,6 +143,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
         )
       )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private val linked = List(
     LinkedSource(
       domain.library.Citekey("zz_two"),

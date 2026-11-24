@@ -8,10 +8,13 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.instance.MapStartMode
 import com.histmersion.api.basemap.BaseMapSource
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the wire says of the `ui` block: the page's settings as `/api/config` serves them, and the tile servers the
   * page fetches from as the Content-Security-Policy names them.
   */
+@movesTo(FeaturePlace.ServerInstance)
 object UiConfigViews:
 
   /** The settings [[tileTemplates]] reads: a reload that changes one of them rebuilds what is made from it. */
@@ -21,12 +24,16 @@ object UiConfigViews:
     * ([[BaseMapSource.MutedTiles]]). None when `ui.base-map-source` is `local`: the page then offers no online map and
     * asks no other host for one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tileTemplates(ui: UiSettings): List[String] =
     if ui.baseMapSource.value.trim.equalsIgnoreCase(BaseMapSource.Local) then Nil
     else List(ui.tiles.value, BaseMapSource.MutedTiles.value)
 
   /** The page's settings: the `ui` block, plus what the server knows and the block does not hold. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(
       ui: UiSettings,
       keyRequired: UiConfig.KeyRequired,

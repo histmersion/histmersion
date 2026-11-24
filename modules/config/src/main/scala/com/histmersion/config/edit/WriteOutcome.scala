@@ -3,6 +3,8 @@ package config.edit
 
 import org.ekrich.config.Config
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a write did to the config file.
   *
@@ -21,6 +23,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param warnings
   *   what works but should be known: a `value:` credential, an environment variable that overrides the new value
   */
+@movesTo(FeaturePlace.UtilSettings)
 final case class WriteOutcome(
     file: SettingsFile.Shown,
     changed: List[SettingKey],
@@ -42,6 +45,7 @@ object WriteOutcome:
   type Created = Created.T
   object Created extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       file: SettingsFile.Shown,
       schema: ConfigSchema,

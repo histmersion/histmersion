@@ -5,9 +5,12 @@ import com.histmersion.api.catalogue.MatchSpan
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A passage of a source's text a search found: where it starts in the body, its text, and where in it the matches are.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Passage(offset: Passage.Offset, text: Passage.Text, matches: List[MatchSpan])
 
 object Passage:

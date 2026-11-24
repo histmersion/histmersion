@@ -6,7 +6,9 @@ import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 import com.histmersion.plugin.Plugin.Config.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
 final case class WithSecrets(token: Secret, password: Option[Secret], retries: Int, verbose: Boolean)
     derives ConfigReader
 
@@ -15,6 +17,8 @@ final class ExamplePlugin extends Plugin:
   val info = Plugin.Info(Plugin.Info.Id("example"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
   def register(config: WithSecrets, ctx: Plugin.Context) = Right(())
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class SecretSuite extends munit.FunSuite:
 
   test("the three reference forms parse"):

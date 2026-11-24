@@ -10,6 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import com.histmersion.api.Plural
 import com.histmersion.api.library.Filter
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One controller for the list tabs that follow the global filter (Articles, Events — #1798 item 5): on a UiState
   * change it recomputes the query, skips an unchanged one, debounces, drops answers to superseded requests
@@ -46,6 +47,7 @@ final class FilterTab[Q, Row](
   private var lastQuery: Option[Q] = None
   private var timer: Int = 0
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := s"$name-pane",
@@ -70,6 +72,7 @@ final class FilterTab[Q, Row](
     )
 
   /** Called on every UiState change: refetch only when the query has changed, after the debounce. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refresh(): Unit =
     val q = query()
     if !lastQuery.contains(q) then
@@ -78,6 +81,8 @@ final class FilterTab[Q, Row](
       timer = dom.window.setTimeout(() => load(), debounceMs().value)
 
   /** The first page of the current query, now. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def load(): Unit =
     val q = query()
     lastQuery = Some(q)
@@ -88,6 +93,8 @@ final class FilterTab[Q, Row](
     )
 
   /** "show more": the loaded rows first, then the next page from the server. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def more(): Unit =
     TabState.more(state.now(), page) match
       case Right(next)  => state.set(next)

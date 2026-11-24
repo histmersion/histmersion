@@ -11,19 +11,25 @@ import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.InstanceLabel
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import
   * uploads it as the request body.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion bundle` arguments")
 object BundleCmd:
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def existing(file: String): Either[Problems, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
     else Left(Problem.Unclassified(Legacy.Text(s"no such file: $file")))
 
   /** The manifest of a bundle on disk — its first entry. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[cli] def manifestOf(p: Path): Either[Problem, Bundle.Manifest] =
     val in = Files.newInputStream(p)
     try
@@ -45,6 +51,8 @@ object BundleCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Export(file, since) =>

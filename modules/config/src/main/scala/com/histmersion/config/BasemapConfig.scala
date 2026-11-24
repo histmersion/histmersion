@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Reloading the config in place (docs/research-plugins.md §3.5): `histmersion config reload`, or — with `watch` — by
   * itself when the config file changes, `watchDebounceMs` after the last change. `drainSeconds` is how long a reload
@@ -14,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * requests go, the sources (the Protomaps vector build, Mapterhorn's elevation, Natural Earth's physical names,
   * ETOPO1's sea floor), and how far the map zooms in on its two vector styles (`mapMaxZoom`).
   */
+@movesTo(FeaturePlace.UtilBasemap)
 final case class BasemapConfig(
     dir: BasemapConfig.Dir,
     bbox: BasemapConfig.Bbox,

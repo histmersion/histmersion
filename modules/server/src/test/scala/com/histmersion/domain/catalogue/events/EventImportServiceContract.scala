@@ -14,13 +14,17 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract an event catalogue's import keeps: a new event made from the record it is named after, refreshed when
   * its record is written again, an event made by hand only filled; the records kept by key with their kinds; the parts
   * read; and the corrections by hand — recorded when a person changes an imported event, kept over the catalogue's
   * value, retired once the catalogue agrees, flagged when it says something else.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class EventImportServiceContract extends CatalogueStoreSuite:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(
       id: CatalogRecord.ProviderId,
       label: CatalogRecord.Label,
@@ -38,6 +42,7 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
       vei = Some(CatalogRecord.Vei(6)),
       names = List(CatalogRecord.Names(label.value + " alias"))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeNew(r: CatalogRecord) =
     r -> CatalogMerge.Placement.New(
       Event.Id.applyUnsafe(CatalogRecord.eventId(r).value),

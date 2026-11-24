@@ -5,8 +5,11 @@ import com.histmersion.util.problem.Problem
 
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What kind of value a setting holds, as its default in reference.conf has it. */
+@movesTo(FeaturePlace.UtilSettings)
 enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe) derives CanEqual:
   case Text extends SettingKind(SettingKind.Wire("text"), SettingKind.Describe("text"))
   case Number extends SettingKind(SettingKind.Wire("number"), SettingKind.Describe("a number"))
@@ -19,6 +22,7 @@ enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe)
   /** A key of an open block (a plugin's own settings): any single value. */
   case Any extends SettingKind(SettingKind.Wire("any"), SettingKind.Describe("a value"))
 
+@tolerated(LintRule.CanEqualHome, "pending G67 (a foreign type's CanEqual in one file; its users share no module yet)")
 object SettingKind:
 
   /** Two kinds of HOCON value compare with `==` and `!=`, also under `-language:strictEquality`: a setting's kind is
@@ -48,4 +52,5 @@ object SettingKind:
     case ConfigValueType.OBJECT  => Block
     case _                       => Any
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[SettingKind] = values.find(_.wire.value == s.value.trim.toLowerCase)

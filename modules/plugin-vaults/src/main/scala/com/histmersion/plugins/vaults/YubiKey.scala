@@ -7,11 +7,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** KeePassXC's YubiKey challenge-response (`keepassxc-cli … -y <slot>[:<serial>]`): which keys the `yubikey` setting
   * lists, which of them are connected, and what a failed attempt means — the next key, or stop. All pure;
   * [[KeePassXcVault]] runs the tools. Slots and serials are not secrets.
   */
+@tolerated(LintRule.CanEqualHome, "pending G67 (a foreign type's CanEqual in one file; its users share no module yet)")
 object YubiKey:
   private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
 
@@ -26,6 +28,7 @@ object YubiKey:
 
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]) derives CanEqual:
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def shown: Label = Label(serial.fold(slot.value.toString)(s => s"${slot.value}:${s.value}"))
 
   object Slot:
@@ -42,6 +45,8 @@ object YubiKey:
   object Written extends Newtype[String, Match["[12](:[0-9]+)?"]]
 
   /** Pure: `"2"` or `"2:12345678"`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(text: Text): Either[Problem, Slot] =
     val t = (text).value.trim
     val refused = Problem.Invalid.malformed(Written.refused(t)).within(Problem.Field("yubikey"))
@@ -55,6 +60,7 @@ object YubiKey:
       case _ => Left(refused)
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAll(entries: List[Setting.Entries]): Either[Problem, List[Slot]] =
     entries
       .map((_).value.trim)
@@ -64,6 +70,8 @@ object YubiKey:
       }
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def serials(out: SerialsOut): Set[Slot.Serial] =
     ((out).value.linesIterator
       .map(_.trim)
@@ -119,6 +127,7 @@ object YubiKey:
     * credentials stop at once: another key cannot fix a wrong password, and with the same secret programmed into every
     * listed key a wrong key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def failure(message: KeePassXcMessage, entry: Setting.Entries): Failure = message match
     case KeePassXcMessage.InvalidCredentials      => Failure.Stop(Problem.Plugin.Attempt.WrongCredentials)
     case KeePassXcMessage.NoEntry                 => Failure.NoEntry(entry)
@@ -131,6 +140,7 @@ object YubiKey:
     * touch your YubiKey", "Enter password to unlock").
     */
   extension (err: Subprocess.Result.Err)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unprompted: External.Stderr =
       Subprocess.Result
         .Err(
@@ -148,11 +158,13 @@ object YubiKey:
     */
   final case class Setting(entries: List[Setting.Entries])
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Setting:
     type Entries = Entries.T
     object Entries extends Newtype[String, Pure]
 
     given ConfigReader[Setting] = new ConfigReader[Setting]:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def from(v: ConfigValue) =
         if v.valueType == ConfigValueType.LIST then
           summon[ConfigReader[List[String]]].from(v).map(l => Setting(l.map(refactorValue3 => Entries(refactorValue3))))

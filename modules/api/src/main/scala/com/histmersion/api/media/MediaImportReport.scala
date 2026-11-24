@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.RepairAcquire
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 final case class MediaImportReport(
     provider: MediaItem.Provider,
     dryRun: RepairAcquire.RepairRequest.DryRun,
@@ -58,6 +61,7 @@ object MediaImportReport:
   type Batches = Batches.T
   object Batches extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def combine(a: MediaImportReport, b: MediaImportReport): MediaImportReport =
     def add(x: List[MediaCount], y: List[MediaCount]) =
       (x ++ y)

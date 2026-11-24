@@ -7,6 +7,7 @@ import com.histmersion.api.problem.Answer.entry
 
 import com.histmersion.api.automation.Agents.PauseReason
 import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a job stopped, as the problems its `jobs.error` keeps say it: a pause for a reason ([[Problem.Run.Halted]], with
   * the problem it stopped on), a restart's cut ([[Problem.Run.Interrupted]]), the autopilot's drain
@@ -84,9 +85,11 @@ object Stopped:
     * whose models are all spent, found in what the run stopped on (inside the step it stopped at, too), or read from a
     * master version's sentence.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def exhaustedRole(why: Problem): Option[AgentRole] =
     exhaustedIn(why).flatMap(role => AgentRole.parse(AgentRole.Wire(s"$role")))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def exhaustedIn(why: Problem): Option[Problem.Run.Role] = why match
     case Problem.Run.NoModel(role, Problem.Run.Shortfall.Exhausted(_, _), _) => Some(role)
     case Problem.Run.AtStep(_, Problem.Run.Failure.Failed(problems))         =>
@@ -97,6 +100,7 @@ object Stopped:
   /** What a job's stored `error` contains when it is a pause for `reason`, as the entry writes it: the SQL `error @>`
     * operand that tells such a row by its case and its cause, whatever it stopped on.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pausedMatch(reason: PauseReason): Json =
     val written = Paused(reason, Problem.Run.Interrupted).problem.entry
     val cause = written.data.asObject.flatMap(_("cause")).getOrElse(Json.Null)

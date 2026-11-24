@@ -32,29 +32,37 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer against a real PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers what cannot be asserted
   * purely: containment, the point tolerance, period overlap, the recursive hierarchy and the `Filter.places` resolution
   * that feeds [[FilterSql]].
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class PlaceRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   // a square over Anatolia, a smaller Late-Bronze-Age polity inside it, and a point site
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def box(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
     Place.Geometry(
       s"""{"type":"Polygon","coordinates":[[[$minLon,$minLat],[$maxLon,$minLat],[$maxLon,$maxLat],[$minLon,$maxLat],[$minLon,$minLat]]]}"""
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val asia = Place(Place.Id("zzp_asia"), Place.Label("Asia"), Place.KindValue(Place.Kind.Region))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val turkey =
     Place(Place.Id("zzp_turkey"), Place.Label("Turkey"), Place.KindValue(Place.Kind.Region), Some(box(26, 36, 45, 42)))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hatti = Place(
     Place.Id("zzp_hatti"),
     Place.Label("Hittite Empire"),
@@ -63,6 +71,7 @@ class PlaceRepoSuite extends DbSuite:
     Some(Period(Year(-1650), Year(-1180))),
     Some(Place.Source("test fixture"))
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hattusa =
     Place(
       Place.Id("zzp_hattusa"),
@@ -71,6 +80,7 @@ class PlaceRepoSuite extends DbSuite:
       Some(Place.Geometry("""{"type":"Point","coordinates":[34.615,40.019]}"""))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val batch = List(
     Place.Input(asia, List(Place.Name(Place.Name.Value("Asia")))),
     Place.Input(

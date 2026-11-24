@@ -40,18 +40,23 @@ import com.histmersion.api.RegisteredPlanMatches
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the whole issue list in
   * one run, conditional issues, resolutions (stale, invalid, partial), the editions policy, and the properties —
   * determinism, stable ids, monotone resolution.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergePlannerSuite extends munit.FunSuite with Bounded:
   private def plan(in: MergePlanner.Input = input(), res: MergeResolutions = MergeResolutions()): MergePlanner.Result =
     MergePlanner.plan(in, sketches, res, cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(pairs: (MergeIssue.Id, MergeResolution.Decision)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(MergeResolution.Issue(i.value), d)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
   private def issue(p: MergePlan, kind: Issue.Kind, right: IssueSide.Label): MergeIssue =
     p.issues
       .find(i => i.kind == kind && i.right.exists(_.label == right))
@@ -324,6 +329,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     }
 
   /** A decision an issue allows: its suggestion, else its first option (with an argument it accepts). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def someDecision(i: MergeIssue, rnd: scala.util.Random): MergeResolution.Decision =
     i.suggested.filter(_ => rnd.nextBoolean()).map(d => MergeResolution.Decision(d.wire.value)).getOrElse {
       i.options(rnd.nextInt(i.options.size)) match
@@ -448,6 +454,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   // ── what a pair owns (M4) ─────────────────────────────────────────────────────────────────
 
   private val At = "2026-10-01T09:00:00.000000Z"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def att(
       id: String,
       source: String,

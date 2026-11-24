@@ -32,6 +32,7 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals
@@ -49,6 +50,7 @@ import com.histmersion.util.database.WritePermit
   * focus hold is released and no goal is recorded active. The focus decides WHAT runs: `max-concurrent-runs`, the
   * budgets, plan floors and daily caps decide how much.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class GoalFocusService(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -58,6 +60,7 @@ final class GoalFocusService(
   private def acfg = cfg.autopilot
 
   /** The cap and where it comes from: a person's (`focus max`) or the config's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cap: (GoalFocus.Settings.Max, FocusInfo.MaxFrom) =
     Transactor(ds)
       .read(FocusRepo.maxOverride)
@@ -91,10 +94,13 @@ final class GoalFocusService(
       .filter(g => current.isDefined && queued(g))
       .fold(note)(_ => Manager.Status(Manager.Status.Kind.Queued, s" its goal waits for a slot — ${note.render}"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(goal: Goal.Slug): ManagerInfo.Id = seedId(ApiGoal.Ref(goal.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def watch(goal: Goal.Slug): ManagerInfo.Id = watchId(ApiGoal.Ref(goal.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def count(n: Int, noun: String): String =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
@@ -103,6 +109,7 @@ final class GoalFocusService(
   /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is `auto` (the
     * same rule as [[AutoApprovals.checked]])?
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def byPerson(
       kind: Option[FocusRepo.WorkRow.ApprovalKind],
       autoApprove: Option[FocusRepo.WorkRow.AutoApprove]
@@ -122,6 +129,7 @@ final class GoalFocusService(
       openPlans: RowCount
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def read(): Read =
     val goals = agents.focusStore.goals()
     val rows = Transactor(ds).read(FocusRepo.work)
@@ -167,6 +175,7 @@ final class GoalFocusService(
       Transactor(ds).read(FocusRepo.openGoalPlans)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings(r: Read, max: GoalFocus.Settings.Max): GoalFocus.Settings =
     GoalFocus.Settings(
       max,
@@ -180,6 +189,7 @@ final class GoalFocusService(
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** One pass at `now`, from the managers' tick before the dispatch; one line per change. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tick(now: Instant)(using WritePermit): List[String] =
     if !inForce then
       current = None
@@ -209,6 +219,7 @@ final class GoalFocusService(
   private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
     List(seed(goal), watch(goal)).find(id => agents.managerStore.get(id).isDefined)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def emit(manager: ManagerInfo.Id, feed: String, text: String)(using WritePermit): Unit =
     agents.managerStore.event(manager, None, None, ManagerEvent.Kind(feed), ManagerEvent.Text(text.take(2000)))
 
@@ -216,6 +227,7 @@ final class GoalFocusService(
     managerOf(goal).foreach(id => emit(id, Feed.Autopilot, text))
 
   /** The goals that joined and left, recorded with why. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(plan: Plan, r: Read, now: Instant)(using WritePermit): List[String] =
     val joined = plan.joined.flatMap(g => plan.active.find(_.slug == g)).map { p =>
       agents.focusStore.joined(p.slug, p.why, now)
@@ -230,6 +242,7 @@ final class GoalFocusService(
     joined ++ left
 
   /** Hold what waits, release what may run; one line per manager that changed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyHolds(plan: Plan, r: Read)(using WritePermit): List[String] =
     val items = r.work.map(w =>
       GoalFocus.Item(
@@ -269,6 +282,7 @@ final class GoalFocusService(
     * person's) to one of any other, counting on from their last starts. Any other manager, or the focus not in force:
     * as given.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fair(
       m: ManagerInfo,
       due: List[ManagerPolicy.Candidate],
@@ -308,6 +322,7 @@ final class GoalFocusService(
     * focus and the plan approvals waited for each other — a goal waiting for its plan was never active, so code never
     * decided its plan).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlanBlock(goal: Goal.Slug, proposed: AutopilotPolicy.Proposed): Option[AutopilotPolicy.Description] =
     val goals = agents.focusStore.goals()
     val kids = goals.filter(_.parent.isDefined).groupMap(g => g.parent.get.value: String)(identity)
@@ -330,6 +345,7 @@ final class GoalFocusService(
     )
 
   /** How many goals with an approved plan are unfinished now. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unfinishedPlanned(): AutopilotPolicy.Unfinished =
     AutopilotPolicy.unfinishedPlanned(
       agents.focusStore.goals().map(g => Goal.Slug.assume(g.slug.value) -> Goal.Status.Wire(g.status.value)),
@@ -337,6 +353,7 @@ final class GoalFocusService(
     )
 
   /** Why goal plans are not offered now, if they are not ([[AutopilotPolicy.goalPlansWait]]). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlansWait(): Option[AutopilotPolicy.Description] =
     val limit = acfg.maxUnfinishedGoals
     if limit.value <= 0 then None
@@ -345,6 +362,7 @@ final class GoalFocusService(
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
   /** The focus as the next pass would decide it (read-only: with the autopilot off, what it WOULD focus on). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def info(now: Instant = Instant.now(agents.clock), changes: List[FocusInfo.Changes] = Nil): FocusInfo =
     val (max, from) = cap
     val r = read()
@@ -414,6 +432,8 @@ final class GoalFocusService(
   /** `pin` / `unpin` / `priority` a goal, or the cap (`max`; no value: back to the config's). Applied at the next
     * managers' tick (nudged now); answers the focus as the next pass will decide it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def set(in: FocusSet, now: Instant = Instant.now(agents.clock))(using WritePermit): Either[Api.Error, FocusInfo] =
     def error(message: String): Api.Error = Api.Error(Problem.Unclassified(Legacy.Text(message)))
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
@@ -462,6 +482,7 @@ final class GoalFocusService(
       info(now, List(FocusInfo.Changes(line)))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(line: String): Unit =
     agents.workLists.logLine(
       QueueAdd(Queue.QueueItem.Text(line.take(1000))),

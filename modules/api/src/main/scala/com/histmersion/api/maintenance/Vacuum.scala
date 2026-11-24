@@ -13,17 +13,21 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 object Vacuum:
   type DeadRows = DeadRows.T
   object DeadRows extends Newtype[Long, Pure]
   type Table = Table.T
   object Table extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobKind = MaintenanceJobKinds.Vacuum.kind.value
 
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plan(in: Request, defaults: List[Table], existing: Set[Table]): Either[Api.Error, VacuumPlan] =
     val asked =
       in.tables.flatMap(_.value.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
@@ -44,13 +48,18 @@ object Vacuum:
       Left(Write.invalid(Problem.NotFound.Entity(Problem.TypeName.of(Table), Problem.Raw(s"${absent.mkString(", ")}"))))
     else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => Request.Tables(refactorValue2))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statement(table: Table, analyze: Request.Analyze): String =
     val q = "\"" + (table).value.replace("\"", "\"\"") + "\""
     if (analyze).value then (s"VACUUM (ANALYZE) $q") else (s"VACUUM $q")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def describe(p: VacuumPlan): String =
     (s"${if (p.analyze) == Request.Analyze(true) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tableLine(
       table: Table,
       deadBefore: DeadRows,
@@ -73,6 +82,8 @@ object Vacuum:
     type Tables = Tables.T
     object Tables extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[Request] = KindlingsSchema
       .derived[Request]
       .schema

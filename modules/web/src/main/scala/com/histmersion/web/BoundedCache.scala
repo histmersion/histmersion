@@ -3,6 +3,7 @@ package web
 
 import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A cache with a ceiling (#1949): at most `maxEntries` entries and at most `maxWeight` of their summed weight, the
   * least recently used going first. Every cache the page keeps for its life is one of these — a hover card per source,
@@ -13,6 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * way) is weighed again with [[reweigh]]. One entry heavier than the whole budget is still kept — it is what was just
   * asked for — and alone. Not thread-safe: the page has one thread. Pure apart from its own state; no browser API.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class BoundedCache[K, V](
     val maxEntries: BoundedCache.MaxEntries,
     val maxWeight: BoundedCache.MaxWeight = BoundedCache.MaxWeight(Long.MaxValue),
@@ -24,7 +26,9 @@ final class BoundedCache[K, V](
   // `var`: the summed weight of `entries`, kept with every change
   private var total = 0L
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size: BoundedCache.Stats.Entries = BoundedCache.Stats.Entries(entries.size)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def weight: BoundedCache.Stats.Weight = BoundedCache.Stats.Weight(total)
   def keys: List[K] = entries.keys.toList
   def contains(k: K): Boolean = entries.contains(k)
@@ -39,6 +43,7 @@ final class BoundedCache[K, V](
   /** The value of `k` without touching its recency (a read that must not keep an entry alive). */
   def peek(k: K): Option[V] = entries.get(k).map(_._1)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def put(k: K, v: V): Unit =
     drop(k)
     val w = math.max(0L, weigh(v).value)
@@ -55,6 +60,7 @@ final class BoundedCache[K, V](
         x
 
   /** `k`'s weight is now `w` (its value arrived); over budget, the least recently used others go. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reweigh(k: K, w: BoundedCache.ReweighW): Unit =
     entries.get(k).foreach { (v, old) =>
       entries(k) = (v, math.max(0L, w.value))
@@ -75,6 +81,7 @@ final class BoundedCache[K, V](
     }
 
   /** Over either ceiling: the least recently used go first, never `keep` (the entry just written). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def evict(keep: K): Unit =
     val it = entries.keysIterator
     val victims = mutable.ListBuffer.empty[K]
@@ -118,5 +125,6 @@ object BoundedCache:
     type MaxWeight = MaxWeight.T
     object MaxWeight extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stats(c: BoundedCache[?, ?]): Stats =
     Stats(c.size, Stats.MaxEntries(c.maxEntries.value), c.weight, Stats.MaxWeight(c.maxWeight.value))

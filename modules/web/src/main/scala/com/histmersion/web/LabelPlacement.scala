@@ -3,6 +3,7 @@ package web
 
 import scala.collection.mutable
 import com.histmersion.api.Geo
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where a region's or polity's NAME goes on the map, and which names are shown — all pure, so the placement is a unit
   * test and the map only applies the answer ([[MapLabels]]).
@@ -67,6 +68,8 @@ object LabelPlacement:
   private val MaxLat = 85.0511287798
 
   /** Pure: (lat, lon) → the zoom-0 Mercator plane. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def project(lat: Geo.Latitude, lon: Geo.Longitude): Pt =
     val phi = math.toRadians(math.max(-MaxLat, math.min(MaxLat, lat.value)))
     Pt(
@@ -75,6 +78,8 @@ object LabelPlacement:
     )
 
   /** Pure: the inverse of [[project]] → (lat, lon). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unproject(p: Pt): (Geo.Latitude, Geo.Longitude) =
     val lon = p.x / World * 360.0 - 180.0
     val n = math.Pi - 2.0 * math.Pi * p.y / World
@@ -94,6 +99,7 @@ object LabelPlacement:
       math.abs(s) / 2.0
 
   /** Pure: a polygon's area — its outer ring less its holes. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def polyArea(p: Poly): Double =
     p.headOption.fold(0.0)(ringArea) - p.drop(1).map(ringArea).sum
 
@@ -129,6 +135,7 @@ object LabelPlacement:
     *   - `parts`: the outline the name may move within when its home is off screen (an archipelago's: its hull);
     *   - `archipelago`: no part holds [[DominantShare]] of the land, so the hull stands for the shape.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class Shape(
       lat: Geo.Latitude,
       lon: Geo.Longitude,
@@ -168,6 +175,7 @@ object LabelPlacement:
       val (lat, lon) = unproject(home)
       Some(Shape(lat, lon, home, size0, box, parts, archipelago = h.length >= 3))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def part(p: Poly): Part =
     val rings = p.map(thin(_, ViewRingPoints))
     Part(rings, Rect.of(rings.head))
@@ -195,6 +203,7 @@ object LabelPlacement:
     * `maxProbes` cells. The first grid has at most [[MaxGridCells]] cells along the longer side, so a sliver (a shape
     * clipped to a screen edge) costs no more than a square.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def anchor(poly: Poly, precision: Double = 0.0, maxProbes: Int = MaxProbes): Pt =
     val rings = poly.map(thin(_))
     val outer = rings.head
@@ -260,6 +269,7 @@ object LabelPlacement:
   def signedDistance(x: Double, y: Double, rings: Poly): Double = signedDistanceFlat(x, y, flatten(rings))
 
   /** Each ring as `[x0, y0, x1, y1, …]`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def flatten(rings: Poly): Array[Array[Double]] =
     rings.iterator.map { r =>
       val a = new Array[Double](r.length * 2)
@@ -331,6 +341,7 @@ object LabelPlacement:
     else if side >= MediumSidePx then Some(Tier.M)
     else Some(Tier.S)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def tier(s: Shape, zoom: Double): Option[Tier] = tier(s.size0, s.extent0, zoom)
 
   // ── where, in this viewport ──────────────────────────────────────────────────────────────────────
@@ -371,6 +382,7 @@ object LabelPlacement:
     *      while the name then still touches that box or sits within [[NearPx]] of it;
     *   4. else nowhere.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def place(s: Shape, view: Rect, scale: Double, halfW: Double, halfH: Double, prev: Option[Pt] = None): Option[Pt] =
     val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale)
     if inner.isEmpty || !s.bbox0.intersects(view) then None
@@ -387,6 +399,7 @@ object LabelPlacement:
   /** Pure: the box around the parts of `s` inside `r` (each part's box cut to `r`) — the cheap stand-in for the visible
     * part, used every frame of a pan. Empty when nothing is inside.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def visibleBox(s: Shape, r: Rect): Rect =
     var x0 = Double.PositiveInfinity
     var y0 = Double.PositiveInfinity
@@ -405,6 +418,7 @@ object LabelPlacement:
   /** Pure: step 3 of [[place]] — the middle of `box` (what is on screen of a shape) pulled into `inner`, kept while the
     * name there touches `box` or is at most [[NearPx]] beside it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def edgePlace(box: Rect, inner: Rect, scale: Double, halfW: Double, halfH: Double): Option[Pt] =
     if box.isEmpty || inner.isEmpty then None
     else
@@ -418,6 +432,7 @@ object LabelPlacement:
     * inset viewport and the on-screen box of the shape, else as in step 3 of [[place]]. `None`: no place on screen, the
     * name fades out.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def glide(s: Shape, view: Rect, scale: Double, halfW: Double, halfH: Double, last: Option[Pt]): Option[Pt] =
     val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale)
     if inner.isEmpty || !s.bbox0.intersects(view) then None
@@ -434,6 +449,7 @@ object LabelPlacement:
       else Some(room.clamp(last.getOrElse(s.home)))
 
   /** Pure: the largest piece of the shape's parts inside `r` (each part clipped to it), if any has area. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def visiblePiece(s: Shape, r: Rect): Option[Poly] =
     var best: Poly = Vector.empty
     var bestArea = 0.0
@@ -452,6 +468,7 @@ object LabelPlacement:
     * three points or more; empty when the outer ring is gone. A concave shape may come back joined by zero-width seams
     * along the rectangle's edge — its area and its pole are unaffected.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def clip(poly: Poly, r: Rect): Poly =
     val outer = clipRing(poly.head, r)
     if outer.length < 3 then Vector.empty

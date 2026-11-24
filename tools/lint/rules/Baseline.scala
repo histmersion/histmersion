@@ -153,11 +153,23 @@ object Baseline:
 
   def tolerations(findings: List[Finding], tree: Tree, rel: String): Patch =
     val key = Project.ref(rel).map(_.key)
-    val open = Tolerance.open(findings, tree)
+    val open = Tolerance.open(findings.filter(f => Reasons.contains(f.rule)), tree)
     val annotations = open.flatMap { f =>
       target(f, tree).map(d => d -> s"@tolerated(LintRule.${f.rule}, ${quoted(reasonOf(f, rel, key))})")
     }
     annotate(tree, annotations, Set("LintRule", "tolerated"))
+
+  def prune(findings: List[Finding], tree: Tree, owned: Set[String]): Patch =
+    val marks = Tolerance.marks(tree)
+    val unused = Tolerance.unused(findings, marks, owned, Tolerance.definitions(tree)).map(_.pos.start).toSet
+    val tokens = tree.tokens
+    marks
+      .filter(m => unused(m.annotation.pos.start) && !m.annotation.syntax.startsWith("@movesTo"))
+      .map { m =>
+        val after = tokens.dropWhile(_.start < m.annotation.pos.end).takeWhile(_.is[Token.Whitespace])
+        Patch.removeTokens(m.annotation.tokens) + Patch.removeTokens(after)
+      }
+      .asPatch
 
   def files(tree: Tree, rel: String): Patch =
     val top = Tolerance.topLevelDefinitions(tree).headOption
@@ -172,8 +184,26 @@ object Baseline:
     val moves = key.flatMap(places.get).flatMap(placeCase.get).filterNot(_ => present("movesTo")).flatMap { c =>
       top.map(d => d -> s"@movesTo(FeaturePlace.$c)")
     }
+    val pkg = tree.collect { case p: Pkg => p.ref.syntax }.mkString(".").stripPrefix("com.histmersion.")
+    val writing = tree.collect {
+      case o: Defn.Object if Tolerance.isTopLevel(o) =>
+        o.templ.body.stats.collect {
+          case v: Defn.Val if getWrites.contains(s"$pkg.${o.name.value}.${v.pats.headOption.map(_.syntax).getOrElse("")}") =>
+            val endpoint = s"$pkg.${o.name.value}.${v.pats.head.syntax}"
+            v -> s"@tolerated(LintRule.GetWrites, ${quoted(getWrites(endpoint))})"
+        }
+    }.flatten
     annotate(tree, boundary.toList, Set("BoundaryKind", "atBoundary")) +
-      annotate(tree, moves.toList, Set("FeaturePlace", "movesTo"))
+      annotate(tree, moves.toList, Set("FeaturePlace", "movesTo")) +
+      annotate(tree, writing, Set("LintRule", "tolerated"))
+
+  lazy val getWrites: Map[String, String] =
+    rows("modules/server/src/test/resources/architecture/get-writes.tsv")
+      .collect { case Array(endpoint, method, _, kind, sink) => endpoint -> s"$method: $kind ${sink.split('.').takeRight(2).mkString(".")}" }
+      .groupMap(_._1)(_._2)
+      .view
+      .mapValues(ws => s"pending S1 follow-up 5 (a GET or HEAD route writes nothing): ${ws.distinct.mkString(", ")}")
+      .toMap
 
 final class FileBaseline extends SyntacticRule("FileBaseline"):
   override def fix(using doc: SyntacticDocument): Patch =

@@ -11,6 +11,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
 
 /** A place's page as the server answers it: the gazetteer's `PlaceCard` with the place's pictures. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class PlaceDetail(
     place: Place.Summary,
     geometry: Option[Place.Geometry],

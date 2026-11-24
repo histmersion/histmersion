@@ -22,6 +22,8 @@ import sttp.ai.core.agent.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `codex` provider: `codex exec --json -p <role>` per step attempt, on the GENERATED Codex home
   * (docs/research-agent-runtimes.md §2.4): the role's profile carries its prompt (includes and skills inlined — with
@@ -30,8 +32,12 @@ import com.histmersion.util.database.WritePermit
   * no approvals. The empty working directory keeps any project `AGENTS.md` and `.codex/` out; the run token decides the
   * tools the endpoint serves. After each step the ChatGPT plan pool is read from the app-server (throttled).
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.AutomationAgents)
 final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntime) extends LlmClient:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val agent = call.agent.getOrElse(throw java.io.IOException("codex: a step must run as an agent definition"))
     val home = rt.trees.codexHome.getOrElse(
@@ -44,6 +50,8 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
     try Codex.Home.using(home)(runIn(call, agent, home))
     finally Codex.Home.maybeRetain(home, cfg)
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runIn[Out](
       call: LlmCall[Out],
       agent: AgentDef,

@@ -5,10 +5,12 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.config.LoadedConfig
 import org.ekrich.config.{Config, ConfigOrigin}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The settings file a [[ConfigFileWriter]] reads and changes, wherever it is kept: the server's in the store of its
   * directory, the command line's on the disk of the machine it runs on.
   */
+@movesTo(FeaturePlace.UtilSettings)
 trait SettingsFile:
   /** Where the file is, as messages and the settings page name it. */
   def shown: SettingsFile.Shown

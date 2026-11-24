@@ -5,10 +5,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.Highlight
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `?q=` article surface (plan §1.4): links keep the query, the match control appears only when something matched,
   * and highlighting survives the flexmark output (links included).
   */
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class ArticleQuerySuite extends munit.FunSuite:
 
   test("the full-text toggle carries ?q= through, url-encoded"):

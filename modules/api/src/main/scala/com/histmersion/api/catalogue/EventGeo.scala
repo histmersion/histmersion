@@ -8,7 +8,11 @@ import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventGeo(
     id: Event.Id,
     label: EventGeo.Label,
@@ -43,6 +47,7 @@ object EventGeo:
   type Anchor = Anchor.T
   object Anchor extends Newtype[String, Pure]
   type PlaceLabel = PlaceLabel.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PlaceLabel extends Newtype[String, Pure]
   type ParentId = ParentId.T
   object ParentId extends Newtype[String, Pure]

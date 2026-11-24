@@ -4,6 +4,7 @@ package domain.catalogue.evidence
 import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.util.text.Anchor
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
   * `suffix`), as an attestation stores it (`quote`/`prefix`/`suffix`). Used when a merge keeps one OCR body and the
@@ -16,6 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object TextAnchor:
   type ChunkChars = ChunkChars.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ChunkChars extends Newtype[Int, Pure]
   type Prefix = Prefix.T
   object Prefix extends Newtype[String, Pure]
@@ -26,11 +28,14 @@ object TextAnchor:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ReanchorText = Text
   val ReanchorText: Text.type = Text
   type ReanchorHint = ReanchorHint.T
   object ReanchorHint extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reanchor(
       text: ReanchorText,
       quote: Quote,
@@ -52,8 +57,10 @@ object TextAnchor:
           else occurrences(norm, q).map(i => anchorAt(back(i), back(i + q.length - 1) + 1))
       best(body, found, prefix.fold("")(_.value), suffix.fold("")(_.value), hint.map(_.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def anchorAt(start: Int, end: Int): Anchor = Anchor(Anchor.Start(start), Anchor.End(end))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def best(
       text: String,
       found: List[Anchor],
@@ -104,6 +111,8 @@ object TextAnchor:
     * is the n-th in the text, and the chunks are searched for the n-th one in document order. `None` when the chunking
     * cannot tell (a quote cut by a chunk boundary).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chunkOf(text: Text, anchor: Anchor, chunkChars: ChunkChars): Option[Chunk.Ord] =
     if chunkChars.value <= 0 then None
     else

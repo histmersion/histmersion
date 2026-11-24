@@ -32,10 +32,14 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
   * lists' text and order.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ToolsSuite extends munit.FunSuite:
 
   /** The citekey shape the server accepts (the model's `Citekey`), for the suggestions' tests. */
@@ -147,6 +151,7 @@ class ToolsSuite extends munit.FunSuite:
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(id: String, s: JobState, kind: String = Ingest.KindIngest) =
     JobInfo(SpatialHierarchyResult.Job.Id(id), JobKinds.Wire(kind), s.wire, (Some(s"ck_$id")).map(Citekey.apply))
 
@@ -463,6 +468,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(gs.map((t, is) => t -> is.map(_.id)), List(Some("b") -> List(1, 5, 9), Some("a") -> List(2)))
   }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def qi(
       id: Queue.QueueItem.Id,
       list: Queue.QueueItem.List,

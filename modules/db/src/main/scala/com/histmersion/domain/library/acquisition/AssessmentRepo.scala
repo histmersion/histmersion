@@ -13,10 +13,14 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the assessment tables and their row codecs")
 private[acquisition] object AssessmentRepo:
 
   final private case class RwRow(
@@ -65,6 +69,8 @@ private[acquisition] object AssessmentRepo:
     RowCount(sql"SELECT count(*)::int FROM retraction_watch".query[Int].run().headOption.getOrElse(0))
 
   /** Every Retraction Watch notice recorded against this DOI (usually zero or one). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def retractionsFor(doi: Doi)(using DbCon): List[RetractionNotice] =
     sql"""SELECT nature, reason, to_char(date, 'YYYY-MM-DD')
           FROM retraction_watch WHERE doi = ${doi.value.toLowerCase}"""
@@ -74,6 +80,7 @@ private[acquisition] object AssessmentRepo:
       .toList
 
   /** Record the verdict for a stored source; the `checked_at` stamp. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def putAssessment(a: AssessmentRecord)(using DbCon)(using creator: Creator.New): String =
     sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict, creator)
           VALUES (${a.citekey}, now(), ${a.retracted}, ${a.noticesJson}::jsonb, ${a.citedBy}, ${a.influential},
@@ -86,6 +93,7 @@ private[acquisition] object AssessmentRepo:
           FROM assessments WHERE citekey = ${a.citekey}""".query[String].run().headOption.getOrElse("")
 
   /** `(verdict, checkedAt)` of the last assessment, when there is one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def assessmentFor(citekey: Citekey)(using DbCon): Option[(AssessmentRow.Verdict, AssessmentRow.CheckedAt)] =
     sql"""SELECT citekey, to_char(checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                  retracted, cited_by, influential, verdict

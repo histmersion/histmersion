@@ -10,8 +10,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class CritiqueRef(src: Citekey, dst: Citekey) derives JsonCodec, KindlingsSchema, api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire: CritiqueRef.Wire = CritiqueRef.Wire(s"$src>$dst")
 
   def same(o: CritiqueRef): Boolean = ((src == o.src && dst == o.dst) || (src == o.dst && dst == o.src))
@@ -23,6 +25,7 @@ object CritiqueRef:
   private def key(s: String): String =
     ((s).trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Either[Problem, CritiqueRef] =
     val t = Option((s).value).getOrElse("").replace("->", ">").replace("→", ">")
     t.split(">", -1).toList match

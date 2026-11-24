@@ -4,6 +4,7 @@ import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.WorkKey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Plain text out of the bits of HTML a provider's metadata carries (Commons' `Artist` is a link to a user page). Pure.
   */
@@ -11,6 +12,7 @@ object MediaText:
   type FileName = FileName.T
   object FileName extends Newtype[String, Pure]
   type Html = Html.T
+  @tolerated(LintRule.HtmlNewtype, "pending G96 (one markup type, api.Html)")
   object Html extends Newtype[String, Pure]
   type PlainText = PlainText.T
   object PlainText extends Newtype[String, Pure]
@@ -30,6 +32,8 @@ object MediaText:
     "&nbsp;" -> " "
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plain(html: Html, max: PlainMax = PlainMax(300)): PlainText =
     val noTags = Tag.replaceAllIn(Option(html).map(_.value).getOrElse(""), " ")
     val named = Named.foldLeft(noTags) { case (acc, (k, v)) => acc.replace(k, v) }
@@ -50,6 +54,8 @@ object MediaText:
     if text.length > (max).value then PlainText(text.take((max).value - 1).trim + "…") else PlainText(text)
 
   /** Pure: a URL without its `utm_*` tracking parameters (Commons adds them to every file URL). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stripTracking(url: RepositoryLanding.Candidate.Url): RepositoryLanding.Candidate.Url =
     (url).value.split("\\?", 2) match
       case Array(base, query) =>
@@ -59,6 +65,8 @@ object MediaText:
       case _ => RepositoryLanding.Candidate.Url((url).value)
 
   /** Pure: a link-safe file name for a provider's file title (`File:Lions Gate.jpg` → `Lions_Gate.jpg`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def safeName(title: WorkKey.Title): FileName =
     val n = (title).value.stripPrefix("File:").trim.replaceAll("[^A-Za-z0-9._-]+", "_").replaceAll("_+", "_")
     if n.isEmpty then FileName("file") else FileName(n.take(180))

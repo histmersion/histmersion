@@ -38,6 +38,8 @@ import com.histmersion.api.library.Citekey as ApiCitekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.3): the
   * mechanical checks, the validation of each reviewer's answer, the merge of the panel (worst verdict wins,
@@ -47,6 +49,8 @@ import com.histmersion.domain.automation.Run
   *
   * JVM-only, like [[EnrichSource]], because quote matching needs `java.text.Normalizer`.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.ResearchWorkflows)
 object ReviewArticle:
 
   /** Why a finding is not fixed: the fixer's words, or the account of what the fixer left; not a failure. */
@@ -54,13 +58,18 @@ object ReviewArticle:
   object Rationale extends Newtype[String, Pure]
   type CitedInCorpusCount = CitedInCorpusCount.T
   object CitedInCorpusCount extends Newtype[Int, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   type Criticised = com.histmersion.api.library.Citekey
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val Criticised: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
   type DefaultRounds = DefaultRounds.T
   object DefaultRounds extends Newtype[Int, Pure]
   type FindingCount = FindingCount.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FindingCount extends Newtype[Int, Pure]
   type FixRun = FixRun.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FixRun extends Newtype[Boolean, Pure]
   type LastRound = LastRound.T
   object LastRound extends Newtype[Boolean, Pure]
@@ -73,8 +82,10 @@ object ReviewArticle:
   type Sentence = Sentence.T
   object Sentence extends Newtype[String, Pure]
   type SpotCheckCount = SpotCheckCount.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SpotCheckCount extends Newtype[Int, Pure]
   type SpotCheckMin = SpotCheckMin.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SpotCheckMin extends Newtype[Int, Pure]
   type TurnCap = TurnCap.T
   object TurnCap extends Newtype[Int, Pure]
@@ -88,8 +99,10 @@ object ReviewArticle:
   object ExplainSlotsValue extends Newtype[String, Pure]
   export Article.Body as MechanicalBody
   export BodyCorpus.Generated as MechanicalGenerated
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type VerdictOfLast = LastRound
   val VerdictOfLast: LastRound.type = LastRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckRulesLast = LastRound
   val CheckRulesLast: LastRound.type = LastRound
   type SpotCheckTools = SpotCheckToolsValue
@@ -97,26 +110,36 @@ object ReviewArticle:
   type SpotVerdicts = SpotVerdictsValue
   type SpotVerdictsValue = SpotVerdictsValue.T
   object SpotVerdictsValue extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckSpotChecksLast = LastRound
   val CheckSpotChecksLast: LastRound.type = LastRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckColdReaderLast = LastRound
   val CheckColdReaderLast: LastRound.type = LastRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckSkepticLast = LastRound
   val CheckSkepticLast: LastRound.type = LastRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type LabelledSentence = Sentence
   val LabelledSentence: Sentence.type = Sentence
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type QualifiedClaimSentence = Sentence
   val QualifiedClaimSentence: Sentence.type = Sentence
   export Evidence.Quote as QualifiedClaimQuote
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type QualifiedClaimCriticised = Criticised
   val QualifiedClaimCriticised: Criticised.type = Criticised
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckCritiquesLast = LastRound
   val CheckCritiquesLast: LastRound.type = LastRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckNotMaterialLast = LastRound
   val CheckNotMaterialLast: LastRound.type = LastRound
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ChecksOfLast = LastRound
   val ChecksOfLast: LastRound.type = LastRound
   export Article.Body as CheckRecheckEdited
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckRecheckLast = LastRound
   val CheckRecheckLast: LastRound.type = LastRound
   export Merged.Round as MergeRound
@@ -127,16 +150,20 @@ object ReviewArticle:
     case ColdReader extends Reviewer(Reviewer.Wire("cold-reader"), Reviewer.Prefix("C"))
     case Skeptic extends Reviewer(Reviewer.Wire("skeptic"), Reviewer.Prefix("S"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Reviewer:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     type Prefix = Prefix.T
     object Prefix extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Reviewer] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Reviewer]:
       def all: Array[Reviewer] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Reviewer): WireEnumValues.Wire = WireEnumValues.Wire(e.wire.value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Reviewer] = parse(Wire(s.value))
     given JsonValueCodec[Reviewer] = WireEnum.codec
     given Schema[Reviewer] = WireEnum.schema
@@ -145,14 +172,18 @@ object ReviewArticle:
     case Major extends Severity(Severity.Wire("major"))
     case Minor extends Severity(Severity.Wire("minor"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Severity:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Severity] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Severity]:
       def all: Array[Severity] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Severity): WireEnumValues.Wire = WireEnumValues.Wire(e.wire.value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Severity] = parse(Wire(s.value))
     given JsonValueCodec[Severity] = WireEnum.codec
     given Schema[Severity] = WireEnum.schema
@@ -163,12 +194,14 @@ object ReviewArticle:
     case Minor extends Verdict(Verdict.Wire("MINOR"), Verdict.Rank(1))
     case Major extends Verdict(Verdict.Wire("MAJOR"), Verdict.Rank(2))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Verdict:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     type Rank = Rank.T
     object Rank extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Verdict] = values.find(_.wire.value == s.value.trim.toUpperCase)
     def worst(vs: Iterable[Verdict]): Verdict = vs.foldLeft(Pass)((a, b) => if b.rank > a.rank then b else a)
 
@@ -177,7 +210,9 @@ object ReviewArticle:
       if fs.exists(_.severity == Severity.Major) then Major else if fs.nonEmpty then Minor else Pass
     given WireEnumValues[Verdict]:
       def all: Array[Verdict] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Verdict): WireEnumValues.Wire = WireEnumValues.Wire(e.wire.value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[Verdict] = parse(Wire(s.value))
     given JsonValueCodec[Verdict] = WireEnum.codec
     given Schema[Verdict] = WireEnum.schema
@@ -196,6 +231,7 @@ object ReviewArticle:
     * read a slice) and the sentence copied from it. Code checks the quote is in that record before the fixer sees it,
     * so the fixer can act on it without searching again.
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EvidenceAnswer(
       citekey: EvidenceAnswer.Citekey,
       offset: Option[EvidenceAnswer.Offset] = None,
@@ -209,6 +245,8 @@ object ReviewArticle:
     object Offset extends Newtype[Int, Pure]
     export Evidence.Quote
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[EvidenceAnswer] = KindlingsSchema
       .derived[EvidenceAnswer]
       .schema
@@ -226,6 +264,7 @@ object ReviewArticle:
   private def ChecksDescription: String =
     "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)"
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class FindingAnswer(
       severity: FindingAnswer.Severity,
       kind: FindingAnswer.Kind,
@@ -243,6 +282,8 @@ object ReviewArticle:
     export Finding.{Fix, Problem}
     export CritiqueRef.Wire as Pair
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[FindingAnswer] = KindlingsSchema
       .derived[FindingAnswer]
       .schema
@@ -282,6 +323,8 @@ object ReviewArticle:
     export Evidence.Quote
     export Finding.{Fix, Problem}
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ReaderFindingAnswer] = KindlingsSchema
       .derived[ReaderFindingAnswer]
       .schema
@@ -310,6 +353,8 @@ object ReviewArticle:
     type StatusesSilent = StatusesSilent.T
     object StatusesSilent extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RulesAnswer] = KindlingsSchema
       .derived[RulesAnswer]
       .schema
@@ -332,6 +377,7 @@ object ReviewArticle:
     * article's words, the AttrScore verdict, and the record's sentence it rests on. Code accepts it only when the step
     * really read that source ([[checkSpotChecks]]).
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SpotCheckAnswer(
       citekey: SpotCheckAnswer.Citekey,
       claim: SpotCheckAnswer.Claim,
@@ -346,6 +392,8 @@ object ReviewArticle:
     export ReviewArticle.SpotVerdictsValue as Verdict
     export Evidence.Quote as RecordQuote
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SpotCheckAnswer] = KindlingsSchema
       .derived[SpotCheckAnswer]
       .schema
@@ -376,6 +424,9 @@ object ReviewArticle:
     type LostAt = LostAt.T
     object LostAt extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ColdReaderAnswer] = KindlingsSchema
       .derived[ColdReaderAnswer]
       .schema
@@ -408,6 +459,8 @@ object ReviewArticle:
     type ClaimsChecked = ClaimsChecked.T
     object ClaimsChecked extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SkepticAnswer] = KindlingsSchema
       .derived[SkepticAnswer]
       .schema
@@ -433,6 +486,8 @@ object ReviewArticle:
   object NotMaterialAnswer:
     export CritiqueRef.Wire as Pair
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[NotMaterialAnswer] = KindlingsSchema
       .derived[NotMaterialAnswer]
       .schema
@@ -446,6 +501,7 @@ object ReviewArticle:
   /** A reviewer's verdict on one of its own earlier findings (the review ledger, [[ReviewLedger]]): fixed or not, shown
     * by a quote of the CURRENT article.
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class CheckAnswer(
       id: CheckAnswer.Id,
       fixed: CheckAnswer.Fixed,
@@ -458,6 +514,8 @@ object ReviewArticle:
     export Evidence.Quote
     export Check.Note
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[CheckAnswer] = KindlingsSchema
       .derived[CheckAnswer]
       .schema
@@ -474,6 +532,7 @@ object ReviewArticle:
   /** A verification pass's answer (the targeted re-check after a fix): the checks of the findings the fixer claims to
     * have fixed, the regressions found in the edited passages, and lessons for the fixer.
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RecheckAnswer(
       checks: List[CheckAnswer] = Nil,
       findings: List[FindingAnswer] = Nil,
@@ -482,6 +541,8 @@ object ReviewArticle:
   object RecheckAnswer:
     export Recheck.Lessons
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RecheckAnswer] = KindlingsSchema
       .derived[RecheckAnswer]
       .schema
@@ -497,6 +558,7 @@ object ReviewArticle:
         )
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RejectionAnswer(
       id: RejectionAnswer.Id,
       reason: Rationale,
@@ -510,6 +572,8 @@ object ReviewArticle:
     export Finding.Id
     export Evidence.Quote
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[RejectionAnswer] = KindlingsSchema
       .derived[RejectionAnswer]
       .schema
@@ -533,6 +597,8 @@ object ReviewArticle:
     export Finding.Id as Applied
     export Fix.{Notes, UnresolvedMoved}
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[FixerAnswer] = KindlingsSchema
       .derived[FixerAnswer]
       .schema
@@ -565,6 +631,7 @@ object ReviewArticle:
   /** The fixer's answer to a missing-critique finding: the critique does not bear on what the article cites the source
     * for. Code stores the reason with the article and closes the finding (§6.8).
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SetAsideAnswer(
       id: SetAsideAnswer.Id,
       pair: Option[SetAsideAnswer.Pair] = None,
@@ -574,6 +641,8 @@ object ReviewArticle:
     export Finding.Id
     export CritiqueRef.Wire as Pair
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[SetAsideAnswer] = KindlingsSchema
       .derived[SetAsideAnswer]
       .schema
@@ -589,10 +658,13 @@ object ReviewArticle:
         )
       )
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class WontFixAnswer(id: WontFixAnswer.Id, reason: Rationale) derives JsonCodec
   object WontFixAnswer:
     export Finding.Id
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[WontFixAnswer] = KindlingsSchema
       .derived[WontFixAnswer]
       .schema
@@ -601,6 +673,7 @@ object ReviewArticle:
 
   // ── verified values (checkpointed) ──────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Finding(
       id: Finding.Id,
       reviewer: Reviewer,
@@ -622,6 +695,7 @@ object ReviewArticle:
     def major: Boolean = severity == Severity.Major
 
     /** One line for a person or a queue item. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String =
       val at = Option(where).map(_.value.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
       s"$id ${severity.wire}$at: ${problem.value.trim}"
@@ -642,6 +716,7 @@ object ReviewArticle:
       * code produces is [[Problem.Cause.Other]]) and [[Problem.of]] writes a cause as the same sentence, so a ledger
       * written by an earlier version reads as it was and one written now reads in an earlier version.
       */
+    @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
     object Problem extends Newtype[String, Pure]:
       type Section = Section.T
       object Section extends Newtype[String, Pure]
@@ -696,6 +771,7 @@ object ReviewArticle:
         else Nil
 
       /** The sentence a cause is stored as. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def of(c: Cause): Problem = c match
         case Cause.UncitedParagraph        => Problem("a paragraph with no [[citekey]]")
         case Cause.HandWrittenSourcesCited => Problem("a hand-written Sources cited section (the page generates it)")
@@ -737,6 +813,7 @@ object ReviewArticle:
         /** What the sentence says. A sentence is only read as a cause when writing that cause gives the sentence back
           * exactly, so [[of]] of [[cause]] is always the stored sentence.
           */
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def cause: Cause =
           val text: String = p.value
           val read: Cause = text match
@@ -784,6 +861,7 @@ object ReviewArticle:
     object Escalated extends Newtype[Boolean, Pure]
 
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Evidence(
       citekey: library.Citekey,
       offset: Option[Evidence.Offset],
@@ -794,7 +872,10 @@ object ReviewArticle:
         com.histmersion.api.json.Schema
 
   object Evidence:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Offset = com.histmersion.Offset
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
     type Quote = Quote.T
     object Quote extends Newtype[String, Pure]
@@ -883,8 +964,10 @@ object ReviewArticle:
 
   object Snapshot:
 
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Slug = research.Slug
     val Slug: research.Slug.type = research.Slug
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = domain.Title
     val Title: domain.Title.type = domain.Title
     export Article.Kind.Wire as Kind
@@ -898,6 +981,7 @@ object ReviewArticle:
     * status from the brief instead of querying for it (a Codex rules step selected the whole `sources` table for it,
     * 2026-10-16). Empty when it cites none.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citedLines(cited: List[CitedSource]): String =
     cited
       .map { c =>
@@ -921,7 +1005,9 @@ object ReviewArticle:
       deferred: List[Merged.Deferred] = Nil
   ) derives JsonCodec:
     def majors: List[Finding] = findings.filter(f => f.major && !deferred.contains(f.id))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def escalated: List[Finding] = findings.filter(_.escalated.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def count(r: Reviewer): FindingCount = FindingCount(findings.count(_.reviewer == r))
 
   object Merged:
@@ -1030,6 +1116,7 @@ object ReviewArticle:
   ) derives JsonCodec
 
   object Outcome:
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Slug = research.Slug
     val Slug: research.Slug.type = research.Slug
     type Rounds = Rounds.T
@@ -1048,6 +1135,8 @@ object ReviewArticle:
   private val HeadingLine = "^#{1,6}\\s+(.+?)\\s*#*\\s*$".r
 
   /** The headings of a body, in order, as written. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def headings(body: Fix.Body): List[String] =
     body.value.linesIterator.collect { case HeadingLine(h) => h.trim }.toList
 
@@ -1057,6 +1146,8 @@ object ReviewArticle:
     * content) has none. `generated`: the article records a filter, so its Not used list is generated (#958) and the
     * body must not have one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def requiredSections(
       kind: Snapshot.Kind,
       generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
@@ -1069,11 +1160,14 @@ object ReviewArticle:
   /** The finding kind of the coverage checks (#958): hand-written generated sections, and drift. */
   val CoverageKind: Finding.Kind = Finding.Kind("coverage")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def findQuote(quote: String, body: String, minRatio: CritiqueRule.MinRatio): AgentVerify.QuoteMatch =
     AgentVerify.findQuote(AgentProposals.Proposal.Quote(quote), AgentVerify.SourceBody(body), minRatio)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def normalise(s: String): String = AgentVerify.normalise(AgentVerify.Text(s)).value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def wikilinks(text: String): List[String] = AgentVerify.wikilinks(AgentVerify.Text(text)).map(_.value)
 
   /** The checks code can make with certainty, as `M<n>` findings: banned filler, a paragraph with no `[[citekey]]`,
@@ -1081,6 +1175,9 @@ object ReviewArticle:
     * and `[[links]]` that resolve to nothing. With `generated` (the article records a filter, #958) a hand-written Not
     * used section or `_Method_` note is one too: code generates both, so a written one duplicates them and goes stale.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def mechanical(
       slug: research.Slug,
       kind: Snapshot.Kind,
@@ -1225,6 +1322,8 @@ object ReviewArticle:
     * Sources cited or Not used, with a reason); a reason for a source the body now cites, or one the filter no longer
     * returns, is minor (it is not shown).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def coverageDrift(c: Coverage, from: Merged.Round): List[Finding] =
     def keys(cks: List[ApiCitekey]) =
       val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
@@ -1273,6 +1372,7 @@ object ReviewArticle:
   type EvidenceCheck = EvidenceAnswer => Either[Problem, Evidence]
 
   /** No evidence is checked (the cold reader has none). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val NoEvidence: EvidenceCheck =
     e =>
       Left(
@@ -1282,6 +1382,7 @@ object ReviewArticle:
   /** The check every reviewer's evidence passes: a real citekey, and a quote that IS in its record (the OCR-tolerant
     * matcher the fixer's rejections use). `text` is the record as get_source shows it (summary, findings, notes, body).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidenceCheck(
       isCitekey: library.Citekey => Boolean,
       text: library.Citekey => Option[AgentVerify.SourceBody],
@@ -1306,6 +1407,8 @@ object ReviewArticle:
     * out is DROPPED with a warning (the finding stays; the fixer just does not get that record) — it is never a reason
     * to ask the reviewer again.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkFindings(
       r: Reviewer,
       as: List[FindingAnswer],
@@ -1342,6 +1445,8 @@ object ReviewArticle:
   /** The stated verdict must not be worse than the findings show (a MAJOR with no major finding is a finding left out);
     * a milder one is simply corrected. On the last attempt the findings decide.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def verdictOf(stated: Verdict.Wire, fs: List[Finding], last: VerdictOfLast): Either[Problem, Verdict] =
     val derived = Verdict.of(fs)
     Verdict.parse(Option(stated).getOrElse(Verdict.Wire(""))) match
@@ -1353,6 +1458,8 @@ object ReviewArticle:
         Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictShown(Raw.of(v.wire)))))
       case _ => Right(derived)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settle(
       r: Reviewer,
       verdict: Either[Problem, Verdict],
@@ -1369,6 +1476,8 @@ object ReviewArticle:
   /** `critique`: a missing-critique MAJOR of the rules reviewer is calibrated like the skeptic's ([[checkCritiques]];
     * it owes no rulings and is never sent back for one).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def checkRules(
       a: RulesAnswer,
       last: CheckRulesLast,
@@ -1411,6 +1520,7 @@ object ReviewArticle:
   object SpotRule:
     type Required = Required.T
     object Required extends Newtype[Int, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Cited = library.Citekey
     val Cited: library.Citekey.type = library.Citekey
     export Article.Body
@@ -1419,13 +1529,19 @@ object ReviewArticle:
   /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the corpus when it
     * cites fewer.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spotChecksRequired(min: SpotCheckMin, citedInCorpus: CitedInCorpusCount): SpotCheckCount = SpotCheckCount(
     math.max(0, math.min(min.value, citedInCorpus.value))
   )
 
   /** Does tool call `u` read the record of `ck`? A get_source or passages call whose input names it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reads(u: AgentVerify.ToolUse, ck: library.Citekey): Boolean = readsText(u, ck.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readsText(u: AgentVerify.ToolUse, ck: String): Boolean =
     SpotCheckTools(SpotCheck.Tool(u.tool.value.trim)) && ck.nonEmpty &&
       Option(u.input).exists(_.value.toLowerCase(java.util.Locale.ROOT).contains(ck.toLowerCase(java.util.Locale.ROOT)))
@@ -1437,6 +1553,7 @@ object ReviewArticle:
     * in it, #1840); on the last attempt it is a warning. A spot-check that fails beyond those required is dropped with
     * a warning. Returns (verified, problems, warnings).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkSpotChecks(
       as: List[SpotCheckAnswer],
       rule: SpotRule,
@@ -1512,11 +1629,15 @@ object ReviewArticle:
 
     val Kind: Finding.Kind = Finding.Kind("term-count")
     val Where: Finding.Where = Finding.Where("explain-back")
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def problem(n: ColdReaderAnswer.TermsUndefined): Finding.Problem =
       Finding.Problem(s"$n terms undefined (count only; the individual findings carry the severity)")
     val Fix: Finding.Fix = Finding.Fix("define each on first use, and add a Glossary")
 
     /** The count finding — this one, or the MAJOR "N terms are undefined (more than 8)" earlier runs stored. */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def is(f: Finding): Boolean =
       f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.value.trim.isEmpty) &&
         normalise(Option(f.where).map(_.value).getOrElse("")) == normalise(Where.value) &&
@@ -1529,6 +1650,7 @@ object ReviewArticle:
     * singular or plural ("open questions", "Disagreements:") is that slot. Returns the slots and the entries that are
     * neither.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def emptySlotsOf(raw: List[ColdReaderAnswer.EmptySlots]): (List[ColdReaderAnswer.EmptySlots], List[String]) =
     val entries = raw.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).filterNot(NoSlot.matches)
     val read = entries.map { e =>
@@ -1545,6 +1667,8 @@ object ReviewArticle:
     * MAJOR verdict the reader states for the count alone is corrected, not sent back (its instructions may still call
     * the count major).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkColdReader(
       a: ColdReaderAnswer,
       last: CheckColdReaderLast,
@@ -1606,6 +1730,7 @@ object ReviewArticle:
     * in the record. Unverifiable ones are dropped with a warning (they are not findings; nothing is lost by dropping
     * them). Its findings' evidence is checked the same way.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def checkSkeptic(
       a: SkepticAnswer,
       last: CheckSkepticLast,
@@ -1634,6 +1759,8 @@ object ReviewArticle:
   /** The finding kind of an omitted critique. */
   val MissingCritique: Finding.Kind = Finding.Kind("missing-critique")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isMissingCritique(f: Finding): Boolean =
     f.kind.value.trim.toLowerCase(java.util.Locale.ROOT) == MissingCritique.value
 
@@ -1656,6 +1783,8 @@ object ReviewArticle:
     export Article.Body
     export AgentVerify.MinRatio
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def recordedMinor(f: Finding, why: String): Finding =
     f.modify(_.severity)
       .setTo(Severity.Minor)
@@ -1706,6 +1835,8 @@ object ReviewArticle:
   /** A paragraph's sentences: split after `.`, `!` or `?` before a capital, a quote, a bracket or an emphasis mark —
     * never after an abbreviation or an initial (`M. L. West`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sentences(p: Fix.Body): List[Sentence] =
     val text = p.value
     val cuts = SentenceEnd
@@ -1729,6 +1860,8 @@ object ReviewArticle:
   /** The sentence of `body` that holds `quote` — the fewest consecutive sentences (at most four) when it spans more
     * than one, else its paragraph; None when the quote is not in the body.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claimSentence(body: Fix.Body, quote: Evidence.Quote, minRatio: CritiqueRule.MinRatio): Option[Sentence] =
     val q = Option(quote).map(_.value.trim).getOrElse("")
     def has(t: String) = findQuote(q, t, minRatio).accepted
@@ -1742,6 +1875,8 @@ object ReviewArticle:
       }
 
   /** Does the text carry a hedge or a contest word (outside its links)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def qualified(text: Sentence): Boolean =
     Hedge.findFirstIn("""\[\[[^\]]*\]\]""".r.replaceAllIn(text.value, " ")).isDefined
 
@@ -1752,6 +1887,8 @@ object ReviewArticle:
     * (2003) dated the split… [[gray2003_language]], and Bouckaert et al. (2012, contested)…") does not qualify it. The
     * whole sentence when the quote's end is not found.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claimWindow(sentence: Sentence, quote: Evidence.Quote): Sentence =
     val ws = quote.value.split("[^\\p{L}\\p{N}]+").filter(_.nonEmpty).takeRight(3)
     if ws.isEmpty then sentence
@@ -1769,6 +1906,8 @@ object ReviewArticle:
     * (`([[smith1998_death]], contested — challenged by …)`, `[[x]] (contested`)? A short form of the citekey
     * (`[[knapp2016]]` for `knapp2016_seven`) counts.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def labelled(sentence: LabelledSentence, criticised: Criticised): Boolean =
     val ck = criticised.value.trim.toLowerCase(java.util.Locale.ROOT)
     val forms = (ck :: Option.when(ck.contains("_"))(ck.takeWhile(_ != '_')).toList).map(java.util.regex.Pattern.quote)
@@ -1779,6 +1918,8 @@ object ReviewArticle:
   /** Is the claim `quote` states already qualified in `sentence`: a hedge or contest word in its own clause
     * ([[claimWindow]]), or a status label on the criticised work ([[labelled]])?
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def qualifiedClaim(
       sentence: QualifiedClaimSentence,
       quote: ReviewArticle.QualifiedClaimQuote,
@@ -1802,6 +1943,9 @@ object ReviewArticle:
     * Minor missing-critique findings, and every other kind, pass unchanged. Returns (findings, problems to send back,
     * warnings).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def checkCritiques(
       r: Reviewer,
       fs: List[Finding],
@@ -1868,6 +2012,7 @@ object ReviewArticle:
     * one whose pair an open skeptic entry of the ledger already holds (the cold reader repeating a ledger finding it
     * read; the rules reviewer the skeptic's). Returns the findings kept and a warning per one dropped.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onePerPair(fs: List[Finding], heldBySkeptic: List[CritiqueRef]): (List[Finding], List[String]) =
     val withPair = fs.filter(f => isMissingCritique(f) && f.pair.isDefined)
     val keep = fs.filter { f =>
@@ -1893,6 +2038,7 @@ object ReviewArticle:
     * dropped: the finding wins). A pair it did not rule on sends the answer back; on the last attempt it is a warning
     * (the pair stays open). Returns (reasons, problems, warnings).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkNotMaterial(
       as: List[NotMaterialAnswer],
       fs: List[Finding],
@@ -1942,6 +2088,7 @@ object ReviewArticle:
     export AgentVerify.MinRatio
 
   /** A full panel's checks: only when the ledger listed findings of this reviewer; otherwise ignored. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def checksOf(
       r: Reviewer,
       prior: Option[Prior],
@@ -1956,6 +2103,8 @@ object ReviewArticle:
     * or its passage is gone. Returns (verified checks, problems to send back, warnings); on the last attempt the
     * problems become warnings (what failed stays open).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkChecks(
       r: Reviewer,
       prior: Prior,
@@ -2011,6 +2160,7 @@ object ReviewArticle:
     * was "fixed" and raised again, run after run). `asked`: the findings the checks are of. Returns the checks and a
     * warning per one held.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def holdPairChecks(
       checks: List[Check],
       asked: List[Finding],
@@ -2042,6 +2192,8 @@ object ReviewArticle:
     * (`now`); or a factual error ([[FactualKinds]], or a bridge claim, `synth`) whose quote lies in the text the run
     * changed (`edited`: the passages that differ from the first snapshot's body).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finalRegression(
       f: Finding,
       start: List[CritiquePair],
@@ -2081,6 +2233,8 @@ object ReviewArticle:
   /** A verification pass's finding, scoped to the edited passages: inside them anything stands; outside them a MAJOR
     * stands only as a factual error with evidence, else it is recorded as minor (with the warning saying so).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scope(f: Finding, edited: Fix.Body, minRatio: CritiqueRule.MinRatio): (Finding, Option[String]) =
     val inside = f.quote.value.trim.nonEmpty && findQuote(f.quote.value, edited.value, minRatio).accepted
     if !f.major || inside || (FactualKinds(
@@ -2098,6 +2252,9 @@ object ReviewArticle:
   /** Verify a verification pass's answer: the checks ([[checkChecks]]), the new findings ([[checkFindings]], then
     * [[scope]]d to `edited`, the text of the edited passages) and the lessons.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def checkRecheck(
       r: Reviewer,
       a: RecheckAnswer,
@@ -2139,11 +2296,15 @@ object ReviewArticle:
 
   // ── merge and gate (§4.3 steps 4–5) ─────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(f: Finding): (String, String) = (normalise(f.where.value), normalise(f.problem.value))
 
   /** Did a reviewer raise `f` before? Same reviewer, and the same quoted passage — or the same `where` + `problem` when
     * there is no quote (a model rewords its problem, rarely its quote).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sameFinding(a: Finding, b: Finding): Boolean =
     a.reviewer == b.reviewer && {
       val (qa, qb) = (normalise(a.quote.value), normalise(b.quote.value))
@@ -2156,6 +2317,9 @@ object ReviewArticle:
     * `escalated`. A dropped duplicate's evidence joins the finding that is kept. The verdict is the worst of every
     * report and every kept finding.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def merge(
       round: ReviewArticle.MergeRound,
       mechanicalFindings: List[Finding],
@@ -2185,6 +2349,7 @@ object ReviewArticle:
       reports.flatMap(_.proposals).distinct
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mergeEvidence(a: List[Evidence], b: List[Evidence]): List[Evidence] =
     (a ++ b)
       .foldLeft(Vector.empty[Evidence]) { (acc, e) =>
@@ -2197,12 +2362,15 @@ object ReviewArticle:
 
   /** After a round: stop when nothing major is open, when no fixing was asked for, or when the rounds are used up.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def done(m: Merged, round: Merged.Round, rounds: RoundCount, fix: FixRun): Boolean =
     m.majors.isEmpty || !fix.value || round.value >= rounds.value
 
   /** The panel rounds a run gets: what it asked for, else the configured default, never more than the cap. The fixer
     * works BETWEEN rounds, so a run that fixes gets at least two (one to find, one to check the fix).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rounds(requested: Option[RequestedRounds], default: DefaultRounds, cap: RoundCap, fix: FixRun): RoundCount =
     val floor = if fix.value then 2 else 1
     RoundCount(math.max(floor, math.min(math.max(floor, cap.value), requested.map(_.value).getOrElse(default.value))))
@@ -2215,6 +2383,7 @@ object ReviewArticle:
     * MAJOR, and each minor of the rules reviewer or the skeptic (a factual one) — never more than `cap` (and never
     * fewer than `base`). Eighteen findings in twelve turns ran out.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fixerTurns(base: Int, m: Merged, perFinding: Int, cap: TurnCap): Int =
     val b = math.max(1, base)
     val n = m.findings.count(f => f.major || f.reviewer == Reviewer.Rules || f.reviewer == Reviewer.Skeptic)
@@ -2243,6 +2412,9 @@ object ReviewArticle:
     * paragraphs; banned filler; and formatting errors the draft introduced (ones already in `before` are not the
     * draft's). FATAL (never written, even on a last attempt): an empty body, or a link problem `before` did not have.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def checkBody(
       slug: research.Slug,
       before: Fix.Body,
@@ -2294,6 +2466,7 @@ object ReviewArticle:
     * checklist of a body; `regressions` — the closed ledger findings a revision (`before`, `after`) would reopen
     * ([[ReviewLedger.guard]]); `repair` — the mechanical pairing repair of a body ([[CritiquePairing.repair]]).
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class FixGuards(
       pairsOf: Fix.Body => List[CritiquePair],
       regressions: (Fix.Body, Fix.Body) => List[ReviewLedger.Regression],
@@ -2328,6 +2501,9 @@ object ReviewArticle:
     * finding — on the last attempt the edits that reopen one are dropped. Every open finding the fixer neither applied,
     * rejected, declined nor set aside is listed in `notFixed`, with why.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def checkFix(
       a: FixerAnswer,
       m: Merged,
@@ -2538,6 +2714,7 @@ object ReviewArticle:
     * aside a pair of the checklist that no finding names (one the revision brought in, §6.9). Returns the verified
     * finding set-asides, the pair-only reasons and the problems.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkSetAside(
       as: List[SetAsideAnswer],
       byId: Map[SetAside.Id, Finding],
@@ -2604,6 +2781,8 @@ object ReviewArticle:
     * open in the ledger for a person. Before this a Codex fixer left such findings out (sent back) and then listed them
     * as applied without an edit (2026-10-16).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def needsFilter(f: Finding, coverage: Option[Coverage]): Boolean =
     f.major && coverage.isEmpty && f.kind.value.trim.equalsIgnoreCase("coverage")
 
@@ -2612,6 +2791,8 @@ object ReviewArticle:
     * listed as applied leaves none unplaced. Returns the reasons that pass (written on the last attempt) and the
     * problems.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def checkReasons(
       stated: List[Coverage.Reason],
       coverage: Option[Coverage],
@@ -2672,11 +2853,15 @@ object ReviewArticle:
   // ── what the reviewers and the fixer are sent ───────────────────────────────────────────────────
 
   /** One evidence record, as the fixer reads it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evidenceLine(e: Evidence): String =
     val at = e.offset.fold("")(o => s" @$o")
     s"[[${e.citekey}]]$at: \"${e.quote.value.replace("\n", " ").take(400)}\""
 
   /** The findings, as the fixer reads them — each with the records the reviewer found, verified. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def findingsText(m: Merged, notes: Map[String, String] = Map.empty): String =
     m.findings
       .map { f =>
@@ -2694,6 +2879,8 @@ object ReviewArticle:
   // ── bookkeeping (§4.3 step 8) ──────────────────────────────────────────────────────────────────
 
   /** The worklog line, in the form the review-article skill writes. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logLine(o: Outcome, last: Merged, runId: Run.Id): String =
     val counts = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic, Reviewer.Mechanical)
       .map(r => s"${r.prefix}:${last.count(r)}")

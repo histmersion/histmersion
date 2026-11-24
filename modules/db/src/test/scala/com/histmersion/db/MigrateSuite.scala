@@ -5,6 +5,8 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MigrateSuite extends munit.FunSuite:
   test("migration index lists every V*.sql, in order, and each is loadable"):
     val names = Migrate.migrationNames

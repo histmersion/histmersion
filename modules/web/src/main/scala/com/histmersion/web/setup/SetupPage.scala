@@ -44,6 +44,8 @@ object SetupPage:
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
   /** The choices the settings say now. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def choicesOf(p: ConfigEdit.Page, ui: UiConfig): SetupChoices =
     def text(k: String): Option[String] =
       p.field(ConfigEdit.Field.Key(k)).flatMap(_.effective).map(v => Draft.plain(Some(Draft.Text(v.value))).value)
@@ -60,6 +62,8 @@ object SetupPage:
     )
 
   /** The areas offered (`basemap.setup-areas`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def areasOf(p: ConfigEdit.Page): List[MapArea] =
     p.field(ConfigEdit.Field.Key("basemap.setup-areas")).flatMap(_.effective).toList.flatMap { json =>
       scala.util
@@ -68,6 +72,10 @@ object SetupPage:
         .flatMap(MapArea.parse)
     }
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def element(ui: UiConfig): HtmlElement =
     val step = Var(SetupStep.Welcome)
     val page = Var(Option.empty[Either[Problem, ConfigEdit.Page]])
@@ -250,6 +258,9 @@ object SetupPage:
       )
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def startDownload(d: SetupDownload): Future[String] = d match
     case SetupDownload.Map(area) =>
       ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(BBox.Text(area.value)))).map(_ => "started")
@@ -286,6 +297,8 @@ object SetupPage:
       span(strong(text), span(cls := "muted", detail))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def body(
       s: SetupStep,
       page: ConfigEdit.Page,

@@ -10,11 +10,13 @@ import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.EventsApi
 import com.histmersion.api.instance.UiApi
 import com.histmersion.api.library.AcquireApi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The REST surface written down once (#1946): every endpoint the core API objects define is in [[Api.all]] (the list
   * the review found unused and incomplete), and every one of them appears in the documentation's REST index — so
   * neither the list nor the index can fall behind the definitions.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ApiSurfaceSuite extends munit.FunSuite:
 
   /** The endpoint values an API object defines, by reflection over its accessors (test-only). */

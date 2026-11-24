@@ -22,6 +22,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The embedded agent runs (docs/research-embedded-agents.md §5.3): the runs window (`GET /api/agents/runs`, filtered
   * on the server through [[UiState.runStatus]], a page at a time: [[ListPaging]]) and one window per run (`GET
@@ -45,6 +46,7 @@ object RunsView:
   /** A run still moving: worth polling for. (A `waiting` run waits for a person, not for the server.) */
   private def stateWire(status: RunInfo.Status): RunState.Wire = status
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def live(status: RunInfo.Status): Boolean =
     RunState.parse(stateWire(status)).exists(s => s == RunState.Queued || s == RunState.Running)
 
@@ -59,15 +61,21 @@ object RunsView:
   /** A run state as a person reads it — the filter buttons and the badges say `waiting for approval`, not the wire word
     * `waiting`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateLabel(s: RunState): Text = Text(Wording.runState(s))
 
   /** A pipeline as a person reads it ([[Wording.pipeline]]); its identifier stays in the tooltip. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pipelineLabel(pipeline: RunInfo.Pipeline): Text =
     Pipeline
       .parse(Pipeline.Wire(pipeline.value))
       .fold(Text(Wording.humanize(Wording.Id(pipeline.value))))(p => Text(Wording.pipeline(p)))
 
   /** What each run state means for a person, and what comes next; a tooltip on its filter button. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateMeaning(s: RunState): Text = s match
     case RunState.Queued  => Text("Waiting for a free place among the runs at once; it starts by itself.")
     case RunState.Running => Text("Its steps are being worked on now; the run's window shows each one.")
@@ -84,6 +92,8 @@ object RunsView:
       Text("Stopped for good by a person, or because its manager was stopped; it does not resume.")
 
   /** [[stateLabel]] of a status as stored; an unknown one as words. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusLabel(status: RunInfo.Status): Text =
     RunState.parse(stateWire(status)).fold(Text(Wording.humanize(Wording.Id(status.value))))(stateLabel)
 
@@ -94,6 +104,7 @@ object RunsView:
   /** The runs a whole filter shows, from the rows already loaded — the state, the pipelines, the origins and the
     * manager; the rest (model, dates, text) is left to the server's page.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def visible(runs: List[RunInfo], f: ListFilters.RunFilter): List[RunInfo] =
     val n = f.normalized
     runs.filter(r =>
@@ -104,6 +115,8 @@ object RunsView:
     )
 
   /** What each pipeline does; a tooltip on its filter chip. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pipelineMeaning(pipeline: RunInfo.Pipeline): Option[Text] = pipeline.value match
     case "plan-goal" =>
       Some(Text("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval)."))
@@ -121,6 +134,8 @@ object RunsView:
   /** Who started a run, for a person: `ingest` is the enrichment an ingest started itself, before the enrich manager
     * took that over (16 Oct 2026); since then those runs are the manager's.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def originLabel(origin: Agents.Origin.Wire): Text = origin.value match
     case "person"    => Text("by a person")
     case "manager"   => Text("by a manager")
@@ -130,6 +145,7 @@ object RunsView:
     case other       => Text(Label.display(Label.Text(other)).value)
 
   /** Who started a run, in a sentence; a tooltip on its filter chip. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def originMeaning(origin: Agents.Origin.Wire): Option[Text] = Agents.Origin.values.find(_.wire == origin).map {
     case Agents.Origin.Person    => Text("Started by a person: from this page, the CLI or an MCP tool.")
     case Agents.Origin.Scheduler =>
@@ -146,6 +162,8 @@ object RunsView:
   /** Who serves a model, for a person; a tooltip on the provider menu's options. A provider a plugin registered has no
     * meaning here.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def providerMeaning(provider: Agents.ProviderDoctor.Provider): Option[Text] = provider.value match
     case "anthropic" => Some(Text("Anthropic's API, with an API key: metered, billed per token."))
     case "openai"    => Some(Text("OpenAI's API, with an API key: metered, billed per token."))
@@ -158,6 +176,7 @@ object RunsView:
     case _          => None
 
   /** The query the window sends, from its filter fields. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def filterOf(
       status: Option[RunState],
       pipelines: List[ListFilters.RunFilter.Pipeline],
@@ -183,12 +202,14 @@ object RunsView:
       subject
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counts(runs: List[RunInfo]): Map[RunInfo.Status, RowCount] =
     runs.groupBy(_.status).map((status, rs) => status -> RowCount(rs.size))
 
   /** Is any run still queued or running — anywhere (the server's counts), not just among the rows a filter shows; the
     * rows' own states when the server sent no counts.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def anyLive(rows: List[RunInfo], page: Paging.Page): Boolean =
     if page.counts.isEmpty then rows.exists(r => live(r.status))
     else
@@ -206,6 +227,7 @@ object RunsView:
     object Wire extends Newtype[String, Pure]
     export api.UiLabels.Text as Label
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def actions(status: RunInfo.Status): List[Action] = RunState.parse(stateWire(status)) match
     case Some(RunState.Queued) | Some(RunState.Running) => List(Action.Pause, Action.Cancel)
     case Some(RunState.Paused)                          => List(Action.Resume, Action.Cancel)
@@ -216,14 +238,19 @@ object RunsView:
   private val WaitingOn = """approval (\d+)""".r.unanchored
 
   /** The approval a waiting run waits for, from its progress line (`approve: waiting for approval 12`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waitingFor(r: RunInfo): Option[Agents.ApprovalInfo.Id] =
     if !r.isWaiting then None
     else r.progress.map(_.value).collect { case WaitingOn(id) => Agents.ApprovalInfo.Id(id.toLong) }
 
   /** Why a paused run stopped: the cause the server reads from the run's stored sentence. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pausedFor(r: RunInfo): Option[Agents.PauseReason] = r.pausedFor
 
   /** What a paused run's window says about its pause. An allowance pause ends by itself. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pausedText(r: RunInfo, why: Agents.PauseReason): Text =
     Text(
       why match
@@ -241,16 +268,24 @@ object RunsView:
     )
 
   /** A budget the person typed: a positive number of dollars, or nothing. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def budget(s: Text): Option[RunRequest.BudgetUsd] =
     s.value.trim.toDoubleOption.filter(_ > 0).map(Agents.RunRequest.BudgetUsd(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tokens(u: Agents.Usage): Text = Text(s"${u.input} in / ${u.output} out")
 
   /** The columns of a run's steps table, in order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val StepColumns: List[Text] =
     List("#", "step", "kind", "try", "status", "model", "tokens", "USD", "note").map(Text(_))
 
   /** One step's cells, each with its column's name (the label a narrow card shows). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def stepCells(s: Agents.StepInfo): List[(Text, Text)] =
     StepColumns.zip(
       List(
@@ -284,6 +319,7 @@ object RunsView:
       UiState.runSubject
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def currentFilter(): ListFilters.RunFilter =
     filterOf(
       UiState.runStatus.now(),
@@ -303,6 +339,8 @@ object RunsView:
     UiState.signal.map(_ => currentFilter()).distinct
 
   /** The rows, the poll and "Show older" ([[PolledList]]). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val list = PolledList[RunInfo](
     fetch =
       (upTo, before) => ApiClient.agentRuns(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
@@ -311,8 +349,10 @@ object RunsView:
   )
   private def listing = list.listing
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def facet(name: Facet.Name): Signal[List[(Facet.Value, Facet.Count)]] = listing.signal.map(_.page.facet(name))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tool-pane runs-pane",
@@ -426,9 +466,11 @@ object RunsView:
   /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter changes; the server's
     * page replaces them a moment later.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def shownSignal: Signal[(ListPaging.Listing[RunInfo], Option[RunState])] =
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.runStatus.now()))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filterButtons: HtmlElement =
     def btn(label: Text, value: Option[RunState], count: Signal[Int]) =
       button(
@@ -448,15 +490,21 @@ object RunsView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stateBadge(status: RunInfo.Status): HtmlElement =
     span(cls := s"job-state state-$status", title := statusLabel(status), statusLabel(status))
 
   /** A dry run (#992) is marked wherever the run is shown: it wrote nothing. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dryBadge(r: RunInfo): Option[HtmlElement] =
     Option.when(r.dryRun.value)(
       span(cls := "job-state state-dry-run", title := "Dry run: nothing was written to the corpus", "Dry run")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def target(r: RunInfo): HtmlElement =
     TargetKind.parse(TargetKind.Wire(r.targetKind.value)) match
       case Some(TargetKind.Article) =>
@@ -475,6 +523,9 @@ object RunsView:
         )
       case _ => SourceLink(Citekey(r.target.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def row(r: RunInfo): HtmlElement =
     li(
       cls := s"job-row run-row job-${r.status}",
@@ -519,6 +570,10 @@ object RunsView:
   // ── one run ─────────────────────────────────────────────────────────────────────────────────────
 
   /** One run's window. Its state is its own (several runs can be open at once). */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def runPane(id: RunInfo.Id): HtmlElement =
     val busy = Var(false)
     val raise = Var("")
@@ -566,6 +621,9 @@ object RunsView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def runBody(d: RunDetail, busy: Signal[Boolean], raise: Var[String], act: Action => Unit): HtmlElement =
     val r = d.run
     div(
@@ -677,6 +735,9 @@ object RunsView:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def controls(r: RunInfo, busy: Signal[Boolean], raise: Var[String], act: Action => Unit): HtmlElement =
     val acts = actions(r.status)
     div(

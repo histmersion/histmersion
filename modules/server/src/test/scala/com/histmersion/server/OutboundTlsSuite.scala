@@ -16,18 +16,22 @@ import java.security.cert.{CertificateFactory, CertPathValidator, PKIXParameters
 import scala.jdk.CollectionConverters.*
 import com.histmersion.pluginhost.PolicyHttp
 import com.histmersion.domain.library.acquisition.Http
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `acquire.tls` (#1568): more roots than the JDK's, never less verification. The fixtures are public CA certificates:
   * HARICA TLS RSA Root CA 2021 (not in the JDK's cacerts) and GEANT TLS RSA 1, the intermediate
   * archiv.ub.uni-heidelberg.de chains through to it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class OutboundTlsSuite extends munit.FunSuite:
   private given CanEqual[X509Certificate, X509Certificate] = CanEqual.derived
 
   private def resource(name: String): String =
     new String(getClass.getResourceAsStream(s"/tls/$name").readAllBytes(), "US-ASCII")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val rootPem = HttpPolicy.PemText(resource("harica-tls-rsa-root-2021.pem"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val intermediatePem = HttpPolicy.PemText(resource("geant-tls-rsa-1.pem"))
 
   private def subject(c: X509Certificate) = c.getSubjectX500Principal.getName
@@ -64,6 +68,7 @@ class OutboundTlsSuite extends munit.FunSuite:
     assert(!validates(jdk, inter), "with the JDK's roots the intermediate does not chain")
     assert(validates(more, inter), "with the added root it does")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val keychainOut = rootPem.value
   private def fakeRun(seen: collection.mutable.Buffer[List[String]]): OutboundTls.Run = cmd =>
     seen += cmd

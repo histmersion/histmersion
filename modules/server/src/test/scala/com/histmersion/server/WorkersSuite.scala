@@ -12,7 +12,7 @@ class WorkersSuite extends munit.FunSuite:
 
   test("every place that starts a thread or a fork is a registered worker, or says why it needs no holding"):
     val found = Scanned.flatMap { module =>
-      ArchitectureSuite.SourceFile.all(module).filter(s => Starts.findFirstIn(s.code).isDefined).map(_.key)
+      SourceFile.all(module).filter(s => Starts.findFirstIn(s.code).isDefined).map(_.key)
     }.toSet
     val unlisted = found -- Listed.keySet
     val stale = Listed.keySet -- found

@@ -12,19 +12,26 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The attestations (`attestations`): which passage of a source attests a finding, an event, a dating, a place or an
   * edge. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the attestation tables and their row codecs")
 private[evidence] object AttestationRepo:
   type AttestationId = AttestationId.T
   object AttestationId extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Attestation] = DbCodec.derived
 
   private val cols =
     sql"a.id, a.citekey, a.target_type, a.target_id, a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, a.page, a.canvas, a.xywh, a.cts_urn, a.note"
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def list(
       citekey: Option[Citekey],
       targetType: Option[BAttestationFullRow.TargetType],
@@ -55,6 +62,7 @@ private[evidence] object AttestationRepo:
       UnreadPage.Offset(offset.value.max(0))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(id: AttestationId)(using DbCon): Option[Attestation] =
     sql"""SELECT $cols FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
@@ -71,9 +79,11 @@ private[evidence] object AttestationRepo:
                    RETURNING id""".query[Long].run().head
     get(AttestationId(id)).get
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def exists(id: AttestationId)(using DbCon): Boolean =
     sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def update(id: AttestationId, p: Attestation.Patch)(using DbCon): Unit =
     p.quote.foreach(v => Unused(sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run(), Unused.Why.Held))
     p.prefix.foreach(v => Unused(sql"UPDATE attestations SET prefix = $v WHERE id = $id".update.run(), Unused.Why.Held))
@@ -95,4 +105,5 @@ private[evidence] object AttestationRepo:
     )
     p.note.foreach(v => Unused(sql"UPDATE attestations SET note = $v WHERE id = $id".update.run(), Unused.Why.Held))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def delete(id: AttestationId)(using DbCon): Boolean = sql"DELETE FROM attestations WHERE id = $id".update.run() > 0

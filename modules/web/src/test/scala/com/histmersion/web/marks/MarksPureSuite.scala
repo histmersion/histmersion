@@ -15,7 +15,9 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.research.Article
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.personal.Note
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MarksPureSuite extends munit.FunSuite:
 
   private val src = ItemRef.source(Citekey("cline2014_year"), Title("1177 B.C. [revised]"))

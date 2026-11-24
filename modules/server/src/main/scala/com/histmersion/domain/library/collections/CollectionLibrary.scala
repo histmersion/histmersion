@@ -18,11 +18,13 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the collections' operations read and write of the library, lent by the composition: the records (as their
   * endpoints write them), the Calibre push metadata and gaps, the stored originals, the acquisition list, the ingest
   * queue, a source's cover and the archive.org import.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait CollectionLibrary:
   def source(citekey: Citekey): Either[Api.Error, Source.WithFindings]
   def create(citekey: Citekey, put: Source.Put)(using Creator.New): Either[Api.Error, Source.WithFindings]

@@ -1,12 +1,15 @@
 package com.histmersion
 package api.media
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object DataCredits:
   private val odbl = Some("https://opendatacommons.org/licenses/odbl/1-0/")
   private val ccBy4 = Some("https://creativecommons.org/licenses/by/4.0/")
   private val ccBy3 = Some("https://creativecommons.org/licenses/by/3.0/")
   private val cc0 = Some("https://creativecommons.org/publicdomain/zero/1.0/")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[DataCredit] = List(
     DataCredit(
       DataCredit.Name("OpenStreetMap"),

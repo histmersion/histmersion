@@ -11,12 +11,15 @@ import scala.concurrent.duration.*
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.LocalFiles
 import com.histmersion.plugin.Processes
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val info =
     Plugin.Info(Plugin.Info.Id("keepassxc"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
@@ -62,6 +65,7 @@ final class KeePassXcPlugin extends Plugin:
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def detector(
       ykman: KeePassXcConfig.Ykman,
       ctx: Plugin.Context

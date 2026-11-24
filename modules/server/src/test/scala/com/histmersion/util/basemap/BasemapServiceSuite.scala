@@ -29,19 +29,23 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The fetch JOB end to end, with a fake provider (a local archive behind [[BasemapFixtures.LocalRange]]) and a fake
   * disk: a dry run, a fetch that writes both layers, the free-space refusal, the provider's list of builds. Job rows
   * need a test database (gated on HISTMERSION_TEST_DB_URL).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BasemapServiceSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def await(id: SpatialHierarchyResult.Job.Id, left: Int = 400): JobInfo =
     val j = Transactor(ds)
       .read(JobRepo.get(Job.Id.applyUnsafe(id.value)))
@@ -49,10 +53,12 @@ class BasemapServiceSuite extends DbSuite:
     if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
 
   /** The tile as a vector tile's bytes, gunzipped. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plain(b: BasemapApi.Tile.Bytes): PmTiles.PlainBytes =
     PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).toOption.get
 
   /** A service over `dir`, its provider serving `vector`/`terrain` fixture archives from `src`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def service(
       dir: Path,
       free: ByteCount = ByteCount.applyUnsafe(Long.MaxValue / 4),
@@ -145,7 +151,9 @@ class BasemapServiceSuite extends DbSuite:
           )
       )
     val router = new RangeHttp:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       private def pick(url: RangeHttp.Url) = if url.value.startsWith("fake://v") then v else t
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def text(url: RangeHttp.Url) =
         if url.value == "fake://ne/ranges.geojson" then Right(BasemapServiceSuite.Ranges)
         else if url.value == "fake://ne/rivers.geojson" then Right(BasemapServiceSuite.Rivers)
@@ -153,6 +161,8 @@ class BasemapServiceSuite extends DbSuite:
       def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = pick(url).bytes(url, o, l)
       def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = pick(url).download(url, o, l, to)
       // the sea floor's tiles: whole files, one a tile; the bucket has none for x = 0
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       override def file(url: RangeHttp.Url) =
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
         url.value match
@@ -613,16 +623,20 @@ class BasemapServiceSuite extends DbSuite:
     val etopoAsked = java.util.concurrent.atomic.AtomicInteger(0)
     val outside = TerrariumPng.encode(Array.fill(256 * 256)(-42f), TerrariumPng.TileSize(256))
     val router = new RangeHttp:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       private def mine(url: RangeHttp.Url) =
         Either.cond(
           url.value == "fake://gebco/n90.0_s0.0_w0.0_e90.0.tif",
           grid,
           Problem.Unclassified(Legacy.Text(s"${url.value}: unexpected"))
         )
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def text(url: RangeHttp.Url) = Left(Problem.Unclassified(Legacy.Text("unexpected")))
       def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = mine(url).flatMap(_.bytes(url, o, l))
       def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) =
         mine(url).flatMap(_.download(url, o, l, to))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def file(url: RangeHttp.Url) = {
         etopoAsked.incrementAndGet(); Right(Some(RangeHttp.ResponseBytes(outside.value)))
       }
@@ -868,11 +882,13 @@ object BasemapServiceSuite:
   val seaGets = java.util.concurrent.atomic.AtomicInteger(0)
 
   /** Two Natural Earth-shaped files: a range in the region and one far away; a river in it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Ranges: RangeHttp.ResponseText = RangeHttp.ResponseText("""{"type":"FeatureCollection","features":[
       |{"type":"Feature","properties":{"FEATURECLA":"Range/mtn","NAME":"Pindus Mts.","NAME_EN":"Pindus","MIN_LABEL":6},
       | "geometry":{"type":"Polygon","coordinates":[[[20.6,39.4],[21.4,39.4],[21.4,40.6],[20.6,40.6],[20.6,39.4]]]}},
       |{"type":"Feature","properties":{"FEATURECLA":"Range/mtn","NAME":"Andes"},
       | "geometry":{"type":"Point","coordinates":[-70,-30]}}]}""".stripMargin)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Rivers: RangeHttp.ResponseText = RangeHttp.ResponseText("""{"type":"FeatureCollection","features":[
       |{"type":"Feature","properties":{"featurecla":"River","name":"Aliákmon","name_en":"Haliacmon","min_label":5},
       | "geometry":{"type":"LineString","coordinates":[[20.9,40.4],[21.6,40.2],[22.6,40.5]]}},

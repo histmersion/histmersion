@@ -13,6 +13,8 @@ import util.nonempty.NonEmptyVector
 import util.json.RawJson
 import util.json.RawJson.*
 import com.histmersion.api.json.NewtypeCodecs.{problemCodec, vector}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the
   * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes
@@ -22,6 +24,8 @@ import com.histmersion.api.json.NewtypeCodecs.{problemCodec, vector}
   * array: readable in SQL through `text` (`error -> 0 ->> 'text'`), and read back as the cases they were written from.
   * A bare string (the text a master version kept) reads through `api.problem.StoredShapes`.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@atBoundary(BoundaryKind.Sql, "reads and writes a newtype column from its base type's codec")
 object NewtypeColumns:
   given column: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[m.BaseType]) => DbCodec[T] = new DbCodec[T]:
     val cols: IArray[Int] = base.cols

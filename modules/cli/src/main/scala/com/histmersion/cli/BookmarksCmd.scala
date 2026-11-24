@@ -6,10 +6,13 @@ import com.histmersion.api.personal.*
 import com.histmersion.api.ItemKind
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion bookmarks list|add|rm` — your bookmarks: items of the collection, places on the map, saved views of
   * Explore and periods.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion bookmarks` arguments")
 object BookmarksCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
@@ -22,6 +25,7 @@ object BookmarksCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.ListCmd(kind, q, limit, json) =>

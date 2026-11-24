@@ -6,6 +6,7 @@ import com.histmersion.plugin.Plugin
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.util.Try
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host settings a first-party plugin reads: the paths of Histmersion's own configuration (`histmersion.acquire`,
   * `histmersion.events.gvp`, …) the host supplies it, each under the same path in the plugin's settings without the
@@ -30,6 +31,7 @@ final case class FirstPartySettings(plugin: Plugin.Info.Id, paths: List[ConfigRe
   /** The settings the host supplies this plugin out of `host` (the `histmersion` tree, other plugins' blocks
     * effective), keys relative to the plugin's block.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fallback(host: Config): Config =
     paths.foldLeft(ConfigFactory.empty) { (acc, path) =>
       Try(Option.when(host.hasPathOrNull(path.value))(host.getValue(path.value))).toOption.flatten
@@ -46,8 +48,10 @@ object FirstPartySettings:
     List(ConfigReload.Key("histmersion.acquire"), ConfigReload.Key("histmersion.media.max-retry-after-seconds"))
 
   private val fetcher = ClientKeys
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val unpaywallContact = ConfigReload.Key(s"${PluginHost.Root}.oa-unpaywall.contact-email")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def entry(id: String, paths: List[ConfigReload.Key]): FirstPartySettings =
     FirstPartySettings(Plugin.Info.Id(id), paths)
 
@@ -60,6 +64,7 @@ object FirstPartySettings:
     * settings at each use, from the host (until they move into plugins of their own): no path, and a host key never
     * rebuilds them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[FirstPartySettings] =
     List("archive-org", "oa-unpaywall", "oa-core", "oa-openalex", "pmc", "arxiv").map(entry(_, fetcher)) ++
       List(
@@ -105,6 +110,7 @@ object FirstPartySettings:
   /** Every host path some first-party plugin reads, and the client's keys: the keys a plugin generation is built from,
     * besides `histmersion.plugins`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hostKeys: List[ConfigReload.Key] =
     (ClientKeys ++ all.flatMap(_.paths)).distinct.filterNot(k =>
       HotPlan.keyMatches(k, ConfigReload.Key(PluginHost.Root))
@@ -120,6 +126,7 @@ object FirstPartySettings:
     * first-party plugin's block as it is in effect for `plugins` (its user block over its defaults, the environment's
     * overrides applied) — what a `histmersion.plugins.<id>` path reads.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hostView(merged: Config, user: Config, env: Config, plugins: List[Plugin]): Config =
     plugins.filter(p => byId.contains(p.info.id)).foldLeft(merged) { (view, p) =>
       val id = p.info.id

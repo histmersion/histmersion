@@ -9,12 +9,15 @@ import com.histmersion.config.given
 
 import CodexRetention.FileInfo
 import com.histmersion.api.maintenance.Storage
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a retention pass of the runs' Codex home may remove (#2582). Pure. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CodexRetentionSuite extends munit.FunSuite:
 
   private val Day = 24L * 60 * 60 * 1000
   private val nowMs = 100 * Day
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val now = CodexRetention.NowMs(nowMs)
 
   test("only transcripts under sessions/ or archived_sessions/ older than keep-days, oldest first"):

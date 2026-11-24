@@ -8,6 +8,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Whether the base map under the names is light or dark — what the map's label colours follow (`.map-tone-light` /
   * `.map-tone-dark`: dark text on a light halo, or the inverse).
@@ -21,4 +22,5 @@ object MapTone:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): MapTone = if s.value.trim.equalsIgnoreCase("dark") then Dark else Light

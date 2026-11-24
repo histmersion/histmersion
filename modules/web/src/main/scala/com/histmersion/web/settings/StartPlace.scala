@@ -33,12 +33,16 @@ object StartPlace:
   type ChooserName = ChooserName.T
   object ChooserName extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoomFor(b: GeoBounds): MapSurface.Zoom =
     val span = math.max(b.east.value - b.west.value, (b.north.value - b.south.value) * 1.4)
     if span <= 0.01 then MapSurface.Zoom(9)
     else MapSurface.Zoom(math.max(2.0, math.min(10.0, math.floor(math.log(360.0 / span) / math.log(2)) + 1)))
 
   /** The centre and zoom of a place's geometry (GeoJSON), when it has one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def viewOf(geometry: Place.Geometry): Option[(LatLon, MapSurface.Zoom)] =
     scala.util.Try(js.JSON.parse(geometry.value)).toOption.flatMap(GeoBounds.ofGeometry).filter(_.valid).map { b =>
       (
@@ -48,6 +52,8 @@ object StartPlace:
     }
 
   /** The changes the choice writes (`ui.map-start.*`). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def changes(c: MapStartConfig): List[(ConfigEdit.Change.Key, ConfigEdit.Change.Value)] =
     List(
       ConfigEdit.Change.Key("ui.map-start.mode") -> ConfigEdit.Change.Value(c.mode.value),
@@ -60,6 +66,10 @@ object StartPlace:
   private def round(v: Double): String =
     BigDecimal(v).setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def chooser(choice: Var[MapStartConfig], name: ChooserName, showLegend: Boolean = true): HtmlElement =
     val query = Var("")
     val hits = Var(List.empty[Place.Hit])
@@ -163,6 +173,8 @@ object StartPlace:
     )
 
   /** What the choice means, in words. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(c: MapStartConfig): Description =
     val at = if c.label.value.trim.nonEmpty then c.label.value else s"${round(c.lat.value)}, ${round(c.lon.value)}"
     MapStartMode.parse(c.mode) match

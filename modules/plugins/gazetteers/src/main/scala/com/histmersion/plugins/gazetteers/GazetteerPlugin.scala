@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.Registry
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One of Histmersion's own network gazetteers: on by default (its defaults resource), switched off by
   * `histmersion.plugins.gazetteer-<source>.enabled = false`. It has no settings of its own: the host lends its download
@@ -11,8 +12,10 @@ import com.histmersion.plugin.Registry
   */
 trait GazetteerPlugin(id: String, name: String, source: DownloadedGazetteer) extends Plugin:
   type Config = GazetteerSettings
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val info: Plugin.Info =
     Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(GazetteerPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: GazetteerSettings, ctx: Plugin.Context): Either[Problems, Unit] =
     ctx.gazetteerSources.add(Registry.AddId(name), source)
 

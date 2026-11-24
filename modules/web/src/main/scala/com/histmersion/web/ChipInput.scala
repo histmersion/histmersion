@@ -13,6 +13,7 @@ import com.histmersion.api.library.{Facet, Label}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Reusable autocomplete + chip component. Ported from chips.js (137 lines).
   *
@@ -20,6 +21,7 @@ import com.histmersion.api.UiLabels
   * typing. Keyboard: arrow-up/arrow-down to move, Enter to pick, Esc to close, Backspace on an empty input removes the
   * last chip.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object ChipInput:
   type Entry = Entry.T
   object Entry extends Newtype[String, Pure]
@@ -28,6 +30,8 @@ object ChipInput:
 
   private var seq: Int = 0
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   case class Config(
       field: Config.Field,
       label: Config.Label,
@@ -59,18 +63,24 @@ object ChipInput:
     type Placeholder = Placeholder.T
     object Placeholder extends Newtype[String, Pure]
     type DebounceMs = DebounceMs.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object DebounceMs extends Newtype[Int, Pure]
 
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def apply(config: Config, values: StrictSignal[List[Chip.Choice]]): HtmlElement =
     view(config, values, () => values.now())
 
   /** [[apply]] over a UiState field's values, which are plain text. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofStrings(config: Config, values: StrictSignal[List[String]]): HtmlElement =
     view(config, values.map(_.map(Chip.Choice(_))), () => values.now().map(Chip.Choice(_)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def view(config: Config, values: Signal[List[Chip.Choice]], now: () => List[Chip.Choice]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
@@ -266,6 +276,8 @@ object ChipInput:
   /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar escapes it, so it must
     * NOT be HTML-escaped first (that shows `&amp;` literally). The value itself is what gets committed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hintLabel(value: Chip.Choice): HintLabel = HintLabel(Fmt.display(UiLabels.Text(value.value)).value)
 
 end ChipInput

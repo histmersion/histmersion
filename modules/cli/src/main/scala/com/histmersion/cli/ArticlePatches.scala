@@ -23,6 +23,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a server. Mirrors
   * [[Patches]] on the source side: `--json` is the baseline, each flag overrides the part it names, and an absent part
@@ -38,6 +39,7 @@ object ArticlePatches:
   type TextFile = TextFile.T
   object TextFile extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
       json: Option[PatchJson],
       title: Option[Article.Title],
@@ -116,6 +118,10 @@ object ArticlePatches:
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
     * sets one reason, `ck=` removes it. Both override `--json`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G5TextBranch, "parses the --reason command-line argument citekey=why")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[ReasonText]): Either[Problems, Article.Patch] =
     for
       period <- periodOf(f.period)
@@ -161,6 +167,9 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def withCritiques(p: Article.Patch, reasons: List[CritiqueReason.Spec]): Either[Problems, Article.Patch] =
     reasons
       .traverse(r =>
@@ -171,6 +180,8 @@ object ArticlePatches:
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def parse(json: Option[PatchJson]): Either[Problems, Article.Patch] = json match
     case None    => Right(Article.Patch())
     case Some(s) =>
@@ -179,6 +190,8 @@ object ArticlePatches:
         .left
         .map(e => Problem.Unclassified(Legacy.Text(s"--json: $e")))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def read[A](file: Option[TextFile])(wrap: String => A): Either[Problems, Option[A]] = file match
     case None    => Right(None)
     case Some(f) =>
@@ -186,6 +199,8 @@ object ArticlePatches:
       if java.nio.file.Files.isRegularFile(p) then Right(Some(wrap(java.nio.file.Files.readString(p))))
       else Left(Problem.Unclassified(Legacy.Text(s"no such file: $f")))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def periodOf(s: Option[FilterFlags.Period]): Either[Problems, Option[Period.Input]] = s match
     case None    => Right(None)
     case Some(v) =>
@@ -204,4 +219,6 @@ object ArticlePatches:
           )
 
   private def csv(s: Option[CsvText]): List[String] = s.map(csv1).getOrElse(Nil)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def csv1(s: CsvText): List[String] = s.value.split(",").toList.map(_.trim).filter(_.nonEmpty)

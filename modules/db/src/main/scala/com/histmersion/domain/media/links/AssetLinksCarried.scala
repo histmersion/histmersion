@@ -8,12 +8,15 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries of the figures' links: each line stamped with its rev; an import writes them after the blobs,
   * once every figure they name is here.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object AssetLinksCarried:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val assetLinks: CarriedKind = CarriedKind.records[Bundle.AssetLink](
     DataOwner("media"),
     Bundle.Kind.AssetLink,

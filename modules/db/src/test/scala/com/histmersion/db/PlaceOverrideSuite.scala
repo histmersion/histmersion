@@ -25,6 +25,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.identity.AliasTable
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's kind and period for a place (V080), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * setting one re-matches the place's findings; every writer of `places` — a re-seed, a gazetteer-style upsert, the
@@ -33,11 +34,13 @@ import com.histmersion.util.identity.AliasTable
   * is the same as, a removal deletes one nothing refers to; no seed import brings either back. Around 150–152°E
   * 30–32°S; ids `zzpo…`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceOverrideSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -54,12 +57,14 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(lon: Double, lat: Double) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
 
   private val Regio = DPlace.Id("zzpo_regio")
   private val City = DPlace.Id("zzpo_city")
   private val Tribe = DPlace.Id("zzpo_tribe")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def regio(kind: Place.KindValue = Place.KindValue(DPlace.Kind.Site), period: Option[Period] = None) =
     Place(
       Place.Id("zzpo_regio"),
@@ -70,6 +75,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       properties = Some(Place.Properties("""{"feature_types":"urban"}"""))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(): Unit =
     val _ = PlaceFixtures.upsertPlaces(
       ds,
@@ -140,6 +146,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       tol
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placesOf(n: Int): Set[String] =
     PlaceFixtures.placesOf(ds, Finding.Id(s"zzpo_src#$n")).map(_.id.value: String).filter(_.startsWith("zzpo")).toSet
 
@@ -372,6 +379,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
   private def geom(id: DPlace.Id): String =
     connect(ds)(sql"SELECT ST_AsText(geom) FROM places WHERE id = $id".query[String].run().head)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tribe(geometry: Option[Place.Geometry]) =
     Place.Input(
       Place(

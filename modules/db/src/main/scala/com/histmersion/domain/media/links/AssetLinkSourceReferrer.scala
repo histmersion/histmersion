@@ -14,6 +14,9 @@ import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The figures of a source (they go with it) and the links of other figures to it or to one of its findings. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "counts and removes the asset link rows that point at a deleted source")
 final class AssetLinkSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
@@ -29,6 +32,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       ).collect { case (t, n) if n > 0 => Rename.Count(Rename.Count.Table(t), Rename.Count.Rows(n)) }
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val ck = source.citekey
     def n(q: Frag): RowCount = RowCount(q.query[Int].run().headOption.getOrElse(0))
@@ -46,6 +50,7 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       Unused(sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run(), Unused.Why.Idempotent)
 
   /** Other figures' links to the source or one of its findings. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def linksTo(source: SourceKeys)(using DbCon): List[AssetLink.Id] =
     val (ck, keys, hash) = (source.citekey, source.keys, source.findingPrefix)
     sql"""SELECT id FROM asset_links WHERE citekey <> $ck

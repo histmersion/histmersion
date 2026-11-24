@@ -2,6 +2,7 @@ package com.histmersion
 package upstreams.wikidata
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class WikidataStatement(
     property: WikidataStatement.Property,
     file: WikidataStatement.File,
@@ -25,6 +26,7 @@ object WikidataStatement:
   type Order = Order.T
   object Order extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def best(statements: List[WikidataStatement], per: BestPer): List[WikidataStatement] =
     val preferred = statements.filter((refactorCallback => (refactorCallback.preferred).value))
     (if preferred.nonEmpty then preferred else statements).sortBy(_.order).take((per).value.max(0))

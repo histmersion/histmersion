@@ -6,7 +6,9 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait WikiClient:
   def refs(articleUrl: WikiClient.ArticleUrl): Either[Problem, WikirefsResult]
 

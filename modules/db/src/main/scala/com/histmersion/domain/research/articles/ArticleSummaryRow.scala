@@ -8,10 +8,12 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.research.Article
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A list row as the database has it: [[ArticleSummary]] without the review state, which the server derives from other
   * tables.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[articles] case class ArticleSummaryRow(
     slug: ArticleSummaryRow.Slug,
     title: ArticleSummaryRow.Title,
@@ -23,6 +25,7 @@ final private[articles] case class ArticleSummaryRow(
     periodEnd: Option[DeepTime.SignedYear],
     updatedAt: Option[ArticleSummaryRow.UpdatedAt]
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summaryRow: Article.Summary =
     Article.Summary(
       Article.Slug(slug.value),
@@ -37,8 +40,10 @@ final private[articles] case class ArticleSummaryRow(
     )
 
 object ArticleSummaryRow:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Slug = domain.research.Slug
   val Slug: domain.research.Slug.type = domain.research.Slug
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   export domain.research.Article.Kind

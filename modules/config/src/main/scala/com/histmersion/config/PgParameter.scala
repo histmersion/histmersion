@@ -2,11 +2,13 @@ package com.histmersion
 package config
 
 import com.histmersion.config.edit.SettingKey
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** A memory parameter of the bundled Postgres that `runtime.postgres` sets: the setting that sizes it, and what `auto`
   * comes to. Its name to Postgres is the case's name in Postgres' spelling ([[name]]: `SharedBuffers` is
   * `shared_buffers`).
   */
+@movesTo(FeaturePlace.UtilDatabase)
 enum PgParameter(val key: SettingKey):
   /** `shared_buffers`: the pages Postgres itself keeps in memory. */
   case SharedBuffers extends PgParameter(SettingKey("histmersion.runtime.postgres.shared-buffers"))

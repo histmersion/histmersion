@@ -2,10 +2,13 @@ package com.histmersion
 package config.edit
 
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.
   */
+@movesTo(FeaturePlace.UtilSettings)
 enum SecretForm(val wire: String, val describe: String):
   case Unset extends SecretForm("unset", "not set")
 
@@ -35,6 +38,7 @@ object SecretForm:
     else reference(t).fold(_ => Plain, identity)
 
   /** The reference's form, or why `text` is none. Never repeats `text` (it may be the value). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reference(text: String): Either[Problem, SecretForm] =
     val t = text.trim
     def not(form: Problem.Invalid.Form) = Left(Problem.Invalid.Reference.here(form))

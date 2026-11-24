@@ -5,9 +5,11 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{HistoricalPeriod, Latitude, Longitude, Period, PresetMenu, PresetRegion, Year}
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure halves of the shared controls: the playback speed menu, and the period-preset menu's grouping by region.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ControlsSuite extends munit.FunSuite:
 
   // ── playback speed ─────────────────────────────────────────────────────────────────────────────
@@ -41,6 +43,7 @@ class ControlsSuite extends munit.FunSuite:
 
   // ── the period-preset menu ─────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def preset(
       id: HistoricalPeriod.Id,
       label: HistoricalPeriod.Label,

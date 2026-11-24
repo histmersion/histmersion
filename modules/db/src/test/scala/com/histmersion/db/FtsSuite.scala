@@ -18,22 +18,27 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.sources.SourceRepairs
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the point of plan
   * §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable because they are chunked, and every hit
   * carries the passage that matched.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class FtsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private def chunkChars = cfg.limits.chunkChars
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def words = Search.SnippetWords(cfg.limits.snippetWords.value)
 
   private def source(
@@ -68,6 +73,7 @@ class FtsSuite extends DbSuite:
     (1 to 200).map(i => s"## Section $marker $i\n\n$para").mkString("\n\n")
 
   /** Built once (munit runs the tests of a suite in declaration order). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val fixture: Unit =
     List("zz_fts_big", "zz_fts_egypt", "zz_fts_title").foreach: ck =>
       transact(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
@@ -171,6 +177,7 @@ class PlannerUpkeepSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)

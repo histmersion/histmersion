@@ -9,8 +9,10 @@ import com.histmersion.domain.personal.reading.ReadingShow
 import com.histmersion.{Offset, PageSize, UserId}
 import com.histmersion.domain.personal.reading.ReadingService
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's read marks and what is not read yet, in memory and in the database. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReadingServiceContractSuite extends PersonalServiceContract("reading"):
 
   both("read marks: only marked read is read; opening is kept apart; unread lists the rest by title") { w =>

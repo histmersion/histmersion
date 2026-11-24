@@ -3,7 +3,11 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+@movesTo(FeaturePlace.AutomationAgents)
 given ConfigReader[ScheduledRefresh] =
   ConfigLayers.checking(summon[ConfigReader[Minutes]])(ScheduledRefresh.fromMinutes)
 

@@ -22,6 +22,7 @@ object LibraryPage:
   val chosen: Signal[Option[ItemKey]] = Router.search.map(LibraryAddress.item).distinct
 
   /** Choose `key` in `section`'s list: a step in the history unless `push` is false. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def choose(section: LibrarySection)(key: ItemKey, push: Router.Push): Unit =
     Router.go(
       Route.Library(section),
@@ -29,6 +30,9 @@ object LibraryPage:
       search = LibraryAddress.search(Some(key), LibraryAddress.shelf(Router.search.now()))
     )
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def element(ui: UiConfig, section: LibrarySection): HtmlElement =
     val articles = section == LibrarySection.Articles
     val page: Signal[ListPage[TableRow]] =
@@ -61,6 +65,9 @@ object LibraryPage:
       ReadingPane.element(section, chosen)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def everythingList(
       section: LibrarySection,
       articles: Boolean,
@@ -90,6 +97,9 @@ object LibraryPage:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def tab(s: LibrarySection, label: String, total: Signal[RowCount], on: LibrarySection): HtmlElement =
     a(
       cls := "library-tab",
@@ -105,6 +115,7 @@ object LibraryPage:
       span(cls := "tab-count", child.text <-- total.map(n => s" · ${ListPage.grouped(n.value)}"))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sortSelect: HtmlElement =
     label(
       cls := "library-sort",
@@ -122,6 +133,7 @@ object LibraryPage:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def pager(section: LibrarySection, page: Signal[ListPage[TableRow]]): HtmlElement =
     div(
       cls := "btn-group library-pager",
@@ -143,6 +155,9 @@ object LibraryPage:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def turn(section: LibrarySection, back: Boolean): Unit =
     val p = if section == LibrarySection.Articles then LibraryLists.articles.now() else LibraryLists.sources.now()
     LibraryLists.turnTo(
@@ -151,6 +166,8 @@ object LibraryPage:
     )
 
   /** In the narrow layouts the filter panel is a drawer: this opens it, counting the active filters. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filtersButton(ui: UiConfig): HtmlElement =
     val active = UiState.signal.map(_ => FilterChips.countNow(ui))
     button(

@@ -13,6 +13,8 @@ import java.sql.SQLException
 import javax.sql.DataSource
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Postgres connection pools from the HOCON config (see [[AppConfig]] / reference.conf).
   *
@@ -26,6 +28,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * built them, so a config reload can swap the database; a test suite holds its own in a fixture. There is no
   * process-wide pool — a static cache keyed by URL is exactly what made a change of database a restart.
   */
+@atBoundary(BoundaryKind.Sql, "opens the Postgres connection pools")
 object Db:
   type ActiveConnections = ActiveConnections.T
   object ActiveConnections extends Newtype[Int, Pure]:
@@ -51,11 +54,14 @@ object Db:
   object SettingName extends Newtype[String, Pure]
 
   /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PooledUrl = JdbcUrl
   val PooledUrl: JdbcUrl.type = JdbcUrl
   type SettingValue = SettingValue.T
   object SettingValue extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pool(cfg: DbConfig): HikariDataSource =
     pooled(
       PooledUrl(cfg.url.value),
@@ -81,6 +87,8 @@ object Db:
     * Neither is a workaround for a missing agent run: both are the shapes that have no reflection in them at all, which
     * is the rule this codebase already follows for everything else.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pooled(url: PooledUrl, user: Login, password: Password, max: PoolMax, name: PoolName): HikariDataSource =
     val pg = unpooled(url, user, password)
     val ds = HikariDataSource()
@@ -92,6 +100,8 @@ object Db:
     ds.setPoolName(s"$name@${databaseOf(url)}")
     ds
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def unpooled(url: PooledUrl, user: Login, password: Password): PGSimpleDataSource =
     val pg = PGSimpleDataSource()
     pg.setUrl(url.value)
@@ -103,6 +113,8 @@ object Db:
     * session that must last as long as its holder wants it (the instance lock), which a pool would end whenever it
     * retires the connection. Kept alive by TCP keep-alives, so a database that went away is noticed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def session(cfg: DbConfig, application: ApplicationName): java.sql.Connection =
     val pg = unpooled(PooledUrl(cfg.url.value), Login(cfg.user.value), Password(cfg.password.value))
     pg.setApplicationName(application.value)
@@ -110,6 +122,8 @@ object Db:
     pg.getConnection()
 
   /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def databaseOf(url: JdbcUrl): DatabaseName =
     DatabaseName(url.value.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse)
 
@@ -143,6 +157,7 @@ object Db:
       SettingName("plan_cache_mode") -> SettingValue("force_custom_plan")
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def ensureDatabaseSettings(ds: DataSource): Unit =
     val c = ds.getConnection()
     try
@@ -158,6 +173,7 @@ object Db:
     * (e.g. a full disk), after which autovacuum has no row counts to act on and would leave these tables unanalyzed
     * until enough new writes accumulate.
     */
+  @tolerated(LintRule.TotalOrder, "pg_stat_user_tables of one schema: relname is unique in it")
   private[histmersion] val staleStatsSql: String =
     "SELECT relname FROM pg_stat_user_tables" +
       " WHERE last_analyze IS NULL AND last_autoanalyze IS NULL AND schemaname = 'public'" +

@@ -3,11 +3,14 @@ package db
 
 import com.histmersion.domain.media.assets.{NewFigure, Reconciled}
 import com.histmersion.util.database.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a re-conversion does to the asset rows already stored (#826) — pure, no database. */
 class AssetReconcileSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def name(raw: String): NewFigure.Name = NewFigure.Name(raw)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha(digit: Char): Sha256 = Sha256.applyUnsafe(digit.toString * 64)
 
   test("reconcile: names first, then a moved sha256 claims a leftover row; the rest is deleted"):

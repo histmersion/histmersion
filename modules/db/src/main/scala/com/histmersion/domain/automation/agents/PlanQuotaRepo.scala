@@ -11,10 +11,15 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the plan quota tables and their row codecs")
 object PlanQuotaRepo:
   type PoolName = PoolName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PoolName extends Newtype[String, Pure]
   type EpochMillis = EpochMillis.T
   object EpochMillis extends Newtype[Long, Pure]
@@ -30,6 +35,8 @@ object PlanQuotaRepo:
 
   /** The newest reading per window replaces the one before (a reading is a snapshot, not a ledger). */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def record(pool: PoolId, rs: List[Reading])(using DbCon): Unit =
     if rs.nonEmpty then
       val _ =
@@ -49,6 +56,7 @@ object PlanQuotaRepo:
           )
         }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def readings(pool: PoolId)(using DbCon): List[Reading] =
     sql"""SELECT limit_id, kind, model, used_pct, (extract(epoch FROM resets_at) * 1000)::bigint, rejected,
                  (extract(epoch FROM observed_at) * 1000)::bigint, source
@@ -90,6 +98,7 @@ object PlanQuotaRepo:
 
   val NoPool: Pool = Pool(Pool.Held(false), None, None, None, None)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pool(p: PoolId)(using DbCon): Pool =
     sql"""SELECT held, floors, refusal, (extract(epoch FROM refusal_until) * 1000)::bigint, plan_type
           FROM plan_pools WHERE pool = ${p.wire}"""
@@ -107,18 +116,22 @@ object PlanQuotaRepo:
       )
       .getOrElse(NoPool)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setHold(p: PoolId, held: Pool.Held)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO plan_pools (pool, held) VALUES (${p.wire}, $held)
             ON CONFLICT (pool) DO UPDATE SET held = EXCLUDED.held, updated_at = now()""".update.run()
 
   /** Saved floors; None drops them (config's apply again). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setFloors(p: PoolId, floors: Option[Pool.Floors])(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO plan_pools (pool, floors) VALUES (${p.wire}, $floors)
             ON CONFLICT (pool) DO UPDATE SET floors = EXCLUDED.floors, updated_at = now()""".update.run()
 
   /** The provider's own refusal (None lifts it) and its plan type, as last read. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def setRefusal(
       p: PoolId,
       refusal: Option[Problem],
@@ -139,6 +152,8 @@ object PlanQuotaRepo:
       .map((role, on) => ModelSettingsRepo.ChainRole(role) -> on)
       .toMap
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setFallthrough(role: ModelSettingsRepo.ChainRole, on: Boolean)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO agent_role_fallthrough (role, fallthrough) VALUES ($role, $on)
@@ -147,6 +162,9 @@ object PlanQuotaRepo:
   // ── the refresh log (V069) ──────────────────────────────────────────────────────────────────────
 
   /** One fresh reading a pool took on purpose (or tried to). */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def logRefresh(p: PoolId, mode: RefreshMode, trigger: RefreshTrigger, ok: Boolean, detail: RefreshDetail)(using
       DbCon
   ): Unit =
@@ -155,6 +173,8 @@ object PlanQuotaRepo:
             VALUES (${p.wire}, $mode, $trigger, $ok, ${detail.value.take(1000)})""".update.run()
 
   /** How many refreshes `p` took since `sinceMs` (epoch ms), and the newest one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def refreshes(p: PoolId, sinceMs: EpochMillis)(using DbCon): (RowCount, Option[RefreshInfo]) =
     val since = sinceMs.value.toDouble / 1000
     val n = sql"""SELECT count(*)::int FROM plan_quota_refreshes

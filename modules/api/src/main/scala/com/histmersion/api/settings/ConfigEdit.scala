@@ -9,6 +9,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object ConfigEdit:
 
@@ -23,6 +24,7 @@ object ConfigEdit:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
@@ -39,6 +41,9 @@ object ConfigEdit:
     type Shown = Shown.T
     object Shown extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   final case class Field(
       key: Field.Key,
       section: Field.Section,
@@ -58,6 +63,7 @@ object ConfigEdit:
       resolved: Option[Field.Resolved] = None
   ) derives JsonCodec,
         KindlingsSchema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def relative: Field.LocalKey = Field.LocalKey((key).value.stripPrefix("histmersion."))
 
   object Field:
@@ -159,6 +165,7 @@ object ConfigEdit:
   /** A changed setting a running server takes on only after a restart, and why (the part of the server it sizes or
     * binds is built once): an explanation, not a failure.
     */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives JsonCodec, KindlingsSchema
 
   object RestartNote:

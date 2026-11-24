@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Open Library Covers API (#1446): a book's cover by ISBN or OCLC number, at
   * `<base>/b/<isbn|oclc>/<id>-<S|M|L>.jpg`; `?default=false` makes a missing cover a 404 instead of a blank picture.
@@ -28,6 +29,8 @@ object OpenLibrary:
     * 13 long.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isbn(raw: Isbn): Option[Isbn] =
     val s = raw.value.trim.toUpperCase(Locale.ROOT).filter(c => c.isDigit || c == 'X')
     Option(s)
@@ -35,12 +38,15 @@ object OpenLibrary:
       .map(Isbn(_))
 
   /** Pure: an OCLC number — its digits (`ocm00012345`, `(OCoLC)12345` → `12345`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def oclc(raw: Oclc): Option[Oclc] =
     Option(raw.value.trim.dropWhile(!_.isDigit).takeWhile(_.isDigit).dropWhile(_ == '0'))
       .filter(_.nonEmpty)
       .map(Oclc(_))
 
   /** Pure: what to ask for — by ISBN first (the API's own preference), else by OCLC number. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(
       isbnRaw: Option[Isbn],
       oclcRaw: Option[Oclc]
@@ -55,6 +61,8 @@ object OpenLibrary:
       )
 
   /** Pure: a cover's URL; a missing cover answers 404. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def coverUrl(
       base: BaseUrl,
       kind: CoverChoice.Pick.OpenLibrary.Kind,
@@ -66,6 +74,8 @@ object OpenLibrary:
     )
 
   /** Pure: the book's page, for the credit line's link. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pageUrl(base: BaseUrl, kind: CoverChoice.Pick.OpenLibrary.Kind, id: CoverChoice.Pick.OpenLibrary.Id): PageUrl =
     if kind.value == "isbn" then PageUrl(s"${base.value.stripSuffix("/")}/isbn/${id.value}")
     else PageUrl(s"${base.value.stripSuffix("/")}/search?q=oclc%3A${URLEncoder.encode(id.value, UTF_8)}")

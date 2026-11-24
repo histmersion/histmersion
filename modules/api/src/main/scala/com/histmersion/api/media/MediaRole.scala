@@ -2,6 +2,7 @@ package com.histmersion
 package api.media
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object MediaRole:
   type Role = Role.T
   object Role extends Newtype[String, Pure]
@@ -28,14 +29,17 @@ object MediaRole:
   val Map = "map"
 
   /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val placeRoles: List[Role] = List(Role(Image), Role(AerialView), Role(Plan), Role(LocatorMap), Role(RouteMap))
 
   /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
     * cover before an illustration.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration).map(Role(_))
 
   /** Pure: the rank of a role on a card (unknown roles last). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def order(role: Role): Int = all.indexOf(role) match
     case -1 => (all.size)
     case i  => (i)

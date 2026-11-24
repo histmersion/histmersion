@@ -15,10 +15,15 @@ import com.histmersion.util.ocr.{
 
 import java.net.http.HttpClient
 import java.time.Duration
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The OCR converter's client over the settings: what the client is told of `converter.*`, read at each request. */
+@movesTo(FeaturePlace.Server)
 object ConverterWiring:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings(c: ConverterConfig): ConverterSettings =
     ConverterSettings(
       ConverterUrl(c.url.value),

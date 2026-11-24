@@ -14,6 +14,7 @@ import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The write surface over real HTTP: status codes are part of the contract (412 on a failed `ifUpdatedAt` precondition,
   * 404 on an unknown citekey), so they are asserted through the wire and not just through the repo. Skipped without
@@ -24,6 +25,7 @@ class WriteHttpSuite extends munit.FunSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   /** The server's settings, on the test database. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def testConfig: AppConfig =
     val base = AppConfig.load()
     base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))

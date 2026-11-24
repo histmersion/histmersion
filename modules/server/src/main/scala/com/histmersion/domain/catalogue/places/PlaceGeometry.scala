@@ -10,12 +10,15 @@ import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer's geometry operations, a mechanism over PostGIS with no in-memory twin (as the map's tiles): which
   * places each finding belongs to rebuilt from scratch, the hierarchy built from spatial containment, the land the
   * polities are clipped to replaced and every polity clipped again, and the places' checks' repairs (a kind, a grid
   * point, a point-only area).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait PlaceGeometry:
 
   /** `finding_places` from scratch: the findings' points, areas and names matched to every place again. */
@@ -53,6 +56,7 @@ object PlaceGeometry:
     def rebuildFindingPlaces(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit): Place.RebuildResult =
       db.write(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
     def buildHierarchy()(using WritePermit): SpatialHierarchyResult = db.write(PlaceRepo.buildSpatialHierarchy())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def replaceLand(geometries: List[PlaceDetailRow.Geometry])(using WritePermit): RowCount =
       db.write(Unused(LandRepo.replace(geometries.map(g => BPlaceRow.Geom(g.value))), Unused.Why.Reported))
       db.read(LandRepo.analyze())
@@ -60,14 +64,17 @@ object PlaceGeometry:
     def reclip()(using WritePermit): RowCount =
       db.read(LandRepo.polities()).grouped(LandRepo.ReclipBatch).foreach(batch => db.write(LandRepo.reclip(batch)))
       db.read(LandRepo.clipped())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reclassify(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit): (RowCount, RowCount) =
       val proposals = db.read(PlaceReviewRepo.proposals())
       if !proposals.exists(_.fixable) then (RowCount(0), RowCount(0))
       else db.write(PlaceReviewRepo.apply(proposals, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def relocate(toleranceKm: GeocodeSettings.ToleranceKm)(using WritePermit): RowCount =
       val moves = db.read(PlaceReviewRepo.relocations())
       if moves.isEmpty then RowCount(0)
       else db.write(PlaceReviewRepo.relocate(moves, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def removePointAreas(s: PointAreaRepo.Settings)(using WritePermit): PointAreaRepo.Removal =
       if s.kinds.isEmpty then
         PointAreaRepo.Removal(

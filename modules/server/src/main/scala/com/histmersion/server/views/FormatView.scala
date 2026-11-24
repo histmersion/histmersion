@@ -7,12 +7,15 @@ import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.server.MarkdownLint
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Source
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `POST /api/lint/markdown`: Markdown that is not stored (yet), checked as the field it is about to be — an article's
   * body by research's rules, a summary against research's pages, a source's notes by the library's. With `fix`, the
   * repaired text comes back in `text`.
   */
 final class FormatView(articles: => ArticlesControllers, sources: => SourcesControllers):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def check(in: FormatCheck): FormatReport =
     val (text, done) =
       if in.fix.value then

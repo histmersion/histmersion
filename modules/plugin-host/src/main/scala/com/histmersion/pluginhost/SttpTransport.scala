@@ -13,10 +13,13 @@ import java.util.Locale
 import scala.concurrent.duration.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition transport: java.net.http through sttp, which follows redirects. `tls` is the trust `acquire.tls`
   * configured ([[OutboundTls.configure]]); `None` keeps the client's default, the JDK's roots.
   */
+@atBoundary(BoundaryKind.Http, "sends HTTP requests with sttp")
 final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Option[javax.net.ssl.SSLContext] = None)
     extends HttpTransport:
   // HTTP/1.1 on every request: java.net.http negotiates HTTP/2 by ALPN, and some hosts that offer h2
@@ -36,6 +39,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
     )
   }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def get(
       url: HttpTransport.Url,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]

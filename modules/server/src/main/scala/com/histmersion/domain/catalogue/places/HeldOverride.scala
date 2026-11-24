@@ -6,10 +6,12 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's kind and period for a place as the in-memory catalogue holds it, with what the place's source said
   * before: a reset puts that back.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class HeldOverride(
     placeId: Place.Id,
     kind: Option[HeldOverride.Kind],

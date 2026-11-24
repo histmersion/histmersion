@@ -12,13 +12,16 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{FollowupRow, WorkRef}
 import com.histmersion.upstreams.Offset
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsClient:
 
   private val Fields =
     "intents,isInfluential,contexts,citingPaper.title,citingPaper.year," +
       "citingPaper.externalIds,citingPaper.citationCount"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def headers =
     cfg.semanticScholar.key.map(k => CoreQuota.HeaderName("x-api-key") -> CoreQuota.HeaderValue(k.value)).toMap
 
@@ -26,6 +29,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
     * `isInfluential` flag, which is what makes a follow-up worth reading. When it is down or rate limited we fall back
     * to OpenAlex's plain citation list — fewer signals, but never nothing.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citing(
       work: WorkRef,
       since: Option[Year],
@@ -44,6 +48,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
       case None => openalexCiting(work, since, limit.value).map((openalex, _))
     found
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def s2(doi: String, since: Option[Year], limit: Int): Either[Problem, List[FollowupRow]] =
     def page(offset: Offset, acc: List[FollowupRow]): Either[Problem, List[FollowupRow]] =
       if acc.size >= limit then Right(acc)
@@ -68,6 +73,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
           }
     page(Offset(0), Nil)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openalexCiting(work: WorkRef, since: Option[Year], limit: Int): Either[Problem, List[FollowupRow]] =
     work.openalexId match
       case None     => Right(Nil)

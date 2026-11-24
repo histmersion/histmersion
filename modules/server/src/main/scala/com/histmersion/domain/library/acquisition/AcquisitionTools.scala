@@ -64,6 +64,9 @@ final class AcquisitionTools(
       Problem.Invalid.Inconsistent.here(NonEmptyVector.of(first, rest*), Problem.Invalid.Exclusion.AtLeastOne)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val discover =
     tool("discover")
       .description(
@@ -100,6 +103,7 @@ final class AcquisitionTools(
       .input[RefsInput]
       .handle(in => CreatorControllers.mcp(in)(render(h.refs(RefsRequest(in.id, in.apply)))(AcquireMarkdown.refs)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val assess =
     tool("assess")
       .description(
@@ -157,6 +161,7 @@ final class AcquisitionTools(
         }
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ingestDoi =
     tool("ingest_doi")
       .description(
@@ -188,6 +193,7 @@ final class AcquisitionTools(
         )(AcquireMarkdown.ingest)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val archive =
     tool("archive")
       .description(
@@ -222,6 +228,7 @@ final class AcquisitionTools(
         }
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val candidates =
     tool("candidates")
       .description(
@@ -265,6 +272,7 @@ object AcquisitionTools:
   given JsonCodec.Unknown = JsonCodec.Unknown.Refused
   given JsoniterConfig = JsonCodec.schemas
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class DiscoverInput(
       query: Option[AcquireApi.Query] = None,
       doi: Option[AcquireApi.Identifier] = None,
@@ -281,6 +289,7 @@ object AcquisitionTools:
     type NotInDb = NotInDb.T
     object NotInDb extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class CandidatesInput(
       goal: Option[Goal.Slug] = None,
       state: Option[Candidates.State.Wire] = None,
@@ -305,6 +314,7 @@ object AcquisitionTools:
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class AssessInput(
       id: Option[AssessRequest.Id] = None,
       apply: AssessRequest.Apply = AssessRequest.Apply(false),
@@ -320,6 +330,7 @@ object AcquisitionTools:
     type RetractionsStatus = RetractionsStatus.T
     object RetractionsStatus extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class FollowupsInput(
       id: FollowupsRequest.Id,
       since: Option[FollowupsRequest.Since] = None,
@@ -340,6 +351,8 @@ object AcquisitionTools:
     type LegalOnly = LegalOnly.T
     object LegalOnly extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
       .schema
@@ -350,6 +363,7 @@ object AcquisitionTools:
         )
       )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class ArchiveInput(
       query: Option[AcquireApi.Query] = None,
       id: Option[ArchiveImportRequest.Id] = None,

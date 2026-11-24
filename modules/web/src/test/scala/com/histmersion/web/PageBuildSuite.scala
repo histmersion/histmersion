@@ -3,7 +3,9 @@ package web
 
 import com.histmersion.api.instance.BuildId
 import com.histmersion.api.instance.BuildId.Verdict
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PageBuildSuite extends munit.FunSuite:
 
   private val a = BuildId("0123456789abcdef0123456789abcdef")

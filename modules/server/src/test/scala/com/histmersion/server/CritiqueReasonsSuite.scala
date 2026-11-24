@@ -30,16 +30,19 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** V091 — the critique checklist's stored reasons (docs/research-review-convergence.md §6.8) against a `*_test`
   * database: written and read through `patch_article`'s one path, refused without a disagreement edge, kept under the
   * edge's direction, removed by an empty reason, and following the article (rename, delete) and both sources (a citekey
   * rename, a delete); the checklist itself with aliases resolved. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CritiqueReasonsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -68,6 +71,7 @@ class CritiqueReasonsSuite extends DbSuite:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(): Unit =
     List(Frazer -> 1922, Smith -> 1987, Brown -> 1999, Lone -> 2005).foreach { (ck, y) =>
       assert(

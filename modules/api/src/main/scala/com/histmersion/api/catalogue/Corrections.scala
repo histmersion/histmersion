@@ -6,7 +6,9 @@ import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object Corrections:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
@@ -23,11 +25,14 @@ object Corrections:
     else if upstreamNow == upstreamThen then Outcome.Keep
     else Outcome.Conflict
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(o: Outcome): Correction.StatusValue = o match
     case Outcome.Keep     => Correction.StatusValue(Correction.Status.Active)
     case Outcome.Retire   => Correction.StatusValue(Correction.Status.Agreed)
     case Outcome.Conflict => Correction.StatusValue(Correction.Status.Conflict)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counts(os: Iterable[Outcome]): Correction.Counts =
     Correction.Counts(
       Correction.Counts.Kept(os.count(_ == Outcome.Keep)),
@@ -41,6 +46,9 @@ object Corrections:
       case Some(j)             => (j.asString.getOrElse(j.noSpaces))
       case None                => (json)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def describe(c: Correction): String =
     val base = s"${c.field}: “${Fmt.clip(show(c.value.value))}” (was “${Fmt.clip(show(c.upstreamValue.value))}”" +
       c.upstream.fold("")(u => s" in $u") + ")"
@@ -54,6 +62,8 @@ object Corrections:
 
     def clip(s: String): String = if (s).length > 80 then ((s).take(79) + "…") else ((s))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(l: Correction.List): Markdown =
     if l.corrections.isEmpty then Markdown("_No corrections by hand._")
     else

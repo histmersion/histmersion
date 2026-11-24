@@ -6,16 +6,21 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import java.nio.file.{Files, Path}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion plugin new`: the names it derives, the files it writes and what they say. Whether the project compiles
   * and its tests pass is checked with scala-cli outside the build, as a plugin author runs it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class PluginTemplateSuite extends munit.FunSuite:
 
   private val repo = TemplateRepository.MavenLocal
   private val remote =
     TemplateRepository.Remote(PluginRepository.parse("https://repo.example.org/m2/", _ => false).toOption.get)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def request(
       id: String,
       kind: PluginKind = PluginKind.SourceFetcher,
@@ -30,6 +35,7 @@ class PluginTemplateSuite extends munit.FunSuite:
   private val testkit =
     s"${PluginBuildVersions.organization}::histmersion-plugin-testkit:${PluginBuildVersions.histmersion}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def file(files: List[TemplateFile], path: TemplateFile.Path): String =
     files.find(_.path == path).map(_.content.value).getOrElse(fail(s"no $path among ${files.map(_.path)}"))
 

@@ -10,7 +10,9 @@ import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.jobs.{JobKindEntry, JobKindMeaning, JobKindName, JobKinds}
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class JobKindsRegistrySuite extends munit.FunSuite:
   private val a =
     JobKindEntry(

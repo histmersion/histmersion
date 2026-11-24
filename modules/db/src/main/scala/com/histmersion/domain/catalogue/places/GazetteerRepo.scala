@@ -19,6 +19,8 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer's external sources in the store (#1064, V071): joining a batch of [[GazRecord]]s to the places already
   * here BY IDENTIFIER, writing what each record says (its place, if it is the first to bring it; its names and links,
@@ -34,6 +36,8 @@ import com.histmersion.util.database.StoredCreator
   * The refs a run has seen go into a temporary table, so the final [[Session.sweep]] removes the rows of records the
   * source no longer has.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the gazetteer tables and their row codecs")
 private[places] object GazetteerRepo:
 
   /** A seed place's own identifiers as `place_links` (V071): Pleiades ids (a `pleiades_…` id and its `pleiades_uri`),
@@ -74,6 +78,8 @@ private[places] object GazetteerRepo:
           FROM gazetteer_sources ORDER BY key""".query[GazetteerSourceRow].run().toList
 
   /** Record a finished import: what was read, and what it now holds in the store. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def recordSource(
       key: GazetteerSourceRow.Key,
       kind: Gazetteer.Kind,
@@ -132,6 +138,7 @@ private[places] object GazetteerRepo:
     * ([[Gazetteer.canonical]]). Returns the placement and the record's old own place when it must go (its ids now name
     * a better place).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def place(
       r: GazRecord,
       byOwn: List[Place.Match],
@@ -146,6 +153,8 @@ private[places] object GazetteerRepo:
 
   // ── one import session ─────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def session(
       source: Gazetteer.SourceInfo.Key,
       version: Gazetteer.LoadCounts.Version,
@@ -173,6 +182,7 @@ private[places] object GazetteerRepo:
         Unused.Why.Idempotent
       )
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def pruneCandidates: List[domain.catalogue.Place.Id] =
       if pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then Nil
       else
@@ -380,6 +390,7 @@ private[places] object GazetteerRepo:
         (RowCount(out.count(identity)), RowCount(out.count(!_)))
 
     /** The records' names on their places, as a diff. (added, removed, changed) */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def writeNames(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount, RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.names.map(n =>
@@ -416,6 +427,7 @@ private[places] object GazetteerRepo:
       (RowCount(out.count(identity)), RowCount(removed), RowCount(out.count(!_)))
 
     /** The records' descriptions on their places (joined ones too), as a diff. (added, removed, changed) */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def writeDescriptions(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount, RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.descriptions
@@ -453,6 +465,8 @@ private[places] object GazetteerRepo:
       * — on a link the seed wrote for the same id too (a curated place citing that Wikidata item), where only those
       * three columns change. (added, removed, changed)
       */
+    @tolerated(LintRule.TotalOrder, "the order rows are inserted in; ON CONFLICT settles a clash whatever it is")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def writeLinks(rows: List[(GazRecord, Place.Id)]): (RowCount, RowCount, RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.placeLinks.map { l =>

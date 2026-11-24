@@ -11,10 +11,12 @@ import com.histmersion.domain.*
 
 import java.time.LocalDate
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Crossref: what was DEPOSITED since (`from-created-date`), newest first — a watermark on deposits. */
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = ScholarlyIndex.Name("crossref")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     http
       .json(

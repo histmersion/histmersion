@@ -20,10 +20,13 @@ import com.histmersion.domain.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the goals keep: put and read back (sub-goals, a refused period), links in their order with what they
   * point at, plans and caps, the schedules not moved yet and their move.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class GoalServiceContract extends EngineStoreSuite:
   private def g(s: EngineStores) = s.goals
   private def bare(s: EngineStores, slug: DomainGoal.Slug) = g(s).get(slug).map(_.modify(_.updatedAt).setTo(None))

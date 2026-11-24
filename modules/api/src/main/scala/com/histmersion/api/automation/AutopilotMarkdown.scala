@@ -4,6 +4,8 @@ package api.automation
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AutopilotMarkdown:
 
   import Autopilot.*
@@ -11,11 +13,15 @@ object AutopilotMarkdown:
   private def counted(n: Long, singular: String): Plural.Phrase =
     Plural.count(Plural.CountN(n), Plural.CountSingular(singular))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def brief(m: ManagerBrief): String =
     s"${m.id} ${m.state}" + m.note
       .filter(n => (n).value.nonEmpty && (n).value != (m.state).value)
       .fold("")(n => s" ($n)")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goal(g: GoalProgress): String =
     val mgrs = if g.managers.isEmpty then "no managers" else g.managers.map(brief).mkString("; ")
     val pace = s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
@@ -25,9 +31,13 @@ object AutopilotMarkdown:
                                                              else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pace(g: FocusGoal): String =
     (s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focus(f: FocusInfo): String =
     val head =
       s"## Focus: ${if (f.on) == FocusInfo.On(true) then s"at most ${f.max} active goals" else "not in force"}" +
@@ -70,6 +80,8 @@ object AutopilotMarkdown:
   /** The autopilot's status; `ingestedBy` ends the line of today's ingests, `beforeBacklog` and `afterBacklog` are the
     * lines the page shows around the backlog's (the library's upstreams and its re-check).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(
       s: Autopilot.EngineStatus,
       ingestedBy: String = (""),

@@ -18,7 +18,9 @@ import com.histmersion.config.PgTuning
 import com.histmersion.config.ServerConfig
 import com.histmersion.config.BundlesConfig
 import com.histmersion.config.InitConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SupervisorSuite extends munit.FunSuite:
 
   // independent of the environment the suite runs in (CI sets HISTMERSION_PG_BIN_DIR, HISTMERSION_BIND, …)
@@ -28,6 +30,7 @@ class SupervisorSuite extends munit.FunSuite:
       .setTo(
         c.backups.modify(_.dir).setTo(BackupsConfig.Dir("backups")).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(""))
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rc(home: String = "", data: String = "") = base.runtime
     .modify(_.enabled)
     .setTo(RuntimeConfig.Enabled(true))
@@ -35,6 +38,7 @@ class SupervisorSuite extends munit.FunSuite:
     .setTo(RuntimeConfig.Home(home))
     .modify(_.dataDir)
     .setTo(RuntimeConfig.DataDir(data))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def env(m: (String, String)*): UserPaths.Lookup =
     m.map((k, v) => Environment.VariablesKey(k) -> Environment.VariablesValue(v)).toMap.get
 

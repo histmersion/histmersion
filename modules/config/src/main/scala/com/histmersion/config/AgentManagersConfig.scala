@@ -3,8 +3,10 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The process managers' supervisor (docs/research-process-managers.md §3). */
+@movesTo(FeaturePlace.AutomationManagers)
 final case class AgentManagersConfig(
     enabled: AgentManagersConfig.Enabled,
     tickSeconds: AgentManagersConfig.TickSeconds,

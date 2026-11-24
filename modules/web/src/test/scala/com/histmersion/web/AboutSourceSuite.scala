@@ -3,10 +3,12 @@ package web
 
 import com.histmersion.api.instance.{About, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The About window offers everyone who uses the server the source of the running version (the AGPL's network clause):
   * the licence, and a link to the repository at the commit.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AboutSourceSuite extends munit.FunSuite:
 
   private def about(build: BuildStamp) =

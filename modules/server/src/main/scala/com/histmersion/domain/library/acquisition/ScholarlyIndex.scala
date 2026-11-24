@@ -9,10 +9,12 @@ import java.time.LocalDate
 import com.histmersion.api.library.WorkRef
 import com.histmersion.domain.library.search.Search
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One scholarly index a goal's saved queries are read from (#3761): the works matching a query that are newer than
   * `since` (published, or deposited where the index says so), newest first. A small trait so a test hands fakes.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait ScholarlyIndex:
   def name: ScholarlyIndex.Name
   def search(

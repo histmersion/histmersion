@@ -8,14 +8,18 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.time.{Instant, LocalDate}
 import com.histmersion.domain.automation.ProviderKind
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A metered upstream's budget (migration V103), one row per upstream. The recent call slots (pacing within a minute)
   * are not kept: see [[CoreQuota.State]]. Every method runs on the connection it is given.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the upstream quota tables and their row codecs")
 private[acquisition] object UpstreamQuotaRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image), a day as its ISO text.
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def load(upstream: ProviderKind.Wire)(using DbCon): Option[CoreQuota.State] =
     sql"""SELECT day::text, lookup_tokens, search_tokens, (extract(epoch FROM blocked_until) * 1000)::bigint, blocked_why,
                  rate_limit, rate_remaining, (extract(epoch FROM observed_at) * 1000)::bigint
@@ -44,6 +48,7 @@ private[acquisition] object UpstreamQuotaRepo:
         )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def save(upstream: ProviderKind.Wire, s: CoreQuota.State)(using DbCon): Unit =
     val day = s.day.toString
     val until = s.block.map(_.until.toEpochMilli.toDouble / 1000)

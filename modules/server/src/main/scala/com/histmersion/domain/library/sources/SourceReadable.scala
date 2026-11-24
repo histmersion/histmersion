@@ -14,14 +14,17 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources a person has not marked read, by title, as "Not read yet" lists them. */
 final class SourceReadable(db: Transactor) extends Readable:
   val kind: ItemKind = SourceReferable.Kind
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notRead(read: Set[ItemRef]): Frag =
     sql" FROM sources i WHERE NOT (i.citekey = ANY(${read.toList.map(_.key)}::text[]) OR i.uid = ANY(${read.toList.flatMap(_.uid).map(u => u.value.toString)}::uuid[]))"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows =
@@ -51,6 +54,7 @@ object SourceReadable:
   type RowEnd = RowEnd.T
   object RowEnd extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[sources] def row(
       ck: Citekey,
       title: Title,

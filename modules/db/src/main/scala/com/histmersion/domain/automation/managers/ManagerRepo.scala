@@ -32,6 +32,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up
@@ -39,6 +41,9 @@ import com.histmersion.util.database.StoredCreator
   * evaluation, on the run it evaluates), so a tick that runs twice — or two processes, should the lease ever fail —
   * cannot do a step twice.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the manager tables and their row codecs")
 object ManagerRepo:
   type EventCursor = EventCursor.T
   object EventCursor extends Newtype[Long, Pure]
@@ -101,6 +106,8 @@ object ManagerRepo:
         sql"updated_at"
       )} FROM agent_managers"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def toInfo(r: ManagerRow)(using DbCon): ManagerInfo =
     val (usd, tokens) = spendToday(r.id)
     ManagerInfo(
@@ -126,6 +133,8 @@ object ManagerRepo:
   /** What a manager's runs spent this UTC day (the steps that finished since midnight UTC): metered USD — a plan-billed
     * call is recorded at 0 — and tokens in + out, every call's.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def spendToday(id: ManagerRow.Id)(using DbCon): (BigDecimal, ManagerRepo.SpendCount) =
     sql"""SELECT coalesce(sum(s.cost_usd), 0), coalesce(sum(s.tokens_in + s.tokens_out), 0)::bigint
           FROM agent_steps s JOIN jobs j ON j.id = s.job_id
@@ -142,6 +151,7 @@ object ManagerRepo:
       .toList
       .map(toInfo(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(id: ManagerRow.Id)(using DbCon): Option[ManagerInfo] =
     sql"$managerSelect WHERE id = $id"
       .query[ManagerRow]
@@ -150,6 +160,7 @@ object ManagerRepo:
       .map(toInfo(_))
 
   /** A new manager (with its cron and first firing, if it has one); `false` when the id is taken. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def create(
       id: ManagerRow.Id,
       kind: Kind,
@@ -161,6 +172,7 @@ object ManagerRepo:
   )(using DbCon)(using Creator.New): Boolean =
     createIn(id, kind, goal, state, config, cron, nextTick)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def createIn(
       id: ManagerRow.Id,
       kind: Kind,
@@ -177,15 +189,18 @@ object ManagerRepo:
           ON CONFLICT (id) DO NOTHING""".update.run() > 0
 
   /** When its cron fires next (None: not scheduled). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setNextTick(id: ManagerRow.Id, next: Option[java.time.Instant])(using DbCon): Boolean =
     val n = next.map(_.toString)
     (sql"""UPDATE agent_managers SET next_tick_at = $n::timestamptz WHERE id = $id""".update.run() > 0)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setState(id: ManagerRow.Id, state: State, pauseRuns: ManagerRow.PauseRuns)(using DbCon): Boolean =
     sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
           WHERE id = $id""".update.run() > 0
 
   /** Its settings and cron; `next` = when the cron fires next (None with no cron). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setConfig(
       id: ManagerRow.Id,
       config: ManagerConfig,
@@ -194,6 +209,7 @@ object ManagerRepo:
   )(using DbCon): Boolean =
     setConfigIn(id, config, cron, next)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setConfigIn(
       id: ManagerRow.Id,
       config: ManagerConfig,
@@ -207,14 +223,18 @@ object ManagerRepo:
           WHERE id = $id""".update.run() > 0
 
   /** The derived status line; written only when it changed (no `updated_at` churn every tick). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setStatusNote(id: ManagerRow.Id, note: ManagerRow.StatusNote)(using DbCon): Boolean =
     val text = note.render
     sql"""UPDATE agent_managers SET status_note = $text
           WHERE id = $id AND status_note IS DISTINCT FROM $text""".update.run() > 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def delete(id: ManagerRow.Id)(using DbCon): Boolean =
     (sql"DELETE FROM agent_managers WHERE id = $id".update.run() > 0)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def counts(id: ManagerRow.Id)(using DbCon): ItemCounts =
     ItemCounts.of(
       sql"""SELECT status, count(*)::int FROM manager_items WHERE manager_id = $id GROUP BY status"""
@@ -224,6 +244,7 @@ object ManagerRepo:
     )
 
   /** Its runs not settled yet (queued, running, paused, waiting). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def inFlight(id: ManagerRow.Id)(using DbCon): RowCount =
     sql"""SELECT count(*)::int FROM jobs WHERE kind = $AgentRun AND manager_id = $id
                       AND status IN ('queued', 'running', 'paused', 'waiting')""".query[RowCount].run().head
@@ -236,6 +257,7 @@ object ManagerRepo:
     * `budget`, `provider`) frees its place — resuming it is that person's call — and so does a run WAITING for a
     * person's approval (#3762 proposal 1: one unanswered approval used to stop a whole manager).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def running(id: ManagerRow.Id)(using DbCon): RowCount =
 
     sql"SELECT count(*)::int FROM jobs WHERE kind = $AgentRun AND manager_id = $id AND ${occupyingOn(sql"jobs")}"
@@ -261,6 +283,8 @@ object ManagerRepo:
 
   /** The item kinds of the last `n` runs the managers started, newest first (what the scheduler's shares count).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def recentKinds(n: PageSize)(using DbCon): List[ItemRow.Kind] =
     sql"""SELECT i.kind FROM jobs j JOIN manager_items i ON i.id = j.manager_item
           WHERE j.kind = $AgentRun ORDER BY j.created_at DESC, j.id DESC LIMIT ${math.max(0, n.value)}"""
@@ -351,6 +375,7 @@ object ManagerRepo:
         .isoSeconds(sql"created_at")}, ${Timestamps.isoSeconds(sql"updated_at")}
        FROM manager_items"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def toItem(r: ItemRow): ManagerItem =
     ManagerItem(
       r.id,
@@ -372,9 +397,11 @@ object ManagerRepo:
       r.updatedAt
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def item(id: ItemRow.Id)(using DbCon): Option[ManagerItem] =
     sql"$itemSelect WHERE id = $id".query[ItemRow].run().headOption.map(toItem)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def itemFor(managerId: ManagerRow.Id, kind: ItemRow.Kind, target: ItemRow.Target)(using DbCon): Option[ManagerItem] =
 
     sql"$itemSelect WHERE manager_id = $managerId AND kind = $kind AND target = $target"
@@ -384,6 +411,7 @@ object ManagerRepo:
       .map(toItem)
 
   /** The open items (pending, held, active) of any manager whose target is `target`, the newest first. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def openFor(target: ItemRow.Target)(using DbCon): List[ManagerItem] =
 
     sql"$itemSelect WHERE target = $target AND status IN ('pending', 'held', 'active') ORDER BY id DESC"
@@ -393,6 +421,8 @@ object ManagerRepo:
       .map(toItem)
 
   /** [[items]] on the caller's connection. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def itemPage(managerId: ManagerRow.Id, status: Option[ItemStatus], offset: Offset, limit: PageSize)(using
       DbCon
   ): (List[ManagerItem], RowCount) =
@@ -408,6 +438,7 @@ object ManagerRepo:
         .map(toItem)
     (rows, total)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def withStatus(managerId: ManagerRow.Id, status: ItemStatus)(using DbCon): List[ManagerItem] =
 
     sql"$itemSelect WHERE manager_id = $managerId AND status = ${status.wire} ORDER BY priority DESC, id"
@@ -419,6 +450,8 @@ object ManagerRepo:
   /** Add an item, or — when it exists — bring it back: `reopen` sets a settled one pending again, and the priority is
     * raised to `priority` (an active one keeps running). Returns the item's id and whether it was new.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def upsert(
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
@@ -453,12 +486,14 @@ object ManagerRepo:
         (id, false)
 
   /** The pending items whose time has come, the most urgent first: (id, target, priority, not-before). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pending(managerId: ManagerRow.Id)(using DbCon): List[ManagerItem] =
     withStatus(managerId, ItemStatus.Pending)
 
   /** Dispatch, in the caller's transaction: pending → active with `run`, one more attempt, the open MAJORs before it in
     * its state. `false` = it was no longer pending (another tick took it).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def dispatchIn(itemId: ItemRow.Id, run: Run.Id, state: ItemState)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = ${ItemStatus.Active.wire}, run_id = $run, attempts = attempts + 1,
                                    state = $state::jsonb, updated_at = now()
@@ -466,6 +501,9 @@ object ManagerRepo:
 
   /** Active items whose run is terminal and not evaluated yet (or whose run is gone): the evaluation queue.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toEvaluate(managerId: ManagerRow.Id)(using
       DbCon
   ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Problem])])] =
@@ -498,6 +536,8 @@ object ManagerRepo:
   /** Record an evaluation (keyed by the run: a second evaluation of the same run changes nothing). `hold` = the hold it
     * is left in (`held`: waiting for an approval).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def evaluated(
       itemId: ItemRow.Id,
       run: Option[ItemRow.EvaluatedRun],
@@ -518,11 +558,13 @@ object ManagerRepo:
             AND coalesce(run_id, '') = $key AND evaluated_run IS DISTINCT FROM $run""".update.run() > 0
 
   /** A person's (or a hint's) change of one item. Each is a CAS on the statuses it may change. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hold(itemId: ItemRow.Id, h: Hold)(using DbCon): Boolean =
     val hold = Option(h)
     sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
           WHERE id = $itemId AND status IN ('pending', 'held')""".update.run() > 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def release(itemId: ItemRow.Id)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
           WHERE id = $itemId AND status = 'held'""".update.run() > 0
@@ -530,12 +572,14 @@ object ManagerRepo:
   // ── the focus's holds (docs/research-process-managers.md "As built: the focus") ─────────────────
 
   /** Hold a PENDING item for the focus (`h.focus` = its goal); false = it was not pending any more. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def focusHold(itemId: ItemRow.Id, h: Hold)(using DbCon): Boolean =
     val hold = Option(h)
     sql"""UPDATE manager_items SET status = 'held', hold = $hold::jsonb, updated_at = now()
           WHERE id = $itemId AND status = 'pending'""".update.run() > 0
 
   /** Release the focus holds among `ids` (a person's or an approval's hold is never touched); how many. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def focusRelease(ids: List[ItemRow.Id])(using DbCon): RowCount =
     if ids.isEmpty then RowCount(0)
     else
@@ -560,12 +604,14 @@ object ManagerRepo:
       .run()
       .head
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setPriority(itemId: ItemRow.Id, priority: ItemRow.Priority)(using DbCon): Boolean =
     (
       sql"UPDATE manager_items SET priority = $priority, updated_at = now() WHERE id = $itemId".update.run() > 0
     )
 
   /** Settle an item that is not active (skip: stopped by a person; a manager's stop: cancelled). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def settle(itemId: ItemRow.Id, status: ItemStatus, outcome: ItemRow.Outcome, from: List[ItemStatus])(using
       DbCon
   ): Boolean =
@@ -574,6 +620,7 @@ object ManagerRepo:
           WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
 
   /** Re-open a settled item: pending again, its run count and failures reset, how often recorded. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def reopen(itemId: ItemRow.Id)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, outcome = NULL,
                                    hold = NULL,
@@ -585,6 +632,7 @@ object ManagerRepo:
   /** A converged item selected again because it went stale: pending at `priority` (exactly: the lowest), its runs
     * counted from zero, its run history dropped (a new cycle), why in its outcome.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def restale(itemId: ItemRow.Id, priority: ItemRow.Priority, why: ItemRow.Outcome)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', attempts = 0, failures = 0, not_before = NULL, hold = NULL,
                                    priority = $priority, origin = ${ItemOrigin.Selection.wire}, outcome = $why,
@@ -594,11 +642,13 @@ object ManagerRepo:
   /** A manager's open items (pending, held, active) as (kind, target) — what
     * [[com.histmersion.domain.ManagerPolicy.waitsFor]] reads.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def openKeys(managerId: ManagerRow.Id)(using DbCon): List[(ItemRow.Kind, ItemRow.Target)] =
     sql"""SELECT kind, target FROM manager_items WHERE manager_id = $managerId
           AND status IN ('pending', 'held', 'active')""".query[(ManagerItem.Kind, ManagerItem.Target)].run().toList
 
   /** Does manager `managerId` have (or ever had) an item of `kind` on `target`? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hasItem(managerId: ManagerRow.Id, kind: ItemRow.Kind, target: ItemRow.Target)(using DbCon): Boolean =
     sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND kind = $kind AND target = $target"""
       .query[Int]
@@ -608,6 +658,7 @@ object ManagerRepo:
   /** Every open item of a manager cancelled (a stop), its outcome line `why`'s sentence (the outcome is a line of text,
     * as every other outcome an item keeps); returns how many.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def cancelOpen(managerId: ManagerRow.Id, why: Problem)(using DbCon): RowCount =
     val line = why.sentence
     RowCount(
@@ -616,6 +667,7 @@ object ManagerRepo:
     )
 
   /** Back to pending (an active item whose run vanished, or was never submitted). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def requeue(itemId: ItemRow.Id, outcome: ItemRow.Outcome)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = 'pending', run_id = NULL, outcome = $outcome, updated_at = now()
           WHERE id = $itemId AND status = 'active'""".update.run() > 0
@@ -625,6 +677,8 @@ object ManagerRepo:
   /** Articles with open MAJORs in their review ledger and no item of this manager yet, the most open MAJORs first;
     * `tags` (all of) and `goal` (linked to it) narrow them.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def openMajorArticles(
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
@@ -648,6 +702,8 @@ object ManagerRepo:
           ORDER BY m.n DESC, a.slug LIMIT ${math.max(1, limit.value)}""".query[(Slug, RowCount)].run().toList
 
   /** Articles never reviewed (no ledger, no review-article run) and with no item of this manager. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def unreviewedArticles(
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
@@ -673,6 +729,8 @@ object ManagerRepo:
     * of it drives (by the ledger's `updated_at`) — oldest first, `tags`/`goal` narrowing as in the selection. (slug,
     * converged at, filter hits then, the done item if any).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def staleCandidates(
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
@@ -718,6 +776,8 @@ object ManagerRepo:
     * when their last extension item settled (None: never extended) — the ones never extended first, then the longest
     * ago; `tags`/`goal` narrow as in the selection.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def extendCandidates(
       managerId: ManagerRow.Id,
       tags: List[EnrichSource.Tag],
@@ -771,6 +831,8 @@ object ManagerRepo:
   /** Open items of `kind` in manager `id` (pending, held or active) — e.g. a goal's compiles. `focusHeld` = an item the
     * focus holds counts as held (false: as the pending item it really is).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def openOf(
       managerId: ManagerRow.Id,
       kinds: List[ItemRow.Kind],
@@ -786,11 +848,13 @@ object ManagerRepo:
       .head
 
   /** Open items on `target` in manager `id`, any kind. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def openOn(managerId: ManagerRow.Id, target: ItemRow.Target)(using DbCon): Boolean =
     (sql"""SELECT 1 FROM manager_items WHERE manager_id = $managerId AND target = $target
                       AND status IN ('pending', 'held', 'active') LIMIT 1""".query[Int].run().nonEmpty)
 
   /** An article's tags and the goals it is linked to (what a hint's effect matches). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def articleFacets(slug: Slug)(using
       DbCon
   ): (List[EnrichSource.Tag], List[Goal.Slug]) =
@@ -804,6 +868,8 @@ object ManagerRepo:
     (tags, goals)
 
   /** Is there a source with this citekey or DOI (a hold waiting for it is released)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sourceExists(ref: Citekey)(using DbCon): Boolean =
     val r = ref.value.trim
     val doi = r.toLowerCase.stripPrefix("https://doi.org/").stripPrefix("doi:")
@@ -825,6 +891,7 @@ object ManagerRepo:
       .toList
       .map(toItem)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def backlogOpenForIn(doi: Doi)(using DbCon): Option[ManagerItem] =
     sql"$itemSelect WHERE kind = $OaIngest AND target = $doi AND status IN ('pending', 'held', 'active') ORDER BY id LIMIT 1"
       .query[ItemRow]
@@ -842,6 +909,8 @@ object ManagerRepo:
       .map((m, p, h) => m -> (p, h))
       .toMap
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def countEventsByIn(kind: ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using
       DbCon
   ): Map[ManagerInfo.Id, RowCount] =
@@ -849,11 +918,13 @@ object ManagerRepo:
     sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
           GROUP BY manager_id""".query[(ManagerInfo.Id, RowCount)].run().toMap
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setItemStateIn(itemId: ItemRow.Id, state: ItemState, from: List[ItemStatus])(using DbCon): Boolean =
     val fs = from.map(_.wire)
     sql"""UPDATE manager_items SET state = $state::jsonb, updated_at = now()
           WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def backlogRetryIn(
       itemId: ItemRow.Id,
       failures: ItemRow.Failures,
@@ -868,6 +939,8 @@ object ManagerRepo:
           WHERE id = $itemId AND status = 'pending'""".update.run() > 0
 
   /** The citekey of the source holding this DOI, if one does. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def citekeyOfDoi(doi: Doi)(using DbCon): Option[Citekey] =
     val d = doi.value.trim.toLowerCase
     (
@@ -912,11 +985,15 @@ object ManagerRepo:
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[ManagerEvent] = DbCodec.derived
 
   private val eventSelect =
     sql"SELECT id, manager_id, item_id, run_id, ${Timestamps.isoSeconds(sql"at")}, kind, text FROM manager_events"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def eventIn(
       managerId: ManagerRow.Id,
       itemId: Option[ItemRow.Id],
@@ -929,6 +1006,8 @@ object ManagerRepo:
     val _ = sql"""INSERT INTO manager_events (manager_id, item_id, run_id, kind, text)
                   VALUES ($managerId, $itemId, $runId, $kind, ${text.value.take(2000)})""".update.run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def event(
       managerId: ManagerRow.Id,
       itemId: Option[ItemRow.Id],
@@ -939,16 +1018,21 @@ object ManagerRepo:
     eventIn(managerId, itemId, runId, kind, text)
 
   /** Newest first; `before` = only events older than that id. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def events(managerId: ManagerRow.Id, before: Option[EventCursor], limit: PageSize)(using DbCon): List[ManagerEvent] =
     sql"$eventSelect WHERE manager_id = $managerId${before.fold(sql"")(b => sql" AND id < $b")} ORDER BY id DESC LIMIT ${math.max(1, limit.value)}"
       .query[ManagerEvent]
       .run()
       .toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def lastEvent(managerId: ManagerRow.Id)(using DbCon): Option[ManagerEvent] =
     events(managerId, None, PageSize(1)).headOption
 
   /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def countEvents(managerId: ManagerRow.Id, kind: ManagerRepo.CountEventsKind, since: java.time.Instant)(using
       DbCon
   ): RowCount =
@@ -959,6 +1043,8 @@ object ManagerRepo:
   /** How many events of `kind` ALL managers recorded since `since` (every watcher's ingests today: the autopilot's
     * shared cap).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def countEventsAll(kind: ManagerRepo.CountEventsAllKind, since: java.time.Instant)(using DbCon): RowCount =
     val at = since.toString
 
@@ -968,6 +1054,8 @@ object ManagerRepo:
       .head
 
   /** The newest event of `kind` (a starved note is logged once per change). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def lastEventOf(managerId: ManagerRow.Id, kind: ManagerRepo.LastEventOfKind)(using DbCon): Option[ManagerEvent] =
 
     sql"$eventSelect WHERE manager_id = $managerId AND kind = $kind ORDER BY id DESC LIMIT 1"
@@ -975,6 +1063,8 @@ object ManagerRepo:
       .run()
       .headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pruneEvents(days: CodexRetention.KeepDays)(using DbCon): RowCount =
     if days.value <= 0 then RowCount(0)
     else RowCount(sql"DELETE FROM manager_events WHERE at < now() - make_interval(days => $days)".update.run())
@@ -1017,6 +1107,7 @@ object ManagerRepo:
                           WHERE a.kind = 'hint-effect' AND a.state = 'open' AND a.subject = h.manager_id
                             AND (a.proposal->>'hint')::bigint = h.id ORDER BY a.id DESC LIMIT 1) p ON true"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def toHint(r: HintRow): ManagerHint =
     ManagerHint(
       r.id,
@@ -1033,6 +1124,7 @@ object ManagerRepo:
       r.proposed
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def addHint(
       managerId: HintRow.ManagerId,
       itemId: Option[HintRow.ItemId],
@@ -1051,24 +1143,30 @@ object ManagerRepo:
         .head
     hint(id).get
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hint(id: HintRow.Id)(using DbCon): Option[ManagerHint] =
     (sql"$hintSelect WHERE h.id = $id".query[HintRow].run().headOption.map(toHint))
 
   /** A manager's hints, oldest first; `live` = only the ones not retired. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def hints(managerId: ManagerRow.Id, live: Boolean)(using DbCon): List[ManagerHint] =
     sql"$hintSelect WHERE h.manager_id = $managerId${
         if live then sql" AND h.retired_at IS NULL" else sql""
       } ORDER BY h.id".query[HintRow].run().toList.map(toHint)
 
   /** The action a hint carries now (a model's proposal a person approved). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setHintEffect(id: HintRow.Id, effect: Option[HintEffect])(using DbCon): Boolean =
     (sql"UPDATE manager_hints SET effect = $effect::jsonb WHERE id = $id".update.run() > 0)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def retireHint(managerId: ManagerRow.Id, id: HintRow.Id)(using DbCon): Boolean =
     sql"""UPDATE manager_hints SET retired_at = now() WHERE id = $id AND manager_id = $managerId
           AND retired_at IS NULL""".update.run() > 0
 
   /** In the dispatch transaction: the hints a run was given, and the once-hints among them retired. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def usedIn(hints: List[ManagerHint], runId: Run.Id)(using DbCon): Unit =
     hints.foreach { h =>
       Unused(

@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobActions
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pause, resume and cancel a job: a long background job cooperatively (it stops at its next part boundary, keeping
   * what it did; resumed, it skips that), an agent run by its own control.
@@ -27,11 +28,14 @@ trait JobControlService:
   def control(id: Job.Id, action: JobAction)(using WritePermit, Creator.New): Either[Api.Error, JobInfo]
 
 object JobControlService:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notFound(id: Job.Id) =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Job.Id), Problem.Raw(s"$id")),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def conflict(why: String) =
     Api.Error(Problem.Unclassified(Legacy.Text(why)), Some(Api.Error.Code(JobActions.CodeConflict)))
 
@@ -49,6 +53,9 @@ object JobControlService:
       runs: (Job.Id, JobAction) => (WritePermit, Creator.New) ?=> Either[Api.Error, Unit]
   ) extends JobControlService:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def control(id: Job.Id, action: JobAction)(using WritePermit, Creator.New): Either[Api.Error, JobInfo] =
       def current = Transactor(ds).read(JobRepo.get(id)).toRight(notFound(id))
       current.flatMap { job =>
@@ -85,8 +92,10 @@ object JobControlService:
   ) extends JobControlService:
 
     /** A job, as the store would hold it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def put(job: JobInfo): Unit = jobs.updateAndGet(_ + (JobInfo.Id(job.id.value) -> job)): Unit
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Job.Id): Option[JobInfo] = jobs.get.get(JobInfo.Id(id.value))
 
     /** A running job's body stopped as asked, after `progress`: paused (resumed by `resume`) or cancelled. */
@@ -98,6 +107,9 @@ object JobControlService:
         move(id, to, Some(JobControlRules.stoppedLine(stop, progress)))
       }
 
+    @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def move(id: Job.Id, to: JobState, progress: Option[JobInfo.Progress]): Unit =
       val key = JobInfo.Id(id.value)
       jobs.updateAndGet(m =>
@@ -115,6 +127,8 @@ object JobControlService:
           )
       ): Unit
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def control(id: Job.Id, action: JobAction)(using WritePermit, Creator.New): Either[Api.Error, JobInfo] =
       def current = get(id).toRight(notFound(id))
       current.flatMap { job =>

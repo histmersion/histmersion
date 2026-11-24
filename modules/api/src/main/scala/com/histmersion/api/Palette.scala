@@ -7,7 +7,10 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Source
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.ApiUi)
 object Palette:
   object Ramp:
     type Stops = Stops.T
@@ -55,14 +58,27 @@ object Palette:
   private def token(family: String, known: List[String], name: String): String =
     if known.contains(name) then (s"--$family-$name") else (s"--$family-default")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def edge(kind: Edge.Kind.Wire): CssVar = CssVar(token("edge", edgeKinds.map(_.value), kind.value))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(status: Source.Status.Wire): CssVar = CssVar(token("status", statuses.map(_.value), status.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalStage(stage: Goal.Status.All): CssVar = CssVar(s"--stage-${stage.value.trim.toLowerCase}")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalStageSoft(stage: Goal.Status.All): CssVar = CssVar(s"${goalStage(stage).value}-soft")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def media(kind: MediaItem.Kind): CssVar = CssVar(token("media", mediaKinds.map(_.value), kind.value))
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def confidence(level: Confidence.Wire): CssVar = CssVar(s"--conf-${level.value}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allTokens: List[CssVar] =
     (edgeKinds.map(edge) :+ CssVar("--edge-default")) ++ (statuses.map(status) :+ CssVar("--status-default")) ++
       (mediaKinds.map(media) :+ CssVar("--media-default")) ++ confidences.map(confidence) ++
@@ -72,5 +88,6 @@ object Palette:
       List("--graph-hover", "--graph-label", "--graph-label-hover", "--place-pick", "--place-preview").map(CssVar(_)) ++
       mapLabelTokens
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val mapLabelTokens: List[CssVar] =
     for tone <- List("light", "dark"); part <- List("ink", "halo", "note") yield CssVar(s"--map-label-$part-$tone")

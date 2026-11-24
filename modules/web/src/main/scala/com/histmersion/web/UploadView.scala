@@ -16,6 +16,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Upload a document for OCR ingest (`POST /api/ingest`): pick or drop a file, give it a citekey and the metadata the
   * endpoint takes, watch the upload, then follow the OCR job in the jobs window. The form can start from an item of the
@@ -67,6 +68,8 @@ object UploadView:
   /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`, or `None` (the
     * reader types one); the server judges it when the upload is sent.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def suggestCitekey(fileName: Api.FileName): Option[api.library.Citekey] =
     val name = fileName.value
     val stem = name.reverse.dropWhile(_ != '.').drop(1).reverse match
@@ -83,6 +86,8 @@ object UploadView:
     Option(slug).filter(_.length >= 2).map(api.library.Citekey(_))
 
   /** The parameters to send, or what is wrong, field by field. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def validate(d: Draft): Either[List[(Field, String)], Ingest.Params] =
     val file = Option.when(d.fileName.isEmpty)(Field.File -> "choose a file to upload")
     // the key itself is the server's to judge (it answers why it refuses one)
@@ -121,6 +126,8 @@ object UploadView:
     * reader has NOT typed yet; the chosen file and anything typed stay. Picking another item replaces the link, and
     * only the fields the previous pick filled are refilled.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def withItem(d: Draft, item: Queue.QueueItem): Draft =
     val from = QueueItemRef.uploadDraft(item)
     val prev = d.forItem.map(QueueItemRef.uploadDraft)
@@ -147,11 +154,14 @@ object UploadView:
       .setTo(Some(item))
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemLabel(item: Queue.QueueItem, max: Int = 110): UiLabels.Text =
     val line = item.text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     UiLabels.Text(s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
 
   /** The item a picker entry names (`#42 …`), among the items offered. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pickedItem(typed: String, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
     """^\s*#(\d+)\b""".r
       .findFirstMatchIn(typed)
@@ -159,6 +169,7 @@ object UploadView:
       .flatMap(id => items.find(_.id.value == id))
 
   /** The server's refusal, placed next to the field it is about. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def fieldOf(f: ApiFailure): Field =
     if f.duplicate then Field.File
     else if f.error.isInvalidCitekey then Field.Citekey
@@ -182,6 +193,7 @@ object UploadView:
 
   /** What is typed in the picker, until it names an item. */
   private val pickText = Var("")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val authors =
     draft.zoomLazy(_.authors.map(a => Chip.Choice(a.value)))((d, a) =>
       d.modify(_.authors).setTo(a.map(c => Draft.Authors(c.value)))
@@ -190,6 +202,7 @@ object UploadView:
   /** Open the window with this form filled in — from an acquisition item's "Upload…". A file chosen for an earlier form
     * is dropped: it belonged to that one.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def prefill(d: Draft): Unit =
     draft.set(d)
     pickText.set("")
@@ -198,6 +211,7 @@ object UploadView:
     accepted.set(None)
     WindowManager.open(WindowKey.Upload)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def choose(f: dom.File): Unit =
     file.set(Some(f))
     accepted.set(None)
@@ -211,6 +225,7 @@ object UploadView:
         else d.citekey)
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   private def submit(): Unit =
     val sent = draft.now()
     validate(sent) match
@@ -240,9 +255,11 @@ object UploadView:
           }
         }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def errorFor(f: Field): Signal[Option[String]] =
     errors.signal.map(_.collectFirst { case (`f`, m) => m })
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def fieldError(f: Field): Modifier[HtmlElement] =
     child.maybe <-- errorFor(f).map(_.map(m => div(cls := "field-error", role := "alert", m)))
 
@@ -269,12 +286,16 @@ object UploadView:
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loadItems(): Unit =
     ApiClient
       .queueList(Queue.Kind.Acquire.label, false)
       .foreach(l => openItems.set(l.items.filter(_.status == Queue.QueueItem.Status(Queue.Open))))
 
   /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemPicker: HtmlElement =
     val optionsId = "upload-acquire-items"
     div(
@@ -304,6 +325,8 @@ object UploadView:
       )
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tool-pane upload-pane",

@@ -20,6 +20,8 @@ import java.time.Clock
 /** What attests a data point: an attestation names a source, a target (a finding, an event, an event's dating, a place,
   * an edge) and where in the source it is said (quote, offsets, page, IIIF region, CTS URN).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AttestationService:
   /** Those of a source, a target kind and a target id (each optional), by id, one page of them. */
   def list(
@@ -44,6 +46,8 @@ object AttestationService:
 
   def apply(db: Transactor, clock: Clock): AttestationService = Implementation(db, clock)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def missing(id: Attestation.Id) =
     Api.Error(Problem.Unclassified(Legacy.Text(s"No attestation $id")), Some(Api.Error.Code(Write.CodeNotFound)))
 
@@ -63,6 +67,7 @@ object AttestationService:
         offset
       )
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Attestation.Id): Option[Attestation] =
       db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
     def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation =
@@ -75,11 +80,13 @@ object AttestationService:
         else
           AttestationRepo.update(AttestationRepo.AttestationId(id.value), p)
           Right(AttestationRepo.get(AttestationRepo.AttestationId(id.value)).get)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: Attestation.Id)(using WritePermit): Boolean =
       db.write(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
 
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
   final class InMemory(state: AtomicReference[CatalogueState]) extends AttestationService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         citekey: Option[Citekey],
         targetType: Option[Attestation.TargetType],
@@ -101,6 +108,7 @@ object AttestationService:
 
     def get(id: Attestation.Id): Option[Attestation] = state.get.attestations.find(_.id == id)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation =
       val after = state.updateAndGet { s =>
         val id = s.lastAttestationId.value + 1

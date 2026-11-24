@@ -5,12 +5,15 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
 final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East)
     derives CanEqual:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contains(p: LatLon): Boolean =
     p.lat.value >= south.value && p.lat.value <= north.value && p.lon.value >= west.value && p.lon.value <= east.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extend(o: GeoBounds): GeoBounds =
     GeoBounds(
       GeoBounds.South(math.min(south.value, o.south.value)),
@@ -18,6 +21,7 @@ final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: 
       GeoBounds.North(math.max(north.value, o.north.value)),
       GeoBounds.East(math.max(east.value, o.east.value))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def valid: Boolean = south.value <= north.value && west.value <= east.value && !south.value.isNaN && !west.value.isNaN
 
 object GeoBounds:
@@ -32,6 +36,7 @@ object GeoBounds:
   type East = East.T
   object East extends Newtype[Double, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofGeometry(g: js.Dynamic): Option[GeoBounds] =
     // `var`s: one pass over every coordinate of the geometry
     var s = Double.MaxValue

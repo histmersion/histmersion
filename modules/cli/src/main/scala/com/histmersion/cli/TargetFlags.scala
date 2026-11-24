@@ -8,10 +8,13 @@ import com.histmersion.api.personal.{ItemKey, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bookmark or a note points at, from the command line: `<kind> [<id>]` and the flags of a point on the map, a
   * view or a period.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses the `<kind> [<id>]` target flags of bookmarks and notes")
 object TargetFlags:
   type Views = Views.T
   object Views extends Newtype[Boolean, Pure]
@@ -28,6 +31,8 @@ object TargetFlags:
   )
 
   /** The target the flags name, or why they name none. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def target(r: Raw): Either[Cli.Error, Target] =
     def usage(why: String) = Cli.Error(Problem.Unclassified(Legacy.Text(why)))
     for

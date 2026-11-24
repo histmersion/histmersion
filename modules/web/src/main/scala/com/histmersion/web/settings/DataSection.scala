@@ -40,11 +40,18 @@ object DataSection:
 
   /** What Histmersion's files take, as a share of the free space left on the disk, 0–100. Pure. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def share(used: ByteCount, free: ByteCount): SharePercent =
     if used.value <= 0 then SharePercent(0)
     else if free.value <= 0 then SharePercent(100)
     else SharePercent(math.min(100, math.round(used.value.toDouble * 100 / free.value.toDouble).toInt))
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def pane(ui: UiConfig): HtmlElement =
     // one request per panel: a server restarted while the page is open shows as unreachable, never as empty panels
     val aboutReq = Request[About]()
@@ -203,6 +210,8 @@ object DataSection:
   /** Starts a download and says what became of the request. */
   final private class Starter:
     val said = Var(Option.empty[Either[String, String]])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def act(text: ActionLabel, what: ActionWhat, job: => Future[JobInfo], primary: Boolean = false): HtmlElement =
       button(
         typ := "button",
@@ -212,6 +221,7 @@ object DataSection:
         disabled <-- Auth.writable.map(!_),
         onClick --> (_ => start(text, what, job))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def start(text: ActionLabel, what: ActionWhat, job: => Future[JobInfo]): Unit =
       job.onComplete { r =>
         r.toEither.left.map(SettingsStore.message) match
@@ -228,6 +238,8 @@ object DataSection:
       }
 
     /** A check (a dry run) is quick: follow it to its end and say what it found. */
+    @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def follow(text: ActionLabel, id: JobInfo.Id, n: Int): Unit =
       val _ = scala.scalajs.js.timers.setTimeout(1000) {
         ApiClient.job(id).foreach { j =>
@@ -238,6 +250,10 @@ object DataSection:
         }
       }
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def maps(b: Basemap.Status, starter: Starter): List[HtmlElement] =
     def act(text: ActionLabel, what: ActionWhat, job: => Future[JobInfo], primary: Boolean) =
       starter.act(text, what, job, primary)
@@ -308,6 +324,8 @@ object DataSection:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def disk(r: Storage.Report): HtmlElement =
     val used = Storage.total(r.entries)
     val free = ByteCount(r.volumes.map(_.freeBytes.value).minOption.getOrElse(0L))

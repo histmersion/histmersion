@@ -13,15 +13,18 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.upstreams.ArchiveId
 import com.histmersion.upstreams.PageSize
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** archive.org's search, an item's metadata and a file of a public item. */
 final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def identifier(s: ArchiveOrg.IdentifierS): ArchiveId =
     val t = (s).value.trim
     ArchiveId((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def search(query: ArchiveOrg.SearchQuery, rows: PageSize): Either[Problem, List[ArchiveItem]] =
     http
       .json(
@@ -40,12 +43,14 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       // restriction) comes from /metadata, one call per hit
       .map(_.map(i => info(i.identifier).getOrElse(i)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def info(id: ArchiveId): Either[Problem, ArchiveItem] =
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
     http
       .json(Url(Candidate.Url(archive.url.value), Url.UrlPath(s"/metadata/$ident")).value)
       .map(AcquireParse.archiveItem(ident, _))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def download(id: ArchiveId, file: ArchiveOrg.DownloadFile): Either[Problem, FetchedFile] =
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
     val url = Url(

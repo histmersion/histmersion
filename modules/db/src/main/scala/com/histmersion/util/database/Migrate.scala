@@ -13,12 +13,16 @@ import java.nio.charset.Charset
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`, enumerated by the
   * build-generated `db/migration/index.txt` (Flyway's classpath scanning does not work inside a native image; this
   * provider works everywhere). The chain was squashed into `V109__schema.sql` on 2026-11-02; a database the chain
   * before it built is given a baseline at 109 instead ([[squashHistory]]).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@atBoundary(BoundaryKind.Sql, "runs the Flyway migrations")
 object Migrate:
   type MigrationName = MigrationName.T
   object MigrationName extends Newtype[String, Pure]
@@ -46,11 +50,15 @@ object Migrate:
     finally is.close()
 
   final private class Res(name: MigrationName) extends LoadableResource:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def read(): Reader =
       InputStreamReader(getClass.getClassLoader.getResourceAsStream(s"$Base/${name.value}"), Charset.forName("UTF-8"))
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def getAbsolutePath: String = s"$Base/${name.value}"
     def getAbsolutePathOnDisk: String = getAbsolutePath
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def getFilename: String = name.value
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def getRelativePath: String = name.value
 
   private val provider: ResourceProvider = new ResourceProvider:
@@ -99,6 +107,8 @@ object Migrate:
     * migration, is refused: a build from before the squash brings it there first. Does nothing to a database without a
     * history or with the squashed one. Returns whether it replaced the history.
     */
+  @tolerated(LintRule.TotalOrder, "LIMIT 1 of Flyway's versions: a version is applied once")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def squashHistory(ds: DataSource): Boolean =
     val c = ds.getConnection
     try
@@ -156,6 +166,7 @@ object Migrate:
     * database of the cluster is not an error, and neither is an application role that may not create roles (V011 then
     * says so, as it always did). Idempotent.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def ensureRole(ds: DataSource, name: RoleName): Unit =
     require(RoleNamePattern.matches(name.value), s"not a plain role name: ${name.value}")
     val c = ds.getConnection
@@ -191,6 +202,8 @@ object Migrate:
     }
 
   /** Run `f`, again (up to `attempts` times, with a short growing pause) while it fails [[transient]]ly. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[histmersion] def retrying[A](attempts: RetryAttempts)(f: => A): A =
     @annotation.tailrec
     def go(n: Int): A =
@@ -236,6 +249,7 @@ object Migrate:
     * version of Flyway" warning — several times per start and once per health check. Flyway itself is now built only to
     * migrate or validate.
     */
+  @tolerated(LintRule.TotalOrder, "LIMIT 1 of Flyway's versions: a version is applied once")
   def current(ds: DataSource): Option[Version] =
     val c = ds.getConnection
     try

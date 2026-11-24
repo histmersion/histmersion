@@ -6,6 +6,7 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Test helpers for the generated trees. */
 object Generated:
@@ -16,6 +17,8 @@ object Generated:
   private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def known(defs: AgentDefinitions): Set[ToolName] =
     val texts = defs.agents.toOption.toList.flatten.map(_.body.value) ++
       defs.fragments.toOption.toList.flatMap(_.values.map(_.value)) ++

@@ -24,6 +24,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source's note in the Markdown mirror (`wiki/sources/<citekey>.md`): its YAML frontmatter carries the catalog
   * fields and findings, its body [[Source.notes]], the agent-written article about the source. [[note]] renders a
@@ -31,17 +32,24 @@ import com.histmersion.api.catalogue.Latitude
   * schema, so `export` then `seed --force` round-trips. `ocrMarkdown` (the paper's converted text, often megabytes) is
   * not in the note: it lives in `md/<citekey>/paper.md`, referenced by `md_path`.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object SourceNote:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def note(s: Source): Text =
     Text(frontmatterOf(s).note(s.notes.map(n => Frontmatter.NoteBody(n.value.trim)).filter(_.value.nonEmpty)).value)
 
   /** The YAML block between the `---` fences (with a trailing newline). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def frontmatter(s: Source): Frontmatter.Block = frontmatterOf(s).yaml
 
   /** Frontmatter key order — matches the notes the research wiki already writes. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def frontmatterOf(s: Source): Frontmatter =
     Frontmatter(
       List(
@@ -68,8 +76,11 @@ object SourceNote:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def field(key: String, value: Any): (Frontmatter.Key, Any) = (Frontmatter.Key(key), value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(f: Finding): java.util.Map[String, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
     m.put("claim", f.claim)
@@ -90,6 +101,7 @@ object SourceNote:
     * AGENT writes — and it used to be resolved and read with no bound at all. `None` keeps the old behaviour, for the
     * host-side workflow where the server legitimately sees the user's own tree.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseFile(p: Path, confineTo: Option[SafePath.Base])(using files: TextFiles): Option[Source] =
     val text = Text(files.read(p).value)
     val fallbackCitekey = Citekey(p.getFileName.toString.stripSuffix(".md"))
@@ -99,6 +111,7 @@ object SourceNote:
     * [[Source.notes]] — the agent-written article about the source — which is what makes [[note]] a true inverse of
     * this function.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def parseNote(text: Text, fallbackCitekey: Citekey): Option[Source] =
     extractYaml(text).map { y =>
       val m = parse(y)
@@ -112,6 +125,7 @@ object SourceNote:
         .setTo(withLinkedTopics(src.topics, src.citekey, text))
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def yamlMap(text: Text): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
 
   private val CkLink = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)(?:\|[^\]]*)?\]\]""".r
@@ -122,6 +136,8 @@ object SourceNote:
     * `[[bronze_age_collapse]]` — is a TOPIC. Topic slugs used to become `references` edges to things that are not
     * sources.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def linkTargets(citekey: Citekey, noteText: Text): (List[Citekey], List[Source.Topics]) =
     val (cites, topics) = CkLink
       .findAllMatchIn(noteText.value)
@@ -133,6 +149,8 @@ object SourceNote:
     (cites.map(Citekey(_)), topics.map(Source.Topics(_)))
 
   /** Typed, directed reference edges out of this note. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def edgesOf(citekey: Citekey, m: Map[String, Any], noteText: Text): List[Edge] =
     val superseded = str(m, "superseded_by").map(d => Edge(citekey, Citekey(d), Edge.Kind.SupersededBy)).toList
     val rel = list(m, "topics").flatMap {
@@ -143,6 +161,7 @@ object SourceNote:
     (superseded ++ rel ++ links).distinct
 
   /** The note's topics plus the topic slugs its body links to, without case-insensitive duplicates. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withLinkedTopics(topics: List[Source.Topics], citekey: Citekey, noteText: Text): List[Source.Topics] =
     val have = topics.map(_.value.toLowerCase).toSet
     topics ++ linkTargets(citekey, noteText)._2.filterNot(t => have(t.value.toLowerCase))
@@ -150,6 +169,7 @@ object SourceNote:
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
     * from `wiki/sources/<ck>.md`). None if absent.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.Base])(using
       files: TextFiles
   ): Option[Source.OcrMarkdown] =
@@ -165,9 +185,13 @@ object SourceNote:
         ) // Postgres text rejects NUL bytes (present in some OCR output)
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def extractYaml(text: Text): Option[String] = split(text.value).map(_._1)
 
   /** The Markdown after the closing `---` fence: the note's article (`notes`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bodyOf(text: Text): Option[Source.Notes] =
     split(text.value).map(_._2).map(_.trim).filter(_.nonEmpty).map(Source.Notes(_))
 
@@ -218,12 +242,14 @@ object SourceNote:
     * (an easy slip when both are negative) used to build an inverted `Period`, which Postgres rejects on the way in —
     * so importing that one note failed the whole request with a 500 instead of reading what the author obviously meant.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(m: Map[String, Any]): Option[Period] =
     (long(m, "period_start"), long(m, "period_end")) match
       case (Some(a), Some(b)) if a <= b => Some(Period(Year(a), Year(b)))
       case (Some(a), Some(b))           => Some(Period(Year(b), Year(a)))
       case _                            => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def toSource(m: Map[String, Any], fallbackCitekey: Citekey): Source =
     val citekey = str(m, "citekey").map(Citekey(_)).getOrElse(fallbackCitekey)
     Source(
@@ -246,6 +272,7 @@ object SourceNote:
       findings = findings(m, citekey)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def findings(m: Map[String, Any], citekey: Citekey): List[Finding] =
     raw(m, "findings") match
       case Some(l: java.util.List[?]) =>

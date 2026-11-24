@@ -18,20 +18,24 @@ import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.AgentVerify
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #1424: the findings step's guards against what a smaller extractor (Haiku) got wrong — places the gazetteer does not
   * know, centuries stored as years, claims that point at a table. Each sends the answer back while attempts remain and
   * keeps it with a warning on the last attempt.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EnrichFindingGuardsSuite extends munit.FunSuite:
 
   private val text =
     "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE. " +
       "The town was walled in the 11th century. Vesuvius buried Pompeii in 79 CE. " +
       "Rainfall rose sharply in the next period. The hoard was buried in the 15th c. by its owners."
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val window = Window(EnrichSource.Window.Index(1), None, EnrichSource.Window.Text(text))
 
   private val known = Set("Uluburun", "Pompeii")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def guards(
       share: FindingGuards.MinPlacedShare = FindingGuards.MinPlacedShare(0.5),
       gap: FindingGuards.CenturyGapYears = FindingGuards.CenturyGapYears(500),
@@ -40,6 +44,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
   ) =
     FindingGuards(share, gap, phrases, (name, _, _) => known.contains(name.value))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(
       claim: String,
       quote: String,
@@ -67,6 +72,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
   private val rain = "Rainfall rose sharply in the next period."
   private val hoard = "The hoard was buried in the 15th c. by its owners."
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def check(
       fs: List[FindingProposal],
       g: FindingGuards = guards(),

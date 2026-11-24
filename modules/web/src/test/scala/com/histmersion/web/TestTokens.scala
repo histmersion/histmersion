@@ -2,6 +2,7 @@ package com.histmersion
 package web
 
 import com.histmersion.web.ui.ThemeTokens
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The colour tokens for suites that compute colours: the tests run in Node, where there is no stylesheet to read them
   * from. The ramp is the shipped one (web/style.css), so the colours the tests expect are the ones the page shows.
@@ -18,6 +19,7 @@ object TestTokens:
     "--status-default" -> "#666666"
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(): Unit =
     ThemeTokens.lookup = n => values.get(n.value).map(ThemeTokens.CssText(_))
     ThemeTokens.refresh()

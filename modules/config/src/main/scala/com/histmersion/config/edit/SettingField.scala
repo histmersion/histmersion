@@ -2,6 +2,8 @@ package com.histmersion
 package config.edit
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One setting the config file may hold, as reference.conf documents it.
   *
@@ -12,6 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param restart
   *   why a running server takes it on only when restarted, if it does
   */
+@movesTo(FeaturePlace.UtilSettings)
 final case class SettingField(
     key: SettingKey,
     kind: SettingKind,
@@ -22,6 +25,7 @@ final case class SettingField(
     secret: SecretRule
 ):
   /** The top-level block it is in (`backups` of `histmersion.backups.keep`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def section: SettingField.Section = SettingField.Section(key.segments.lift(1).map(_.value).getOrElse(""))
 
 object SettingField:

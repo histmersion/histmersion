@@ -13,8 +13,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[CandidatesCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion candidates`: declares its options, parses them into typed commands")
 object CandidatesArgs:
   object CandidatesEntry extends CommandLine.Entry:
     val name = "candidates"
@@ -43,6 +46,7 @@ object CandidatesArgs:
     private val ids_ = args[Long]("id", required = true)
     private val as_ = value[String]("as", "seen|queued|dismissed|new")
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def command: Either[Problem, Cli.Command] = Right(
       CandidatesCmd.Command.Mark(ids_(), as_.getOrElse(Candidates.State.Seen.wire.value))
     )

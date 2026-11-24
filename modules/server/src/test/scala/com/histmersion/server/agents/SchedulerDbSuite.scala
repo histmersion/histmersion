@@ -71,6 +71,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The central scheduler against a `*_test` database (docs/research-goal-advancement.md "As built"): 20 goals under the
   * autopilot — `goal-first` with 3 runs at once gives every place to the best goal (a pin, then a person's priority,
@@ -80,31 +81,44 @@ import com.histmersion.util.database.TestCreators.given
   * are scripted and never called (the runs are dispatched, not executed); the acquisition upstream is a fixture.
   * Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SchedulerDbSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val goals = (1 to 20).toList.map(i => DomainGoal.Slug.applyUnsafe(f"zzfocus-g$i%02d"))
   private def g(i: Int) = goals(i - 1)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ref(g: DomainGoal.Slug) = Goal.Ref(g.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apiSlug(g: DomainGoal.Slug) = Goal.Slug(g.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def target(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalLink(g: DomainGoal.Slug) = GoalLink.Ref(g.value)
   private val Art = Slug("zzfocus_art")
   private val ArtLink = GoalLink.Ref("zzfocus_art")
   private val ArtRunTarget = RunInfo.Target("zzfocus_art")
   private val ArtItem = ManagerItem.Target("zzfocus_art")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
   private val ReviewLight = ApiIds.manager(Review)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CompileKind = ManagerItem.Kind(ArticleCompile)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ProposeKind = ManagerItem.Kind(ProposeArticles)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val PlanGoalKind = ManagerItem.Kind(PlanGoalItem)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val IngestKind = ManagerItem.Kind(OaIngest)
 
   /** 3 runs at once, goal-first, the crons off (nothing fires by itself), the backlog drained whole. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val cfg =
     val b = AppConfig.load()
     val m = Model.wire
@@ -209,10 +223,13 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doi(slug: DomainGoal.Slug) = Doi(s"10.5555/$slug")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ck(d: String) = Citekey.applyUnsafe("zzfocus" + d.replaceAll("[^a-z0-9]", ""))
 
   /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(a: AgentsControllers, h: ServerWiring, up: StubUpstream): Unit =
     goals.foreach { s =>
       assert(h.goals.put(s, Goal.Put(Goal.Title(s"Zz $s"))).isRight)
@@ -282,6 +299,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       )
 
   /** An open goal plan of `goal` with `kids` planned sub-goals. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plan(goal: DomainGoal.Slug, kids: Int = 0) =
     TestRuns
       .approvals(ds)
@@ -299,6 +317,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def on(a: AgentsControllers): Unit =
     a.managers.ensureDefaults()
     // the review manager's own selection narrowed to these goals' article (other suites' articles stay out)
@@ -314,10 +333,12 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(mid, kind, target)).getOrElse(fail(s"no $kind item for $target in $mid"))
 
   /** The runs the managers dispatched on these goals (and the article), by pipeline. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runs(): Vector[RunInfo] =
     connect(ds)(AgentRepo.list(None, PageSize(1000))).filter(r =>
       r.managerId.isDefined && r.target.value.startsWith("zzfocus")
@@ -879,9 +900,11 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
 
 /** The worklog, read for an assertion. */
 private object QueueRepoLog:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =
     QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith(prefix))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def writers(ds: javax.sql.DataSource, prefix: String): Set[(String, String)] =
     QueueRows
       .list(ds, Queue.Kind.Log, all = true)

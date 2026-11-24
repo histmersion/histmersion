@@ -25,10 +25,12 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.domain.library.acquisition.CandidateDedupe
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.research.ReviewGoal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The deterministic new-source search's pure half (#3761): keys, watermarks, deduplication, the indexes' answers, the
   * Markdown.
   */
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class CandidatesSuite extends munit.FunSuite:
 
   private def w(doi: String, title: String = "T", by: List[String] = Nil) =

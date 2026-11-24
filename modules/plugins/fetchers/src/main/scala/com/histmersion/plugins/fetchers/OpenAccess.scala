@@ -19,6 +19,7 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Access
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The fetchers of the four open-access index plugins, all by DOI: Unpaywall's best OA location (`oa-unpaywall`),
   * CORE's download URLs with a key (`oa-core`), OpenAlex's OA locations (`oa-openalex`), and the repository landing
@@ -39,6 +40,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   private def downloads = Downloads(http)
   private lazy val openalexClient = OpenAlexCrossref(cfg, http, log)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def records(ctx: Fetch.Context, doi: OaRecords.Doi): OaRecords =
     ctx.memo(Fetch.Context.MemoKey(s"oa:records:$doi"))(OaRecords(doi, cfg, http, openalexClient, ctx.log))
 
@@ -46,6 +48,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     * an e-mail, so without one it is not asked. The `unpaywall` step and the landing step share it when they use the
     * same contact.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unpaywallRecord(
       ctx: Fetch.Context,
       doi: OaRecords.Doi,
@@ -89,6 +92,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     */
   def core(key: Option[OpenAccess.CoreKey], quota: UpstreamQuota): SourceFetcher = new SourceFetcher:
     val access = Access.Open
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
         .map(d => OaRecords.Doi(d.value))
@@ -99,6 +103,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   /** `landing`: the indexes' records only of the index plugins registered, Unpaywall's with the very contact (so the
     * very memo key) `oa-unpaywall` asks with — one request per upstream per work.
     */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def landing(unpaywallEmail: Option[UnpaywallConfig.ContactEmail]): SourceFetcher = ByDoi(
     ByDoi.Step("landing"),
     (ctx, d) =>
@@ -112,6 +117,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unpaywallPdf(ctx: Fetch.Context, record: Json): Iterator[Fetch] =
     AcquireParse
       .unpaywall(record)
@@ -119,6 +125,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       .iterator
       .map(u => downloads.pdf(ctx.log, FetchedFile.Source("unpaywall"), Plugin.Http.Url(u.value)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def corePdf(
       ctx: Fetch.Context,
       doi: OaRecords.Doi,
@@ -151,6 +158,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openalexOa(ctx: Fetch.Context, r: OaRecords): Iterator[Fetch] =
     r.openalex.iterator
       .flatMap(AcquireParse.openalexPdfUrls)
@@ -166,6 +174,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     * is read like a repository's. `unpaywall` is Unpaywall's record (`None` when its plugin is off); `openalex` says
     * whether OpenAlex's record may be read (its plugin on).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def landingPdf(
       ctx: Fetch.Context,
       r: OaRecords,
@@ -249,6 +258,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   /** An OA index calls it a publisher's location, or its host is denied (`acquire.landing.deny-*`) — and it is not an
     * open-access publisher's open location (`oa-publisher-hosts`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def publisherPage(
       ctx: Fetch.Context,
       c: RepositoryLanding.Candidate,
@@ -263,6 +273,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     * `citation_pdf_url`s (a page that turns out to be the PDF is taken as it is); an open-access publisher's open page
     * its `citation_pdf_url`s and OJS PDF galleys (provenance `publisher`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolvePage(
       ctx: Fetch.Context,
       c: RepositoryLanding.Candidate,
@@ -307,6 +318,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
             Fetch.firstFound(pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.Url(u.value))), none)
 
   /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def zenodo(ctx: Fetch.Context, id: RepositoryLanding.ZenodoRecordId, none: Fetch): Fetch =
     http.json(Url(RepositoryLanding.Candidate.Url(cfg.zenodo.url.value), Url.UrlPath(s"/api/records/$id")).value) match
       case Left(e) =>

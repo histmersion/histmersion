@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MediaCount(
     key: MediaCount.Key,
@@ -23,6 +24,7 @@ object MediaCount:
   type Allowed = Allowed.T
   object Allowed extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(keys: List[Key], allowed: Key => Boolean = _ => (true)): List[MediaCount] =
     keys
       .groupBy(identity)

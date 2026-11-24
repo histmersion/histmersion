@@ -56,6 +56,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Model chains and allowances end to end against a `*_test` database, with sttp-ai's scripted model per chained model:
   * the chain's next model takes over when the first is below its allowance (before a step, during one, or when its plan
@@ -63,17 +64,20 @@ import com.histmersion.util.database.TestCreators.given
   * saved over config survive a restart, `agent doctor` spends nothing, and `/mcp/agent` offers the read-only tools
   * only. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ModelChainRunSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = Citekey("zzchain2019_tin")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ApiTarget = RunRequest.Target(Ck.value)
   private val A = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzA"))
   private val B = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzB"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Source.OcrMarkdown(
     """# Introduction
       |
@@ -81,11 +85,16 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       |""".stripMargin
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runId(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(id: RunInfo.Id): Job.Id = Job.Id.assume(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chainModel(m: ModelRef): ChainSet.Models = ChainSet.Models(m.wire.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowanceTarget(m: ModelRef): AllowanceSet.Target = AllowanceSet.Target(m.wire.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -122,12 +131,15 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
   private val finding =
     """{"claim":"The Uluburun ship carried copper and tin.","quote":"The Uluburun ship carried ten tons of copper and one ton of tin.",
       |"place":null,"start":null,"end":null,"periodName":null,"tags":[],"confidence":"high"}""".stripMargin
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notesJson = s"""{"notes":"The source traces tin by sea [[$Ck]]."}"""
 
   /** classify · findings-1 · notes, each answered at once. */
   private def enrichScripts(c: ScriptedClient): Unit =
     c.scripts ++= List(Seq(text(classifyJson)), Seq(text(s"""{"findings":[$finding]}""")), Seq(text(notesJson)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def handlers(clients: Map[ModelRef, LlmClient], cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
@@ -169,6 +181,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
 
   /** Spend `tokens` on `model`, finished `minutesAgo`, as a recorded LLM attempt of a run of its own. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spend(model: ModelRef, tokens: Usage.Input, minutesAgo: Int = 1): RunInfo.Id =
     val run = TestRuns.create(
       ds,
@@ -216,6 +229,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def llmModels(id: RunInfo.Id) =
     connect(ds)(AgentRepo.steps(jobId(id), AgentRepo.OutputChars(200)))
       .filter(_.kind.value == "llm")
@@ -305,6 +319,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val until = Instant.now().plusSeconds(3600)
     val limited = new LlmClient:
       val model = A
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def run[Out](call: LlmCall[Out])(using WritePermit) =
         throw ModelLimitReached(
           A,

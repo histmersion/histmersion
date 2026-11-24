@@ -75,6 +75,7 @@ import com.histmersion.api.exchange.MergePlan
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Markdown and JSON of the wire records slice 12 moves, over synthetic fixture values: the renderers no other
   * suite asserts on (the brief search, a source's findings, the graph, the contradictions, the map feed, the body
@@ -290,6 +291,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     siteType = Some(Place.Entry.SiteType("tell"))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rendered: String =
     val parts: List[(String, String)] = List(
       "briefResults" -> SearchMarkdown.briefResults(result),

@@ -27,15 +27,18 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.Limits
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #406 against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. The Articles and Events lists are the
   * items RELATED to the sources the global filter selects: an article that cites a matching source is listed, one
   * citing none is not; an event is listed when its source matches and its own span overlaps the period; the title
   * filter narrows each list by the item's own title.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RelatedListsRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -43,6 +46,7 @@ class RelatedListsRepoSuite extends DbSuite:
 
   private val Tag = "zz-rel-tag"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       ck: String,
       tags: List[Source.Tags],
@@ -100,6 +104,7 @@ class RelatedListsRepoSuite extends DbSuite:
       EventPut(label = label, timeSpan = TimeSpan(Some(year), None, None, Some(year)), citekey = citekey)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       val _ = source(
@@ -163,6 +168,7 @@ class RelatedListsRepoSuite extends DbSuite:
         BEventRow.Id("zz_rel_ev_nosrc")
       ).foreach(e => EventFixtures.delete(ds, e))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def articles(f: Filter): Set[String] =
     ArticleFixtures
       .list(ds, f, PlaceScope.empty, None, None, ArticleFixtures.Limit(500), Offset(0))
@@ -171,6 +177,7 @@ class RelatedListsRepoSuite extends DbSuite:
       .filter(_.startsWith("zz_rel_"))
       .toSet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def events(f: Filter, text: Option[EventSelection.Text] = None): Set[String] =
     EventFixtures
       .list(ds, f, PlaceScope.empty, text, None, None, None, PageSize(500), Offset(0))

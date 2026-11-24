@@ -22,21 +22,25 @@ import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `edges` connects stored sources only (V026): the migration's data move, the write-path routing into
   * `unresolved_edges`, promotion when the target arrives, and the graph/neighbors reads built on that invariant.
   * Against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EdgeRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val Prefix = "zzedge"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(ck: String, edges: List[Edge] = Nil, topics: List[Source.Topics] = Nil) = Source(
     citekey = Citekey(ck),
     title = api.library.Title(s"Title $ck"),

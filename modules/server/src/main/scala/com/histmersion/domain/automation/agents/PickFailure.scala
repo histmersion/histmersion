@@ -9,11 +9,13 @@ import com.histmersion.api.automation.ModelChains.*
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Why no model of a role's chain can take the next call. `Exhausted` pauses the run until `freesAt` (resumed by itself
   * then); `Unavailable` is a configuration problem (no chain, no priced or buildable model) and fails the step as
   * before chains existed.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 enum PickFailure:
   case Unavailable(problems: Problems)
   case Exhausted(

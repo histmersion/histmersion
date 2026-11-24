@@ -13,17 +13,20 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.SchedulerPolicy.*
 
 import java.time.Instant
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The central scheduler, pure: each strategy's order, aging, the max wait, the minimum share per job type, the
   * gathering places, the resources (room, plan pools, a manager's own cap, a block, a stop), a start that fails, and
   * the explanations. A simulated clock and fake producers: no database, no provider.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SchedulerPolicySuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-24T12:00:00Z")
   private def ago(h: Int) = now.minusSeconds(h.toLong * 3600L)
   private def day(d: Int) = Some(Instant.parse(f"2026-10-$d%02dT00:00:00Z"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def c(
       id: Candidate.Id,
       kind: Candidate.Kind = Candidate.Kind(ArticleReview),

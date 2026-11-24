@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class Facet(
     value: Facet.Value,
@@ -17,6 +18,7 @@ final case class Facet(
       api.json.Schema
 object Facet:
   type FieldText = FieldText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FieldText extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
@@ -45,6 +47,7 @@ object Facet:
       case Status     => Wire("status");
       case Provenance => Wire("provenance")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Field] =
       values.find(f => label(f) == Wire((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
 

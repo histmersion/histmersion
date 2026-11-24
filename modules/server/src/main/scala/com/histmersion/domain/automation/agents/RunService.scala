@@ -26,10 +26,13 @@ import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.CodexRetention
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The agent runs as the engine's features read them — each run's row with its steps' usage summed — and the steps
   * themselves: the checkpoints a resume replays, the attempts, the trace, the spend.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 trait RunService:
   def get(id: Run.Id): Option[RunInfo]
 
@@ -115,6 +118,7 @@ object RunService:
     * started it, `origin` who; `dryRun` is fixed here, once — a resumed dry run is still one. `managerId` and
     * `managerItem`: the manager and work item it is for. The jobs area records it (`util.jobs.JobRuns`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def row(
       p: Pipeline,
       target: AgentsControllers.Target,
@@ -152,15 +156,20 @@ object RunService:
     )
 
   final private class Implementation(db: Transactor) extends RunService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def stateOf(status: Option[RunQuery.Status]): Option[Run.State.Wire] =
       status.map(s => Run.State.Wire(s.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def size(limit: RunQuery.Limit): PageSize = PageSize.assume(math.max(1, limit.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def count(n: RowCount): Count =
       Count(n.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Run.Id): Option[RunInfo] = db.read(AgentRepo.get(RunInfo.Id(id.value)))
     def list(status: Option[RunQuery.Status], limit: RunQuery.Limit, goal: Option[Goal.Slug]): Vector[RunInfo] =
       db.read(AgentRepo.list(stateOf(status), size(limit), goal))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(
         status: Option[RunQuery.Status],
         limit: RunQuery.Limit,
@@ -169,6 +178,7 @@ object RunService:
         upTo: Option[RunQuery.UpTo]
     ): Either[Problem, (Vector[RunInfo], Boolean)] =
       db.read(AgentRepo.page(stateOf(status), size(limit), goal, before, upTo.map(u => AgentRepo.PageCursor(u.value))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(
         q: RunQuery,
         limit: RunQuery.Limit,
@@ -181,20 +191,25 @@ object RunService:
       (states.map((s, n) => (s, count(n))), facets.map((name, vs) => (name, vs.map((v, n) => (v, count(n))))))
     def stateCounts(goal: Option[Goal.Slug]): List[(Run.State.Wire, Count)] =
       db.read(AgentRepo.stateCounts(goal)).map((s, n) => (s, count(n)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo] =
       db.read(AgentRepo.forTarget(p, RunInfo.Target(target.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       db.read(
         AgentRepo.forManager(Managers.ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit))
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
       db.read(AgentRepo.unsettledOn(RunInfo.Target(target.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checkpoint(
         jobId: Job.Id,
         seq: AgentRepo.StepRecord.Seq
     ): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
       db.read(AgentRepo.checkpoint(jobId, StepInfo.Seq(seq.value)))
         .map((name, output) => (AgentRepo.StepRecord.Name(name.value), AgentRepo.StepRecord.Output(output.value)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
       Count(db.read(AgentRepo.attempts(jobId, StepInfo.Seq(seq.value))).value)
     def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord])(using
@@ -206,6 +221,7 @@ object RunService:
     def messages(jobId: Job.Id): List[MessageInfo] = db.read(AgentRepo.messages(jobId))
     def runSpend(jobId: Job.Id): (Usage, BigDecimal) = db.read(AgentRepo.runSpend(jobId))
     def spendDayMonth(): (BigDecimal, BigDecimal) = db.read(AgentRepo.spendDayMonth())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pruneMessages(days: RetentionDays)(using WritePermit): Count =
       count(db.write(AgentRepo.pruneMessages(CodexRetention.KeepDays(days.value))))
 
@@ -216,12 +232,17 @@ object RunService:
       extends RunService:
     private def now: Instant = Instant.now(clock)
     private val Unsettled = Set("queued", "running", "paused", "waiting")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def runs: List[JobRunState] = jobs.all.filter(_.row.kind.value == JobKind)
     private def stepsOf(jobId: Job.Id): Vector[StepRecordState] = state.get.steps.filter(_.jobId == jobId)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def jobOf(r: JobRunState): Job.Id = Job.Id.assume(r.id.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def text(at: Instant): String = AutomationState.text(at).value
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def count(n: Int): Count =
       Count(n)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def info(r: JobRunState): RunInfo =
       val ss = stepsOf(jobOf(r)).map(_.step)
       val error = r.error
@@ -259,12 +280,16 @@ object RunService:
         r.heartbeatAt.map(t => RunInfo.HeartbeatAt(text(t))),
         pausedFor = Option.when(status == RunState.Paused.wire)(Stopped.pausedFor(error)).flatten
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def key(r: JobRunState): (Instant, Long) = (r.createdAt, r.created.value)
     private def newest(rs: List[JobRunState]): List[JobRunState] = rs.sortBy(key).reverse
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def runOf(cursor: AgentRepo.PageCursor): Option[JobRunState] =
       Run.Id.option(cursor.value).flatMap(jobs.get)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Run.Id): Option[RunInfo] = jobs.get(id).filter(_.row.kind.value == JobKind).map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(status: Option[RunQuery.Status], limit: RunQuery.Limit, goal: Option[Goal.Slug]): Vector[RunInfo] =
       val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
       val g = goal.map(_.value.trim).filter(_.nonEmpty)
@@ -272,6 +297,7 @@ object RunService:
         .take(math.max(1, limit.value))
         .toVector
         .map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(
         status: Option[RunQuery.Status],
         limit: RunQuery.Limit,
@@ -290,11 +316,13 @@ object RunService:
       )
 
     /** The models a run used: the one it was started with and every one its steps reported. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def models(r: JobRunState): Set[String] =
       (r.row.model.toList.map(_.value) ++ stepsOf(jobOf(r)).flatMap(_.step.model.map(_.value))).toSet
     private def provider(model: String): String = model.takeWhile(_ != ':')
 
     /** Whether `r` passes every filter of `q` but `except`'s. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def matches(q: RunQuery, except: String)(r: JobRunState): Boolean =
       def any(name: String, vs: List[String], v: => Option[String]) =
         except == name || vs.isEmpty || v.exists(vs.contains)
@@ -312,6 +340,7 @@ object RunService:
       )) &&
       (except == "q" || q.q.forall(t => r.row.target.value.toLowerCase.contains(t.value.toLowerCase)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(
         q: RunQuery,
         limit: RunQuery.Limit,
@@ -343,6 +372,7 @@ object RunService:
         .sortBy((v, n) => (-n, v))
         .take(ListFilters.FacetMax)
         .map((v, n) => (v, count(n)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def runFacets(q: RunQuery): (List[(Run.State.Wire, Count)], List[(String, List[(String, Count)])]) =
       def of(except: String) = runs.filter(matches(q, except))
       (
@@ -355,10 +385,12 @@ object RunService:
           "provider" -> facet(of("provider").flatMap(r => models(r).map(provider)))
         )
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def stateCounts(goal: Option[Goal.Slug]): List[(Run.State.Wire, Count)] =
       val g = goal.map(_.value.trim).filter(_.nonEmpty)
       facet(runs.filter(r => g.forall(x => r.row.goal.exists(_.value == x))).map(_.row.status.value))
         .map((v, n) => (Run.State.Wire(v), n))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo] =
       runs
         .filter(r => r.row.pipeline.value == p.wire.value && r.row.target.value == target.value)
@@ -366,6 +398,7 @@ object RunService:
         .reverse
         .toVector
         .map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       newest(
         runs.filter(r =>
@@ -375,8 +408,10 @@ object RunService:
         .take(math.max(1, limit.value))
         .toVector
         .map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
       runs.filter(r => r.row.target.value == target.value && Unsettled(r.row.status.value)).toVector.map(info)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checkpoint(
         jobId: Job.Id,
         seq: AgentRepo.StepRecord.Seq
@@ -386,8 +421,10 @@ object RunService:
         .sortBy[Int](_.step.attempt.value)
         .lastOption
         .map(s => (s.step.name, s.step.output.getOrElse(AgentRepo.StepRecord.Output("null"))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
       count(stepsOf(jobId).filter(_.step.seq == seq).map(_.step.attempt.value).maxOption.getOrElse(0))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord])(using
         WritePermit
     ): Unit =
@@ -409,6 +446,7 @@ object RunService:
           )
       )
       jobs.stamped(Run.Id.assume(jobId.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo] =
       stepsOf(jobId).sortBy[(Int, Int)](s => (s.step.seq.value, s.step.attempt.value)).toList.map { s =>
         val r = s.step
@@ -432,6 +470,7 @@ object RunService:
           r.turns.map(t => StepInfo.Turns(t.value))
         )
       }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def messages(jobId: Job.Id): List[MessageInfo] =
       state.get.messages
         .filter(_.jobId == jobId)
@@ -449,6 +488,7 @@ object RunService:
             m.message.latencyMs.map(l => MessageInfo.LatencyMs(l.value))
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def runSpend(jobId: Job.Id): (Usage, BigDecimal) =
       val ss = stepsOf(jobId).map(_.step)
       (
@@ -469,6 +509,7 @@ object RunService:
         ss.filter(s => !s.finishedAt.isBefore(day)).map(_.step.costUsd).sum,
         ss.filter(s => !s.finishedAt.isBefore(month)).map(_.step.costUsd).sum
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pruneMessages(days: RetentionDays)(using WritePermit): Count =
       if days.value <= 0 then Count(0)
       else

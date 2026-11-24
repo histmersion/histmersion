@@ -11,11 +11,15 @@ import com.histmersion.util.data.exchange.MergeFollowUps
 
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a merge leaves on the work lists: a `/review-article` task per merged article (a merged text is not reviewed),
   * and a worklog line.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object WorkListMergeFollowUps extends MergeFollowUps:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def recordIn(
       m: Bundle.Manifest,
       from: MergeFollowUps.FromRecordRef,

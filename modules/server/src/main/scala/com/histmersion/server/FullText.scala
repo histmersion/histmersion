@@ -4,8 +4,10 @@ package server
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Whether a source page shows the whole OCR'd paper. */
+@movesTo(FeaturePlace.LibrarySources)
 enum FullText derives CanEqual:
   case Hidden
   case Missing

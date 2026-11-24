@@ -2,6 +2,7 @@ package com.histmersion
 package web.marks
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** When something was written, as a person says it: "just now", "5 minutes ago", "3 days ago", or the date. Pure.
   */
@@ -13,6 +14,8 @@ object Ago:
   type Phrase = Phrase.T
   object Phrase extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(thenMs: Millis, nowMs: Millis, isoDate: IsoDate): Phrase =
     val s = math.max(0.0, (nowMs.value - thenMs.value) / 1000)
     def n(v: Double, one: String): Phrase =
@@ -25,6 +28,10 @@ object Ago:
     else Phrase(isoDate.value.take(10))
 
   /** An ISO time's milliseconds, NaN for none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ms(iso: IsoDate): Millis = Millis(scala.scalajs.js.Date.parse(iso.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(iso: IsoDate): Phrase = apply(ms(iso), Millis(scala.scalajs.js.Date.now()), iso)

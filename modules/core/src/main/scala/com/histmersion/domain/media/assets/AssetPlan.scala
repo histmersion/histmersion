@@ -12,12 +12,14 @@ import com.histmersion.api.text.SafeName
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats the figures of the sources and their links: a figure belongs to its source, a link to its
   * figure's; in a pair of sources that fold, the same bytes are one figure, a name the survivor has gets the other
   * collection's label (and a body taken from the bundle follows the new name), a link the survivor's figure already has
   * is one; a figure added under a name another figure of its source has here arrives renamed.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
   private val assetSource = in.foreign.assets.map(a => a.uid -> a.sourceUid).toMap
   private val linkAsset = in.foreign.assetLinks.map(l => l.uid -> l.assetUid).toMap
@@ -35,6 +37,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     case Bundle.Kind.AssetLink => linkAsset.get(foreign).flatMap(assetSource.get)
     case _                     => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def foldPairFirst(
       right: Bundle.Source,
       left: Bundle.Source,
@@ -79,6 +82,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
       }
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def relabel(relabels: PlanRelabels): Unit =
     val taken = scala.collection.mutable.Set.from(in.local.assets.map(a => (a.sourceUid, a.name)))
     relabels.rows
@@ -120,6 +124,8 @@ object AssetPlan extends PlanRules:
   /** An asset name not taken in the survivor: `<stem>-<label>.<ext>` (then `-2`, `-3`…). `~` of the design is not
     * link-safe in Markdown, so a hyphen.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def freeName(
       name: Bundle.Asset.Name,
       label: MergePlanner.Row.Label,

@@ -5,10 +5,14 @@ import com.histmersion.util.problem.Problem
 
 import java.io.InputStream
 import java.nio.file.{Files, Path, StandardCopyOption}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A [[ContentStore]] in a directory: `<dir>/<sha256>.<ext>`. */
+@atBoundary(BoundaryKind.Process, "stores and finds content files named by hash in a directory")
 final class ContentDirectory(dir: Path) extends ContentStore:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def find(sha256: Sha256): Option[(ByteSource, ContentStore.Ext)] =
     scala.util
       .Try {
@@ -23,6 +27,7 @@ final class ContentDirectory(dir: Path) extends ContentStore:
   /** Written to a temporary file, hashed, and moved into place only when the content IS `sha256`: the directory is
     * content-addressed, and whoever reads it trusts the name.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[Problem, Unit] =
     if find(sha256).isDefined then
       val _ = in.transferTo(java.io.OutputStream.nullOutputStream())

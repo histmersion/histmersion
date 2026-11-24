@@ -16,7 +16,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Queue:
 
   /** Why an item is on a list, or how it was closed: a rationale, not a failure. */
@@ -26,6 +28,7 @@ object Queue:
       /** Does it record that the item was ingested as this citekey (`ingested as [[citekey]]`)? */
       def recordsIngestOf(citekey: Citekey): Boolean = s"$r".contains(ingestTag(citekey))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def ingestTag(citekey: Citekey): String = s"ingested as [[$citekey]]"
   type Export = Export.T
   object Export extends Newtype[String, Pure]
@@ -42,6 +45,7 @@ object Queue:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueueItem(
       id: QueueItem.Id,
       list: QueueItem.List,
@@ -84,8 +88,10 @@ object Queue:
         KindlingsSchema,
         api.json.Schema
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class GoalRef(slug: Goal.Slug, title: Goal.Title) derives JsonCodec, KindlingsSchema, api.json.Schema
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueueAdd(
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic] = None,
@@ -103,6 +109,7 @@ object Queue:
 
     export QueueItem.CreatedAt
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueuePatch(
       status: Option[QueueItem.Status] = None,
       text: Option[QueueItem.Text] = None,
@@ -118,6 +125,7 @@ object Queue:
 
     export QueueItem.ClosedBy
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueueImport(text: QueueItem.Text, replace: QueueImport.Replace = QueueImport.Replace(true))
       derives JsonCodec,
         KindlingsSchema,
@@ -127,6 +135,7 @@ object Queue:
     type Replace = Replace.T
     object Replace extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueueImported(
       list: QueueImported.List,
       items: QueueImported.Items,
@@ -158,18 +167,22 @@ object Queue:
     type Checkboxes = Checkboxes.T
     object Checkboxes extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type All = Label
     val All: Label.type = Label
 
     val all: List[All] = values.toList.map(_.label)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Label): Option[Kind] = values.find(_.label == Label((s).value.trim.toLowerCase))
 
   val Open = "open"
   val Done = "done"
   val Note = "note"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Statuses: List[QueueItem.Status] = List(QueueItem.Status(Open), QueueItem.Status(Done), QueueItem.Status(Note))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusOf(raw: Option[QueueItem.Status]): Either[Problem, Option[QueueItem.Status]] =
     raw.map((_).value.trim.toLowerCase).filter(_.nonEmpty).map(x => QueueItem.Status(x)) match
       case None                            => Right(None)
@@ -177,11 +190,13 @@ object Queue:
       case Some(s)                         =>
         Left(Invalid.Unknown.here(TypeName.of(QueueItem.Status), Raw(s"$s"), Statuses.toVector.map(x => Raw(s"$x"))))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def textOf(raw: Option[QueueItem.Text]): Either[Problem, Option[QueueItem.Text]] =
     raw match
       case Some(t) if (t).value.trim.isEmpty => Left(Invalid.Missing.here(Field("text")))
       case other                             => Right(other)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fulfilledReason(prev: Option[Rationale], citekey: Citekey): Rationale =
     val tag = Rationale.ingestTag(citekey)
     prev.map(r => s"$r".trim).filter(_.nonEmpty) match
@@ -189,6 +204,8 @@ object Queue:
       case Some(p)                    => Rationale(s"$p · $tag")
       case None                       => Rationale(s"$tag")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fulfil(item: QueueItem, citekey: Citekey, by: Option[QueueItem.ClosedBy] = None): QueuePatch =
     QueuePatch(
       status = Some(QueueItem.Status(Done)),
@@ -196,6 +213,8 @@ object Queue:
       closedBy = by
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fulfillable(id: QueueItem.Id, found: Option[QueueItem]): Either[Problem, QueueItem] =
     found match
       case None => Left(Problem.NotFound.Entity(TypeName.of(QueueItem.Id), Raw(s"$id")))
@@ -222,6 +241,8 @@ object Queue:
   def itemGoals(own: List[(QueueItem.Id, GoalRef)], linked: List[(QueueItem.Id, GoalRef)]): List[ItemGoals] =
     (own ++ linked).groupBy(_._1).toList.sortBy(_._1).map((id, gs) => ItemGoals(id, gs.map(_._2).distinctBy(_.slug)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
     def clearable[A](v: Option[A], old: Option[A])(text: A => String, make: String => A): Option[A] =
       v.fold(old)(x => Some(text(x).trim).filter(_.nonEmpty).map(make))
@@ -251,6 +272,7 @@ object Queue:
       .modify(_.actor)
       .setTo(p.actor.orElse(cur.actor))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def createdAtOf(raw: Option[QueueItem.CreatedAt]): Either[Problem, Option[QueueItem.CreatedAt]] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
@@ -272,11 +294,13 @@ object Queue:
 
   val Sep = " > "
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def path(topic: Option[QueueItem.Topic]): Vector[String] =
     topic
       .map((_).value.split(java.util.regex.Pattern.quote(Sep), -1).toVector.filter(_.nonEmpty))
       .getOrElse(Vector.empty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def topicOf(p: Vector[String]): Option[QueueItem.Topic] =
     if p.isEmpty then None else Some(QueueItem.Topic(p.mkString(Sep)))
 
@@ -287,6 +311,8 @@ object Queue:
 
   private val DateRe = """^(\d{4}-\d{2}-\d{2}).*""".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(kind: Kind, text: FileText): List[QueueAdd] =
     val out = List.newBuilder[QueueAdd]
     var stack = Vector.empty[String]
@@ -349,6 +375,7 @@ object Queue:
 
   private def isBold(s: String): Boolean = ((s).startsWith("**") && (s).endsWith("**"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def entryDate(stack: Vector[String]): Option[QueueItem.CreatedAt] =
     stack.headOption.flatMap {
       case DateRe(d) => Some(QueueItem.CreatedAt(s"${d}T00:00:00Z"))
@@ -363,6 +390,8 @@ object Queue:
       .reverse)
       .map(refactorValue15 => ((refactorValue15)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def defaultPreamble(kind: Kind): Preamble = kind match
     case Kind.Acquire =>
       Preamble(
@@ -379,6 +408,8 @@ object Queue:
     case Item(lines: String)
     case Note(lines: String)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(kind: Kind, items: List[QueueItem]): Markdown =
     val (preamble, rest) = items.partition(_.topic.isEmpty)
     val groups = rest
@@ -418,6 +449,8 @@ object Queue:
         else Block.Heading(s"${"#" * (i + 2)} $seg")
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bullet(kind: Kind, i: QueueItem): String =
     val marker =
       if !(kind.checkboxes).value then "- " else if i.status == QueueItem.Status(Done) then "- [x] " else "- [ ] "
@@ -441,10 +474,14 @@ object Queue:
     sb.append("\n")
     (sb.result())
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def instantKey(s: QueueItem.CreatedAt): InstantKey =
     InstantKey(scala.util.Try(java.time.Instant.parse((s).value).toEpochMilli).getOrElse(0L))
 
   /** A list's open items by topic; `notes` is a line under an item, by its id (an ACQUIRE item's last check). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(
       kind: Kind,
       items: List[QueueItem],

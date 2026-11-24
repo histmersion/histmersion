@@ -52,6 +52,7 @@ import com.histmersion.domain.automation.agents.PluginAiClient
 import com.histmersion.api.Api
 import com.histmersion.api.json.Schema
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class Ping(word: String) derives JsonCodec, KindlingsSchema, Schema
 
@@ -60,6 +61,8 @@ final case class Ping(word: String) derives JsonCodec, KindlingsSchema, Schema
   * factory resolving through the registry; and a plugin provider driven through the host's own tool loop — the host's
   * tool runs, the typed answer is decoded, every turn's usage is counted, a plan limit becomes a chain switch.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class AiProvidersSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk
@@ -67,10 +70,12 @@ class AiProvidersSuite extends munit.FunSuite:
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   private val offline = new Plugin.Http:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
       Left(Problem.Unclassified(Legacy.Text("offline")))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def providersOf(
       registered: ListMap[Registries.AiProvidersKey, AiProvider]
   ): ListMap[util.plugins.Plugin.Id, AiProvider] =
@@ -94,6 +99,7 @@ class AiProvidersSuite extends munit.FunSuite:
 
   /** The six built-in providers' plugins: the HTTP APIs' found on the class path, the command-line runtimes the host's.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val builtins: List[Plugin] =
     PluginHost
       .discover(getClass.getClassLoader)
@@ -111,6 +117,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val title = AiProvider.Title("Scripted")
     val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
     override def check(model: AiProvider.CheckModel) = checked
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def turn(r: AiTurn.Request, http: AiHttp) =
       asked += r
       answers
@@ -131,6 +138,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private def on(id: String = "zq-ai") = s"histmersion.plugins.$id.enabled = true"
 
   private val app = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rt(host: String = "127.0.0.1") =
     CliRuntime(
       app.modify(_.server).setTo(app.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host(host)))),
@@ -520,6 +528,7 @@ class AiProvidersSuite extends munit.FunSuite:
         verbatimFailures = AiCapabilities.VerbatimFailures(true)
       )
     override def check(model: AiProvider.CheckModel) = checked
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def turn(r: AiTurn.Request, http: AiHttp) =
       asked += r
       answers

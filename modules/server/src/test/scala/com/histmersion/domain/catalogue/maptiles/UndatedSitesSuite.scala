@@ -6,13 +6,16 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.*
 
 import java.util.concurrent.atomic.AtomicReference
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The undated sites of a tile, over sites held in memory: counted by squares, the counts adding up to every site, and
   * listed one by one but those the span already shows.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class UndatedSitesSuite extends munit.FunSuite:
   private val grid =
     TileGrid.of(maxZoom = TileGrid.MaxZoom(11), maxPoints = TileGrid.MaxPoints(600), cellPx = TileGrid.CellPx(32))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val sites = (0 until 30)
     .flatMap(i =>
       (0 until 30)
@@ -28,6 +31,7 @@ class UndatedSitesSuite extends munit.FunSuite:
     .toList
   private val service = UndatedSites.InMemory(AtomicReference(sites))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tileAt(z: TileCoord.Z, lat: Latitude, lon: Longitude): TileCoord =
     val (mx, my) = TileCoord.mercator(lat, lon)
     TileCoord

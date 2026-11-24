@@ -7,8 +7,10 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.{Aggregate, TimeHistogram}
 import com.histmersion.api.catalogue.{Period, Year}
 import com.histmersion.api.library.Histogram
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pure tests for the timeline bucketing (plan §1.6 sizes, §1.7 strip). No DB involved. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AggregateSuite extends munit.FunSuite:
 
   private def row(a: Year, b: Year) = Period.Row(Some(a), Some(b))
@@ -205,6 +207,7 @@ class AggregateSuite extends munit.FunSuite:
     }
 
 /** `unit=starts` — one bar per source, at the bucket its period begins in (UX item 11). Pure. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AggregateStartsSuite extends munit.FunSuite:
   import com.histmersion.api.library.Aggregate.Counting
 

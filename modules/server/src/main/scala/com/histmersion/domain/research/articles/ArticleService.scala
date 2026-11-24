@@ -29,6 +29,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and
   * its recorded versions. Slugs are taken as given; the controllers normalise them.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait ArticleService:
 
   /** The slug an old slug was renamed to, or the slug itself. */
@@ -135,14 +136,21 @@ object ArticleService:
 
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)
     private def stamp(at: Instant): String = Stamp.format(at)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def token(at: Instant): Article.UpdatedAt = Article.UpdatedAt(stamp(at))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def articleKey(slug: Slug): ResearchState.ArticlesKey = ResearchState.ArticlesKey(slug.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def aliasKey(slug: Slug): ResearchState.AliasesKey = ResearchState.AliasesKey(slug.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def critiqueKey(slug: Slug): ResearchState.CritiquesKey = ResearchState.CritiquesKey(slug.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ledgerKey(slug: Slug): ResearchState.LedgersKey = ResearchState.LedgersKey(slug.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def slugOf(key: ResearchState.ArticlesKey): Slug = Slug.assume(key.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def canonicalIn(st: ResearchState, slug: Slug): Slug =
       if st.articles.contains(articleKey(slug)) then slug
       else st.aliases.get(aliasKey(slug)).fold(slug)(a => Slug.assume(a.value))
@@ -153,6 +161,7 @@ object ArticleService:
     def canonical(slug: Slug): Slug = canonicalIn(state.get, slug)
     def load(slug: Slug): Option[Article] = state.get.articles.get(articleKey(slug)).map(loaded)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def view(requested: Slug): Option[Article.View] =
       val st = state.get
       val slug = canonicalIn(st, requested)
@@ -186,9 +195,11 @@ object ArticleService:
 
     def exists(slug: Slug): Boolean = state.get.articles.contains(articleKey(slug))
     def slugs: List[Slug] = state.get.articles.keys.toList.sorted.map(slugOf)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def updatedAtMillis: Map[Slug, CitekeyMillis.Millis] =
       state.get.articles.map((k, v) => slugOf(k) -> CitekeyMillis.Millis(v.updatedAt.toEpochMilli))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(slugs: List[Slug]): List[Article.Ref] =
       val st = state.get
       slugs.distinct.sorted
@@ -202,6 +213,7 @@ object ArticleService:
     def citing(citekeys: List[Citekey], limit: PageSize): List[EventArticleRef] = Nil
     def sourcesCited(slug: Slug): List[CitedSource] = Nil
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def versions(slug: Slug): List[Article.Version] =
       state.get.versions
         .filter(_.slug.value == slug.value)
@@ -223,6 +235,7 @@ object ArticleService:
     private def wordCount(body: String): Int =
       body.dropWhile(_ == ' ').reverse.dropWhile(_ == ' ').reverse.split("\\s+", -1).length
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def version(slug: Slug, id: ArticleRepo.VersionId): Option[Article.VersionFull] =
       state.get.versions
         .find(v => v.slug.value == slug.value && v.id.value == id.value)
@@ -237,6 +250,7 @@ object ArticleService:
           )
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def latestVersion(slug: Slug): Option[ArticleRepo.VersionId] =
       state.get.versions.filter(_.slug.value == slug.value).map(_.id.value).maxOption.map(ArticleRepo.VersionId(_))
 
@@ -244,6 +258,7 @@ object ArticleService:
     def articlesByGoal: Map[Goal.Slug, List[Slug]] = Map.empty
 
     /** The write path: the previous body and summary kept as a version, the row replaced, its links recomputed. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def written(st: ResearchState, a: Article, now: Instant): ResearchState =
       val key = ResearchState.ArticlesKey(a.slug.value)
       val before = st.articles.get(key)
@@ -280,6 +295,7 @@ object ArticleService:
       state.updateAndGet(written(_, article, now))
       token(now)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(slug: Slug, patch: Article.Patch, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Article.UpdatedAt] =
@@ -309,11 +325,13 @@ object ArticleService:
           case Right((next, stamped)) => if state.compareAndSet(st, next) then Right(stamped) else attempt()
       attempt()
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def refused(problem: Problem, code: String): Api.Error = Api.Error(problem, Some(Api.Error.Code(code)))
 
     /** A reason names its two sources by citekey; with no source stored, the first reason is refused as the database
       * refuses it (its text checked first).
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def critiqueRefusal(reasons: List[CritiqueReason]): Option[Api.Error] =
       val tidy = reasons.map(CritiqueReason.tidy)
       tidy.collectFirst { case Left(m) => refused(m, Write.CodeInvalid) }.orElse {
@@ -330,6 +348,7 @@ object ArticleService:
         }
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(slug: Slug, caller: Caller)(using WritePermit): Boolean =
       val before = state.getAndUpdate { st =>
         if !st.articles.contains(articleKey(slug)) then st
@@ -347,6 +366,7 @@ object ArticleService:
       }
       before.articles.contains(articleKey(slug))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(from: Slug, to: Slug, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, List[Slug]] =
@@ -381,6 +401,8 @@ object ArticleService:
     /** The slug moved with its versions, links and reasons, the links to it following, every other article that
       * mentions it rewritten through the write path, the old slug kept as an alias.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def renamed(
         st: ResearchState,
         oldSlug: Slug,

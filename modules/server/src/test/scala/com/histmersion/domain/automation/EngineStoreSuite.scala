@@ -91,8 +91,10 @@ object EngineStoreSuite:
         val managers = ManagerService.InMemory(state, jobs, clock)
         val focus = FocusService.InMemory(state, clock)
         val agentState = AgentStateService.InMemory(state, clock)
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def article(slug: Slug, title: Title): Unit =
           titles.update((Goal.LinkKind.Article, BGoalLinkRow.Ref(slug.value)), GoalLinkTargets.LinkTitle(title.value))
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def source(citekey: Citekey, title: Title): Unit =
           titles.update(
             (Goal.LinkKind.Source, BGoalLinkRow.Ref(citekey.value)),
@@ -104,6 +106,7 @@ object EngineStoreSuite:
   trait OnDatabase extends EngineStoreSuite:
     private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s7c_${getClass.getSimpleName.toLowerCase.take(24)}",

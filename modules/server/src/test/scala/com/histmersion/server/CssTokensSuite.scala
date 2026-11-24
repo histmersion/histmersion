@@ -9,13 +9,16 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.research.ReviewState
 import com.histmersion.api.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The colour tokens the code names ([[Palette]]) are defined in the stylesheet it ships. A token the stylesheet lacks
   * renders as nothing at all — a transparent dot, an invisible edge — and no other test would notice. Reads the served
   * `web/style.css` off the classpath, as [[WebAssetsSuite]] does.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CssTokensSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val css: String = Static.read(Static.ReadPath("web/style.css")).value
 
   /** `--name: value` declarations in the `:root` blocks. */
@@ -61,8 +64,10 @@ class CssTokensSuite extends munit.FunSuite:
   /** Colours the OSM tiles draw large areas in: land, water, forest, farmland, sand, built-up, and the HOT style's
     * land; the dark set is the same tiles as `.map-tiles-dark` draws them (inverted, 90%).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val lightTiles =
     List("#f2efe9", "#aad3df", "#add19e", "#eef0d5", "#fff1ba", "#e0dfdf", "#f8f4f0", "#c8facc").map(Wcag.Hex(_))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def darkened(c: (Wcag.Channel, Wcag.Channel, Wcag.Channel)): (Wcag.Channel, Wcag.Channel, Wcag.Channel) =
     def d(v: Wcag.Channel) = Wcag.Channel(((255 - v.value) * 0.9).round.toInt)
     (d(c._1), d(c._2), d(c._3))
@@ -155,6 +160,7 @@ class CssTokensSuite extends munit.FunSuite:
     )
 
   /** A theme's resolved colour: its own value, `var(--x)` followed, as a hex triple. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def colour(theme: Map[String, String], token: String): (Wcag.Channel, Wcag.Channel, Wcag.Channel) =
     def resolve(t: String, depth: Int): String =
       val v = theme.getOrElse(t, rootTokens.getOrElse(t, fail(s"$t is not defined")))
@@ -237,6 +243,7 @@ class CssTokensSuite extends munit.FunSuite:
       )
 
   /** A control's edge, the focus ring and the source-status marks against what they sit on: 3:1. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val componentPairs: List[(String, String)] =
     for
       fg <- List("--control-line", "--accent") ++ Palette.statuses.map(s =>
@@ -385,6 +392,7 @@ class CssTokensSuite extends munit.FunSuite:
     assert(!seeding.contains("danger") && !seeding.contains("health-down"), seeding)
 
   /** The colours a goal stage's badge is drawn with: its ground, its word and its mark, from its rules. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stageLook(stage: Goal.Status.All): (String, String, String) =
     def rule(sel: String) = ("""(?s)""" + java.util.regex.Pattern.quote(sel) + """ \{([^}]*)\}""").r
       .findFirstMatchIn(css)

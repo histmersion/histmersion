@@ -3,15 +3,19 @@ package config.edit
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What reference.conf says about a setting, read from its text: the comment lines just above the key, the comment at
   * the end of its line and of its environment line (`key = ${?VAR}` right under it), and the comment lines under those
   * that continue them (indented to the comments' column), and the variable it names. Pure.
   */
+@movesTo(FeaturePlace.UtilSettings)
 final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
   import ReferenceDocs.*
 
   /** The documentation of the key `leaf` defined at line `line` (1-based). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doc(line: Int, leaf: String): String =
     val i = line - 1
     if i < 0 || i >= lines.size then ""
@@ -22,12 +26,14 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
       clean(leading(i, indent) ++ trailing)
 
   /** The environment variable the key `leaf` at `line` names on the lines right under it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def envVar(line: Int, leaf: String): Option[SettingField.EnvVar] =
     envLines(line - 1, leaf)
       .flatMap(j => EnvLine.findFirstMatchIn(content(lines(j).value)).map(m => SettingField.EnvVar(m.group(2))))
       .headOption
 
   /** The `leaf = ${?VAR}` lines directly under line `i`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def envLines(i: Int, leaf: String): List[Int] =
     @tailrec def loop(j: Int, acc: List[Int]): List[Int] =
       if j >= lines.size then acc.reverse
@@ -43,6 +49,7 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
     loop(i + 1, Nil)
 
   /** The comment-only lines right above line `i` that are not a continuation of the line above them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def leading(i: Int, indent: Int): List[String] =
     @tailrec def loop(j: Int, acc: List[String]): List[String] =
       if j < 0 || !isCommentOnly(lines(j).value) || commentColumn(lines(j).value) > indent + ContinuationIndent then acc
@@ -50,6 +57,7 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
     loop(i - 1, Nil)
 
   /** The comment-only lines under line `i`, indented past the key: the end-of-line comment goes on there. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def continuations(i: Int, indent: Int): List[String] =
     @tailrec def loop(j: Int, acc: List[String]): List[String] =
       if j >= lines.size || !isCommentOnly(lines(j).value) || commentColumn(
@@ -66,6 +74,7 @@ object ReferenceDocs:
   type Line = Line.T
   object Line extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(text: Text): ReferenceDocs = new ReferenceDocs(text.value.split("\n", -1).toIndexedSeq.map(Line(_)))
 
   /** A comment-only line indented this much past its key's column continues the comment above it. */

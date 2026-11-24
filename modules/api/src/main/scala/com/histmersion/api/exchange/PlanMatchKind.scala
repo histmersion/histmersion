@@ -4,6 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The kind of record a merge plan's matches are of, as its owner declares it: how one is written and read, which ones
   * the plan's Markdown lists, and how a line of it reads.
@@ -21,6 +22,7 @@ final class PlanMatchKind[A](listed: A => Boolean, line: A => PlanMatchKind.Matc
   def all(m: PlanMatches): List[A] = m.rows.flatMap(_.as[A].toOption)
 
   /** The matches the plan's Markdown lists (at most `limit`), one line each. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lines(m: PlanMatches, limit: PlanMatchKind.LineLimit): List[PlanMatchKind.MatchLine] =
     m.rows
       .flatMap(_.as[A].toOption)

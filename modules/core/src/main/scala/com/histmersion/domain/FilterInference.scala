@@ -16,6 +16,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `infer-filter` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (a), phase 2):
   * an article that records no coverage filter (#958) gets one proposed by a model — free text, topics, tags and the
@@ -24,6 +26,8 @@ import com.histmersion.domain.automation.Run
   * cites (a filter that misses what the article is built on is not the article's filter). A failing answer goes back
   * with the measurements; on the last attempt nothing is proposed rather than a filter that failed.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.ResearchWorkflows)
 object FilterInference:
   type Last = Last.T
   object Last extends Newtype[Boolean, Pure]
@@ -43,6 +47,8 @@ object FilterInference:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[FilterAnswer] = KindlingsSchema
       .derived[FilterAnswer]
       .schema
@@ -71,6 +77,8 @@ object FilterInference:
   final case class Inferred(proposal: Option[FilterProposal], problems: List[Problem] = Nil) derives JsonCodec
 
   /** The answer as a filter: tidied ([[ArticleFilter.normalise]]); Left = what is wrong with its shape. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def filterOf(a: FilterAnswer): Either[List[Problem], Article.Filter] =
     val raw = Article.Filter(query = a.query, topics = a.topics, tags = a.tags, extraQueries = a.extraQueries)
     Article.Filter.normalise(raw) match
@@ -86,6 +94,8 @@ object FilterInference:
     * returns `citedIn`; `sample` = a few it returns the article does not cite. Left = the problems a retry should fix;
     * on the `last` attempt a failing filter becomes `Inferred(None, problems)` — nothing is proposed.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def judge(
       slug: Slug,
       f: Article.Filter,
@@ -144,5 +154,7 @@ object FilterInference:
     else Left(problems)
 
   /** The worklog line of a run. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logLine(slug: Slug, outcome: Outcome, runId: Run.Id): LogLine =
     LogLine(s"infer-filter [[$slug]]: $outcome (agent run ${runId.value.take(8)})")

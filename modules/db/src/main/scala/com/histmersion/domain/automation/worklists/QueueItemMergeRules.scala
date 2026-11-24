@@ -6,8 +6,10 @@ import com.augustnagro.magnum.{sql, Frag}
 
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.exchange.MergeRules
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge treats the work lists' items: the ledger names one by the start of its text. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object QueueItemMergeRules extends MergeRules:
 
   val owner: DataOwner = DataOwner("automation")

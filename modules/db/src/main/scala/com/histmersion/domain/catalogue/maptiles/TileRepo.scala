@@ -15,12 +15,16 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.given
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's point layers cut into vector tiles (`GET /api/tiles/…`, [[TileGrid]]): each layer's selection in a tile's
   * box ([[siteCandidates]], [[EventSql.tileCandidates]], another domain's layer's — every item, never a limit), placed
   * on the tile ([[cellsSql]]) and counted by cell where there are more than the grid keeps alone; then the records of
   * the items drawn alone. And the versions of what the layers read ([[versions]], V105).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the tile tables and their row codecs")
 private[maptiles] object TileRepo:
   type GroupName = GroupName.T
   object GroupName extends Newtype[String, Pure]
@@ -57,6 +61,7 @@ private[maptiles] object TileRepo:
   /** Fold `grp`'s change rows into one of their summed weight — its version unchanged. One fold at a time (an advisory
     * lock; a second caller does nothing).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def compact(grp: GroupName)(using DbCon): Unit =
     val locked = sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.map_changes'))".query[Boolean].run().head
     if locked then
@@ -70,6 +75,8 @@ private[maptiles] object TileRepo:
   /** The tile's box as a PostGIS envelope; a tile at the grid's top or bottom edge reaches the pole, so a place beyond
     * Web Mercator's last latitude is drawn on the edge rather than nowhere.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def envelope(c: TileCoord): Frag =
     val (w, s, e, n) = c.bounds
     val south = if c.y.value == c.side.value - 1 then -90.0 else s
@@ -79,6 +86,8 @@ private[maptiles] object TileRepo:
   /** Web Mercator in SQL over the columns `lon` and `lat`: [[TileCoord.mercator]], each axis held inside the unit
     * square, then in units of tile `c` — `(x, y)`. `TileRepoSuite` holds it to the Scala.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def unitsSql(c: TileCoord): (Frag, Frag) =
     val l = sql"radians(greatest(${(-TileCoord.MaxLat.value).literal}, least(${TileCoord.MaxLat.literal}, lat)))"
     def held(v: Frag) = sql"least(greatest($v, 0), 0.99999999999)"
@@ -101,6 +110,7 @@ private[maptiles] object TileRepo:
     * counted by cells of `cellUnits` (a cell of one item answers as the item). Rows as [[TileCell]]'s fields, `undated`
     * how many of a cell's items are marked `ub`. Pure.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def cellsSql(candidates: Frag, c: TileCoord, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits): Frag =
     val units = cellUnits.value.max(1)
     val perSide = (TileCoord.Extent.value / units).max(1)
@@ -110,12 +120,15 @@ private[maptiles] object TileRepo:
     * number: one [[GridCell]] a square (`dup` those marked `ub`), its square on the world's grid of the tile's zoom.
     * Pure.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def gridCellsSql(candidates: Frag, c: TileCoord, cellUnits: TileGrid.CellUnits): Frag =
     val cu = cellUnits.value.max(1)
     val perSide = (TileCoord.Extent.value / cu).max(1)
     sql"${placedSql(candidates, c)} SELECT ${(c.x.value * perSide).literal} + floor(px / ${cu.literal})::bigint, ${(c.y.value * perSide).literal} + floor(py / ${cu.literal})::bigint, count(*)::int, (count(*) FILTER (WHERE ub))::int, sum(px), sum(py), coalesce(sum(px) FILTER (WHERE ub), 0), coalesce(sum(py) FILTER (WHERE ub), 0), min(mid), max(mid), min(lon), min(lat), max(lon), max(lat), min(key) FROM t GROUP BY 1, 2"
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[TileCell] = DbCodec.derived
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[GridCell] = DbCodec.derived
 
   /** The cells of tile `c` over a layer's `candidates` ([[cellsSql]]). */
@@ -123,6 +136,7 @@ private[maptiles] object TileRepo:
     cellsSql(candidates, c, grid.pointsAt(c), grid.cellUnits).query[TileCell].run().toList
 
   /** Every item of `candidates` in tile `c`, each alone. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def items(candidates: Frag, c: TileCoord)(using DbCon): List[TileCell] =
     cellsSql(candidates, c, TileGrid.MaxPoints(Int.MaxValue), TileGrid.CellUnits(TileCoord.Extent.value))
       .query[TileCell]
@@ -141,6 +155,8 @@ private[maptiles] object TileRepo:
     * Wikidata as much as curated (the places layer draws an imported place only once a finding names it; a site is no
     * less a site for being in no source yet). Over `places_site_map` (V105), whose predicate is stated word for word.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def siteCandidates(
       window: (DeepTime.SignedYear, DeepTime.SignedYear),
       siteType: Option[SiteType],
@@ -179,6 +195,7 @@ private[maptiles] object TileRepo:
         .toMap
 
   /** A sites tile's cells. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def siteCells(
       c: TileCoord,
       grid: TileGrid,
@@ -191,6 +208,7 @@ private[maptiles] object TileRepo:
   /** The sites tile `c` shows for `window` as candidates of [[items]] and [[gridCells]], an undated one the span shows
     * by its findings marked (it is among the undated sites too).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def datedSites(
       c: TileCoord,
       window: (DeepTime.SignedYear, DeepTime.SignedYear),
@@ -202,6 +220,7 @@ private[maptiles] object TileRepo:
   /** An events tile's cells, with the events of no known date `undatedWhere` selects
     * ([[EventSql.tileCandidatesWithUndated]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def eventCellsWithUndated(
       c: TileCoord,
       grid: TileGrid,
@@ -212,5 +231,6 @@ private[maptiles] object TileRepo:
 
   /** An events tile's cells: the events `where` selects (over `events e` with its place `ep`, [[EventSql.listWhere]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def eventCells(c: TileCoord, grid: TileGrid, where: Frag)(using DbCon): List[TileCell] =
     cells(EventSql.tileCandidates(where, envelope(c)), c, grid)

@@ -10,10 +10,12 @@ import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.jats.Jats
 import com.histmersion.plugin.WorkKey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Europe PMC search hits and NCBI's PMC Article Datasets records (#1523), from responses captured on 2026-10-11
   * (trimmed, in `src/test/resources/acquire`).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PmcParseSuite extends munit.FunSuite:
 
   private def text(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString

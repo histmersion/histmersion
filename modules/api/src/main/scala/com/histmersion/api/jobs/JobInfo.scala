@@ -16,8 +16,10 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.Sha256
 import com.histmersion.api.automation.Queue
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A job's row. `problems`: every problem a job that failed (or stopped) keeps, in order; none for one that did not. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class JobInfo(
     id: SpatialHierarchyResult.Job.Id,
     kind: JobKinds.Wire,
@@ -38,6 +40,7 @@ final case class JobInfo(
   def isTerminal: Boolean = state.isTerminal
   def succeeded: Boolean = (state == JobState.Done)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateLine: String =
     val detail =
       progress.map(p => s"$p").orElse(problems.map(_.sentences.mkString("; "))).map(t => s" — $t").getOrElse("")
@@ -54,6 +57,7 @@ object JobInfo:
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Kind = JobKinds.Wire
   val Kind: JobKinds.Wire.type = JobKinds.Wire
 

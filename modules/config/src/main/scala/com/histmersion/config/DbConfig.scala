@@ -6,11 +6,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** @param instanceLockCheckSeconds
   *   how often the server looks whether the session holding its database's instance lock (one server per database) is
   *   still there, and takes the lock again when the database dropped it.
   */
+@movesTo(FeaturePlace.UtilDatabase)
 final case class DbConfig(
     url: DbConfig.Url,
     user: DbConfig.User,

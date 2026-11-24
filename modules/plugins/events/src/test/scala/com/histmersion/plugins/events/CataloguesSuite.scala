@@ -16,11 +16,14 @@ import com.histmersion.upstreams.dating.CatalogDating
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.upstreams.wikidata.WikidataItem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own event catalogues, from their answers RECORDED 2026-10-14 (trimmed): each read into the events the
   * SPI exchanges, and those as the host stores them (its check, its dating held inside the present and the catalogue's
   * floor); each stored record read again without the network, as `events rederive` reads it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class CataloguesSuite extends munit.FunSuite:
 
   private def fixture(name: String): Json =
@@ -28,6 +31,7 @@ class CataloguesSuite extends munit.FunSuite:
       .parse(scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString)
       .fold(e => throw IllegalArgumentException(e), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def years(e: CatalogueEvent) =
     (
       e.notBefore.map(_.value.toLong),
@@ -240,6 +244,7 @@ class CataloguesSuite extends munit.FunSuite:
     assert(noaa.everyPartEachImport.value)
     assertEquals(noaa.floorYear, None)
     val http = new Plugin.Http:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) =
         Right(Plugin.HttpResponse.Body("""{"items":[],"totalPages":2}""".getBytes("UTF-8")))
     assertEquals(

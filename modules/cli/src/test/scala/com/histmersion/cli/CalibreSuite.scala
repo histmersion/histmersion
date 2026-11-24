@@ -25,6 +25,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionUpdateAll
 import com.histmersion.api.media.MediaImportRequest
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host-side Calibre integration: both readers produce the same book, the metadata guard refuses junk, and the
   * commands assembled for `calibredb` are the ones we mean to run.
@@ -32,6 +33,7 @@ import com.histmersion.api.media.MediaImportRequest
   * The fixtures are REAL output captured from `calibredb list --for-machine` and from `sqlite3 -readonly -json` against
   * the same book, with the home directory rewritten. No Calibre installation is needed to run this.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CalibreSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard
@@ -159,6 +161,7 @@ class CalibreSuite extends munit.FunSuite:
     s"""[{"id":1567,"title":"Kumarbi","authors":"$authors","pubdate":"$pubdate","publisher":"$publisher",""" +
       s""""comments":"$comments","tags":$tags,"identifiers":$identifiers,"formats":[]}]"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fields(shell: RecordingShell) =
     val cmd = shell.commands.find(_.contains("set_metadata")).getOrElse(fail("no set_metadata ran"))
     assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib.value, "1567"))
@@ -480,6 +483,7 @@ class CalibreSuite extends munit.FunSuite:
 
   test("reading falls back to sqlite3 when calibredb refuses (the GUI case)"):
     val shell = new RecordingShell():
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       override def run(cmd: List[String]) =
         commands = commands :+ cmd
         if cmd.head.endsWith("calibredb") then
@@ -678,6 +682,7 @@ class CalibreSuite extends munit.FunSuite:
   )
 
   /** A [[Shell]] that records instead of executing. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private class RecordingShell(running: Boolean = false) extends Shell:
     var commands: List[List[String]] = Nil // a test double is the one place a var is the simplest thing
     def run(cmd: List[String]): Either[Problem, String] =
@@ -693,6 +698,7 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.parseMachineJson("[]"), Right(Nil))
     // the GUI case: calibredb refuses, sqlite3 -json prints nothing at all for an empty result
     val shell = new RecordingShell():
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       override def run(cmd: List[String]) =
         commands = commands :+ cmd
         if cmd.head.endsWith("calibredb") then

@@ -28,17 +28,27 @@ import com.histmersion.domain.CreatorControllers
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge
   * is a person's decision, made with `histmersion article delete`.
   */
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ArticleTools:
   /** A slug a tool reads: one that is no slug names no article. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def readSlug(slug: Article.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(_ => Articles.notFound(slug))
 
   /** A slug a tool writes: one that is no slug is refused. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def writeSlug(slug: Article.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
 
   import com.histmersion.util.mcp.ToolInputs.given
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def apply(articles: ArticlesControllers) =
     // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
     // Shared preamble: the ONE place the writing rules are named, so all four tools point an agent at
@@ -253,6 +263,7 @@ object ArticleTools:
     /** `tag` is the shared Filter's (a source tag: articles CITING such a source); `query` is the article's own full
       * text — see [[Api.ArticleQuery]].
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def toQuery: Api.ArticleQuery =
       Api.ArticleQuery(
         Filter.of(
@@ -270,13 +281,20 @@ object ArticleTools:
     object Query extends Newtype[String, Pure]
     type Tag = Tag.T
     object Tag extends Newtype[String, Pure]
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = domain.Title
     val Title: domain.Title.type = domain.Title
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Limit = PageSize
     val Limit: PageSize.type = PageSize
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Offset = com.histmersion.Offset
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ListArticlesInput] = KindlingsSchema
       .derived[ListArticlesInput]
       .schema
@@ -292,6 +310,8 @@ object ArticleTools:
     type Parts = Parts.T
     object Parts extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[GetArticleInput] = KindlingsSchema
       .derived[GetArticleInput]
       .schema
@@ -312,6 +332,8 @@ object ArticleTools:
       "that records no filter has none (set it with patch_article `filter`)."
 
   /** `article_coverage`: the one handler, rendered. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleCoverageMarkdown(
       articles: ArticlesControllers,
       in: ArticleCoverageInput
@@ -328,6 +350,8 @@ object ArticleTools:
       "won't fix, still open). CLI: histmersion article review."
 
   /** `article_review`: the one handler, rendered. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): Either[Api.Error, McpOut.Markdown] =
     readSlug(in.slug).flatMap(articles.review).map(v => Article.ReviewView.markdown(v).value)
 
@@ -335,6 +359,8 @@ object ArticleTools:
   object ArticleReviewInput:
     export Article.Slug
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ArticleReviewInput] = KindlingsSchema
       .derived[ArticleReviewInput]
       .schema
@@ -344,6 +370,8 @@ object ArticleTools:
   object ArticleCoverageInput:
     export Article.Slug
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ArticleCoverageInput] = KindlingsSchema
       .derived[ArticleCoverageInput]
       .schema
@@ -360,6 +388,8 @@ object ArticleTools:
       "checks code runs on a review fixer's answer."
 
   /** `check_edits`: the one handler, rendered. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): Either[Api.Error, McpOut.Markdown] =
     writeSlug(in.slug)
       .flatMap(
@@ -384,6 +414,8 @@ object ArticleTools:
     export Article.Slug
     export domain.research.Article.{Body, Kind}
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[CheckEditsInput] = KindlingsSchema
       .derived[CheckEditsInput]
       .schema
@@ -406,6 +438,8 @@ object ArticleTools:
     export Article.Slug
     export domain.research.Article.StrictMode as Strict
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
       .schema
@@ -421,6 +455,8 @@ object ArticleTools:
     export Article.Slug
     export domain.research.Article.StrictMode as Strict
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]
       .schema
@@ -428,6 +464,7 @@ object ArticleTools:
     given JsonCodec[PatchArticleInput] =
       StrictJson.codec(JsonCodec.derived[PatchArticleInput]) // #813
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class ExportArticleInput(slug: ExportArticleInput.Slug)
       derives JsonCodec,
         KindlingsSchema,
@@ -440,6 +477,8 @@ object ArticleTools:
   object ArticleVersionsInput:
     export Article.Slug
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ArticleVersionsInput] = KindlingsSchema
       .derived[ArticleVersionsInput]
       .schema
@@ -452,6 +491,8 @@ object ArticleTools:
     type VersionId = VersionId.T
     object VersionId extends Newtype[Long, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[ArticleVersionInput] = KindlingsSchema
       .derived[ArticleVersionInput]
       .schema

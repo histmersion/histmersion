@@ -12,6 +12,7 @@ import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.given
 import com.histmersion.util.database.literal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How an owner's table names its records, so that references to them are resolved and described in one place: the
   * table (aliased `t` in the expressions), the expression of a record's key and title, its uid column where the kind
@@ -27,11 +28,16 @@ final case class RecordTable(
     uid: Option[RecordTable.Uid],
     aliases: Option[AliasColumns]
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val uidCol = uid.fold("NULL::uuid")(_.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val keyCol = key.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val titleCol = title.value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val tableName = table.value
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def byKeys(keys: List[ItemKey])(using DbCon): List[(ItemKey, Option[ItemUid], Option[Title])] =
     if keys.isEmpty then Nil
     else
@@ -41,6 +47,7 @@ final case class RecordTable(
         .toList
 
   /** Old keys → (the key now, uid, title). */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def byAliases(keys: List[ItemKey])(using DbCon): Map[ItemKey, (ItemKey, Option[ItemUid], Option[Title])] =
     aliases.filter(_ => keys.nonEmpty).fold(Map.empty) { a =>
       sql"""SELECT a.${a.alias}, ${SqlLiteral(keyCol)}, ${SqlLiteral(uidCol)}, ${SqlLiteral(titleCol)} FROM ${a.table} a
@@ -52,6 +59,8 @@ final case class RecordTable(
         .toMap
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def byUids(uids: Set[ItemUid])(using DbCon): Map[ItemUid, (ItemKey, Option[Title])] =
     uid.filter(_ => uids.nonEmpty).fold(Map.empty) { col =>
       sql"SELECT ${SqlLiteral(col.value)}, ${SqlLiteral(keyCol)}, ${SqlLiteral(titleCol)} FROM ${SqlLiteral(tableName)} t WHERE ${SqlLiteral(col.value)} = ANY(${uids.toList
@@ -63,6 +72,7 @@ final case class RecordTable(
     }
 
   /** Merged-away uid → the uid that answers for it now, through every merge since. */
+  @tolerated(LintRule.TotalOrder, "DISTINCT ON (start): an alias chain has one record per hop count")
   private def redirects(uids: Set[ItemUid])(using DbCon): Map[ItemUid, ItemUid] =
     if uids.isEmpty then Map.empty
     else
@@ -88,6 +98,8 @@ final case class RecordTable(
         .map((u, at) => u -> Instant.parse(at))
         .toMap
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def resolve(k: ItemKey)(using DbCon): Either[Problem, ItemRef] =
     byKeys(List(k)).headOption
       .map((_, u, _) => ItemRef(kind, k, u))

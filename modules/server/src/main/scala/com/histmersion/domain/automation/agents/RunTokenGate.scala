@@ -6,6 +6,7 @@ import com.histmersion.util.problem.Problem
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.http.*
 import io.netty.util.ReferenceCountUtil
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The netty gate in front of the agent MCP endpoint, on every request whatever the method: no live run token → 401; a
   * token for another agent's path → 403; the bare `/mcp/agent` is routed to the token's own agent
@@ -21,6 +22,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
     discarding = !req.isInstanceOf[LastHttpContent]
     Refusal(problem).answer(ctx, req)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def channelRead(ctx: ChannelHandlerContext, msg: AnyRef): Unit =
     msg match
       case req: HttpRequest =>

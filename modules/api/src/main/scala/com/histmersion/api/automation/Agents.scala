@@ -23,6 +23,8 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 object Agents:
   type Action = Action.T
   object Action extends Newtype[String, Pure]
@@ -38,6 +40,7 @@ object Agents:
     * provider.
     */
   final case class ModelRef(provider: ProviderKind, model: ModelRef.Model) derives CanEqual:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire: ModelRef.Wire = ModelRef.Wire(s"${provider.wire}:$model")
 
   object ModelRef:
@@ -49,6 +52,7 @@ object Agents:
       type Spec = Spec.T
       object Spec extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(
         s: Wire,
         known: Set[api.automation.ProviderKind.Plugin.Name] = Set.empty
@@ -76,6 +80,7 @@ object Agents:
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
     * `cacheRead`/`cacheWrite` are subsets of it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Usage(
       input: Usage.Input = Usage.Input((0).toLong),
       output: Usage.Output = Usage.Output((0).toLong),
@@ -84,6 +89,7 @@ object Agents:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def +(o: Usage): Usage =
       Usage(
         Usage.Input((input).value + (o.input).value),
@@ -91,8 +97,10 @@ object Agents:
         Usage.CacheRead((cacheRead).value + (o.cacheRead).value),
         Usage.CacheWrite((cacheWrite).value + (o.cacheWrite).value)
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def total: Usage.TotalTokens = Usage.TotalTokens((input).value + (output).value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def budgeted(cacheReadWeight: Usage.CacheReadWeight): Usage.BudgetedTokens =
       Usage.BudgetedTokens(
         math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round(
@@ -104,6 +112,7 @@ object Agents:
     type BudgetedTokens = BudgetedTokens.T
     object BudgetedTokens extends Newtype[Long, Pure]
     type CacheReadWeight = CacheReadWeight.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object CacheReadWeight extends Newtype[Double, Pure]
     type TotalTokens = TotalTokens.T
     object TotalTokens extends Newtype[Long, Pure]
@@ -125,6 +134,7 @@ object Agents:
       cacheRead: Option[BigDecimal] = None,
       cacheWrite: Option[BigDecimal] = None
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def cost(u: Usage): BigDecimal =
       val plain = math.max(u.input.value - u.cacheRead.value - u.cacheWrite.value, 0L)
       (BigDecimal(plain) * input + BigDecimal(u.cacheRead.value) * cacheRead.getOrElse(input) +
@@ -144,6 +154,7 @@ object Agents:
       case Plan(_)    => BigDecimal(0)
       case Metered(p) => p.cost(u)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: String = this match
       case Plan(p)    => (s"plan pool: ${p.wire}")
       case Metered(p) => (s"price: ${p.text} USD per million tokens")
@@ -155,6 +166,8 @@ object Agents:
 
     private[Agents] val Million = BigDecimal(1000000)
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Either[Problems, Map[ModelRef.Model, Price]] =
       val entries = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty)
       val parsed = entries.map { e =>
@@ -187,6 +200,7 @@ object Agents:
     /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
       * never trip a cost budget.
       */
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def cost(prices: Map[ModelRef.Model, Price], model: Prices.CostModel, u: Usage): Either[Problem, BigDecimal] =
       (prices
         .get(model)
@@ -207,16 +221,21 @@ object Agents:
             .toRight(unpriced(m.model, metered(m)))
 
     /** The model has no price in `agents.prices`: an error, never a price of zero. */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def unpriced(model: ModelRef.Model, metered: Option[Problem.Config.Metered]): Problem =
       Problem.Config.Unpriced(Problem.Run.Model(s"$model"), metered)
 
     /** Why a model of a provider that can run on a plan is billed by the token, when it is one. */
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def metered(m: ModelRef): Option[Problem.Config.Metered] = m.provider match
       case p @ (ProviderKind.ClaudeCode | ProviderKind.Codex) =>
         Some(Problem.Config.Metered.ApiKey(Problem.Upstream.Name(s"${p.wire}")))
       case ProviderKind.Opencode => Some(Problem.Config.Metered.Opencode)
       case _                     => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobKind = AgentJobKinds.Agent.kind.value
 
   enum PauseReason(val wire: PauseReason.Wire) derives CanEqual:
@@ -231,6 +250,7 @@ object Agents:
 
     case Stalled extends PauseReason(PauseReason.Wire("stalled"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object PauseReason:
     export WireEnumValues.Wire
 
@@ -242,6 +262,7 @@ object Agents:
     given JsonValueCodec[PauseReason] = WireEnum.codec
     given Schema[PauseReason] = WireEnum.schema
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   enum StepKind(val wire: StepKind.Wire):
     case Code extends StepKind(StepKind.Wire("code"))
     case Llm extends StepKind(StepKind.Wire("llm"))
@@ -268,6 +289,7 @@ object Agents:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Origin] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   final case class ProbeRequest(citekey: Citekey, model: Option[ProbeRequest.Model] = None)
@@ -283,6 +305,7 @@ object Agents:
       derives JsonCodec,
         KindlingsSchema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[Problem] = List(
       Option.when(Option(citekey).forall(_.value.trim.isEmpty))(
         Invalid.Missing.here(Field("citekey"))
@@ -295,8 +318,10 @@ object Agents:
       )
     ).flatten
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object ProbeAnswer:
     /** The year asked of a model stays the 32-bit integer its schema has always said. */
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     given Schema[ProbeAnswer] = api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
     type RecordYear = RecordYear.T
     object RecordYear extends Newtype[Int, Pure]
@@ -340,6 +365,7 @@ object Agents:
     type Attempts = Attempts.T
     object Attempts extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunRequest(
       pipeline: RunRequest.Pipeline,
       target: RunRequest.Target,
@@ -394,6 +420,7 @@ object Agents:
       derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def text: ModelOverride.Wire = ModelOverride.Wire(s"$role=$model")
   object ModelOverride:
     type Wire = Wire.T
@@ -403,6 +430,7 @@ object Agents:
     type Model = Model.T
     object Model extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Either[Problem, ModelOverride] =
       (s).value.indexOf('=') match
         case -1 =>
@@ -417,6 +445,7 @@ object Agents:
           else if m.isEmpty then Left(Invalid.Missing(Field("model"), Vector(Field(s"${(s).value.trim}"))))
           else Right(ModelOverride(AgentRole.Wire(r), Model(m)))
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunParams(
       fix: Option[RunRequest.Fix] = None,
       rounds: Option[RunRequest.Rounds] = None,
@@ -438,6 +467,7 @@ object Agents:
         KindlingsSchema,
         api.json.Schema:
     def fixes: Boolean = (fix.contains(RunRequest.Fix(true)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def noteList: List[RunParams.Notes] = (notes
       .getOrElse(Nil)
       .map((_).value.trim)
@@ -464,6 +494,8 @@ object Agents:
     type OaBacklog = OaBacklog.T
     object OaBacklog extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunInfo(
       id: RunInfo.Id,
       pipeline: RunInfo.Pipeline,
@@ -498,6 +530,7 @@ object Agents:
         CanEqual:
     def isWaiting: Boolean = (status == Run.State.WaitingApproval.wire)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def modelFor(role: Role): Option[RunInfo.Model] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(o => RunInfo.Model(o.model.value)).orElse(model)
 
@@ -527,6 +560,7 @@ object Agents:
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
     type TargetKind = TargetKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetKind extends Newtype[String, Pure]
     export Agents.Origin.Wire as Origin
     type ResumeAt = ResumeAt.T
@@ -547,6 +581,7 @@ object Agents:
     type Payload = Payload.T
     object Payload extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class StepInfo(
       seq: StepInfo.Seq,
       name: StepInfo.Name,
@@ -568,6 +603,7 @@ object Agents:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def modelText: String = (model, actualModel) match
       case (Some(m), Some(a)) if StepInfo.ActualModel((m).value.drop((m).value.indexOf(':') + 1)) != a => (s"$m → $a")
       case (Some(m), _)                                                                                => ((m).value)
@@ -635,6 +671,7 @@ object Agents:
     type LatencyMs = LatencyMs.T
     object LatencyMs extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
       derives JsonCodec,
         KindlingsSchema,
@@ -685,6 +722,7 @@ object Agents:
     case Warn extends CheckLevel(CheckLevel.Wire("warn"))
     case Fail extends CheckLevel(CheckLevel.Wire("fail"))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object CheckLevel:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -692,7 +730,9 @@ object Agents:
     def parse(s: Wire): Option[CheckLevel] = values.find(_.wire == s)
     given WireEnumValues[CheckLevel]:
       def all: Array[CheckLevel] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: CheckLevel): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[CheckLevel] = parse(Wire((s).value))
     given com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec[CheckLevel] = WireEnum.codec
     given Schema[CheckLevel] = WireEnum.schema
@@ -793,8 +833,10 @@ object Agents:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Decision] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class ApprovalInfo(
       id: ApprovalInfo.Id,
       runId: Option[RunInfo.Id],
@@ -827,6 +869,7 @@ object Agents:
     /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a
       * plan of articles), its rationale as the evidence; None for a kind that carries none.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def withArticleProposal(payload: Option[Json]): Option[ApprovalInfo] =
       if approvalKind.exists((refactorCallback => ((refactorCallback.proposesFilter) == (true)))) then
         val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)

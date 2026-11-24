@@ -10,10 +10,13 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Launching child processes (the bundled database's tools, the converter, dumps): the one place a process is started.
   * Working directories and log files are store handles.
   */
+@atBoundary(BoundaryKind.Process, "starts and controls operating-system processes")
 trait Processes:
   /** Start the process; `Left` with why it could not be. */
   def start(launch: ProcessLaunch): Either[Problem, RunningProcess]
@@ -30,6 +33,8 @@ object Processes:
   def apply(): Processes = Implementation()
 
   final private class Implementation extends Processes:
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def start(launch: ProcessLaunch): Either[Problem, RunningProcess] =
       for
         dir <- directory(launch)
@@ -69,6 +74,7 @@ object Processes:
     def output: InputStream = p.getInputStream
     def input: OutputStream = p.getOutputStream
     def waitFor(): ProcessResult.ExitCode = ProcessResult.ExitCode(p.waitFor())
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def waitFor(timeout: WaitTimeout, unit: TimeUnit): Boolean = p.waitFor(timeout.value, unit)
     def destroy(): Unit = p.destroy()
     def destroyForcibly(): Unit =
@@ -87,6 +93,7 @@ object Processes:
       Right(new RunningProcess:
         def pid: Pid = Pid(0L)
         def isAlive: Boolean = false
+        @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
         val output: InputStream = ByteArrayInputStream(r.lines.map(_.value + "\n").mkString.getBytes("UTF-8"))
         val input: OutputStream = ByteArrayOutputStream()
         def waitFor(): ProcessResult.ExitCode = r.exitCode

@@ -8,11 +8,13 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pleiades snaps imprecise places to stand-in points: 17 places, three of them "Mesopotamia", share 37.5 N 37.5 E, and
   * some sit on the centre of an atlas grid square ([[LocationPrecision.GridCell]]). Such points rank below every
   * precise candidate.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Geocode:
   object TimeRank:
     type Class = Class.T
@@ -32,14 +34,17 @@ object Geocode:
   enum KindHint derives CanEqual:
     case Site, Region, Polity, Water, Unknown
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire: KindHint.Wire = KindHint.Wire(toString.toLowerCase(java.util.Locale.ROOT))
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object KindHint:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
     /** Lenient: it parses a model's free answer, and an unrecognised word is no hint. */
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): KindHint =
       val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
       values
@@ -53,7 +58,9 @@ object Geocode:
 
     given WireEnumValues[KindHint]:
       def all: Array[KindHint] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: KindHint): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fromWire(s: WireEnumValues.Wire): Option[KindHint] =
         values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given JsonValueCodec[KindHint] = WireEnum.codec
@@ -69,6 +76,7 @@ object Geocode:
 
   private val Aside = "\\([^)]*\\)".r
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(s: String): Key =
     val b = new StringBuilder((s).length)
     Aside.replaceAllIn((s), " ").foreach { c =>
@@ -88,6 +96,7 @@ object Geocode:
 
     case GridSquare
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: String = this match
       case Qualifier(d)  => (s"'$d' dropped")
       case OnlyWithin(m) => (s"'$m' not found there; the enclosing place's point")
@@ -112,6 +121,9 @@ object Geocode:
       within: Option[Attempt.Within] = None,
       approx: Option[Approximation] = None
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def key: Key = Geocode.key(name.value)
 
   object Attempt:
@@ -154,6 +166,8 @@ object Geocode:
 
   private val Joiners: Set[String] = Set("and", "or")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stripQualifier(name: Attempt.Name): Option[(Approximation.Qualifier.Dropped, Attempt.Name)] =
     val words = name.value.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
     def isQ(w: String) = QualifierWords.contains(key(w).value)
@@ -167,6 +181,8 @@ object Geocode:
       (Approximation.Qualifier.Dropped(dropped.mkString(" ")), Attempt.Name(rest.mkString(" ")))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def compassBox(
       dropped: Approximation.Qualifier.Dropped
   ): Option[(Compass.Fraction, Compass.Fraction, Compass.Fraction, Compass.Fraction)] =
@@ -176,6 +192,7 @@ object Geocode:
       case List(box) => Some(box)
       case _         => None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def box(x0: Double, y0: Double, x1: Double, y1: Double) =
     (Compass.Fraction(x0), Compass.Fraction(y0), Compass.Fraction(x1), Compass.Fraction(y1))
 
@@ -195,6 +212,9 @@ object Geocode:
 
   private val Asides = "\\(([^)]*)\\)".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def attempts(name: Attempt.Name): List[Attempt] =
     val n = (name).value.trim
     if (key((n))).value.isEmpty then Nil
@@ -241,10 +261,12 @@ object Geocode:
   ):
     def undated: Boolean = (from.isEmpty && to.isEmpty)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def span: Candidate.Span = Candidate.Span((for a <- from; b <- to
     yield (b).value - (a).value).getOrElse((Candidate.Span(Long.MaxValue / 4)).value))
     def overlaps(p: Period): Boolean = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def gap(p: Period): Candidate.Gap =
       if overlaps(p) then Candidate.Gap(0L)
       else
@@ -270,15 +292,21 @@ object Geocode:
     type GridCell = GridCell.T
     object GridCell extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def broad(kind: Candidate.Kind) =
     kind.value == Place.Kind.Region || kind.value == Place.Kind.Polity
 
   def tierOf(importSource: Option[Place.Match.ImportSource]): Gazetteer.Rank =
     Gazetteer.rank(Place.Match(Place.Id(""), importSource))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isPlaceholder(c: Candidate, placeholderMin: Placeholder.Min): Boolean =
     c.dimension.value == 0 && c.shared.value >= placeholderMin.value
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kindRank(kind: Candidate.Kind, hint: KindHint): KindRank = hint match
     case KindHint.Site =>
       if kind.value == Place.Kind.Site then KindRank(0)
@@ -290,6 +318,8 @@ object Geocode:
       else KindRank(2)
     case _ => if broad(kind) then KindRank(0) else if kind.value == Place.Kind.Feature then KindRank(1) else KindRank(2)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def timeRank(c: Candidate, at: Option[Period]): (TimeRank.Class, Candidate.Gap) = at match
     case None =>
       if (c.undated) == (true) then (TimeRank.Class(0), Candidate.Gap(0L))
@@ -299,6 +329,7 @@ object Geocode:
       else if (c.overlaps(p)) == (true) then (TimeRank.Class(0), Candidate.Gap(0L))
       else (TimeRank.Class(2), c.gap(p))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rank(cs: List[Candidate], hint: KindHint, at: Option[Period], placeholderMin: Placeholder.Min): List[Candidate] =
     cs.sortBy { c =>
       val (t, gap) = timeRank(c, at)
@@ -325,6 +356,7 @@ object Geocode:
   ):
     def isApproximate: Boolean = (approximate.nonEmpty)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: String =
       val approx = if approximate.isEmpty then "" else s" (approximate: ${approximate.map(_.describe).mkString("; ")})"
       (s"'$asked' → $label [$placeId]$approx")
@@ -334,6 +366,7 @@ object Geocode:
     type Asked = Asked.T
     object Asked extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def choose(
       asked: Resolution.Asked,
       attempt: Attempt,
@@ -346,6 +379,8 @@ object Geocode:
       Resolution(asked, c.id, c.label, c.lon, c.lat, attempt.approx.toList ++ rough.toList ++ grid.toList)
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def distanceKm(lon1: Longitude, lat1: Latitude, lon2: Longitude, lat2: Latitude): DistanceKm =
     val r = 6371.0
     val dLat = math.toRadians(((lat2).value - (lat1).value))
@@ -365,6 +400,7 @@ object Geocode:
   ):
     def km: DistanceKm = distanceKm(fromLon, fromLat, to.lon, to.lat)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: String =
       val from = region.filter(_ != asked).fold("")(r => s" (stored as '${r.value}')")
       String.format(
@@ -390,9 +426,12 @@ object Geocode:
     object Name extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.{Latitude as FromLat, Longitude as FromLon}
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def worthMoving(m: Move, minKm: Move.MinKm): Boolean = (m.km).value > minKm.value
 
   final case class Placement(findingId: Finding.Id, citekey: Citekey, region: Placement.Region, to: Resolution):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: String =
       String.format(
         java.util.Locale.ROOT,
@@ -410,6 +449,7 @@ object Geocode:
     type Region = Region.T
     object Region extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def periodOf(from: Option[Year], to: Option[Year]): Option[Period] = (from, to) match
     case (Some(a), Some(b)) => Some(Period(Year(math.min((a).value, (b).value)), Year(math.max((a).value, (b).value))))
     case (Some(a), None)    => Some(Period(a, a))

@@ -2,11 +2,16 @@ package com.histmersion
 package api.library
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object CandidatesMarkdown:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counts(cs: List[CandidateCount]): String =
     if cs.isEmpty then ("none yet") else (cs.map(c => s"${c.count} ${c.state}").mkString(", "))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(l: CandidateList): String =
     val head = s"# Candidates${l.goal.fold(" (every goal)")(g => s" for goal `$g`")} — ${l.state}"
     val total = s"Counts: ${counts(l.counts)}."
@@ -22,6 +27,8 @@ object CandidatesMarkdown:
     val body = if rows.isEmpty then List(s"No ${l.state} candidates.") else rows
     ((head :: "" :: total :: "" :: body ++ (if tail.isEmpty then Nil else "" :: tail)).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sweep(s: CandidateSweep): String =
     val w = s.watches.map { w =>
       s"- ${w.index} ${w.kind} `${w.subject}`: ${w.lastError.fold(s"${w.lastFound} found")(e =>
@@ -38,4 +45,6 @@ object CandidatesMarkdown:
       s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
       (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def marked(m: CandidateMarked): String = (s"${m.updated} candidate(s) marked ${m.state}.")

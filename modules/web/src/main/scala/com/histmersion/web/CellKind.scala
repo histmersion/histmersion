@@ -9,6 +9,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Html
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The cells of a tiled layer drawn as bubbles ([[MapView.dots]] draws a cell alone as the bubble of its count): what
   * they count for and where a click goes — into their box.
@@ -16,12 +17,18 @@ import com.histmersion.api.Html
 final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def shape: Shape = Shape.Circle
   def icon: Icon = Icon.PointSite
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def layerLabel: UiLabels.Text = UiLabels.Text(dot.many.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def meaning: UiLabels.Text = UiLabels.Text(s"several ${dot.many} nearby")
   def box: (PointKind.BoxPixels, PointKind.BoxPixels) = (PointKind.BoxPixels(0), PointKind.BoxPixels(0))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(c: TileCellPoint): PointKind.PointKey = PointKind.PointKey(c.key.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def at(c: TileCellPoint): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inner(c: TileCellPoint): Html = Html.text(c.n.value.toString)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fill(c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): String =
     MapView
       .rampEnds(
@@ -31,6 +38,7 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
       )
       ._1
       .value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def member(c: TileCellPoint): Member =
     Member(
       dot,
@@ -40,7 +48,9 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
       cell = Some(c.box),
       undated = Member.Undated(c.undated.value)
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def classes(c: TileCellPoint): String = if c.undated.value == c.n.value then MapView.UndatedClass else ""
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def label(c: TileCellPoint): UiLabels.Text =
     UiLabels.Text(
       DotCluster.summary(Map(dot -> DotCluster.KindCount(c.n.value)), DotCluster.Undated(c.undated.value)).value

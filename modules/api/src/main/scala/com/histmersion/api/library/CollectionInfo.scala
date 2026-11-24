@@ -9,10 +9,13 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source collection the server can run: its name, title and description, what it lets the server do (`read`, `add`,
   * `update`), and whether the server can reach it now (`problem` says what is missing when it cannot).
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionInfo(
     name: CollectionInfo.Name,
     title: Title,

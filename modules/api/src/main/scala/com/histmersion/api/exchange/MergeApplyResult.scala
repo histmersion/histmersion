@@ -9,6 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MergeApplyResult(
     bundleId: UUID,
@@ -28,6 +29,7 @@ final case class MergeApplyResult(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def changed: Bundle.ChangedCount = Bundle.ChangedCount(counts.map(c => c.changed.value: Int).sum)
 
 object MergeApplyResult:

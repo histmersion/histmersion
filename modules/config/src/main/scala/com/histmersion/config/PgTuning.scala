@@ -6,6 +6,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.numeric.Interval
 
 import PgTuning.Connections
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Memory and connection settings the bundled Postgres is started with (`-c`, so an existing cluster gets them on its
   * next start; nothing is written to its `postgresql.conf`). Each memory setting is a [[PgSize]]: a size Postgres reads
@@ -14,6 +16,7 @@ import PgTuning.Connections
   * holds a 15 GB gazetteer it searches as you type. A value that is no size stops the settings from loading, so a
   * mistyped size is said where the settings are read, not by a Postgres that will not start.
   */
+@movesTo(FeaturePlace.UtilDatabase)
 final case class PgTuning(
     sharedBuffers: PgSize,
     effectiveCacheSize: PgSize,
@@ -57,6 +60,7 @@ final case class PgTuning(
       )
     )
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object PgTuning:
 
   /** A number of connections to the bundled Postgres, within what its `max_connections` accepts. */

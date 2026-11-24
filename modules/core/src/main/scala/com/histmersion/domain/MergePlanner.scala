@@ -59,6 +59,8 @@ import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.PlanMatches
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered
@@ -93,6 +95,9 @@ import com.histmersion.api.exchange.Bundle.uidEquality
   * Issue ids hash the issue's kind and the uids and revs it is about ([[issueId]]): they stay the same while those
   * records do not change, and a resolution whose id is no longer in the plan is reported, never re-applied.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.UtilDataExchange)
 object MergePlanner:
   type IssueExtra = IssueExtra.T
   object IssueExtra extends Newtype[String, Pure]
@@ -177,6 +182,7 @@ object MergePlanner:
     def ownBundle: Boolean = manifest.instance.id == here.id
 
     /** How the other collection is named in what the merge writes ("work"). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromLabel: Row.Label =
       Row.Label(
         manifest.instance.label.map(_.value.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8))
@@ -312,6 +318,9 @@ object MergePlanner:
     * replaced by the local one, and a mapped row's label by its local label — after a merge the local citekey (slug,
     * id) wins. Lines with no mapping are left as they are.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, Row.Label]): BundleEntities =
     if mapped.isEmpty then es
     else
@@ -359,6 +368,8 @@ object MergePlanner:
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): util.data.exchange.Bundle.Kind.IssueLetter =
     kind match
       case MergeIssue.Kind.BodyDiffers   => util.data.exchange.Bundle.Kind.IssueLetter("O")
@@ -369,6 +380,8 @@ object MergePlanner:
     * else that tells the issue apart (an alias). The same records unchanged → the same id; either side changed → a new
     * id, and the old resolution goes stale. Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def issueId(
       kind: MergeIssue.Kind,
       entity: Bundle.Kind,
@@ -380,6 +393,8 @@ object MergePlanner:
   ): MergeIssue.Id = issueIdOf(kind, entity, right, left, rightRev.value, leftRev.value, extra)
 
   /** As above for an issue about a body: the body kept (its sha256, or none) stands where the local rev does. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def issueId(
       kind: MergeIssue.Kind,
       entity: Bundle.Kind,
@@ -390,6 +405,8 @@ object MergePlanner:
       extra: IssueExtra
   ): MergeIssue.Id = issueIdOf(kind, entity, right, left, rightRev.value, keptBody.fold("")(_.value), extra)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def issueIdOf(
       kind: MergeIssue.Kind,
       entity: Bundle.Kind,
@@ -412,6 +429,7 @@ object MergePlanner:
   /** Two versions of an article, with the three-way merge's regions over their common version (or the whole text as one
     * region when there is none).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def articleText(
       base: Option[Bundle.Article.Body],
       left: Bundle.Article.Body,
@@ -444,6 +462,9 @@ object MergePlanner:
   /** A goal's links name what they link by label; the label of a linked source or article is the one it has here once
     * the merge is done (a merged source's survivor citekey, a renamed article).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def relinkGoals(es: BundleEntities, in: Input): BundleEntities =
     val citekeys = in.sources.map(s => s.uid -> s.citekey).toMap ++ es.sources.map(s => s.uid -> s.citekey)
     val slugs = in.local.articles.map(a => a.uid -> a.slug).toMap ++ es.articles.map(a => a.uid -> a.slug)
@@ -462,12 +483,14 @@ object MergePlanner:
   /** The OCR bodies (by sha256) whose MinHash could decide whether two sources are one, as the kinds' rules say: the
     * database computes them before [[plan]].
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[Bundle.Source.BodySha256] =
     PlanRuns(rules.map(_.start(in))).sketchesWanted(cfg)
 
   /** The OCR bodies (by sha256) the plan must read for the kinds' rules (re-anchoring attestations): of the matched
     * pairs, as each kind's rules say.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bodiesWanted(
       in: Input,
       sketches: Map[Bundle.Source.BodySha256, MinHash],
@@ -503,6 +526,13 @@ object MergePlanner:
     /** A record a kind's rules found to be one with a record here. */
     case Contributed(how: PlanMerge)
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def plan(
       in: Input,
       sketches: Map[Bundle.Source.BodySha256, MinHash],
@@ -570,6 +600,7 @@ object MergePlanner:
       def here(u: UUID): Boolean = localRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
       def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def info(line: PairQuestions.InfoLine): Unit = noted += line.value
 
     // whether a pair is one work, the fields of a pair, a citekey taken: as the sources' rules ask
@@ -896,7 +927,9 @@ object MergePlanner:
       def merged(foreign: UUID): Boolean = merges.contains(foreign)
       def merge(foreign: UUID, here: UUID, how: PlanMerge): Unit = merges(foreign) = here -> Merges.Contributed(how)
       def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def info(line: PairQuestions.InfoLine): Unit = noted += line.value
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def labelTaken[A](
           kind: Bundle.Kind,
           rows: List[A],
@@ -1343,7 +1376,9 @@ object MergePlanner:
       def rows: List[Row] = initialRows
       def localized: BundleEntities = linesHere
       def writesInitially(foreign: UUID): Boolean = initialOf.get(foreign).exists(_.decision.writes)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def info(line: PlanRelabels.InfoLine): Unit = notes0 += line.value
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def relabelled(line: PlanRelabels.RelabelledLine): Unit = relabelled0 += line.value
     run.relabelFirst(fates, relabels)
     run.relabel(relabels)

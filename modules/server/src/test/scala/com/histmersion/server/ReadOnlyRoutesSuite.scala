@@ -13,8 +13,8 @@ import scala.jdk.CollectionConverters.*
   * trees of every main module ([[RouteWrites]]): each route given its logic by `serverLogic…`, its method from its
   * endpoint's definition, and every write its logic's call graph reaches.
   *
-  * The routes that write today are listed in `architecture/get-writes.tsv`, exact both ways (a new one fails, a row no
-  * route matches any more fails); `HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites it, and refuses while the list grows.
+  * A route that writes today carries a `tolerated` annotation for `LintRule.GetWrites` on its endpoint, exact both
+  * ways: a write of an endpoint without it fails, and so does the annotation on an endpoint none of whose routes writes.
   * `HISTMERSION_GET_WRITES_REPORT=<file>` also writes each write's chain of calls there. A route whose method the check
   * cannot read fails the suite: it could not vouch for it.
   */
@@ -108,7 +108,7 @@ class ReadOnlyRoutesSuite extends munit.FunSuite:
     assertEquals(unresolved.size, 1, unresolved)
     assert(unresolved.head.endpoint.endsWith("e"), unresolved)
 
-  test("no GET or HEAD route writes but the listed ones, and every listed one still does"):
+  test("no GET or HEAD route writes but the tolerated ones, and every tolerated one still does"):
     assert(mainCode.exists(_.contains("histmersion-server")), s"the server's code is not on the class path: $classpath")
     val found = scanned(mainCode)
     assert(found.unread.isEmpty, s"compiled files the scan could not read: ${found.unread.mkString("\n")}")
@@ -124,25 +124,18 @@ class ReadOnlyRoutesSuite extends munit.FunSuite:
       val text = (head :: found.writes.map(w => s"${w.row}\n  ${w.via.mkString("\n  ")}")).mkString("\n")
       val _ = Files.writeString(Path.of(out), text + "\n", UTF_8)
     }
-    val file = ArchitectureSuite.Resources.resolve("get-writes.tsv")
-    val actual = found.writes.map(_.row).distinct.sorted
-    val listed =
-      if Files.isRegularFile(file) then Files.readAllLines(file, UTF_8).asScala.filterNot(_.startsWith("#")).toList
-      else Nil
-    if sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1") then
-      val added = actual.filterNot(listed.toSet)
-      assert(
-        added.isEmpty || !Files.isRegularFile(file),
-        s"not rewritten: a GET or HEAD route writes that the list does not name (fix it first): ${added.mkString("\n")}"
-      )
-      val header = "# endpoint\tmethod\troute file\twrite\tsink — GET/HEAD routes that write today; shrink, never grow"
-      val _ = Files.write(file, (header :: actual).asJava, UTF_8)
-    else
-      val added = actual.filterNot(listed.toSet)
-      val gone = listed.filterNot(actual.toSet)
-      val via = found.writes.groupBy(_.row).view.mapValues(_.head.via.mkString(" → ")).toMap
-      assert(
-        added.isEmpty && gone.isEmpty,
-        (added.map(r => s"a GET or HEAD route writes: $r\n  via ${via(r)}") ++
-          gone.map(r => s"no longer written — remove it from architecture/get-writes.tsv: $r")).mkString("\n")
-      )
+    val (gate, untolerated) = RouteWrites.judge(found)
+    assert(
+      untolerated.isEmpty && gate.isEmpty,
+      (untolerated.map(w => s"a GET or HEAD route writes: ${w.row}\n  via ${w.via.mkString(" → ")}") ++
+        gate.map(e => s"unused: no route of $e writes — drop its GetWrites toleration")).mkString("\n")
+    )
+
+  test("a write of an untolerated route is a finding; a tolerated endpoint none of whose routes writes is unused"):
+    def route(e: String, t: RouteWrites.Tolerated) = RouteWrites.Route(e, "GET", "x.scala", t)
+    val written = route("api.A.written", RouteWrites.Tolerated.Writes)
+    val stray = route("api.A.stray", RouteWrites.Tolerated.Not)
+    val idle = route("api.A.idle", RouteWrites.Tolerated.Writes)
+    val writes = List(written, stray).map(r => RouteWrites.Write(r, RouteWrites.Kind.File, "Files.write", Nil))
+    val found = RouteWrites.Found(List(written, stray, idle), writes, Nil, Nil, 3)
+    assertEquals(RouteWrites.judge(found), (List("api.A.idle"), writes.filter(_.route == stray)))

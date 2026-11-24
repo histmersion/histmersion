@@ -53,12 +53,14 @@ import com.histmersion.domain.automation.agents.PoolSink
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `claude-code` provider without a model: the argument vector, the environment, the stream-json output read back
   * (rate-limit readings, the quota guard's abort, the last of two results), the plan's usage limit — and the whole
   * client against a FAKE `claude` replaying recorded streams on the GENERATED plugin. No network, no login, nothing
   * spent.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ClaudeCodeSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk
@@ -78,8 +80,10 @@ class ClaudeCodeSuite extends munit.FunSuite:
     env = Map.empty
   )
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val AllTools = ToolboxOrder.names.map(t => ToolUse.Tool(t.value))
   private val Offered = List(ToolUse.Tool("get_source"), ToolUse.Tool("search"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stream(lines: String*): List[CliProcess.Run.Lines] = lines.toList.map(CliProcess.Run.Lines(_))
   private val Launch =
     ClaudeCode.Launch.Agent(

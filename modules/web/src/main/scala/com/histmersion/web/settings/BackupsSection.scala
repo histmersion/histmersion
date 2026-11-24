@@ -9,11 +9,15 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.web.ErrorLine
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › Backups: how many backups are kept, a backup now, and the backups there are. Restoring one replaces
   * everything in the database, so it is done from the command line (`histmersion restore`), never with a click.
   */
 object BackupsSection:
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def pane: HtmlElement =
     val list = Var(Option.empty[Either[Problem, List[Backup.Info]]])
     val busy = Var(false)

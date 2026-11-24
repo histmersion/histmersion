@@ -6,13 +6,16 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.util.database.InstanceLock
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One server per database (G90): the instance lock on the `*_test` database. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class InstanceLockSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val db: DbConfig =
     val base = AppConfig.load().db
     base.modify(_.url).setTo(DbConfig.Url(testDb.get))
@@ -21,6 +24,7 @@ class InstanceLockSuite extends DbSuite:
 
   override protected def afterSuite(): Unit = if testDb.nonEmpty then scratch.dropAll()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def holds(name: String) = InstanceLock.Holds(InstanceLock.Holder(s"histmersion-server $name"))
 
   /** The session of `holder` on `db`'s database, as the database lists it. */

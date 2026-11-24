@@ -30,11 +30,14 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.domain.automation.agents.AgentsControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a step reads an attempt that did not produce its typed answer: an answer over the output cap (#1450, a
   * configuration error), and an answer that did not decode (#941, the decoder's path and message, for the record and
   * the retry). Pure: recorded `claude -p` results, no process, no DB.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class StepFailureSuite extends munit.FunSuite:
 
   private given Stores = Stores.disk

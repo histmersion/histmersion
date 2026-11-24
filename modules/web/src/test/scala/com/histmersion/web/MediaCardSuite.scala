@@ -26,12 +26,15 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.Html.Atoms
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pictures on the cards and the media layer (#1446): the place and event cards carry their first picture with its
   * credit and licence, an event element previews an event, the layer's filter menus and popup. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaCardSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val thumb = MediaThumb(
     MediaItem.Uid("0190a0b0-0000-7000-8000-000000000001"),
     MediaThumb.Role(MediaRole.Image),
@@ -44,6 +47,7 @@ class MediaCardSuite extends munit.FunSuite:
     Some(ImageSize.Height(267))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val mycenae = PlaceDetail(
     Place
       .Summary(

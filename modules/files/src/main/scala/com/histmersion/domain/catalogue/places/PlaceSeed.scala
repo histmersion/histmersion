@@ -8,6 +8,7 @@ package domain.catalogue.places
   */
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 object PlaceSeed:
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
@@ -25,6 +26,7 @@ object PlaceSeed:
     * a file comes from its directory — `polities/` → `polity` — and a feature that declares its own `kind` always wins
     * over it. `top` is what the seed directory holds, `list` what a subdirectory holds.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def files[K](top: List[Entry[K]], list: K => List[Entry[K]]): List[(K, Option[Place.Kind.Wire])] =
     def isSeed(e: Entry[K]) =
       !e.directory.value && (e.name.value.endsWith(".json") || e.name.value.endsWith(".geojson"))

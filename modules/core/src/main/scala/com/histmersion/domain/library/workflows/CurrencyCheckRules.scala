@@ -10,10 +10,12 @@ import com.histmersion.api.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure rules of a currency check (docs/research-embedded-agents.md §14): what it makes of the papers citing a
   * source, and the acquisition item a disagreeing paper outside the corpus becomes.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object CurrencyCheckRules:
 
   /** What a currency check makes of one paper citing `target`: a disagreement edge to propose (both ends in the
@@ -29,6 +31,8 @@ object CurrencyCheckRules:
     case Fetch(row: FollowupRow)
     case Ignore
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def currencyAction(target: Citekey, row: FollowupRow): CurrencyAction =
     val kind = row.proposedKind.value.trim.toLowerCase
     val disagreement = kind == Acquire.EdgeKinds.Refutes || kind == Acquire.EdgeKinds.Challenges ||
@@ -60,6 +64,8 @@ object CurrencyCheckRules:
           }
 
   /** The acquisition item a disagreeing paper outside the corpus becomes. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def acquireText(row: FollowupRow, target: Citekey, goal: Goal.Slug): AcquireText =
     val year = row.year.fold("")(y => s" ($y)")
     AcquireText(

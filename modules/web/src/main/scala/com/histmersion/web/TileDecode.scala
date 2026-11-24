@@ -16,6 +16,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:
@@ -23,13 +24,17 @@ object TileDecode:
     p.get(k).filter(v => v != null && !js.isUndefined(v)).map(_.toString)
   private def num(p: js.Dictionary[js.Any], k: String): Option[Double] =
     p.get(k).filter(v => js.typeOf(v) == "number").map(_.asInstanceOf[Double])
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def long(p: js.Dictionary[js.Any], k: String): Option[Year] =
     num(p, k).map(d => Year(d.toLong))
 
   /** Is it a cell of several items (it carries their count)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def isCell(f: TilePointFeature): Boolean = num(f.props, P.Count).exists(_ > 1)
 
   /** A cell of `kind`: its count, dates' range and box (none of them missing: its own point). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cell(f: TilePointFeature, kind: DotKind): TileCellPoint =
     val p = f.props
     val box = (for w <- num(p, P.West); s <- num(p, P.South); e <- num(p, P.East); n <- num(p, P.North)
@@ -53,6 +58,8 @@ object TileDecode:
       TileCellPoint.Undated(num(p, P.Undated).fold(0)(_.toInt))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def site(f: TilePointFeature): Option[SitePoint] =
     val p = f.props
     str(p, P.Id).map { id =>
@@ -71,6 +78,8 @@ object TileDecode:
       )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def event(f: TilePointFeature): Option[EventGeo] =
     val p = f.props
     for id <- str(p, P.Id)
@@ -94,6 +103,8 @@ object TileDecode:
       str(p, P.Dating).map(EventGeo.Dating(_))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def media(f: TilePointFeature): Option[MediaGeoHit] =
     val p = f.props
     for uid <- str(p, P.Uid)

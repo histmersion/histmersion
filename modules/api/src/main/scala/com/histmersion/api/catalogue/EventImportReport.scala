@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventImportReport(
     provider: EventImportReport.Provider,
     dryRun: EventImportReport.DryRun,
@@ -53,6 +56,7 @@ object EventImportReport:
   type Updated = Updated.T
   object Updated extends Newtype[Int, Pure]
   type MatchedEvents = MatchedEvents.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object MatchedEvents extends Newtype[String, Pure]
   type Parts = Parts.T
   object Parts extends Newtype[Int, Pure]
@@ -67,9 +71,11 @@ object EventImportReport:
   type Citation = Citation.T
   object Citation extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val Detail: JobDetail.Field[Option[EventImportReport]] =
     new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("eventImport"), None)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def combine(a: EventImportReport, b: EventImportReport): EventImportReport =
     EventImportReport(
       b.provider,
@@ -92,6 +98,7 @@ object EventImportReport:
       a.corrections + b.corrections
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(r: EventImportReport): String =
     val verb = if (r.dryRun).value then "would create" else "created"
     (List(
@@ -106,6 +113,7 @@ object EventImportReport:
       r.corrections.summary
     ).flatten.mkString(" · "))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(r: EventImportReport): Markdown =
     def counts(cs: List[EventCount]) = if cs.isEmpty then "none" else cs.map(c => s"${c.key} ${c.n}").mkString(" · ")
     val head = s"## Event import — ${r.provider}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"

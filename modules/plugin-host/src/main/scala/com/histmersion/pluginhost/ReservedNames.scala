@@ -3,6 +3,7 @@ package pluginhost
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The names a plugin's contribution may not take, because Histmersion's own providers answer to them: a plugin's
   * pictures, events or models would be taken for theirs. The server's built-in registries define the same sets; a
@@ -19,6 +20,7 @@ object ReservedNames:
   /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures are stored
     * under.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val mediaCollections: Set[Name] =
     Set[String](
       "wikidata",
@@ -44,6 +46,7 @@ object ReservedNames:
       )
 
   /** The built-in event catalogues and their aliases. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val eventCatalogues: Set[Name] =
     CatalogProvider.all.map(id => Name(id.value)).toSet ++ Set("smithsonian", "volcano", "ncei", "wd").map(Name(_))
 
@@ -90,6 +93,7 @@ object ReservedNames:
   /** The network gazetteers `places fetch` and `init.fetch-sources` name, and the other names they take (the coastline,
     * PeriodO, the bundled extracts): a plugin's source under one of them would be taken for the host's own.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val gazetteerSources: Set[Name] =
     Set("cliopatria", "awmc", "chronontology", "land", "periodo").map(Name(_)) ++
       Gazetteer.Kind.values.map(k => Name(k.wire.value)).toSet
@@ -98,4 +102,5 @@ object ReservedNames:
   val sourceCollections: Set[Name] = Set(Name("calibre"), Name("archive-org"))
 
   /** The built-in AI providers. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val aiProviders: Set[Name] = Agents.ProviderKind.values.map(k => Name(k.wire.value)).toSet

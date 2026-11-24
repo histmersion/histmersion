@@ -4,13 +4,20 @@ package api.catalogue
 import com.histmersion.api.{Plural, TimeSpan, YearFmt}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventLeads:
   type LeadList = LeadList.T
   object LeadList extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def years(ts: TimeSpan): EventLead.Years =
     EventLead.Years(YearFmt.span(ts))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size(vei: Option[LeadFacts.Vei], magnitude: Option[LeadFacts.Magnitude]): Option[String] =
     (vei
       .map(v => s"VEI $v")
@@ -19,6 +26,8 @@ object EventLeads:
 
   private def q(s: String): String = ("\"" + (s).replace("\"", "'") + "\"")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def actions(
       eventId: Event.Id,
       label: EventLead.Label,
@@ -56,6 +65,8 @@ object EventLeads:
         )
         .toList
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(f: LeadFacts): Option[EventLead] =
     if f.tier != LeadFacts.Tier(EventTier.Catalogue) || (f.attesting).value > 0 then None
     else
@@ -85,6 +96,8 @@ object EventLeads:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(l: EventLead.List): LeadList =
     if l.leads.isEmpty then
       LeadList("_No leads: every event in the selection is attested by a source in the corpus, or none matched._")

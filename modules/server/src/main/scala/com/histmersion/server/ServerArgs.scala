@@ -3,13 +3,17 @@ package server
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.Server)
 object ServerArgs:
 
   type Usage = UsageValue
   type UsageValue = UsageValue.T
   object UsageValue extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val Usage: Usage =
     UsageValue("""usage: histmersion-server [--self-check | --help]
       |
@@ -21,6 +25,8 @@ object ServerArgs:
       |  --help, -h      this text""".stripMargin)
 
   /** Pure: the mode, or the usage error. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def parse(args: List[String]): Either[Problem, ServerMode] =
     args match
       case Nil                   => Right(ServerMode.Serve)

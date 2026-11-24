@@ -24,11 +24,13 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The event links' controllers over the in-memory services and a fake library: a source is confirmed only from a
   * passage of its text naming the event — the attestation carries its quote and offsets — refused with why when none
   * does, rejected on request; an event's card lists the proposals still open.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventLinksControllersSuite extends munit.FunSuite:
   private val texts = Map(
     Citekey("zzln2020_names") -> "The Siege of Zzaria lasted long.",
@@ -37,9 +39,11 @@ class EventLinksControllersSuite extends munit.FunSuite:
 
   private val sources = new Passage.Source:
     def canonical(citekey: Citekey): Option[Citekey] = Option.when(texts.contains(citekey))(citekey)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def naming(name: Title, limit: PageSize): List[Citekey] = texts.collect {
       case (ck, t) if t.contains(name.value) => ck
     }.toList
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reader(citekey: Citekey): PassageReader = (query, _, _, _, _, _) =>
       val text = texts.getOrElse(citekey, "")
       val at = text.indexOf("Siege of Zzaria")
@@ -51,6 +55,7 @@ class EventLinksControllersSuite extends munit.FunSuite:
           .toList
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def controllers() =
     val state = AtomicReference(CatalogueState.empty)
     val events = EventService.InMemory(state)

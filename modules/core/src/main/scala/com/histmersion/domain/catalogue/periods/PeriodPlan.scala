@@ -19,11 +19,13 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats named periods of this collection's own: one id added on both sides is one period when its
   * span and label agree, else a question; one under another id here is one when its label and span are (the database
   * compared them: `periodMatches`); what points at a matched one by id points at ours.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
   import PeriodPlan.*
 
@@ -36,15 +38,18 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
 
   /** The same period: this collection's is kept. */
   private val SamePeriod: PlanMerge = new PlanMerge:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit =
       folds.fold(f, o, Bundle.Kind.Period)
       periodLine(o) = _ => localPeriod(o)
       folds.count(_.modify(_.periodsMerged).using(n => MergeTally.PeriodsMerged(n.value + 1)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoText =
       PlanMerge.InfoText(
         s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept"
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
     val periodIdMap: Map[Bundle.Period.ParentId, Bundle.Period.ParentId] =
       in.foreign.periods
@@ -57,6 +62,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
         .toMap
     repoint(es, periodIdMap)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def addedOnBoth(q: PlanQuestions): Unit =
     val localPeriodById = in.local.periods.map(p => p.id -> p).toMap
     q.localized.periods.filter(p => q.writesInitially(p.uid)).sortBy(_.id.value).foreach { p =>
@@ -131,6 +137,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
     }
 
   // a named period added on both sides under one id: ours stays, or theirs wins
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def decided(i: MergeIssue, folds: PlanFolds): Unit =
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
       case (MergeIssue.Kind.NamedPeriodDiffers, Bundle.Kind.Period, Some(d), Some(f), Some(o)) =>
@@ -154,6 +161,7 @@ object PeriodPlan:
   /** Periods point at their parents by id: a bundle period matched to one here under another id is pointed at under
     * that id. Pure.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   def repoint(es: BundleEntities, periods: Map[Bundle.Period.ParentId, Bundle.Period.ParentId]): BundleEntities =
     if periods.isEmpty then es
     else
@@ -161,6 +169,7 @@ object PeriodPlan:
         .setTo(es.periods.map(p => p.parentId.flatMap(periods.get).fold(p)(x => p.copy(parentId = Some(x)))))
 
   /** Two records of one period id that say the same: the same span and label. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def samePeriod(
       l: Bundle.Period,
       r: Bundle.Period

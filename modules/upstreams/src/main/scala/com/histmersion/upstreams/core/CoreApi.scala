@@ -16,13 +16,17 @@ import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.plugin.Plugin
 import com.histmersion.upstreams.PageSize
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** CORE's `search/works` with a key, through the server's CORE budget (`quota`) — the one way Histmersion calls CORE.
   * Asked once, never retried ([[Plugin.Http.fetch]]): the budget decides when CORE is asked again.
   */
+@atBoundary(BoundaryKind.Http, "calls CORE's works search and returns its JSON")
 final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota):
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchWorks(
       key: CoreApi.SearchWorksKey,
       query: CoreApi.SearchWorksQuery,

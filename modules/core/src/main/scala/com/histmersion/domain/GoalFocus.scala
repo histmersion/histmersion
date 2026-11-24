@@ -10,6 +10,8 @@ import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research goals are
   * ACTIVE for model work — at most `max` at a time — which wait and why, which of their items are held, and in which
@@ -30,6 +32,8 @@ import com.histmersion.domain.research.Slug
   * review or compile (taking the slot of one still gathering) moves it back to the queue. A parent with unfinished
   * sub-goals takes a slot only for its plan; its own articles wait for its sub-goals.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationGoals)
 object GoalFocus:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
@@ -40,6 +44,7 @@ object GoalFocus:
   type WaitCode = WaitCode.T
   object WaitCode extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def counted(n: Int, singular: String): String =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular)).value
 
@@ -56,14 +61,19 @@ object GoalFocus:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Stage] = values.find(_.wire == Wire(s.value.trim.toLowerCase))
 
   /** Whether an item kind's pipeline calls a model (the currency check and the ingest backlog do not: they run for
     * every goal whatever the focus).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def usesModel(kind: ManagerItem.Kind): Boolean = kind.value != CurrencyCheck && kind.value != OaIngest
 
   /** Reviewed or done: the focus has nothing more to do for it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finished(status: Goal.Status.Wire): Boolean =
     status.value == Goal.Status.Reviewed || status.value == Goal.Status.Done
 
@@ -83,9 +93,11 @@ object GoalFocus:
       approval: Option[Work.Approval] = None,
       approvalByPerson: Work.ApprovalByPerson = Work.ApprovalByPerson(false)
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def waitsForPerson: Boolean = approval.isDefined && approvalByPerson.value
 
     /** It can still use a model without a person: not waiting for a person's approval, not held by one. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def runnable: Boolean = !waitsForPerson && !personHeld.value
 
   object Work:
@@ -99,10 +111,12 @@ object GoalFocus:
     type FocusHeld = FocusHeld.T
     object FocusHeld extends Newtype[Boolean, Pure]
     type PersonHeld = PersonHeld.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object PersonHeld extends Newtype[Boolean, Pure]
     type Approval = Approval.T
     object Approval extends Newtype[Long, Pure]
     type ApprovalByPerson = ApprovalByPerson.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ApprovalByPerson extends Newtype[Boolean, Pure]
 
   /** A goal as the focus sees it. `articles` = its linked articles that exist, `unreviewed` = those not passed their
@@ -110,6 +124,7 @@ object GoalFocus:
     * the outcome of its last stopped or failed item; `pinned`/`priority` = a person's; `active`/`since` = what the
     * focus recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Facts(
       slug: Goal.Slug,
       parent: Option[Goal.Slug] = None,
@@ -214,6 +229,7 @@ object GoalFocus:
   ):
     lazy val activeSet: Set[Goal.Slug] = active.map(_.slug).toSet
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def unfinishedKids(f: Facts, kids: Map[Goal.Slug, List[Facts]]): List[Facts] =
     kids.getOrElse(f.slug, Nil).filterNot(k => finished(k.status))
 
@@ -221,6 +237,7 @@ object GoalFocus:
     * focus recorded (the counts left empty), each open item with the goals it belongs to, and the per-goal counts.
     * Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
       goals: List[Facts],
       work: List[(List[Goal.Slug], Work)],
@@ -250,6 +267,7 @@ object GoalFocus:
   /** What an active goal is doing or waiting for, in a line: its runs in flight, the approvals it waits for (and who
     * decides them), its next item.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doing(work: List[Work]): Option[Description] =
     def name(w: Work) = s"${w.kind} ${w.target}".trim
     val running = work.filter(w => w.status == ItemStatus.Active.wire && w.approval.isEmpty)
@@ -275,6 +293,8 @@ object GoalFocus:
     Option.when(parts.nonEmpty)(Description(parts.mkString("; ")))
 
   /** The stage the facts put a goal at. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stage(f: Facts, minSources: Settings.MinSources): Stage =
     if f.unreviewed.value > 0 then Stage.Reviewing
     else if f.compileOpen.value > 0 then Stage.Compiling
@@ -282,6 +302,8 @@ object GoalFocus:
     else Stage.Gathering
 
   /** The stage in words, with the numbers behind it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stageWhy(f: Facts, st: Stage, minSources: Settings.MinSources): Rationale = st match
     case Stage.Reviewing =>
       Rationale(s"${f.unreviewed} of ${counted(f.articles.value, "article")} still to pass review")
@@ -298,6 +320,8 @@ object GoalFocus:
     * all wait for a person (an approval only a person decides, or a person's hold), or that has none left (stopped:
     * stuck; else idle until its cron or new sources), cannot use a slot.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fit(f: Facts, kids: Map[Goal.Slug, List[Facts]], s: Settings): Fit =
     if finished(f.status) then Fit.Finished
     else
@@ -346,12 +370,15 @@ object GoalFocus:
   /** The open items `w` waits for before it may run ([[ManagerPolicy.waitsFor]]): a proposal waits for its goal's plan,
     * an article's review for the article's filter.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blockers(w: Work, all: List[Work]): List[Work] = w.kind.value match
     case ProposeArticles => all.filter(_.kind.value == PlanGoalItem)
     case ArticleReview   => all.filter(p => p.kind.value == InferFilter && p.target == w.target)
     case _               => Nil
 
   /** The root of a goal's tree (a cycle or a missing parent stops the walk). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def root(slug: Goal.Slug, parentOf: Goal.Slug => Option[Goal.Slug]): Goal.Slug =
     @annotation.tailrec
     def go(s: Goal.Slug, seen: Set[Goal.Slug]): Goal.Slug = parentOf(s) match
@@ -362,6 +389,7 @@ object GoalFocus:
   /** How near `f` is to the goals already chosen: 0 = a sibling (or a sub-goal) of one, 1 = in the same tree, 2 =
     * elsewhere.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def kin(f: Facts, chosen: List[Facts], rootOf: Goal.Slug => Goal.Slug): (Int, Option[Goal.Slug]) =
     chosen.find(c => (c.parent.isDefined && c.parent == f.parent) || f.parent.contains(c.slug)) match
       case Some(c) => (0, Some(c.slug))
@@ -372,9 +400,13 @@ object GoalFocus:
           case None    => (2, None)
 
   private type Key = (Int, Int, Int, Int, String, String)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(f: Facts, st: Stage, k: Int): Key =
     (st.rank.value, k, -f.priority.value, -f.sources.value, f.createdAt.value, f.slug.value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Settings.MinSources): Rationale =
     val near = k match
       case (0, Some(s)) if f.parent.contains(s) => List(s"a sub-goal of $s (active)")
@@ -393,6 +425,7 @@ object GoalFocus:
     * review or compile takes the slot of an active goal still gathering sources. Deterministic: the same facts give the
     * same plan.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def select(goals: List[Facts], s: Settings): Plan =
     val bySlug = goals.map(g => g.slug -> g).toMap
     val kids = goals.filter(_.parent.isDefined).groupBy(_.parent.get)
@@ -531,6 +564,7 @@ object GoalFocus:
     * active (or finished, or only library work is left, or a person asked for it) is released. An item of several goals
     * runs when one of them lets it. Items in flight are never touched.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def holds(items: List[Item], plan: Plan, goals: List[Facts]): Holds =
     val bySlug = goals.map(g => g.slug -> g).toMap
     val openKids = goals.filter(g => g.parent.isDefined && !finished(g.status)).groupBy(_.parent.get)
@@ -568,6 +602,7 @@ object GoalFocus:
     * items to one of any other, counting on from the last starts (`recent`, newest first: true = an active goal's). The
     * order inside each class is kept. `ratio` ≤ 0: the active goals' first, the others only after them.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fairOrder[A](cs: List[A], focus: A => Boolean, recent: List[Recent], ratio: Ratio): List[A] =
     val (fs, os) = cs.partition(focus)
     if ratio.value <= 0 || fs.isEmpty || os.isEmpty then fs ++ os
@@ -584,5 +619,6 @@ object GoalFocus:
   /** Days until a goal's open items are done at its pace of the last week (None: nothing open or nothing done to
     * measure by).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def etaDays(open: AutopilotPolicy.OpenCount, doneLast7: AutopilotPolicy.DoneLast7): Option[AutopilotPolicy.Days] =
     AutopilotPolicy.etaDays(open, doneLast7)

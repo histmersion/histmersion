@@ -15,16 +15,20 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The About window's "Map regions" panel: pick a named region or type a box, see what it would download zoom by zoom
   * (a dry run of the fetch job), download it and follow the job, and remove what was downloaded. Over the base map's
   * REST: `GET /api/basemap`, `POST /api/basemap/fetch`, `GET /api/jobs/{id}`, `DELETE /api/basemap`.
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object MapRegionsView:
   import MapRegions.*
 
   private var jobPollMs = 1000 // set from /api/config before any window opens
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def configure(ui: UiConfig): Unit = jobPollMs = math.max(200, ui.jobPollMs.value)
 
   private val status = Var(Option.empty[Basemap.Status])
@@ -42,6 +46,8 @@ object MapRegionsView:
   /** The window is open (no polling into a closed one); mutable like the About window's own. */
   private var mounted = false
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(): Unit =
     ApiClient
       .basemap()
@@ -55,17 +61,25 @@ object MapRegionsView:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def namedOf(id: RegionChoice.Id): Option[Basemap.Focus.Name] =
     status.now().flatMap(_.regions.find(_.name.value == id.value)).map(_.name)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def current(dryRun: Basemap.FetchQuery.DryRun): Either[Problem, Basemap.FetchQuery] =
     request(MapArea.Bbox(box.now().value), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def choose(id: RegionChoice.Id): Unit =
     pick.set(id)
     status.now().toList.flatMap(choices).find(_.id == id).flatMap(_.bbox).foreach(box.set)
     checked.set(None)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def start(dryRun: Basemap.FetchQuery.DryRun): Unit =
     current(dryRun) match
       case Left(m)  => error.set(Some(m.sentence))
@@ -77,6 +91,9 @@ object MapRegionsView:
   private def follow(started: Future[JobInfo], dry: Option[Basemap.FetchQuery]): Unit =
     started.onComplete(_.fold(e => error.set(Some(e.getMessage)), j => { job.set(Some(j)); poll(j.id, dry) }))
 
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def poll(id: JobInfo.Id, dry: Option[Basemap.FetchQuery]): Unit =
     val _ = scala.scalajs.js.timers.setTimeout(jobPollMs.toDouble) {
       if mounted then
@@ -97,6 +114,8 @@ object MapRegionsView:
           )
     }
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def remove(q: Basemap.RemoveQuery): Unit =
     ApiClient
       .basemapRemove(q)
@@ -111,6 +130,7 @@ object MapRegionsView:
 
   private val busy: Signal[Boolean] = job.signal.map(_.exists(!_.isTerminal))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def panel: HtmlElement =
     div(
       cls := "about-section map-regions",
@@ -208,6 +228,8 @@ object MapRegionsView:
       child.maybe <-- job.signal.map(_.map(jobView))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobView(j: JobInfo): HtmlElement =
     val dry = j.detail.flatMap(JobDetail.Purpose.of).exists(_.value.startsWith("dry run"))
     val state = if j.succeeded then ServiceState.Ok else if j.isTerminal then ServiceState.Down else ServiceState.Busy
@@ -239,6 +261,8 @@ object MapRegionsView:
     )
 
   /** What is downloaded now: the map's region and each detailed-relief region, each with its remove. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def downloaded(s: Basemap.Status): HtmlElement =
     val map = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present.value)
     val focus = s.layers.find(_.layer == Basemap.Layer.Terrain.wire).toList.flatMap(_.focus)

@@ -1,9 +1,13 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object EventLinksMarkdown:
   private def km(d: Double): String = s"${math.round(d)} km"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def context(d: EventCard): String =
     val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == EventGeo.Tier(EventTier.Catalogue) then
                                                " — known from a catalogue only: a research lead, not evidence"
@@ -48,10 +52,14 @@ object EventLinksMarkdown:
         .mkString("\n")
     (tier + names + cat + srcs + arts + near + cands + leads)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def line(c: EventLinkCandidate): String =
     (s"- [[${c.citekey}]]${c.title.fold("")(t => s" — $t")} · score ${c.score} · ${c.status}" +
       (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(l: EventLinkList): String =
     if l.candidates.isEmpty then (s"_No source in the corpus is near `${l.eventId}` in time and space or names it._")
     else
@@ -60,6 +68,8 @@ object EventLinksMarkdown:
         l.candidates.map(line)).mkString("\n")
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def result(r: EventLinksResult): String =
     (List(
       Option.when(r.attested.nonEmpty)(

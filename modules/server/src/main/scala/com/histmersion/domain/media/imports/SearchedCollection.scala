@@ -10,6 +10,7 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.media.MediaRole
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An open-access collection (#1446): how to search it for a place, read its records, and tie one to a place
   * ([[MediaMatch]]). The import around it is [[CollectionImport]]; a plugin's is a [[PluginCollection]].
@@ -60,6 +61,7 @@ object SearchedCollection:
   type LicenceKey = LicenceKey.T
   object LicenceKey extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def infoId(p: PlaceFacts): MediaMatch.PlaceInfo.Id = MediaMatch.PlaceInfo.Id(p.id.value)
 
   /** Pure: the equivalents of a place among the places a name names — itself, one with its Wikidata item, one within
@@ -87,12 +89,14 @@ object SearchedCollection:
       byId.getOrElse(id, Nil).map(p => if equivalent(target, p, sameSiteKm) then infoId(target) else infoId(p)).toSet ++
         (if own(id) then Set(infoId(target)) else Set.empty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def equivalent(a: PlaceFacts, b: PlaceFacts, km: MediaConfig.SameSiteKm): Boolean =
     a.id == b.id || a.qid.exists(q => b.qid.contains(q)) ||
       (for la <- a.lat; oa <- a.lon; lb <- b.lat; ob <- b.lon
       yield distanceKm(la, oa, lb, ob).value <= km.value).getOrElse(false)
 
   /** Pure: great-circle distance in km. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def distanceKm(lat1: Latitude, lon1: Longitude, lat2: Latitude, lon2: Longitude): DistanceKm =
     val r = 6371.0
     val (p1, p2) = (math.toRadians(lat1.value), math.toRadians(lat2.value))
@@ -102,5 +106,6 @@ object SearchedCollection:
     DistanceKm(2 * r * math.asin(math.sqrt(a.min(1.0))))
 
   /** Pure: a record's licence key for the counts — its SPDX id, or why it has none. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def licenceKey(rec: MediaRecord): LicenceKey =
     rec.rights.fold(_ => LicenceKey("not open access"), r => LicenceKey(r.licence.id.value))

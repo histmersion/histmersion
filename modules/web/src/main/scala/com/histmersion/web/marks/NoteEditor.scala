@@ -25,14 +25,17 @@ object NoteEditor:
   def isOpen: Boolean = session.now().isDefined
 
   /** A new note on `target`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def write(target: Target, title: Title): Unit = open(Session(target, title, None, focused))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def edit(n: Note): Unit = open(Session(n.target, n.title, Some(n), focused))
 
   private def focused: Option[dom.HTMLElement] = Option(dom.document.activeElement).collect { case e: dom.HTMLElement =>
     e
   }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def open(s: Session): Unit =
     if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
     else session.set(Some(s))
@@ -45,6 +48,9 @@ object NoteEditor:
   lazy val element: HtmlElement =
     div(cls := "note-editor-root", child.maybe <-- session.signal.map(_.map(dialog)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def dialog(s: Session): HtmlElement =
     val draftKey = NoteDrafts.key(s.target, s.note.map(_.id))
     val restored = NoteDrafts.get(draftKey).filter(d => !s.note.exists(_.text == d))

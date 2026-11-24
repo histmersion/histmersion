@@ -29,6 +29,7 @@ import com.histmersion.pluginhost.Registries
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every `histmersion calibre …` command, run end to end over a fixture library: a server on port 0 over a database of
   * this suite's own, seeded with sources, and the CLI as a separate process (its stdout, stderr and exit code are what
@@ -37,6 +38,8 @@ import com.histmersion.util.database.TestCreators.given
   * compared byte for byte (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it); only what differs between runs is normalised:
   * the scratch directories, the server's port, job ids and timestamps.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class CalibreCommandsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -44,6 +47,7 @@ class CalibreCommandsSuite extends DbSuite:
 
   private val Transcript = Path.of("modules/server/src/test/resources/calibre/commands.txt")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val base =
     val b = AppConfig.load()
     b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -51,6 +55,7 @@ class CalibreCommandsSuite extends DbSuite:
 
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(ck: String, title: String, authors: List[String], year: Option[Int]) =
     Source(
       Citekey(ck),
@@ -72,6 +77,7 @@ class CalibreCommandsSuite extends DbSuite:
     )
 
   /** The sources the commands act on; `stored` ones get an original in the spool. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(ds: javax.sql.DataSource, spool: Path, chunk: Limits.ChunkChars): Unit =
     def put(s: Source, stored: Boolean = false): Unit =
       SourceFixtures.upsert(ds, s, chunk)
@@ -172,13 +178,16 @@ class CalibreCommandsSuite extends DbSuite:
     * the server between two commands.
     */
   private enum Step:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Run(args: List[String], originals: Boolean = false)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Lock(locked: Boolean)
     case Patch(citekey: String, json: String)
 
   import Step.*
   private def run(args: String*): Step = Run(args.toList)
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val Scenario: List[Step] = List(
     run("search", "Bronze"),
     run("search", "Bronze", "--json"),
@@ -429,6 +438,7 @@ object CalibreCommandsSuite:
     * programs that do not exist — the server runs the command, so the CLI never starts one, and the transcript is the
     * proof.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def tools(lib: CalibreFixture, hostSide: Boolean): Map[String, String] =
     if hostSide then
       Map(

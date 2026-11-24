@@ -8,6 +8,8 @@ import com.histmersion.config.OpencodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `opencode` provider: `opencode run --agent <role> --format json -m <provider/model>` on the GENERATED config
   * (`XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` pointed at it, the Claude Code folders and autoupdate off, an empty
@@ -15,8 +17,12 @@ import com.histmersion.util.database.WritePermit
   * travels in the message and the final text is parsed as JSON (the validators send a miss back, as for every
   * provider).
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.AutomationAgents)
 final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliRuntime) extends LlmClient:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val agent = call.agent.getOrElse(throw java.io.IOException("opencode: a step must run as an agent definition"))
     val (xdg, conf) = (for x <- rt.trees.opencodeXdg; c <- rt.trees.opencodeConfig yield (x, c))

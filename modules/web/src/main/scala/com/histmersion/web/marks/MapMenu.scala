@@ -18,6 +18,7 @@ import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's own actions, at a point (a right click there) or at its centre (its "⋯" button, or the menu key while the
   * map has the focus): bookmark the place, leave a note there, lock the map, start the map here, bookmark this view of
@@ -27,6 +28,8 @@ object MapMenu:
 
   val locked: Var[MapSurface.Locked] = Var(MapSurface.Locked(false))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setLocked(on: MapSurface.Locked, surface: MapSurface): Unit =
     locked.set(on)
     surface.setLocked(on)
@@ -34,6 +37,8 @@ object MapMenu:
     else Flash.Text("The map moves again."))
 
   /** A point on the map, as a target. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def point(at: LatLon, zoom: MapSurface.Zoom, span: Option[(Year, Year)]): Target =
     Target(
       ItemKind.Point,
@@ -45,13 +50,18 @@ object MapMenu:
     )
 
   /** A longitude on the world's first copy (the map draws copies side by side). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wrap(lon: LatLon.Lon): LatLon.Lon = LatLon.Lon(((lon.value + 180) % 360 + 360) % 360 - 180)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spanNow: Option[(Year, Year)] =
     UiState.from.now().zip(UiState.to.now()).map((a, b) => (Year(a), Year(b)))
 
   private def writing(act: => Unit): Unit = if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entries(surface: MapSurface, at: LatLon): List[ContextMenu.Entry] =
     val here = point(at, surface.zoom, spanNow)
     List(
@@ -88,6 +98,8 @@ object MapMenu:
     )
 
   /** `ui.map-start` in the settings file: always open at this point, at this zoom. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def startHere(surface: MapSurface, at: LatLon): Unit =
     val c = MapStartConfig(
       MapStartMode.Place.wire,
@@ -112,6 +124,9 @@ object MapMenu:
       )
 
   /** The right click, the menu key and the "⋯" button on `surface`; the lock's notice over it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def install(surface: MapSurface): Unit =
     val box = surface.container
     box.addEventListener(

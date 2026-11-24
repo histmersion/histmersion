@@ -29,12 +29,15 @@ import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against
   * this collection), the resolution file is read here and sent as JSON. Left is always this collection, right the
   * bundle.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion merge` arguments")
 object MergeCmd:
   /** `--resolutions`, `--resolve ID=decision`…, `--editions`, as given. */
 
@@ -53,6 +56,9 @@ object MergeCmd:
     object Editions extends Newtype[String, Pure]
 
   /** The file, then the flags over it. Every bad line is reported at once. Reads the file; else pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def resolutions(f: ResolutionFlags): Either[Problems, MergeResolutions] =
     val fromFile: Either[List[Problem], MergeResolutions] = f.file match
       case None    => Right(MergeResolutions())
@@ -88,6 +94,9 @@ object MergeCmd:
   /** The merged text of every `file:<path>` decision, read here and sent along: the server cannot read this machine's
     * files. A path that cannot be read is an error.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def withTexts(r: MergeResolutions): Either[Problems, MergeResolutions] =
     val read = r.resolve.map { x =>
       MergeDecision
@@ -114,6 +123,8 @@ object MergeCmd:
     else Right(r.modify(_.resolve).setTo(read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def upload(c: Client, f: java.io.File): Either[Cli.Error, Bundle.Upload] =
     c.uploadBundle(f).flatMap { u =>
       if u.manifest.isEmpty then
@@ -131,6 +142,9 @@ object MergeCmd:
   private val PollMs = 2000
 
   /** Follow an apply job to its end: the apply takes a backup first, which can outlast the request. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
   def follow(c: Client, j: MergeApplyJob)(using console: Console): Either[Cli.Error, MergeApplyResult] =
     j.state match
@@ -167,6 +181,7 @@ object MergeCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Plan(
         file: String,
         flags: ResolutionFlags,
@@ -174,6 +189,7 @@ object MergeCmd:
         all: Boolean,
         json: Cli.JsonOutput
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Apply(file: String, flags: ResolutionFlags, expected: Option[String], yes: Boolean)
     case ListCmd(limit: Option[Int], json: Cli.JsonOutput)
     case Show(id: String, json: Cli.JsonOutput)
@@ -183,6 +199,9 @@ object MergeCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Plan(file, flags, template, all, json) =>

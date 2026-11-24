@@ -8,6 +8,7 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{AiHttp, Plugin, WorkKey}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with a
   * refused `Left`, "no scripted answer") and keeps every request, to assert on what the provider sent.
@@ -19,6 +20,7 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
 
   def requests: List[AiHttpRequest] = synchronized(seen.result())
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def post(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
@@ -34,6 +36,7 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(
       url: Plugin.Http.Url,
       headers: Map[Header.Name, Header.Value],
@@ -48,6 +51,7 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def next(r: AiHttpRequest): Either[Problem, AiHttp.Response] = synchronized {
     seen += r
     if left.isEmpty then Left(Problem.NotFound.Entity(Problem.TypeName.named[StubAnswer], Problem.Raw(s"${r.url}")))
@@ -56,6 +60,7 @@ final class ScriptedAiHttp(answers: Either[Problem, AiHttp.Response]*) extends A
 
 object ScriptedAiHttp:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def masked(
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =

@@ -9,10 +9,15 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources a run of covers and illustrations looks at (#1446): those with figures and no illustration yet, those
   * with an ISBN or OCLC number and no cover yet. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the cover tables and their row codecs")
 private[covers] object CoverRepo:
   type Only = Only.T
   object Only extends Newtype[String, Pure]
@@ -23,6 +28,7 @@ private[covers] object CoverRepo:
 
   /** Sources with figures, for illustrations: those without one yet (all with `refresh`), or `only`. */
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def illustrationCandidates(only: Option[Only], refresh: Refresh, limit: Limit)(using DbCon): List[String] =
     sql"""SELECT s.citekey FROM sources s
           WHERE ($only::text IS NULL OR s.citekey = $only::text)
@@ -34,6 +40,7 @@ private[covers] object CoverRepo:
   /** Sources with an ISBN or OCLC number and no cover (all with `refresh`), not asked of Open Library yet (unless
     * `refresh`), or `only`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def coverCandidates(only: Option[Only], refresh: Refresh, limit: Limit)(using DbCon): List[CoverKeys] =
     sql"""SELECT s.citekey,
                  (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = s.uid AND i.scheme = 'isbn'),

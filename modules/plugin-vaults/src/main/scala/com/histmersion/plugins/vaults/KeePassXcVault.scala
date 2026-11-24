@@ -13,6 +13,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import java.nio.file.Path
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Processes
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class KeePassXcVault(
     val name: Secret.Vault.Name,
@@ -32,8 +33,10 @@ final class KeePassXcVault(
   /** The YubiKey that opened the database last, tried first next time (a resolve may run on any thread). */
   private val lastOpened = new java.util.concurrent.atomic.AtomicReference[Option[YubiKey.Slot]](None)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def file = Path.of(db.value).getFileName.toString
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(ref: Secret.Vault.ResolveRef): Either[Problems, Secret.Resolved] =
     request(ref).flatMap { (entry, attr) =>
       if yubikeys.nonEmpty then
@@ -70,6 +73,7 @@ final class KeePassXcVault(
     else single ++ session(batched)
 
   /** `<entry>#<attribute>` as two arguments that cannot read as options. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def request(
       ref: Secret.Vault.ResolveRef
   ): Either[Problem, (KeePassXcSession.Entry, Vaults.Field)] =
@@ -81,12 +85,15 @@ final class KeePassXcVault(
         .plain(Vaults.Operation("the attribute"), Subprocess.Text(attr.value))
     yield (entry, attr)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stdin = password.map(p => Processes.RunStdin(p.value + "\n"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unlocking(yk: Option[YubiKey.Slot]): List[String] =
     keyFile.toList.flatMap(k => List("-k", k.value)) ++ yk.toList.flatMap(y => List("-y", y.shown.value)) ++
       (if password.isEmpty then List("--no-password") else Nil)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def argv(
       attr: Vaults.Field,
       entry: KeePassXcSession.Entry,
@@ -102,6 +109,7 @@ final class KeePassXcVault(
     * `Left` = it could not start or did not answer within `wait` (killed). The password line is written alone, before
     * any request: the unlock reads stdin ahead of the prompt.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def open(
       yk: Option[YubiKey.Slot],
       wait: FiniteDuration
@@ -134,6 +142,7 @@ final class KeePassXcVault(
             Left(YubiKey.NoAnswer.TimedOut(wait))
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def session(
       batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
   ): Map[Secret.Vault.ResolveRef, Either[Problems, Secret.Resolved]] =
@@ -170,6 +179,7 @@ final class KeePassXcVault(
 
   /** One request after another, each answered before the next is sent; a session that stops answering fails the rest.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readAll(
       o: Opened,
       batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
@@ -225,6 +235,7 @@ final class KeePassXcVault(
     read(batched, Map.empty, KeePassXcSession.Segment.From(s.out.value.length), None)
 
   /** The connected serials, when `ykman` can tell; `None` = unknown (then every entry is tried). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def connected(): Option[Set[YubiKey.Slot.Serial]] =
     ykman.flatMap { y =>
       Subprocess.run(List(y.value, "list", "--serials").map(a => Processes.RunArgv(a)), Map.empty, None, timeout) match
@@ -244,6 +255,7 @@ final class KeePassXcVault(
     * that failed is logged; the answer is every key's failure, in order (or that none of them is connected). `purpose`
     * says what the log line asks the touch for.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def withYubiKey[A](purpose: String, entry: KeePassXcSession.Entry)(
       attempt: YubiKey.Slot => Either[YubiKey.NoAnswer, Either[Subprocess.Result, A]]
   ): Either[Problems, A] =
@@ -297,6 +309,7 @@ final class KeePassXcVault(
                   case YubiKey.Failure.Stop(why) => Left(and(key(yk, why, Some(r.err))))
       go(planned, Vector.empty)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def classify(entry: KeePassXcSession.Entry)(err: String): Option[Problem] =
     if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||
       err.contains("enter password")

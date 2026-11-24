@@ -17,14 +17,17 @@ import com.histmersion.api.catalogue.CatalogRecord.Wikidata
 import com.histmersion.api.catalogue.SiteTypes.{Geonames, Pleiades, SiteType}
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `SiteTypesSql.expr` — the map tiles' site type in SQL — answers what [[SiteTypes.of]] answers, for every entry of
   * its tables and the cases between them (HISTMERSION_TEST_DB_URL; skipped otherwise).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SiteTypesSqlSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val cfg = AppConfig.load()
     testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -33,6 +36,7 @@ class SiteTypesSqlSuite extends DbSuite:
   private val polity = Place.Kind.Wire("polity")
   private val feature = Place.Kind.Wire("feature")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def q(s: String) = Wikidata.Class(s)
 
   private def sqlType(
@@ -55,6 +59,7 @@ class SiteTypesSqlSuite extends DbSuite:
       sql"SELECT ${SiteTypesSql.expr(sql"a")} FROM (SELECT $kind::text AS kind, nullif(${stored.getOrElse("")}, '')::text AS site_type, $props::jsonb AS properties) a"
     connect(ds)(q.query[Option[String]].run().head)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def same(
       kind: Place.Kind.Wire,
       stored: Option[SiteType.Id] = None,

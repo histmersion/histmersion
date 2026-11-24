@@ -5,6 +5,7 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Offset
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A small OFFSET pager: "Items 26–50 of 112" with previous / next — for a list ordered by something other than time
   * (the manager window's items, most urgent first), where [[ListPaging]]'s newest-first keyset cursor does not apply.
@@ -18,18 +19,26 @@ object Pager:
 
   /** The line a page shows: `a–b of n`, or `none` for an empty one. Pure. */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def range(offset: Offset, shown: Paging.Shown, total: Paging.Page.Total): RangeText =
     if total.value <= 0 || shown.value <= 0 then RangeText("none")
     else RangeText(s"${offset.value + 1}–${offset.value + shown.value} of ${total.value}")
 
   /** The offset of the previous page (never below 0), and of the next one (None past the end). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def previous(offset: Offset, limit: Paging.Limit): Offset = Offset(
     math.max(0, offset.value - math.max(1, limit.value))
   )
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def next(offset: Offset, limit: Paging.Limit, total: Paging.Page.Total): Option[Offset] =
     Option(Offset(offset.value + math.max(1, limit.value))).filter(_.value < total.value)
 
   /** The controls: `offset` moves; `limit` and `total` come from the last page read. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(
       label: Label,
       offset: Var[Offset],

@@ -14,11 +14,14 @@ import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.DeepTime
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the media imports ask about and what they recorded asking (#1446, V082): the places on the map and the events
   * not asked yet by a provider, the facts a collection's match reads of a place, and `media_checks`. Every method runs
   * on the connection it is given.
   */
+@atBoundary(BoundaryKind.Sql, "reads and writes the import tables and their row codecs")
 private[imports] object ImportRepo:
   type Category = Category.T
   object Category extends Newtype[String, Pure]
@@ -43,6 +46,8 @@ private[imports] object ImportRepo:
   private val QidRe = "^Q[1-9][0-9]*$"
 
   /** One place's Wikidata item: an exact link first, else any; a `wikidata_q…` id names its own. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def placeQid(id: domain.catalogue.Place.Id)(using DbCon): Option[Target.Qid] =
     sql"""SELECT external_id FROM place_links
           WHERE place_id = $id AND scheme = 'wikidata' AND external_id ~ $QidRe
@@ -58,6 +63,10 @@ private[imports] object ImportRepo:
     * this provider (neither that place nor that item), or — `since` set, a refresh — not since then; `everyOne` (a
     * refresh with no start) leaves none out.
     */
+  @tolerated(LintRule.TotalOrder, "LIMIT 1 over place_links of one place and scheme: external_id completes the key")
+  @tolerated(LintRule.TotalOrder, "used holds one row per place: DISTINCT ON (qid) settled by place_id")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def placeCandidates(
       provider: MediaItemRow.Provider,
       since: Option[Since],
@@ -89,6 +98,8 @@ private[imports] object ImportRepo:
   private def checkedSince(alias: Frag, since: Option[Since]): Frag =
     since.fold(sql"")(ms => sql"AND $alias.checked_at >= to_timestamp(${ms.literal}::double precision / 1000)")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def eventCandidates(
       provider: MediaItemRow.Provider,
       since: Option[Since],
@@ -105,6 +116,10 @@ private[imports] object ImportRepo:
     * been asked about it yet, or, with `refresh`, not since `since` (a job's start: a refresh job goes through every
     * one once).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def targets(
       provider: MediaItemRow.Provider,
       place: Option[domain.catalogue.Place.Id],
@@ -165,6 +180,7 @@ private[imports] object ImportRepo:
   /** How many places (one per Wikidata item) and events this provider has still to be asked about — since `since` for a
     * refresh job.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pending(provider: MediaItemRow.Provider, since: Option[Since])(using DbCon): RowCount =
     val e =
       sql"SELECT count(*)::int FROM (${eventCandidates(provider, since)}) x".query[Int].run().head
@@ -177,6 +193,8 @@ private[imports] object ImportRepo:
   /** The places on the map — those holding findings — not asked yet by `check` (by place id: a collection is searched
     * by name, so equivalents with another id are asked on their own).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def mapPlaces(
       check: MediaItemRow.Provider,
       since: Option[Since],
@@ -201,6 +219,10 @@ private[imports] object ImportRepo:
     * event by id, else the ones not asked yet — sites and features first, then by sources citing — as [[targets]] does
     * for Wikidata. A place needs no Wikidata item here (`qid` is empty); an event does.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def collectionTargets(
       check: MediaItemRow.Provider,
       places: Places,
@@ -270,6 +292,9 @@ private[imports] object ImportRepo:
           )
 
   /** How many places (`places`) or events a collection or the depictions import has still to ask. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def collectionPending(check: MediaItemRow.Provider, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly)(
       using DbCon
   ): RowCount =
@@ -277,6 +302,7 @@ private[imports] object ImportRepo:
     else eventCandidates(check, since, everyOne = false)
     RowCount(sql"SELECT count(*)::int FROM ($q) x".query[Int].run().head)
 
+  @tolerated(LintRule.TotalOrder, "LIMIT 1 over place_links of one place and scheme: external_id completes the key")
   def placeFacts(
       ids: List[domain.catalogue.Place.Id]
   )(using DbCon): Map[domain.catalogue.Place.Id, PlaceFacts] =
@@ -369,6 +395,7 @@ private[imports] object ImportRepo:
   /** The places ON THE MAP (holding findings) carrying each gazetteer id — as their own id (`pleiades_697725`) or an
     * exact link.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)])(using
       DbCon
   ): Map[(ExternalIds.Scheme, ExternalIds.ExternalId), List[PlaceFacts]] =
@@ -403,6 +430,7 @@ private[imports] object ImportRepo:
       hits.groupMap(_._1)(_._2).view.mapValues(_.distinct.flatMap(facts.get)).toMap
 
   /** The places ON THE MAP (holding findings) each name key names — by label or an alternative name. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def mapPlacesNamed(keys: List[NameKey])(using DbCon): Map[NameKey, List[PlaceFacts]] =
     val ks = keys.filter(_.value.nonEmpty).distinct
     if ks.isEmpty then Map.empty
@@ -423,6 +451,7 @@ private[imports] object ImportRepo:
   // ── what was asked ───────────────────────────────────────────────────────────────────────────
 
   /** Record a place's Commons category (Wikidata P373) as a link of the place. Returns whether new. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def commonsCategory(placeId: domain.catalogue.Place.Id, category: Category, qid: Target.Qid)(using
       DbCon
   ): Boolean =
@@ -433,6 +462,7 @@ private[imports] object ImportRepo:
   /** Remember that `provider` was asked about a place, event or source (by its Wikidata item `qid`, when it has one),
     * and how many pictures it gave.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def checked(
       provider: MediaItemRow.Provider,
       targetType: Target.TargetType,

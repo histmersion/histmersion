@@ -8,6 +8,8 @@ import com.histmersion.util.problem.{Problem, Problems}
   */
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Registry
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class PmcPlugin extends FetcherPlugin("pmc"):
   type Config = HostAcquire
   def register(c: HostAcquire, ctx: Plugin.Context): Either[Problems, Unit] =

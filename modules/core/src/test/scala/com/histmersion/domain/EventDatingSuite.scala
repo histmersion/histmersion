@@ -35,11 +35,14 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.StoredEvent
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.EventCatalogueRef
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The data-source assessment's P0 fixes, the host's pure half: the precision classes and the dating note; the
   * corrections' reconcile table and the event fields compared; and a merge that does not depend on the order of its
   * inputs. The catalogues' datings and re-reading are their plugins' suites'.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 class EventDatingSuite extends munit.FunSuite:
 
   test("a dating note: the stated year, ± and method as the card shows them"):
@@ -183,6 +186,7 @@ class EventDatingSuite extends munit.FunSuite:
   // ── deterministic merge ────────────────────────────────────────────────────────────────────
 
   private val tol = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       p: CatalogRecord.Provider,
       id: CatalogRecord.ProviderId,
@@ -202,6 +206,7 @@ class EventDatingSuite extends munit.FunSuite:
       Some(lon),
       group = group
     )
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def ev(
       id: Event.Id,
       y0: Year,

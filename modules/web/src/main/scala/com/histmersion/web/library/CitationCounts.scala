@@ -3,6 +3,7 @@ package web.library
 
 import com.histmersion.api.library.{Edge, NeighborRow}
 import com.histmersion.api.research.Article
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the reading pane counts of a source's place in the citation graph: what it cites (as its page's "Cites" lists
   * it), the sources that answer it — challenge, refute, update or supersede it — and the articles that cite it. Pure.
@@ -14,6 +15,7 @@ object CitationCounts:
   /** A disagreement is stored on the critic (`challenges`, `refutes`, `updates` point at this source) and a superseding
     * on the older source (`superseded_by` points from this one to the newer).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def answering(r: NeighborRow): Boolean =
     val kind = Edge.Kind.wireOf(r.kind).value
     (r.direction.value == "in" && Article.Coverage.DisagreementKinds.exists(
@@ -22,6 +24,7 @@ object CitationCounts:
     (r.direction.value == "in" && kind == "supersedes") ||
     (r.direction.value == "out" && kind == "superseded_by")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(rows: List[NeighborRow], citingArticles: Int): CitationCounts =
     CitationCounts(
       cites = rows.count(_.direction.value == "out"),

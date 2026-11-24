@@ -6,6 +6,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The places' SQL other queries embed, over a `places` row by its alias (a fragment: `sql"p"`): what an import brought
   * in, how a place is dated, its time basis and the time rule of a view at a year or over a window, the base layers'
@@ -109,6 +110,7 @@ object PlaceSql:
     * time, nothing is filtered), `modern_on` whether it reaches `modern-from`. [[inTimeSql]] reads it; every
     * time-filtered place query starts with it.
     */
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def timeWindowCte(asOf: Option[DeepTime.SignedYear], modernFrom: PlaceSql.TimeWindowCteModernFrom): Frag =
     windowCte(asOf.map(y => (y, y)), modernFrom)
 
@@ -135,6 +137,7 @@ object PlaceSql:
     * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of a search, the
     * (kind, period) GiSTs of a map layer (V076).
     */
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def inTimeSql(
       alias: Frag,
       asOf: Option[DeepTime.SignedYear],
@@ -148,6 +151,7 @@ object PlaceSql:
     * findings of each undated place through its `finding_places` rows — through the CTE's init-plan it read every
     * finding of the window for each of them (2.5 s of a sites tile over -3000..2000, 2026-10-27).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inWindowSql(
       alias: Frag,
       window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],

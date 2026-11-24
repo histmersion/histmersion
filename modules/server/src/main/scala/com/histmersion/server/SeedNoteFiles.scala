@@ -11,10 +11,15 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.SafePath
 import com.histmersion.util.storage.TextFiles
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The notes of a folder the person names for a seed, read where they are: the frontmatter of each `*.md` (its
   * converted body from `md_path`, confined to `corpus.dir` when that is set) and the figures beside it.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Process, "reads the Markdown notes and figures of a seed folder")
+@movesTo(FeaturePlace.Server)
 final class SeedNoteFiles(dir: Path, confineTo: Option[SafePath.Base])(using TextFiles) extends SeedFolder:
 
   // `Files.list` holds an OS directory handle; on a corpus-sized seed, leaking one per call
@@ -29,12 +34,14 @@ final class SeedNoteFiles(dir: Path, confineTo: Option[SafePath.Base])(using Tex
         .map(SeedFolder.Note(_))
     }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def read(name: SeedFolder.Name): Option[SeedNote] =
     val f = dir.resolve(name.value)
     SourceNote
       .parseFile(f, confineTo)
       .map(s => SeedNote(s, SeedNote.ModifiedMillis(Files.getLastModifiedTime(f).toMillis)))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def figures(name: SeedFolder.Name, citekey: Citekey, maxBytes: SeedFolder.MaxBytes): List[NewFigure] =
     val note = dir.resolve(name.value)
     scala.util
@@ -67,6 +74,7 @@ object SeedNoteFiles:
     * frontmatter uses to resolve `md_path`; the figures sit next to the converted body. Falls back to the
     * `md/<citekey>/figures` convention when the note carries no `md_path`.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def dirFor(notePath: Path, noteText: Figures.NoteText, citekey: Citekey): Option[Path] =
     val root = Option(notePath.getParent)
       .flatMap(a => Option(a.getParent))

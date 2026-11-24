@@ -4,6 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Anthropic Messages API (`anthropic:<model>`) over the host's [[AiHttp]]: one call per turn, keyed by
   * `x-api-key`. Its failures read as they always have (`RuntimeException: Claude API error: …`), whole: the provider
@@ -23,6 +24,7 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
   private def base: Either[Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting("agents.providers.anthropic.base-url"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
     base
       .flatMap(_ =>
@@ -36,6 +38,7 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def turn(request: AiTurn.Request, http: AiHttp): Either[Problem, AiTurn] =
     val schema = request.answerSchemaRendered.orElse(request.answerSchema)
     for
@@ -67,6 +70,7 @@ object AnthropicProvider:
 
   val Version = "2023-06-01"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def headers(key: ProviderSettings.ApiKey): Map[Header.Name, Header.Value] =
     Map(
       Header.Name("x-api-key") -> Header.Value(key.value),
@@ -87,9 +91,11 @@ object AnthropicProvider:
     WithoutStructuredOutputValue("claude-opus-4-20250514")
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def structuredOutput(model: AiTurn.Request.Model): Boolean =
     (!WithoutStructuredOutput(WithoutStructuredOutputValue((model).value)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def noStructuredOutput(model: AiTurn.Request.Model): Problem =
     Problem.Plugin.Said(
       Problem.Plugin.Id("ai-http"),

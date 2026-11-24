@@ -9,6 +9,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class Edge(src: Citekey, dst: Citekey, kind: Edge.Kind)
 
 object Edge:
@@ -43,14 +44,19 @@ object Edge:
       case ReviewOf        => Wire("review_of")
       case Verifies        => Wire("verifies")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: Wire): Option[Kind] = wireMap.get(Wire((s).value.toLowerCase))
 
     /** All wire strings, for validators and legends. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val allWire: List[Wire] = (values.map(wireOf).toList).map(refactorValue => Wire((refactorValue).value))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = Kind.fromWire(Wire((s).value))
 
   final case class Input(dst: Citekey, kind: Kind, src: Option[Citekey] = None)

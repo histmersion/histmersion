@@ -2,6 +2,7 @@ package com.histmersion
 package api.catalogue
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A place as the hierarchy shows it: its id, label, kind, period, and whether it is contested or withdrawn. */
 final case class RegionNode(
@@ -19,6 +20,7 @@ object RegionNode:
   object RootKindsText extends Newtype[String, Pure]
 
   type RootKinds = RootKindsValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RootKindsValue = RootKindsText
   val RootKindsValue: RootKindsText.type = RootKindsText
 
@@ -33,6 +35,7 @@ object RegionNode:
   type Withdrawn = Withdrawn.T
   object Withdrawn extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val RootKinds: Set[RootKinds] = Set(
     RootKindsText(Place.Kind.Region),
     RootKindsText(Place.Kind.Polity),
@@ -42,10 +45,12 @@ object RegionNode:
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
     * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uncertainLabel(label: Label): Boolean =
     val l = (label).value.trim
     (l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rootEligible(n: RegionNode): Boolean =
     RootKinds.contains(RootKindsText((n.kind).value)) && !((n.withdrawn) == Withdrawn(true)) && !((uncertainLabel(
       Label((n.label).value)

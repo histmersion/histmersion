@@ -15,12 +15,14 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.config.CodexConfig
 import com.histmersion.config.AgentsConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Reading the plan pools without spending anything: Claude's `rate_limit_event`, a mod's report, and Codex's
   * `account/rateLimits/read` — the last through a STUB `codex app-server` answering the response captured on 2026-10-05
   * (docs/research-agent-runtimes.md §1.2), which also proves that nothing but initialize / initialized / the read is
   * ever sent (never a reset-credit consume).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlanPoolsSuite extends munit.FunSuite:
 
   /** The read captured on 2026-10-05: the weekly Codex window spent, no 5-hour window on this plan, a second bucket for

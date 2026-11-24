@@ -3,12 +3,15 @@ package config.edit
 
 import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A setting as it may be SHOWN — to a person, a client or an agent: its values as HOCON writes them, and for a
   * credential none of them (neither what the file writes, nor what applies, nor the default), only the rule it is
   * written by (`environment`, `reference`), how it is held (`unset`, `env`, `vault`, `value`, `plain`) and the
   * reference where that may be shown.
   */
+@movesTo(FeaturePlace.UtilSettings)
 final case class SettingShown(
     key: SettingKey,
     section: SettingField.Section,
@@ -34,6 +37,7 @@ object SettingShown:
   type CredentialForm = CredentialForm.T
   object CredentialForm extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(r: SettingReading): SettingShown =
     val f = r.field
     val secret = r.credential.isDefined

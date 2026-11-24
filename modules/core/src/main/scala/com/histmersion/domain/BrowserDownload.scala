@@ -9,11 +9,15 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Not
 import io.github.iltotore.iron.constraint.string.{Blank, Match}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A gold open-access work whose publisher refuses scripts (`acquire.landing.browser-download-hosts`): the acquisition
   * list carries it as a download in the browser, where the person reads it under its licence, and then an ingest of the
   * downloaded file.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryAcquisition)
 final case class BrowserDownload(
     doi: Doi,
     citekey: Citekey,
@@ -25,6 +29,7 @@ final case class BrowserDownload(
 ):
 
   /** The acquisition item's text: it names the DOI as a doi.org link, which is what finds the item again. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text: BrowserDownload.Description =
     BrowserDownload.Description(
       s"${citation.value} https://doi.org/${doi.value} — ${oaStatus.value} open access" +
@@ -61,12 +66,14 @@ object BrowserDownload:
 
   /** The work as the acquisition item cites it: `Author et al. (2019). Title.` */
   type CitationText = CitationText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CitationText extends Newtype[String, Not[Blank]]
 
   /** The work as a browser download, when it is gold (or diamond) open access, has a DOI, and one of its open-access
     * locations is on a host that refuses scripts — `refusingHost(url)`, the host of a location when it is one of
     * `acquire.landing.browser-download-hosts` (that location is where the person downloads it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(work: WorkRef, citekey: Citekey, refusingHost: Location => Option[Host]): Option[BrowserDownload] =
     val onRefusingHost =
       (work.oaLocations.map(l => Location(l.value)) ++ work.oaUrl.map(u => Location(u.value)).toList).distinct.flatMap(
@@ -90,6 +97,7 @@ object BrowserDownload:
     )
 
   /** `Author et al. (2019). Title.` — the DOI stands in for a missing title. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citationOf(work: WorkRef, doi: Doi): Citation =
     val who = work.authors.headOption.map(a => if work.authors.size > 1 then s"${a.value} et al." else a.value)
     val head = List(who, work.year.map(y => s"($y)")).flatten.mkString(" ")

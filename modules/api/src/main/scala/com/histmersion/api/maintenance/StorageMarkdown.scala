@@ -5,8 +5,13 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.instance.AboutMarkdown
 import com.histmersion.api.given
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object StorageMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(r: Storage.Report): List[String] =
     if r.entries.isEmpty && !((r.measuring) == Storage.Report.Measuring(true)) && r.problems.isEmpty then Nil
     else
@@ -30,6 +35,8 @@ object StorageMarkdown:
                              else entries) ++
         vols ++ (if hints.isEmpty then Nil else "" :: hints) ++ problems
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def entry(r: Storage.Report, e: Storage.Entry, depth: Storage.Depth): String =
     val indent = "  " * (depth).value
     val host = if e.host == Storage.Entry.Host("server") then "" else " [on this machine]"

@@ -8,11 +8,16 @@ import com.histmersion.util.storage.SafePath
 
 import java.nio.file.Files
 import com.histmersion.util.storage.HandedFile
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The files this server can see, for the MCP `ingest` tool's `path`: confined to `corpus.dir` when that is set; when
   * it is not, the old behaviour stands and the operator is told why.
   */
+@atBoundary(BoundaryKind.Process, "reads the file named by the MCP ingest tool, inside the allowed directory")
+@movesTo(FeaturePlace.Server)
 final class ServerToolFiles(cfg: () => AppConfig) extends ToolFiles:
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def file(path: ToolFiles.Path): Either[Problem, Option[Upload]] =
     val root = Option(cfg().corpus.dir.value).map(_.trim).filter(_.nonEmpty).map(SafePath.Base(_))
     if !SafePath.configured(root) then

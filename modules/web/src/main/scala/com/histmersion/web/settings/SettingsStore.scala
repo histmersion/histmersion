@@ -10,6 +10,7 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings as the server reads its settings file, for every Settings page: read once when a page opens and again
   * after each change; and the change itself — written into the file by the server, then applied.
@@ -28,10 +29,13 @@ object SettingsStore:
   /** What the last change did, or why it was refused. */
   def lastResult: Signal[Option[Either[Problem, ConfigEdit.Written]]] = result.signal
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   def load(): Unit =
     ApiClient.settings().onComplete(r => page.set(Some(r.toEither.left.map(message))))
 
   /** `changes` written against the version read; the page is read again either way. */
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def save(
       changes: List[ConfigEdit.Change],
       literalConsent: SaveLiteralConsent = SaveLiteralConsent(false)
@@ -50,12 +54,15 @@ object SettingsStore:
 
   def clearResult(): Unit = result.set(None)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def message(e: Throwable): Problem = e match
     case f: ApiFailure => Problem.Unclassified(Legacy.Text(f.getMessage))
     case other         =>
       Problem.Unclassified(Legacy.Text(Option(other.getMessage).getOrElse("the server could not be reached")))
 
   /** A field of the page read now. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def field(key: ConfigEdit.Field.Key): Signal[Option[ConfigEdit.Field]] =
     page.signal.map(_.flatMap(_.toOption).flatMap(_.field(key)))
 
@@ -72,6 +79,9 @@ object SettingsStore:
       })
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def written(w: ConfigEdit.Written): HtmlElement =
     val reloadErrors = w.reload.toList.flatMap(_.errors)
     div(
@@ -94,6 +104,9 @@ object SettingsStore:
 
   private val restarting = Var(Option.empty[Either[Problem, String]])
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def restartLine(w: ConfigEdit.Written): HtmlElement =
     div(
       cls := "settings-restart",

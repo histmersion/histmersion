@@ -5,8 +5,10 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
 import java.util.Comparator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A store on disk measured by a bounded walk: what About › Storage reports of each directory. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DiskMeasureSuite extends munit.FunSuite:
 
   private val tmp = FunFixture[Path](
@@ -26,6 +28,7 @@ class DiskMeasureSuite extends munit.FunSuite:
     Files.write(p, Array.fill[Byte](bytes)(1))
 
   private def at(p: Path): Store = Storage.at(Location.DataDirectory, p)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def measured(p: Path, b: MeasureBudget = MeasureBudget.unlimited) =
     val r = at(p).measure(b)
     (r.bytes.value: Long, r.files, r.exists, r.partial, r.unreadable)

@@ -37,6 +37,7 @@ import com.histmersion.util.database.TestCreators
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
   * acquisition bookkeeping failed. Uses only the disposable *_test database.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class IngestQueueFailureSuite extends DbSuite:
   override def munitIgnore: Boolean = TestDb.url.isEmpty
 

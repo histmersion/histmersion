@@ -21,6 +21,9 @@ import com.histmersion.api.automation.Creation
   * shows (the articles citing its sources, filled by whoever shows the card). Not on the wire: the server answers the
   * page (`EventDetail`), which adds the event's pictures.
   */
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventEntry(
     event: EventSummary,
     geometry: Option[EventGeometry.Geojson] = None,

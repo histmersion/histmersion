@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 import LogEvent.{Actor, At, Id, Kind, Label, Subject, Trace, What}
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class LogEvent(
     id: Id,
@@ -24,6 +25,7 @@ final case class LogEvent(
 
   def kind: Kind = what.kind
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown: String =
     val named = if subjects.isEmpty then "" else subjects.map(_.ref).mkString(" (", ", ", ")")
     s"- ${at.shown} · ${what.markdown}$named · trace `$trace`${label.fold("")(l => s" [$l]")}"
@@ -186,6 +188,7 @@ object LogEvent:
     case Problem(key: ProblemId)
     case Request(key: Trace)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def ref: String = this match
       case Source(k)   => s"source:$k"
       case Job(k)      => s"job:$k"
@@ -236,6 +239,7 @@ object LogEvent:
       case _: Lost            => true
       case _                  => false
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown: String = this match
       case r: RequestAnswered =>
         val client = r.client.fold("")(c => s" from $c")

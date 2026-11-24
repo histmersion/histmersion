@@ -19,6 +19,7 @@ import java.time.Clock
 /** The named periods: the timeline's presets and the PeriodO definitions behind them, searched, read one by one and
   * written by the seed and the imports.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait PeriodService:
   def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod]
 
@@ -62,6 +63,7 @@ object PeriodService:
   final private class Implementation(db: Transactor, clock: Clock) extends PeriodService:
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = db.read(PeriodRepo.get(id))
     def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = db.read(PeriodRepo.children(id)).toList
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def search(q: PeriodSearch): List[HistoricalPeriod] =
       db.read(
         PeriodRepo.search(
@@ -73,6 +75,7 @@ object PeriodService:
       ).toList
     def count(): RowCount = db.read(PeriodRepo.count)
     def presetCount(): RowCount = db.read(PeriodRepo.presetCount)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value))))
         .map((k, v) => HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value)))
@@ -84,8 +87,10 @@ object PeriodService:
       db.write(PeriodRepo.retainPresets(ids))
     def deleteSeedExcept(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       db.write(PeriodRepo.deleteSeedExcept(ids))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def seedVersion(name: SeedName): Option[SeedVersion] =
       db.read(PeriodRepo.seedVersion(PeriodRepo.SeedVersionName(name.value))).map(v => SeedVersion(v.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSeedVersion(name: SeedName, version: SeedVersion)(using WritePermit): Unit = db.write(
       PeriodRepo.setSeedVersion(PeriodRepo.SetSeedVersionName(name.value), PeriodRepo.SeedVersion(version.value))
     )
@@ -95,14 +100,17 @@ object PeriodService:
     */
   final class InMemory(state: AtomicReference[CatalogueState]) extends PeriodService:
     private def all: Vector[HistoricalPeriod] = state.get.periods.map(_.period)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def ordered(ps: Vector[HistoricalPeriod]): List[HistoricalPeriod] =
       ps.sortBy(p => (p.period.start.value: Long, p.label.value: String, p.id)).toList
 
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = all.find(_.id == id)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = ordered(
       all.filter(_.parentId.exists(_.value == id.value))
     )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def search(q: PeriodSearch): List[HistoricalPeriod] =
       def lower(s: String) = s.toLowerCase(Locale.ROOT)
       val text = q.text.map(_.value.trim).filter(_.nonEmpty).map(lower)
@@ -113,12 +121,16 @@ object PeriodService:
         q.from.forall(_.value <= p.period.end.value) && q.to.forall(_.value >= p.period.start.value)
       })
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def count(): RowCount = RowCount(all.size)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def presetCount(): RowCount = RowCount(all.count(_.preset.isDefined))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId.map(x => HistoricalPeriod.Id(x.value))).toMap
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount =
       @tailrec def upsert(rest: List[HistoricalPeriod], held: Vector[StoredPeriod]): Vector[StoredPeriod] =
         rest match
@@ -136,6 +148,7 @@ object PeriodService:
         val _ = state.updateAndGet(_.modify(_.periods).using(upsert(rows, _)))
         RowCount(rows.size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       val lost = all.count(p => p.preset.isDefined && !ids.contains(p.id))
       val _ = state.updateAndGet(
@@ -145,6 +158,7 @@ object PeriodService:
       )
       RowCount(lost)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def deleteSeedExcept(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       val gone = state.get.periods.filter(s => s.dataset == Dataset.Seed && !ids.contains(s.period.id))
       val goneIds = gone.map(_.period.id.value).toSet
@@ -158,8 +172,10 @@ object PeriodService:
       )
       RowCount(gone.size)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def seedVersion(name: SeedName): Option[SeedVersion] =
       state.get.seedVersions.get(CatalogueState.SeedVersionsKey(name.value)).map(v => SeedVersion(v.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSeedVersion(name: SeedName, version: SeedVersion)(using WritePermit): Unit =
       val _ = state.updateAndGet(
         _.modify(_.seedVersions)

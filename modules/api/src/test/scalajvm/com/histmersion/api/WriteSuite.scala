@@ -34,14 +34,17 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Pure tests for the patch-merge (plan §1.9a). No database: `applyPatch` is a total function of (existing, patch),
   * which is exactly why the merge rules live in `core`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WriteSuite extends munit.FunSuite:
 
   private val ck = "haak2015_massive"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(n: Finding.Ordinal, claim: Finding.Claim) =
     Finding(
       Source.Write.findingId(Citekey(ck), n),
@@ -55,6 +58,7 @@ class WriteSuite extends munit.FunSuite:
       Some(Confidence.High)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val existing = Source(
     citekey = Citekey(ck),
     title = Title("Massive migration"),

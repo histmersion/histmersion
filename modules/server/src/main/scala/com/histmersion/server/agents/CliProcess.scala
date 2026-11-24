@@ -6,6 +6,8 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit}
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One CLI process per step attempt: in an empty temporary working directory (no project `AGENTS.md`, `.codex/`,
   * `.claude/` or `opencode.json` is read), the user message on stdin, stdout read LINE BY LINE as it arrives (a quota
@@ -20,15 +22,22 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `perl -e setpgrp`), so a kill also reaches a grandchild that outlived its parent — `Process.descendants` no longer
   * sees an orphan.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Process, "pending G39 (processes only through util.process)")
+@atBoundary(BoundaryKind.Process, "starts a provider CLI as a child process and streams its output")
+@movesTo(FeaturePlace.AutomationAgents)
 object CliProcess:
 
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
   type CannotStartHint = CannotStartHint.T
   object CannotStartHint extends Newtype[String, Pure]
   type RunStdin = RunStdin.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RunStdin extends Newtype[String, Pure]
   type RunTimeoutSeconds = RunTimeoutSeconds.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RunTimeoutSeconds extends Newtype[Int, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RunHint = CannotStartHint
   val RunHint: CannotStartHint.type = CannotStartHint
   type WithDirPrefix = WithDirPrefix.T
@@ -49,6 +58,8 @@ object CliProcess:
     object Stopped extends Newtype[String, Pure]
 
   /** Raised when the executable cannot be started at all. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def cannotStart(command: ClaudeCode.Argument, e: java.io.IOException, hint: CannotStartHint): java.io.IOException =
     java.io.IOException(s"cannot run '$command' (${e.getMessage}) — $hint")
 
@@ -61,6 +72,7 @@ object CliProcess:
   private val hooks = InheritableThreadLocal[Hooks]()
 
   /** Run `f` with `h` as this thread's (and its forks') hooks. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def withHooks[A](h: Hooks)(f: => A): A =
     val before = hooks.get()
     hooks.set(h)
@@ -92,6 +104,8 @@ object CliProcess:
       .getOrElse(Nil)
 
   /** `command` resolved the way `execvp` would against `path` (None: not found, or not executable). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[agents] def resolve(command: ClaudeCode.Argument, path: Option[String], dir: Path): Option[Path] =
     if command.value.contains('/') then Option(dir.resolve(command.value)).filter(Files.isExecutable)
     else
@@ -102,6 +116,7 @@ object CliProcess:
         .find(f => Files.isRegularFile(f) && Files.isExecutable(f))
 
   /** One live CLI: the process, whether it leads its own group, and every descendant seen so far. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private class ProcessTree(val p: Process, val grouped: Boolean):
     val seen: java.util.Set[ProcessHandle] = java.util.concurrent.ConcurrentHashMap.newKeySet[ProcessHandle]()
 
@@ -140,6 +155,7 @@ object CliProcess:
       case e: InterruptedException => Thread.currentThread().interrupt()
       case _: Exception            => () // no `kill` (or the group is gone): the per-process kills above still ran
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def run(
       argv: List[ClaudeCode.Argument],
       dir: Path,
@@ -235,6 +251,8 @@ object CliProcess:
   def kill(p: Process): Unit = ProcessTree(p, grouped = false).kill()
 
   /** A scratch working directory, removed with everything in it afterwards. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def withDir[A](prefix: WithDirPrefix)(f: Path => A): A =
     val dir = Files.createTempDirectory(prefix.value)
     try f(dir)
@@ -247,6 +265,7 @@ object CliProcess:
       finally files.close()
 
   /** An owner-only file (it may carry a run token). */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def privateFile(f: Path, text: PrivateFileText): Path =
     Files.writeString(f, text.value, StandardCharsets.UTF_8)
     try {

@@ -10,13 +10,19 @@ import com.histmersion.util.storage.{Location, Storage, Store}
 import java.nio.file.Path
 import com.histmersion.config.RuntimeConfig
 import com.histmersion.config.AcquireConfig
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where each storage location lives, worked out from today's settings at each call — so the directories are where they
   * always were, and a reload that moves one is followed.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Server)
 object StorageLocations:
 
   /** The directory of `location` under `cfg`; `None` where the configuration places none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def root(
       location: Location,
       cfg: AppConfig,
@@ -66,6 +72,7 @@ object StorageLocations:
       case Location.Executables   => None
 
   /** The directories of the executables' search path `path` (`PATH`), each a store, in order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchPath(path: Option[Environment.VariablesValue]): List[Store] =
     path.toList
       .flatMap(_.value.split(java.io.File.pathSeparatorChar).toList)
@@ -87,6 +94,8 @@ object StorageLocations:
     * is made; the bundled database's files and the install only in a bundle (`runtime.enabled`, or the executable in a
     * bundle's layout when `HISTMERSION_RUNTIME` is not set).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def measured(cfg: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName, exe: Option[Path]): Storage =
     val bundled = cfg.runtime.enabled.value || (env(Environment.VariablesKey("HISTMERSION_RUNTIME"))
       .forall(_.value.trim.isEmpty) && Supervisor.bundled(exe))
@@ -130,6 +139,8 @@ object StorageLocations:
   /** The settings file `loaded` was read from, in the store of its directory ([[Location.UserConfig]]) and named in
     * messages as the load names it; `None` when it was read from none.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settingsFile(loaded: LoadedConfig, storage: Storage): Option[SettingsFile] =
     loaded.file.path.flatMap(p =>
       Store.Key
@@ -139,6 +150,8 @@ object StorageLocations:
     )
 
   /** `acquire.spool-dir`, or `<java.io.tmpdir>/histmersion-acquire` when it is empty — absolute and normalised. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spool(dir: AcquireConfig.SpoolDir): Path =
     nonBlank(dir.value)
       .map(Path.of(_))
@@ -147,6 +160,7 @@ object StorageLocations:
       .normalize
 
   /** The JVM's temporary directory: what a container gets for scratch. */
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
   def temp: Path = Path.of(System.getProperty("java.io.tmpdir"))
 
   /** The server's storage over the configuration `cfg` returns at each call. */

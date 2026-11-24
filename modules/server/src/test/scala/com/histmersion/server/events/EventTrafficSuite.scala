@@ -29,6 +29,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The recorded traffic and the stored results of the event catalogues: imports of GVP, NOAA and Wikidata from the
   * fixtures (no socket) on the stock generation's catalogues — every request with its headers, in order — then the
@@ -85,6 +86,7 @@ class EventTrafficSuite extends DbSuite:
     AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.sentences.mkString("; ")), identity)
   private def cfg = loaded.config
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -119,6 +121,7 @@ class EventTrafficSuite extends DbSuite:
       "events:\n" + steady(events.toList) + "event_catalogue:\n" + steady(records.toList) + "event_import_parts:\n" +
         steady(parts.toList) + "event_datings:\n" + steady(datings.toList)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def transcript: String =
     val sb = StringBuilder()
     val plugins =

@@ -12,24 +12,31 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Named historical periods (`periods`, V016) — the timeline's presets and the PeriodO definitions behind them: the
   * search, the single-period reads and the write path. The period is `int8range '[]'`, so the inclusive upper bound
   * read back is `upper − 1`. Every method runs on the connection it is given.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the period tables and their row codecs")
 private[periods] object PeriodRepo:
   type SearchText = SearchText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SearchText extends Newtype[String, Pure]
   type SeedVersion = SeedVersion.T
   object SeedVersion extends Newtype[Int, Pure]
 
   type SeedVersionName = SeedVersionName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SeedVersionName extends Newtype[String, Pure]
   type SetSeedVersionName = SetSeedVersionName.T
   object SetSeedVersionName extends Newtype[String, Pure]
 
   private val columns = sql"id, label, authority, ${RangeSql.cols(sql"period")}, region, parent_id, preset"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def get(id: PeriodRow.Id)(using DbCon): Option[HistoricalPeriod] =
     sql"SELECT $columns FROM periods WHERE id = $id"
       .query[PeriodRow]
@@ -37,6 +44,7 @@ private[periods] object PeriodRepo:
       .headOption
       .map(_.toPeriod)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def children(id: PeriodRow.Id)(using DbCon): Vector[HistoricalPeriod] =
     sql"SELECT $columns FROM periods WHERE parent_id = $id ORDER BY ${RangeSql.start(sql"period")}, label, id"
       .query[PeriodRow]
@@ -46,6 +54,7 @@ private[periods] object PeriodRepo:
   /** The periods whose label holds `q` (a literal substring, any case), of the region `region` (any case), overlapping
     * `from..to` (either bound alone is a span too), by start, then label, then id.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(
       q: Option[SearchText],
       region: Option[PeriodRow.Region],
@@ -119,9 +128,11 @@ private[periods] object PeriodRepo:
       sql"""DELETE FROM periods WHERE dataset = 'seed' AND NOT (id = ANY($ids::text[]))""".update.run()
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def seedVersion(name: SeedVersionName)(using DbCon): Option[SeedVersion] =
     sql"SELECT version FROM seed_versions WHERE name = $name".query[Int].run().headOption.map(SeedVersion(_))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setSeedVersion(name: SetSeedVersionName, version: SeedVersion)(using DbCon): Unit =
     val _ = sql"""INSERT INTO seed_versions (name, version) VALUES ($name, $version)
                   ON CONFLICT (name) DO UPDATE SET version = EXCLUDED.version, applied_at = now()""".update.run()

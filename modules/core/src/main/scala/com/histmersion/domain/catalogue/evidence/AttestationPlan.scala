@@ -18,12 +18,14 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a merge plan treats attestations: they travel with the sources they quote. When a pair of sources that are one
   * keeps one OCR body, the attestations that point into the other are found again in it (re-anchored) — under each
   * alternative of the body question, so nothing new appears after it is answered; one whose quote is not there is a
   * question (drop it, or keep it without a place). One already here (the same target and quote) is one.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   import AttestationPlan.*
 
@@ -59,6 +61,9 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       if a != b && (withAtts(r.uid) || withAtts(l.uid)) then a.toList ++ b.toList else Nil
     }.toSet
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   override def pair(
       r: Bundle.Source,
       l: Bundle.Source,
@@ -165,6 +170,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   override def pairIssue(kind: MergeIssue.Kind): Boolean = kind == MergeIssue.Kind.AttestationUnanchored
 
   // attestations: re-anchored into the body kept, or as decided; one already here is one
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def foldPair(
       r: Bundle.Source,
       l: Bundle.Source,
@@ -236,13 +242,17 @@ object AttestationPlan:
 
   /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def anchored(t: Bundle.Attestation): Boolean =
     t.quote.exists(_.value.nonEmpty) || t.charStart.isDefined
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def field(name: String, ours: Option[String], theirs: Option[String]): IssueField =
     IssueField(IssueField.Field(name), ours.map(IssueField.Value(_)), theirs.map(IssueField.Value(_)))
 
   /** An attestation of a pair tried against the body one alternative keeps. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private case class AnchorTry(
       att: Bundle.Attestation,
       foreign: Boolean,

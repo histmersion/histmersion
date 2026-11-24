@@ -11,6 +11,8 @@ import io.github.iltotore.iron.constraint.string.Match
 import java.io.InputStream
 import java.security.{DigestOutputStream, MessageDigest}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One named place's files: what a supporting area or a domain is given instead of a path. Keys are relative and
   * checked ([[StoreKey]]); nothing outside the store can be named. A write either lands whole or not at all ([[put]],
@@ -125,6 +127,7 @@ trait Store:
       key: Store.Key
   ): Either[Store.Error, HandedFile] = onDisk(key).map(_.toFile)
 
+@atBoundary(BoundaryKind.Process, "reads and writes one named place's files, atomically")
 object Store:
   type EntryName = EntryName.T
   object EntryName extends Newtype[String, Pure]
@@ -137,6 +140,7 @@ object Store:
 
   final class Contents(store: Store) extends ContentStore:
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def find(sha256: Sha256): Option[(ByteSource, ContentStore.Ext)] =
       store
         .list()
@@ -147,6 +151,7 @@ object Store:
     /** Written beside its name, hashed, and moved into place only when the content IS `sha256`: the store is
       * content-addressed, and whoever reads it trusts the name.
       */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[Problem, Unit] =
       if find(sha256).isDefined then
         val _ = in.transferTo(java.io.OutputStream.nullOutputStream())
@@ -227,6 +232,7 @@ object Store:
       def /(child: String): Either[Problem, Key] = of(key.value, child)
 
       /** `key/child` for a child the caller built from checked parts. */
+      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
       def child(name: EntryName): Key =
         (key / name.value).fold(e => throw IllegalArgumentException(e.sentence), identity)
 
@@ -238,6 +244,7 @@ object Store:
       def parent: Key = applyUnsafe(segments.dropRight(1).mkString("/"))
 
       /** The key `name` with `suffix` added to its last segment. */
+      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
       def withSuffix(suffix: TempName.Suffixed.Suffix): Key = parent.child(EntryName(name.value + suffix.value))
 
       /** Is `key` this key or below it? */

@@ -5,6 +5,7 @@ import com.histmersion.api.given
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 object Aggregate:
   type Count = Count.T
   object Count extends Newtype[Long, Pure]
@@ -13,6 +14,8 @@ object Aggregate:
   type Width = Width.T
   object Width extends Newtype[Long, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bucketSize(spanYears: Span): Width =
     val span = math.abs((spanYears).value)
     if span >= 20000 then Width((5000).toLong)
@@ -20,11 +23,15 @@ object Aggregate:
     else if span >= 1000 then Width((100).toLong)
     else Width((10).toLong)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def finer(size: Width): Width = size match
     case s if (s).value > 1000 => Width((1000).toLong)
     case s if (s).value > 100  => Width((100).toLong)
     case _                     => Width((10).toLong)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def buckets(from: Year, to: Year, size: Width): List[(Year, Year)] =
     require((size).value > 0, s"bucket size must be positive, got $size")
     val (lo, hi) = order(from, to)
@@ -43,6 +50,8 @@ object Aggregate:
         go = s <= hi.value
     out.result().map((a, b) => (Year(a), Year(b)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bucketCount(from: Year, to: Year, size: Width): BigInt =
     if size.value <= 0 then BigInt(0)
     else
@@ -57,6 +66,7 @@ object Aggregate:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Counting] = (s).value.trim.toLowerCase match
       case "starts"       => Some(Starts)
       case "overlap" | "" => Some(Overlap)
@@ -64,10 +74,12 @@ object Aggregate:
 
   val UnitStarts = "starts"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def histogram(rows: List[Period.Row], from: Year, to: Year): List[TimeBucket] =
     val (lo, hi) = order(from, to)
     histogram(rows, lo, hi, bucketSize(Span(hi.value - lo.value)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def histogram(
       rows: List[Period.Row],
       from: Year,
@@ -104,10 +116,12 @@ object Aggregate:
           )
         }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def span(row: Period.Row): Option[(Year, Year)] = (row.periodStart, row.periodEnd) match
     case (Some(a), Some(b)) => Some(order(a, b))
     case (Some(a), None)    => Some((a, a))
     case (None, Some(b))    => Some((b, b))
     case (None, None)       => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def order(a: Year, b: Year): (Year, Year) = if a <= b then (a, b) else (b, a)

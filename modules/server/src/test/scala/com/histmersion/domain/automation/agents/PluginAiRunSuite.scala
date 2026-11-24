@@ -54,6 +54,7 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is
@@ -64,16 +65,22 @@ import com.histmersion.util.database.TestCreators.given
   * `agent models set` see it — and forget it once the plugin is gone. No network: the provider is scripted. Skipped
   * without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class PluginAiRunSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
   private val Ck = Citekey("zzplugai2019_tin")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ApiTarget = RunRequest.Target(Ck.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runId(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(id: RunInfo.Id): Job.Id = Job.Id.assume(id.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Source.OcrMarkdown(
     """# Introduction
       |
@@ -90,6 +97,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
       "\n",
       ""
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notesJson = s"""{"notes":"The source traces tin by sea [[$Ck]]."}"""
 
   /** The plugin's block: three scripted replies — classify (a `facets` call first), the findings, the notes. */
@@ -117,6 +125,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
       String(in.readAllBytes(), UTF_8).linesIterator.find(_.startsWith("hello-ai=")).get.stripPrefix("hello-ai=")
     URLClassLoader(Array(Path.of(jar).toUri.toURL), getClass.getClassLoader)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def generation(user: String = pluginConf): Generation =
     val (found, errors) = PluginHost.discover(loader)
     assert(errors.isEmpty, errors)
@@ -144,6 +153,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
       Plugins.services(
         () =>
           new Plugin.Http {
+            @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
             def get(u: Plugin.Http.Url, h: Map[Header.Name, Header.Value]) =
               Left(Problem.Unclassified(Legacy.Text("offline")))
           },
@@ -153,6 +163,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
       firstParty = Plugins.firstParty(None)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)

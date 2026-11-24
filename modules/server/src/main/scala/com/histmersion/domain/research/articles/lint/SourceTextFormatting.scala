@@ -8,13 +8,16 @@ import com.histmersion.server.{LinkTarget, MarkdownLint}
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.Source
 import com.histmersion.domain.library.sources.SourceNote
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source's summary and notes checked with the prose lint the articles are checked with, their `[[links]]` resolved
   * by `links` (the corpus's sources and articles).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SourceTextFormatting(
     links: List[WikiLinks.Occurrence.Target] => WikiLinks.Occurrence.Target => Option[LinkTarget]
 ) extends SourceFormatting:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def issues(summary: Option[Source.Summary], notes: Option[SourceNote.Text]): List[FormatIssue] =
     MarkdownLint.ofSource(
       summary,
@@ -24,6 +27,7 @@ final class SourceTextFormatting(
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fix(text: Source.Text, field: FormatField): (Source.Text, List[Source.Text]) =
     val (fixed, done) = MarkdownLint.fix(MarkdownLint.Scan.Text(text.value), field)
     (Source.Text(fixed.value), done.map(d => Source.Text(d.value)))

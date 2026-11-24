@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 enum Pipeline(
     val wire: Pipeline.Wire,
     val version: Pipeline.Version,
@@ -108,6 +109,7 @@ object Pipeline:
   type Describe = Describe.T
   object Describe extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[Pipeline] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   val Fallback: Pipeline = ReviewArticle

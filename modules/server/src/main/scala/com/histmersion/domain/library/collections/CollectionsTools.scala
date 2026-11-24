@@ -31,6 +31,7 @@ import com.histmersion.domain.CreatorControllers
 object CollectionsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class CollectionInput(
       action: CollectionInput.Action,
       name: Option[CollectionInput.Name] = None,
@@ -70,6 +71,10 @@ object CollectionsTools:
     type Fields = Fields.T
     object Fields extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def apply(c: CollectionsControllers) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val me = Caller.Local

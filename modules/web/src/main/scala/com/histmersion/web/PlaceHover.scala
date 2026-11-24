@@ -7,6 +7,7 @@ import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
   * the app's links do, with the same card ([[Preview]]):
@@ -39,6 +40,7 @@ object PlaceHover:
   private var surface: MapSurface = null
   private var hoveredShape: Option[ShapeHit] = None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val intent =
     HoverIntent[Preview.Target](
       HoverIntent.DelayMs(Layout.hoverDelayMs.value),
@@ -54,12 +56,19 @@ object PlaceHover:
   private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[ShapeHit.Set, Places]
 
   /** The shapes of set `set` answer as the places `place` names. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def shapes(set: PlaceHover.ShapeSetName, places: Places): Unit = shapeSets(set) = places
 
   /** Is this pointer type a finger? (`pen` hovers like a mouse.) */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def isTouch(pointerType: PointerType): Boolean = pointerType.value == "touch"
 
   /** The place shape topmost under `p`, if any. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def placeAt(p: ScreenPt): Option[(ShapeHit, (PlaceHover.PlaceId, UiLabels.Text, PlaceKind), Places)] =
     if surface == null then None
     else
@@ -72,6 +81,9 @@ object PlaceHover:
   /** Once per map: remember the pointer type of each press, the shapes' hover and click, and drop a tapped card when
     * the map itself is tapped or starts to move.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def install(m: MapSurface): Unit =
     if surface == null then
       surface = m
@@ -117,6 +129,8 @@ object PlaceHover:
       m.on(MapEventKind.ZoomEnd)(_ => Preview.reposition())
 
   /** A pinned card's anchor at map point `ll`: where it is on screen now, `None` while panned away. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def anchorAt(ll: LatLon): () => Option[Preview.Anchor] = () =>
     Option(surface).flatMap { m =>
       val p = m.project(ll)
@@ -134,6 +148,7 @@ object PlaceHover:
     }
 
   /** A pinned card's anchor at an element's centre (a keyboard pin), `None` once it is gone. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def anchorOn(el: dom.Element): () => Option[Preview.Anchor] = () =>
     Option.when(el.isConnected) {
       val r = el.getBoundingClientRect()
@@ -141,6 +156,8 @@ object PlaceHover:
     }
 
   /** Pin `t`'s card after a click or Enter that left the place `chosenNow`, or close it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settle(
       t: Preview.Target,
       chosenNow: Boolean,
@@ -157,11 +174,13 @@ object PlaceHover:
       Preview.hide()
       Preview.unpin(restoreFocus = Preview.RestoreFocus(false))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(e: dom.MouseEvent): Unit =
     lastX = Preview.ScreenPixels(e.clientX)
     lastY = Preview.ScreenPixels(e.clientY)
 
   /** Where a marker's event happened on the map. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def latLonOf(e: dom.MouseEvent): Option[LatLon] =
     Option(surface).map { m =>
       val r = m.container.getBoundingClientRect()
@@ -171,6 +190,9 @@ object PlaceHover:
   /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover, a click (or
     * Enter) chooses it. `asOf` is the year the card reads the hierarchy at.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def bind(
       m: DomMarker,
       id: PlaceHover.PlaceId,
@@ -184,6 +206,7 @@ object PlaceHover:
       override def over(e: dom.MouseEvent): Unit = hoverIn(e, Some(target))
       override def move(e: dom.MouseEvent): Unit = hoverMove(e)
       override def out(e: dom.MouseEvent): Unit = if !isTouch(lastPointer) then dropHover()
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       override def click(e: dom.MouseEvent): Unit =
         e.stopPropagation()
         at(e)
@@ -193,6 +216,8 @@ object PlaceHover:
         settle(target, on, anchor, None, keyboard = Preview.KeyboardDriven(false))
       override def focus(e: dom.FocusEvent): Unit = focusCard(m.el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
@@ -202,6 +227,9 @@ object PlaceHover:
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
     * it to the shape under it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def bindName(
       m: DomMarker,
       id: PlaceHover.PlaceId,
@@ -214,6 +242,8 @@ object PlaceHover:
     m.handlers = new MarkerHandlers:
       override def focus(e: dom.FocusEvent): Unit = focusCard(el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
@@ -243,6 +273,7 @@ object PlaceHover:
     at(e)
     hovered.filter(Preview.showingAt).foreach(_ => Preview.moveTo(lastX, lastY))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusCard(el: dom.Element, t: Preview.Target): Unit =
     val r = el.getBoundingClientRect()
     hovered = Some(t)
@@ -260,6 +291,8 @@ object PlaceHover:
     * `activate`s it — what that means is the kind's (a finding's popup, a place chosen and pinned, an event's card
     * pinned…). A point that leaves the map (re-drawn, clustered, filtered away) takes its hover card with it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bindPoint(
       m: DomMarker,
       target: () => Option[Preview.Target],
@@ -280,6 +313,7 @@ object PlaceHover:
         activate(Activation(keyboard = Activation.Keyboard(false), Some(el), latLonOf(e)))
       override def focus(e: dom.FocusEvent): Unit = target().foreach(t => focusCard(el, t))
       override def blur(e: dom.FocusEvent): Unit = dropHover()
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
@@ -293,6 +327,10 @@ object PlaceHover:
     * the point clicked, or on the focused element with the focus moving in; activating the chosen place again lets it
     * go and closes the card.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def activatePlace(
       id: PlaceHover.PlaceId,
       label: UiLabels.Text,

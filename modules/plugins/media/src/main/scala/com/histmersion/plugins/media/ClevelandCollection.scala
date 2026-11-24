@@ -7,6 +7,8 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `cleveland`: The Cleveland Museum of Art Open Access API (https://openaccess-api.clevelandart.org/), no key. A
   * search answers the records themselves (`/api/artworks/?q=&cc0=1&has_image=1`). A record's `share_license_status` is
@@ -14,6 +16,7 @@ import com.histmersion.plugin.*
   * `culture` (a list whose plain entries are places of origin — "Cyprus", "Egypt, Middle Kingdom"). Years are taken as
   * given.
   */
+@atBoundary(BoundaryKind.Json, "reads the cleveland collection collection's JSON answers into media records")
 final class ClevelandCollection(conf: CollectionSettings)
     extends MuseumCollection(
       conf,
@@ -25,6 +28,7 @@ final class ClevelandCollection(conf: CollectionSettings)
     MediaCollection.Description("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
   val role = MediaCollection.Object
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def search(
       place: MediaPlace,
       http: Plugin.Http
@@ -56,6 +60,7 @@ object ClevelandCollection:
     "tombstone"
   ).mkString(",")
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def searchUrl(
       api: Plugin.Http.Url,
       name: CollectionQuery.Text,

@@ -7,6 +7,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Manager:
 
@@ -24,6 +25,7 @@ object Manager:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
@@ -38,6 +40,7 @@ object Manager:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** The status line of a manager: what holds it (`kind`) and the rest of the sentence (`detail`). The line is
@@ -54,13 +57,21 @@ object Manager:
 
     /** What a manager's line is about; the prefix is the text every line of the kind starts with. */
     enum Kind(val wire: Wire, val prefix: String, val exact: Boolean) derives CanEqual:
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Stopped extends Kind(Wire("stopped"), "stopped", true)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Paused extends Kind(Wire("paused"), "paused", false)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Budget extends Kind(Wire("budget"), "budget: ", false)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Starved extends Kind(Wire("starved"), "starved: ", false)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case AtCapacity extends Kind(Wire("at-capacity"), "at capacity", false)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Idle extends Kind(Wire("idle"), "idle", true)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Queued extends Kind(Wire("queued"), "focus:", false)
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       case Other extends Kind(Wire("other"), "", false)
 
       def matches(text: String): Boolean = if exact then text == prefix else text.startsWith(prefix)
@@ -68,6 +79,7 @@ object Manager:
     object Kind:
       def parse(s: Wire): Option[Kind] = values.find(_.wire == s)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def apply(kind: Kind, detail: String = ""): Status = Status(kind.wire, Detail(detail))
 
     extension (s: Status)
@@ -75,6 +87,7 @@ object Manager:
       def is: Kind = Kind.parse(s.kind).getOrElse(Kind.Other)
 
       /** The line as shown and stored. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def render: String = s"${s.is.prefix}${s.detail}"
 
       /** This line with `suffix` added, read back as a line (the kind may change with the text). */
@@ -82,6 +95,7 @@ object Manager:
 
     /** Reads a stored line: the first kind whose prefix it starts with, [[Kind.Other]] for any text no writer produces.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(text: String): Status =
       val kind = Kind.values.find(k => k != Kind.Other && k.matches(text)).getOrElse(Kind.Other)
       Status(kind.wire, Detail(text.drop(kind.prefix.length)))

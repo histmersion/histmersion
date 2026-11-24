@@ -12,6 +12,7 @@ package db
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
+import com.histmersion.lint.{LintRule, tolerated}
 object TestDb:
   val Env = "HISTMERSION_TEST_DB_URL"
 
@@ -59,6 +60,7 @@ object TestDb:
       ok
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val dbUrl: Option[DbConfig.Url] = url.map(DbConfig.Url(_))
 
   private[db] def name(url: String): String = url.split('?').head.reverse.takeWhile(_ != '/').reverse

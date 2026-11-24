@@ -26,7 +26,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.backup.Backup
 import com.histmersion.config.UserPaths.pathEquality
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
+@tolerated(LintRule.Process, "pending G39 (processes only through util.process)")
+@atBoundary(BoundaryKind.Process, "builds the codex CLI arguments and environment and reads its output lines")
+@movesTo(FeaturePlace.AutomationAgents)
 object Codex:
   type SchemaJson = SchemaJson.T
   object SchemaJson extends Newtype[String, Pure]
@@ -49,6 +55,8 @@ object Codex:
   /** `codex exec --json -p <role> …` with the prompt on stdin (`-`). Not `--ephemeral`: the rollout keeps the run's
     * rate-limit snapshot.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def argv(
       cfg: CodexConfig,
       model: ModelRef.Model,
@@ -78,6 +86,8 @@ object Codex:
   /** The CLI's environment: its own CODEX_HOME (its login, never a copied `auth.json`), the run token the MCP server
     * config names, and no API key unless asked (a key bills the API).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def environment(
       cfg: CodexConfig,
       home: Path,
@@ -95,6 +105,7 @@ object Codex:
   /** `codex exec --json` events → the outcome: `item.completed` agent messages (the last is the answer), MCP tool calls
     * with their results, reasoning; `turn.completed.usage`; `turn.failed` and `error` messages.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parse(lines: List[CliProcess.Run.Lines]): CliOutcome =
     val events = lines.map(_.value.trim).filter(_.startsWith("{")).flatMap(l => RawJson.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
@@ -160,6 +171,8 @@ object Codex:
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, CliOutcome.Turns(turns))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Codex then
       Left(
@@ -208,6 +221,7 @@ object Codex:
         vacuumed: List[(Report.VacuumedFile, ByteCount, ByteCount)] = Nil,
         problems: List[Problem] = Nil
     ):
+      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
       def summary: Report.Summary = Report.Summary(skipped.fold {
         val v = vacuumed.map((n, b, a) => s"$n ${Backup.humanBytes(b)} → ${Backup.humanBytes(a)}")
         (List(
@@ -247,6 +261,8 @@ object Codex:
     /** One pass now: transcripts older than `keep-sessions-days` deleted, the SQLite files vacuumed — or nothing, when
       * a run holds the home.
       */
+    @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def retain(
         home: Path,
         cfg: CodexConfig,
@@ -321,12 +337,14 @@ object Codex:
         finally s.close()
 
     /** The command line `argv`, as a problem names the process: the program and the file it works on. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def commandOf(argv: List[Argument]): Problem.Io.Tool = Problem.Io.Tool(argv.map(_.value).mkString(" "))
 
     /** How long a command may run. */
     private val CommandLimit = Problem.Millis(10L * 60L * 1000L)
 
     /** A command's exit code; Left when it cannot start or does not end within 10 minutes. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def runCommand(argv: List[Argument]): Either[Problem, ExitCode] =
       scala.util
         .Try {
@@ -347,6 +365,8 @@ object Codex:
         .flatten
 
     /** After a step: a pass on a virtual thread when one is due ([[CodexRetention.due]]). */
+    @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def maybeRetain(
         home: Path,
         cfg: CodexConfig,

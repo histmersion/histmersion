@@ -11,6 +11,7 @@ import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.MapArea
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a person downloads of the base map from the About window, as data: the regions to pick from, the fetch a choice
   * asks for, and the dry run's sizes zoom by zoom.
@@ -37,6 +38,7 @@ object MapRegions:
     object Label extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Name): Content = values.find(_.toString == s.value).getOrElse(Map)
 
   /** One entry of the region list: what it is called and its box (`None`: the box typed in). */
@@ -52,6 +54,8 @@ object MapRegions:
   val OwnBox = "own"
 
   /** The configured region first — the whole world by default, then listed once, as itself. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def choices(s: Basemap.Status): List[RegionChoice] =
     val world = RegionChoice(RegionChoice.Id("world"), RegionChoice.Label("the whole world"), Some(BBox.Text("world")))
     val configured =
@@ -77,6 +81,9 @@ object MapRegions:
   /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank: the
     * configured one). A relief download is a focus region: the named one, or one named after its box.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def request(
       box: MapArea.Bbox,
       content: Content,
@@ -122,6 +129,9 @@ object MapRegions:
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
     * `by zoom — zoom 0: … · zoom 1: …`).
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sizes(answer: SizesText): List[LayerSizes] =
     answer.value.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
       if part.startsWith("by zoom — ") && acc.nonEmpty then

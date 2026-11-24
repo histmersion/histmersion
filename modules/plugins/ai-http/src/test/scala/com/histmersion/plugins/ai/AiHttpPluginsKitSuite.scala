@@ -8,11 +8,13 @@ import com.histmersion.plugin.testkit.{PluginHarness, ScriptedAiHttp}
 import com.histmersion.pluginhost.Registries
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.CoreQuota
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own HTTP AI providers run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does (the host's own `agents.providers.<name>` supplied to a first-party
   * plugin, its key from the environment) and answers its calls from a scripted client — never the network.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AiHttpPluginsKitSuite extends munit.FunSuite:
 
   private def load(id: Plugin.Info.Id, env: Map[String, String] = Map.empty, config: String = "") =

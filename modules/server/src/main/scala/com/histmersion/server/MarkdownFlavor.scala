@@ -6,12 +6,14 @@ import com.histmersion.domain.*
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.ext.tables.TablesExtension
 import com.vladsch.flexmark.util.data.{DataHolder, MutableDataSet}
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The ONE Markdown dialect the server reads: CommonMark plus GFM pipe tables, configured the way GitHub and Obsidian
   * read them (the delimiter row must match the header's column count; a short row is padded, a long one cut). Both the
   * pages ([[MarkdownHtml]]) and the formatting lint ([[MarkdownLint]]) parse with this, so "the lint says it will not
   * render" and "the page does not render it" are the same fact.
   */
+@movesTo(FeaturePlace.UtilCommon)
 object MarkdownFlavor:
   val options: DataHolder =
     val o = new MutableDataSet()

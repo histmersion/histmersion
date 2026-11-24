@@ -9,8 +9,11 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A source's dating of an event. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[events] case class EventDatingRow(
     eventId: Event.Id,
     citekey: Citekey,
@@ -21,6 +24,8 @@ final private[events] case class EventDatingRow(
     method: Option[EventDating.Method],
     note: Option[EventDating.Note]
 ) derives DbCodec:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toDto: EventDating =
     def year(y: Option[DeepTime.SignedYear]) = y.map(v => Year(v.value))
     EventDating(

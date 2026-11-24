@@ -70,6 +70,7 @@ import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched
@@ -79,6 +80,9 @@ import com.histmersion.util.database.TestCreators.given
   * the autopilot drains. The upstreams are fixtures: nothing reaches the network. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   /** The words a job the drain stopped says, as before its problem was typed. */
   private val DrainingText = "stopped while the autopilot drains: it resumes once the drain is lifted"
@@ -88,6 +92,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
 
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -127,6 +132,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   /** The legal chain's refusal for `d`: unpaywall had no copy, and the landing page refused when `landingRefused`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def noCopy(d: Doi, landingRefused: Boolean = false): Problem =
     Problem.NotFound.Copy(
       Problem.Raw.of(d),
@@ -160,18 +166,23 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         noCopy(d)
       )
     val asked = java.util.concurrent.ConcurrentLinkedQueue[(Doi, Option[Citekey])]()
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using
         Creator.New
     ) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
@@ -190,6 +201,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     (a, h, up)
 
   private def doi(n: String) = s"10.5555/zzrecheck.$n"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def checkItem(i: Queue.QueueItem.Id): AcquireAttemptRow.Id =
     AcquireAttemptRow.Id(i.value)
 
@@ -211,8 +223,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         ),
         AcquireAttempt.Kept(20)
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobKey(id: SpatialHierarchyResult.Job.Id): Job.Id =
     Job.Id.applyUnsafe(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(h: ServerWiring, n: String): Queue.QueueItem.Id =
     h.workLists
       .addOverRest(
@@ -232,6 +246,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       s"every legal ingest is the re-check's own: ${up.askedBy}"
     )
     up.asked.asScala.toList
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def found(d: Doi, ck: Citekey) =
     Right(
       Ingest.Report(
@@ -247,8 +262,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
 
   /** A pass at once, as the managers' tick runs it (a person's pass of more than one item is a job). */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def passNow(a: AgentsControllers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
     a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error(Problem.Unclassified(Legacy.Text("a pass is running"))))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(h: ServerWiring, id: Queue.QueueItem.Id): String =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
@@ -514,12 +531,15 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   // ── through the real acquisition handlers ──────────────────────────────────────────────────────
 
   private object Discovery extends DiscoveryClient:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def search(
         query: Search.Query,
         since: Option[Year],
         sort: Option[DiscoveryClient.SearchSort],
         limit: DiscoveryClient.SearchLimit
     ) = Right(Nil)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def meta(d: Doi) = Right(
       WorkRef(
         doi = (Some(d.value)).map(api.library.Doi.apply),
@@ -530,15 +550,21 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
           .map(api.library.Citekey.apply)
       )
     )
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def references(d: Doi) = Right((DiscoveryClient.Backend("crossref"), Nil))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def updates(d: Doi) = Right(Nil)
   private object NoCitations extends CitationsClient:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def citing(work: WorkRef, since: Option[Year], limit: CitationsClient.CitingLimit) = Right(
       (CitationsClient.Backend("stub"), Nil)
     )
   private object NoWiki extends WikiClient:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def refs(articleUrl: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used here")))
   private object NoRw extends RetractionWatchClient:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def csv() = Left(Problem.Unclassified(Legacy.Text("not used here")))
 
   test(
@@ -547,6 +573,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val unauthorisedAsked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fetch(w: WorkKey, c: Fetch.Context) =
         unauthorisedAsked.incrementAndGet()
         Fetch.Found(
@@ -559,6 +586,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
     val open = new SourceFetcher:
       val access = Access.Open
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def fetch(w: WorkKey, c: Fetch.Context) =
         if w.doi.exists(_.value == doi("oa")) then
           Fetch.Found(
@@ -638,6 +667,8 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     r.fold(e => fail(e.problems.sentences.mkString("; ")), res => res.job.getOrElse(fail(s"not a job: $res")))
 
   /** The job once it ended (it runs on its own thread) and its slot is free. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ended(a: AgentsControllers, id: SpatialHierarchyResult.Job.Id): JobInfo =
     awaitTrue(s"job $id")(
       Transactor(ds).read(JobRepo.get(jobKey(id))).exists(j => JobState.parse(j.status).exists(_.isTerminal)) &&
@@ -1002,6 +1033,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val unauthorisedAsked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def fetch(w: WorkKey, c: Fetch.Context) =
         unauthorisedAsked.incrementAndGet()
         Fetch.Found(
@@ -1014,6 +1046,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         )
     val open = new SourceFetcher:
       val access = Access.Open
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def fetch(w: WorkKey, c: Fetch.Context) =
         Fetch.Miss(Fetch.Absence.NotHeld, Problem.Unclassified(Legacy.Text("no open-access location")))
     val chain = FetchChain(

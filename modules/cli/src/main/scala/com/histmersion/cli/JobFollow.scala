@@ -11,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import com.histmersion.lint.{LintRule, tolerated}
 
 object JobFollow:
 
@@ -58,11 +59,14 @@ object JobFollow:
 
   private def pause(d: FiniteDuration): Unit = Thread.sleep(d.toMillis)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def failed(what: String, why: Option[String]): Cli.Error =
     Cli.Error.answered(
       Problem.Unclassified(Legacy.Text(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @annotation.tailrec
   def job(using
       console: Console
@@ -111,6 +115,8 @@ object JobFollow:
           sleep(Poll)
           job(fetch, id, unanswered, limits, sleep, progress, clear, waited + Poll, 0, Some(j))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
   def backup(using
       console: Console

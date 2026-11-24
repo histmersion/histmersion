@@ -18,11 +18,16 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the process managers (docs/research-process-managers.md §3.4): what to do with an item after its
   * run settled, the order items are dispatched in, how many runs a manager may start, the backoff, and the hold
   * releases. No I/O: the supervisor reads the facts and writes the result.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationManagers)
 object ManagerPolicy:
   type ActiveAll = ActiveAll.T
   object ActiveAll extends Newtype[Int, Pure]
@@ -88,6 +93,7 @@ object ManagerPolicy:
       val CurrencyCheck: Kind = Kind(Managers.CurrencyCheck)
 
   /** The count of `n` `singular` (`3 runs`). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def counted(n: Int, singular: String): Plural.Phrase =
     Plural.count(Plural.Count(n.toLong), Plural.CountSingular(singular))
 
@@ -122,6 +128,7 @@ object ManagerPolicy:
     type Rounds = Rounds.T
     object Rounds extends Newtype[Int, Pure]
     type MaxRunsPerArticle = MaxRunsPerArticle.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object MaxRunsPerArticle extends Newtype[Int, Pure]
     type NoProgressRuns = NoProgressRuns.T
     object NoProgressRuns extends Newtype[Int, Pure]
@@ -144,6 +151,7 @@ object ManagerPolicy:
     type InferFilter = InferFilter.T
     object InferFilter extends Newtype[Boolean, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
       val maxRuns = math.max(0, c.maxRuns.fold(simple(k, m).maxRuns.value)(_.value))
       ReviewSettings(
@@ -168,6 +176,7 @@ object ManagerPolicy:
       case _                   => m.seed
 
     /** The defaults of a manager of kind `k` (a kind whose defaults say more builds them itself). */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def defaultsFor(k: Manager.Kind, m: ManagerDefaults): ManagerConfig =
       val s = simple(k, m)
       ManagerConfig(
@@ -180,6 +189,7 @@ object ManagerPolicy:
   // ── the cron (phase 3) ─────────────────────────────────────────────────────────────────────────
 
   /** What a manager's cron does at a tick. */
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   enum CronStep:
     /** Nothing: no cron, or not due yet. */
     case Idle
@@ -205,6 +215,8 @@ object ManagerPolicy:
   /** A cron a person sets: it parses, and it fires no more often than every `minIntervalMinutes`
     * (`agents.scheduler.min-interval-minutes`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkCron(text: Cron.Text, now: Instant, minIntervalMinutes: MinIntervalMinutes): Either[Problem, Cron] =
     Cron.parse(text).flatMap { c =>
       c.shortestGapMinutes(now).filter(_.value < minIntervalMinutes.value) match
@@ -219,12 +231,15 @@ object ManagerPolicy:
     }
 
   /** A manager's own daily cap in effect: its `dailyUsd`, else `agents.managers.daily-usd`; 0 = none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[ManagerConfig.DailyUsd] =
     c.dailyUsd.orElse(Some(ManagerConfig.DailyUsd(m.dailyUsd.value))).filter(_.value > 0)
 
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached its daily
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[SchedulerPolicy.Block.Why] =
     cap
       .filter(c => spentToday >= BigDecimal(c.value))
@@ -265,6 +280,8 @@ object ManagerPolicy:
       object Failures extends Newtype[Int, Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def backoff(
       baseMinutes: ReviewSettings.BackoffMinutes,
       maxMinutes: ReviewSettings.MaxBackoffMinutes,
@@ -294,6 +311,8 @@ object ManagerPolicy:
     * for an approval, or stopped; failed → retried after the backoff, stopped with a task after `maxFailures`;
     * cancelled → stopped. `facts` are read only for a done run.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evaluateStep(
       s: ReviewSettings,
       label: StepLabel,
@@ -353,6 +372,8 @@ object ManagerPolicy:
           )
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decided(state: Approval.State.Wire, result: Option[Approval.Outcome]): Option[Approval.Outcome] =
     Approval.State.parse(state).filter(_ != Approval.State.Open).map { st =>
       Approval.Outcome(st.wire.value + result.map(_.value).filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}"))
@@ -362,6 +383,7 @@ object ManagerPolicy:
     * still open (pending, held or active), a goal's article proposal while its plan-goal item is? `open` = the
     * manager's open items (kind, target).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def waitsFor(kind: Item.Kind, target: Candidate.Target, open: List[(Item.Kind, Candidate.Target)]): Boolean =
     (kind == Item.Kind.ArticleReview && open.contains((Item.Kind.InferFilter, target))) ||
       (kind == Item.Kind.ProposeArticles && open.contains((Item.Kind.PlanGoalItem, target)))
@@ -376,6 +398,7 @@ object ManagerPolicy:
     * and acquisition items), so a plan waiting days for a person does not stop its watcher, nor a sweep the proposal
     * (which waits for the plan through [[waitsFor]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def blocks(kind: Item.Kind, pipeline: Pipeline.Wire, unsettled: Seq[Pipeline.Wire]): Boolean =
     if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
 
@@ -398,11 +421,13 @@ object ManagerPolicy:
     object Priority extends Newtype[Int, Pure]
 
   /** May it start now? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def due(c: Candidate, now: Instant): Boolean = c.notBefore.forall(!_.isAfter(now))
 
   /** The dispatch order within one manager: priority (highest first), then the earliest `notBefore` (none first), then
     * the oldest.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def order(cs: List[Candidate]): List[Candidate] =
     cs.sortBy(c => (-c.priority.value, c.notBefore.map(_.toEpochMilli).getOrElse(Long.MinValue), c.id))
 
@@ -410,6 +435,8 @@ object ManagerPolicy:
     * person's too), its own (`maxRuns` minus its queued/running; `maxOpen` minus every unsettled one, paused and
     * waiting included), and its pools' (`poolCap`, the calls its models' plan pools take at once). Never negative.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def capacity(
       maxConcurrent: MaxConcurrent,
       activeAll: ActiveAll,
@@ -431,6 +458,7 @@ object ManagerPolicy:
   /** Several managers sharing the global room: one item from each in turn (in the order given), each within its own
     * `cap`, until `room` is used or nothing is left.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roundRobin[M, A](queues: List[(M, Quota, List[A])], room: Room)(using CanEqual[M, M]): List[(M, A)] =
     @annotation.tailrec
     def go(qs: List[(M, Int, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
@@ -448,6 +476,8 @@ object ManagerPolicy:
   /** Is a hold over: its date passed, or the source it waits for exists. A hold with neither waits for a person's
     * release.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def released(h: Hold, now: Instant, sourceExists: Citekey => Boolean): Boolean =
     h.until
       .flatMap(u => parseInstant(InstantText(u.value)))
@@ -458,6 +488,8 @@ object ManagerPolicy:
       .exists(sourceExists)
 
   /** `2026-11-01` (UTC midnight) or an ISO instant. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseInstant(s: InstantText): Option[Instant] =
     val t = s.value.trim
     scala.util
@@ -466,6 +498,8 @@ object ManagerPolicy:
       .orElse(scala.util.Try(java.time.LocalDate.parse(t).atStartOfDay(java.time.ZoneOffset.UTC).toInstant).toOption)
 
   /** The status line a manager shows; `held` is the spend cap or the starved plan pools that hold all its items. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusNote(
       state: Manager.State,
       held: Option[SchedulerPolicy.Block.Why],
@@ -499,6 +533,8 @@ object ManagerPolicy:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   /** Does a structured hint effect name this target (by slug, or by one of its tags/topics/goals)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(
       e: HintEffect,
       target: Candidate.Target,
@@ -515,6 +551,7 @@ object ManagerPolicy:
   /** The notes a run is given: the manager's live standing hints and unconsumed once-hints, manager-wide or about this
     * item, oldest first.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def notesFor(hints: List[ManagerHint], itemId: Item.Id): List[ManagerHint] =
     hints
       .filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty)

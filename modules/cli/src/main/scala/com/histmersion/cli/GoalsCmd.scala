@@ -15,12 +15,16 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion goals` arguments")
 object GoalsCmd:
 
   /** What `goals schedule` does to the schedule. */
   enum ScheduleChange:
     case Remove
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Set(cron: String, off: Boolean, budget: Option[Double])
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
@@ -36,6 +40,7 @@ object GoalsCmd:
         from: Option[Long],
         to: Option[Long]
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Plan(slug: String, model: Option[String], budget: Option[Double], fol: Boolean)
     case Link(slug: String, kind: LinkKind, ref: String, note: Option[String])
     case Unlink(slug: String, kind: LinkKind.Wire, ref: String)
@@ -46,6 +51,7 @@ object GoalsCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Listing(status, limit, offset, json) =>

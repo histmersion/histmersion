@@ -4,8 +4,10 @@ package plugin
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.{External, Problem}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The source-fetching part of the SPI (docs/research-plugins.md §5.1). */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourceFetcherSuite extends munit.FunSuite:
 
   test("a WorkKey with no identifier is empty; title, authors, year and format identify nothing"):

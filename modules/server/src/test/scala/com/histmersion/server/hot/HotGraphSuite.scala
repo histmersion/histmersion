@@ -12,11 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 import com.histmersion.config.HotNode
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The hot component graph without a database (docs/research-plugins.md §3.6): nodes built in scopes of their own, a
   * reload rebuilding what the changed keys concern and its dependents, a failed build publishing nothing, pins keeping
   * a generation open, retired scopes closed once free.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class HotGraphSuite extends munit.FunSuite:
 
   type Conf = Map[String, String]
@@ -35,6 +38,7 @@ class HotGraphSuite extends munit.FunSuite:
     val log = ConcurrentLinkedQueue[String]()
     val graph = Hot.Graph[Conf](Map("db" -> "a", "query" -> "q1", "other" -> "x"), quiet)
     val builds = AtomicInteger(0)
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     val pool = graph
       .node[Res](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db"))) { ctx =>
         builds.incrementAndGet()
@@ -48,6 +52,7 @@ class HotGraphSuite extends munit.FunSuite:
         Right(s"migrated ${ctx(pool).name}")
       }
       .fold(p => fail(p.sentence), identity)
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     val query = graph
       .node[Res](Hot.Graph.Def.Name("query"), deps = List(pool), keys = List(HotNode.Keys("query"))) { ctx =>
         if ctx.config("query") == "bad" then Left(Problem.Unclassified(Legacy.Text("role cannot log in")))

@@ -3,10 +3,12 @@ package util.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
 /** A position in a JSON document that may not exist: how a reader walks a document whose shape no record describes
   * (`doc.cursor.downField("a").downArray.focus`).
   */
+@atBoundary(BoundaryKind.Json, "walks JSON no record describes and finds where a text broke off")
 final case class Cursor(focus: Option[Json], at: Vector[Either[String, Int]] = Vector.empty):
   import Cursor.{pathText, Read, Step}
 

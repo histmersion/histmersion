@@ -19,6 +19,7 @@ import java.time.{Instant, LocalDate}
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.library.search.Search
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The recorded traffic of the acquisition chain: every request the stock generation's source fetchers (and the
   * new-source search's CORE index, on the generation's CORE key) send for a set of works, on the wire below the
@@ -28,8 +29,11 @@ import com.histmersion.domain.library.search.Search
   */
 class FetcherTrafficSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Pdf: HttpAnswer.Body = HttpAnswer.Body(("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Epub: HttpAnswer.Body = HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes("ISO-8859-1"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Xml: HttpAnswer.Body =
     HttpAnswer.Body(scala.io.Source.fromResource("jats/article.xml").mkString.getBytes(UTF_8))
 
@@ -42,9 +46,11 @@ class FetcherTrafficSuite extends munit.FunSuite:
     scala.io.Source.fromResource(s"acquire/$name")(using scala.io.Codec.UTF8).mkString
   private def landing(name: String): String = fixture(s"landing/$name")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def md5(b: HttpAnswer.Body): String =
     OaFetch.md5(OaFetch.Bytes(b.value)).getOrElse(fail("no MD5 in this runtime")).value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def json(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -53,6 +59,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def html(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -63,6 +70,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
     )
   private def file(b: HttpAnswer.Body, mime: CoreQuota.HeaderValue): Either[Problem, HttpAnswer] =
     Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> mime), b))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notFound: Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -75,6 +83,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   /** Answers from `routes` (matched on the URL's text), 404 otherwise; every request written to `out`. */
   final private class Wire(routes: PartialFunction[String, Either[Problem, HttpAnswer]]) extends HttpTransport:
     val out = StringBuilder()
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(
         url: HttpTransport.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
@@ -100,6 +109,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private def budget(): CoreBudget = CoreBudget(() => t0, _ => ())
 
   /** One generation over `wire`, as the server loads it for `text`, and the fetch of each work through its chain. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scenario(
       name: String,
       works: List[WorkKey],
@@ -148,12 +158,14 @@ class FetcherTrafficSuite extends munit.FunSuite:
     sb ++= s"budget: lookups ${core.state.lookupTokens} searches ${core.state.searchTokens}\n"
     sb.result()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doi(d: String): WorkKey = WorkKey(doi = Some(Doi.applyUnsafe(d)))
 
   // ── the routes ──────────────────────────────────────────────────────────────────────────────
 
   private val PmcDoi = "10.1038/nature25778"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pmc(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     val record = fixture("pmc_dataset_oa.json").replaceAll("(\\.pdf\\?md5=)[0-9a-f]{32}", "$1" + md5(Pdf))
     {
@@ -180,6 +192,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
 
   private val ManuscriptDoi = "10.1126/science.aar7711"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def manuscript(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     val record = fixture("pmc_dataset_manuscript.json").replaceAll("(\\.xml\\?md5=)[0-9a-f]{32}", "$1" + md5(Xml))
     {
@@ -201,6 +214,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private val OaPage = "https://repo-o.example.org/item/1"
   private val DcPage = "https://repo-d.example.org/item/1"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def indexes(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     case u if u.startsWith(s"${c.unpaywall.url}/$IndexDoi") =>
       json(s"""{"doi":"$IndexDoi","oa_locations":[{"host_type":"repository","url_for_landing_page":"$UpPage"}]}""")
@@ -210,6 +224,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       )
     case u if u == s"${c.datacite.url}/dois/$IndexDoi" => json(s"""{"data":{"attributes":{"url":"$DcPage"}}}""")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def direct(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     case u if u.startsWith(s"${c.unpaywall.url}/10.1/up") =>
       json("""{"doi":"10.1/up","best_oa_location":{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"},
@@ -259,6 +274,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
     case u if u.startsWith(s"${c.archiveOrg.url}/download/zqbook/zqbook.pdf")  =>
       file(HttpAnswer.Body(("%PDF-1.4\n" + ("p" * 20480)).getBytes("ISO-8859-1")), PdfType)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def zenodo(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     val record = landing("zenodo_record_3695551.json").replaceAll("md5:[0-9a-f]{32}", s"md5:${md5(Pdf)}")
     val pdf = "https://zenodo.org/api/records/3695551/files/Oreshko%20Ahhiyawa-Danuna-offprint.pdf/content"
@@ -270,6 +286,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       case `pdf`                                            => file(Pdf, PdfType)
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def repositories(c: AcquireConfig): PartialFunction[String, Either[Problem, HttpAnswer]] =
     val apollo = "https://www.repository.cam.ac.uk/handle/1810/265228"
     val apolloPdf = "https://www.repository.cam.ac.uk/bitstreams/635fb0e4-fed6-4dd0-a369-16067170b87f/download"
@@ -295,6 +312,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def transcript: String =
     List(
       scenario(

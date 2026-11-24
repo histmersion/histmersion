@@ -13,10 +13,14 @@ import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.util.storage.Blob
 import com.histmersion.api.ocr.ConvertedDoc
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media's services and controllers, built over one server's `deps`: `http` fetches the providers' pictures and Open
   * Library's covers, `converter` makes thumbnails; the sources its figures and covers belong to are the library's.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@movesTo(FeaturePlace.Server)
 final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterClient):
   def this(deps: Deps, converter: ConverterClient) =
     this(deps, JavaHttpTransport(HttpTransport.TimeoutSeconds(deps.cfg.media.timeoutSeconds.value)), converter)
@@ -40,6 +44,7 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
 
   val assets: AssetsControllers = AssetsControllers(assetStore, sources, () => deps.cfg, deps.maintenance)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val iiif: IiifControllers =
     new IiifControllers(assetStore, () => IiifControllers.BaseUrl(deps.cfg.server.publicUrl.value.stripSuffix("/")))
 
@@ -91,6 +96,7 @@ object MediaWiring:
 
   /** A converter that makes no thumbnails (tests; a server whose sidecar is down still serves cards). */
   object NoThumbnails extends ConverterClient:
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,

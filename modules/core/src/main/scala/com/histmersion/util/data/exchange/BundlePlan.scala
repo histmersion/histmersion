@@ -5,6 +5,7 @@ import scala.annotation.tailrec
 import com.histmersion.api.given
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching (docs/research-merge-import.md
   * §7.3): a foreign row is the local row with the same uid, or no row. Pure; the importer gathers the local state and
@@ -75,6 +76,7 @@ object BundlePlan:
 
     val absent: Local = Local(None, tombstoned = Tombstoned(false), None)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def entity(foreignRev: Ledger.ForeignRev, local: Local, ownBundle: EntityOwnBundle): Decision =
     entity(foreignRev, foreignRev, local, ownBundle)
 
@@ -82,6 +84,8 @@ object BundlePlan:
     * bundle's rev, as the ledger remembers it; `localizedRev` the rev of the same line in this instance's terms,
     * comparable with the local row's. Without a mapping they are equal.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entity(
       foreignRev: Ledger.ForeignRev,
       localizedRev: Local.Rev,
@@ -97,6 +101,8 @@ object BundlePlan:
       case None if local.tombstoned.value                              => Decision.SkipDeleted
       case None                                                        => Decision.Insert
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tombstone(local: Local, ownBundle: TombstoneOwnBundle): Decision =
     local.rev match
       case Some(_) if ownBundle.value => Decision.KeepLocal
@@ -111,6 +117,8 @@ object BundlePlan:
   /** The per-kind tally of the report. A recorded tombstone of a row that never existed here changes nothing visible,
     * so it counts as unchanged.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counts(kind: Bundle.Kind, ds: Iterable[Decision]): Bundle.KindCounts =
     val decisions = ds.iterator
     @tailrec def loop(
@@ -161,6 +169,7 @@ object BundlePlan:
     * so the old ancestor stays, and a later change over there is seen as the conflict it is; a conflict or a skip
     * leaves it as well. For a tombstone `foreignRev` is a fixed marker.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def ledgerAfter(d: Decision, foreignRev: Ledger.ForeignRev, tombstone: Local.Tombstoned): Option[Ledger] =
     ledgerAfter(d, foreignRev, foreignRev, None, tombstone)
 
@@ -168,6 +177,8 @@ object BundlePlan:
     * has: a conflict decided `keep-left` is in sync by decision — the foreign version was seen and ours chosen — so its
     * ledger row records both.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ledgerAfter(
       d: Decision,
       foreignRev: Ledger.ForeignRev,

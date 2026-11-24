@@ -13,6 +13,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An event's page as the catalogue, the pictures and the articles show it together: the catalogue's event with its
   * evidence and context (the events' controllers, whose card [[EventCardView.cited]] gives the articles citing the
@@ -22,6 +23,7 @@ import com.histmersion.domain.Creator
 final class EventCardView(events: EventsControllers, pictures: Event.Id => List[MediaThumb]):
 
   /** The catalogue's event with its pictures. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(e: EventEntry): EventDetail =
     e.into[EventDetail].withFieldConst(_.media, pictures(Event.Id.assume(e.event.id.value))).transform
 
@@ -36,6 +38,7 @@ final class EventCardView(events: EventsControllers, pictures: Event.Id => List[
 object EventCardView:
   /** An event's card: the catalogue's context (`context`), then the articles citing the sources that attest it. */
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cited(context: EventEntry => EventEntry, citing: (List[Citekey], PageSize) => List[EventArticleRef])(
       e: EventEntry
   ): EventEntry =

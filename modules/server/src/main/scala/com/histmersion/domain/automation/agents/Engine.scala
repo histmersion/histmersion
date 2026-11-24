@@ -44,11 +44,14 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
   * so the in-memory queue is rebuilt at [[start]].
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class Engine(
     val ds: DataSource,
     cfgNow: => AgentsConfig,
@@ -88,12 +91,14 @@ final class Engine(
     hold.synchronized { holding = true }
     running.values.asScala.foreach(_.thread.interrupt())
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def busy: Vector[Quiescent.Busy] = running.keySet.asScala.toVector.sorted.map(id => Quiescent.Busy(s"agent run $id"))
 
   /** After a restore: the runs queued in memory name rows the restore replaced, so they are dropped; the restored
     * database's runs are reconciled as at a start (its running ones paused as interrupted — none of them runs here —
     * its queued ones queued).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restored()(using WritePermit)(using Creator.New): Unit =
     era = Era()
     Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
@@ -106,14 +111,19 @@ final class Engine(
 
   def resume(): Unit = hold.synchronized { holding = false; hold.notifyAll() }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobKind: Job.Kind = Job.Kind.assume(JobKind)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rowStatus(s: RunState): RunRow.Status = RunRow.Status(s.wire.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val llmSlots: Semaphore = Semaphore(math.max(1, cfg.maxLlmCallsInFlight.value))
 
   /** The tools a step of `run` offers its agent: the agent's own, as far as its workflow lets the agent's role use them
     * (a run of no registered workflow offers none).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def offered(run: RunInfo, agent: AgentDef): List[ToolName] =
     workflows
       .parse(run.pipeline.value)
@@ -125,6 +135,7 @@ final class Engine(
   /** Delete traced messages older than `agents.trace.keep-messages-days`, at most once every `prune-every-minutes` (or
     * now with `force`). Returns how many went. Never fails a run: a failed prune is logged and tried again next time.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pruneTrace(
       force: Engine.PruneTraceForce = Engine.PruneTraceForce(false),
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())
@@ -144,6 +155,7 @@ final class Engine(
           RowCount(0)
 
   /** How many traced messages [[pruneTrace]] deleted, said in the log. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def logPruned(n: RowCount): Unit =
     if n.value > 0 then
       scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
@@ -154,6 +166,7 @@ final class Engine(
   final private class Control(val thread: Thread):
     @volatile var pause: Boolean = false
     @volatile var cancel: Boolean = false
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     @volatile var lastBeat: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())
 
     /** When `lastBeat` was last written to `jobs.heartbeat_at` (at most every heartbeat-seconds). */
@@ -181,6 +194,7 @@ final class Engine(
     * run's thread and from the threads reading its processes and model calls: the heartbeat's write is a unit of the
     * engine's worker (the run's own unit, on its thread).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[histmersion] def beat(id: Run.Id, seq: Option[Engine.BeatSeq] = None): Unit =
     Option(running.get(id)).foreach { c =>
       val now = PlanQuotaRepo.EpochMillis(agents.clock.millis())
@@ -208,6 +222,7 @@ final class Engine(
     * `agents.watchdog.stall-minutes` has its processes killed and is interrupted; it settles paused `stalled` (resuming
     * after resume-minutes), or failed on its max-stalls-th stall of one step. Returns the ids.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkStalls(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis()))(using
       WritePermit
   ): List[Run.Id] =
@@ -258,6 +273,7 @@ final class Engine(
   /** Reconcile (an interrupted run is paused, not failed), re-enqueue queued runs, start the workers. Idempotent.
     * Returns how many runs were paused as interrupted.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start()(using WritePermit)(using Creator.New): Int =
     val (paused, queued) = reconcile()
     logPruned(pruneTrace(force = Engine.PruneTraceForce(true)))
@@ -282,6 +298,7 @@ final class Engine(
   /** As [[reconcile]], leaving the runs `except` be: after a restore none (a run still running here is fenced off and
     * cannot go on with the restored rows).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def reconcile(except: List[Run.Id])(using WritePermit): (RowCount, Vector[Run.Id]) =
     // a run this engine is running is not interrupted, and one it holds queued is not queued twice: a
     // config reload that swapped back to its database must leave them be (docs/research-plugins.md §3.6)
@@ -309,6 +326,7 @@ final class Engine(
   /** The thread that resumes runs paused for an allowance; a `var` for the same reason as [[scope]]. */
   private var waker: Option[Thread] = None
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resumer()(using Creator.New): Unit =
     // the stall check shares this loop: at least once a minute
     val every = math.min(60, math.max(5, cfg.allowanceCheckSeconds.value)).toLong * 1000L
@@ -352,6 +370,7 @@ final class Engine(
         Paused(id, pipeline, error, at, if byItself then Actor.Agents else Actor.Person)
       }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resumeFreed(now: java.time.Instant)(using WritePermit)(using Creator.New): List[Run.Id] =
     agents.jobRuns
       .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
@@ -411,6 +430,7 @@ final class Engine(
     * (another worker, a concurrent cancel). `resumeAt` is when a run paused for an allowance may go on; every
     * transition sets it (None clears it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def transition(
       id: Run.Id,
       from: RunState,
@@ -438,6 +458,7 @@ final class Engine(
   def submit(id: Run.Id)(using Creator.New): Unit =
     queue.put(Queued(id, agents.pins.carry(agents.workers.unit(executeInItsTrace(id))), era))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pool(): Unit =
     try
       ox.supervised {
@@ -471,6 +492,8 @@ final class Engine(
     TraceScope.resumed(agents.jobRuns.trace(id))(execute(id))
 
   /** Run one queued run to its next resting state. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[histmersion] def execute(id: Run.Id)(using WritePermit)(using Creator.New): Unit =
     agents.runs.get(id) match
       case None      => ()
@@ -563,6 +586,7 @@ final class Engine(
     * plan floor resumes by itself, so it leaves none (a batch of imports would otherwise leave one per source each time
     * a plan dips below its floor).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def notify(run: RunInfo, settled: Either[Halt, String])(using WritePermit): Unit =
     val scheduled = run.origin.contains(Origin.Scheduler.wire)
     val ingested = run.origin.contains(Origin.FromIngest.wire)
@@ -603,6 +627,8 @@ final class Engine(
       case _ => Right(())
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[histmersion] def checkBudget(id: Run.Id): Either[Halt, Unit] =
     agents.runs.get(id) match
       case None    => Left(Halt.Fail(Problem.Run.Stopped(Problem.Run.Stop.Vanished)))
@@ -660,6 +686,7 @@ final class Engine(
           )
         else Right(())
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[histmersion] def budgetInterceptor(id: Run.Id, billing: Billing): RunBudget =
     val r = agents.runs.get(id)
     val weight = Usage.CacheReadWeight(cfg.budgets.cacheReadWeight.value)
@@ -675,9 +702,11 @@ final class Engine(
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def conflict(m: Problem) =
     Api.Error(m, Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pause(id: Run.Id)(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(RunState.Wire(r.status.value)) match
@@ -697,6 +726,7 @@ final class Engine(
           Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Pause)))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resume(
       id: Run.Id,
       budgetUsd: Option[AgentsControllers.BudgetUsd],
@@ -717,6 +747,7 @@ final class Engine(
           .flatMap { _ => submit(id); get(id) }
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cancel(id: Run.Id)(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       RunState.parse(RunState.Wire(r.status.value)) match
@@ -739,6 +770,7 @@ final class Engine(
           Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Cancel)))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def get(id: Run.Id): Either[Api.Error, RunInfo] =
     agents.runs
       .get(id)
@@ -791,11 +823,13 @@ object Engine:
   /** The tool-loop turns of one step: its agent's `max-turns`, never the global `agents.step.max-iterations` (which
     * once capped a reviewer meant for 20 lookups at 6).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stepTurns(agent: AgentDef): AgentDef.MaxTurns = AgentDef.MaxTurns(math.max(1, agent.maxTurns.value))
 
   /** [[stepTurns]], unless the pipeline sized this one call itself (`review-article`'s fixer gets more turns the more
     * findings it has to settle).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stepTurns(agent: AgentDef, overridden: Option[AgentDef.MaxTurns]): AgentDef.MaxTurns =
     overridden.fold(stepTurns(agent))(t => AgentDef.MaxTurns(math.max(1, t.value)))
 
@@ -805,6 +839,7 @@ object Engine:
   /** The setting that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline passed the step its own
     * cap (the fixer's and the writer's).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ceiling(overridden: CapKeyOverridden): Problem.Run.Ceiling =
     if overridden.value then Problem.Run.Ceiling.StepOwn else Problem.Run.Ceiling.StepMaxTokens
 
@@ -815,6 +850,7 @@ object Engine:
     * then (a failed cold-reader attempt recorded 16384 output tokens: four 4096-token tries), and the same cap fails
     * the same way again, so this is a CONFIGURATION error: the step stops at once rather than spending its retries.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def outputCapHit[Out](res: AgentResult[Either[AgentFailure, Out]]): Option[OutputCapLimit] =
     val texts = (res.finishReason match
       case FinishReason.Error(m) => List(m)
@@ -843,6 +879,7 @@ object Engine:
     * error — WHERE in the answer (the JSON path) and WHAT (missing field, wrong type) — then the start of the answer;
     * or, for no answer at all, how the call ended.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def answerProblem(f: AgentFailure, finish: FinishReason): Problem =
     def began(raw: String): Option[External.ModelSaid] =
       Option(raw.trim).filter(_.nonEmpty).map(r => External.ModelSaid(r.take(AnswerExcerpt)))

@@ -18,10 +18,12 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.Years
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The tiled layers' pure half: a tile feature read back as the app's records (an item, a cell), the playback buckets,
   * the tile URL template, and what a cell counts for in a bubble.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TiledLayersSuite extends munit.FunSuite:
 
   private def feature(lat: LatLon.Lat, lon: LatLon.Lon, props: (String, js.Any)*): TilePointFeature =

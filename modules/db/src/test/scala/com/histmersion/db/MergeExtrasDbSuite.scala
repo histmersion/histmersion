@@ -64,6 +64,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),
@@ -71,16 +72,23 @@ import com.histmersion.util.database.TestCreators.given
   * `merge list | show | ledger` read back. Two databases of their own per case, as `MergeSuite`. Skipped without
   * HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class MergeExtrasDbSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val merge = cfg.merge.transformInto[MergeSettings]
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private val tmp = Files.createTempDirectory("histmersion-merge-extras")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val importChunkChars = ImportOptions.ChunkChars(cfg.limits.chunkChars.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val importToleranceKm = ImportOptions.ToleranceKm(cfg.places.pointToleranceKm.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha256Of(bundle: Path): Sha256 =
     Sha256.assume(BundleFormat.sha256Hex(Files.readAllBytes(bundle)).value)
 
@@ -100,6 +108,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_mx", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -153,6 +162,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyIn(
       ds: DataSource,
       bundle: Path,
@@ -179,10 +189,13 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def count(ds: DataSource, q: String): Int = connect(ds)(sql"${SqlLiteral(q)}".query[Int].run().head)
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def text(ds: DataSource, q: String): Option[String] =
     connect(ds)(sql"${SqlLiteral(q)}".query[Option[String]].run().headOption.flatten)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def site(id: String, label: Place.Label, lon: Double, lat: Double): Place.Input =
     Place.Input(
       Place(

@@ -16,6 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Years
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the place, the
   * period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags and the publication
@@ -25,6 +26,7 @@ import com.histmersion.api.Years
   */
 object FilterBar:
   type FieldName = FieldName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FieldName extends Newtype[String, Pure]
   type StorageKey = StorageKey.T
   object StorageKey extends Newtype[String, Pure]
@@ -38,6 +40,7 @@ object FilterBar:
   type Folded = Folded.T
   object Folded extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private case class ChipField(
       state: Field[List[String]],
       facet: ChipInput.Config.Field,
@@ -87,24 +90,37 @@ object FilterBar:
   /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set (from a shared
     * link, say), so nothing that filters is hidden.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def moreOpenInitially(stored: Option[StoredText], someMoreSet: Boolean, narrow: Boolean = false): Boolean =
     stored.exists(_.value == "1") || someMoreSet
 
   /** Pure: is the panel folded at start-up? Only when this browser left it folded. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def foldedInitially(stored: Option[StoredText]): Boolean = stored.exists(_.value == "1")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stored(key: StorageKey): Option[StoredText] =
     try Option(dom.window.localStorage.getItem(key.value)).map(StoredText(_))
     catch case _: Exception => None
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def keep(key: StorageKey, on: Boolean): Unit =
     try dom.window.localStorage.setItem(key.value, if on then "1" else "0")
     catch case _: Exception => ()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setFolded(on: Folded): Unit =
     folded.set(on)
     keep(foldedKey, on.value)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chipInput(c: ChipField, config: UiConfig): HtmlElement =
     val chipConfig = ChipInput.Config(
       field = c.facet,
@@ -135,6 +151,8 @@ object FilterBar:
     div(cls := "f", label(c.label.value), ChipInput.ofStrings(chipConfig, c.state.signal))
 
   /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodField(config: UiConfig): HtmlElement =
     def end(
         name: FieldName,
@@ -187,6 +205,9 @@ object FilterBar:
   /** `top` and `foot`: what a page that lists by these filters adds above and under them (Library's "My library" and
     * "Show these on the map").
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def init(
       config: UiConfig,
       top: Modifier[HtmlElement] = emptyMod,

@@ -28,6 +28,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The checked auto approvals (docs/research-process-managers.md "As built: the autopilot"): on every managers' tick,
   * each OPEN approval of the kinds a person used to decide by hand — an `article-plan` (propose-articles), a
@@ -39,6 +40,8 @@ import com.histmersion.domain.Creator
   * line — so a person can audit (and undo) every one. Left (a cap reached, a plan too large for the cap), it waits for
   * a person or the next day; the manager says so once.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class AutoApprovals(
     ds: DataSource,
     cfg: => AgentsConfig,
@@ -52,10 +55,12 @@ final class AutoApprovals(
   private val PerTick = 50
 
   /** The run that opened an approval, and the manager that dispatched that run. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runOf(a: ApprovalInfo): Option[RunInfo] =
     a.runId.flatMap(id => Run.Id.option(id.value)).flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&
@@ -70,6 +75,7 @@ final class AutoApprovals(
     if auto then Actor.Agents else Actor.Person
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sweep(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a
     // person's priority), then the oldest goals; approvals about no known goal last, oldest first
@@ -121,6 +127,7 @@ final class AutoApprovals(
       manager: Option[Managers.ManagerInfo]
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decide(
       a: ApprovalInfo,
       run: Option[RunInfo],
@@ -184,6 +191,7 @@ final class AutoApprovals(
   /** Today's cap of automatic goal-plan approvals: `goal-plans-per-day`, scaled to the open plans when
     * `goal-plans-backlog-share` is above 0 (at most `goal-plans-ceiling`).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalPlanCap: AutopilotPolicy.Cap =
     val c = cfg.approvals.auto
     AutopilotPolicy.scaledCap(
@@ -194,6 +202,7 @@ final class AutoApprovals(
     )
 
   /** Today's cap of automatic publishes, scaled the same way to the open drafts. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def publishCap: ApprovalChecks.PublishCap =
     val c = cfg.approvals.auto
     ApprovalChecks.PublishCap(
@@ -215,6 +224,7 @@ final class AutoApprovals(
       .getOrElse(judgeOwn(a, now))
 
   /** The approvals the engine's own workflows open (a goal's plan). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def judgeOwn(a: ApprovalInfo, now: Instant): Verdict =
     val day = ManagerPolicy.dayStart(now)
     val caps = cfg.approvals.auto
@@ -259,6 +269,7 @@ final class AutoApprovals(
               case _ => Verdict.Leave(AutopilotPolicy.Rationale("the approval names no valid goal"))
       case _ => Verdict.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String] =
     agents.runs
       .steps(Job.Id.assume(run.value), AgentRepo.OutputChars(100000))
@@ -267,6 +278,7 @@ final class AutoApprovals(
       .flatMap(_.output.map(_.value))
 
   def config: AgentsConfig = cfg
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def slugExists(slug: ApprovalChecks.Slug): Boolean = Slug.option(slug.value).exists(agents.host.articleExists)
   def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore
     .autoApprovedSince(io.scalaland.chimney.Transformer.derive[Approval.Kind, ApprovalKind].transform(kind), since)

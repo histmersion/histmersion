@@ -3,12 +3,14 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** What one tool call of an agent step may return (every runtime: the agent MCP endpoint a run token reaches and the
   * API tool loop). Every later turn of the step re-sends the result, so a long one is cut at a line with a trailer
   * saying how to read on: `resultMaxChars` for any result, `bodyChars` the body slice a `get_source section=body`
   * without `chars` reads, `queryMaxRows` the rows of a `query`.
   */
+@movesTo(FeaturePlace.AutomationAgents)
 final case class AgentToolsConfig(
     resultMaxChars: AgentToolsConfig.ResultMaxChars,
     bodyChars: AgentToolsConfig.BodyChars,

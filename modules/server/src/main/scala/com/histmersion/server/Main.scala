@@ -13,10 +13,14 @@ import com.histmersion.util.console.Console
 import com.histmersion.util.access.AccessPolicy
 import com.histmersion.util.database.InstanceLock
 import com.histmersion.util.problem.Raised
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there
   * is one, then [[Composition]] and the listener.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@movesTo(FeaturePlace.Server)
 @main def histmersionServer(args: String*): Unit =
   // the command line first: an argument the server does not know ends it HERE, before the config, the
   // bundled runtime or the database is touched. The usage and the self-check report are the binary's

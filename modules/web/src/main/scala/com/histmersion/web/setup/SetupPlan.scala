@@ -6,12 +6,16 @@ import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.settings.ConfigEdit
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.settings.StartPlace
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The settings and the downloads a setup's choices come to. Pure. */
 object SetupPlan:
 
   /** An e-mail address that can be one (empty: none, which is allowed). */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def email(s: SetupChoices.Email): Either[Problem, SetupChoices.Email] =
     val t = s.value.trim
     if t.isEmpty || t.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+") then Right(SetupChoices.Email(t))
@@ -20,6 +24,8 @@ object SetupPlan:
   /** The settings to write: what differs from `before`, and the mark that the setup was done. A change the file already
     * holds is skipped by the server, so writing it again does no harm.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def changes(c: SetupChoices, before: SetupChoices): List[(ConfigEdit.Change.Key, Option[ConfigEdit.Change.Value])] =
     val finders = c.finders.toList.sortBy(_._1.value).collect {
       case (id, on) if !before.finders.get(id).contains(on) =>
@@ -42,6 +48,8 @@ object SetupPlan:
       )
     ).flatten ++ finders ++ start :+ (ConfigEdit.Change.Key("setup.completed") -> Some(ConfigEdit.Change.Value("true")))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def downloads(c: SetupChoices): List[SetupDownload] =
     c.area.map(SetupDownload.Map(_)).toList ++
       Option.when(c.boundaries.value)(SetupDownload.Boundaries) ++
@@ -50,5 +58,7 @@ object SetupPlan:
       Option.when(c.morePlaces.value)(SetupDownload.MorePlaces)
 
   /** About how much the chosen map area downloads, in GB. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mapGb(c: SetupChoices, areas: List[MapArea]): MapArea.ApproxGb =
     c.area.flatMap(a => areas.find(_.bbox.value == a.value)).fold(MapArea.ApproxGb(0.0))(_.approxGb)

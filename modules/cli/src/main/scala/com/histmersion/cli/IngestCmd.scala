@@ -17,6 +17,8 @@ import com.histmersion.api.SpatialHierarchyResult.Job
 import com.histmersion.util.console.Console
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.Paging
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
   *
@@ -25,8 +27,10 @@ import com.histmersion.api.Paging
   * (fetch upstream, then the same job), and [[AcquireCmd.ingest]] is the single place that dispatches between them.
   * Everything else lives here.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion ingest` arguments")
 object IngestCmd:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pollJob(c: Client, id: Job.Id, waited: Int)(using console: Console): Either[Cli.Error, Unit] =
     followLimits.flatMap(limits =>
       JobFollow
@@ -38,6 +42,9 @@ object IngestCmd:
     JobFollow.Limits.of(Settings.app.cli.followTimeoutSeconds).left.map(Cli.Error(_))
 
   /** Upload one document and (unless told to return) follow its OCR job to completion. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def upload(using
       console: Console
   )(
@@ -104,6 +111,7 @@ object IngestCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Reocr(ck: String, quality: Boolean, following: Cli.Following)
     case Assets(ck: String)
     case Jobs(
@@ -119,6 +127,7 @@ object IngestCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Reocr(ck, quality, following) =>

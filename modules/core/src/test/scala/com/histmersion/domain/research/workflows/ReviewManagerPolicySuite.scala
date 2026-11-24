@@ -26,10 +26,13 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): every stop rule over the review ledger,
   * the settings over research's defaults, the selection and when an article is stale.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ReviewManagerPolicySuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-15T12:00:00Z")
@@ -48,6 +51,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     maxBackoffMinutes = ReviewSettings.MaxBackoffMinutes(360)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def f(
       id: Finding.Id,
       r: Reviewer,

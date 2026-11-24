@@ -10,6 +10,7 @@ import org.scalacheck.Gen
 
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.database.Jsonb
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How [[StoredShapesSuite]] writes and reads a stored document: through the store's own functions (`Jsonb`,
   * `BundleFormat`) and the codecs they take.
@@ -17,6 +18,7 @@ import com.histmersion.util.database.Jsonb
 object StoredCodecs:
   final class Codec[A](val write: (A, Boolean) => String, val decode: String => Either[String, A])
   object Codec:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given [A: JsonValueCodec] => Codec[A] = Codec(
       (a, drop) => s"${Jsonb.write(a, if drop then Jsonb.DropNulls(true) else Jsonb.DropNulls(false))}",
       t => Jsonb.decode[A](Jsonb.JsonText(s"$t")).left.map(e => s"$e")
@@ -28,6 +30,7 @@ object StoredCodecs:
       val decode: (String, Boolean) => Either[String, A]
   )
   object BundleCodec:
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     given [A: JsonValueCodec] => BundleCodec[A] = BundleCodec(
       a => BundleFormat.stamp(a).line,
       a => BundleFormat.line(a),

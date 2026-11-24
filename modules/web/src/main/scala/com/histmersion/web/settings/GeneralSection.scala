@@ -9,11 +9,14 @@ import com.histmersion.web.map.MapMotion
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › General: the theme and the map's motion (this browser's own), and where the map opens (the settings
   * file's `ui.map-start`, for every browser).
   */
 object GeneralSection:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig): HtmlElement =
     div(
       cls := "settings-section",
@@ -45,6 +48,7 @@ object GeneralSection:
       startCard(ui)
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def themeName(c: ThemeChoice): String = c match
     case ThemeChoice.System => "Follow the system"
     case ThemeChoice.Light  => "Light"
@@ -80,6 +84,8 @@ object GeneralSection:
     )
 
   /** Where the map opens, saved into the settings file. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def startCard(ui: UiConfig): HtmlElement =
     val choice = Var(ui.mapStart)
     val saved = Var(ui.mapStart)

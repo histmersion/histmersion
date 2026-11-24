@@ -4,6 +4,7 @@ package upstreams.identifiers
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.ArxivId
+import com.histmersion.lint.{LintRule, tolerated}
 object Identifiers:
   type ArxivText = ArxivText.T
   object ArxivText extends Newtype[String, Pure]
@@ -15,6 +16,8 @@ object Identifiers:
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
   /** DOIs are case-insensitive, so they are kept lower-case. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def doi(raw: DoiText): Option[Doi] =
     val s = Option(raw)
       .map(_.value)
@@ -37,6 +40,8 @@ object Identifiers:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def arxiv(raw: ArxivText): Option[ArxivId] =
     Option(raw).map((_).value.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLowerCase match

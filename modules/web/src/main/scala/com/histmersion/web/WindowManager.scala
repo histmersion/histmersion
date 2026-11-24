@@ -12,8 +12,10 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Html
+import com.histmersion.lint.{LintRule, tolerated}
 
 object WindowManager:
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private case class WinState(
       id: Int,
       key: WindowKey,
@@ -50,6 +52,7 @@ object WindowManager:
   private var resizeOw = 0.0
   private var resizeOh = 0.0
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def element: HtmlElement =
     div(
       cls := "wm-container",
@@ -74,11 +77,14 @@ object WindowManager:
     )
 
   /** Open `key`'s window — or, for a window of the old toolbar, show the page that took it over. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def open(key: WindowKey): Unit =
     Route.ofWindow(key) match
       case Some(page) => Router.go(page)
       case None       => openWindow(key)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openWindow(key: WindowKey): Unit =
     shown.get(key) match
       case Some(wid) =>
@@ -135,6 +141,7 @@ object WindowManager:
   /** The title of `key`'s window, once its content knows a better one than [[WindowKey.initialTitle]]: an item's own
     * title, never its identifier (which the title's tooltip keeps).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def retitle(key: WindowKey, title: UiLabels.Text): Unit =
     Route.ofItem(key).foreach(Router.retitle(_, title))
     shown
@@ -144,9 +151,11 @@ object WindowManager:
       )
 
   /** Close the window showing `key`, if one is open. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def close(key: WindowKey): Unit = shown.get(key).foreach(closeWin(_))
 
   /** Fetch a page window's content again — after an edit changed what it shows. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def reload(key: WindowKey): Unit = windows.now().find(_.key == key).foreach(w => loadContent(w.id, key))
 
   def closeAll(): Unit =
@@ -160,6 +169,7 @@ object WindowManager:
   /** Only the server-rendered pages load here; every other window's content is a Laminar component (see
     * [[renderWindow]]) that mounts and unmounts with its window.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadContent(wid: Int, key: WindowKey, extraParams: Map[String, String] = Map.empty): Unit =
     key match
       case WindowKey.Source(_) | WindowKey.Article(_) =>
@@ -181,6 +191,7 @@ object WindowManager:
   private val contents = scala.collection.mutable.Map.empty[Int, Request[String]]
 
   /** A server page fetched for window `wid`, through the allow-list, into its content root. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showContent(wid: Int, key: WindowKey, page: String): Unit =
     val contentEl = document.getElementById(s"wm-content-$wid")
     if contentEl != null then
@@ -203,6 +214,7 @@ object WindowManager:
   /** The web UI's own filter links (`/#tag=x`, a chip on a source page) — pure: the hash to MERGE, or `None` for any
     * other href.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def filterHash(href: String): Option[UiState.UrlHash] =
     Option(href)
       .map(_.trim)
@@ -249,6 +261,7 @@ object WindowManager:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def buildUrl(key: WindowKey, fragment: Boolean, extra: Map[String, String] = Map.empty): String =
     val base = key.pageHref.getOrElse("/")
     val params = new dom.URLSearchParams("")
@@ -260,6 +273,7 @@ object WindowManager:
   /** The actions of a source window: its citation graph, and the metadata editor — which asks for the API key first
     * when the server wants one and none is held.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def sourceActions(ck: WindowKey.Source.Citekey): HtmlElement =
     div(
       cls := "wm-actions",
@@ -302,6 +316,7 @@ object WindowManager:
   // ── Escape ──────────────────────────────────────────────────────────────────────────────────────
 
   /** An open window as the Escape key sees it. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private[web] case class Stacked(id: Int, z: Int, minimized: Boolean)
 
   /** The window Escape closes: the one holding the focus, else the topmost one showing; never a minimized one. Pure.
@@ -313,6 +328,7 @@ object WindowManager:
   /** Whether an Escape press is the window manager's: a bare Escape that nothing took first (an open dropdown, the
     * lightbox, a drawer call `preventDefault`), not typed into a field, and with no suggestion list open. Pure.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private[web] def escapeIsOurs(
       key: String,
       modified: Boolean,
@@ -356,6 +372,7 @@ object WindowManager:
     * every close ([[UiState.open]]). Installed once, on `window`: every document-level handler (a dropdown, the
     * lightbox, a drawer, the period presets) has had the key first and claims it with `preventDefault`.
     */
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def installKeys(): Unit =
     dom.window.addEventListener(
       "keydown",
@@ -372,6 +389,8 @@ object WindowManager:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderWindow(initial: WinState, wSignal: Signal[WinState]): HtmlElement =
     val wid = initial.id
     div(

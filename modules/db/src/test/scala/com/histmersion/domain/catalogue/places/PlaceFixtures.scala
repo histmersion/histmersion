@@ -21,6 +21,7 @@ import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The places' repository as the db suites seed and read it: each call on a connection (a write in a transaction) of
   * the suite's own `ds`, and the SQL the suites assert on.
@@ -32,7 +33,11 @@ object PlaceFixtures:
   export FindingPlaceRepo.{placeholderSql, DefaultPlaceholderAreaShare, DefaultPlaceholderMin}
   export Geocoder.{apply as applyMoves, candidates, moves, place, placements, resolve, tierSql}
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def findingTolerance(t: PlacesConfig.PointToleranceKm) = FindingPlacement.Implementation.ToleranceKm(t.value)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def areaTolerance(t: PlacesConfig.PointToleranceKm) = PointAreaRepo.Settings.ToleranceKm(t.value)
 
   def upsertPlaces(ds: DataSource, batch: List[Place.Input], dataset: Dataset = Dataset.Seed): Place.ImportResult =
@@ -68,6 +73,7 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): Vector[Place.Summary] = connect(ds)(PlaceRepo.children(id, asOf, limit, modernFrom))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hierarchy(
       ds: DataSource,
       asOf: Option[SignedYear],
@@ -78,6 +84,7 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): Vector[Place.TreeRow] = connect(ds)(PlaceRepo.hierarchy(asOf, root, maxDepth, limit, depthCap, modernFrom))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placesOf(ds: DataSource, findingId: Finding.Id): Vector[Place.Summary] =
     connect(ds)(PlaceRepo.placesOf(EventMatcher.NearFinding.Id(findingId.value)))
 
@@ -97,6 +104,7 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): PlaceRepo.GeoJson = connect(ds)(PlaceRepo.geoJsonAt(kind, time, limit, modernFrom))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def scopeFor(ds: DataSource, values: List[Filter.Places], period: Option[Period]): PlaceScope =
     connect(ds)(PlaceRepo.scopeFor(values.map(v => PlaceRepo.ScopeForValues(v.value)), period))
 
@@ -145,6 +153,7 @@ object PlaceFixtures:
   def rebuildFindingPlaces(ds: DataSource, toleranceKm: PlacesConfig.PointToleranceKm): Place.RebuildResult =
     transact(ds)(FindingPlaceRepo.rebuildFindingPlaces(findingTolerance(toleranceKm)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def materialisePlaces(
       ds: DataSource,
       placeIds: List[domain.catalogue.Place.Id],
@@ -155,6 +164,7 @@ object PlaceFixtures:
     )
 
   /** The same, on the suite's own transaction. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def materialisePlacesIn(
       placeIds: List[domain.catalogue.Place.Id],
       toleranceKm: PlacesConfig.PointToleranceKm
@@ -165,6 +175,7 @@ object PlaceFixtures:
     connect(ds)(FindingPlaceRepo.unresolvedPlaceholdersIn())
 
   /** The places of the gazetteer slice the rows of a tree hang off. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[RegionNode], List[Place.Relation]) =
     connect(ds)(
       TreeRepo.gazetteer(
@@ -175,6 +186,7 @@ object PlaceFixtures:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setOverride(
       ds: DataSource,
       id: domain.catalogue.Place.Id,
@@ -183,6 +195,7 @@ object PlaceFixtures:
   ): Either[Api.Error, Place.OverrideChanged] =
     transact(ds)(PlaceOverrideRepo.set(BPlaceRow.Id(id.value), edit, findingTolerance(toleranceKm)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def merge(
       ds: DataSource,
       from: domain.catalogue.Place.Id,
@@ -193,6 +206,7 @@ object PlaceFixtures:
       PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), findingTolerance(toleranceKm))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def remove(
       ds: DataSource,
       id: domain.catalogue.Place.Id,
@@ -200,6 +214,7 @@ object PlaceFixtures:
   ): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def overrides(ds: DataSource, id: Option[domain.catalogue.Place.Id]): List[Place.Override] =
     connect(ds)(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
 

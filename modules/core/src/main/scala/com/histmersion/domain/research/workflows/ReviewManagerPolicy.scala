@@ -17,12 +17,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.ManagerPolicy.Item
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): its settings over research's defaults,
   * what to do with a review item after its run settled — the stop rules over the article's review ledger —, the
   * selection that refills its queue and when a converged article is due again. No I/O: the kind reads the facts and the
   * supervisor writes the result.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object ReviewManagerPolicy:
   type OpenPairs = OpenPairs.T
   object OpenPairs extends Newtype[Int, Pure]
@@ -32,6 +34,8 @@ object ReviewManagerPolicy:
   object FilterHits extends Newtype[Int, Pure]
 
   /** A review manager's settings in effect: its saved config over research's defaults (`d`) and the engine's (`m`). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings(c: ManagerConfig, d: ReviewManagerDefaults, m: ManagerDefaults): ReviewSettings =
     val maxRuns = math.max(0, c.maxRuns.fold(d.maxRuns.value)(_.value))
     ReviewSettings(
@@ -52,6 +56,8 @@ object ReviewManagerPolicy:
     )
 
   /** The defaults as a config (what `effective` shows for an unset key). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaults(d: ReviewManagerDefaults, m: ManagerDefaults): ManagerConfig =
     ManagerConfig(
       maxRuns = Some(ManagerConfig.MaxRuns(d.maxRuns.value)),
@@ -95,6 +101,7 @@ object ReviewManagerPolicy:
     object OpenPairs extends Newtype[Int, Pure]
 
     /** The facts of `l`, with the checklist's open pairs counted by the caller. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(l: Ledger, openPairs: Option[OpenPairs] = None): ReviewFacts =
       val majors = l.openMajors
       ReviewFacts(
@@ -108,6 +115,7 @@ object ReviewManagerPolicy:
   /** The open MAJORs over the last `n` runs went from `before` (when the window's first run was dispatched) to `after`
     * without going down.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def noProgress(history: List[RunMark], n: ReviewSettings.NoProgressRuns): Boolean =
     val window = history.takeRight(n.value)
     window.size >= n.value && {
@@ -119,6 +127,7 @@ object ReviewManagerPolicy:
     * window's first run to `pairsAfter` of its last. Unknown counts (a run evaluated before the checklist existed) are
     * no evidence of a stall.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pairsStalled(history: List[RunMark], n: ReviewSettings.NoProgressRuns): Boolean =
     val window = history.takeRight(n.value)
     window.size >= n.value && window.head.pairsBefore
@@ -135,6 +144,8 @@ object ReviewManagerPolicy:
     * runs are finishing a closed list, so neither churn nor the open-MAJOR count stops the item (a missing-critique
     * MAJOR per open pair keeps that count flat by design); `maxRunsPerArticle` still does.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def evaluateReview(
       s: ReviewSettings,
       slug: Slug,
@@ -242,6 +253,7 @@ object ReviewManagerPolicy:
       why: Rationale
   ):
     /** The item's outcome when a stale article is selected again: why. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def outcome: ManagerItem.Outcome = ManagerItem.Outcome(why.said)
 
   object Pick:
@@ -260,6 +272,7 @@ object ReviewManagerPolicy:
       case NoFilter
 
       /** The account as the manager's event and its item's outcome show it. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def said: String = this match
         case OpenMajors(majors) => counted(majors.value, "open MAJOR").value
         case NeverReviewed      => "never reviewed"
@@ -275,6 +288,7 @@ object ReviewManagerPolicy:
     case Old(days: ReviewSettings.StaleAfterDays)
 
     /** The reason as the selection shows it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String = this match
       case Gained(converged, now) => s"its filter gained ${counted(now.value - converged.value, "source")}"
       case Old(days)              => s"last converged over $days days ago"
@@ -291,6 +305,7 @@ object ReviewManagerPolicy:
     * article that records no coverage filter (`hasFilter`) and never had an infer-filter item (`inferredBefore`) gets
     * one too, at its review's priority: the review waits for it ([[waitsFor]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def select(
       majors: List[(Slug, ReviewFacts.OpenMajors)],
       unreviewed: List[Slug],
@@ -343,6 +358,7 @@ object ReviewManagerPolicy:
   /** Why a converged article is due again, if it is: its review converged more than `days` days ago, or its filter
     * returns more sources now (`hitsNow`) than when it converged (`hitsThen`). `days` 0 = never.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def staleWhy(
       convergedAt: Instant,
       now: Instant,

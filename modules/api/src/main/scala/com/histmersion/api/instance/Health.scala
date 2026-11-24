@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class Health(
     status: Health.Status,
@@ -23,6 +24,7 @@ object Health:
   type Db = Db.T
   object Db extends Newtype[String, Pure]
   type SchemaVersion = SchemaVersion.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SchemaVersion extends Newtype[String, Pure]
   type Converter = Converter.T
   object Converter extends Newtype[String, Pure]

@@ -26,6 +26,7 @@ import java.time.Clock
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the
   * parts of each catalogue read.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait EventImportService:
   /** Every stored event as the merge sees it, in id order. */
   def stored(): List[StoredEvent]
@@ -78,6 +79,7 @@ object EventImportService:
   /** The same rules over the shared in-memory state (no place is stored: an event's anchor is its own point). */
   final class InMemory(state: AtomicReference[CatalogueState]) extends EventImportService:
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def stored(): List[StoredEvent] =
       val s = state.get
       s.events
@@ -101,6 +103,7 @@ object EventImportService:
     private def merged(names: List[BEventRow.Names], more: List[BEventRow.Names]): List[BEventRow.Names] =
       (names ++ more).distinct.sorted
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def keyOrder(r: CatalogRecord): (String, String) = (r.key._1.value, r.key._2.value)
 
     private def fill(
@@ -117,6 +120,7 @@ object EventImportService:
           )
         )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def refresh(
         s: CatalogueState,
         id: Event.Id,
@@ -193,6 +197,7 @@ object EventImportService:
         })
       (refreshed, Corrections.counts(outcomes.map(_._2)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def inserted(
         s: CatalogueState,
         id: Event.Id,
@@ -228,6 +233,7 @@ object EventImportService:
     /** One event's placed records written: the state after, whether the event was created, and what became of its
       * corrections when it was refreshed.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def saveOne(
         s: CatalogueState,
         eventId: Event.Id,
@@ -266,6 +272,7 @@ object EventImportService:
         case Nil       => acc
       (kept(recs, written), created, refreshed)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved =
       val groups = placed.groupBy(_._2.eventId).toList.sortBy(_._1.value)
       @tailrec def loop(
@@ -298,6 +305,7 @@ object EventImportService:
       }
       answer.get
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def records(
         provider: Option[CatalogRecord.Provider]
     ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
@@ -313,6 +321,7 @@ object EventImportService:
         )
       (rows, RowCount(0))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def storedKinds(
         provider: CatalogRecord.Provider
     ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
@@ -321,12 +330,14 @@ object EventImportService:
           r.key -> EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))
       }.toMap
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def partsDone(provider: CatalogRecord.Provider): Set[EventImportRepo.PartName] =
       state.get.importParts
         .getOrElse(CatalogueState.ImportPartsKey(provider.value), Map.empty)
         .keySet
         .map(k => EventImportRepo.PartName(k.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount)(using
         WritePermit
     ): Unit =
@@ -338,5 +349,6 @@ object EventImportService:
         )
       )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def clearParts(provider: CatalogRecord.Provider)(using WritePermit): Unit =
       val _ = state.updateAndGet(_.modify(_.importParts).using(_ - CatalogueState.ImportPartsKey(provider.value)))

@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `licence` and `sourceUrl` are `None` from an older server. */
 final case class BuildStamp(
@@ -32,4 +33,5 @@ object BuildStamp:
   type Licence = Licence.T
   object Licence extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SourceUrl extends Newtype[String, Pure]

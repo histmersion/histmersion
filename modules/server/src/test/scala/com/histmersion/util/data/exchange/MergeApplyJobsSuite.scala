@@ -13,10 +13,13 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A merge apply as a job: it answers once done within the wait, or as running; a second is refused while one runs; its
   * row keeps how it ended. Over the in-memory rows.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class MergeApplyJobsSuite extends munit.FunSuite:
 
   private val result =
@@ -27,9 +30,12 @@ class MergeApplyJobsSuite extends munit.FunSuite:
       MergeApplyResult.PlanHash("abc")
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sha(c: Char): Sha256 = Sha256.applyUnsafe(c.toString * 64)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plan(c: Char): MergeRow.PlanHash = MergeRow.PlanHash(c.toString * 64)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(jobs: MergeApplyJobs, id: MergeApplyJob.Job): Option[MergeApplyJob] =
     jobs.status(Job.Id.applyUnsafe(id.value))
 

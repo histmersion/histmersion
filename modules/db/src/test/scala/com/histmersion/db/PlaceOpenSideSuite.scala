@@ -14,6 +14,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A one-ended LPF timespan is stored OPEN (#1403): `[start,)` / `(,end]`, never the one known year — for the place,
   * its names and its relations. Against a real PostGIS (HISTMERSION_TEST_DB_URL).
@@ -23,6 +24,7 @@ class PlaceOpenSideSuite extends DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d

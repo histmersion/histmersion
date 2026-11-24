@@ -6,12 +6,15 @@ import com.histmersion.upstreams.jats.Jats
 
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A JATS article (`*.xml` whose root is `<article>` — PMC's full text, fetched when no PDF exists, #1523) is rendered
   * to Markdown here, by [[Jats]]: it is already text, so OCR would only lose its structure. Everything else goes to the
   * sidecar unchanged.
   */
 final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def convert(
       file: Blob,
       filename: ConverterClient.Filename,

@@ -10,12 +10,15 @@ import scala.concurrent.duration.*
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.LocalFiles
 import com.histmersion.plugin.Processes
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class OnePasswordPlugin extends Plugin:
   type Config = OnePasswordConfig
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val info =
     Plugin.Info(Plugin.Info.Id("1password"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[Problems, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes

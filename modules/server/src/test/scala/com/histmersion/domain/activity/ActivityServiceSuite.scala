@@ -19,6 +19,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.api.automation.Goal
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The activity list merges runs, jobs, worklog lines and a person's decisions into one time-ordered list: the same
   * answers from the in-memory service and from the database's (on a scratch database of its own, gated on
@@ -32,8 +33,10 @@ class ActivityServiceSuite extends DbSuite:
   /** What both services hold, by name: the rows of the store, and the keys the list gives them. */
   final private case class World(service: ActivityService, key: Map[String, Entry.Key])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(i: Instant): Entry.At = Entry.At(i.toString)
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def inMemory: World =
     val m = ActivityService.InMemory()
     val names = Map(
@@ -107,6 +110,7 @@ class ActivityServiceSuite extends DbSuite:
     World(m, names)
 
   private val testDb = TestDb.url
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("activity", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
@@ -126,6 +130,7 @@ class ActivityServiceSuite extends DbSuite:
       )
     )
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def seed(ds: DataSource): Unit =
     def t(i: Instant) = i.toString
     // the job's problems as the server stores them: a list of entries
@@ -170,6 +175,7 @@ class ActivityServiceSuite extends DbSuite:
   private def keysOf(w: World, q: ActivityQuery): List[Entry.Key] = w.service.page(q, now).entries.map(_.key)
   private def named(w: World, names: String*): List[Entry.Key] = names.toList.map(w.key)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spec(label: String, world: => World): Unit =
     lazy val w = world
 

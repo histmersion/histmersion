@@ -1,7 +1,10 @@
 package com.histmersion
 package config.edit
 
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 /** How a setting that holds a credential may be written into the config file. */
+@movesTo(FeaturePlace.UtilSettings)
 enum SecretRule derives CanEqual:
   /** Not a credential. */
   case NotSecret
@@ -21,12 +24,14 @@ object SecretRule:
 
   private val Names = Set("api-key", "password", "session", "service-account-token", "token", "secret")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def looksSecret(leaf: SettingKey.Segment): Boolean =
     Names(leaf.value) || leaf.value.endsWith("-api-key") || leaf.value.endsWith("-password") || leaf.value.endsWith(
       "-token"
     )
 
   /** The rule for `key`: a plugin's credential is a reference; any other is the value itself. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(key: SettingKey): SecretRule =
     if !looksSecret(key.leaf) then NotSecret
     else if key.within(SettingKey.applyUnsafe("histmersion.plugins")) then Reference

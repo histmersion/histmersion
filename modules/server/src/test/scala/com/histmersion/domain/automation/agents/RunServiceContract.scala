@@ -14,13 +14,19 @@ import java.time.Instant
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerLight
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the runs' reads and steps keep: a run's usage is its steps' sum; attempts, checkpoints and the trace in
   * their order; the lists and pages, their filters and facets.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class RunServiceContract extends EngineStoreSuite:
   private def r(s: EngineStores) = s.agentRuns
   private val started = Instant.parse("2026-10-31T10:00:00Z")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def step(
       seq: AgentRepo.StepRecord.Seq,
       attempt: AgentRepo.StepRecord.Attempt,
@@ -47,7 +53,9 @@ abstract class RunServiceContract extends EngineStoreSuite:
       Some(AgentRepo.StepRecord.FirstCallTokens(7L)),
       Some(AgentRepo.StepRecord.Turns(attempt.value))
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobOf(id: Run.Id): Job.Id = Job.Id.assume(id.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def move(s: EngineStores, id: Run.Id, from: RunRow.Status, to: RunRow.Status) =
     assert(s.runs.move(Job.Kind.assume(JobKind), id, from, to, None, None, None), s"$id $from → $to")
 

@@ -13,7 +13,9 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Approval
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AgentProposalsSuite extends munit.FunSuite:
 
   private val cks = Set(

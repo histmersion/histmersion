@@ -14,6 +14,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[IngestJobs]] backed by the OCR job queue.
   *
@@ -34,11 +35,13 @@ import com.histmersion.domain.Creator
   * With no file (metadata-only acquisition, or an OA fetch that found nothing) this degrades exactly to the skeleton
   * behaviour: a source to enrich and queue by hand, and no job.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spooled: FetchedCopy => Option[Upload])
     extends IngestJobs:
 
   private val skeleton = SkeletonIngest(sources)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enqueue(
       copy: Option[FetchedCopy],
       citekey: Citekey,
@@ -61,6 +64,8 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
         case Some(file) => convert(file, citekey, meta, base)
     yield out
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def convert(
       file: FetchedCopy,
       citekey: Citekey,

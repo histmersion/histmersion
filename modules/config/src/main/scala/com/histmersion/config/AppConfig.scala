@@ -7,7 +7,11 @@ import com.histmersion.util.log.LogConfig
 import org.ekrich.config.{ConfigFactory, ConfigResolveOptions}
 import hearth.kindlings.sconfigderivation.ConfigReader
 import hearth.kindlings.sconfigderivation.annotations.configKey
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Config, "reads the HOCON layers into the typed application config")
+@movesTo(FeaturePlace.Config)
 final case class AppConfig(
     server: ServerConfig,
     db: DbConfig,
@@ -118,6 +122,7 @@ object AppConfig:
     try withUser(ConfigLayers.reference, ConfigFactory.parseString(text), env, None)
     catch case e: org.ekrich.config.ConfigException => Left(ConfigLayers.unreadable(e, MergedSettings))
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def withUser(
       reference: org.ekrich.config.Config,
       user: org.ekrich.config.Config,

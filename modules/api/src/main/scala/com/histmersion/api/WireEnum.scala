@@ -5,8 +5,13 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import sttp.tapir.{Schema, Validator}
 
 import util.json.JsonCodec
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.Json, "encodes and decodes an enum as its wire string")
+@movesTo(FeaturePlace.UtilCommon)
 object WireEnum:
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def spelled[E](using values: WireEnumValues[E]): E => String = e => values.wire(e).value
 
   def codec[E <: reflect.Enum](using values: WireEnumValues[E]): JsonValueCodec[E] =

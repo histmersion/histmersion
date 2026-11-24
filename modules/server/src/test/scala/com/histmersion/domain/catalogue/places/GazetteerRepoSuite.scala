@@ -45,11 +45,13 @@ import com.histmersion.util.database.TestCreators
   * geocoder reading a dated name. Every fixture id is `pleiades_99900…`, `zzgaz…` or an authority id in the 99900000…
   * range, and the sources are `lpf:zzgaz…` or the `wikidata`/`geonames` keys with refs nothing else uses.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GazetteerRepoSuite extends DbSuite with db.Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -83,10 +85,12 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(lon: Longitude, lat: Latitude) = Some(
     GazGeometry.GeoJson(GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       own: ExternalId,
       label: GazRecord.Label,
@@ -115,6 +119,8 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
   /** `sweep = false` for `geonames`: GazetteerLoadSuite (another module, maybe running at the same time) holds rows of
     * that source, which a sweep would take.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def run(
       source: Gazetteer.SourceInfo.Key,
       version: Gazetteer.LoadCounts.Version,
@@ -135,6 +141,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
           )(_ + _)
       if sweep then c + s.sweep() else c
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seedPlace(): Unit =
     val r = PlaceFixtures.upsertPlaces(
       ds,

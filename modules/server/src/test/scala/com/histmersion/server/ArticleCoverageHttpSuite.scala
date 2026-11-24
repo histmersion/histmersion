@@ -24,12 +24,14 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
   * `GET /api/articles/{slug}/coverage`, the generated sections in `GET /api/articles/{slug}` (and so `article get`),
   * the `/article/{slug}` page, the export (and the import that drops them again), the `article_coverage` MCP tool, and
   * the 404 of an article that records no filter. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleCoverageHttpSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -61,6 +63,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
   private val Critic = Citekey("zzcov2022_critic")
   private val Outside = Citekey("zzcov2020_synoikism")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def source(
       url: String,
       ck: Citekey,
@@ -83,6 +86,7 @@ class ArticleCoverageHttpSuite extends DbSuite:
     connect(testPool(cfg.db)):
       sql"DELETE FROM sources WHERE citekey LIKE 'zzcov%'".update.run()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body =
     s"""# Tin
        |

@@ -17,6 +17,8 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Place, Year}
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.util.console.Console
 import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.
@@ -25,6 +27,7 @@ import com.histmersion.api.SpatialHierarchyResult
   * on `core` only), and each batch is re-rendered as Linked Places Format and POSTed, so a 5 MB Pleiades extract never
   * becomes one 5 MB request body and the user sees progress.
   */
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion places` arguments")
 object PlacesCmd:
 
   /** Config-driven defaults (no literals in code, plan §1.9); read on demand so `--help` never needs a config file to
@@ -32,13 +35,18 @@ object PlacesCmd:
     */
 
   private def cfg(using console: Console) = Settings.app.places
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def defaultBatch(using console: Console): Paging.Limit = Paging.Limit(cfg.importBatch.value)
   private def seedDir(using console: Console): PlacesConfig.SeedDir = cfg.seedDir
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def show(rows: List[Place.Hit], asOf: Option[Api.AggregateQuery.AsOf])(using console: Console): Unit =
     Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf.map(a => Year(a.value))))
 
   /** Read one LPF / GeoJSON file and upsert it, `batch` features per request. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[cli] def importFile(using
       console: Console
   )(
@@ -92,10 +100,12 @@ object PlacesCmd:
   /** `--dataset local|seed`: whose the places are (V052) — local ones travel in a bundle. */
 
   /** The seed set in import order — [[PlaceSeed.files]], shared with the server's first-run import. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def seedFiles(dir: Path): List[(Path, Option[Place.KindValue])] =
     PlaceSeed.files(entries(dir), entries).map((f, k) => f -> k.map(w => Place.KindValue(w.value)))
 
   /** What a directory on the host holds, as [[PlaceSeed]] orders it. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
     val st = java.nio.file.Files.list(dir)
     try
@@ -116,6 +126,8 @@ object PlacesCmd:
     * through the `~/bin` symlink), whose bundle ships `db/places`. Returns the directory picked and every candidate
     * tried, for the error message.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def resolveSeedDir(dir: PlacesConfig.SeedDir, cwd: Path, exe: Option[Path]): (Path, List[Path]) =
     val p = Path.of(dir.value)
     if p.isAbsolute then (p, List(p))
@@ -136,6 +148,8 @@ object PlacesCmd:
     */
 
   /** A places job started on the server (#1946): say so, and follow it unless told to return. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def started(c: Client, id: SpatialHierarchyResult.Job.Id, following: Cli.Following)(using
       console: Console
   ): Either[Cli.Error, Unit] =
@@ -153,12 +167,16 @@ object PlacesCmd:
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
     case Search(q: Option[String], asOf: Option[Api.AggregateQuery.AsOf], limit: Option[Int])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Show(id: String, asOf: Option[Api.AggregateQuery.AsOf], depth: Option[Int], noTree: Boolean)
     case Children(id: String, asOf: Option[Api.AggregateQuery.AsOf])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case SiteTypes(writes: Cli.Writes, limit: Option[Int], refresh: Boolean, following: Cli.Following)
     case NameAdd(id: String, name: String, lang: Option[String])
     case NameRm(id: String, name: String, lang: Option[String])
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case NameListing(place: Option[String], csv: Boolean)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case SetCmd(
         id: String,
         kind: Option[String],
@@ -184,6 +202,7 @@ object PlacesCmd:
         to: Option[Long]
     )
     case Import(file: String, kind: Option[String], batch: Option[Int], dataset: Dataset)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Seed(dir: Option[String], batch: Option[Int], noRebuild: Boolean)
     case Fetch(source: String, writes: Cli.Writes, following: Cli.Following)
     case Sources()
@@ -195,6 +214,8 @@ object PlacesCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Search(q, asOf, limit) =>

@@ -24,6 +24,7 @@ import com.histmersion.server.ListQueries
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -32,6 +33,8 @@ import com.histmersion.domain.Creator
   *
   * A run does not wait for its approvals: it finishes, and the proposal stays open until decided.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
@@ -50,6 +53,7 @@ final class Approvals(
   /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
     * with the per-state and the kind / decidedBy counts under the same filter.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(
       f: ListFilters.ApprovalFilter,
       limit: ApprovalQuery.Limit,
@@ -76,6 +80,7 @@ final class Approvals(
       )
 
   /** The `state` query: none = the open ones, `all` = every state (None), else one state. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filter(state: Option[ApprovalQuery.State]): Either[Problems, Option[ApprovalState]] =
     state.map(_.value.trim).filter(_.nonEmpty) match
       case None        => Right(Some(ApprovalState.Open))
@@ -93,6 +98,7 @@ final class Approvals(
           )
 
   /** An approval whose stored payload this server cannot read. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unreadable(id: Problem.Raw): Problem =
     Problem.Io.Corrupt(Problem.Io.Format.Json, Problem.Where(s"approval $id"), Problem.Io.Damage.Undecodable)
 
@@ -100,6 +106,7 @@ final class Approvals(
     * for one already decided. A BLOCKING approval (a goal's plan, an article to publish) is only decided here: the run
     * waiting on it applies it when it resumes (the caller wakes it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decide(
       id: Approval.Id,
       decision: Approval.Outcome,
@@ -149,6 +156,7 @@ final class Approvals(
     * recorded on the article when approved; an approved plan of articles is the seeding manager's to compile (the
     * caller tells it). The decision is claimed first, as for a source.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decideSubject(
       a: ApprovalInfo,
       k: ApprovalKind,
@@ -206,6 +214,7 @@ final class Approvals(
         )
     yield out
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decideBlocking(
       a: ApprovalInfo,
       d: Decision,

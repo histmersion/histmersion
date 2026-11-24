@@ -2,6 +2,7 @@ package com.histmersion
 package config.edit
 
 import org.ekrich.config.Config
+import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
 
 /** The user's config file, changed in place: the change is made to the file's text ([[ConfigTextEdit]]: comments,
   * order, includes and unknown keys kept), checked against the schema ([[SettingPolicy]]), written beside the file,
@@ -10,6 +11,8 @@ import org.ekrich.config.Config
   * `<file>.bak` ([[SettingsFile.replace]]). Nothing here needs the server or the database: the command line uses it
   * over the file on its own disk.
   */
+@atBoundary(BoundaryKind.Config, "writes a changed setting into the user's config file text and moves it into place")
+@movesTo(FeaturePlace.UtilSettings)
 final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: ConfigSchema):
 
   def read(): Either[SettingError, ConfigFileState] = file.read()

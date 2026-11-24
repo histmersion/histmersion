@@ -21,6 +21,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A finding whose POINT is a placeholder (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise). 12 findings on "Greece" sat on 37.5 N 22.5 E, an atlas grid square's centre near Tegea, and had joined
@@ -33,11 +34,13 @@ import com.histmersion.api.library.Citekey
   *   - an unnamed placeholder keeps its areas by containment and is listed by `finding-placeholder`;
   *   - a precise point is matched as before; nobody loses their last place; a write and a rebuild agree.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PlaceholderPointSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -51,7 +54,9 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pt(lon: Double, lat: Double) = Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def box(x0: Double, y0: Double, x1: Double, y1: Double) =
     Some(Place.Geometry(s"""{"type":"Polygon","coordinates":[[[$x0,$y0],[$x1,$y0],[$x1,$y1],[$x0,$y1],[$x0,$y0]]]}"""))
 
@@ -65,6 +70,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
 
   private val Grid = GeoPoint(Longitude(152.5), Latitude(-42.5)) // a 5° and a 1° square's centre
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val rep: GeoPoint = connect(ds)(
     sql"SELECT ST_X(ST_PointOnSurface(geom)), ST_Y(ST_PointOnSurface(geom)) FROM places WHERE id = $Hellas"
       .query[(Double, Double)]
@@ -73,6 +79,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
   ) match
     case (x, y) => GeoPoint(Longitude(x), Latitude(y))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(): Unit =
     def in(p: Place) = Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))
     val _ = PlaceFixtures.upsertPlaces(
@@ -195,6 +202,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
       tol
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(n: Int): Set[String] =
     PlaceFixtures.placesOf(ds, Finding.Id(s"zzph_src#$n")).map(_.id.value).filter(_.startsWith("zzph")).toSet
 

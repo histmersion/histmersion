@@ -6,11 +6,13 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.library.Finding
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots) joins the one
   * cluster group of the map ([[MapView]]), so dots near each other are drawn as one bubble whatever layer they come
   * from.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 enum DotKind(val one: DotKind.One, val many: DotKind.Many) derives CanEqual:
   case Finding extends DotKind(DotKind.One("finding"), DotKind.Many("findings"))
   case Site extends DotKind(DotKind.One("site"), DotKind.Many("sites"))

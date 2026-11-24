@@ -33,8 +33,12 @@ import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The stall report tells a wait by its kind of reason only; the sentence is made from the case. */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 private given waitWhyToStall: Transformer[SchedulerPolicy.Block.Why, Stalls.SchedWait.Why] =
   why =>
     why match
@@ -62,19 +66,23 @@ final class SchedulerService(
   def chosen: Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
     agents.autopilotRow.strategy()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def instantOf(text: String): Option[Instant] = ManagerPolicy.parseInstant(ManagerPolicy.InstantText(text))
 
   /** The model a manager's override names for `role`, if any. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def modelOf(over: List[Agents.ModelOverride], role: Role): Option[AgentsControllers.ModelName] =
     over.find(o => Role.parse(o.role).contains(role)).map(o => AgentsControllers.ModelName(o.model.value))
 
   /** The settings in effect now. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings: Settings = SchedulerPolicy.settings(
     ManagerDefaultsViews.scheduler(cfg.scheduler),
     chosen.map(c => SchedulerPolicy.StrategyName(c._1.value))
   )
 
   /** One pass as shown: when, whether it was dry, its inputs and its decision. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class Snapshot(at: Instant, dry: Boolean, in: Inputs, s: Settings, d: Decision)
 
   /** The last real pass (a `var`: the supervisor's tick writes it, the status reads it). */
@@ -83,6 +91,7 @@ final class SchedulerService(
   /** One goal as the scheduler sees it: its priority (a pin added), when it was created, whether it is still gathering
     * its sources.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class GoalInfo(
       priority: Int,
       created: Option[Instant],
@@ -90,6 +99,8 @@ final class SchedulerService(
       inProgress: Option[String]
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def goals(): Map[DomainGoal.Slug, GoalInfo] =
     agents.focus
       .facts()
@@ -113,6 +124,7 @@ final class SchedulerService(
   final case class Inputs(cands: List[Candidate], items: Map[Candidate.Id, (ManagerInfo, ManagerItem)], res: Resources)
 
   /** Why nothing may start for any manager now (a spend cap reached), if so. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def budgetBlock(): Option[Block] =
     val (day, month) = agents.runs.spendDayMonth()
     if day >= BigDecimal(cfg.budgets.dailyUsd.value) then
@@ -129,6 +141,7 @@ final class SchedulerService(
     * chosen by `choose` — never with a fresh plan reading taken (nothing is spent): Left = a role's chain cannot run
     * now (why); Right(Nil) = a metered model in the mix, or nothing known (no pool limit).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def poolIds(
       over: List[Agents.ModelOverride],
       now: Instant,
@@ -152,6 +165,7 @@ final class SchedulerService(
         val pools = plans.collect { case Billing.Plan(p) => p }.distinct
         Right(if pools.nonEmpty && plans.forall(_.isInstanceOf[Billing.Plan]) then pools else Nil)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def poolCap(p: PlanQuota.PoolId): Int =
     val calls = p match
       case PlanQuota.PoolId.ClaudePlan  => cfg.quota.claudePlan.maxCallsInFlight.value
@@ -163,6 +177,7 @@ final class SchedulerService(
     * role's model: as a run would ([[pass]], which may record the ChatGPT pool's reading) or from what is stored
     * ([[dry]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inputs(ms: List[ManagerInfo], now: Instant, stop: Option[Block], choose: ModelPicker.Choose): Inputs =
     val gs = goals()
     val perManager = ms.map { m =>
@@ -324,6 +339,7 @@ final class SchedulerService(
     * last pass left work waiting on a pool, so the next passes decide on current numbers. Nothing while draining. One
     * line per reading taken.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refreshPlans(now: Instant)(using WritePermit): List[String] =
     val wanted = if agents.drain.draining then Set.empty[Candidate.Pools] else wantedPools()
     val autopilotOn = agents.autopilot.on
@@ -345,6 +361,7 @@ final class SchedulerService(
     )
 
   /** The pools every model of `c`'s role chains draws on, whether or not it is usable now. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chainPools(in: Inputs, c: Candidate): List[Candidate.Pools] =
     val over = in.items.get(c.id).flatMap(_._1.config.models).getOrElse(Nil)
     agents.managers
@@ -377,6 +394,7 @@ final class SchedulerService(
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
   /** The status: the last pass (or a dry one), the first `limit` waiting items (default 50). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(
       limit: Option[PageSize] = None,
       now: Instant = Instant.now(agents.clock),
@@ -437,10 +455,12 @@ final class SchedulerService(
     )
 
   /** The waiting items in the order shown: the ones in the order first (by place), then the rest. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ordered(d: Decision): List[(Scored, SchedulerPolicy.Wait)] =
     val (inOrder, rest) = d.waiting.partition(_._2.position.value > 0)
     inOrder.sortBy(w => (w._2.position.value: Int)) ++ rest
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def wire(x: (Scored, SchedulerPolicy.Wait)): Waiting =
     val (sc, w) = x
     Waiting(
@@ -458,10 +478,13 @@ final class SchedulerService(
       Waiting.Position(w.position.value)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def say(base: WhyInfo, code: String, why: String): WhyInfo =
     base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(AgentScheduler.Rationale(why))
 
   /** Why one item (its id, or a target among the open items) is where it is. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def why(ref: ManagerItem.Ref, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
     val r = ref.value.trim
     val item = r
@@ -575,6 +598,7 @@ final class SchedulerService(
     * counts as progress), the one reason it stands still and what unblocks it ([[Stalls.classify]]): waiting for a
     * person, draining, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stalls(
       days: Option[AgentAutopilotConfig.StallDays] = None,
       now: Instant = Instant.now(agents.clock)
@@ -642,6 +666,8 @@ final class SchedulerService(
   /** Switch the strategy live (`default` = back to agents.scheduler.strategy); the next tick uses it (nudged now).
     * Answers what a pass would do with it.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def set(in: SchedulerSet, now: Instant = Instant.now(agents.clock))(using
       WritePermit
   ): Either[Api.Error, SchedulerStatus] =

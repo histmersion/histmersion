@@ -23,6 +23,7 @@ import com.histmersion.api.media.{
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
 import com.histmersion.api.Paging
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The host-side half of a source's cover (#1446): the cover the local Calibre library keeps beside a linked book is
   * READ here (the library is on the user's machine, like every `calibre` command) and uploaded to the server as the
@@ -37,6 +38,7 @@ object MediaCovers:
   /** Pure: the read-only query for the Calibre-linked sources to look at — those with no cover yet (every one with
     * `refresh`), or just `only`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linkedQuery(only: Option[Citekey], refresh: MediaImportRequest.Refresh): Query.Statement =
     Query.Statement(s"""SELECT s.citekey, s.calibre_id FROM sources s
         WHERE s.calibre_id ~ '^[0-9]+$$'
@@ -49,6 +51,8 @@ object MediaCovers:
         ORDER BY s.citekey""")
 
   /** The Calibre-linked sources to look at, as (citekey, Calibre id). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linked(
       c: Client,
       only: Option[Citekey],
@@ -71,6 +75,9 @@ object MediaCovers:
     case Skipped(reason: Problem)
     case Failed(message: MediaCoversReport.Failed)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairAcquire.RepairRequest.DryRun): Outcome =
     CoverChoice.choose(
       book.cover.map(p => CoverChoice.Pick.Calibre.Path(p.value)),
@@ -111,6 +118,9 @@ object MediaCovers:
   /** The Calibre step over the linked sources: what was uploaded, what Open Library is to be asked for (by the server),
     * and the counts.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def calibreStep(
       c: Client,
       cal: Calibre,

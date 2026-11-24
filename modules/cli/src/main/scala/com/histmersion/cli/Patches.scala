@@ -20,6 +20,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *
@@ -31,8 +32,10 @@ object Patches:
   type BodyFile = BodyFile.T
   object BodyFile extends Newtype[String, Pure]
   type NotesFile = NotesFile.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object NotesFile extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
       json: Option[String],
       tagsAdd: Option[String],
@@ -126,6 +129,7 @@ object Patches:
         )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mergeFindings(base: Option[FindingsPatch], add: List[Finding.Input], remove: List[String]) =
     if add.isEmpty && remove.isEmpty then base
     else
@@ -145,8 +149,11 @@ object Patches:
   // ── parsing ──────────────────────────────────────────────────────────────────────────────────
   private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def csvItems(s: String): List[Write.ListItem] = csv(s).map(Write.ListItem(_))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def parse[A: JsonValueCodec](flag: String, s: String): Either[Problems, A] =
     RawJson
       .decode[A](s)
@@ -156,6 +163,8 @@ object Patches:
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[cli] def parseEdge(flag: String, s: String): Either[Problems, Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
@@ -174,6 +183,8 @@ object Patches:
           )
         )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def parsePeriod(s: String): Either[Problems, Period.Input] =
     csv(s).map(_.toLongOption) match
       case List(Some(a), Some(b)) => Right(Period.Input(Year(a), Year(b)))
@@ -183,6 +194,8 @@ object Patches:
         )
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def readFile(flag: String, file: String): Either[Problems, String] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))

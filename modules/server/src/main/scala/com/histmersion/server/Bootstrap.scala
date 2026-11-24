@@ -32,6 +32,8 @@ import com.histmersion.domain.catalogue.places.GazetteerControllers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *
@@ -44,6 +46,7 @@ import com.histmersion.domain.automation.workflows.InTreeWorkflow
   *
   * `download` is the seam a test substitutes for the network.
   */
+@movesTo(FeaturePlace.Server)
 final class Bootstrap(
     deps: Deps,
     download: HttpDownload.Url => Either[Problem, HttpDownload.Text] = HttpDownload().text,
@@ -59,7 +62,9 @@ final class Bootstrap(
     */
   private val slot = BackgroundJob.Slot()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dataDir: Path = Path.of(cfg.init.dataDir.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodsSeed: Path = dataDir.resolve(cfg.periods.seedFile.value)
 
   // ── periods ──────────────────────────────────────────────────────────────────────────────────
@@ -81,6 +86,8 @@ final class Bootstrap(
     )
 
   /** The bundled seed's text. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def bundledSeed: Either[Problem, PeriodImports.Document] =
     if !Files.isRegularFile(periodsSeed) then
       Left(Problem.Unclassified(Legacy.Text(s"no period seed at $periodsSeed (set init.data-dir)")))
@@ -112,6 +119,8 @@ final class Bootstrap(
   /** `POST /api/init` — the bundled gazetteer and period presets (re-imported: every write is an upsert) and, with
     * `fetch`, the network sources in `init.fetch-sources`.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def init(fetch: Boolean)(using Creator.New): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = false)))
 
@@ -124,6 +133,8 @@ final class Bootstrap(
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
     * do (the default), or the import itself.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def loadGazetteer(source: Gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply)(using
       Creator.New
   ): Either[Api.Error, JobInfo] =
@@ -143,6 +154,8 @@ final class Bootstrap(
   /** What an init job will import: everything bundled, or (on a first start) only what is empty, plus the network
     * sources when asked. Decided up front and stored on the job (#770).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
     InitPlan(
       gazetteer = InitPlan.Gazetteer(!onlyEmpty || places.count().value == 0),
@@ -150,6 +163,7 @@ final class Bootstrap(
       fetch = if fetch then cfg.init.sources.map(s => InitPlan.Fetch(s.value)) else Nil
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def start(p: InitPlan)(using WritePermit)(using Creator.New): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
@@ -162,6 +176,9 @@ final class Bootstrap(
       stops = Some(deps.jobStops)
     )((job, note) => run(Job.Id.assume(job.id.value), p, note))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def run(id: Job.Id, p: InitPlan, note: JobInfo.Progress => Unit)(using
       WritePermit
   )(using Creator.New): BackgroundJob.Outcome =
@@ -215,12 +232,15 @@ final class Bootstrap(
     )
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seedPlaces(note: JobInfo.Progress => Unit)(using WritePermit)(using Creator.New): Either[String, String] =
     gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note).left.map(_.sentence).map(_.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def skippedNote(r: Period.ImportResult): String =
     if r.skippedCount.value == 0 then "" else s", ${r.skippedCount} skipped"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fetchSource(
       name: String,
       periods: Period.ImportResult => Period.ImportResult,
@@ -239,6 +259,8 @@ final class Bootstrap(
             .map(_.map(_.describe).mkString("; "))
         case None => fetchNetwork(name, periods)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def fetchNetwork(name: String, periods: Period.ImportResult => Period.ImportResult)(using
       WritePermit
   )(using Creator.New): Either[String, String] =
@@ -272,6 +294,7 @@ final class Bootstrap(
 
 object Bootstrap:
   /** The `jobs.kind` of an init job — what `histmersion jobs` lists. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobKind: Job.Kind = Job.Kind.assume(InitPlan.JobKind)
 
   /** The `seed_versions` name of the bundled period seed. */
@@ -281,6 +304,7 @@ object Bootstrap:
   val SkippedListed: Int = PeriodImports.SkippedListed
 
   /** Every name `init.fetch-sources` may hold (and the sources a plugin registers). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sources: List[BuiltinGazetteers.Entry.Name] =
     BuiltinGazetteers.names ++ List(NaturalEarthLand.name, PeriodOFetch.name).map(BuiltinGazetteers.Entry.Name(_)) ++
       GazetteerLoad.names.map(n => BuiltinGazetteers.Entry.Name(n.value))

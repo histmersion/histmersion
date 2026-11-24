@@ -4,6 +4,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.upstreams.landing.RepositoryLanding
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion.acquire.landing`: whether a fetch resolves repository landing pages, how many it reads per work, and
   * the host and platform lists of [[RepositoryLanding.Rules]] (each comma-separated).
@@ -20,6 +21,7 @@ final case class LandingSettings(
     denyHostWords: LandingSettings.DenyHostWords,
     oaPublisherHosts: LandingSettings.OaPublisherHosts
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(
       LandingSettings.entries(allowHosts.value).map(RepositoryLanding.HostPattern(_)),
@@ -43,6 +45,7 @@ object LandingSettings:
   type DenyHosts = DenyHosts.T
   object DenyHosts extends Newtype[String, Pure]
   type DenyHostsExtra = DenyHostsExtra.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object DenyHostsExtra extends Newtype[String, Pure]
   type AcademicHostWords = AcademicHostWords.T
   object AcademicHostWords extends Newtype[String, Pure]

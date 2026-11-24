@@ -32,10 +32,12 @@ import com.histmersion.util.database.TestCreators
   * HISTMERSION_TEST_DB_URL (skipped otherwise); it does not re-materialise `finding_places`, which other suites assert
   * on.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GazetteerLoadSuite extends DbSuite:
   private val testDb = TestDb.url
 
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
@@ -51,6 +53,7 @@ class GazetteerLoadSuite extends DbSuite:
     finally in.close()
 
   /** A data dir with a manifest pinning the fixture as `geonames`, an extracts dir and an LPF dir. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def layout(
       sha: Gazetteer.Extract.Sha256 = FixtureSha,
       withFile: Boolean = true,
@@ -91,6 +94,7 @@ class GazetteerLoadSuite extends DbSuite:
     )
 
   /** The stores over the directories, the manifest read from its file. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stores(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None): GazetteerLoad.Stores =
     GazetteerLoad.Stores(
       Storage.at(Location.GazetteerExtracts, extracts),
@@ -100,9 +104,13 @@ class GazetteerLoadSuite extends DbSuite:
       () => GazetteerPaths(extracts, lpf, manifest).manifestText()
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def extractsOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.extracts.where().value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def manifestOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.manifestAt.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private val noNet: GazetteerLoad.Download = (u, _, _) =>
     Left(Problem.Unclassified(Legacy.Text(s"no network in a test ($u)")))
   private lazy val db = Transactor(ds)

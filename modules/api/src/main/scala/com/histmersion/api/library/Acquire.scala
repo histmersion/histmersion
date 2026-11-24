@@ -16,6 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobDetail
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Acquire:
   object Intent:
@@ -34,6 +35,7 @@ object Acquire:
   type Recommendation = Recommendation.T
   object Recommendation extends Newtype[String, Pure]
   type YearGap = YearGap.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object YearGap extends Newtype[Int, Pure]
 
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
@@ -43,6 +45,8 @@ object Acquire:
   /** Follows the convention every existing key uses (`drews1993_collapse`, `haak2015_massive`), so a re-ingest of a
     * stored paper lands on its existing citekey instead of a duplicate.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def citekey(authors: List[AuthorName], year: Option[Year], title: Option[Title]): Citekey =
     legacyCitekey(
       authors.map(a => AuthorName(LatinFold.fold((a).value))),
@@ -53,6 +57,7 @@ object Acquire:
   /** Records created before accented letters were folded keep keys that dropped them (`gterbock1938`), so a lookup by
     * generated key tries this form too.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def legacyCitekey(authors: List[AuthorName], year: Option[Year], title: Option[Title]): Citekey =
     val first = authors.map((_).value.trim).find(_.nonEmpty)
     val surname = first
@@ -97,10 +102,14 @@ object Acquire:
       "partial retraction"
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def isRetractingNature(n: RetractionNotice.Nature): Boolean =
     val s = (n).value.toLowerCase
     (s.contains("retraction") && !s.contains("reinstatement") || s.contains("withdrawal"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verdict(
       retractions: List[RetractionNotice],
       updates: List[UpdateNotice],
@@ -128,6 +137,8 @@ object Acquire:
     */
   val BrowserDownloadTopic = "browser download"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def browserDownloadText(
       work: WorkRef,
       doi: Doi,
@@ -158,8 +169,11 @@ object Acquire:
       )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def flagged(verdict: Verdicts.Wire): Boolean = (verdict == Verdicts.Retracted || verdict == Verdicts.Corrected)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def recommendation(verdict: Verdicts.Wire, citedByCount: Option[CitedByCount]): Recommendation =
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
     verdict match
@@ -176,12 +190,15 @@ object Acquire:
         Recommendation(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
       case _ => Recommendation(s"UNASSESSED — $cited; judge relevance to the topic by hand")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def statusFor(verdict: Verdicts.Wire): Option[Source.Status] = verdict match
     case Verdicts.Retracted => Some(Source.Status.Retracted)
     case Verdicts.Corrected => Some(Source.Status.Contested)
     case Verdicts.Current   => Some(Source.Status.Current)
     case _                  => None
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def statusDecision(
       verdict: Verdicts.Wire,
       current: Source.Status,
@@ -193,6 +210,7 @@ object Acquire:
       else Left(current)
     }
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object EdgeKinds:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -202,6 +220,7 @@ object Acquire:
     val Refutes = "refutes"
     val Supersedes = "supersedes"
     val Cites = "cites"
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: List[Wire] = List(Wire(Confirms), Wire(Challenges), Wire(Refutes), Wire(Supersedes), Wire(Cites))
 
   private val RefutesCues = List(
@@ -248,6 +267,8 @@ object Acquire:
     "in line with"
   )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def classify(
       intents: List[Intent.Wire],
       contexts: List[CitationContext],
@@ -271,6 +292,7 @@ object Acquire:
     else if has((ConfirmCues).map(refactorValue5 => (refactorValue5))) then EdgeKinds.Wire(EdgeKinds.Confirms)
     else EdgeKinds.Wire(EdgeKinds.Cites)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rankFollowups(rows: List[FollowupRow]): List[FollowupRow] =
     rows.sortBy { r =>
       val strong = r.intents.map(_.value.toLowerCase).exists(i => i == "result" || i == "methodology")
@@ -316,6 +338,7 @@ object Acquire:
     * wins because the export lists amendments chronologically. A DOI is normalised (lower case, no resolver prefix) and
     * a row whose DOI is none is dropped.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseRetractionWatch(csv: String): List[RetractionRow] =
     Csv.parse(csv) match
       case Nil            => Nil
@@ -335,6 +358,7 @@ object Acquire:
         }
 
   /** Retraction Watch writes dates as `MM/DD/YYYY 0:00`; Postgres wants `YYYY-MM-DD`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rwDate(raw: Option[RetractionRow.Date]): Option[RetractionRow.Date] =
     raw.map((_).value.trim.takeWhile(_ != ' ')).flatMap { s =>
       s.split("[/-]").toList match
@@ -348,6 +372,7 @@ object Acquire:
   object Checks:
     import AcquireCheck.Said
 
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class AcquireCheck(
         item: Queue.QueueItem.Id,
         checkedAt: AcquireCheck.CheckedAt,
@@ -472,11 +497,14 @@ object Acquire:
       type Resumes = Resumes.T
       object Resumes extends Newtype[String, Pure]
 
+      @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
       val Detail: JobDetail.Field[Option[RecheckJob]] =
         new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("recheck"), None)
 
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       val JobKind = AcquisitionJobKinds.AcquireRecheck.kind.value
 
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def describe(j: RecheckJob): String =
         "the acquisition list's legal re-check of " +
           (if (j.all).value then "every open item with a DOI"

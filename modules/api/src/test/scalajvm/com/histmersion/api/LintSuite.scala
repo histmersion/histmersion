@@ -12,10 +12,12 @@ import com.histmersion.api.library.{Citekey, Edge}
 import com.histmersion.api.research.Article
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The lint classifiers (plan §5.2 stream 2.8) — everything that decides whether a row offends and what the report says
   * about it, with no database in sight.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LintSuite extends munit.FunSuite:
 
   private val corpus = Set(
@@ -168,6 +170,7 @@ class LintSuite extends munit.FunSuite:
 
   // ── report assembly and rendering ────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val rule = Lint.rule(Lint.Rule.Name(NoFindings)).get
 
   test("count is the true total; items are capped"):

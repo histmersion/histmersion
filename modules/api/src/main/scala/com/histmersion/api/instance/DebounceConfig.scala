@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class DebounceConfig(
     suggestMs: DebounceConfig.SuggestMs,
@@ -20,6 +21,7 @@ object DebounceConfig:
   type SuggestMs = SuggestMs.T
   object SuggestMs extends Newtype[Int, Pure]
   type SearchMs = SearchMs.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SearchMs extends Newtype[Int, Pure]
   type ReloadMs = ReloadMs.T
   object ReloadMs extends Newtype[Int, Pure]

@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.WebPaths
 import com.histmersion.config.AuthConfig
 import com.histmersion.util.problem.Problem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a request was let in. The wire spelling ([[wire]]) is what the gate tells the endpoints behind it. */
 enum Admission(val wire: String) derives CanEqual:
@@ -108,6 +109,7 @@ object Admission:
         * the position of the first difference nor the key's length shows in the time it takes. An empty key matches
         * nothing.
         */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def matches(key: AuthConfig.ApiKey): Boolean =
         val expected = s"$key"
         expected.nonEmpty && MessageDigest.isEqual(sha256(s"$b"), sha256(expected))
@@ -120,6 +122,7 @@ object Admission:
   /** What every client may read without a credential: the health and version probes, and the web UI's own page and
     * assets (the page asks for the key when the server refuses it the rest).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isPublic(method: Method, path: Path): Boolean =
     method == Method.Read && {
       val p = s"$path"
@@ -154,6 +157,7 @@ object Admission:
           case ClientAddress.Forwarded(client) => Standing.of(policy.requirementOf(client))
           case ClientAddress.Unusable(_)       => Standing.NeedsKey
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def accepted(
       request: Request,
       policy: AccessPolicy,
@@ -177,6 +181,7 @@ object Admission:
     * request with neither is no browser page's (the CLI, an MCP client) and carries no cookie a page could ride on, so
     * it passes; an origin that does not parse (`null`, from a sandboxed frame or a file) does not.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sameSite(request: Request, policy: AccessPolicy): Boolean =
     request.origin.orElse(request.referer) match
       case None       => true

@@ -6,6 +6,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The clustering of points on screen, pure: which points are drawn as one bubble at a zoom. */
 object Clustering:
@@ -22,6 +23,8 @@ object Clustering:
   object InViewMargin extends Newtype[Double, Pure]
 
   /** World pixels of a point at zoom `z` on the 256-pixel grid (Web Mercator). Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def world(lat: LatLon.Lat, lon: LatLon.Lon, z: Double): (Double, Double) =
     val scale = 256.0 * math.pow(2, z)
     val l = math.max(-85.05112878, math.min(85.05112878, lat.value))
@@ -32,6 +35,7 @@ object Clustering:
     * point is within `radius` px, else starts one. Answers each point's group number (0, 1, … in the order the groups
     * were started). Pure; one pass with a grid of `radius` cells.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def group(xs: Array[Double], ys: Array[Double], radius: GroupRadius): Array[Int] =
     val n = xs.length
     val out = new Array[Int](n)
@@ -86,6 +90,8 @@ object Clustering:
   /** The groups of `pts` at zoom `z`: each group's keys (in the points' order) and where its bubble stands — the mean
     * of its points. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def groups(pts: Seq[(GroupKey, LatLon)], z: ZoomLevel, radius: GroupRadius): Vector[(Vector[GroupKey], LatLon)] =
     val n = pts.length
     val arr = pts.toArray
@@ -113,6 +119,8 @@ object Clustering:
     )
 
   /** Is `at` on `s`'s screen, or within `margin` px of it (the copy of the world nearest the view)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inView(s: MapSurface, at: LatLon, margin: InViewMargin): Boolean =
     val (w, h) = s.size
     val c = s.center.lon.value
@@ -123,6 +131,7 @@ object Clustering:
   /** What a cluster layer draws of `groups` on `s`: the points drawn alone and the bubbles (their points), those in
     * view and a margin of a quarter of the view. Pure but for the projection.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drawn(
       groups: Vector[(Vector[GroupKey], LatLon)],
       s: MapSurface
@@ -142,4 +151,6 @@ object Clustering:
   /** The zoom a map at `zoom` clusters at: the nearest whole zoom (the bubbles regroup as the map passes the middle
     * between two). Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def level(zoom: MapSurface.Zoom): ZoomLevel = ZoomLevel(math.round(zoom.value).toInt)

@@ -7,7 +7,9 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Stalls:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
@@ -48,6 +50,7 @@ object Stalls:
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class StallReport(
       days: StallReport.Days,
       at: StallReport.At,
@@ -102,6 +105,7 @@ object Stalls:
     object Why:
       extension (w: Why)
         /** The sentence as the stall report tells it. */
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def render: Stall.Why = w match
           case Budget(d)  => Stall.Why(s"budget: $d")
           case Starved(d) => Stall.Why(s"starved: $d")
@@ -148,8 +152,10 @@ object Stalls:
     type IdleDays = IdleDays.T
     object IdleDays extends Newtype[Int, Pure]
     type ApprovalId = ApprovalId.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ApprovalId extends Newtype[Long, Pure]
     type ApprovalKind = ApprovalKind.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ApprovalKind extends Newtype[String, Pure]
     type PersonHeld = PersonHeld.T
     object PersonHeld extends Newtype[Int, Pure]
@@ -168,8 +174,12 @@ object Stalls:
     type Running = Running.T
     object Running extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stalled(f: Facts, days: ReportDays): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def classify(f: Facts): (Stall.Code, Stall.Why, Stall.Action) =
     val g = f.slug
     def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
@@ -282,6 +292,7 @@ object Stalls:
                             Stall.Action(s"histmersion agent scheduler why <item>")
                           )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(facts: List[Facts], days: ReportDays, at: ReportAt): StallReport =
     val stalls = facts
       .filter(stalled(_, days))

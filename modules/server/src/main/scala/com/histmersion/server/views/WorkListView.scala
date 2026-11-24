@@ -23,17 +23,20 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A work list as `GET /api/queue/{list}` shows it: its items (open, all, a goal's or a job's) as the automation keeps
   * them, the goals each belongs to or is linked from, and — for the ACQUIRE list — the library's last legal check of
   * each item.
   */
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class WorkListView(
     workLists: WorkListControllers,
     queues: QueueService,
     goals: GoalService,
     acquireAttempts: AcquireCheckService
 ):
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def list(
       list: WorkListControllers.KindOfList,
       all: WorkListView.IncludeAll,
@@ -97,6 +100,7 @@ object WorkListView:
   /** A check's outcome as the listing carries it: the stored wire spelling, unchanged. The names differ (the core
     * enum's `Outcome.Wire`, the record's `Outcome`), so chimney-iron's same-name pairing does not apply.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given Transformer[AcquireRecheck.Outcome.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
     Acquire.Checks.AcquireCheck.Outcome(wire.value)
   type IncludeAll = IncludeAll.T

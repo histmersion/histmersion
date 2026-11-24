@@ -11,6 +11,7 @@ import com.histmersion.domain.CreatorControllers
 /** The acquisition list's routes among the managers' (the repair of the open-access backlog and the legal re-check),
   * bound to the library's acquisition work, in their place among the managers' routes.
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AcquisitionWorkRoutes:
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 

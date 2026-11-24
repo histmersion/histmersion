@@ -11,11 +11,14 @@ import java.time.Instant
 import com.histmersion.db.DbSuite
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the runs' rows keep, on [[JobRuns.InMemory]] and on the database (a scratch database per test, gated on
   * HISTMERSION_TEST_DB_URL): a run is created queued, moves only from the state it is in, is annotated, is paused and
   * re-queued at a start, resumes when its time comes — each for its own kind only.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class JobRunsContract(name: String) extends DbSuite:
 
   /** A new, empty store and the moment it calls now; None when this run has no such store. */
@@ -32,6 +35,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
 
   private val Kind = Job.Kind("agent")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(
       target: RunRow.Target,
       origin: RunRow.Origin = RunRow.Origin("person"),

@@ -5,6 +5,7 @@ import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.joined
 import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[SiteTypes.of]] in SQL, over a `places` row aliased `a` (a site or a feature): the stored type, else the Pleiades
   * feature types (the most specific by [[SiteTypes]]' preference), else the GeoNames feature code, else the Wikidata
@@ -12,6 +13,7 @@ import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
   * same tables, so the map's site-type filter and the type a site is drawn with cannot disagree. `SiteTypesSqlSuite`
   * holds it to [[SiteTypes.of]].
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object SiteTypesSql:
 
   /** A word of [[SiteTypes]]' own tables (a type id, a Pleiades type, a GeoNames code, a Wikidata class, a place kind)
@@ -19,12 +21,14 @@ object SiteTypesSql:
     * constants, a few hundred words, written in so a map tile's statement stays one plan (bound, each tile query would
     * carry them all as parameters).
     */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def quote(s: String): Frag = sql"${SqlLiteral("'" + s.replace("'", "''") + "'")}"
   private def list(xs: Iterable[String]): Frag = xs.map(quote).toSeq.joined(sql", ")
 
   /** The preference [[SiteTypes]] picks a type by when a place lists several. */
   private val preference: List[SiteTypes.SiteType.Id] = SiteTypes.preference
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expr(a: Frag): Frag =
     val stored = sql"CASE WHEN $a.site_type IN (${list(SiteTypes.all.map(_.id.value))}) THEN $a.site_type END"
     // the feature types as a list: lower case, each without its `-2` variant suffix

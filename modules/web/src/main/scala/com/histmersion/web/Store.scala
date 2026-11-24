@@ -8,11 +8,14 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import scala.util.Try
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Key-value persistence for [[Persist.Local]] fields: the browser's `localStorage` in the app, an in-memory map in
   * tests (Node has none). Every access is guarded — private browsing and a full quota must degrade to "not remembered",
   * never to a broken page.
   */
+@atBoundary(BoundaryKind.Dom, "reads and writes the browser's localStorage")
 trait Store:
   def get(key: String): Option[String]
   def put(key: String, value: String): Unit

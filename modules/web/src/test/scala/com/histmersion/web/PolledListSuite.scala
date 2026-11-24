@@ -16,18 +16,22 @@ import com.histmersion.api.library.Ingest
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.Agents
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** [[PolledList]] (#1798 item 6) — the one controller of the jobs, runs and approvals windows — with a fake server
   * (promises completed by hand) and a fake clock: a poll keeps the pages loaded, a gone cursor restarts, a closed
   * window drops a late answer, an older answer never overwrites a newer one; and the manager window's events keep their
   * older pages on a poll.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(id: SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) =
     JobInfo(id, JobKinds.Wire(Ingest.KindIngest), state.wire)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(id: String) = SpatialHierarchyResult.Job.Id(id)
   private def page(
       total: Paging.Page.Total,
@@ -36,10 +40,12 @@ class PolledListSuite extends munit.FunSuite:
   ) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private class Fixture(liveRows: Boolean):
     val asked =
       mutable.ListBuffer.empty[(Option[Paging.Cursor], Option[Paging.Cursor], Promise[(List[JobInfo], Paging.Page)])]
     val timers = mutable.ListBuffer.empty[(Poll.Revision, () => Unit)]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val list = PolledList[JobInfo](
       fetch =
         (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
@@ -117,6 +123,7 @@ class PolledListSuite extends munit.FunSuite:
     val asked = mutable.ListBuffer.empty[Promise[JobInfo]]
     val timers = mutable.ListBuffer.empty[(Poll.Revision, () => Unit)]
     val settled = mutable.ListBuffer.empty[(Option[JobInfo.Status], JobInfo.Status)]
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val one = PolledList.single[JobInfo](
       fetch = () => { val p = Promise[JobInfo](); asked += p; p.future },
       live = j => !j.state.isTerminal,

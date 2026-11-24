@@ -28,11 +28,13 @@ import com.histmersion.config.AgentRuntimesConfig
 import com.histmersion.config.UserPaths
 import com.histmersion.util.data.diagnostics.ShownStore
 import com.histmersion.api.ByteCount
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The Storage part of About: the locations come from the config (the same resolvers the writers use), are measured
   * within the caps, and the cache measures once per TTL, in the background. All of it in a temp directory: no live data
   * directory, cache or database is read.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class StorageProbeSuite extends munit.FunSuite:
 
   private val figures = StorageFigures(Deps.data)
@@ -54,6 +56,7 @@ class StorageProbeSuite extends munit.FunSuite:
     Files.write(p, Array.fill[Byte](bytes)(1))
 
   /** A config whose every directory is under `d` (the defaults left empty resolve under `d` too). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def config(d: Path, bundled: Boolean = false): AppConfig =
     val base = AppConfig.load()
     base
@@ -102,6 +105,7 @@ class StorageProbeSuite extends munit.FunSuite:
         base.agents.modify(_.runtimes).setTo(base.agents.runtimes.modify(_.dir).setTo(AgentRuntimesConfig.Dir("")))
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def env(d: Path): UserPaths.Lookup =
     Map(
       Environment.VariablesKey("HOME") -> Environment.VariablesValue(d.resolve("home").toString),
@@ -231,6 +235,7 @@ class StorageProbeSuite extends munit.FunSuite:
 
   // ── the cache ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def report(n: Int) = Storage.Report(measuredAt = Some(Storage.Report.MeasuredAt(s"m$n")))
 
   test("the cache: the first request waits for the first measurement; then it is reused until the TTL"):

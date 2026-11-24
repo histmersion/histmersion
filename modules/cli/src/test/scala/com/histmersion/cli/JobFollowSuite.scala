@@ -13,7 +13,9 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.ByteCount
 
 import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class JobFollowSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

@@ -14,11 +14,13 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.Years
 import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Explore's chrome (the redesign's phase 3), its pure parts: the filter panel's fold and count, the layers button, the
   * timeline's speeds in words, the results' tabs, the detail's page and kind, the credits' fold, the places list's
   * lines, and the sites and events of no known date as the tiles mark them.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ExploreChromeSuite extends munit.FunSuite:
 
   private def feature(lat: LatLon.Lat, lon: LatLon.Lon, props: (String, js.Any)*): TilePointFeature =

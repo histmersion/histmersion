@@ -32,6 +32,8 @@ import com.histmersion.api.Sha256
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.config.UserPaths.pathEquality
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink` and the JVM
   * launcher with the kit's jars on the class path, as [[pluginTool]] — never part of the server's native image (nothing
@@ -56,6 +58,8 @@ import com.histmersion.config.UserPaths.pathEquality
   * learn what it contributes and on what terms: that runs the plugin's code, in this short-lived JVM, as installing it
   * will.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@movesTo(FeaturePlace.UtilPlugins)
 @main def pluginTool(args: String*): Unit =
   sys.exit(RelinkPlugins.exitCode(args.toList.map(RelinkPlugins.Argument(_)))(using Console.system).value)
 
@@ -69,7 +73,8 @@ object RelinkPlugins:
   type Note = Note.T
   object Note extends Newtype[String, Pure]
 
-  extension (id: PluginDescription.Id) private def nonEmpty: Boolean = id.value.nonEmpty
+  extension (id: PluginDescription.Id) @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+                                       private def nonEmpty: Boolean = id.value.nonEmpty
 
   private val SpiVersion: PluginSet.SpiVersion = PluginSet.SpiVersion(Spi.Version)
 
@@ -85,12 +90,15 @@ object RelinkPlugins:
       console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
       ExitCode(3)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(args: List[Argument])(using console: Console): ExitCode = args match
     case cmd :: flag :: lib :: rest if flag.value == "--lib" =>
       run(cmd, rest, dependencyJars(Path.of(lib.value)))(using console)
     case cmd :: rest => run(cmd, rest, Nil)(using console)
     case Nil         => console.errorLine(Usage); ExitCode(1)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(cmd: Argument, args: List[Argument], deps: List[Path])(using console: Console): ExitCode =
     val loader = withDependencies(deps, getClass.getClassLoader)
     (cmd.value, args.map(_.value)) match
@@ -157,12 +165,16 @@ object RelinkPlugins:
 
   // ── describe ──────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sha256(p: Path): Sha256 = Sha256(digestHex(p))
 
   /** The jar `jar`'s plugins could not even be listed: why, as the plugin host words it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jarFailed(jar: Path, e: Throwable): String =
     Problem.Plugin.Load(Problem.Plugin.Id(s"${jar.getFileName}"), PluginHost.failure(e)).sentence
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def kitSha256(p: Path): com.histmersion.Sha256 = com.histmersion.Sha256.applyUnsafe(digestHex(p))
 
   private def digestHex(p: Path): String =
@@ -175,6 +187,7 @@ object RelinkPlugins:
     md.digest().map(b => f"$b%02x").mkString
 
   /** The plugins `jar` provides — only providers loaded FROM it, not from `parent`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(jar: Path, parent: ClassLoader): PluginJar =
     val abs = jar.toAbsolutePath.normalize
     val loader = URLClassLoader(Array(abs.toUri.toURL), parent)
@@ -206,6 +219,8 @@ object RelinkPlugins:
         case e: LinkageError => List(unloadable(jarFailed(abs, e)))
     PluginJar(PluginJar.File(abs.getFileName.toString), sha256(abs), plugins)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def unloadable(error: String): PluginDescription =
     PluginDescription(
       PluginDescription.Id(""),
@@ -218,6 +233,7 @@ object RelinkPlugins:
     Try(Path.of(c.getProtectionDomain.getCodeSource.getLocation.toURI).toAbsolutePath.normalize == jar).getOrElse(false)
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def get(url: Plugin.Http.Url, headers: Map[Header.Name, Header.Value]) = Left(
       Problem.Unclassified(Legacy.Text("no HTTP while a plugin is being described"))
     )
@@ -225,6 +241,8 @@ object RelinkPlugins:
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its
     * source fetchers declare.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dryRun(p: Plugin): PluginDescription =
     val info = p.info
     val user =
@@ -261,6 +279,7 @@ object RelinkPlugins:
   // ── check ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The class files of a jar (`module-info` and multi-release copies left out: neither is a duplicate). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def classesOf(jar: Path): Set[ClassName] =
     val z = ZipFile(jar.toFile)
     try
@@ -275,6 +294,8 @@ object RelinkPlugins:
   /** Pure: the classes each plugin jar shares with the kit or with an earlier plugin jar. The image has one class
     * loader: a second copy of a class is a conflict, never a choice (§7.1).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def duplicates(kit: Set[ClassName], plugins: List[(PluginJar.File, Set[ClassName])]): List[Problem] =
     @tailrec def loop(
         rest: List[(PluginJar.File, Set[ClassName])],
@@ -306,6 +327,7 @@ object RelinkPlugins:
   /** Everything that refuses linking these plugin jars, with their dependency jars `deps`, into this kit, and a line
     * per plugin found.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(kit: Path, jars: List[Path], deps: List[Path], loader: ClassLoader): (List[Note], List[Problem]) =
     val described = jars.map(j => describe(j, loader))
     val taken = hostIds(loader)
@@ -343,6 +365,7 @@ object RelinkPlugins:
   /** The ids the binary itself has: the plugins on the kit's class path (the first-party ones among them) and the ones
     * the host supplies itself.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hostIds(loader: ClassLoader): Map[PluginDescription.Id, String] =
     val discovered = PluginHost.discover(loader)._1.map(p => PluginDescription.Id(p.info.id.value))
     val supplied = HostProvided.Ids.map(id => PluginDescription.Id(id.value))
@@ -375,12 +398,14 @@ object RelinkPlugins:
 
   // ── the kit ───────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def kitLabel(kit: Path): Option[PluginSet.Kit] =
     val f = kit.resolve("kit.json")
     if Files.isRegularFile(f) then PluginKit.parseKit(Files.readString(f)).toOption.map(m => PluginSet.Kit(m.label))
     else None
 
   /** The manifest over every file under `kit` (the manifests themselves excluded). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kitManifest(
       kit: Path,
       version: PluginKit.KitManifest.Version,

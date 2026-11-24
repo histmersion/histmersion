@@ -4,11 +4,13 @@ package web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A toggle BUTTON (never a checkbox) whose pressed state is a signal: it cannot disagree with the thing it switches,
   * because it shows that thing's state rather than keeping its own.
   */
 object LayerToggle:
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def apply(icon: Icon, label: String, on: Signal[Boolean], set: Boolean => Unit): HtmlElement =
     button(
       typ := "button",

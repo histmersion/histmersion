@@ -16,13 +16,17 @@ import java.time.{Instant, ZoneOffset}
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The work lists held in memory: every item in id order, and the last id handed out. The rules are the database's: an
   * item is stamped when it is made (or keeps the instant it was imported with) and when it is first done, its times
   * read as `to_char` writes them (UTC, microseconds).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def listed(kind: Kind, scope: QueueScope): Vector[QueueItem] =
     val ofKind = items.filter(_.list == kind.label)
     scope match
@@ -40,9 +44,12 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
             (i.goal.exists(_.value == goal.value) || linked.contains(QueueScope.ForGoal.Linked(i.id.value.toString)))
         )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(id: QueueItemId): Option[QueueItem] = items.find(_.id.value == id.value)
 
   /** The items of `kind` whose text names `doi`, as the database's `strpos` and the DOI rule find them. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def naming(kind: Kind, doi: Doi): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
@@ -66,6 +73,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
     loop(ins, Vector.empty, lastId)
 
   /** `next` written over its item; a done item keeps its first done time, any other status clears it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updated(next: QueueItem, now: Instant): WorkListState =
     this
       .modify(_.items)
@@ -78,6 +86,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
           next.modify(_.doneAt).using(_ => doneAt)
       })
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def removed(id: QueueItemId): WorkListState = this.modify(_.items).using(_.filterNot(_.id.value == id.value))
 
   def emptied(kind: Kind): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
@@ -92,6 +101,7 @@ object WorkListState:
   def stamp(at: Instant): String = Stamp.format(at.truncatedTo(ChronoUnit.MICROS))
 
   /** Item `id` of `kind` made from `in` at `now`: open unless it says otherwise, done at once when it is done. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def item(kind: Kind, in: QueueAdd, creator: Creator.New, id: QueueItemId, now: Instant): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Queue.Open)
     QueueItem(

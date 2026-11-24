@@ -4,10 +4,12 @@ package domain.media.covers
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources a run of covers and illustrations looks at: those with figures and no illustration yet, those with an
   * ISBN or OCLC number and no cover yet (not asked of Open Library yet).
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 trait CoverService:
   def illustrationCandidates(
       only: Option[Citekey],
@@ -29,6 +31,7 @@ object CoverService:
   def apply(db: Transactor): CoverService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends CoverService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def illustrationCandidates(
         only: Option[Citekey],
         refresh: CandidatesRefresh,
@@ -41,6 +44,7 @@ object CoverService:
           CoverRepo.Limit(limit.value)
         )
       ).map(Citekey.assume(_))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def coverCandidates(only: Option[Citekey], refresh: CandidatesRefresh, limit: CandidatesLimit): List[CoverKeys] =
       db.read(
         CoverRepo.coverCandidates(

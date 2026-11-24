@@ -7,11 +7,13 @@ import com.histmersion.domain.ReviewLedger.Ledger
 import java.time.Instant
 import java.util.UUID
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Research's records the in-memory services share: the articles (each with its uid, its last write and the targets its
   * body links), the old slugs, the recorded versions, the critique reasons beside each article and each article's
   * review ledger.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class ResearchState(
     articles: Map[ResearchState.ArticlesKey, ResearchState.Stored],
     aliases: Map[ResearchState.AliasesKey, ResearchState.AliasesValue],

@@ -20,6 +20,7 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.UiLabels
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.AgentJobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The background (OCR) jobs window: `GET /api/jobs`, filtered by state through [[UiState.jobStatus]] (on the server),
   * a page at a time ([[ListPaging]]: the heading says how many of how many, "Show older" loads the next page, the
@@ -38,6 +39,7 @@ object JobsView:
     val MaxMs: Int = web.Poll.MaxMs
 
     /** The delay before the next poll, or `None` to stop: no job left to wait for. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def next(
         previous: Option[web.Poll.Revision],
         jobs: List[JobInfo],
@@ -48,6 +50,7 @@ object JobsView:
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just among the rows a filter
     * shows; the rows' own states when the server sent no counts.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def live(rows: List[JobInfo], page: Paging.Page): Boolean =
     if page.counts.isEmpty then rows.exists(!_.isTerminal)
     else
@@ -66,6 +69,7 @@ object JobsView:
     jobs.filter(j => (n.status.isEmpty || n.status.contains(j.status)) && (n.kind.isEmpty || n.kind.contains(j.kind)))
 
   /** The query the window sends, from its filter fields. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def filterOf(
       status: Option[JobState],
       kinds: List[String],
@@ -91,13 +95,16 @@ object JobsView:
     jobs.groupMapReduce(_.state)(_ => 1)(_ + _)
 
   /** What kind of work a job is, for a person ([[Wording.jobKind]]); a kind it does not know, as words. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindLabel(kind: String): String = Wording.jobKindOf(JobKinds.Wire(kind))
 
   /** What each kind of job does; a tooltip on its filter chip, after its identifier (for the command line). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindMeaning(kind: String): Option[String] =
     RegisteredJobKinds.all.parse(JobKinds.Wire(kind)).map(_.meaning.value)
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def stateMeaning(s: JobState): String = s match
     case JobState.Queued  => "Waiting for a free worker; it starts by itself."
     case JobState.Running => "A worker is doing it now; its progress line says how far it got."
@@ -111,10 +118,13 @@ object JobsView:
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names what it imports.
     * `None` for a job that has a citekey, or no detail.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def what(j: JobInfo): Option[JobKinds.Subject] =
     if j.citekey.isDefined then None else JobDetail.subject(j)
 
   /** The period definitions an import left out (#771): how many, and which. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def skippedLine(j: JobInfo): Option[String] =
     j.detail.filter(SkippedPeriod.SkippedCount.of(_).value > 0).map { d =>
       val ids = SkippedPeriod.Skipped.of(d).map(_.id)
@@ -123,11 +133,13 @@ object JobsView:
         (if more > 0 then s" and $more more" else "")
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def stateLabel(s: JobState): String = Wording.jobState(s)
 
   /** Is the job's subject a stored source yet? An ingest creates the source only when its OCR finished; a re-OCR runs
     * on a source that already exists.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == IngestJobKinds.Reocr.kind
 
   /** `3 s ago`, `4 min ago`, `2 h ago`, `5 d ago` — `thenMs` and `nowMs` in epoch milliseconds. */
@@ -163,6 +175,8 @@ object JobsView:
   /** The filter, as a signal, so a change restarts the list from the newest page. */
   private val filterSignal: Signal[ListFilters.JobFilter] = UiState.signal.map(_ => currentFilter()).distinct
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val list = PolledList[JobInfo](
     fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
     id = j => PolledList.ItemId(j.id.value),
@@ -175,12 +189,16 @@ object JobsView:
   private val started = Var(Option.empty[SpatialHierarchyResult.Job.Id])
 
   /** A job this page started (an upload): show it, and poll quickly again. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def track(jobId: SpatialHierarchyResult.Job.Id): Unit =
     started.set(Some(jobId))
     list.refresh(changed = web.Poll.DataChanged(true))
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def pane: HtmlElement =
     div(
       cls := "tool-pane jobs-pane",
@@ -252,9 +270,11 @@ object JobsView:
   /** The listing with the rows the filter shows — at once, from the rows loaded, when the filter changes; the server's
     * page replaces them a moment later.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def shownSignal: Signal[(ListPaging.Listing[JobInfo], Option[JobState])] =
     listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), UiState.jobStatus.now()))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def filterButtons: HtmlElement =
     def btn(label: String, value: Option[JobState], count: Signal[Int]) =
       button(
@@ -276,6 +296,10 @@ object JobsView:
       )
     )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private[web] def row(j: JobInfo, mine: Boolean): HtmlElement =
     li(
       cls := s"job-row job-${j.state.wire}",

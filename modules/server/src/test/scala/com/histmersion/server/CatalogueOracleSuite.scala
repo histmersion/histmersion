@@ -46,6 +46,7 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the catalogue answers, on a crafted collection, recorded on the code before the catalogue moved into its own
   * domain: places and their names, overrides, merges, removals and renames, the hierarchy, footprints and the map's
@@ -68,6 +69,7 @@ class CatalogueOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-catalogue-oracle")
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_s8o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -82,6 +84,7 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = Files.copy(Path.of("db/periods/periodo-seed.json"), d.resolve("periods/periodo-seed.json"))
     d
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfgFor(name: String): AppConfig =
     base
       .modify(_.db)
@@ -178,6 +181,7 @@ class CatalogueOracleSuite extends DbSuite:
       .flatMap(_.cursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @scala.annotation.tailrec
   private def awaitJob(url: String, id: SpatialHierarchyResult.Job.Id, left: Int = 600): String =
     val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/jobs/$id")))
@@ -305,6 +309,7 @@ class CatalogueOracleSuite extends DbSuite:
     else Left(s"unexpected $url")
 
   /** Writes, each recorded with its answer. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def craft(url: String, ds: DataSource, name: String = "cat"): String =
     val log = StringBuilder()
     def step(name: String, answer: String): String =
@@ -705,6 +710,7 @@ class CatalogueOracleSuite extends DbSuite:
     val y = ((1 - math.log(math.tan(r) + 1 / math.cos(r)) / math.Pi) / 2 * n).toLong
     (z, x, y)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tileLine(url: String, path: String): String =
     val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/tiles/$path")))
     val sha = BundleFormat.sha256Hex(r.body)
@@ -793,6 +799,7 @@ class CatalogueOracleSuite extends DbSuite:
   private val DurationRe = "(\"(?:durationMs|elapsedMs|tookMillis|ageSeconds)\" ?: ?)\\d+".r
 
   /** uid → the record it names. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def names(dss: List[(String, DataSource)]): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -921,6 +928,7 @@ class CatalogueOracleSuite extends DbSuite:
     "tombstones"
   )
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def rows(ds: DataSource, names: Map[String, String]): String =
     val present = connect(ds)(
       sql"""SELECT table_name::text FROM information_schema.tables WHERE table_schema = 'public'""".query[String].run()
@@ -1038,6 +1046,7 @@ class CatalogueOracleSuite extends DbSuite:
   /** An init data directory with the seed, the period presets and a manifest pinning the GeoNames fixture (and a TGN
     * pin whose file is not there); the fixture in the extracts directory; the LPF fixtures in the drop folder.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val gazetteerCfg: AppConfig =
     val d = tmp.resolve("gaz-init")
     Files.createDirectories(d.resolve("places/sites"))
@@ -1094,6 +1103,7 @@ class CatalogueOracleSuite extends DbSuite:
           )
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def gazetteer(url: String, ds: DataSource): String =
     val log = StringBuilder()
     def step(name: String, answer: String): String =
@@ -1497,6 +1507,7 @@ class CatalogueOracleSuite extends DbSuite:
     "tombstones"
   )
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def exchangeRows(ds: DataSource, names: Map[String, String]): String =
     ExchangeTables
       .map { t =>

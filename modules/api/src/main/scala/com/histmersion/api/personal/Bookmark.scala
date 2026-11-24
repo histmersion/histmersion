@@ -12,7 +12,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Title
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Bookmark(
     id: Bookmark.Id,
     target: Target,
@@ -23,6 +25,7 @@ final case class Bookmark(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def name: Bookmark.Name =
     Bookmark.Name(label.map(_.value: String).filter(_.trim.nonEmpty).getOrElse(title.value: String))
 
@@ -40,12 +43,14 @@ object Bookmark:
 
   type Id = Id.T
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Id extends Newtype[String, Pure]:
     given JsonValueCodec[Id] = JsonCodec.mapped[Id, String](_.value, b => Right(Id(b)))
     given Schema[Id] = Schema.string[Id]
 
   type Label = Label.T
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Label extends Newtype[String, Pure]:
 
     val MaxChars = 200

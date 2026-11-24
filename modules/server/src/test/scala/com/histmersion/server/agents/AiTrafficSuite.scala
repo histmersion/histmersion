@@ -34,6 +34,7 @@ import com.histmersion.util.plugins.Plugin
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.api.instance.Version
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The recorded wire of the HTTP AI providers (`anthropic`, `openai`, `local`): the engine's agent loop driven through
   * the server's own factory ([[LlmClient.factory]] over the generation's AI-provider registry) against a loopback
@@ -99,11 +100,13 @@ class AiTrafficSuite extends munit.FunSuite:
 
   // ── the step's tools and answers ───────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val search = AgentTool.fromFunction[AgentSearchInput]("search", "Search the corpus by its filters")(in =>
     s"""{"total":2,"query":${Json
         .fromString(in.query.map(_.value).getOrElse(""))
         .noSpaces},"hits":["zz2001_a","zz2002_b"]}"""
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val facets = AgentTool.fromFunction[AgentFacetsInput]("facets", "The values of one field")(in =>
     s"""{"field":"${in.field}","values":["Tin Trade","Bronze Age"]}"""
   )
@@ -190,6 +193,7 @@ class AiTrafficSuite extends munit.FunSuite:
   /** The loop over `ref` for `c`, as the engine runs a step: through the server's factory, then
     * `AgentsControllers.call`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scenario[A: JsonValueCodec](
       up: Upstream,
       name: String,
@@ -729,6 +733,7 @@ class AiTrafficSuite extends munit.FunSuite:
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/ai.txt")
 
   /** The User-Agent the host's AI client sends (its policy: the project, never an e-mail). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hostAgent =
     HttpPolicy.userAgent(
       HttpPolicy.UserAgent(s"Histmersion/${Version.version} (agents)")
@@ -739,6 +744,7 @@ class AiTrafficSuite extends munit.FunSuite:
     * are the host client's own — its User-Agent, and no `Accept-Encoding` (it reads bodies as sent). Every other line,
     * every body included, is compared as recorded.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def onHostTransport(recorded: String): String =
     recorded
       .split("\n", -1)

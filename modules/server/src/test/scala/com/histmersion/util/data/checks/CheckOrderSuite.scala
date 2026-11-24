@@ -6,10 +6,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.checks.Lint
 import com.histmersion.server.Deps
 import com.histmersion.util.data.DataOwner
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Today's 34 rules, each registered once by the owner whose data it checks, reported in `Lint.all`'s order; the safe
   * fixes in the order `lint --fix` has always applied them (by each fix's rank).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CheckOrderSuite extends munit.FunSuite:
   private val rules = Deps.data.checks
   private val runner = CheckRunner(rules, CheckOrder(Lint.names), null)

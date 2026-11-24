@@ -22,6 +22,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.automation.agents.LlmCall
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every step's answer schema as Codex is sent it — OpenAI's strict structured-output form, which the Responses API
   * demands with `strict: true` and answers anything else with a 400 before the model runs — and every answer Codex
@@ -107,7 +108,9 @@ class AnswerSchemasSuite extends munit.FunSuite:
       unsupported ++ badFormat ++ bareRef ++ untyped ++ obj
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def strict(s: ResponseSchema[?]): Json = RawJson.parse(Codex.outputSchemaJson(s).value).toOption.get
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def derived(s: ResponseSchema[?]): Json = RawJson.parse(Codex.schemaJson(s).value).toOption.get
 
   test("every step schema has a name, and they are all listed"):
@@ -282,6 +285,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
           any && typed
     ok(schema, value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
     CliOutcomes
       .result(

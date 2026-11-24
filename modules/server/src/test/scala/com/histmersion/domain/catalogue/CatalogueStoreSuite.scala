@@ -47,21 +47,26 @@ object CatalogueStoreSuite:
         val events = evs
         val corrections = CorrectionService.InMemory(state)
         val eventImports = EventImportService.InMemory(state)
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck.value).map(_ => Some(Title(ck.value))))
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         val leads = LeadService.InMemory(
           state,
           evs,
           ck => sources.get(ck.value).map(_ => (Some(EventSourceRef.Title(ck.value)), None))
         )
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         val siteTypes = SiteTypeService.InMemory(state, () => HeldSite.CheckedAt(clock.incrementAndGet()))
         val places =
           PlaceService.InMemory(state, java.time.Clock.fixed(java.time.Instant.EPOCH, java.time.ZoneOffset.UTC))
         def source(citekey: String): Unit = sources.update(citekey, ())
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
           val _ = state.updateAndGet(
             _.modify(_.sites)
               .using(_ :+ HeldSite(HeldSite.Id(id), HeldSite.OnMap(onMap), cls.map(HeldSite.ImportClass(_))))
           )
+        @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def seedRows(): List[String] =
           state.get.periods.filter(_.dataset == Dataset.Seed).map(_.period.id.value).toList)
 
@@ -69,6 +74,7 @@ object CatalogueStoreSuite:
   trait OnDatabase extends CatalogueStoreSuite:
     private val testDb = TestDb.url
     override def munitIgnore: Boolean = testDb.isEmpty
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private lazy val scratch =
       ScratchDatabases(
         s"histmersion_s8c_${getClass.getSimpleName.toLowerCase.take(24)}",

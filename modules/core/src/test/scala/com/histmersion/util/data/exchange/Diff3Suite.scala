@@ -6,15 +6,20 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The three-way merge of article bodies (docs/research-merge-import.md §5.4): clean when the two sides changed
   * different places, a conflict when they changed one place differently.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class Diff3Suite extends munit.FunSuite:
 
   private val baseText = "Intro.\n\nMiddle.\n\nEnd."
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val base = Diff3.Text(baseText)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val baseLeft = Diff3.Text(baseText)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val baseRight = Diff3.Text(baseText)
 
   test("changes in different places merge cleanly, both kept"):

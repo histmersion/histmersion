@@ -12,11 +12,13 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The article surface over real HTTP (plan §5.2 stream 2.7): the REST contract including its status codes, and the
   * rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a `[[slug]]` resolve to DIFFERENT
   * places. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticlesHttpSuite extends munit.FunSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty

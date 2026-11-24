@@ -21,6 +21,8 @@ import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -30,6 +32,8 @@ import com.histmersion.util.database.StoredCreator
   * one re-matches that place's findings in the same transaction ([[FindingPlaceRepo.materialisePlaces]]): a kind
   * decides how a place takes findings — a site by the point tolerance, a point-only region only by an explicit match.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the place override tables and their row codecs")
 private[places] object PlaceOverrideRepo:
 
   final private case class Row(
@@ -53,11 +57,13 @@ private[places] object PlaceOverrideRepo:
     object End extends Newtype[Long, Pure]
     type HasShape = HasShape.T
     object HasShape extends Newtype[Boolean, Pure]
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Place.Override] = DbCodec.derived
 
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`
     * when its geometry is a line or an area).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def rowOf(id: BPlaceRow.Id)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${PlaceRepo.startCol},
                  ${RangeSql.end(sql"p.period")},
@@ -66,12 +72,16 @@ private[places] object PlaceOverrideRepo:
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
           FROM places p WHERE p.id = $id""".query[Row].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def linked(id: BPlaceRow.Id)(using DbCon): List[String] =
     sql"SELECT finding_id FROM finding_places WHERE place_id = $id".query[String].run().toList
 
   /** Apply `edit` to place `id` and re-match its findings. `Left` when there is no such place, or a reset finds no
     * override.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def set(
       id: BPlaceRow.Id,
       edit: Place.OverrideEdit,
@@ -203,6 +213,7 @@ private[places] object PlaceOverrideRepo:
         }
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def labelOf(id: BPlaceRow.Id)(using DbCon): Option[BPlaceRow.Label] =
     sql"SELECT label FROM places WHERE id = $id".query[BPlaceRow.Label].run().headOption
 
@@ -214,6 +225,8 @@ private[places] object PlaceOverrideRepo:
     * asset links move, `from` is deleted and stays an old id of `into`, which no seed import re-creates) and match
     * `into`'s findings again.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def merge(from: BPlaceRow.Id, into: BPlaceRow.Id, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
       DbCon
   ): Either[Api.Error, Place.Gone] =
@@ -267,6 +280,8 @@ private[places] object PlaceOverrideRepo:
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def remove(id: BPlaceRow.Id, reason: Option[PlaceRationale])(using DbCon): Either[Api.Error, Place.Gone] =
     labelOf(id)
       .toRight(

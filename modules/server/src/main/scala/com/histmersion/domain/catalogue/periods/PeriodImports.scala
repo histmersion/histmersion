@@ -11,11 +11,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled
   * file's text and `download` fetches a URL; both are the composition's.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class PeriodImports(
     periods: PeriodService,
     sources: () => PeriodSources,
@@ -26,10 +28,12 @@ final class PeriodImports(
   /** The bundled seed, parsed. */
   private def bundled: Either[Problem, PeriodODataset] = seed().flatMap(parsed)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def parsed(document: PeriodImports.Document): Either[Problem, PeriodODataset] =
     PeriodO.parse(document.value)
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def applySeed(
       replace: PeriodImports.Replace
   )(using WritePermit)(using Creator.New): Either[Problem, Period.ImportResult] =
@@ -48,12 +52,15 @@ final class PeriodImports(
     }
 
   /** Is the bundled seed newer than the one last applied here? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seedOutdated: Boolean =
     bundled.toOption
       .flatMap(_.version)
       .exists(v => periods.seedVersion(PeriodService.SeedName(PeriodImports.SeedName)).forall(_.value < v.value))
 
   /** The live PeriodO dump, the named collections only (the configured ones when none is named). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def fetch(collections: List[PeriodSources.Collections])(using
       WritePermit
   )(using Creator.New): Either[Problem, Period.ImportResult] =
@@ -74,6 +81,8 @@ final class PeriodImports(
   /** Upsert a dataset. A raw PeriodO dump (no curated overlay) is grouped under one node per authority, and every
     * period already in the store keeps its place; a curated seed places its own rows ([[PeriodO.toPeriods]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def write(d: PeriodODataset, dataset: Dataset)(using WritePermit)(using Creator.New): Period.ImportResult =
     val roots = !d.curated
     val ids = d.authorities.flatMap(a => a.id :: a.periods.map(_.id))
@@ -91,6 +100,7 @@ object PeriodImports:
   type Dataset = Dataset.T
   object Dataset extends Newtype[String, Pure]
   type DatasetBody = DatasetBody.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object DatasetBody extends Newtype[String, Pure]
 
   /** The text of a PeriodO dataset: the bundled seed or a dump. */

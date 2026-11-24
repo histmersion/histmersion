@@ -7,13 +7,20 @@ import com.histmersion.api.automation.Creation
 
 object PlacesMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def kindOf(kind: Place.Summary.Kind, ps: Option[Year], pe: Option[Year]): String =
     val p = YearFmt.period(ps, pe)
     if p.isEmpty then kind.value else (s"$kind · $p")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def kindWhen(s: Place.Summary): String =
     if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else (s"${s.kind} · ${s.when}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def places(rows: Vector[Place.Hit], asOf: Option[Year] = None): String =
     if rows.isEmpty then ("_No matching places._")
     else
@@ -26,6 +33,9 @@ object PlacesMarkdown:
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def placeTree(rows: Vector[Place.TreeRow]): String =
     if rows.isEmpty then ("_No hierarchy._")
     else
@@ -36,6 +46,8 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeImport(r: Place.ImportResult): String =
     val head = r.job.fold(s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)")(id =>
       s"job `$id` started (`histmersion jobs $id` follows it)"
@@ -43,6 +55,7 @@ object PlacesMarkdown:
     if r.failed.isEmpty then (head)
     else (s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gazetteerSources(rows: List[Gazetteer.SourceInfo]): String =
     if rows.isEmpty then ("_No external gazetteer sources: no pinned extracts and no LPF files._")
     else
@@ -59,6 +72,8 @@ object PlacesMarkdown:
       }
       ((head :: body).mkString("\n"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeNameChanged(r: Place.NameChanged): String =
     val lang = if r.lang.value.isEmpty then "" else s" (${r.lang})"
     val what =
@@ -70,6 +85,7 @@ object PlacesMarkdown:
       else s"added the name **${r.name}**$lang to"
     (s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def manualPlaceNames(rows: List[ManualPlaceName]): String =
     if rows.isEmpty then ("_No names added by hand._")
     else
@@ -79,6 +95,8 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeOverrideChanged(r: Place.OverrideChanged): String =
     val kind = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}"
     else s"kind ${r.kindBefore} → ${r.kindAfter}"
@@ -98,6 +116,8 @@ object PlacesMarkdown:
     else s"; **${r.unlocated}** of them now have no place at all"
     (s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeGone(r: Place.Gone): String =
     val head = r.into match
       case Some(into) =>
@@ -107,6 +127,7 @@ object PlacesMarkdown:
       if r.unlocated == Place.Gone.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
     (s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeOverrides(rows: List[Place.Override]): String =
     if rows.isEmpty then ("_No place has a kind, period or point set by hand._")
     else
@@ -130,17 +151,25 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeAdded(p: Place.Summary): String =
     s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
       p.source.fold("")(src => s" — source: $src") +
       "\n\nIt is this collection's own place (carried in a bundle, never touched by a re-seed). " +
       "Run `histmersion places rebuild` to match findings to it."
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeRebuild(r: Place.RebuildResult): String =
     (s"${r.links} finding→place link(s) over ${r.places} place(s) " +
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
     val p = d.place
     val header = s"# ${p.label}${contestedMark(d.contested.value || p.contested.value, p.label.value)}" +

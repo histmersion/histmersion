@@ -59,6 +59,7 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The watchers' ingest backlog against a `*_test` database (docs/research-process-managers.md "As built: the ingest
   * backlog"): a sweep's legal open-access picks past the day's allowance wait in the backlog — never the acquisition
@@ -68,6 +69,8 @@ import com.histmersion.util.database.TestCreators.given
   * ones the corpus has, and never touches a person's. Models are scripted, the acquisition toolset a fixture
   * ([[StubUpstream]]): nothing reaches a provider or the network. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -77,7 +80,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   private val Goal2 = DomainGoal.Slug("zzagent-oa2")
   private val Query = "zzagent oa tin"
   private val Query2 = "zzagent oa bronze"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val QueryRef = LinkAdd.Ref(Query)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Query2Ref = LinkAdd.Ref(Query2)
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
@@ -85,6 +90,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   /** The crons off (a test drives every sweep itself), room for every run; the acquisition list's re-check off (it
     * would try the items a test leaves on the list, and this suite counts the backlog's ingests).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
@@ -159,6 +165,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(
       a: AgentsControllers,
       h: ServerWiring,
@@ -191,6 +198,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     text(ns.map(n => s"""{"doi":"${doi(n)}","why":"fits $n"}""").mkString("""{"picks":[""", ",", "]}"))
 
   /** The fixture's legal ingest: stores the source, unless the DOI has no legal copy. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def legalIngest(h: ServerWiring, noCopy: Set[String] = Set.empty)(d: String): Either[Problem, Ingest.Report] =
     if noCopy.contains(d) then Left(Problem.NotFound.Copy(Problem.Raw(d), Vector.empty))
     else
@@ -226,8 +234,10 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
           Nil
         )
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ck0(d: String): Citekey = Citekey.assume("zzagent" + d.replaceAll("[^a-z0-9]", ""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def watcher(
       a: AgentsControllers,
       goal: DomainGoal.Slug,
@@ -250,6 +260,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     m
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sweepRun(mid: ManagerInfo.Id, goal: DomainGoal.Slug): RunInfo =
     connect(ds)(
       AgentRepo.get(
@@ -259,6 +270,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       )
     ).get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false))
@@ -267,6 +279,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       .items
       .filter(_.text.value.contains("zzagent"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def backlog(mid: ManagerInfo.Id): List[ManagerItem] =
     Transactor(ds)
       .read(ManagerRepo.itemPage(mid, None, Offset(0), PageSize(500)))

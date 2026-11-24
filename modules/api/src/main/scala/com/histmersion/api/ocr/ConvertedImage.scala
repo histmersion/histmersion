@@ -6,8 +6,10 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Sha256
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The converter sidecar's `/convert` response. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class ConvertedImage(
     name: ConvertedImage.Name,
     mime: ConvertedImage.Mime,

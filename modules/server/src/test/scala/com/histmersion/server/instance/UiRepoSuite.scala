@@ -17,16 +17,19 @@ import com.augustnagro.magnum.*
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an approval's proposal
   * and its decision both count as a change, a goal's edit does, the open ones are counted, V083 left a baseline mark
   * for every board, and each counter carries the seen mark it is given. Assertions are about this suite's own rows
   * (other suites write approvals and goals at the same time).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class UiRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -46,6 +49,7 @@ class UiRepoSuite extends DbSuite:
   /** The seen marks as the person's service keeps them (`ui_seen`, written here directly: that service is the
     * server's).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seen(): Map[Board.Wire, UiNotices.Counter.Seen] =
     connect(ds)(
       sql"""SELECT board, to_char(seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM ui_seen"""
@@ -62,9 +66,11 @@ class UiRepoSuite extends DbSuite:
         .run(): Unit
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def board(b: Board) =
     Transactor(ds).read(UiRepo.counters(seen())).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def now(): UiNotices.Counter.Seen =
     UiNotices.Counter.Seen(
       connect(ds)(

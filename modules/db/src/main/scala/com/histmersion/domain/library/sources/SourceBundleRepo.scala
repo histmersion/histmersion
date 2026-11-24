@@ -42,15 +42,21 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
   * sets by their source's uid, then their own key, in the "C" collation); and written in by an import, a source's body
   * and stored original as their blobs arrive.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the source rows for bundle export and import")
 private[sources] object SourceBundleRepo:
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.TotalOrder, "array_agg ORDER BY the value: rows tied on it hold the same value")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
     sql"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
                        s.topics, s.regions, s.tags, ${rangeCols(sql"s.period")}, s.summary, s.notes, s.source,
@@ -64,6 +70,8 @@ private[sources] object SourceBundleRepo:
       .query[BSourceRow]
       .run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def findings(scope: BundleScope)(using DbCon): Vector[Bundle.Finding] =
     sql"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
                        ${rangeCols(sql"f.period")}, f.period_name, f.tags, f.confidence, f.significance,
@@ -97,6 +105,7 @@ private[sources] object SourceBundleRepo:
     }
 
   /** The out-edges of the sources in scope — a source carries its whole set. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def edges(scope: BundleScope)(using DbCon): Vector[Bundle.Edge] =
     sql"""SELECT a.uid, b.uid, e.kind FROM edges e
                 JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE ${where(
@@ -108,6 +117,7 @@ private[sources] object SourceBundleRepo:
       .run()
       .map(Bundle.Edge.apply)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def unresolvedEdges(scope: BundleScope)(using DbCon): Vector[Bundle.UnresolvedEdge] =
     sql"""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
                 JOIN sources a ON a.citekey = u.src WHERE ${where(
@@ -119,6 +129,8 @@ private[sources] object SourceBundleRepo:
       .run()
       .map(Bundle.UnresolvedEdge.apply)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def assessments(scope: BundleScope)(using DbCon): Vector[Bundle.Assessment] =
     sql"""SELECT s.uid, ${Timestamps.iso(sql"a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
                        a.influential, a.verdict
@@ -138,6 +150,7 @@ private[sources] object SourceBundleRepo:
       )
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def aliases(scope: BundleScope)(using DbCon): Vector[Bundle.Alias] =
     sql"""SELECT a.alias, s.uid, ${Timestamps.iso(sql"a.created_at")}
                 FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE ${where(
@@ -150,6 +163,8 @@ private[sources] object SourceBundleRepo:
       .map(Bundle.Alias.apply)
 
   /** A source row as its bundle line; `originals` says whether the stored original goes along. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sourceLine(r: BSourceRow, originals: ContentStore): Bundle.Source =
     Bundle.Source(
       r.uid,
@@ -187,9 +202,12 @@ private[sources] object SourceBundleRepo:
 
   /** The sources whose body an import wrote or changed: their search chunks are rebuilt in the derived step. */
   private val changedBodies = BundleImport.Once(_ => scala.collection.mutable.LinkedHashSet.empty[UUID])
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def bodiesChanged(w: BundleImport.Writer): scala.collection.mutable.LinkedHashSet[UUID] =
     w.once(changedBodies)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def sourcesIn(w: BundleImport.Writer, referrers: SourceReferrers)(using Creator.New): Unit =
     given DbCon = w.transaction
     given CreatedAt = w.at
@@ -274,6 +292,7 @@ private[sources] object SourceBundleRepo:
     }
 
   /** A source's whole edge set travels with it: both sets are emptied for every source written, then its edges. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def edgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.sources.filter(s => w.writes(s.uid)).foreach { s =>
@@ -293,6 +312,8 @@ private[sources] object SourceBundleRepo:
       }
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def unresolvedEdgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     given Creator.New = Creator.New.FromBundle
@@ -305,6 +326,8 @@ private[sources] object SourceBundleRepo:
       }
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def aliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.aliases.filterNot(a => w.skipsAlias(domain.library.Citekey.assume(a.alias.value))).foreach { a =>
@@ -316,6 +339,8 @@ private[sources] object SourceBundleRepo:
       if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
     }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def findingsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.findings.filter(f => w.writes(f.uid)).foreach { f =>
@@ -338,6 +363,7 @@ private[sources] object SourceBundleRepo:
     }
 
   /** The newer verdict wins (§4); a source that is not here (deleted, skipped) has none. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def assessmentsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.es.assessments.foreach { a =>
@@ -355,6 +381,7 @@ private[sources] object SourceBundleRepo:
     }
 
   /** What a merge changes in a body it took from the bundle: the figures it renamed. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bodyRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.merged.bodyRenames.foreach { (u, renames) =>
@@ -369,6 +396,8 @@ private[sources] object SourceBundleRepo:
     }
 
   /** The search chunks of a changed body, the finding places of a touched source, a new source's parked edges. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def derivedIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     bodiesChanged(w).foreach { u =>
@@ -388,6 +417,8 @@ private[sources] object SourceBundleRepo:
     w.insertedSources.foreach(u => SourceRepo.promote(w.citekeyOf(u)))
 
   /** A source's body into its row; a stored original into `files`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def blobIn(use: BlobUse, sha: Sha256, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
     given DbCon = w.transaction
     use match

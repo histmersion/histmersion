@@ -3,11 +3,14 @@ package config.edit
 
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Whether a change may be written at all, against the schema: the key is a setting, the value is of its kind, a
   * credential is a reference (`value:` only with `literalConsent`). The warnings say what works but should be known (a
   * `value:` credential). Pure.
   */
+@movesTo(FeaturePlace.UtilSettings)
 object SettingPolicy:
   type LiteralConsent = LiteralConsent.T
   object LiteralConsent extends Newtype[Boolean, Pure]
@@ -24,6 +27,7 @@ object SettingPolicy:
 
   /** [[check]] of every edit, the first refusal ending it; the warnings of all of them. */
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckLiteralConsent = LiteralConsent
   val CheckLiteralConsent: LiteralConsent.type = LiteralConsent
 
@@ -41,6 +45,7 @@ object SettingPolicy:
           case Right(ns) => loop(tail, notes ++ ns)
     loop(edits, Nil)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def check(
       edit: SettingEdit,
       schema: ConfigSchema,
@@ -58,6 +63,9 @@ object SettingPolicy:
         case SettingEdit.Set(_, v) => value(field, v, literalConsent)
     yield notes
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def value(
       field: SettingField,
       v: SettingValue,

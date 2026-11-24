@@ -9,11 +9,13 @@ import com.histmersion.domain.library.search.SearchControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What research's workflows are given by the composition: the work lists, research's own articles (their controllers
   * and their store) and review ledgers, and what they read of the library — its sources, citations, search and labels —
   * and of the engine's goals.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait ResearchSite:
   def workLists: WorkListControllers
   def queues: QueueService

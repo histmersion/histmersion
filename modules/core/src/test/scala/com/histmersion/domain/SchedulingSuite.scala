@@ -10,8 +10,10 @@ import com.histmersion.config.given
 import com.histmersion.api.automation.Agents.ApprovalKind, com.histmersion.domain.automation.Run.State as RunState
 import com.histmersion.domain.Scheduling.*
 import com.histmersion.domain.library.Edge
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The schedules' pure rules: when a due schedule may start, its cap, and the DOIs an acquisition item names. */
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class SchedulingSuite extends munit.FunSuite:
 
   private val zero = BigDecimal(0)

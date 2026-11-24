@@ -24,8 +24,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[MediaCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion media`: declares its options, parses them into typed commands")
 object MediaArgs:
   object MediaEntry extends CommandLine.Entry:
     val name = "media"
@@ -127,6 +130,7 @@ object MediaArgs:
     private val offset_ = value[Int]("offset", "Skip this many (the list's footer names the next offset)")
     private val facets_ = flag("facets", "Only the counts per provider and licence")
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       MediaCmd.Command.ListCmd(
         provider_.toOption,

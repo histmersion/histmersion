@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The maintenance lock. A restore drops and recreates every table, so nothing else may touch the database while it
   * runs, and nothing begun before it may write after it:
@@ -57,6 +58,7 @@ final class WriteGate(val permits: WritePermit.Gate = WritePermit.Gate()):
     * The restore's own thread holds a worker's permit for all of it (the workers' quiescing and reconciling write, and
     * so may `f`): the gate lets that thread through while it holds the database.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def exclusively[A](
       op: OperationName,
       drain: FiniteDuration = FiniteDuration(0L, java.util.concurrent.TimeUnit.SECONDS),
@@ -103,10 +105,12 @@ object WriteGate:
     def reconcile()(using WritePermit)(using Creator.New): List[Problem] =
       if reconciled.compareAndSet(false, true) then workers.reconcileAll() else Nil
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refusal(op: OperationName, why: WritePermit.Refusal): Api.Error = why match
     case WritePermit.Refusal.Restoring => Backup.maintenance(s"$op")
     case WritePermit.Refusal.Stale     => Api.Error(why.problem, Some(Api.Error.Code(Backup.CodeMaintenance)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def undrained(
       first: Problem.Raw,
       restless: Vector[(Quiescent.Name, Quiescent.Busy)],

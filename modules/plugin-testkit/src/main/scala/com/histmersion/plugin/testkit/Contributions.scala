@@ -3,6 +3,7 @@ package plugin.testkit
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.Registries
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the plugin registered, by extension point, each under the id the server lists it by. */
 final case class Contributions(
@@ -13,6 +14,7 @@ final case class Contributions(
     secretVaults: List[Registries.SecretVaultsKey]
 ):
   /** As `histmersion plugin add` and `histmersion about` show them: `source-fetcher:oapen`, … */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def provides: List[Registries.RegistryKey] =
     sourceFetchers.map(k => Registries.RegistryKey("source-fetcher:" + k.value)) ++
       mediaCollections.map(k => Registries.RegistryKey("media-collection:" + k.value)) ++

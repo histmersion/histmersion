@@ -16,10 +16,14 @@ import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's workflows' site over the composition: its own wiring, the work lists, the write gate, the jobs, the
   * catalogue's geocoder and research's articles as the composition wires them.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@movesTo(FeaturePlace.Server)
 final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite:
   def workLists: WorkListControllers = deps.workLists
   def queues: QueueService = deps.queues
@@ -32,12 +36,14 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
   def query: QueryControllers = h.library.query
   def jobs: JobListing = h.jobs
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geocode(name: LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
     h.geocode(Geocode.Attempt.Name(name.value), hint, at)
 
   def articleSources(slug: Slug): Either[Api.Error, List[Citekey]] =
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def citedSources(slug: Slug): List[Citekey] =
     h.research.articles
       .get(slug)

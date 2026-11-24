@@ -17,15 +17,23 @@ import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the pictures' service answers, the same on the database and in memory. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class AssetServiceContract extends MediaStoreSuite:
 
   private val Ck = Citekey("zqas2001_x")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ImageRole = MediaRole.Wire(MediaRole.Image)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val LocatorMapRole = MediaRole.Wire(MediaRole.LocatorMap)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CoverRole = MediaRole.Wire(MediaRole.Cover)
   private def bytes(tag: String): Array[Byte] = Array[Byte](-1, -40, -1) ++ tag.getBytes("UTF-8")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def figureBytes(tag: String): NewFigure.Bytes = NewFigure.Bytes(bytes(tag))
   private def fig(name: NewFigure.Name, tag: String) = NewFigure(
     name,
@@ -35,6 +43,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
     Some(NewFigure.Height(8))
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def picture(
       key: ProviderAsset.Key,
       license: ProviderAsset.License = ProviderAsset.License("CC0-1.0"),

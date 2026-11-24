@@ -13,6 +13,7 @@ import sttp.tapir.server.interpreter.BodyListener
 import sttp.tapir.server.model.ServerResponse
 
 import RequestLog.{LabelHeader, TraceHeader, Unmatched}
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends RequestInterceptor[Identity]:
   private val matched = ThreadLocal[LogEvent.Operation | Null]()
@@ -46,6 +47,8 @@ final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends Req
   ): RequestHandler[Identity, R, B] =
     val next = requestHandler(routes)
     new RequestHandler[Identity, R, B]:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
       def apply(request: ServerRequest, endpoints: List[ServerEndpoint[R, Identity]])(using
           monad: MonadError[Identity]
       ): RequestResult[B] =

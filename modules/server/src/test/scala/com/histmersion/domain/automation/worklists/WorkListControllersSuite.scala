@@ -11,10 +11,12 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The work lists' controllers over the in-memory kernel: the list parsed from its word, the inputs checked, a log item
   * dated by the clock it is given.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WorkListControllersSuite extends munit.FunSuite:
   private val clock = Clock.fixed(Instant.parse("2026-10-30T23:59:59Z"), ZoneOffset.UTC)
   private def controllers() =

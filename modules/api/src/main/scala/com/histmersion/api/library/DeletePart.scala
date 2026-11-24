@@ -8,6 +8,7 @@ import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label) derives CanEqual:
   case Findings extends DeletePart(DeletePart.Wire("findings"), DeletePart.Label("findings"))
@@ -47,6 +48,7 @@ enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label) derives 
   case CoverageReasons
       extends DeletePart(DeletePart.Wire("coverage-reasons"), DeletePart.Label("articles' reasons for leaving it out"))
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object DeletePart:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
@@ -55,7 +57,9 @@ object DeletePart:
 
   given WireEnumValues[DeletePart]:
     def all: Array[DeletePart] = values
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire(e: DeletePart): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: WireEnumValues.Wire): Option[DeletePart] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given JsonValueCodec[DeletePart] = WireEnum.codec
   given Schema[DeletePart] = WireEnum.schema

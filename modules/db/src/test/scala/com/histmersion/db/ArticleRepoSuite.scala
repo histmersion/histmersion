@@ -30,14 +30,17 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.config.Limits
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.sources.Citekeys
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance lines
   * of plan §5.2 stream 2.7 that need a database: put/patch, the link graph maintained from the body, backlinks in both
   * directions, the cited-sources footer, and FTS.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val base = AppConfig.load().db
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
@@ -46,6 +49,7 @@ class ArticleRepoSuite extends DbSuite:
   private val slug = Slug("zz_article_sea")
 
   /** A source to cite, so a `[[citekey]]` in an article body is classifiable as a source link. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seedSource(ck: String, notes: Option[Source.Notes] = None) =
     SourceFixtures.put(
       ds,
@@ -71,6 +75,7 @@ class ArticleRepoSuite extends DbSuite:
       Limits.ChunkChars(4000)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def article(body: Article.Body, s: Article.Slug = Article.Slug(slug.value)) = Article(
     slug = s,
     title = Article.Title("The Sea Peoples"),

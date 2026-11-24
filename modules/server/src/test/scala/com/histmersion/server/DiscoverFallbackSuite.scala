@@ -23,10 +23,12 @@ import com.histmersion.pluginhost.HostLog
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** OpenAlex pauses anonymous search under heavy load (HTTP 503, 2026-09-27): discovery must not go dark with it. The
   * search falls back to Crossref's keyless `works?query=`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DiscoverFallbackSuite extends munit.FunSuite:
 
   private def discovery(c: AcquireConfig, http: Http): OpenAlexDiscovery =
@@ -45,6 +47,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   /** OpenAlex answers 503; Crossref answers the captured page. Records what was asked. */
   final private class OpenAlexDown extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       urls = urls :+ url
       if url.value.startsWith(cfg.crossref.url.value) then Right(crossrefPage)
@@ -57,9 +60,11 @@ class DiscoverFallbackSuite extends munit.FunSuite:
             External.ReplyExcerpt("down")
           )
         )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(
       Problem.Unclassified(Legacy.Text("unused"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
@@ -79,10 +84,14 @@ class DiscoverFallbackSuite extends munit.FunSuite:
 
   test("both down: the error names both upstreams"):
     val dead = new Http:
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         Left(Problem.Unclassified(Legacy.Text(s"$url: HTTP 503")))
+      @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         Left(Problem.Unclassified(Legacy.Text("unused")))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
@@ -112,6 +121,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   /** OpenAlex answers 503 (rate-limited); Crossref and Unpaywall answer. */
   final private class OpenAlexBusy(c: AcquireConfig) extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       urls = urls :+ url
       if url.value.startsWith(c.crossref.url.value) then Right(crossrefWork)
@@ -125,9 +135,11 @@ class DiscoverFallbackSuite extends munit.FunSuite:
             External.ReplyExcerpt("down")
           )
         )
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(
       Problem.Unclassified(Legacy.Text("unused"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 

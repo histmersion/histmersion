@@ -5,10 +5,12 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One shape: its id (unique in its set), GeoJSON geometry, colour, whether it is drawn dashed, and its visibility
   * (0…1).
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class ShapeFeature(
     id: ShapeFeature.Id,
     geometry: js.Any,

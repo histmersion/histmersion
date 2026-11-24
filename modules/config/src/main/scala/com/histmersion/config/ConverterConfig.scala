@@ -3,10 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The OCR sidecar (plan §1.8). `dpi`/`maxImagePx` are passed through to `POST /convert`; `spoolDir` is where the
   * server keeps an uploaded original so `reocr` can re-convert it without a second upload.
   */
+@movesTo(FeaturePlace.LibraryIngest)
 final case class ConverterConfig(
     url: ConverterConfig.Url,
     timeoutSeconds: ConverterConfig.TimeoutSeconds,
@@ -51,8 +54,11 @@ object ConverterConfig:
   type HealthCacheMs = HealthCacheMs.T
   object HealthCacheMs extends Newtype[Int, Pure]
   type SecondsPerPage = SecondsPerPage.T
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   object SecondsPerPage extends Newtype[Int, Pure]
   type SecondsPerPageQuality = SecondsPerPageQuality.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SecondsPerPageQuality extends Newtype[Int, Pure]
   type SecondsPerScannedPage = SecondsPerScannedPage.T
+  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
   object SecondsPerScannedPage extends Newtype[Int, Pure]

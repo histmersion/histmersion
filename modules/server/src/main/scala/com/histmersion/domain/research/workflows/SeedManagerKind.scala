@@ -41,11 +41,14 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
   * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its
   * articles and the goals its site reads; the seeding settings are `agents.seed`.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) extends ManagerKindDefinition:
   val kind: Kind = Kind.Seed
   val creator: domain.Creator.New =
@@ -54,6 +57,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     SeedManagerKind.plan(lib.seed).managerDefaults(m)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = itemKind.value match
     case ProposeArticles => Pipeline.ProposeArticles
     case ArticleCompile  => Pipeline.CompileArticle
@@ -61,6 +65,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
     case _               => Pipeline.ReviewArticle
 
   /** A firing proposes the goal's next articles. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant)(using WritePermit): List[ManagerKindDefinition.FirePhrase] =
     m.goal.toList.map { g =>
       val (_, isNew) = c.upsert(
@@ -74,6 +79,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       ManagerKindDefinition.FirePhrase(s"$ProposeArticles ${if isNew then "added" else "due"}")
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     lazy val progress = c.progress(run)
     item.kind.value match
@@ -122,6 +128,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   /** A compiled article is linked to its research area and queued for the review manager; an approved plan becomes
     * compile items; an approved goal plan may have created sub-goals.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def afterDone(
       c: ManagerContext,
       m: ManagerInfo,
@@ -167,6 +175,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         then c.autopilotSoon()
       case _ => ()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def target(
       m: ManagerInfo,
       itemKind: ManagerContext.ItemKind,
@@ -205,6 +215,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
     * filter reaching enough sources, within the area's daily cap) and an article to publish (its draft's filter, the
     * sources it cites, the daily cap).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   override def judge(
       c: ApprovalChecks,
       a: ApprovalInfo,
@@ -280,6 +292,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         case _ => Verdict.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def dispatch(
       c: ManagerContext,
       m: ManagerInfo,

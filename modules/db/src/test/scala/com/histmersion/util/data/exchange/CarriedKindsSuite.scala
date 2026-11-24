@@ -7,10 +7,12 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.storage.ContentStore
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The carried kinds and merge rules an export, an import and a plan run over: every entry of the format once, in its
   * order, whoever registered first; the import's steps in stage and rank order; each kind of record's table.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CarriedKindsSuite extends munit.FunSuite:
 
   private val kinds = TestExchange.kinds
@@ -29,6 +31,7 @@ class CarriedKindsSuite extends munit.FunSuite:
     val odd = new CarriedKind:
       def owner: DataOwner = DataOwner("x")
       def entry: BundleEntry = BundleEntry("entities/odd.ndjson")
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def out(scope: BundleScope, files: ContentStore)(using
           com.augustnagro.magnum.DbCon
       ): CarriedOut = CarriedOut(CarriedOut.Payload(Array.emptyByteArray), None)

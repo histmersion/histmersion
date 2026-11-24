@@ -3,6 +3,7 @@ package util.data.exchange
 
 import com.histmersion.{Period, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Bundle:
   type RangeIsNull = RangeIsNull.T
@@ -17,8 +18,10 @@ object Bundle:
 
     case Place, Period
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire: Kind.Wire = Kind.Wire((Kind.wireOf(this)).value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def file: Kind.EntryPath = Kind.EntryPath(s"entities/${Kind.fileStem(this)}.ndjson")
 
     def issueLetter: Kind.IssueLetter = Kind.letterOf(this)
@@ -27,6 +30,7 @@ object Bundle:
     type EntryPath = EntryPath.T
     object EntryPath extends Newtype[String, Pure]
     type IssueLetter = IssueLetter.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object IssueLetter extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
@@ -73,9 +77,13 @@ object Bundle:
       case Place          => IssueLetter("P")
       case Period         => IssueLetter("N")
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = Kind.fromWire(Wire((s).value))

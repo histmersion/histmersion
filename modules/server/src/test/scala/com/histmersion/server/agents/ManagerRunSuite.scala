@@ -58,6 +58,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the supervisor's tick with
   * a fixed clock — selection, dispatch, evaluation and the stop rules over several runs, holds, pause (with and without
@@ -66,6 +67,9 @@ import com.histmersion.util.database.TestCreators.given
   * the skeptic's user message, once-hints retired). Runs are scripted ([[PanelClient]]) or settled by hand; no provider
   * is ever called. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class ManagerRunSuite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -76,18 +80,25 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   private val SkipTag = HintEffect.Tag("zzmgr")
   private val Ck = Citekey("zzagent2019_tin")
   private val ApiCk = api.library.Citekey("zzagent2019_tin")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
   private val ReviewLight = ApiIds.manager(Review)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
   private val ReviewEnqueue = EnqueueRequest.Kind(ArticleReview)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val StoppedKind = ManagerEvent.Kind(Feed.Stopped)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val StarvedKind = ManagerEvent.Kind(Feed.Starved)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val EvaluatedKind = ManagerEvent.Kind(Feed.Evaluated)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val HintKind = ManagerEvent.Kind(Feed.Hint)
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-15T12:00:00Z")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Article.Body(
     s"""Tin reached the Aegean by sea [[$Ck]].
        |
@@ -105,6 +116,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
        |""".stripMargin
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(_.db)
@@ -172,6 +184,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(h: ServerWiring, slugs: Slug*): Unit =
     assert(
       h.library.sources
@@ -208,6 +221,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       .action(ReviewLight, ManagersControllers.Action("resume"), None)
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def finding(id: Finding.Id, r: Reviewer, kind: Finding.Kind = Finding.Kind("synth")) =
     Finding(
       id,
@@ -221,6 +235,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     )
 
   /** Settle a manager's run by hand: done (with a ledger of `majors` open MAJORs raised by it), or another state. */
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def settle(
       run: RunInfo.Id,
       slug: Ledger.Slug,

@@ -12,10 +12,12 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The geocoder's pure half (#981): the name key, the readings of a name, and the ranking — each case mirrors a real
   * failure of 2026-10-06.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GeocodeSuite extends munit.FunSuite:
 
   // ── key ──────────────────────────────────────────────────────────────────────────────────────
@@ -107,6 +109,7 @@ class GeocodeSuite extends munit.FunSuite:
     Candidate(id, label, kind, byLabel, from, to, dim, area, shared, lon, lat)
 
   // the live gazetteer's "Albania" candidates
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val iranSite = c(
     Place.Id("pleiades_903043"),
     Place.Label("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania"),
@@ -119,6 +122,7 @@ class GeocodeSuite extends munit.FunSuite:
     lon = Longitude(45.86),
     lat = Latitude(34.47)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val country = c(
     Place.Id("ne_country_alb"),
     Place.Label("Albania"),
@@ -127,6 +131,7 @@ class GeocodeSuite extends munit.FunSuite:
     lon = Longitude(19.97),
     lat = Latitude(41.25)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val caucasian = c(
     Place.Id("pleiades_863731"),
     Place.Label("Albania"),
@@ -138,6 +143,7 @@ class GeocodeSuite extends munit.FunSuite:
     lon = Longitude(48.16),
     lat = Latitude(41.38)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val snap1920 =
     c(
       Place.Id("cliopatria_albania_1920_1935"),

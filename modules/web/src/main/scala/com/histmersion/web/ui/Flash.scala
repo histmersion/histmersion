@@ -4,6 +4,7 @@ package web.ui
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A short line saying that something happened ("Copied the link"), read out by screen readers, gone after a few
   * seconds. Mounted once by the page.
@@ -16,6 +17,8 @@ object Flash:
   // `var`: the timer that clears the line
   private var timer = 0
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def say(text: Text): Unit =
     line.set(Some(text.value))
     dom.window.clearTimeout(timer)

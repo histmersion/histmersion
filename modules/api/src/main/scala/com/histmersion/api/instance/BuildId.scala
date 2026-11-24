@@ -3,6 +3,7 @@ package api.instance
 
 import com.histmersion.api.Html
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 type BuildId = BuildId.T
 
@@ -31,4 +32,5 @@ object BuildId extends Newtype[String, Pure]:
       else if id == server then Verdict.Same
       else Verdict.Updated
 
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     def encoded: String = Html.Atoms.segment(id.value)

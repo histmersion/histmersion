@@ -6,6 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
+import com.histmersion.lint.{LintRule, tolerated}
 
 trait MapSurface:
   // ── the view ───────────────────────────────────────────────────────────────────────────────
@@ -150,8 +151,11 @@ object MapSurface:
   type ShapesId = ShapesId.T
   object ShapesId extends Newtype[String, Pure]
   type ShapeSetId = ShapeSetId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ShapeSetId extends Newtype[String, Pure]
   type PointTilesMaxZoom = PointTilesMaxZoom.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PointTilesMaxZoom extends Newtype[Int, Pure]
   type PopupCls = PopupCls.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PopupCls extends Newtype[String, Pure]

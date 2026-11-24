@@ -4,22 +4,31 @@ package api.automation
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object AgentSchedulerMarkdown:
 
   import AgentScheduler.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goal(g: Option[Goal.Slug]) = g.fold("library work")(x => s"goal $x")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waiting(w: Waiting): String =
     val place = if (w.position).value > 0 then s"${w.position}. " else "- "
     s"$place#${w.item} ${w.jobType} **${w.target}** (${w.manager}; ${goal(w.goal)}; priority ${w.priority}; " +
       s"waited ${minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def minutes(m: Waiting.WaitedMinutes): String =
     if (m).value < 60 then (s"$m min")
     else (s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(s: SchedulerStatus): String =
     val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == SchedulerStatus.StrategyFrom("person") then
                                                   " (set by a person)"
@@ -68,6 +77,8 @@ object AgentSchedulerMarkdown:
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     (head :: "" :: facts).mkString("\n") + changes + types + started + queue + strategies
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def why(w: WhyInfo): String =
     s"# #${w.item} ${w.kind} ${w.target}\n\n- manager: ${w.manager}\n- status: ${w.status}" +
       w.run.fold("")(r => s" (run ${r.value.take(8)})") + w.approval.fold("")(a => s"\n- waits for approval #$a") +

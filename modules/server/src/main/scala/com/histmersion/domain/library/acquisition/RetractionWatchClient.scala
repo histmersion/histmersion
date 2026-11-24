@@ -5,7 +5,9 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 trait RetractionWatchClient:
   def csv(): Either[Problem, RetractionWatchClient.Csv]
 

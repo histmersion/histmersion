@@ -4,6 +4,7 @@ package domain
 import java.util.Locale
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class Licence(id: Licence.Id, family: Licence.Family)
 
@@ -15,8 +16,10 @@ object Licence:
   type Url = Url.T
   object Url extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unknown(statement: Statement): Licence = Licence(Id((statement).value), Family.Unknown)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allowList(csv: AllowList): Set[Family] =
     Option(csv).toList
       .flatMap((_).value.split(",").toList)
@@ -31,6 +34,7 @@ object Licence:
 
   private val CcRe = """^cc-by(-nc)?(-sa|-nd)?(?:-([0-9](?:\.[0-9])?))?(?:-([a-z]{2,3}))?$""".r
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def classify(raw: Id): Licence =
     val s = (raw).value.trim.toLowerCase(Locale.ROOT).replaceAll("[\\s_]+", "-")
     s match
@@ -57,6 +61,7 @@ object Licence:
   private val PdUrl =
     """^https?://(?:www\.)?creativecommons\.org/publicdomain/(zero|mark)/[0-9.]+/?(?:deed\.[a-z-]+)?$""".r
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofUrl(url: Url): Licence =
     val u = Option((url).value).getOrElse("").trim.toLowerCase(Locale.ROOT)
     u match
@@ -65,12 +70,14 @@ object Licence:
       case CcUrl(code, version, port) => classify(Id(s"cc-$code-$version" + Option(port).fold("")("-" + _)))
       case _                          => unknown(Statement(u))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofStatement(stated: Statement): Licence =
     if (stated).value.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(Url((stated).value))
     else classify(Id((stated).value))
 
   def parse(machine: Option[Statement], short: Option[Statement]): Licence = firstKnown(machine.toList ++ short.toList)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def firstKnown(statements: List[Statement]): Licence =
     val cands = statements.map((_).value.trim).filter(_.nonEmpty)
     cands.iterator
@@ -95,6 +102,7 @@ object Licence:
     case AllRightsReserved extends Family(Family.Wire("all-rights-reserved"))
     case Unknown extends Family(Family.Wire("unknown"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def needsAttribution: Boolean = ((wire).value.startsWith((CcBy.wire).value) || this == Gfdl)
 
     def isPublicDomain: Boolean = (this == Cc0 || this == PublicDomain)

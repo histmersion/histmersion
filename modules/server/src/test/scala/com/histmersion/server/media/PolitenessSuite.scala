@@ -16,15 +16,18 @@ import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite, Politeness
 import java.time.Instant
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.AppConfig
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The polite client (#1446): its User-Agent, its pace, and what it does with 429/503 and MediaWiki's maxlag — all
   * against a fake provider and a fake clock.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PolitenessSuite extends munit.FunSuite:
 
   import Politeness.Step
 
   private val now = Instant.parse("2026-10-10T12:00:00Z")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def answer(code: Int, headers: Map[String, String] = Map.empty, body: String = "{}") =
     HttpAnswer(
       HttpAnswer.Code(code),
@@ -189,6 +192,7 @@ class PolitenessSuite extends munit.FunSuite:
   // ── a refusal taken as rate limiting (#2561: the Met's firewall after ~2 000 requests) ──────────
 
   private val metHost = Polite.Host("collectionapi.metmuseum.org")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def metUrl(i: Int) = HttpTransport.Url(s"https://$metHost/public/collection/v1/objects/$i")
 
   test("a 403 after answers waits each backoff step and asks again; the host's pace then halves per refusal"):

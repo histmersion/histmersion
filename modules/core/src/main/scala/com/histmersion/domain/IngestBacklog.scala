@@ -11,6 +11,8 @@ import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"): the legal
   * open-access works a sweep picked past the day's ingest allowance wait as `oa-ingest` items of the watcher that found
@@ -18,6 +20,8 @@ import com.histmersion.domain.library.Doi
   * before any new find. Only a work with no legal copy goes to the acquisition list, which is the person's buy/borrow
   * list. The pure rules; the supervisor reads the facts and writes the result.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryAcquisition)
 object IngestBacklog:
   type DaysToDrain = DaysToDrain.T
   object DaysToDrain extends Newtype[Int, Pure]
@@ -43,6 +47,7 @@ object IngestBacklog:
     * [[Problem.NotFound.Copy]], or an earlier version stored [[NoLegalCopy]]): such a work goes to the acquisition list
     * at once; any other failure is tried again later.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def isNoLegalCopy(message: Problems): Boolean = message.exists {
     case _: Problem.NotFound.Copy            => true
     case stored: Problem.Stored.Unrecognised => stored.sentence.trim.startsWith(NoLegalCopy)
@@ -53,6 +58,8 @@ object IngestBacklog:
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
     * the watcher's own pending items (`ownBacklog`) and every drainable watcher's (`allBacklog`). Never negative.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sweepAllowance(
       own: OwnAllowance,
       shared: Option[SharedAllowance],
@@ -79,6 +86,7 @@ object IngestBacklog:
     * paused, auto-ingest off — drains nothing) and of the shared one (None = no shared cap); at most `max` (one tick's
     * share: an ingest fetches a file, so a tick takes only a few).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drain(
       entries: List[Entry],
       ownLeft: Map[Entry.ManagerId, Lane.LeftToday],
@@ -158,6 +166,7 @@ object IngestBacklog:
     case GaveUp(problems: Problems, tries: Plural.Count)
 
     /** The account as the item's outcome and the manager's feed show it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String =
       def words(problems: Problems): String =
         Option(problems)
@@ -170,6 +179,8 @@ object IngestBacklog:
         case GaveUp(problem, tries) =>
           s"${words(problem)} (${Plural.count(tries, Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onFailure(
       message: Problems,
       failures: Failure.Retry.Failures,
@@ -206,6 +217,7 @@ object IngestBacklog:
     * backlog first, and the shared cap (`sharedPerDay` / `sharedLeftToday`, None = none) truncates the day's total. An
     * estimate: the drain itself goes by priority and age.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def daysToDrain(
       lanes: List[Lane],
       sharedPerDay: Option[Lane.PerDay],
@@ -259,8 +271,10 @@ object IngestBacklog:
     type Watcher = Watcher.T
     object Watcher extends Newtype[String, Pure]
     type WatcherExists = WatcherExists.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object WatcherExists extends Newtype[Boolean, Pure]
     type WatcherAutoIngest = WatcherAutoIngest.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object WatcherAutoIngest extends Newtype[Boolean, Pure]
 
   enum RepairAction:
@@ -285,11 +299,14 @@ object IngestBacklog:
     case WatcherManual(watcher: RepairFacts.Watcher)
 
     /** The account as the repair's report shows it. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def said: String = this match
       case NoLegalCopyKnown       => "no legal open-access copy known: it stays on the acquisition list"
       case WatcherGone(watcher)   => s"its watcher $watcher no longer exists"
       case WatcherManual(watcher) => s"its watcher $watcher does not auto-ingest"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def repairAction(f: RepairFacts): RepairAction =
     if !f.isOa.value then RepairAction.Keep(RepairRationale.NoLegalCopyKnown)
     else

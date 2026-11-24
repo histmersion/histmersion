@@ -9,6 +9,8 @@ import java.time.format.DateTimeFormatter
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.TimeEquality.dayEquality
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The budget Histmersion keeps for CORE's API (api.core.ac.uk), shared by its two uses: the `core` step of the
   * acquisition chain (a PDF lookup by DOI) and the `core` index of the new-source search (a goal's saved query). Pure:
@@ -27,6 +29,8 @@ import com.histmersion.util.time.TimeEquality.dayEquality
   *     searches may use `searchDailyTokens` — the rest stays for PDF lookups, so a sweep of many saved queries cannot
   *     leave the ingests without CORE.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryAcquisition)
 object CoreQuota:
   type Cap = Cap.T
   object Cap extends Newtype[Int, Pure]
@@ -67,11 +71,14 @@ object CoreQuota:
       exhaustedPauseSeconds: Limits.ExhaustedPauseSeconds,
       maxWaitSeconds: Limits.MaxWaitSeconds
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def cost(p: Purpose): Cost = p match
       case Purpose.Lookup => Cost(lookupCost.value.max(0))
       case Purpose.Search => Cost(searchCost.value.max(0))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def dailyCap: Cap = Cap(dailyTokens.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def searchCap: Cap = Cap(searchDailyTokens.value)
 
   object Limits:
@@ -112,6 +119,7 @@ object CoreQuota:
       case Stored(text: Rationale.Text)
 
       /** The reason as the surfaces show it and the column keeps it. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def said: String = this match
         case Throttled        => "HTTP 429"
         case Exhausted(limit) => s"X-RateLimit-Remaining 0 of ${limit.fold("?")(l => s"$l")}"
@@ -126,6 +134,7 @@ object CoreQuota:
       private val ExhaustedOf = "X-RateLimit-Remaining 0 of (\\d+|\\?)".r
 
       /** The reason a column's text says: the case that writes it back, else the text kept as it was. */
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def read(written: String): Rationale = written match
         case "HTTP 429"         => Throttled
         case "asked to wait"    => Unstated
@@ -158,7 +167,9 @@ object CoreQuota:
       window: Option[Window],
       recent: Vector[Instant] = Vector.empty
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def spent: Spent = Spent(lookupTokens.value + searchTokens.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def spentOn(p: Purpose): Spent = p match
       case Purpose.Lookup => Spent(lookupTokens.value)
       case Purpose.Search => Spent(searchTokens.value)
@@ -178,6 +189,7 @@ object CoreQuota:
     case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
     case Paced(waitMs: Refusal.Paced.WaitMs)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe: Description = this match
       case Blocked(until, why)       => Description(s"CORE asked to wait until $until (${why.said})")
       case OverBudget(p, spent, cap) =>
@@ -211,6 +223,7 @@ object CoreQuota:
   def day(now: Instant): LocalDate = now.atZone(ZoneOffset.UTC).toLocalDate
 
   /** `s` on `now`'s day: a new day starts with no tokens spent; a block and the recent slots stay. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def onDay(s: State, now: Instant): State =
     val today = day(now)
     if s.day == today then s
@@ -225,6 +238,8 @@ object CoreQuota:
   /** May a call for `purpose` go out at `now`? Counts it when it may (the reservation is made before the call is sent,
     * so callers on several threads never overspend together).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reserve(s0: State, limits: Limits, purpose: Purpose, now: Instant): Either[Refusal, Grant] =
     val s = onDay(s0, now)
     val cost = limits.cost(purpose)
@@ -268,6 +283,8 @@ object CoreQuota:
     * and a block after a 429 or when `Remaining` reached 0 — until the time CORE gave, else `exhaustedPauseSeconds`
     * from now. A block is only ever lengthened by an answer.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def observe(s: State, limits: Limits, code: StatusCode, headers: Map[HeaderName, HeaderValue], now: Instant): State =
     def int(name: HeaderName) = headers.get(name).flatMap(_.value.trim.toIntOption)
     val window = Window(
@@ -294,6 +311,7 @@ object CoreQuota:
   /** A retry time as CORE gives it (`2026-10-26T18:52:11+0000`), an ISO-8601 instant or offset time, delay seconds, or
     * an HTTP date.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def retryAt(v: Option[HeaderValue], now: Instant): Option[Instant] =
     v.map(_.value.trim).filter(_.nonEmpty).flatMap { s =>
       Try(OffsetDateTime.parse(s, CoreTime).toInstant).toOption
@@ -303,6 +321,8 @@ object CoreQuota:
     }
 
   /** The state as the surfaces show it (`histmersion about`, the autopilot status), as of `now`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def view(s0: State, limits: Limits, now: Instant): UpstreamQuota =
     val s = onDay(s0, now)
     val b = s.block.filter(_.until.isAfter(now))

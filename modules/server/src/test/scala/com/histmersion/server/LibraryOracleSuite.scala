@@ -34,6 +34,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the library answers, on a crafted collection, recorded on the code before the library's sources, findings,
   * citations, labels and search moved into their own domain:
@@ -66,6 +67,7 @@ import com.histmersion.util.database.TestCreators.given
   * Uids are written as the record they name, timestamps as `TS`, durations as `N`, today's date as `DAY`.
   * `HISTMERSION_UPDATE_ORACLE=1` rewrites the files. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class LibraryOracleSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -76,6 +78,7 @@ class LibraryOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-library-oracle")
   private lazy val base = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val scratch = ScratchDatabases("histmersion_s10o", base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
@@ -83,6 +86,7 @@ class LibraryOracleSuite extends DbSuite:
 
   // ── the server ─────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cfgFor(name: String): AppConfig =
     base
       .modify(_.db)
@@ -931,6 +935,7 @@ class LibraryOracleSuite extends DbSuite:
   private val MsRe = "· \\d+ ms".r
 
   /** uid → the record it names. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def names(ds: DataSource): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -999,6 +1004,7 @@ class LibraryOracleSuite extends DbSuite:
     "tombstones" -> "kind"
   )
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def rows(ds: DataSource, names: Map[String, String]): String =
     Tables
       .map { (t, cols) =>
@@ -1358,6 +1364,7 @@ class LibraryOracleSuite extends DbSuite:
     out.toString
 
   /** uid → the record it names, over every database the exchange test made. */
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def xnames(dss: List[(String, DataSource)]): Map[String, String] =
     val queries = List(
       "SELECT uid::text, 'source:' || citekey FROM sources",
@@ -1468,6 +1475,7 @@ class LibraryOracleSuite extends DbSuite:
     "queue_items" -> "list, text, topic, status"
   )
 
+  @tolerated(LintRule.G58Raw, "pending G58 (SQL text only through the codecs)")
   private def libraryRows(ds: DataSource, names: Map[String, String]): String =
     LibraryTables
       .map { (t, cols) =>
@@ -1504,6 +1512,7 @@ class LibraryOracleSuite extends DbSuite:
   /** A merge of `bundle` into the collection at `url`: the first plan, every open issue answered keep-right, the plan
     * again, the resolution file, the apply, the merges, the merge and the ledger.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mergeInto(url: String, bundle: Array[Byte]): List[(String, String)] =
     val up = ok(postBytes(s"$url/api/bundle/upload", bundle))
     val sha = field(up, "sha256")

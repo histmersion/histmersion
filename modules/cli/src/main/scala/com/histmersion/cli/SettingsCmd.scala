@@ -10,11 +10,15 @@ import com.histmersion.config.edit.*
 import org.ekrich.config.ConfigFactory
 import com.histmersion.api.settings.{ConfigEdit, ConfigEditMarkdown}
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion config get|set|unset|restart` — the settings file. Through the server, which writes the file it reads
   * and reloads it; with `--local`, or when the server does not answer, the file on THIS machine is read and changed
   * directly (the same checks: the server, the database and the web UI may all be down).
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion settings` arguments")
 object SettingsCmd:
 
   /** The server is down: the file on this machine instead (said once, on stderr). */
@@ -53,6 +57,8 @@ object SettingsCmd:
 
     private def env = ConfigFactory.systemEnvironment()
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     private def file: Either[Problems, LocalSettingsFile] =
       UserPaths
         .configFile(k => AppConfig.lookup(env)(k.value).map(Environment.VariablesValue(_)))
@@ -64,8 +70,10 @@ object SettingsCmd:
     private def writer: Either[Problems, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     private def failed(e: SettingError) = Cli.Error(e.message)
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
         f <- file.left.map(Cli.Error(_))
@@ -111,6 +119,8 @@ object SettingsCmd:
           )
         )
 
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def write(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] =
       for
         fw <- writer.left.map(Cli.Error(_))
@@ -137,8 +147,11 @@ object SettingsCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Get(key: Option[String], prefix: Option[String], onlyLocal: Boolean, json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case SetCmd(key: String, value: String, onlyLocal: Boolean, nr: Boolean, consent: Boolean, json: Cli.JsonOutput)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Unset(key: String, onlyLocal: Boolean, nr: Boolean, json: Cli.JsonOutput)
     case Restart(json: Cli.JsonOutput)
 
@@ -148,6 +161,8 @@ object SettingsCmd:
   final private[cli] class Perform(c: Client, local: ConfigEdit.Write => Either[Cli.Error, ConfigEdit.Written])(using
       console: Console
   ):
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Get(key, prefix, onlyLocal, json) =>

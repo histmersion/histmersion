@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class SkippedPeriod(
     id: SkippedPeriod.Id,
@@ -24,10 +25,12 @@ object SkippedPeriod:
   type Detail = Detail.T
   object Detail extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val Skipped: JobDetail.Field[List[SkippedPeriod]] =
     new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("skippedPeriods"), Nil)
 
   /** How many period presets an init job skipped, in its detail. */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val SkippedCount: JobDetail.Field[Period.ImportResult.SkippedCount] =
     new com.histmersion.api.jobs.JobDetail.Field(
       JobDetail.Field.Name("skippedPeriodCount"),

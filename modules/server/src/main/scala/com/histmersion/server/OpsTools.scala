@@ -39,9 +39,12 @@ import com.histmersion.domain.CreatorControllers
   * Same rule as the rest of the server: a tool is a thin wrapper over the controllers REST binds and returns Markdown,
   * so the MCP output and the CLI output are the same bytes.
   */
+@movesTo(FeaturePlace.Split)
 object OpsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(h: ServerWiring) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val lint =
@@ -139,6 +142,8 @@ object OpsTools:
     List(lint, queue) ++ QueryTools(h.library.query) ++ List(backups)
 
   /** `action` dispatch, kept out of the tool body so the failure modes read as one list. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runQueue(h: ServerWiring, in: QueueInput)(using Creator.New): ToolResult[NoStructuredOutput] =
     def render(list: String) =
       h.workListView.list(
@@ -219,6 +224,7 @@ object OpsTools:
         )
 
   // Inputs last, per the file convention: JSON codec + tapir Schema both derived by Kindlings.
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class LintInput(
       rules: List[String] = Nil,
       fix: Boolean = false,
@@ -229,6 +235,8 @@ object OpsTools:
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec
   object LintInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[LintInput] = KindlingsSchema
       .derived[LintInput]
       .schema
@@ -243,6 +251,7 @@ object OpsTools:
       .modify(_.text)(_.description("Check Markdown that is not stored yet (e.g. an article body before put_article)"))
       .modify(_.field)(_.description("What `text` is: body (an article body, the default), summary or notes"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final case class QueueInput(
       action: String,
       list: Option[String] = None,
@@ -256,6 +265,8 @@ object OpsTools:
       createdBy: Option[Creation.By] = None
   ) derives JsonCodec
   object QueueInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[QueueInput] = KindlingsSchema
       .derived[QueueInput]
       .schema
@@ -282,4 +293,5 @@ object OpsTools:
         _.description("action=recheck: try at most this many due items (default acquire.recheck.per-pass)")
       )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class BackupsInput() derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema

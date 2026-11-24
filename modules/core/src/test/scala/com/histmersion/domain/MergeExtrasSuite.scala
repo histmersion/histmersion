@@ -30,11 +30,13 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.exchange.IssueField
 import com.histmersion.api.research.Article
 import com.histmersion.api.exchange.Bundle.uidEquality
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and
   * the detail the review screen shows beside an issue.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MergeExtrasSuite extends munit.FunSuite with Bounded:
   private val At = "2026-10-01T09:00:00.000000Z"
 
@@ -45,6 +47,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   ): MergePlanner.Result =
     MergePlanner.plan(in0(input(es)), sketches, res, cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(pairs: (Issue.Id, MergeResolution.Decision)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => MergeResolution(MergeResolution.Issue(i.value), d)))
 
@@ -52,6 +55,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   private val PointA = Bundle.Place.Geom("0101000020e610000000000000004040400000000000004440")
   private val PointB = Bundle.Place.Geom("0101000020e610000000000000008040400000000000804440")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def place(
       id: String,
       pid: Bundle.Place.Id,
@@ -76,6 +80,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
       Bundle.Place.UpdatedAt(At)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(
       id: String,
       pid: Bundle.Period.Id,

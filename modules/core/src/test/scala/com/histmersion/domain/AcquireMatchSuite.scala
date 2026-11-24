@@ -14,12 +14,16 @@ import com.histmersion.domain.AcquireMatch.Decision
 import com.histmersion.api.automation.Queue.QueueItem
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.library.Doi
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** #970: which open acquisition items an import closes (its DOI, exactly) and which it only proposes (a similar title
   * and first author) — with the false positives seen in the real queue.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class AcquireMatchSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(
       id: QueueItem.Id,
       text: QueueItem.Text,

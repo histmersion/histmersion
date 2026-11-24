@@ -21,6 +21,7 @@ import com.histmersion.plugin.MediaTarget
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The import of a collection of its targets' own pictures ([[MediaMatchRule.Own]]: a Wikidata item's statements, the
   * files a gazetteer record or a depiction search names): the collection is asked about the whole batch at once
@@ -35,10 +36,14 @@ import com.histmersion.domain.Creator
   * @param name
   *   the collection's name in the registry
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fetch: Polite, cfg: MediaConfig):
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val check: String = BuiltinMedia.checkOf(BuiltinMedia.CheckOfName(name.value)).value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val provider: String = BuiltinMedia.providerOf(BuiltinMedia.ProviderOfName(name.value)).value
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val allow = LicencePolicy.of(
     Licence.AllowList(BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), cfg).value)
   )
@@ -48,6 +53,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
     */
   final private case class Verdict(licence: Option[String], decision: Either[String, (MediaItem, Rights)])
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def idOf(t: Target): MediaTarget.Id =
     MediaTarget
       .Id(
@@ -56,6 +62,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       )
 
   /** A use's Wikidata statement as the host checks it: one that is no item is left out, with a warning. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def wikidataOf(u: MediaUse): Option[Wikidata.Id] =
     val (q, why) = SpiValues.kept(u.wikidata)(SpiValues.wikidataOf)
     why.foreach(w => scribe.warn(s"media import: ${u.item.key}: ${w.sentence}, left out"))
@@ -65,14 +72,17 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
     case MediaTarget.Events => ImportRepo.Event
     case MediaTarget.Places => ImportRepo.Place
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def roleOf(u: MediaUse): MediaRole.Wire =
     MediaRole.Wire(
       u.item.role.map(_.value.trim).filter(_.nonEmpty).getOrElse(col.role.value)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def providerKey(key: MediaItem.Key): AssetService.ProviderKey = AssetService.ProviderKey(key.value)
 
   /** The host's reading of an item's stated licence, and its judgement. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def judge(item: MediaItem): Verdict =
     item.rights match
       case Left(why)     => Verdict(None, Left(why.reason))
@@ -102,6 +112,8 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
                   )
                 )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def run(
       targets: List[Target],
       dryRun: MediaImporter.DryRun,
@@ -203,6 +215,8 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       val answered = targets.filter(t => asked(idOf(t)))
       persist(base, uses, verdicts, answered, refresh, store, failed, found.categories, byId)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G5TextBranch, "reads the wording a plugin gives for a refused item (its SPI has no closed reason)")
   private def persist(
       base: MediaImportReport,
       uses: List[MediaUse],
@@ -353,6 +367,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
   /** The picture and its thumbnail — the provider's own copies; the picture must not pass `max-bytes`. A failed
     * thumbnail leaves the picture without one (the card skips it).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def download(
       item: MediaItem,
       completed: Option[MediaItem]

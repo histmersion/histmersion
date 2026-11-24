@@ -3,10 +3,13 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Where the map opens (`ui.map-start`): `mode` "last" (where the browser left it; here the first time) or "place"
   * (always here).
   */
+@movesTo(FeaturePlace.ServerInstance)
 final case class UiMapStartSettings(
     mode: UiMapStartSettings.Mode,
     lat: UiMapStartSettings.Lat,
@@ -18,8 +21,10 @@ final case class UiMapStartSettings(
 object UiMapStartSettings:
   type Mode = Mode.T
   object Mode extends Newtype[String, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Lat = Latitude
   val Lat: Latitude.type = Latitude
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Lon = Longitude
   val Lon: Longitude.type = Longitude
   type Zoom = Zoom.T

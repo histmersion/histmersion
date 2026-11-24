@@ -10,11 +10,15 @@ import com.histmersion.api.given
 import com.histmersion.util.json.{Cursor, RawJson}
 import com.histmersion.util.json.RawJson.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** PeriodO writes ISO 8601 years, which count a year 0 (`"-2999"` is 3000 BC, `"0000"` is 1 BC). The store's signed
   * years have no year 0, so a year `≤ 0` moves down by one.
   */
 
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.Json, "reads the PeriodO dataset JSON into period records")
 object PeriodO:
   type MaxYearNumber = MaxYearNumber.T
   object MaxYearNumber extends Newtype[Long, Pure]
@@ -25,23 +29,29 @@ object PeriodO:
   type MinYearNumber = MinYearNumber.T
   object MinYearNumber extends Newtype[Long, Pure]
   type SpanFactorNumber = SpanFactorNumber.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SpanFactorNumber extends Newtype[Long, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
   type MinYear = MinYearValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MinYearValue = MinYearNumber
   val MinYearValue: MinYearNumber.type = MinYearNumber
   type MaxYear = MaxYearValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MaxYearValue = MaxYearNumber
   val MaxYearValue: MaxYearNumber.type = MaxYearNumber
   type SpanFactor = SpanFactorValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SpanFactorValue = SpanFactorNumber
   val SpanFactorValue: SpanFactorNumber.type = SpanFactorNumber
   type MinImplausibleSpan = MinImplausibleSpanValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MinImplausibleSpanValue = MinImplausibleSpanNumber
   val MinImplausibleSpanValue: MinImplausibleSpanNumber.type = MinImplausibleSpanNumber
   type MinSiblings = MinSiblingsValue
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MinSiblingsValue = MinSiblingsCount
   val MinSiblingsValue: MinSiblingsCount.type = MinSiblingsCount
 
@@ -61,6 +71,7 @@ object PeriodO:
 
   val MinSiblings: MinSiblings = MinSiblingsCount(3)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parse(json: String): Either[Problem, PeriodODataset] =
     RawJson
       .parse(json)
@@ -123,6 +134,8 @@ object PeriodO:
           )
       }
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def authority(
       id: HistoricalPeriod.Id,
       c: Cursor
@@ -143,6 +156,7 @@ object PeriodO:
       defs.flatMap(_.left.toOption) ++ implausible
     )
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def implausibleSpans(
       defs: List[Definition]
   ): (List[SkippedPeriod], List[Definition]) =
@@ -173,6 +187,8 @@ object PeriodO:
     }
     (verdicts.flatMap(_.left.toOption), verdicts.flatMap(_.toOption))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def definition(
       id: HistoricalPeriod.Id,
       c: Cursor
@@ -229,6 +245,9 @@ object PeriodO:
         skip(Period.Skip.EndsBeforeStart, SkippedPeriod.Detail(s"starts after it ends ($s > $e)"))
       case _ => skip(Period.Skip.NoSpan, SkippedPeriod.Detail("no readable start or stop year"))
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def toPeriods(
       ds: PeriodODataset,
       existing: Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] = Map.empty,
@@ -272,6 +291,7 @@ object PeriodO:
     }
     parentsFirst(authorityRoots ++ rows)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[api] def parentsFirst(rows: List[HistoricalPeriod]): List[HistoricalPeriod] =
     val byId = rows.map(r => r.id -> r).toMap
     val out = scala.collection.mutable.LinkedHashMap.empty[HistoricalPeriod.Id, HistoricalPeriod]
@@ -294,6 +314,7 @@ object PeriodO:
       periods: List[Definition]
   ):
     /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def cite(periodId: HistoricalPeriod.Id): HistoricalPeriod.Authority =
       HistoricalPeriod.Authority(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")
 

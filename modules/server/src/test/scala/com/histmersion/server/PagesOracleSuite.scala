@@ -24,6 +24,7 @@ import com.histmersion.domain.Title
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 class PagesOracleSuite extends munit.FunSuite:
 
@@ -208,6 +209,7 @@ class PagesOracleSuite extends munit.FunSuite:
     )
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val article = ArticlePage(
     Article.Row(
       Article.Slug("sea_peoples"),
@@ -265,6 +267,8 @@ class PagesOracleSuite extends munit.FunSuite:
     Some(review)
   )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def pages: String =
     val atoms = List(
       "chips" -> s"${HtmlRender.chips(ChipField.Tag, List("sea_peoples", " trade & \"routes\" ", "", "sea_peoples").map(HtmlRender.Label(_)))}",

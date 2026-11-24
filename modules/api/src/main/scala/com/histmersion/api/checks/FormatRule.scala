@@ -6,6 +6,7 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 enum FormatRule(
     val wire: FormatRule.Wire,
@@ -263,6 +264,7 @@ enum FormatRule(
         )
       )
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object FormatRule:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
@@ -273,9 +275,12 @@ object FormatRule:
 
   given WireEnumValues[FormatRule]:
     def all: Array[FormatRule] = values
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire(e: FormatRule): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: WireEnumValues.Wire): Option[FormatRule] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given JsonValueCodec[FormatRule] = WireEnum.codec
   given Schema[FormatRule] = WireEnum.schema
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fromWire(s: Wire): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(WireEnumValues.Wire(s.value))

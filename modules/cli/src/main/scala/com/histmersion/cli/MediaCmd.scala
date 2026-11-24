@@ -21,7 +21,10 @@ import com.histmersion.api.library.{Citekey, RepairAcquire}
 import com.histmersion.util.console.Console
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.Paging
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion media` arguments")
 object MediaCmd:
 
   // ── media from outside providers (#1446) ──
@@ -38,6 +41,7 @@ object MediaCmd:
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Import(
         name: String,
         writes: Cli.Writes,
@@ -48,6 +52,7 @@ object MediaCmd:
         following: Cli.Following
     )
     case Providers()
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Covers(
         writes: Cli.Writes,
         limit: Option[Int],
@@ -58,6 +63,7 @@ object MediaCmd:
         noIll: Boolean,
         following: Cli.Following
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case ListCmd(
         provider: Option[String],
         licence: Option[String],
@@ -87,6 +93,7 @@ object MediaCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Import(name, writes, limit, place, event, refresh, following) =>

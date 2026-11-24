@@ -8,7 +8,9 @@ import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class ReadMark(
     kind: ItemKind,
     id: ItemKey,
@@ -26,6 +28,7 @@ object ReadMark:
   type Read = Read.T
   object Read extends Newtype[Boolean, Pure]
   type ReadAt = ReadAt.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ReadAt extends Newtype[String, Pure]
   type OpenedAt = OpenedAt.T
   object OpenedAt extends Newtype[String, Pure]

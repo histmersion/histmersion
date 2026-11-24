@@ -44,8 +44,11 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The command line of [[CalibreCmd]]. */
+@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion calibre`: declares its options, parses them into typed commands")
 object LibraryArgs:
   object LibraryEntry extends CommandLine.Entry:
     val name = "calibre"
@@ -66,6 +69,7 @@ object LibraryArgs:
 
     // an EMPTY query is the whole library (`search "" --limit 2000`, the enrich-calibre audit); only a missing one is
     // refused
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] =
       if q_.isEmpty && !unlinked_.getOrElse(false) then Left(Problem.Invalid.Missing.here(Problem.Field("query")))
       else Right(CalibreCmd.Command.Search(q_.toOption, unlinked_.getOrElse(false), limit_.toOption, json_()))
@@ -139,6 +143,7 @@ object LibraryArgs:
       flag("replace", "Replace the file of the source's LINKED Calibre entry instead of adding a new entry")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       CalibreCmd.Command.Push(ckText_(), file_.toOption, replaceFlag_.getOrElse(false), json_())
     )
@@ -225,6 +230,7 @@ object LibraryArgs:
     private val limit_ = value[Int]("limit", "Max gaps to list")
     private val json_ = json()
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(
       CalibreCmd.Command.Gaps(quiet_.getOrElse(false), limit_.toOption, json_())
     )

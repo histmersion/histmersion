@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The review manager's defaults (a value saved in the manager's config wins). `staleAfterDays`: a converged article is
   * selected again (lowest priority) after this many days, or when its filter gained sources (0 = never); looked for at
@@ -10,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * its review. `extendMinNew`: an article whose filter returns at least this many sources it neither cites nor gives a
   * reason for gets an `article-extend` item (0 = never), at most every `extendCooldownDays` per article.
   */
+@movesTo(FeaturePlace.ResearchWorkflows)
 final case class ReviewManagerConfig(
     maxRuns: ReviewManagerConfig.MaxRuns,
     rounds: ReviewManagerConfig.Rounds,
@@ -32,6 +35,7 @@ object ReviewManagerConfig:
   type Rounds = Rounds.T
   object Rounds extends Newtype[Int, Pure]
   type MaxRunsPerArticle = MaxRunsPerArticle.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object MaxRunsPerArticle extends Newtype[Int, Pure]
   type NoProgressRuns = NoProgressRuns.T
   object NoProgressRuns extends Newtype[Int, Pure]

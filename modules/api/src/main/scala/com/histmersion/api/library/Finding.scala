@@ -44,6 +44,7 @@ object Finding:
   type Region = Region.T
   object Region extends Newtype[String, Pure]
   type PeriodName = PeriodName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PeriodName extends Newtype[String, Pure]
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
@@ -65,11 +66,15 @@ object Finding:
   object Input:
     export com.histmersion.api.library.Confidence.Wire as Confidence
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[Input] = KindlingsSchema
       .derived[Input]
       .schema
       .modify(_.confidence)(_.description("high | medium | low | contested — another word is refused"))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def of(f: Finding): Input = Input(
       claim = f.claim,
       region = f.region,

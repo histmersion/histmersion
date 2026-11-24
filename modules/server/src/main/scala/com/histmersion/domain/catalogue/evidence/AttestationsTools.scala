@@ -19,6 +19,7 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 
 /** The attestations for agents: list or show, create, delete. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object AttestationsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -31,6 +32,8 @@ object AttestationsTools:
       offset: Option[Offset] = None
   ) derives JsonCodec
   object AttestationsInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[AttestationsInput] = KindlingsSchema
       .derived[AttestationsInput]
       .schema
@@ -57,6 +60,8 @@ object AttestationsTools:
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives StrictJson // #813
   object AttestationPutInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[AttestationPutInput] = KindlingsSchema
       .derived[AttestationPutInput]
       .schema
@@ -76,11 +81,15 @@ object AttestationsTools:
 
   final case class DeleteAttestationInput(id: Attestation.Id) derives JsonCodec
   object DeleteAttestationInput:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[DeleteAttestationInput] = KindlingsSchema
       .derived[DeleteAttestationInput]
       .schema
       .modify(_.id)(_.description("Id of the attestation to delete"))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(attestations: AttestationsControllers) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val listTool =

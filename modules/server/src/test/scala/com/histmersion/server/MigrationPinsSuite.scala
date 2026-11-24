@@ -17,16 +17,14 @@ import scala.jdk.CollectionConverters.*
   *     The update mode only appends; it refuses while a pinned file changed or went away, and it creates the file only
   *     when git has never had it (a deleted file is restored from git, never regenerated: that would pin any edit).
   *   - History may still be rewritten on purpose before publishing (owner decision: no compatibility engineering), but
-  *     only explicitly: the owner's `notes/accept-repin-migrations.sh` re-pins the named files and appends an accepted
-  *     row for each to `architecture/accepted-rises.tsv`. Against the merge base with the pilot, a pin the base has
-  *     that is changed or gone here fails unless such a row, added on this branch, names it.
+  *     only explicitly: a re-pin is the owner's own signed commit of the pins file, which agents may not write.
   */
 class MigrationPinsSuite extends munit.FunSuite:
   import MigrationPinsSuite.*
 
   test("every migration is pinned, and no pinned migration changed or went away"):
     val actual = Pins.of(MigrationsDir)
-    val tracked = RatchetBase.Git(Path.of(".")).show("HEAD", PinsPath).isDefined
+    val tracked = GitRepo(Path.of(".")).show("HEAD", PinsPath).isDefined
     val update = sys.env.get("HISTMERSION_UPDATE_ARCHITECTURE").contains("1")
     if !Files.isRegularFile(PinsFile) then
       assert(
@@ -44,30 +42,6 @@ class MigrationPinsSuite extends munit.FunSuite:
       else
         val wrong = Pins.check(pinned, actual)
         assert(wrong.isEmpty, Pins.describe(wrong))
-
-  test("a pin the merge base has is unchanged here, unless the owner's accepted row re-pins it"):
-    val git = RatchetBase.Git(Path.of("."))
-    val outcome =
-      for
-        base <- git.base(sys.env)
-        before <- Pins.parse(git.show(base.commit, PinsPath).getOrElse(Nil))
-        now <-
-          if Files.isRegularFile(PinsFile) then Pins.parse(Files.readAllLines(PinsFile, UTF_8).asScala.toList)
-          else Right(Vector.empty)
-        accepted <- RatchetBase.Approvals.AddedInBranch(git).granted(base)
-      yield Pins.unaccepted(before, now, accepted.filter(_.file == PinsPath).map(_.key))
-    outcome match
-      case Left(why)   => fail(why)
-      case Right(Nil)  => ()
-      case Right(left) =>
-        fail(
-          (s"$PinsPath changes the pins of applied migrations against the merge base:" :: left.map(p =>
-            s"  ${p.file}: ${p.sha256}"
-          ) ++ List(
-            "An applied migration is immutable (G93): add a new migration instead. A deliberate rewrite of history is " +
-              "re-pinned by the owner's notes/accept-repin-migrations.sh, which writes the accepted row."
-          )).mkString("\n")
-        )
 
   test("the pins file reads back what it was written from, in the migrations' order"):
     val pins = Vector(Pin("V110__problems_as_entries.sql", "b" * 64), Pin("V109__schema.sql", "a" * 64))
@@ -104,19 +78,6 @@ class MigrationPinsSuite extends munit.FunSuite:
     )
     assertEquals(Pins.appended(pinned, Vector.empty), Left(List(Drift.Gone("V1__a.sql"))))
 
-  test("against the base: a changed or dropped pin needs an accepted row naming its new pin; a new pin needs none"):
-    val before = Vector(Pin("V1__a.sql", "1" * 64), Pin("V2__b.sql", "2" * 64))
-    val now = Vector(Pin("V1__a.sql", "8" * 64), Pin("V3__c.sql", "3" * 64))
-    assertEquals(
-      Pins.unaccepted(before, now, Nil),
-      List(Pin("V1__a.sql", "8" * 64), Pin("V2__b.sql", Pins.GoneMark))
-    )
-    assertEquals(
-      Pins.unaccepted(before, now, List(List("V1__a.sql", "8" * 64), List("V2__b.sql", Pins.GoneMark))),
-      Nil
-    )
-    assertEquals(Pins.unaccepted(before, before :+ Pin("V3__c.sql", "3" * 64), Nil), Nil)
-
   test("a migration's pin is the SHA-256 of its bytes"):
     assertEquals(
       Pins.sha256("abc".getBytes(UTF_8)),
@@ -147,10 +108,7 @@ object MigrationPinsSuite:
     val Header: String =
       "# file\tsha256 — the Flyway migrations as applied (G93): a pinned file never changes. A new migration is " +
         "appended by HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *MigrationPinsSuite'; a deliberate " +
-        "rewrite of history is re-pinned only by the owner's notes/accept-repin-migrations.sh"
-
-    /** The key an accepted row names for a pin dropped on purpose. */
-    val GoneMark: String = "gone"
+        "rewrite of history is re-pinned only by the owner's signed commit"
 
     private val Hex = "[0-9a-f]{64}".r
     private val Version = "^[VR]([0-9]+(?:[._][0-9]+)*)__.*".r
@@ -214,21 +172,9 @@ object MigrationPinsSuite:
       }
       Either.cond(refused.isEmpty, pinned ++ added, refused)
 
-    /** The base's pins changed (as the new pin) or dropped (as [[GoneMark]]) here that no accepted key names. */
-    def unaccepted(before: Vector[Pin], now: Vector[Pin], accepted: List[List[String]]): List[Pin] =
-      val here = now.map(p => p.file -> p.sha256).toMap
-      before.toList
-        .flatMap { p =>
-          here.get(p.file) match
-            case Some(h) if h == p.sha256 => None
-            case Some(h)                  => Some(Pin(p.file, h))
-            case None                     => Some(Pin(p.file, GoneMark))
-        }
-        .filterNot(p => accepted.contains(List(p.file, p.sha256)))
-
     def describe(drifts: List[Drift]): String =
       (s"applied migrations are immutable (G93), against $PinsPath:" :: drifts.map(_.describe) ++ List(
         "A new migration is pinned by HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly *MigrationPinsSuite' " +
           "(it only appends). A changed or removed migration is a new migration instead; a deliberate rewrite of " +
-          "history is re-pinned by the owner's notes/accept-repin-migrations.sh."
+          "history is re-pinned only by the owner's signed commit."
       )).mkString("\n")

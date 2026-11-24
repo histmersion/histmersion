@@ -9,10 +9,12 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.domain.research.articles.ArticleTools
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** Everything a `/source/{citekey}` page shows, typed. Built by [[PageBuilder]], rendered by [[Pages.source]] —
   * Markdown bodies stay Markdown until rendering, so the page model is testable without flexmark in the way.
   */
+@movesTo(FeaturePlace.ResearchArticles)
 final case class SourcePage(
     ref: Source.Ref,
     venue: Option[SourcePage.Venue],

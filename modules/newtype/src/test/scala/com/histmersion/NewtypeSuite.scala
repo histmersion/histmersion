@@ -4,6 +4,7 @@ import scala.language.strictEquality
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 object NewtypeSuite:
   type Count = Count.T
@@ -20,6 +21,7 @@ object NewtypeSuite:
   object Rank extends Newtype[Int, Pure]:
     given Ordering[T] = Ordering.Int.on[T](_.value).reverse
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NewtypeSuite extends munit.FunSuite:
   import NewtypeSuite.*
 

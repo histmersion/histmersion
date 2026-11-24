@@ -4,6 +4,7 @@ package web
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a map name MOVES (#1447): pure, so the smoothing is a unit test and [[MapLabels]] only feeds it the clock and
   * writes the result.
@@ -52,6 +53,7 @@ object LabelMotion:
   /** A point moving with its velocity (both zoom-0). */
   final case class Motion(p: Pt, vx: Double, vy: Double):
     /** Toward `target` by `dt` seconds; snaps when `reduced`. */
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     def toward(target: Pt, dt: Double, reduced: Boolean): Motion =
       if reduced then Motion(target, 0, 0)
       else
@@ -77,6 +79,7 @@ object LabelMotion:
   /** The visibility `a` (0 hidden … 1 shown) after `dt` seconds of fading toward `shown`: linear, so a name reversed
     * mid-fade turns around where it is.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def fade(a: Double, shown: Boolean, dt: Double): Double =
     val step = if FadeSec <= 0 then 1.0 else dt / FadeSec
     if shown then math.min(1.0, a + step) else math.max(0.0, a - step)
@@ -84,6 +87,7 @@ object LabelMotion:
   /** The size factor of a name at visibility `a`: it grows in from [[GrowFrom]] and shrinks out to it, eased; with
     * reduced motion it keeps its size and only fades.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def appearScale(a: Double, reduced: Boolean): Double =
     if reduced then 1.0
     else
@@ -94,6 +98,7 @@ object LabelMotion:
     * [[ZoomFollow]] of the map's scaling, so a zoom grows or shrinks the names with the map, and is 1 again once the
     * zoom ends (then `settled == zoom`).
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def zoomScale(zoom: Double, settled: Double, reduced: Boolean): Double =
     if reduced then 1.0 else math.pow(2, (zoom - settled) * ZoomFollow)
 
@@ -101,5 +106,6 @@ object LabelMotion:
     * `after` px wide — the class changes at the end of a zoom, and the name eases from there to its new size instead of
     * popping.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def rebase(s: Double, before: Double, after: Double, reduced: Boolean): Double =
     if reduced || before <= 0 || after <= 0 then 1.0 else s * before / after

@@ -10,6 +10,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.histmersion.domain.automation.agents.AgentStateRecord
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The engine's rows held in memory, one record the `InMemory` services of its features share (each reads and changes
   * its own part, through lenses): the autopilot's row; the goals, their links, the schedules not moved yet and what the
@@ -55,6 +56,7 @@ object AutomationState:
 
   import hearth.kindlings.optics.syntax.*
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(
       conflicts: ApprovalRecord => Boolean
   )(make: Approval.Id => ApprovalRecord): Option[Approval.Id] =
@@ -87,4 +89,5 @@ object AutomationState:
     )
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text(at: Instant): Timestamp = Timestamp(at.truncatedTo(ChronoUnit.SECONDS).toString)

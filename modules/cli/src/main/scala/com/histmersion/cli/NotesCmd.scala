@@ -10,11 +10,16 @@ import com.histmersion.api.ItemKind
 import com.histmersion.api.library.Title
 import com.histmersion.util.console.Console
 import com.histmersion.util.problem.Problems
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion notes list|show|add|edit|rm` — your notes (Markdown), each left on an item or a place on the map.
   */
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion notes` arguments")
 object NotesCmd:
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def text(inline: Option[String], file: Option[String]): Either[Problems, Note.Text] =
     (inline, file) match
       case (Some(t), None) => Right(Note.Text(t))
@@ -51,6 +56,7 @@ object NotesCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.ListCmd(kind, item, q, limit, json) =>

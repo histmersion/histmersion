@@ -2,6 +2,8 @@ package com.histmersion
 package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** CORE (api.core.ac.uk): its endpoint, the plain key (`api-key`; the `oa-core` plugin's secret reference wins over
   * it), and the budget both CORE uses share — the acquisition chain's `core` step and the new-source search's `core`
@@ -23,6 +25,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *   how long a call waits for its slot under `perMinute`; longer, and it is not made (the chain goes on, the sweep
   *   leaves CORE out)
   */
+@movesTo(FeaturePlace.LibraryAcquisition)
 final case class CoreServiceConfig(
     url: ServiceUrl,
     apiKey: ApiKey,
@@ -34,4 +37,5 @@ final case class CoreServiceConfig(
     exhaustedPauseSeconds: Seconds,
     maxWaitSeconds: Seconds
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key: Option[ApiKey] = Option(apiKey.value: String).map(_.trim).filter(_.nonEmpty).map(ApiKey(_))

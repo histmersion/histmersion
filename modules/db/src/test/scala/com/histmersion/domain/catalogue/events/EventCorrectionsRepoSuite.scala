@@ -38,6 +38,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.catalogue.Latitude
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V088's
   * generated uncertainty agrees with core.EventPrecision; the map's feed leaves the imprecise events out (and counts
@@ -46,11 +47,14 @@ import com.histmersion.api.catalogue.Latitude
   * something else — follow a rename, go with a delete, and a conflict is a lint item. Ids start with `zqcr` (provider
   * `zzcr`).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 class EventCorrectionsRepoSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -66,6 +70,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def put(id: BEventRow.Id, ts: TimeSpan, lon: Longitude = Longitude(160.0)) =
     EventFixtures.put(
       ds,
@@ -203,6 +208,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
   )
   private val Id = BEventRow.Id("zzcr_c1")
   private val TargetId = Correction.TargetId("zzcr_c1")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val EventKind = Correction.TargetKind(Correction.Target.Event)
 
   private def reimport(r: CatalogRecord): EventSaved =

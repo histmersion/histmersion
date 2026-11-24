@@ -2,11 +2,13 @@ package com.histmersion
 package util.text
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A MinHash signature (Broder 1997): the minimum of each of `k` hash functions over a text's word shingles. */
 final case class MinHash(mins: Vector[MinHash.Mins]):
 
   /** The estimated Jaccard similarity of the two shingle sets. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def similarity(o: MinHash): MinHash.Similarity =
     if mins.isEmpty || mins.length != o.mins.length then MinHash.Similarity(0.0)
     else MinHash.Similarity(mins.zip(o.mins).count((a, b) => a == b).toDouble / mins.length)
@@ -28,6 +30,7 @@ object MinHash:
   /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
     * hashed as one. Pure and deterministic.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(text: Text, k: Size = Size(64), shingle: ShingleLength = ShingleLength(5)): MinHash =
     val ws = Fingerprint.tokens(Fingerprint.TokensS(text.value)).map(_.value)
     val shingles: Iterator[String] =

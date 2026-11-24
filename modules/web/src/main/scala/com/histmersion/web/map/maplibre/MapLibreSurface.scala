@@ -13,8 +13,10 @@ import com.histmersion.web.map.BaseMapSpec
 import com.histmersion.web.Auth
 import com.histmersion.web.HtmlSink
 import com.histmersion.api.Html
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A [[MapSurface]] over one MapLibre map. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class MapLibreSurface(
     el: dom.HTMLElement,
     maxZoom0: MapEngine.MaxZoom,
@@ -23,6 +25,7 @@ final class MapLibreSurface(
 ) extends MapSurface:
   import MapLibreEngine.ZoomShift
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val gl: GlMap =
     val o = js.Dynamic.literal(
       container = el,
@@ -65,10 +68,14 @@ final class MapLibreSurface(
 
   // ── the view ─────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoom: MapSurface.Zoom = MapSurface.Zoom(gl.getZoom() + ZoomShift)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def maxZoom: MapSurface.MaxZoom = MapSurface.MaxZoom(gl.getMaxZoom() + ZoomShift)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setMaxZoom(z: MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z.value - ZoomShift) }
   def center: LatLon = { val c = gl.getCenter(); LatLon(c.lat, c.lng) }
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bounds: GeoBounds =
     val b = gl.getBounds()
     GeoBounds(
@@ -77,6 +84,7 @@ final class MapLibreSurface(
       GeoBounds.North(b.getNorth()),
       GeoBounds.East(b.getEast())
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sizeNow(): (MapSurface.Dimension, MapSurface.Dimension) =
     (MapSurface.Dimension(el.clientWidth.toDouble), MapSurface.Dimension(el.clientHeight.toDouble))
   // the container's size, read when it changes (a layout read per marker per frame forced a layout each)
@@ -87,11 +95,15 @@ final class MapLibreSurface(
   // Every camera move the app asks for: animated only when the map animates now ([[MotionPref]]), and then
   // `essential` — MapLibre otherwise drops the ease itself when the system asks for reduced motion, and "always
   // animate" would not. A move that does not animate is a jump.
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setView(at: LatLon, z: MapSurface.Zoom, animate: MapSurface.SetViewAnimate): Unit =
     val o = js.Dynamic.literal(center = js.Array(at.lon.value, at.lat.value), zoom = z.value - ZoomShift)
     if MapLibreSurface.eases(animate.value) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
     else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def fitBounds(
       b: GeoBounds,
       padding: MapSurface.FitBoundsPadding,
@@ -106,10 +118,14 @@ final class MapLibreSurface(
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate): Unit =
     val _ = gl.panBy(js.Array(dx.value, dy.value), MapLibreSurface.motion(animate.value, js.Dynamic.literal()))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon.value, p.lat.value)); ScreenPt(q.x, q.y) }
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unproject(p: ScreenPt): LatLon = { val ll = gl.unproject(js.Array(p.x.value, p.y.value)); LatLon(ll.lat, ll.lng) }
 
   /** The container's new size taken — only when it changed (a resize sends every move event: the markers, the names and
@@ -126,6 +142,7 @@ final class MapLibreSurface(
       val _ = gl.redraw()
   // `var`: how many times the container's size was taken (diagnostics: a chrome change resizes, nothing more)
   private var resizes = 0
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def resizeCount: MapSurface.ResizeCount = MapSurface.ResizeCount(resizes)
   def isMoving: Boolean = gl.isMoving()
   private var idleSinceChange = false
@@ -137,6 +154,7 @@ final class MapLibreSurface(
   // the names' language of the base map drawn now
   private var lang = "en"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drawnNames: Seq[MapSurface.LabelText] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
@@ -163,6 +181,7 @@ final class MapLibreSurface(
               .map(t => MapSurface.LabelText(t.toString))
           )
           .distinct
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def baseMapLabels: Seq[(MapSurface.LabelText, MapSurface.LabelText, ScreenPt)] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
@@ -198,6 +217,7 @@ final class MapLibreSurface(
             yield (MapSurface.LabelText(f.layer.id.toString), MapSurface.LabelText(t), project(a))
           }
           .distinctBy((l, t, _) => (l, t))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
@@ -217,6 +237,8 @@ final class MapLibreSurface(
         ).toSeq
           .map(f => MapSurface.LayerId(s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}"))
           .distinct
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def baseMapLayer(id: MapSurface.LayerId): Option[MapSurface.LayerId] =
     gl.getLayer(id.value)
       .toOption
@@ -225,6 +247,8 @@ final class MapLibreSurface(
           Option(gl.getLayoutProperty(id.value, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString)
         )
       )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def baseMapDrawn(id: MapSurface.LayerId): MapSurface.DrawnCount =
     if gl.getLayer(id.value).isEmpty then MapSurface.DrawnCount(0)
     else
@@ -253,6 +277,7 @@ final class MapLibreSurface(
   // the base map's "drawn" listeners (our own event: the first `idle` after a new style)
   private val ready = mutable.ListBuffer.empty[MapEvent => Unit]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def on(kind: MapEventKind)(f: MapEvent => Unit): Subscription =
     if kind == MapEventKind.BaseMapReady then
       ready += f
@@ -299,6 +324,8 @@ final class MapLibreSurface(
   private var creditsV: Seq[BaseMapSpec.Raster.Attribution] = Nil
   override def credits: Seq[BaseMapSpec.Raster.Attribution] = creditsV
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G5TextBranch, "the browser reports a fetch cut short on purpose only as a JS error named AbortError, which Scala.js hands over as the exception's message")
   def setBaseMap(b: BaseMapSpec): Unit =
     generation += 1
     b match
@@ -352,11 +379,14 @@ final class MapLibreSurface(
 
   private val shapeSets = mutable.LinkedHashMap.empty[String, GlShapes]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
     shapeSets.getOrElseUpdate(id.value, GlShapes(gl, NoMap.Shapes.Id(id.value), style))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = shapeSets.get(id.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shapesAt(p: ScreenPt): Seq[ShapeHit] =
     val at = unproject(p)
     shapeSets.values.toSeq.reverse
@@ -367,6 +397,7 @@ final class MapLibreSurface(
 
   private val pointSets = mutable.LinkedHashMap.empty[String, GlPointTiles]
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =
     pointSets.getOrElseUpdate(id.value, GlPointTiles(gl, id, layer, maxZoom))
 
@@ -385,6 +416,7 @@ final class MapLibreSurface(
       Option(e.querySelector(".maplibregl-popup-content")).collect { case h: dom.HTMLElement => h }.getOrElse(e)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def setLocked(locked: MapSurface.Locked): Unit =
     List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
       if locked.value then h.disable() else h.enable()
@@ -394,6 +426,7 @@ final class MapLibreSurface(
       gl.keyboard.disableRotation()
     el.classList.toggle("is-map-locked", locked.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def popup(at: LatLon, html: Html, cls: MapSurface.PopupCls): Popup =
     closePopups()
     val p = GlPopup(
@@ -419,9 +452,12 @@ final class MapLibreSurface(
 
 object MapLibreSurface:
   /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   private[web] def eases(animated: Boolean): Boolean = animated && MotionPref.animate()
 
   /** `o` with the motion of a camera move: `animate`, and `essential` when it eases (see `setView`). */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private[web] def motion(animated: Boolean, o: js.Dynamic): js.Object =
     val e = eases(animated)
     o.animate = e

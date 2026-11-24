@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
@@ -20,6 +21,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * a string whose new form would not fit is left alone and counted. On macOS every patched Mach-O file is re-signed ad
   * hoc, or arm64 refuses to run it.
   */
+@tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 object PgRelocation:
   type BytePattern = BytePattern.T
   object BytePattern extends Newtype[Array[Byte], Pure]
@@ -32,8 +34,10 @@ object PgRelocation:
   type Replacement = Replacement.T
   object Replacement extends Newtype[Array[Byte], Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PatchFrom = BytePattern
   val PatchFrom: BytePattern.type = BytePattern
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type PatchTo = Replacement
   val PatchTo: Replacement.type = Replacement
 
@@ -52,6 +56,8 @@ object PgRelocation:
   /** Rewrite `from` → `to` in `bytes`. Binary data (it holds a NUL) is patched string by string in place; text is
     * replaced outright. Returns the new bytes and how many strings did not fit.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def patch(bytes: FileBytes, from: PatchFrom, to: PatchTo): (FileBytes, PatchCount) =
     val b = bytes.value
     val f = from.value
@@ -78,6 +84,8 @@ object PgRelocation:
   /** Relocate the PostgreSQL in `pg` if its marker names another place. `None` when there is nothing to do: no marker
     * (a pixi environment used in place) or already at home. The re-signing runs through `processes`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def relocate(pg: Store, macOS: MacOsMode, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
     val here =

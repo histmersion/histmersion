@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One Calibre entry that disagrees with the corpus, judged against the record it matches best (an entry shared by a
   * chapter and its volume is fine when it matches either).
@@ -21,6 +22,7 @@ final case class AuditFinding(
 object AuditFinding:
 
   type CalibreId = CalibreId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CalibreId extends Newtype[Int, Pure]
   type Citekeys = Citekeys.T
   object Citekeys extends Newtype[String, Pure]

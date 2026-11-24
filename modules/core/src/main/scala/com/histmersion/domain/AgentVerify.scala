@@ -12,6 +12,8 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body, the set of
@@ -19,6 +21,8 @@ import com.histmersion.domain.research.Slug
   *
   * JVM-only because quote matching needs `java.text.Normalizer` (NFKC), which Scala.js lacks.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryWorkflows)
 object AgentVerify:
   type MaxAbsYear = MaxAbsYear.T
   object MaxAbsYear extends Newtype[Long, Pure]
@@ -44,6 +48,7 @@ object AgentVerify:
   /** A tool call an LLM step made, as the engine records it ([[com.histmersion.domain.automation.agents.ToolUse]]). */
   type SimilarWordA = String
   type SimilarWordB = String
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type LinkProblemsText = Text
   val LinkProblemsText: Text.type = Text
   type ToSignedYearValue = ToSignedYearValue.T
@@ -78,17 +83,23 @@ object AgentVerify:
       export AgentVerify.Ratio as Best
 
   /** The text an OCR'd body and a model's quote are compared in ([[ComparedText.normalise]]). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normalise(s: Text): NormalisedText = normalised(s.value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def normalised(s: String): NormalisedText =
     NormalisedText(ComparedText.normalise(ComparedText.NormaliseS(s)).value)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def words(normalised: NormalisedText): Array[String] =
     normalised.value.split("[^\\p{L}\\p{N}']+").filter(_.nonEmpty)
 
   /** Two words match if equal, or — at four letters or more — one OCR slip apart (`tbe`/`the` is too short to trust;
     * `Mycenaean`/`Mycenacan` is not).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[domain] def similarWord(a: SimilarWordA, b: SimilarWordB): Boolean =
     a == b || (math.min(a.length, b.length) >= 4 && math.abs(a.length - b.length) <= 1 && editDistanceAtMostOne(a, b))
 
@@ -109,6 +120,7 @@ object AgentVerify:
   /** Longest common subsequence of `q` inside `w` under [[similarWord]] — how many quote words appear, in order, in
     * that stretch of the body.
     */
+  @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   private def lcs(q: Array[String], w: Array[String]): Int =
     val prev = Array.fill(w.length + 1)(0)
     val cur = Array.fill(w.length + 1)(0)
@@ -122,6 +134,8 @@ object AgentVerify:
     * those windows is the ratio. `minRatio` decides Fuzzy/Missing. A quote of fewer than 4 words must be verbatim: a
     * short quote matches anywhere by chance.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def findQuote(quote: AgentProposals.Proposal.Quote, body: SourceBody, minRatio: MinRatio): QuoteMatch =
     val q = normalised(quote.value)
     val b = normalised(body.value)
@@ -145,6 +159,8 @@ object AgentVerify:
         else QuoteMatch.Missing(QuoteMatch.Missing.Best(best))
 
   /** Titles compared the way a person would: normalised, punctuation ignored. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sameTitle(a: Title, b: Title): Boolean =
     words(normalised(a.value)).mkString(" ") == words(normalised(b.value)).mkString(" ")
 
@@ -153,6 +169,8 @@ object AgentVerify:
   /** A model-proposed status, against the enum. Statuses the DB does not know are rejected, never coerced
     * (`SourceStatus.fromString` would quietly turn a typo into `unassessed`).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(s: library.Source.Status.Wire): Either[Problem, Source.Status] =
     Source.Status.values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
@@ -164,6 +182,8 @@ object AgentVerify:
         )
       )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def confidence(s: library.Confidence.Wire): Either[Problem, Confidence] =
     Confidence
       .fromString(Confidence.Wire(s.value.trim))
@@ -176,6 +196,8 @@ object AgentVerify:
       )
 
   /** `[[x]]` targets in a text. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wikilinks(text: Text): List[Wikilink] =
     "\\[\\[([^\\]|]+)(?:\\|[^\\]]*)?\\]\\]".r
       .findAllMatchIn(text.value)
@@ -186,6 +208,8 @@ object AgentVerify:
   /** Every problem with a text's links: a target that is neither a citekey nor an article slug, and escaped links
     * (`\[\[…\]\]`), which render as text and link nothing.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def linkProblems(
       text: LinkProblemsText,
       at: Where,
@@ -217,6 +241,7 @@ object AgentVerify:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[YearUnit] =
       s.value.trim match
         case "BCE" | "BC" | "bce" | "bc" | "B.C." | "B.C.E."        => Some(BCE)
@@ -229,6 +254,8 @@ object AgentVerify:
     * is astronomical `1950 − BP` (which has a year 0) mapped to historical. Raw `BP` is refused: it needs calibration,
     * and a guess would sit on the map as if it were a date.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toSignedYear(value: ToSignedYearValue, unit: YearUnit): Either[Problem, SignedYear] = unit match
     case YearUnit.BCE if value.value <= 0 =>
       Left(Content.Proposal(Content.Requirement.PositiveBce(Raw.of(value)), PeriodAt))
@@ -247,6 +274,8 @@ object AgentVerify:
   /** A proposed period's problems (empty = sane): start after end, a year 0, a year beyond `maxAbsYear`, and — when the
     * source has a period of its own — a finding outside it.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def periodProblems(
       start: PeriodStart,
       end: PeriodEnd,

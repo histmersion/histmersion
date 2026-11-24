@@ -16,6 +16,7 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
   * [[SourceLink]].
@@ -25,9 +26,12 @@ import com.histmersion.api.catalogue.Year
   * window, and nothing is added again per render.
   */
 object GraphPanel:
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Citekey = api.library.Citekey
   val Citekey: api.library.Citekey.type = api.library.Citekey
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def open(citekey: Citekey): Unit =
     WindowManager.open(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)))
 
@@ -38,6 +42,7 @@ object GraphPanel:
   /** The legend: the statuses and edge kinds this graph actually uses, in their enums' order — typed, so a new kind is
     * a compile-time decision, not a stray string.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def legend(g: Source.Graph): (List[Source.Status], List[Edge.Kind]) =
     val statuses = g.nodes.map(_.status.getOrElse(Source.Status.Unassessed)).toSet
     val kinds = g.links.map(l => l.kind).toSet
@@ -46,6 +51,7 @@ object GraphPanel:
   /** Links as node-index pairs. Every link of a V026 graph joins two of its nodes, so none is lost; a link to a node
     * the graph does not carry is dropped rather than drawn to nowhere.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def indexLinks(g: Source.Graph): List[(Int, Int, Edge.Kind)] =
     val idx = g.nodes.zipWithIndex.map((n, i) => n.id -> i).toMap
     g.links.flatMap(l => for s <- idx.get(l.source); t <- idx.get(l.target) yield (s, t, l.kind))
@@ -57,6 +63,10 @@ object GraphPanel:
     case Failed(message: Problem)
     case Loaded(g: Source.Graph)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def element(citekey: Citekey): HtmlElement =
     val state = Var[Load](Load.Loading)
     val hovered = Var(Option.empty[GraphNode])
@@ -87,6 +97,9 @@ object GraphPanel:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def legendView(g: Source.Graph): HtmlElement =
     val (statuses, kinds) = legend(g)
     div(
@@ -101,6 +114,7 @@ object GraphPanel:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def info(node: Signal[Option[GraphNode]]): HtmlElement =
     div(
       cls := "graph-info",
@@ -118,6 +132,7 @@ object GraphPanel:
       }
     )
 
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class SimNode(
       id: api.library.Citekey,
       title: String,
@@ -132,6 +147,7 @@ object GraphPanel:
   )
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def stage(g: Source.Graph, hovered: Var[Option[GraphNode]]): HtmlElement =
     // the drawing area in CSS pixels — THE size: every frame reads it, so a resize re-centres
     val size = Var((0.0, 0.0))
@@ -176,6 +192,8 @@ object GraphPanel:
     private val dpr = dom.window.devicePixelRatio.max(1.0)
     private val byId = g.nodes.map(n => n.id -> n).toMap
     private val links = indexLinks(g).toArray
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     private val nodes: Array[SimNode] = g.nodes.zipWithIndex.map { (n, i) =>
       val angle = 2 * Math.PI * i / g.nodes.length.max(1)
       val r = if n.id == g.root then 0.0 else 100.0 + n.depth.value * 60.0
@@ -303,6 +321,7 @@ object GraphPanel:
       ticks = 0
       if !running then { running = true; tick() }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def step(): Unit =
       for i <- nodes.indices; j <- (i + 1) until nodes.length do
         val (a, b) = (nodes(i), nodes(j))
@@ -339,6 +358,7 @@ object GraphPanel:
         frameId = dom.window.requestAnimationFrame((_: Double) => tick())
       else draw()
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def draw(): Unit =
       ctx.save()
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -392,6 +412,7 @@ object GraphPanel:
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def radius(i: Int): Double =
       if i == rootIdx then GL.rootRadius.value
       else if nodes(i).depth <= 1 then GL.depth1Radius.value

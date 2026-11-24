@@ -26,9 +26,12 @@ import com.histmersion.api.research.{
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.library.Filter
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CritiquesSuite extends munit.FunSuite:
 
   /** `[[x]]` → its canonical citekey: two aliases, one article slug, the rest themselves. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val resolve: Article.Link.Target => Option[Citekey] = t =>
     t.value match
       case "frazer"           => Some(Citekey("frazer1922_golden")) // a short form
@@ -37,6 +40,7 @@ class CritiquesSuite extends munit.FunSuite:
       case x                  => Some(Citekey(x))
 
   /** Every link target is itself a citekey. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val selfResolve: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value))
 
   private def edge(a: Citekey, k: Coverage.Edge.Kind, b: Citekey) = Coverage.Edge(a, k, b)
@@ -182,6 +186,7 @@ class CritiquesSuite extends munit.FunSuite:
       Some(CritiqueRef(Citekey("b2001_y"), Citekey("a2000_x")))
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pair(
       src: Citekey,
       kind: CritiquePair.Kinds,

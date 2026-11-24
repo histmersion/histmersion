@@ -4,6 +4,7 @@ package domain.catalogue.events
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A catalogue's row of one event, as its card lists it. */
 final private[events] case class CatalogueRefRow(
@@ -20,6 +21,7 @@ object CatalogueRefRow:
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
   type ProviderId = ProviderId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ProviderId extends Newtype[String, Pure]
   type Url = Url.T
   object Url extends Newtype[String, Pure]

@@ -3,10 +3,12 @@ package cli
 
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.CollectionAudit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The audit compares loosely where Calibre legitimately differs (subtitles, accents, "Last, First") and strictly where
   * it matters (no author in common, scraped junk, a missing entry).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CalibreAuditSuite extends munit.FunSuite:
 
   private def book(

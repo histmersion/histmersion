@@ -16,14 +16,17 @@ import sttp.client4.Backend
 import sttp.shared.Identity
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
   * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in
   * process under the step's allowlist), the interceptors (trace, budget, LLM slots, the first-call probe, the allowance
   * guard: each sees every turn), the typed answer's decoding — exactly as for the sttp-ai providers.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHttp) extends LlmClient:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run[Out](call: LlmCall[Out])(using WritePermit): AgentResult[Either[AgentFailure, Out]] =
     val builder =
       AgentBuilder[Identity, PluginModel.type](conf => PluginAiClient.Turns(model, provider, http, conf))(using
@@ -41,6 +44,7 @@ object PluginAiClient:
   /** The client for `ref`, or why it cannot be used here: a provider that spends the person's own plan beyond loopback,
     * or one whose own check says no (no key, no URL).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Loopback): Either[Problem, LlmClient] =
     if provider.spendsPersonalPlan.value && !loopback.value then
       Left(
@@ -62,6 +66,7 @@ object PluginAiClient:
   /** Whether the provider's failures are whole descriptions ([[AiCapabilities.verbatimFailures]]); a provider whose
     * capabilities throw is taken as not.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def verbatim(provider: AiProvider): Boolean =
     try Option(provider.capabilities).exists(_.verbatimFailures.value)
     catch case scala.util.control.NonFatal(_) => false
@@ -69,6 +74,7 @@ object PluginAiClient:
   /** Pure: the conversation sttp-ai keeps → the provider's messages; the loop's iteration notes kept as user messages
     * (`[Iteration 2 of 6]`, as sttp-ai's own providers send them) when `markers`, else dropped.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def messages(
       h: ConversationHistory,
       markers: AiCapabilities.IterationMarkers = AiCapabilities.IterationMarkers(false)
@@ -93,6 +99,7 @@ object PluginAiClient:
     }
 
   /** Pure: a tool as the provider is told about it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tool(t: AgentTool[Identity, ?]): AiTool =
     AiTool(
       AiTool.Name(t.name),
@@ -110,6 +117,7 @@ object PluginAiClient:
   def renderedSchema(s: ResponseSchema[?]): String = SttpAiJson.answerSchema(s).noSpaces
 
   /** Pure: the provider's answer → sttp-ai's. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def response(t: AiTurn, model: ModelRef): AgentResponse =
     val stop = t.stop match
       case AiStop.EndTurn   => if t.toolCalls.nonEmpty then StopReason.ToolUse else StopReason.EndTurn
@@ -147,6 +155,8 @@ object PluginAiClient:
     def tools: Seq[AgentTool[Identity, ?]] = conf.userTools
     def systemPrompt: Option[String] = conf.systemPrompt
 
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def sendRequest(
         history: ConversationHistory,
         backend: Backend[Identity],

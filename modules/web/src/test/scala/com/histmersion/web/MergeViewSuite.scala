@@ -28,14 +28,18 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.PlanMatches
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
   * field table's result column, the diff3 editor's starting text, the span bars.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 class MergeViewSuite extends munit.FunSuite:
 
   private val U = UUID.fromString("0191a2f0-0000-7000-8000-000000000001")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def issue(
       id: MergeIssue.Id,
       sev: MergeIssue.Severity = MergeIssue.Severity.Blocking,

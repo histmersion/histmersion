@@ -2,6 +2,7 @@ package com.histmersion
 package api.media
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class DataCredit(
     name: DataCredit.Name,
     usedFor: DataCredit.UsedFor,
@@ -21,6 +22,7 @@ object DataCredit:
   type Licence = Licence.T
   object Licence extends Newtype[String, Pure]
   type LicenceUrl = LicenceUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenceUrl extends Newtype[String, Pure]
   type Url = Url.T
   object Url extends Newtype[String, Pure]

@@ -13,11 +13,13 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The catalogue's background runs — an event catalogue's import, a re-derivation, the event links' candidates, the
   * refinement of site types — one at a time (a run's pace is per run; two would ask twice as fast). Starting one takes
   * the maintenance guard. `stoppable` names the kinds a person may pause and cancel.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class CatalogueJobs(
     ds: DataSource,
     maintenance: WriteGate,
@@ -31,6 +33,7 @@ final class CatalogueJobs(
     * is written under the maintenance gate (refused while a restore runs: a dry run's too, its row is a write); `body`
     * holds the job's unit permit.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(kind: Job.Kind, describe: JobKinds.Subject)(
       body: (JobInfo, JobInfo.Progress => Unit) => WritePermit ?=> Either[Problems, BackgroundJob.Outcome.Summary]
   )(using Creator.New): Either[Api.Error, JobInfo] =

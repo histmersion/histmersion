@@ -7,10 +7,12 @@ import com.histmersion.util.database.Jsonb
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
   * plan-goal item (any status).
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class ManagerLight(
     id: ManagerLight.Id,
     kind: ManagerLight.Kind,
@@ -22,6 +24,7 @@ final case class ManagerLight(
     planItem: ManagerLight.PlanItem
 )
 
+@tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ManagerLight:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
@@ -39,4 +42,5 @@ object ManagerLight:
   object PlanItem extends Newtype[Boolean, Pure]
 
   private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[ManagerLight] = DbCodec.derived

@@ -11,6 +11,7 @@ import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.concurrent.duration.Deadline
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The right to write to the database for the extent of one block. Only a [[WritePermit.Gate]] issues one: every write
   * transaction ([[Transactor.write]], [[Transactor.writeAutocommit]]) takes one, so a write cannot be opened without
@@ -246,6 +247,7 @@ object WritePermit:
     /** Wait until every permit out has come back, or `deadline`: the permits still out (none when it returns in time).
       * The restore's own thread does not count its own.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def awaitPermits(deadline: Deadline): Outstanding =
       val own = if current.get().exists(p => p.live && p.kind == Kind.Operation) then 1 else 0
       lock.lock()

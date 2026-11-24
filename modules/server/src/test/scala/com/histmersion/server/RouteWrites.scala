@@ -11,6 +11,7 @@ import dotty.tools.dotc.core.Phases.Phase
 import dotty.tools.dotc.fromtasty.TASTYCompiler
 import dotty.tools.dotc.quoted.QuotesCache
 import dotty.tools.dotc.reporting.{Diagnostic, Reporter}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What the compiled code of the main modules says about the HTTP routes: every route a tapir endpoint is given its
   * logic in (`<endpoint>.serverLogic…(f)`), its method, and every write its logic can reach — read from the TASTy
@@ -37,10 +38,20 @@ object RouteWrites:
   enum Kind derives CanEqual:
     case Database, File, Process
 
+  enum Tolerated derives CanEqual:
+    case Writes, Not
+
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  def judge(found: Found): (List[String], List[Write]) =
+    val writing = found.writes.map(_.route.endpoint).toSet
+    val idle = found.routes.filter(r => r.tolerated == Tolerated.Writes && r.reads).map(_.endpoint).distinct
+    val unused = idle.filterNot(writing).sorted
+    (unused, found.writes.filter(_.route.tolerated == Tolerated.Not))
+
   /** A route: its endpoint (the val that defines it, or the expression), its method (`GET`, …, `ANY` when it sets
     * none), and the file its logic is given in.
     */
-  final case class Route(endpoint: String, method: String, site: String):
+  final case class Route(endpoint: String, method: String, site: String, tolerated: Tolerated) derives CanEqual:
     def reads: Boolean = method == "GET" || method == "HEAD" || method == "ANY"
 
   /** A write `route`'s logic reaches: the sink called, and one shortest chain of calls from the logic to it. */
@@ -294,14 +305,18 @@ object RouteWrites:
       val unresolved = mutable.ListBuffer.empty[Unresolved]
       val routes = logics.toList.flatMap { (endpoint, logic, pos) =>
         val name = chain(endpoint)._2.map(s => plain(s.fullName).stripPrefix("com.histmersion.")).getOrElse("?")
+        val tolerated =
+          if chain(endpoint)._2.exists(_.annotations.exists(a => a.show.contains("LintRule.GetWrites"))) then
+            Tolerated.Writes
+          else Tolerated.Not
         methodOf(endpoint, 0) match
-          case Some(m) => List((Route(name, m, where(pos)), logic))
+          case Some(m) => List((Route(name, m, where(pos), tolerated), logic))
           case None    =>
             // no method set anywhere along the definition: tapir matches every method, GET included
             val (_, root) = chain(endpoint)
             // tapir's own empty endpoint (`endpoint`, `infallibleEndpoint`) sets none either
             val tapirs = root.exists(s => ownerName(s).startsWith("sttp.tapir") && s.name.endsWith("ndpoint"))
-            if root.exists(definitions.contains) || tapirs then List((Route(name, "ANY", where(pos)), logic))
+            if root.exists(definitions.contains) || tapirs then List((Route(name, "ANY", where(pos), tolerated), logic))
             else
               unresolved += Unresolved(where(pos), name)
               Nil

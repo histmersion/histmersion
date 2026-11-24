@@ -3,6 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
 /** The crons and the goal sweeps. Since phase 3 a goal's schedules are its watcher (`watch:<goal>`) and every manager's
   * cron fires from the managers' tick (docs/research-process-managers.md, "As built (phase 3)"); the scheduler thread
@@ -11,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `currencySources` of a goal's sources and `followupsPerSource` citing papers each; an acquisition sweep asks
   * `discoverPerQuery` works per query and offers at most `sweepCandidates` to the ranking model.
   */
+@movesTo(FeaturePlace.AutomationScheduler)
 final case class AgentSchedulerConfig(
     enabled: AgentSchedulerConfig.Enabled,
     minIntervalMinutes: AgentSchedulerConfig.MinIntervalMinutes,

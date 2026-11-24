@@ -9,10 +9,12 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 import com.histmersion.config.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The pure half of the hot component graph (docs/research-plugins.md §3.6) and of a config reload (§3.5): order,
   * cycles, what a set of changed keys rebuilds; which keys changed, which apply in place and which wait for a restart.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class HotPlanSuite extends munit.FunSuite:
 
   private val nodes = List(

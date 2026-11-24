@@ -13,6 +13,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.MetadataPatch.absentOnly
+import com.histmersion.lint.{LintRule, tolerated}
 
 final case class MetadataPatch(
     @Schema.annotations.customise(absentOnly) title: Option[Title] = None,
@@ -60,8 +61,11 @@ object MetadataPatch:
       )
     case _ => Validator.pass[Any]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private val derived: JsonCodec[MetadataPatch] = JsonCodec.derived[MetadataPatch]
 
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given JsonCodec[MetadataPatch] = StrictJson.codec(
     JsonCodec.mapped[MetadataPatch, Json](
       m => m.asJson(using derived).dropNullValues,

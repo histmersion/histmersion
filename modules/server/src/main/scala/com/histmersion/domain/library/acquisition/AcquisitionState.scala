@@ -6,11 +6,13 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.CandidateWatch
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition's records the in-memory services share: the Retraction Watch mirror, the recorded assessments (each
   * with its stamp), each goal's candidates and watches, the metered upstreams' budgets and the acquisition list's
   * checks.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class AcquisitionState(
     retractions: Map[AcquisitionState.RetractionsKey, Acquire.RetractionRow],
     assessments: Map[AcquisitionState.AssessmentsKey, (AssessmentRecord, AssessmentService.CheckedAt)],

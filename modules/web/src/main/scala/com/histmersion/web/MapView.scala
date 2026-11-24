@@ -35,6 +35,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.Paging
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
+import com.histmersion.lint.{LintRule, tolerated}
 
 object MapView:
   type ClassName = ClassName.T
@@ -58,6 +59,7 @@ object MapView:
   object Title extends Newtype[String, Pure]
   export PlaybackBuckets.YearsPerSecond
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private var radius: Int = Layout.markerRadiusDefault.value
   private val pickerMax = Layout.pickerMax
   private val fitMaxZoom = Layout.fitMaxZoom
@@ -86,11 +88,13 @@ object MapView:
   private var heldPoints: Option[List[GeoHit]] = None
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private var playYearsPerSecond: MapView.YearsPerSecond = MapView.YearsPerSecond(0.0)
 
   /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one bubble,
     * whatever it is. Regions never join.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val dots: PointSet[Dot] = new PointSet[Dot](
     paneOf = d => TheMap.pane(d.layer.kind.pane),
     pane = () => TheMap.pane(MapStack.Pane.Markers),
@@ -134,6 +138,7 @@ object MapView:
       load: ((Years.Astronomical, Years.Astronomical)) => Unit
   )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def slot(l: MapLayer): Slot = l match
     case MapLayer.Boundaries => Slot(() => overlayOn = true, () => clearOverlay(), loadOverlay)
     case MapLayer.Sites      => Slot(sitesLayer.attach, sitesLayer.detach, loadSites)
@@ -159,6 +164,8 @@ object MapView:
     polityPlaces.clear()
 
   /** A popup at a map point (a finding's, a picture's). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def popup(lat: Latitude, lon: Longitude, html: Html): Unit =
     if TheMap.isUp then {
       val _ = TheMap.surface.popup(
@@ -171,6 +178,8 @@ object MapView:
     * Stopped, the map is drawn for the span shown again (the caller's [[App.restoreSpan]]: the findings, the legend,
     * the tiles and the boundaries of the whole span) — this alone only lets go of playback's states.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setPlaybackMode(on: Playback): Unit =
     val was = playbackMode
     playbackMode = on
@@ -181,6 +190,7 @@ object MapView:
   /** A playback state as drawn: its outline (kept here: the names' placement drops the feature's), its years, its look
     * and the place it is.
     */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   final private case class PlayArea(
       feature: js.Dynamic,
       geometry: js.Any,
@@ -198,6 +208,8 @@ object MapView:
   /** One playback frame: the findings of the window `span` and the states at playhead `ph`, played at `yearsPerSecond`.
     * The findings are diffed (only the colour of a kept one changes); the states are recoloured and faded in place.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def playFrame(
       points: List[GeoHit],
       span: (Years.Astronomical, Years.Astronomical),
@@ -211,6 +223,7 @@ object MapView:
     render(points, span)
     if TheMap.isUp && overlayOn then restylePlayAreas(span)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def restylePlayAreas(span: (Years.Astronomical, Years.Astronomical)): Unit =
     playAreas.foreach { (k, a) =>
       val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade)).value
@@ -224,6 +237,8 @@ object MapView:
   /** A year's states fetched in playback: added to those held (the ones over for longer than a fade let go), the shapes
     * sent to the map only when that changed what is held.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def addPlayAreas(
       features: js.Array[js.Dynamic],
       span: (Years.Astronomical, Years.Astronomical),
@@ -275,9 +290,14 @@ object MapView:
         )
       })
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def midOf(pt: GeoHit): Option[MapView.Mid] =
     for a <- pt.periodStart; b <- pt.periodEnd yield Mid((a.value + b.value).toDouble / 2)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def avgMid(items: Iterable[GeoHit]): Option[MapView.Mid] =
     val points = items.iterator
     @tailrec def loop(sum: Double, n: Int): Option[MapView.Mid] =
@@ -289,6 +309,8 @@ object MapView:
       else None
     loop(0.0, 0)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def colorFor(
       mid: Option[MapView.Mid],
       span: (Years.Astronomical, Years.Astronomical),
@@ -301,12 +323,17 @@ object MapView:
       case Some(m) => Fmt.color(Fmt.ColorT(if hi == lo then 0.5 else (m.value - lo) / (hi - lo)))
     tinted(base, certainty)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tinted(base: Wcag.Hex, certainty: Certainty): Color =
     Color(Certainty.desaturate(ConfidenceStyle.Rgb(base.value), certainty).value)
 
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def midRange(items: Iterable[GeoHit]): Option[(MapView.Mid, MapView.Mid)] = rangeOf(items.flatMap(midOf))
 
   /** Pure: the least and the greatest of `mids`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def rangeOf(mids: Iterable[MapView.Mid]): Option[(MapView.Mid, MapView.Mid)] =
     // `var`s: one pass over what may be thousands of mids, during a drag
     var lo = Double.MaxValue
@@ -329,6 +356,8 @@ object MapView:
   /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and pictures alike
     * (the undated have no say).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def gradientOf(
       mids: Iterable[MapView.Mid],
       span: (Years.Astronomical, Years.Astronomical),
@@ -341,6 +370,8 @@ object MapView:
   /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `certainty`); the undated
     * colour twice when none is dated.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def rampEnds(
       mids: Iterable[MapView.Mid],
       span: (Years.Astronomical, Years.Astronomical),
@@ -356,6 +387,8 @@ object MapView:
         def norm(v: MapView.Mid): Fmt.ColorT = Fmt.ColorT(if sHi == sLo then 0.5 else (v.value - sLo) / (sHi - sLo))
         (tinted(Fmt.color(norm(lo)), certainty), tinted(Fmt.color(norm(hi)), certainty))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def radiusFor(n: DotCluster.Total): Int =
     if n.value > 1 then radius + 4 + 3 * n.value.toString.length else radius
 
@@ -364,6 +397,7 @@ object MapView:
   /** Pure: how near (px) two points' centres are when they join a bubble — the widest bubble's diameter (`maxDot` its
     * radius), or the largest marker box if that is wider: two markers drawn apart never overlap.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def clusterRadius(maxDot: Int, boxes: Iterable[(PointKind.BoxPixels, PointKind.BoxPixels)]): Int =
     math.max(2 * maxDot, boxes.map((w, h) => math.max(w.value, h.value)).maxOption.getOrElse(0))
 
@@ -371,6 +405,8 @@ object MapView:
   private var bubbleSeq = 0
 
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def ringOf(n: DotCluster.Total, spanYears: Option[Years.Astronomical]): Ring =
     if n.value == 1 && spanYears.exists(_.value > 0) then
       Ring(math.max(1, math.min(4, math.round(math.log10(spanYears.get.value.toDouble + 1) * 1.3).toInt)))
@@ -379,6 +415,8 @@ object MapView:
   /** One finding's popup: the source link (identifier label, preview on hover, window on click), title, period, claim
     * and its confidence badge — the same atoms as the server's pages.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def popupHtml(pt: GeoHit): Html =
     // a finding that states no confidence says so — it is not drawn as high
     val conf = pt.confidence.fold(markup""" <span class="hd-conf">confidence ${Certainty.UnstatedLabel}</span>""")(c =>
@@ -395,6 +433,7 @@ object MapView:
       markup"""<a href="${SourceLink.href(pt.citekey)}" target="_blank">new tab ↗</a>"""
 
   /** A bubble's marker: its count, colours and outline, what it holds; a click lists them (or zooms in). */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bubbleMarker(ds: Seq[Dot]): DomMarker =
     val held = DotCluster.contents(ds)
     val n = held.total
@@ -428,11 +467,15 @@ object MapView:
     m
 
   /** A drawn bubble's colours set again in place (its members' colours moved with the span). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def repaintBubble(m: DomMarker, ds: Seq[Dot]): Unit = repaintHeld(m, DotCluster.contents(ds))
 
   /** A tile's cell drawn alone, recoloured in place. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[web] def repaintCell(m: DomMarker, member: Member): Unit = repaintHeld(m, DotCluster.Contents(List(member)))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def repaintHeld(m: DomMarker, held: DotCluster.Contents): Unit =
     val (a, b) = rampEnds(held.mids, currentSpan, held.certainty)
     Option(m.el.querySelector(".hd-cluster")).map(_.asInstanceOf[dom.html.Element]).foreach { c =>
@@ -443,6 +486,7 @@ object MapView:
   /** The map zoomed in on `boxes` (a bubble's, or a tile's cells', items), as far as it takes to part them — deeper
     * than a list's fit, since a cell holds items the page has not got yet.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def zoomInto(boxes: List[GeoBounds]): Unit =
     if TheMap.isUp && boxes.nonEmpty then
       val b = boxes.reduce(_.extend(_))
@@ -460,6 +504,7 @@ object MapView:
     * bubble no zoom parts — its dots at one spot, or the deepest zoom reached — is also fanned out around its spot
     * ([[PointSet.spiderfy]]), so each of its dots can be reached on the map.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def open(ds: Seq[Dot]): Unit =
     val all = DotCluster.contents(ds)
     val pts = ds.map(_.at)
@@ -489,13 +534,18 @@ object MapView:
   /** Pure: is a bubble of `n` dots fanned out (not when it holds a tile's counted cell, which is no one dot, or more
     * than a spiral around the spot shows legibly)?
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def spiderfies(n: DotCluster.Total, holdsCell: HoldsCell): Boolean =
     n.value >= 2 && n.value <= Layout.spiderMax.value && !holdsCell.value
 
   /** How far apart fanned-out dots stand: the widest marker box and a gap. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spiderSeparation: Spiderfy.Separation =
     Spiderfy.Separation((PointKinds.all.map(k => math.max(k.box._1.value, k.box._2.value)).max + 8).toDouble)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def init(ui: UiConfig): HtmlElement =
     radius = ui.markerRadius.value
     tilesConfig = ui.mapTiles
@@ -611,9 +661,13 @@ object MapView:
   /** The findings' switch, as every point layer's: their points join or leave the cluster group, which the other kinds
     * share (so it stays on the map); `render` keeps them current while they are out.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showSources(on: ShowSources): Unit =
     if on.value then findingsLayer.attach() else findingsLayer.detach()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def addLegend(surface: MapSurface): Unit =
     legendEl = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
     legendEl.className = "hd-legend hd-map-control"
@@ -653,10 +707,12 @@ object MapView:
     corner.insertBefore(legendEl, corner.firstChild)
 
   /** The legend's key to the icons (#1449), for the layers that draw them. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def updateKey(events: MapKey.Events, sites: MapKey.Sites, undated: MapKey.Undated): Unit =
     if legendEl != null then
       Option(legendEl.querySelector(".hd-key-slot")).foreach(HtmlSink.replace(_, MapKey.html(events, sites, undated)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadEvents(span: (Years.Astronomical, Years.Astronomical)): Unit =
     val tiles = tileSpan(span)
     EventMarkers.load((Year(tiles._1.value), Year(tiles._2.value)), span)
@@ -664,6 +720,8 @@ object MapView:
   /** Pure: the span the tiled layers are asked for — the span itself, or in playback the playhead's window widened to
     * whole time buckets ([[PlaybackBuckets]]), so their tiles change once a bucket.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def tileSpanOf(
       span: (Years.Astronomical, Years.Astronomical),
       playback: Playback,
@@ -687,6 +745,7 @@ object MapView:
     List(MapLayer.Sites -> sitesLayer, MapLayer.Media -> mediaLayer, MapLayer.Events -> EventMarkers.layer)
       .collect { case (l, t) if layerSync.attached(l) => t }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def updateLegend(span: (Years.Astronomical, Years.Astronomical)): Unit =
     if legendEl == null then ()
     else
@@ -698,17 +757,21 @@ object MapView:
   /** Pure: the native tooltip of a dot holding `items` — "N findings here" where several coincide, none for a single
     * finding (its source's card answers the hover, [[hoverSource]]): never a citekey.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def markerTitle(items: List[GeoHit]): Option[Title] =
     Option.when(items.size > 1)(Title(s"${items.size} findings here"))
 
   /** Pure: the source whose card a dot's hover shows — its one finding's; none for coincident findings (the first of
     * several would misdescribe the spot: their list opens on a click).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hoverSource(items: List[GeoHit]): Option[SourceLabel] = items match
     case List(one) => Some(SourceLabel(one.citekey.value))
     case _         => None
 
   /** Pure: a single finding's dot as words, for assistive tech — the source's title and the period. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def markerLabel(pt: GeoHit): Label =
     val title =
       Option(pt.title.value).map(_.trim).filter(_.nonEmpty).getOrElse(SourceLink.idLabel(pt.citekey, pt.doi).value)
@@ -728,6 +791,7 @@ object MapView:
       if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadQuiet(span)
 
   /** Bring the point `key` out of its bubble (zooming in as far as it takes), then `andThen`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private[web] def reveal(key: PointSet.Key, andThen: () => Unit): Unit =
     if TheMap.isUp then dots.zoomToShow(key, andThen)
 
@@ -735,6 +799,7 @@ object MapView:
     * pointer move) does not fire a request burst — except the one that waits for the span to settle
     * ([[waitsForQuiet]]).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val reloadLayers = Throttle[(Years.Astronomical, Years.Astronomical)](
     Throttle.IntervalMs(Layout.layerReloadMs.value),
     span =>
@@ -744,6 +809,7 @@ object MapView:
   )
 
   /** The layers that wait for the span to settle, once it has stopped moving for `Layout.rangeReloadMs`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val reloadQuiet = Debounce[(Years.Astronomical, Years.Astronomical)](
     Debounce.QuietMs(Layout.rangeReloadMs.value),
     span =>
@@ -757,6 +823,8 @@ object MapView:
     * keep what they show, recoloured. A snapshot year follows the drag as before; in playback every layer follows the
     * playhead (the tiled ones by whole time buckets, [[tileSpanOf]]).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: Playback): Boolean =
     !playback.value && (layer match
       case MapLayer.Boundaries => !pick.snapshot
@@ -767,6 +835,7 @@ object MapView:
     * led to it, and a whole-range answer is its own. Bounded by count AND by size (#1949): a whole range's answer is
     * megabytes, and 48 of them were kept.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val geoCache =
     BoundedCache[(Place.Kind.Wire, GeoTime), scala.concurrent.Future[String]](
       BoundedCache.MaxEntries(Layout.geoCacheSize.value),
@@ -777,6 +846,8 @@ object MapView:
   def geoCacheStats: BoundedCache.Stats = BoundedCache.stats(geoCache)
 
   /** Pure: the query of a layer of `kind` drawn for `time`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def geoQuery(kind: Place.Kind.Wire, time: GeoTime, limit: Paging.Limit): Api.PlacesGeoQuery =
     val q = Api.PlacesGeoQuery(kind = Some(kind), limit = Some(Api.PlacesGeoQuery.Limit(limit.value)))
     time match
@@ -793,6 +864,7 @@ object MapView:
   /** Pure: the time the boundaries layer is drawn for over `span`, as `pick` reads it; playback always draws the
     * playhead's one year (the middle of its window).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def areaTime(
       span: (Years.Astronomical, Years.Astronomical),
       pick: GeoPick,
@@ -808,10 +880,15 @@ object MapView:
   /** Pure: how many areas the boundaries layer asks for at `time` — a year's few hundred at most, or every state of a
     * whole range.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def overlayLimit(time: GeoTime): Paging.Limit = time match
     case _: GeoTime.Within => Paging.Limit(Layout.overlayRangeFetchLimit.value)
     case _                 => Paging.Limit(Layout.overlayFetchLimit.value)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placesGeoCached(
       kind: Place.Kind.Wire,
       time: GeoTime,
@@ -841,11 +918,15 @@ object MapView:
     if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
     else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def viridisAt(mid: MapView.Mid, span: (Years.Astronomical, Years.Astronomical)): Color =
     val sLo = span._1.value.min(span._2.value).toDouble
     val sHi = span._1.value.max(span._2.value).toDouble
     Color(Fmt.color(Fmt.ColorT(if sHi == sLo then 0.5 else ((mid.value - sLo) / (sHi - sLo)).max(0).min(1))).value)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadOverlay(span: (Years.Astronomical, Years.Astronomical)): Unit =
     val mid = (span._1.value + span._2.value) / 2
     overlayReqId += 1
@@ -946,6 +1027,7 @@ object MapView:
           )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def areaKeyOf(keyOf: js.Dynamic => String, f: js.Dynamic): PlaybackAreas.AreaKey =
     PlaybackAreas.key(
       PlaybackAreas.AreaKey(keyOf(f)),
@@ -954,6 +1036,8 @@ object MapView:
     )
 
   /** A polity or region with only a point has no boundary yet: its NAME, never a pin or a dot. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def syncPointLabels(points: List[js.Dynamic], keyOf: js.Dynamic => String): Unit =
     val pane = TheMap.pane(MapStack.Pane.AreaPoints)
     val want = points.map(f => keyOf(f) -> f).toMap
@@ -1003,6 +1087,8 @@ object MapView:
     * dated then are attached to it (an undated place, [[PlaceTimeBasis.Findings]]) — drawn dashed and lighter, so it
     * never reads as a place known to exist then.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placeClasses(base: ClassName, basis: Option[Place.TimeBasis.Wire]): ClassName =
     if basis.flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings) then ClassName(s"$base $ByFindingsClass")
     else base
@@ -1013,15 +1099,18 @@ object MapView:
   val UndatedClass = "hd-undated"
 
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def spanMid(): Option[Years.Astronomical] = Some(
     Years.Astronomical((currentSpan._1.value + currentSpan._2.value) / 2)
   )
 
   /** Pure: a tile query's span — `from`/`to` of the shared filter. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def tileFilter(span: (Years.Astronomical, Years.Astronomical)): Filter =
     Filter(period = Some(Period(Year(span._1.value), Year(span._2.value))))
 
   /** Every picture of the span, by provider and licence. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadMedia(span: (Years.Astronomical, Years.Astronomical)): Unit =
     mediaLayer.load(
       ApiClient.tileTemplate(
@@ -1039,6 +1128,7 @@ object MapView:
     )
 
   /** Every site of the span, of the type the site-type menu (#1449) keeps. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def loadSites(span: (Years.Astronomical, Years.Astronomical)): Unit =
     sitesLayer.load(
       ApiClient.tileTemplate(

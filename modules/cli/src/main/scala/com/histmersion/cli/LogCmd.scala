@@ -3,6 +3,7 @@ package cli
 
 import com.histmersion.api.log.{LogApi, LogPage}
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{LintRule, tolerated}
 
 object LogCmd:
 
@@ -21,6 +22,7 @@ object LogCmd:
               Output.emit(json, p)(_.markdown(cursor => s"Older: `${PageCmd.next("log", options(filter), cursor)}`"))
             )
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def options(filter: LogPage.Filter): List[(String, Option[String])] = List(
       "trace" -> filter.trace.map(t => s"$t"),
       "label" -> filter.label.map(l => s"$l"),

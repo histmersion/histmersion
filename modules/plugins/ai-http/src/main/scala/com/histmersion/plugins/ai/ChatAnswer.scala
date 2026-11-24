@@ -11,12 +11,15 @@ import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import com.histmersion.plugin.AiTool
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiMessage
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** What an OpenAI-compatible chat-completions API answered, read as these providers have always read it: the first
   * choice's text and tool calls (a call without an id is `call_<n>`, without a name `unknown`), its finish reason, the
   * usage with its cached prompt and reasoning tokens; or the failure — an error status answered by `provider` at `url`
   * with the error's message (else the start of its body), a success answer that cannot be read by why.
   */
+@atBoundary(BoundaryKind.Json, "reads an OpenAI-style chat completion answer")
 final case class ChatAnswer(
     provider: Problem.Upstream.Name,
     url: Problem.Upstream.Url,
@@ -25,6 +28,7 @@ final case class ChatAnswer(
 ):
 
   /** The turn the answer says, or the failure. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def turn: Either[Problem, AiTurn] =
     if (status).value / 100 != 2 then
       Left(
@@ -64,6 +68,7 @@ object ChatAnswer:
   object FinishReason:
 
     /** The reason a provider's answer states (`function_calls` is read as `tool_calls`, as it always has been). */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def parse(raw: FinishText): FinishReason = raw.value match
       case "stop"                          => Stop
       case "length"                        => Length
@@ -84,6 +89,7 @@ object ChatAnswer:
   /** An error status's description: the `error.message`; for an error without one, the status and the body; for an
     * answer of another shape, its body's start.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def errorMessage(status: Status, body: Body): String =
     val fallback = (body).value.take(MaxRawErrorBody)
     RawJson.parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
@@ -183,6 +189,7 @@ object ChatAnswer:
     )
   }
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private val choice: Cursor.Read[(AiTurn.Text, List[AiTool.Call], FinishReason)] = product { c =>
     for
       m <- c.downField("message").read(message)

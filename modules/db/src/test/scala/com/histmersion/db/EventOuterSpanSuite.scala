@@ -22,16 +22,19 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.events.EventSelection
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** V089 (#1768) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the generated `events.outer_span`
   * is TimeSpan.outer — an open-ended event covers the end it states, not every year after it — and the map's feed
   * (`/api/events/geo`) and the list follow it. Ids start `zqos`.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventOuterSpanSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -43,6 +46,7 @@ class EventOuterSpanSuite extends DbSuite:
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def put(id: BEventRow.Id, ts: TimeSpan, kind: EventSummary.Kind = EventSummary.Kind("war")) =
     EventFixtures.put(
       ds,

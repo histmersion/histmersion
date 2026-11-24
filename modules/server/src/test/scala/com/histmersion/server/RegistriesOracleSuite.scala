@@ -22,6 +22,7 @@ import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every job kind and every alias table the server registers, written as text to `src/test/resources/oracle/` and
   * compared byte for byte: for a job kind its identifier, the name a person reads, whether it can be paused and
@@ -30,6 +31,8 @@ import com.histmersion.api.exchange.Bundle
   * the code before the registries existed, read from the registries since
   * (`com.histmersion.api.RegisteredJobKinds.all`, `Deps.aliasTables`); `HISTMERSION_UPDATE_ORACLE=1` rewrites it.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class RegistriesOracleSuite extends munit.FunSuite:
 
   private val dir = Path.of("modules/server/src/test/resources/oracle")

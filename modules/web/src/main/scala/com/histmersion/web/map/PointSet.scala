@@ -6,6 +6,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A group of points drawn as ONE cluster layer: nearby points of every kind join one bubble ([[Clustering]]), the rest
   * are drawn alone; only what is in view (and a margin) has an element. The kinds' look is the caller's (and their
@@ -40,6 +41,7 @@ final class PointSet[D](
   // the groups at `level`: each one's points, and its place
   private var groups: Vector[(Vector[PointSet.Key], LatLon)] = Vector.empty
   private var groupOf: collection.Map[PointSet.Key, Int] = Map.empty
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private var level: Clustering.ZoomLevel = Clustering.ZoomLevel(Int.MinValue)
   private var queued = false
   // the newest drawing: an older one's slices still queued stop; whether its slices still have markers to make
@@ -72,6 +74,7 @@ final class PointSet[D](
   var animations: PointSet.Animations = PointSet.Animations(0)
   def busy: Boolean = queued || slicing || awaitingMoves.isDefined
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size: PointSet.PointCount = PointSet.PointCount(items.size)
   def keys: Iterable[PointSet.Key] = items.keys
   def get(k: PointSet.Key): Option[D] = items.get(k)
@@ -165,6 +168,7 @@ final class PointSet[D](
     * back to the spot — the only way to reach points no zoom can part (one spot, or the deepest zoom). Anything else
     * fanned out folds back first. `separation`: the markers' spacing, px.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spiderfy(ks: Seq[PointSet.Key], separation: Spiderfy.Separation): Unit =
     unspiderfy()
     install()
@@ -209,6 +213,7 @@ final class PointSet[D](
     * very spot, or the deepest zoom reached), `andThen` where it is: it was left undone there, and a picture at a spot
     * it shares never opened.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoomToShow(k: PointSet.Key, andThen: () => Unit): Unit =
     val s = surface()
     items.get(k).foreach { d =>
@@ -234,6 +239,7 @@ final class PointSet[D](
         )
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fadeAway(mp: (DomMarker, MarkerPane)): Unit =
     val (m, p) = mp
     if p.has(m) then
@@ -258,6 +264,8 @@ final class PointSet[D](
 
   /** The groups at the map's zoom (again only when the zoom or the points changed), and the elements of those in view.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def layout(animate: Boolean, shared: Boolean = true): Unit =
     val s = surface()
     if s != null then
@@ -316,6 +324,7 @@ final class PointSet[D](
       i += 1
     groupOf = m
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def draw(
       wanted: (Set[PointSet.Key], Map[Clustering.GroupLabel, Vector[PointSet.Key]]),
       before: Option[Map[PointSet.Key, (ScreenPt.X, ScreenPt.Y)]],
@@ -429,6 +438,7 @@ final class PointSet[D](
   /** A zoom's moves ([[ClusterMotion]]), once its markers on screen are made: a marker made of ONE former place comes
     * out of it (a split); one made of several stays where it is and appears as the markers that merge into it arrive.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def animate(
       was: Map[PointSet.Key, (ScreenPt.X, ScreenPt.Y)],
       fresh: List[(DomMarker, Seq[PointSet.Key])],

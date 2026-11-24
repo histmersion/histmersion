@@ -5,11 +5,13 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Shapes drawn by the map itself (areas, outlines). Updates are DIFFS: a shape whose geometry is the same keeps its
   * tile data, its colour and visibility change in place — so a timeline drag recolours 1 600 states without the map
   * cutting a single tile again.
   */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 trait ShapeSet:
   def id: NoMap.Shapes.Id
 

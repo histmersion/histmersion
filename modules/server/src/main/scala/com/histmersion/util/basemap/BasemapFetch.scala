@@ -29,6 +29,7 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Plural
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A regional extract of a remote PMTiles archive (a Protomaps build, Mapterhorn's planet), read with HTTP range
   * requests — the way `pmtiles extract` reads it, and what both providers document for a partial download — and written
@@ -44,6 +45,7 @@ import com.histmersion.api.Plural
   *
   * Nothing here knows the configuration or the job; [[BasemapService]] drives it.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object BasemapFetch:
   type Attribution = Attribution.T
   object Attribution extends Newtype[String, Pure]
@@ -80,6 +82,7 @@ object BasemapFetch:
 
   object Wanted:
     export PmTiles.Entry.TileId as Id
+    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Offset = ByteOffset
     val Offset: ByteOffset.type = ByteOffset
     export PmTiles.Entry.Length
@@ -102,6 +105,7 @@ object BasemapFetch:
       /** The shallowest zoom planned (a focus region starts below the extract's depth). */
       minZoom: Plan.MinZoom = Plan.MinZoom(0)
   ):
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def requestBytes: ByteCount = ByteCount.applyUnsafe(requests.map(_._2.value).sum)
 
   object Plan:
@@ -115,6 +119,7 @@ object BasemapFetch:
   /** The politeness of the requests: the pause between two, the largest, and how much of a gap is read through rather
     * than split.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Pace(
       gapMs: Pace.GapMs,
       maxRequestBytes: ByteCount,
@@ -133,6 +138,8 @@ object BasemapFetch:
   /** What a plan downloads at each zoom: its tiles and their distinct bytes, shallowest first — a download ahead's size
     * estimate per zoom (#3760). Pure.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def perZoom(p: Plan): List[(PmTiles.Zoom, TileCount, ByteCount)] =
     p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy[Int](_._1.value).map { (z, ts) =>
       (
@@ -143,6 +150,8 @@ object BasemapFetch:
     }
 
   /** [[perZoom]] in a line: `zoom 0: 1 tile, 12 KB · …`, the deepest zooms' running total last. Pure. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def perZoomLine(rows: List[(PmTiles.Zoom, TileCount, ByteCount)]): ZoomSummary =
     ZoomSummary(
       rows
@@ -153,6 +162,8 @@ object BasemapFetch:
     )
 
   /** Every tile id of zooms `minZoom`…`maxZoom` over `b`, sorted. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wantedIds(b: BBox, minZoom: Plan.MinZoom, maxZoom: Plan.MaxZoom): Array[Long] =
     val out = mutable.ArrayBuilder.make[Long]
     for z <- minZoom.value to maxZoom.value do
@@ -172,6 +183,7 @@ object BasemapFetch:
     * request when the gap before it is at most `overfetch` of the request so far (or 64 KiB) and the request stays
     * within `maxBytes`. Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def coalesce(
       contents: Seq[(ByteOffset, ByteCount)],
       maxBytes: ByteCount,
@@ -198,6 +210,8 @@ object BasemapFetch:
     out.result().map((o, l) => (ByteOffset.applyUnsafe(o), ByteCount.applyUnsafe(l)))
 
   /** The extract's bounds: the region clipped to the source's own. Pure. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def clip(b: BBox, h: PmTiles.Header): BBox =
     BBox(
       Longitude(b.minLon.value.max(h.minLon.value)),
@@ -208,6 +222,8 @@ object BasemapFetch:
 
   // ── 1. the plan ────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def plan(
       http: RangeHttp,
       source: Source,
@@ -303,6 +319,7 @@ object BasemapFetch:
   /** The stored tiles of `ids` (sorted) under one directory: its runs, and the leaf directories it points to — fetched
     * in merged requests, as the tiles are — searched in turn.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(
       dir: Vector[PmTiles.Entry],
       ids: Array[Long],
@@ -359,15 +376,20 @@ object BasemapFetch:
   // ── 2. the download ────────────────────────────────────────────────────────────────────────────
 
   /** The file request `r` is kept in, in the work store. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chunkKey(r: (ByteOffset, ByteCount)): Store.Key = Store.Key.applyUnsafe(s"${r._1}-${r._2}.bin")
 
   /** The requests not downloaded yet. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pending(p: Plan, work: Store): Vector[(ByteOffset, ByteCount)] =
     p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size == r._2))
 
   /** Download every pending request into `work`; `room(bytes)` is asked before each one and stops the fetch (with its
     * reason) when the disk would get too full.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def download(
       http: RangeHttp,
       p: Plan,
@@ -421,6 +443,8 @@ object BasemapFetch:
     * through `transform` once (`None` drops the tile), in tile-id order. Answers the size and the number of tiles
     * written.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def assemble(
       p: Plan,
       work: Store,
@@ -486,6 +510,8 @@ object BasemapFetch:
   /** The local archive's header: the source's tile type and compression, the extract's zooms and region. The writer
     * fills in the offsets.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def localHeader(p: Plan): PmTiles.Header =
     val b = p.bbox
     p.header
@@ -512,6 +538,8 @@ object BasemapFetch:
     * replaced by `attribution`, and where and when it came from — and, for the vector layer, what it kept (`filter`:
     * `keepAll` or the `drop` list) — under `histmersion`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def localMetadata(
       p: Plan,
       dropped: Set[Dropped],
@@ -560,6 +588,8 @@ object BasemapFetch:
     )
 
   /** The resume record of a work directory: a fetch continues only the download it describes. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateOf(p: Plan, extra: Note): Json = Json.obj(
     "url" -> Json.fromString(p.source.url.value),
     "size" -> Json.fromLong(p.remote.size.value),
@@ -574,6 +604,8 @@ object BasemapFetch:
   /** Make `work` hold only the parts of THIS plan: a work store left by another download (another build, region or
     * depth) is emptied first. Answers how many parts are already there.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def prepare(work: Store, state: Json): ChunkCount =
     val file = Store.Key.applyUnsafe("state.json")
     if work.isDirectory(Store.Key.Root) && !work

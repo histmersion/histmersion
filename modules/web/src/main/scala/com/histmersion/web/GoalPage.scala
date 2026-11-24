@@ -20,6 +20,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Api
 import com.histmersion.api.research.Article
 import com.histmersion.api.views.QueueListing
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One research goal's page: its question, state and schedule ("checked for new publications 3 days ago · next check
   * …"), its actions (check for new publications now, pause the goal, edit), its plan — each step linked to the agent
@@ -40,6 +41,7 @@ object GoalPage:
 
   /** How many of the goal's steps the plan lists, and how many entries its history. */
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ScheduleNowMs = Millis
   val ScheduleNowMs: Millis.type = Millis
   type HeaderNote = HeaderNote.T
@@ -55,6 +57,8 @@ object GoalPage:
   enum Mark derives CanEqual:
     case Done, Going, Todo, Stopped
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markOf(i: ManagerItem): Mark = i.status.value match
     case "done"                             => Mark.Done
     case "active"                           => Mark.Going
@@ -62,6 +66,9 @@ object GoalPage:
     case _                                  => Mark.Todo
 
   /** A step's name: what kind of work it is, on what. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def stepName(i: ManagerItem): Agents.StepInfo.Name =
     val what = UiLabels.label(Wording.Id(i.kind.value)).value
     Agents.StepInfo.Name(
@@ -70,6 +77,7 @@ object GoalPage:
     )
 
   /** The steps the plan shows: going now first, then still to do, then done, newest first in each. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def steps(items: List[ManagerItem]): List[ManagerItem] =
     def rank(i: ManagerItem) = markOf(i) match
       case Mark.Going   => 0
@@ -81,6 +89,8 @@ object GoalPage:
     )
 
   /** `3 days ago`, `today`, `in 2 days`, from two instants in epoch ms: calendar days in the reader's time zone. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def days(thenMs: Millis, nowMs: Millis): DaysText =
     def day(ms: Millis) = ((ms.value - new js.Date(ms.value).getTimezoneOffset() * 60000) / 86400000).floor.toLong
     val d = day(nowMs) - day(thenMs)
@@ -90,6 +100,8 @@ object GoalPage:
     else DaysText(s"in ${-d} days")
 
   /** When it was last checked for new publications and when next: the currency schedule, else the watcher. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def schedule(
       v: GoalView,
       watcher: Option[ManagerInfo],
@@ -107,12 +119,18 @@ object GoalPage:
   def paused(ms: List[ManagerInfo]): Boolean = ms.nonEmpty && ms.forall(_.state == Managers.State.Paused.wire)
 
   /** The address of a list page that shows only this goal's items. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def listOf(section: ResearchSection, goal: Goal.Slug): LinkTarget =
     LinkTarget(s"${Route.Research(section).path}?goal=${js.URIUtils.encodeURIComponent(goal.value)}")
 
   /** Library and the map, filtered to the goal's sources. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def libraryOf(goal: Goal.Slug): LinkTarget =
     LinkTarget(s"${Route.Library(LibrarySection.Sources).path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mapOf(goal: Goal.Slug): LinkTarget = LinkTarget(
     s"${Route.Explore.path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}"
   )
@@ -121,6 +139,9 @@ object GoalPage:
 
   private def write(f: () => Unit): Unit = if Auth.writableNow then f() else WindowManager.open(WindowKey.ApiKey)
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig, slug: Goal.Slug): HtmlElement =
     // each part of the page is one request: the newest answer wins, a failure or an unreachable server is shown
     val view = Request[GoalView]()
@@ -246,6 +267,8 @@ object GoalPage:
       }
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def header(
       v: GoalView,
       managers: Signal[List[ManagerInfo]],
@@ -315,6 +338,8 @@ object GoalPage:
       )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def plan(v: GoalView, items: Signal[List[ManagerItem]], ui: UiConfig): HtmlElement =
     sectionTag(
       cls := "card goal-plan",
@@ -339,6 +364,9 @@ object GoalPage:
       }
     )
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def step(i: ManagerItem, n: Agents.StepInfo.Seq): HtmlElement =
     val mark = markOf(i)
     val busy = Var(false)
@@ -401,6 +429,8 @@ object GoalPage:
         )
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def produced(
       v: GoalView,
       backlog: Signal[Option[RowCount]],
@@ -483,6 +513,8 @@ object GoalPage:
     )
 
   /** Library or the map, showing only this goal's sources. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showFiltered(slug: Goal.Slug, to: Route): Unit =
     UiState.set(UiState.goal := Some(slug.value))(push = UiState.SetPush(true))
     Router.go(to)

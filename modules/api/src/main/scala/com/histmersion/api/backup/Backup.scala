@@ -20,6 +20,7 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
+import com.histmersion.lint.{LintRule, tolerated}
 
 object Backup:
   type JdbcUrl = JdbcUrl.T
@@ -42,8 +43,11 @@ object Backup:
 
   def timestamp(at: Instant): String = (Stamp.format(at.truncatedTo(ChronoUnit.SECONDS)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fileName(at: Instant): Result.File = Result.File(s"$Prefix${timestamp(at)}$Extension")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uniqueName(name: Name, taken: Result.File => Boolean): Result.File =
     if !((taken(Result.File((name).value))) == (true)) then Result.File((name).value)
     else
@@ -59,6 +63,7 @@ object Backup:
   /** Only names this service writes count: anything else in the directory is someone's own file. As plain text
     * `…Z-2.dump` sorts before `…Z.dump`, so the order is the stamp, then the same-second suffix.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toPrune(names: List[Result.File], keep: Retention): List[Result.File] =
     if keep.value <= 0 then Nil
     else
@@ -72,11 +77,14 @@ object Backup:
   private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
 
   /** The stamp in the name wins over the mtime: a copied archive keeps its name but not its mtime. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def takenAt(name: Result.File, mtime: Instant): Instant = name.value match
     case AnyStamp(stamp, _) =>
       scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
     case _ => mtime
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def newestFirst(bs: List[Info]): List[Info] =
     def suffix(n: String) = n match
       case AnyStamp(_, sfx) => Option(sfx).flatMap(_.toIntOption).getOrElse(1)
@@ -87,6 +95,8 @@ object Backup:
 
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def safeName(raw: Name): Either[Problem, Result.File] =
     val n = Option(raw).map((_).value.trim).getOrElse("")
     val example = Vector(Raw(s"histmersion-2026-11-01$Extension"))
@@ -103,6 +113,7 @@ object Backup:
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
   final case class PgTarget(host: Option[PgTarget.Host], port: Option[PgTarget.Port], database: PgTarget.Database):
     /** `-w`: a missing password fails instead of `pg_dump` prompting forever. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def args: List[String] =
       host.toList.flatMap(h => List("-h", h.value)) ++
         port.toList.flatMap(p => List("-p", p.value.toString)) ++
@@ -119,6 +130,8 @@ object Backup:
 
   private val JdbcScheme = "jdbc:postgresql:"
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseJdbc(url: JdbcUrl): Either[Problem, PgTarget] =
     val u = Option(url).map((_).value.trim).getOrElse("")
     val jdbc = Vector(Raw("jdbc:postgresql://127.0.0.1/histmersion"))
@@ -163,6 +176,8 @@ object Backup:
     * with `SET transaction_timeout = 0`, which Postgres < 17 rejects) while the data restores perfectly, so a run that
     * reached that summary succeeded with warnings.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restoreOutcome(exit: Problem.Io.ExitCode, output: List[ToolOutput]): Either[Problem, List[Outcome]] =
     val notable = output
       .map((_).value.trim)
@@ -181,12 +196,15 @@ object Backup:
 
   val CodeMaintenance = "maintenance"
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def maintenance(op: String): Api.Error =
     Api.Error(
       Problem.Conflict.Busy(Problem.Conflict.Activity.Restore),
       Some(Api.Error.Code(CodeMaintenance))
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def missing(file: Result.File): Api.Error =
     Api.Error(
       Problem.NotFound.Entity(TypeName.of(Result.File), Raw(s"$file")),
@@ -196,6 +214,8 @@ object Backup:
   /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
     * locales such as `en_PL`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def humanBytes(n: ByteCount): String =
     val units = Vector("kB", "MB", "GB", "TB")
     if (n).value < 1000 then (s"$n B")
@@ -234,6 +254,7 @@ object Backup:
 
   enum State:
     case Running, Done, Failed
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wire: State.Wire = State.Wire(toString.toLowerCase(java.util.Locale.ROOT))
 
   object State:
@@ -262,9 +283,13 @@ object Backup:
     export Result.{DurationMs, File, File as FailedFile, File as RunningFile}
     export Result.Pruned
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status =
       Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, problems: Problems): Status =
       Status(file, State.Failed.wire, elapsedMs, problems = Some(problems.toNonEmpty))

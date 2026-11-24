@@ -2,9 +2,12 @@ package com.histmersion
 package config.edit
 
 import com.histmersion.config.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ConfigSchemaSuite extends munit.FunSuite:
   private val schema = ConfigSchema.reference
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def key(s: String) = SettingKey.parse(SettingKey.ParseRaw(s)).toOption.get
   private def field(s: String) = schema.field(key(s)).getOrElse(fail(s"no field $s"))
 

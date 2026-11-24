@@ -3,16 +3,21 @@ package domain
 
 import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A research area's watcher when it saves no settings of its own (`agents.managers.watch`): its runs at once and the
   * daily cap of its opt-in auto-ingest.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryWorkflows)
 final case class WatchManagerDefaults(
     maxRuns: WatchManagerDefaults.MaxRuns,
     autoIngestPerDay: WatchManagerDefaults.AutoIngestPerDay
 ):
 
   /** A watcher's settings when it saves none: every sweep, auto-ingest off, its cap. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def managerDefaults(m: ManagerDefaults): ManagerConfig =
     ManagerConfig(
       maxRuns = Some(ManagerConfig.MaxRuns(maxRuns.value)),
@@ -27,6 +32,7 @@ final case class WatchManagerDefaults(
   /** How many legal open-access works a watcher's next acquisition sweep may ingest: none unless it opted in
     * (`autoIngest`, default off), else what is left of its daily cap after the ones it ingested today.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingestAllowance(
       c: ManagerConfig,
       ingestedToday: WatchManagerDefaults.IngestedToday

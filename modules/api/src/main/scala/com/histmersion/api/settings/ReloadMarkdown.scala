@@ -1,8 +1,11 @@
 package com.histmersion
 package api.settings
 import com.histmersion.api.given
+import com.histmersion.lint.{LintRule, tolerated}
 object ReloadMarkdown:
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def report(r: ReloadReport): String =
     def list(title: String, xs: List[String]): List[String] =
       if xs.isEmpty then Nil else (s"**$title:**" :: xs.map(x => s"- $x")).map(refactorValue => (refactorValue))

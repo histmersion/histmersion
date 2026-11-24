@@ -6,6 +6,7 @@ import com.histmersion.plugin.Doi
 import com.histmersion.plugin.WorkKey
 import com.histmersion.upstreams.ArxivId
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 final case class FollowupRow(
     title: Option[FollowupRow.Title] = None,
     year: Option[Year] = None,
@@ -19,6 +20,7 @@ final case class FollowupRow(
 
 object FollowupRow:
   export WorkKey.Title
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Arxiv = ArxivId
   val Arxiv: ArxivId.type = ArxivId
   type CitedBy = CitedBy.T

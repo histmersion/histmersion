@@ -56,6 +56,7 @@ import com.histmersion.domain.automation.agents.RunService
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The process managers' phase 3 against a `*_test` database (docs/research-process-managers.md §4 (c), §6): the
   * watcher (created paused with its cron and one item per sweep; an acquisition sweep whose OPT-IN auto-ingest takes
@@ -64,6 +65,7 @@ import com.histmersion.util.database.TestCreators.given
   * watcher's settled sweeps). Models are scripted and the acquisition toolset is a fixture ([[StubUpstream]]): nothing
   * reaches a provider or the network. Skipped without HISTMERSION_TEST_DB_URL.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
@@ -73,23 +75,36 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private val GoalSlug = api.automation.Goal.Slug("zzagent-watch")
   private val GoalTarget = ManagerItem.Target("zzagent-watch")
   private val Query = "zzagent tin trade"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val QueryRef = LinkAdd.Ref(Query)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Enrich = ManagerInfo.Id(EnrichId)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val SweepKind = ManagerItem.Kind(AcquisitionSweep)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CurrencyKind = ManagerItem.Kind(CurrencyCheck)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val EnrichKind = ManagerItem.Kind(SourceEnrich)
   private val Open = WorkRef.IsOa(true)
   private val Closed = WorkRef.IsOa(false)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val StartedKind = ManagerEvent.Kind(Feed.Started)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val IngestedKind = ManagerEvent.Kind(Feed.Ingested)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val SweptKind = ManagerEvent.Kind(Feed.Swept)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CronKind = ManagerEvent.Kind(Feed.Cron)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val HintKind = ManagerEvent.Kind(Feed.Hint)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val StarvedKind = ManagerEvent.Kind(Feed.Starved)
   private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
@@ -165,6 +180,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, QueryRef)).isRight)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
 
   private def work(doi: String, title: String, oa: WorkRef.IsOa) =
@@ -177,6 +193,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[Problem, Ingest.Report] =
     if noCopy.contains(doi) then Left(Problem.NotFound.Copy(Problem.Raw(doi), Vector.empty))
     else
@@ -219,6 +236,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private def events(mid: ManagerInfo.Id, kind: ManagerEvent.Kind): List[ManagerEvent] =
     connect(ds)(ManagerRepo.events(mid, None, PageSize(200))).filter(_.kind == kind)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
@@ -550,6 +568,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private val CkB = Citekey("zzagent2021_hintb")
 
   /** The (paused) enrich manager with two source items. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enrichItems(a: AgentsControllers, h: ServerWiring): Unit =
     assert(
       h.library.sources
@@ -575,9 +594,11 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enrichItem(ck: Citekey): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(Enrich, EnrichKind, ManagerItem.Target(ck.value))).get
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openHintApprovals(a: AgentsControllers): List[ApprovalInfo] =
     a.approvalsList(None, None).left.map(Api.Error(_)).toOption.get.filter(_.kind.value == "hint-effect")
 

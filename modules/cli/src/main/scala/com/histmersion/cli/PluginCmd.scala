@@ -10,11 +10,16 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.util.console.Console
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@atBoundary(BoundaryKind.CliArgs, "parses `histmersion plugin` arguments")
 object PluginCmd:
 
   /** The install on this machine, wherever the CLI is pointed. */
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def install(using console: Console): Either[Cli.Error, LocalInstall] =
     val env: UserPaths.Lookup = k => Option(java.lang.System.getenv(k.value)).map(Environment.VariablesValue(_))
     val exe =
@@ -31,6 +36,9 @@ object PluginCmd:
       .left
       .map(e => Cli.Error(e))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[cli] def local(c: Client)(using console: Console): Either[Cli.Error, PluginOps] =
     if !PluginKit.isLoopback(c.serverUrl.value) then
       Left(
@@ -46,11 +54,13 @@ object PluginCmd:
     else install.map(i => PluginOps(i, Settings.app.cli.plugins))
 
   /** The running server's plugins, when it answers. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def running(c: Client): (Option[PluginsReport], Boolean) =
     c.about.fold(_ => (None, false), a => (Some(a.plugins), true))
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum Command extends Cli.Command:
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Add(
         arg: String,
         yes: Boolean,
@@ -60,11 +70,15 @@ object PluginCmd:
         sha: Option[String],
         repoArgs: List[String]
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Rm(what: String, rebuild: Boolean)
     case Listing()
     case Status()
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Rebuild(noRestart: Boolean, unsigned: Boolean, ignoreMemory: Boolean, jvm: Boolean, check: Boolean)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Rollback(noRestart: Boolean)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case New(
         rawId: String,
         rawKind: String,
@@ -73,13 +87,19 @@ object PluginCmd:
         repoArg: Option[String],
         agentNotes: Boolean
     )
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case Repo(asUrl: Boolean, m2: Boolean)
+    @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
     case ApiJar(sources: Boolean)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
+    @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Add(arg, yes, rebuild, verify, unsigned, sha, repoArgs) =>

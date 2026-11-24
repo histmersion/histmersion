@@ -54,6 +54,7 @@ import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.{PluginJar, PluginSet}
 import StoredCodecs.{sameJson, BundleCodec, Codec, JsonAst, JsonSamples}
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Every JSON shape the user's data holds — the `jsonb` columns and the `.hmx` bundle's lines — as the circe codecs
   * wrote it, kept as fixtures (`stored-shapes/<name>.jsonl`, one document per line) and read back by today's codecs:
@@ -194,6 +195,7 @@ object StoredShapesSuite:
     )
 
   /** A bundle file's line: a stamped record's rev must check, and the record must write the same bytes again. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def bundle[A](name: String, salt: Int, gen: => Gen[A], stamped: Boolean = true)(using c: BundleCodec[A]): Shape =
     def line(a: A) = if stamped then c.stamp(a) else c.line(a)
     Shape(
@@ -280,6 +282,7 @@ object StoredShapesSuite:
           case Some(j) => Option.unless(sameJson(JsonAst.print(j), l))(s"prints ${JsonAst.print(j)}")
     )
 
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   val shapes: List[Shape] =
     import Arbitraries.given
     List(
@@ -456,6 +459,7 @@ object StoredShapesSuite:
     private val hex64: Gen[String] = Gen.listOfN(64, Gen.hexChar).map(_.mkString.toLowerCase)
     given Arbitrary[String] =
       Arbitrary(Gen.oneOf(identifier, Gen.listOf(chars).map(_.mkString), Gen.uuid.map(_.toString), hex64))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given Arbitrary[MergeDecision] = Arbitrary(
       Gen
         .oneOf(MergeDecision.Kind.values.toList)

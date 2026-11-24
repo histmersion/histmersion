@@ -28,6 +28,8 @@ import com.histmersion.domain.{CreatedAt, Creator}
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait GoalService:
   def get(slug: domain.automation.Goal.Slug): Option[Goal]
 
@@ -142,6 +144,7 @@ object GoalService:
     /** [[GoalService.link]] by the server itself (a sweep, a plan): a goal deleted meanwhile is said in the log, the
       * link not written.
       */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def linkIfThere(
         goal: domain.automation.Goal.Slug,
         kind: domain.automation.Goal.LinkKind,
@@ -253,10 +256,12 @@ object GoalService:
       extends GoalService:
     private def now: Instant = Instant.now(clock)
     private def goals: Map[AutomationState.GoalsKey, GoalRecord] = state.get.goals
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def key(slug: DomainGoal.Slug): AutomationState.GoalsKey = AutomationState.GoalsKey(slug.value)
     private val Updated = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC)
 
     /** `updated_at::text` in a UTC session: seconds, the fraction without its trailing zeros, the offset. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def updatedText(at: Instant): Goal.UpdatedAt =
       val micros = at.getNano / 1000
       val fraction = if micros == 0 then "" else "." + f"$micros%06d".reverse.dropWhile(_ == '0').reverse
@@ -267,9 +272,11 @@ object GoalService:
       case domain.automation.Goal.LinkKind.Article     => 1
       case domain.automation.Goal.LinkKind.SearchQuery => 2
       case _                                           => 3
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def refused(problem: Problem, code: String): Api.Error = Api.Error(problem, Some(Api.Error.Code(code)))
 
     /** As [[RangeSql.merge]] refuses it: the start, above the end. */
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def inverted[Y](slug: DomainGoal.Slug, a: Y, b: Y)(using
         RefinedType.Mirror[Y] { type BaseType <: Long | Int }
     ): Problem =
@@ -280,9 +287,12 @@ object GoalService:
       )
 
     def get(slug: domain.automation.Goal.Slug): Option[Goal] = goals.get(key(slug)).map(shown)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug.value).map(shown)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def children(slug: domain.automation.Goal.Slug): List[Goal] =
       all().filter(_.parentSlug.exists(_.value == slug.value))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Unit] =
@@ -318,6 +328,8 @@ object GoalService:
             )
           )
           Right(())
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     def page(
         status: Option[domain.automation.Goal.Status.Wire],
         limit: PageSize,
@@ -335,6 +347,7 @@ object GoalService:
     private def notFound(slug: domain.automation.Goal.Slug) =
       refused(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw.of(slug)), Write.CodeNotFound)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(slug: domain.automation.Goal.Slug, p: Goal.Patch)(using WritePermit): Either[Api.Error, Unit] =
       goals.get(key(slug)).toRight(notFound(slug)).flatMap { r =>
         val g = r.goal
@@ -375,6 +388,7 @@ object GoalService:
             Right(())
       }
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(slug: domain.automation.Goal.Slug)(using WritePermit): Boolean =
       val before = state.getAndUpdate(
         _.modify(_.goals)
@@ -386,6 +400,7 @@ object GoalService:
       )
       before.goals.contains(key(slug))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(
         from: domain.automation.Goal.Slug,
         to: domain.automation.Goal.Slug
@@ -435,6 +450,7 @@ object GoalService:
         }
         Right(())
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def goalsOfItems(
         items: List[GoalLinkRepo.ItemId]
     ): List[(GoalLinkRepo.ItemId, domain.automation.Goal.Slug, BGoalRow.Title)] =
@@ -453,6 +469,7 @@ object GoalService:
         .toList
         .sortBy(t => (t._3.value, t._2.value))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def links(goal: domain.automation.Goal.Slug): List[GoalLink] =
       state.get.links
         .filter(_.goal.value == goal.value)
@@ -473,6 +490,7 @@ object GoalService:
               .map(q => GoalLink.Queue(q.value))
           )
         )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def link(
         goal: domain.automation.Goal.Slug,
         kind: domain.automation.Goal.LinkKind,
@@ -492,6 +510,7 @@ object GoalService:
         )
         true
       }
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(
         goal: domain.automation.Goal.Slug,
         kind: domain.automation.Goal.LinkKind
@@ -502,6 +521,7 @@ object GoalService:
         .map(l => GoalLink.Ref(l.ref.value))
         .toList
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unlink(
         goal: domain.automation.Goal.Slug,
         kind: domain.automation.Goal.LinkKind,
@@ -513,6 +533,7 @@ object GoalService:
             .using(_.filterNot(l => l.goal.value == goal.value && l.kind == kind && l.ref.value == ref.value))
         )
       before.links.exists(l => l.goal.value == goal.value && l.kind == kind && l.ref.value == ref.value)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def linkCounts(): Map[
       (domain.automation.Goal.Slug, domain.automation.Goal.LinkKind.Wire),
       RowCount
@@ -527,8 +548,10 @@ object GoalService:
         .view
         .map((k, ls) => (DomainGoal.Slug.assume(k._1), k._2) -> RowCount(ls.size))
         .toMap
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def planned(): Set[domain.automation.Goal.Slug] =
       goals.values.filter(_.plan.isDefined).map(r => DomainGoal.Slug.assume(r.goal.slug.value)).toSet
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def planAndBudget(
         goal: domain.automation.Goal.Slug
     ): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
@@ -536,6 +559,7 @@ object GoalService:
     private def changeGoal(goal: domain.automation.Goal.Slug)(f: GoalRecord => GoalRecord): Unit =
       val _ =
         state.updateAndGet(_.modify(_.goals).using(gs => gs.get(key(goal)).fold(gs)(r => gs.updated(key(goal), f(r)))))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setPlan(goal: domain.automation.Goal.Slug, planJson: BGoalRow.Plan)(using WritePermit): Unit =
       val at = now
       changeGoal(goal)(
@@ -549,6 +573,7 @@ object GoalService:
     def setBudget(goal: domain.automation.Goal.Slug, usd: Option[BigDecimal])(using WritePermit): Unit =
       val at = now
       changeGoal(goal)(_.modify(_.budgetUsd).setTo(usd).modify(_.updatedAt).setTo(at))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def view(r: GoalScheduleRecord): GoalSchedule =
       GoalSchedule(
         Goal.Slug(r.goal.value),
@@ -561,12 +586,14 @@ object GoalService:
         None,
         None
       )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def schedules(goal: Option[domain.automation.Goal.Slug]): List[GoalSchedule] =
       state.get.schedules
         .filter(r => goal.forall(_.value == r.goal.value))
         .sortBy(r => (r.nextRunAt.isEmpty, r.nextRunAt.getOrElse(Instant.EPOCH), r.goal.value, r.kind.wire.value))
         .toList
         .map(view)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSchedule(
         goal: domain.automation.Goal.Slug,
         kind: ScheduleKind,
@@ -588,13 +615,16 @@ object GoalService:
           case -1 => rs :+ row
           case i  => rs.updated(i, row)
       })
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def removeSchedule(goal: domain.automation.Goal.Slug, kind: ScheduleKind)(using WritePermit): Boolean =
       state
         .getAndUpdate(_.modify(_.schedules).using(_.filterNot(r => r.goal.value == goal.value && r.kind == kind)))
         .schedules
         .exists(r => r.goal.value == goal.value && r.kind == kind)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def scheduleGoals(): List[domain.automation.Goal.Slug] =
       state.get.schedules.map(_.goal.value).distinct.sorted.toList.map(DomainGoal.Slug.assume(_))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def takeSchedulesIn(goal: domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
       state
         .getAndUpdate(_.modify(_.schedules).using(_.filterNot(_.goal.value == goal.value)))
@@ -602,6 +632,7 @@ object GoalService:
         .filter(_.goal.value == goal.value)
         .toList
         .map(view)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def createIn(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
         DbCon,
         WritePermit

@@ -10,12 +10,14 @@ import com.histmersion.domain.catalogue.periods.PeriodOFetch
 import scala.collection.immutable.ListMap
 import com.histmersion.api.catalogue.Gazetteer
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Histmersion's own network gazetteers — first-party plugins (`gazetteer-cliopatria`, `gazetteer-awmc`,
   * `gazetteer-chronontology`), each enabled by default and switched off by
   * `histmersion.plugins.gazetteer-<source>.enabled = false` — by the names `places fetch` and `init.fetch-sources`
   * take, which a plugin's source may not take. The places of one switched off since stay on the map.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object BuiltinGazetteers:
 
   /** A first-party gazetteer: its plugin, the name it registers, and what to call it. */
@@ -49,11 +51,13 @@ object BuiltinGazetteers:
   /** Names a plugin's source may not take: these, and the other names `places fetch` and `init.fetch-sources` take (the
     * coastline, PeriodO, the bundled extracts).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val reserved: Set[Entry.Name] =
     names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name).map(Entry.Name(_)) ++
       Gazetteer.Kind.values.map(k => Entry.Name(k.wire.value))
 
   /** Pure: the registered sources that are not first-party, in registration order. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def thirdParty(registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource]): List[Entry.Name] =
     registered.keys.toList.map(k => Entry.Name(k.value)).filterNot(names.contains)
 
@@ -66,6 +70,8 @@ object BuiltinGazetteers:
   /** The registered source `name` (trimmed, lower case) names, or why none: a first-party one switched off, else
     * `unknown`.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(
       name: Entry.Name,
       registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource],

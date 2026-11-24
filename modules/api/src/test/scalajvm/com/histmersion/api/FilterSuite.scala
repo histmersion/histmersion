@@ -18,10 +18,12 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Place
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `Filter` contract (plan §1.0): the flat wire shape, its interpretation, and the Markdown that shows a human/LLM
   * *why* each source matched. All pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FilterSuite extends munit.FunSuite:
 
   test("Filter.of trims, splits comma lists and drops blanks"):

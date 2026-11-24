@@ -3,10 +3,12 @@ package cli
 
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Citekey
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** `histmersion rename <old> <new> [--json]`: the arguments parse, and a new citekey the server would refuse is a usage
   * error here, before any request.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class RenameCmdSuite extends munit.FunSuite:
 
   private given console: util.console.Console = util.console.Console.standard

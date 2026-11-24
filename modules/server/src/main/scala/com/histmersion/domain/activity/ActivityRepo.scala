@@ -10,10 +10,14 @@ import java.time.Instant
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.{joined, Timestamps}
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The activity list in SQL: the jobs (agent runs among them), the worklog and a person's decisions as one relation,
   * filtered and cut into pages by the rules of [[ActivityRules]]. Takes the connection it runs on.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.AutomationActivity)
 private[activity] object ActivityRepo:
 
   /** Every entry, with its time as a timestamp (`t`) to filter and order by, and its key in byte order. */
@@ -51,6 +55,7 @@ private[activity] object ActivityRepo:
       )}, goal, job, writer,
               citekey, article, queue_item, queue_list, approval, target, target_kind"""
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def showSql(show: Show): Frag = show match
     case Show.Everything => sql"true"
     case Show.Running    => sql"kind IN ('run', 'job') AND state IN (${listed(ActivityRules.RunningStates)})"
@@ -60,9 +65,11 @@ private[activity] object ActivityRepo:
     case Show.Problems   => sql"kind IN ('run', 'job') AND state IN (${listed(ActivityRules.ProblemStates)})"
 
   /** The rules' own states, each bound through its codec, in their sorted order: `?, ?, …`. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def listed(states: Set[Entry.State]): Frag =
     states.toList.sortBy(_.value).map(s => sql"$s").joined(sql", ")
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def where(q: ActivityQuery): Frag =
     sql" WHERE ${showSql(q.show)}${q.goal.fold(sql"")(g =>
         sql" AND goal = $g"
@@ -71,6 +78,9 @@ private[activity] object ActivityRepo:
       )}"
 
   /** One page of `q`, with the next page's cursor. */
+  @tolerated(LintRule.TotalOrder, "kind and rid name one row of the merged activity")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[ActivityCursor.Wire]) =
     val sql = sql"""$Projection FROM $Merged${where(
         q
@@ -80,6 +90,7 @@ private[activity] object ActivityRepo:
     (kept, Option.when(rest.nonEmpty)(kept.lastOption).flatten.map(ActivityRules.cursorOf(_).wire))
 
   /** The runs and jobs running now, and those started since `weekAgo` that failed. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def counts(weekAgo: Instant)(using DbCon): Activity.Counts =
     val sql = sql"""SELECT count(*) FILTER (WHERE status IN (${listed(ActivityRules.RunningStates)})),
                                 count(*) FILTER (WHERE status IN (${listed(

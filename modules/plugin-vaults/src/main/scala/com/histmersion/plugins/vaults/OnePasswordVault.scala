@@ -10,6 +10,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
+import com.histmersion.lint.{LintRule, tolerated}
 
 final class OnePasswordVault(
     val name: Secret.Vault.Name,
@@ -19,6 +20,7 @@ final class OnePasswordVault(
     timeout: FiniteDuration
 )(using processes: Processes)
     extends Secret.Vault:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def resolve(ref: Secret.Vault.ResolveRef): Either[Problems, Secret.Resolved] =
     val r = ref.value.trim
     for
@@ -34,6 +36,7 @@ final class OnePasswordVault(
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(uri))
     yield v
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def classify(uri: String)(err: String): Option[Problem] =
     if err.contains("not currently signed in") || err.contains("sign in") || err.contains("authorization") ||
       err.contains("session expired") || err.contains("locked")

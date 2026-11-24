@@ -22,8 +22,11 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Queue
+import com.histmersion.lint.{LintRule, tolerated}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class IngestSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val md = AssetLinks.Body(
     """# Paper
       |
@@ -194,6 +197,7 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(AssetLinks.mimeOf(Bundle.Asset.Extension("a.bin")), "application/octet-stream")
 
   // ── image headers (figures read off disk carry no declared size) ─────────────────────────────
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def png(w: ImageSize.Width, h: ImageSize.Height): ImageSize.Bytes =
     val b = new Array[Byte](24)
     Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10).copyToArray(b)
@@ -202,6 +206,7 @@ class IngestSuite extends munit.FunSuite:
     }
     ImageSize.Bytes(b)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def gif(w: ImageSize.Width, h: ImageSize.Height): ImageSize.Bytes =
     val b = new Array[Byte](10)
     "GIF89a".getBytes("US-ASCII").copyToArray(b)
@@ -210,6 +215,7 @@ class IngestSuite extends munit.FunSuite:
     ImageSize.Bytes(b)
 
   /** SOI, one APP0 segment to be skipped, then SOF0 carrying height then width. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jpeg(w: ImageSize.Width, h: ImageSize.Height): ImageSize.Bytes =
     val app0 = Array[Byte](0xff.toByte, 0xe0.toByte, 0, 4, 0, 0)
     val sof0 = Array[Byte](

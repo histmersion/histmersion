@@ -25,6 +25,7 @@ import com.histmersion.server.ServerWiring
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How the agent suites set up runs by hand: through the jobs area, as the engine records them. */
 object TestRuns:
@@ -42,6 +43,7 @@ object TestRuns:
     val noon = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS).plusSeconds(12L * 3600L)
     java.time.Clock.offset(wall, java.time.Duration.between(now, noon))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def create(
       ds: DataSource,
       p: Pipeline,
@@ -96,6 +98,7 @@ object TestRuns:
       )
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def transition(
       ds: DataSource,
       id: Run.Id,
@@ -120,6 +123,7 @@ object TestRuns:
         )(t)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def reconcile(ds: DataSource): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
     runs(ds).reconcile(
       Job.Kind.assume(JobKind),
@@ -131,6 +135,8 @@ object TestRuns:
     )
 
   /** The library's routing of a source's proposals, as the composition builds it for engine `a`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def proposals(
       a: AgentsControllers,
       h: ServerWiring,

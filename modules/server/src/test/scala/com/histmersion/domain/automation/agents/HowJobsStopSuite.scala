@@ -13,14 +13,17 @@ import Halt.Stopped
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** How a job stopped, as the problem its `jobs.error` keeps: a pause (its reason and what it stopped on), a restart's
   * cut, the drain's stop, or a failure. What the engine writes now is typed; what a master version wrote as a sentence
   * reads into the same cases ([[StoredShapes]]).
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class HowJobsStopSuite extends munit.FunSuite:
 
   private def text(t: String): Problem = StoredShapes.read(t)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def unrecognised(t: String): Problem = Problem.Stored.Unrecognised(Problem.Stored.Text(t))
 
   /** What the master engine wrote as `<reason>: <detail>`, a queued run paused before it started, an upload no longer

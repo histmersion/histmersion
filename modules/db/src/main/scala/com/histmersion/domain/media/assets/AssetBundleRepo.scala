@@ -14,15 +14,20 @@ import com.histmersion.api.Sha256
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.util.database.StoredCreator
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
   * ones whose bytes are here already first, the rest as their bytes arrive.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the asset rows for bundle export and import")
 private[assets] object AssetBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
     sql"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
@@ -33,6 +38,8 @@ private[assets] object AssetBundleRepo:
         sql"x.updated_at"
       )} ORDER BY x.uid""".query[AssetBundleRow].run()
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def line(r: AssetBundleRow): Bundle.Asset =
     Bundle.Asset(
       r.uid,
@@ -72,11 +79,13 @@ private[assets] object AssetBundleRepo:
   val byUid: BundleImport.Once[Map[UUID, Bundle.Asset]] = BundleImport.Once(w => w.es.assets.map(a => a.uid -> a).toMap)
 
   /** Asset metadata whose bytes are already here (same sha): no blob needed. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def metadataIn(w: BundleImport.Writer): Unit =
     val localSha = w.local.assets.map(a => a.uid -> a.sha256).toMap
     w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[AssetBytesRow.Bytes]): Unit =
     given DbCon = w.transaction
     w.touchSource(a.sourceUid)

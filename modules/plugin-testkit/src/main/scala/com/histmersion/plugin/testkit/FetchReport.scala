@@ -2,6 +2,7 @@ package com.histmersion
 package plugin.testkit
 
 import com.histmersion.plugin.*
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One fetch of one work through the plugin's fetchers, run as the server runs its acquisition chain: the legal gate,
   * an exception read as a miss, a "PDF" that is not one read as no copy, one memo for the work.
@@ -27,6 +28,7 @@ final case class FetchReport(
   /** The licence the copy is published under: what the fetcher stated on the file, else the first line it logged about
     * a licence (the server records the first and logs the second).
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def licence: Option[domain.Licence.Id] =
     file
       .flatMap(_.licence)

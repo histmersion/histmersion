@@ -3,6 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`, `.smithsonian`,
   * `.europeana`): its API, its own pace, how many records are looked at and kept per place, and the licence families it
@@ -10,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * boundary for maps, and for the museum collections that set it (Smithsonian, Europeana) the last year an object may
   * be made in (0 = no limit).
   */
+@movesTo(FeaturePlace.Media)
 final case class MediaCollectionConfig(
     enabled: MediaCollectionConfig.Enabled,
     apiUrl: MediaCollectionConfig.ApiUrl,
@@ -33,6 +36,7 @@ final case class MediaCollectionConfig(
     excludeTypes: MediaCollectionConfig.ExcludeTypes = MediaCollectionConfig.ExcludeTypes("")
 ) derives ConfigReader:
   /** [[refusalBackoffSeconds]] as milliseconds; an entry that is not a positive number is dropped. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def refusalBackoffMs: List[MediaCollectionConfig.RefusalBackoffMs] =
     Option(refusalBackoffSeconds).toList
       .flatMap(_.value.split(","))

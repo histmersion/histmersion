@@ -7,10 +7,13 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.{Goal, Managers}
 import com.histmersion.api.automation.Goal.Plans.{GoalSchedule, GoalView, ScheduleKind}
 import com.histmersion.api.automation.Managers.ManagerItem
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A goal page's pure parts: the plan's steps and marks, the schedule line, pausing, its filtered lists. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GoalPageSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def item(
       id: ManagerItem.Id,
       status: ManagerItem.Status,

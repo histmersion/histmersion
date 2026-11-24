@@ -7,6 +7,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
@@ -15,6 +17,8 @@ import com.histmersion.util.database.Unused
   * The migration makes the row (`V109__schema.sql`, as V096 did before the squash), so a read only reads: a database
   * without it (a row deleted by hand) reads as the row the migration makes, and the first write makes it again.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@atBoundary(BoundaryKind.Sql, "reads and writes the autopilot tables and their row codecs")
 object AutopilotRepo:
   type Digest = Digest.T
   object Digest extends Newtype[String, Pure]
@@ -76,6 +80,7 @@ object AutopilotRepo:
   /** Switch it; `paused` = the managers it paused (turning it off) or none (turning it on). True = it changed (it was
     * the other way).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def set(enabled: Row.Enabled, by: Row.ChangedBy, paused: List[Row.Paused])(using DbCon): Boolean =
     made()
     sql"""UPDATE agent_autopilot SET enabled = $enabled, changed_at = now(), changed_by = $by, paused = $paused::text[],
@@ -104,6 +109,7 @@ object AutopilotRepo:
     Unused(sql"UPDATE agent_autopilot SET last_lint_at = $t::timestamptz WHERE id".update.run(), Unused.Why.Held)
 
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def unpaused(managerId: Managers.ManagerInfo.Id)(using DbCon): Unit =
     made()
     Unused(
@@ -155,6 +161,7 @@ object AutopilotRepo:
       .headOption
 
   /** Start draining (true; a drain under way keeps its start) or stop (false). True = it changed. */
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def setDrain(on: Boolean, by: Row.ChangedBy)(using DbCon): Boolean =
     made()
     if on then sql"""UPDATE agent_autopilot SET drain_since = now(), drain_by = $by, drained_at = NULL

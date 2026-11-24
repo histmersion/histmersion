@@ -9,6 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
 
 /** An approval as [[ApprovalService.InMemory]] holds it: its columns, the payload as written, and its times. */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class ApprovalRecord(
     id: ApprovalRecord.Id,
     jobId: Option[Job.Id],

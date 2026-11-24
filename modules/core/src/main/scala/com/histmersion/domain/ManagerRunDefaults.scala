@@ -2,7 +2,9 @@ package com.histmersion
 package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
 
+@movesTo(FeaturePlace.AutomationManagers)
 final case class ManagerRunDefaults(maxRuns: ManagerRunDefaults.MaxRuns)
 
 object ManagerRunDefaults:

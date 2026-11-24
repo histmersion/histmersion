@@ -12,6 +12,7 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.ArchiveFile
 import com.histmersion.api.Api
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** IIIF Image API Level 1, served at `/iiif/{identifier}/{region}/{size}/{rotation}/{quality}.{format}`. Level 1
   * requires:
@@ -21,6 +22,7 @@ import com.histmersion.api.Api
   *   - quality: `default` only
   *   - format: `jpg`, `png`
   */
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Iiif:
   type Format = Format.T
   object Format extends Newtype[String, Pure]
@@ -29,10 +31,12 @@ object Iiif:
   type Quality = Quality.T
   object Quality extends Newtype[String, Pure]
   type RegionText = RegionText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RegionText extends Newtype[String, Pure]
   type Rotation = Rotation.T
   object Rotation extends Newtype[String, Pure]
   type SizeText = SizeText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SizeText extends Newtype[String, Pure]
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
@@ -56,6 +60,7 @@ object Iiif:
       type H = H.T
       object H extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Either[Problem, Region] = (s).value.trim.toLowerCase match
       case "full" | "square" => Right(Full)
       case other             =>
@@ -104,6 +109,7 @@ object Iiif:
       type H = H.T
       object H extends Newtype[Int, Pure]
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Either[Problem, Size] =
       val t = (s).value.trim
       t match
@@ -174,17 +180,23 @@ object Iiif:
                 )
               )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseFormat(s: ArchiveFile.Format.Wire): Either[Problem, Format] =
     (s).value.trim.toLowerCase match
       case "jpg" | "jpeg" => Right(Format("jpg"))
       case "png"          => Right(Format("png"))
       case other => Left(Invalid.Unreadable.here(TypeName.of(Format), Raw(s"$other"), Vector(Raw("jpg"), Raw("png"))))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contentType(format: Format): Api.ContentType = format.value match
     case "png" => Api.ContentType("image/png")
     case _     => Api.ContentType("image/jpeg")
 
   /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond derivation. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def infoJson(id: ImageId, width: ImageSize.Width, height: ImageSize.Height): Json =
     Json.obj(
       "@context" -> Json.fromString(ApiContext),

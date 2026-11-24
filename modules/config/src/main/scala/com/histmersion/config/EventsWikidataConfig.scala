@@ -3,7 +3,10 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
+@movesTo(FeaturePlace.CatalogueEvents)
 final case class EventsWikidataConfig(
     sparqlUrl: EventsWikidataConfig.SparqlUrl,
     apiUrl: EventsWikidataConfig.ApiUrl,
@@ -13,6 +16,7 @@ final case class EventsWikidataConfig(
     languages: EventsWikidataConfig.Languages,
     batch: EventsWikidataConfig.Batch
 ) derives ConfigReader:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def languageList: List[EventsWikidataConfig.Language] =
     languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList.map(EventsWikidataConfig.Language(_))
 

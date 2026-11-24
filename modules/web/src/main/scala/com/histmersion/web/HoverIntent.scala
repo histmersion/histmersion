@@ -4,11 +4,13 @@ package web
 import com.histmersion.web.map.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another `enter`, so sweeping
   * the pointer across twenty polygons fetches nothing and the one it rests on fetches once. `later`/`cancel` are
   * injectable so the timing is a unit test, like [[Throttle]].
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final class HoverIntent[K](
     delayMs: HoverIntent.DelayMs,
     fire: K => Unit,

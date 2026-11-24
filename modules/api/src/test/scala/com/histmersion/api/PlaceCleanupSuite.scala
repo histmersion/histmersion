@@ -7,8 +7,11 @@ import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.catalogue.{Latitude, Longitude, Place}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The point-only seed regions (2026-10-09): which points are only an atlas grid square's centre. */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+@tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
 class PlaceCleanupSuite extends munit.FunSuite:
 
   test("grid centres: 5°, 1° and ½° cells, both coordinates; nothing else"):

@@ -8,6 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.catalogue.Year
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The narrow (phone) layout's own controls. There the page is the map; everything else is shown on demand:
   *   - the app bar: ☰ filters, the search box, ⏱ the timeline, and the map & tools drawer;
@@ -42,12 +43,14 @@ object MobileChrome:
   val SwipeRatio = 1.5
 
   /** Is a gesture of (`dx`, `dy`) a horizontal swipe TOWARDS the middle from `edge` (so, opening)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def swipesIn(edge: Edge, dx: Double, dy: Double): Boolean =
     horizontal(dx, dy) && (edge match
       case Edge.Left  => dx > 0
       case Edge.Right => dx < 0)
 
   /** …and back out towards `edge` (so, closing the drawer that came from it)? */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def swipesOut(edge: Edge, dx: Double, dy: Double): Boolean =
     horizontal(dx, dy) && (edge match
       case Edge.Left  => dx < 0
@@ -62,6 +65,7 @@ object MobileChrome:
   /** Whether the timeline is unfolded when the page comes into `mode`: on a tablet, whose map keeps most of the screen
     * with it open; on a phone it waits for ⏱.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def timelineOpenIn(mode: Viewport.Mode): Boolean = mode == Viewport.Mode.Tablet
 
   // ── state ─────────────────────────────────────────────────────────────────────────────────────
@@ -72,8 +76,10 @@ object MobileChrome:
   /** Whether the timeline is unfolded under the bar. */
   val timelineOpen: Var[Boolean] = Var(false)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def open(d: Drawer): Unit = drawer.set(Some(d))
   def close(): Unit = drawer.set(None)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toggle(d: Drawer): Unit = drawer.update(cur => if cur.contains(d) then None else Some(d))
 
   /** Root classes for `.histmersion-app`: which drawer is open, whether the timeline is. */
@@ -85,6 +91,8 @@ object MobileChrome:
 
   // ── view ──────────────────────────────────────────────────────────────────────────────────────
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bar(config: UiConfig): HtmlElement =
     val hidden = UiState.signal.map(_ => hiddenFilterCount(UiState.activeChips()))
     div(
@@ -137,6 +145,8 @@ object MobileChrome:
   /** The span the map shows, short: `3500 BCE–500 BCE`. With the timeline folded, this is what says which time the map
     * is at.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def spanLabel(config: UiConfig): Signal[SpanLabel] =
     UiState.from.signal.combineWith(UiState.to.signal).map { (a, b) =>
       SpanLabel(
@@ -147,6 +157,8 @@ object MobileChrome:
     }
 
   /** A drawer's heading: its name and a close button. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drawerHead(name: Name): HtmlElement =
     div(
       cls := "drawer-head",
@@ -168,6 +180,7 @@ object MobileChrome:
     */
   def edges: List[HtmlElement] = List(edgeStrip(Edge.Left, Drawer.Filters), edgeStrip(Edge.Right, Drawer.MapTools))
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def edgeStrip(edge: Edge, d: Drawer): HtmlElement =
     // `var`: the primary pointer whose captured gesture began on this strip.
     var gesture = Option.empty[(Double, Double, Double)]

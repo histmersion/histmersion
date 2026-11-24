@@ -2,6 +2,7 @@ package com.histmersion
 package cli
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A corpus source as the audit sees it: the Calibre entry it names and what the corpus says. */
 final case class AuditRecord(
@@ -16,6 +17,7 @@ object AuditRecord:
   type Citekey = Citekey.T
   object Citekey extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CalibreId extends Newtype[Int, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]

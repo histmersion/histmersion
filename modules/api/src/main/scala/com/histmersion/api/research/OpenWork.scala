@@ -14,6 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import java.time.Instant
 import scala.util.Try
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 object OpenWork:
 
@@ -182,6 +183,7 @@ object OpenWork:
       case _: NoFreeCopy     => "buy or borrow"
       case NoIdentifier      => "no identifier"
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wording: String = this match
       case Unchecked(due)     => s"Not checked under the current providers yet; due ${due.shown}"
       case Converting(source) =>
@@ -256,6 +258,7 @@ object OpenWork:
       case t: Task        => t.creator.exists(_.kind == Creation.Unattributed)
       case _              => false
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String = this match
       case Decision(a, _) =>
         s"decision #${a.id}: ${a.kind}${a.subject.fold("")(s => s" ($s)")}, waiting since ${a.createdAt}"
@@ -273,9 +276,11 @@ object OpenWork:
 
     private def notRecorded: String = if creatorNotRecorded then " · creator not recorded" else ""
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def firstLine(text: Queue.QueueItem.Text): String = s"$text".linesIterator.nextOption().getOrElse("")
 
   final case class Totals(owner: Count, agents: Count) derives JsonCodec, KindlingsSchema, api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wording: String = s"$owner ${Who.Owner.wording} · $agents ${Who.Agents.wording}"
 
   object Totals:
@@ -354,6 +359,7 @@ object OpenWork:
       derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String = s"$fetcher ${said.wording}"
 
   enum Outcome derives CanEqual:
@@ -363,6 +369,7 @@ object OpenWork:
     case Failed(why: Vector[Problem])
     case OldCheck(note: Terms.LegacyNote, checks: Tries)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def wording: String = this match
       case Closed(citekey)   => s"closed: the corpus holds it as $citekey"
       case Fetched(source)   => s"a copy was fetched ($source)"
@@ -381,6 +388,7 @@ object OpenWork:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String =
       List(
         status.map(s => s"open access: $s"),
@@ -412,6 +420,7 @@ object OpenWork:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown: String =
       s"### Acquisition #$item: ${s"$text".linesIterator.nextOption().getOrElse("")}\n\n${verdict.wording}\n\n" +
         (if attempts.isEmpty then "_Not checked yet._" else attempts.map(_.markdown).mkString("\n"))

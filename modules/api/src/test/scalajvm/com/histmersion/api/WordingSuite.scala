@@ -24,10 +24,12 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.automation.AgentMode
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
   * wording fails here, not in front of a reader.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class WordingSuite extends munit.FunSuite:
 
   /** A label a person reads: sentence case, words, never the identifier it stands for. */

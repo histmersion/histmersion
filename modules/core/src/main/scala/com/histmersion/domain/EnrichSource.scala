@@ -22,11 +22,15 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.research.Slug
+import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The `enrich-source` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.2): what each
   * LLM step must return, how the body is cut into windows, how an answer is verified, and how the verified result
   * becomes ONE `SourcePatch`. The server runs the steps; every function here is pure and unit-tested.
   */
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
+@movesTo(FeaturePlace.LibraryWorkflows)
 object EnrichSource:
   type Century = Century.T
   object Century extends Newtype[Int, Pure]
@@ -40,6 +44,7 @@ object EnrichSource:
   object Last extends Newtype[Boolean, Pure]
   type MaxWindows = MaxWindows.T
   object MaxWindows extends Newtype[Int, Pure]
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MaxAbsYear = AgentVerify.MaxAbsYear
   val MaxAbsYear: AgentVerify.MaxAbsYear.type = AgentVerify.MaxAbsYear
   export AgentVerify.{MinRatio, SourceBody}
@@ -53,16 +58,22 @@ object EnrichSource:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
   type WindowChars = WindowChars.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object WindowChars extends Newtype[Int, Pure]
 
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckClassificationMaxAbsYear = MaxAbsYear
   val CheckClassificationMaxAbsYear: MaxAbsYear.type = MaxAbsYear
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type MentionsCenturyText = Text
   val MentionsCenturyText: Text.type = Text
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type StatesYearText = Text
   val StatesYearText: Text.type = Text
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CenturyAsYearText = Text
   val CenturyAsYearText: Text.type = Text
+  @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type CheckFindingsMaxAbsYear = MaxAbsYear
   val CheckFindingsMaxAbsYear: MaxAbsYear.type = MaxAbsYear
   type PatchNotes = PatchNotes.T
@@ -75,6 +86,8 @@ object EnrichSource:
   /** A year as the source states it. The model never converts; [[AgentVerify.toSignedYear]] does. */
   final case class StatedYear(value: ToSignedYearValue, unit: YearUnit.Wire) derives JsonCodec
   object StatedYear:
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[StatedYear] = KindlingsSchema
       .derived[StatedYear]
       .schema
@@ -83,6 +96,7 @@ object EnrichSource:
         _.description("BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)")
       )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None)
       derives JsonCodec,
         KindlingsSchema,
@@ -107,6 +121,8 @@ object EnrichSource:
     type StatusEvidence = StatusEvidence.T
     object StatusEvidence extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[Classification] = KindlingsSchema
       .derived[Classification]
       .schema
@@ -139,6 +155,8 @@ object EnrichSource:
     type PeriodName = PeriodName.T
     object PeriodName extends Newtype[String, Pure]
 
+    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
+    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
     given Schema[FindingProposal] = KindlingsSchema
       .derived[FindingProposal]
       .schema
@@ -152,11 +170,13 @@ object EnrichSource:
       )
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Findings(findings: List[FindingProposal] = Nil)
       derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Notes(notes: Notes.Value) derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Notes:
@@ -179,6 +199,7 @@ object EnrichSource:
   /** What `load` records: enough of the source for every later step, and its `updatedAt` for the final patch's
     * precondition.
     */
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class Loaded(
       citekey: Citekey,
       title: Loaded.Title,
@@ -391,6 +412,8 @@ object EnrichSource:
     * `maxWindows` of them spread evenly from the first to the last (a book's argument is not all in chapter one). Each
     * window remembers the heading it falls under.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def windows(body: SourceBody, windowChars: WindowChars, maxWindows: MaxWindows): List[Window] =
     val size = math.max(500, windowChars.value)
     val paras = body.value
@@ -425,6 +448,8 @@ object EnrichSource:
     }
 
   /** Turn a stated period into signed years, or say why not. A point (no end) is `start..start`. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def convert(p: StatedPeriod, maxAbsYear: MaxAbsYear, within: Option[Period]): Either[Problems, Period] =
     // a unit the model wrote that is none of the four, named back to it as it wrote it
     def unit(stated: YearUnit.Wire): Either[Problem, YearUnit] =
@@ -449,6 +474,8 @@ object EnrichSource:
     * it is `unassessed`. A period that cannot be converted (raw BP) is dropped, and missing evidence let through, with
     * a warning on the last attempt rather than failing the whole classification.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkClassification(
       c: Classification,
       maxAbsYear: CheckClassificationMaxAbsYear,
@@ -490,9 +517,12 @@ object EnrichSource:
     else Left(problems)
 
   /** Tags are lowercase_snake_case in this corpus (the `non-canonical-tag` lint rule). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normaliseTag(t: Tag): Tag =
     Tag(t.value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "_").replaceAll("^_+|_+$", ""))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def normalised(s: String): NormalisedText = normalise(AgentVerify.Text(s))
 
   /** The findings step's guards (#1424, config `agents.enrich.guards`) and the gazetteer they ask:
@@ -550,6 +580,8 @@ object EnrichSource:
   /** The centuries `text` mentions ("11th century", "15th c.", "eleventh and twelfth centuries"), as their ordinal
     * numbers; empty when it mentions no century.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def centuriesMentioned(text: Text): List[Century] =
     val words = OrdinalWord
       .findAllMatchIn(text.value)
@@ -562,10 +594,14 @@ object EnrichSource:
     (digits ++ words).filter(_ > 0).distinct.map(Century(_))
 
   /** Whether `text` mentions a century at all (an ordinal or just the word). */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mentionsCentury(text: MentionsCenturyText): Boolean =
     CenturyMention.findFirstIn(text.value).isDefined || OrdinalWord.findFirstIn(text.value).isDefined
 
   /** Whether `text` states `year` (its absolute value) as a year with its era: "79 CE", "AD 79", "79 B.C.". */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statesYear(text: StatesYearText, year: Year): Boolean =
     val n = math.abs(year.value).toString
     s"(?i)(?:\\b$Era\\s*$n(?!\\d)|(?<!\\d)$n\\s*$Era(?![A-Za-z]))".r.findFirstIn(text.value).isDefined
@@ -575,6 +611,8 @@ object EnrichSource:
     * `gap` years after it. A year the text states with its era ("79 CE") is valid. The problem names the century as
     * years, e.g. "'11th century' is the years 1001–1100 (BCE negative)".
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def centuryAsYear(
       start: Year,
       end: Year,
@@ -601,6 +639,8 @@ object EnrichSource:
     }
 
   /** The first of `phrases` (lowercase) the claim contains as whole words, if any. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointerPhrase(
       claim: FindingProposal.Claim,
       phrases: List[FindingGuards.PointerPhrases]
@@ -613,6 +653,7 @@ object EnrichSource:
   /** The placement guard: of the proposals that name a place, how many resolve; a problem when fewer than `minShare`
     * do, listing the names that did not.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placementProblem(
       named: List[(Problem.Count, FindingProposal.Place, Boolean)],
       minShare: FindingGuards.MinPlacedShare
@@ -641,6 +682,8 @@ object EnrichSource:
     * a warning: too few named places resolve in the gazetteer, a century stored as a year, and a claim that points at a
     * table ("this date", "the next column") instead of standing alone on the map.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkFindings(
       f: Findings,
       window: Window,
@@ -729,6 +772,8 @@ object EnrichSource:
       )
 
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkNotes(n: Notes, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): Either[List[Problem], Description] =
     val text = Option(n.notes.value).map(_.trim).getOrElse("")
     if text.isEmpty then Left(List(Content.Answer(Content.Requirement.NotesGiven)))
@@ -741,6 +786,8 @@ object EnrichSource:
     * person or an earlier run wrote it), topics/regions are merged, tags are added, findings are added. A status is set
     * only from `unassessed` to `current`/`foundational`; any other proposal goes to a person (returned, not applied).
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def patch(
       l: Loaded,
       c: Classified,
@@ -785,6 +832,9 @@ object EnrichSource:
     * year (the `year-citekey-mismatch` lint rule). Each difference is a sentence a person can act on; an empty list =
     * they agree. Nothing is written from here — a rename or a metadata fix stays a person's call.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def compareMetadata(
       citekey: Citekey,
       title: Title,
@@ -814,6 +864,8 @@ object EnrichSource:
   /** The lint rules `close` runs for this one source (`no-findings`, `no-period`, `unassessed-status`): each hit is a
     * run warning.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def closeLint(findings: FindingCount, hasPeriod: Loaded.HasPeriod, status: Source.Status): List[Description] =
     List(
       Option.when(findings.value == 0)(s"${Lint.NoFindings}: the source has no findings"),

@@ -14,12 +14,15 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.jobs.JobKinds
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's re-check as every surface shows it: an item's last check under it in `queue acquire`, the
   * status line (`agent autopilot status`, `about`) and a pass's report. Pure.
   */
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class AcquireChecksSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val item = Queue.QueueItem(
     Queue.QueueItem.Id(7),
     Queue.QueueItem.List("acquire"),
@@ -27,6 +30,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     Some(Queue.QueueItem.Topic("tin")),
     Queue.QueueItem.Status(Queue.Open)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val check = AcquireCheck(
     Queue.QueueItem.Id(7),
     Acquire.Checks.AcquireCheck.CheckedAt("2026-10-27T10:00:00Z"),

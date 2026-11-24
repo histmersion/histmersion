@@ -17,6 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.UiLabels
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,
   * topics, regions, tags, the period it is about, and the summary. Sent as ONE `PATCH` carrying only what changed, with
@@ -46,6 +47,7 @@ object SourceEditor:
   )
 
   object Draft:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(s: Source.Detail): Draft = Draft(
       title = s.title.value,
       authors = s.authors.map(_.value),
@@ -80,6 +82,8 @@ object SourceEditor:
     s"$what cannot be removed here, only changed — the patch leaves an omitted value alone"
 
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def year(raw: Years.Text): Either[Problem, Option[api.catalogue.Year]] =
     if raw.value.trim.isEmpty then Right(None)
     else Years.parse(raw).map(Some(_))
@@ -87,6 +91,8 @@ object SourceEditor:
   /** The patch that turns `orig` into `d`: only the changed parts, with `orig`'s `updatedAt` as the precondition —
     * `Right(None)` when nothing changed, `Left` with what is wrong, per field.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toPatch(
       orig: Source.Detail,
       d: Draft
@@ -165,6 +171,9 @@ object SourceEditor:
 
   // ── the component (one per open editor window) ──────────────────────────────────────────────────
 
+  @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(ck: Preview.Target.Source.Citekey): HtmlElement =
     val key = ck
     val orig = Var(Option.empty[Source.Detail])

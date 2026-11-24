@@ -5,8 +5,10 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A shape under the pointer: its set and its id. */
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id) derives CanEqual
 
 object ShapeHit:
