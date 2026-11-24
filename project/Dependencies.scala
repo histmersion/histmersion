@@ -57,7 +57,7 @@ object Dependencies {
     val FileName = "build-versions.properties"
 
     val entries: List[(String, String)] =
-      List("scala" -> V.scala, "scalafix" -> V.scalafix, "scalafixScala" -> V.scalafixScala)
+      List("scala" -> V.scala, "scalafix" -> V.scalafix, "scalafixScala" -> V.scalafixScala, "munit" -> V.munit)
 
     val text: String = entries.map { case (k, v) => s"$k=$v\n" }.mkString
 
