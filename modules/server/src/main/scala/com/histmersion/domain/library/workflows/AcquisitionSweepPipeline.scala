@@ -101,9 +101,10 @@ final class AcquisitionSweepPipeline(
               if found.stored.isEmpty then Right(0)
               else ctx.code[Int](StepRecord.Name("seen"))(Right(markSeen(ctx, found, picks)))
             backed = ctx.run.params.oaBacklog.exists(_.value) && ctx.run.managerId.isDefined
-            line <-
+            line <- ctx.byAnswer(StepRecord.Name("rank")) {
               if backed then withBacklog(ctx, goal, found, picks, allowed)
               else withoutBacklog(ctx, goal, found, picks, allowed)
+            }
           yield line
     yield PipelineDef.Summary(line)
 

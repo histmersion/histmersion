@@ -77,7 +77,9 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               check(slug, loaded, a, FilterInference.Last(last.value))
                 .map(Checked(_))
             )
-            recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(record(ctx, slug, inferred))
+            recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(
+              ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, slug, inferred))
+            )
             closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
               log(ctx, FilterInference.logLine(slug, FilterInference.Outcome(recorded.line.value), runId))
             )

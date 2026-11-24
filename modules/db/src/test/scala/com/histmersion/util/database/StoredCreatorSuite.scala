@@ -91,3 +91,15 @@ class StoredCreatorSuite extends munit.FunSuite:
       Some(Creation(Creation.Manual)),
       "a backfilled person's record: the surface unknown"
     )
+
+  test("the run's write shows a model agent with its one definition, or none, and never a provider or model"):
+    def run(definition: Option[Creator.Definition.Name]) =
+      Creator.New.Automated(
+        Creator.Plugin.Name("library"),
+        Creator.Workflow.Name("enrich-source"),
+        Creator.Agent.RunModels(definition),
+        Creator.Surface.Internal
+      )
+    val one = shown(run(Some(Creator.Definition.Name("enrich-notes"))).stored).flatMap(_.agent)
+    assertEquals(one, Some(Creation.Agent(Creation.ByModel, Some(Creation.Definition("enrich-notes")))))
+    assertEquals(shown(run(None).stored).flatMap(_.agent), Some(Creation.Agent(Creation.ByModel)))

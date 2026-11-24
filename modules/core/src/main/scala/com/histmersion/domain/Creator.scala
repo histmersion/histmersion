@@ -25,6 +25,7 @@ object Creator:
 
   enum Agent derives CanEqual:
     case Model(definition: Definition.Name, provider: Provider.Name, model: LanguageModel.Name)
+    case RunModels(definition: Option[Definition.Name])
     case Code
 
   enum Facts derives CanEqual:

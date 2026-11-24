@@ -83,7 +83,9 @@ final class ProposeArticlesPipeline(
         Prompt.UserText(input(ctx, loaded)),
         ResearchAnswers.articles
       )((a, last) => check(ctx, loaded, a, last.value).map(Checked(_, Nil)))
-      recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(record(ctx, goal, plan))
+      recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(
+        ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, goal, plan))
+      )
       closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
         log(ctx, PlanArticles.logLine(goal, plan, PlanArticles.Outcome(recorded.line.value), runId))
       )

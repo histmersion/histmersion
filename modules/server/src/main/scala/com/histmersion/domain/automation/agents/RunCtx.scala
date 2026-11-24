@@ -42,7 +42,16 @@ final class RunCtx private[automation] (
 ):
   private val ds = engine.ds
 
-  def creator: Creator.New = workflow.creator(Creator.Agent.Code)
+  def creator: Creator.New = workflow.creator(workflow.runAgent)
+
+  private val answers = ConcurrentHashMap[AgentRepo.StepRecord.Name, Creator.New]()
+
+  def answered(step: AgentRepo.StepRecord.Name): Creator.New = Option(answers.get(step)).getOrElse(creator)
+
+  def byAnswer[A](step: AgentRepo.StepRecord.Name)(body: Creator.New ?=> A): A = body(using answered(step))
+
+  private[agents] def stepCreator(agent: AgentDef, model: ModelRef): Creator.New =
+    RunCtx.modelAgent(agent.name, model).fold(creator)(workflow.creator)
 
   /** The approvals a run's steps open and wait on (and a pipeline records). */
   def approvalStore: ApprovalService = engine.agents.approvalStore
@@ -645,6 +654,7 @@ final class RunCtx private[automation] (
                         served
                       )
                       ws.foreach(w => warn(s"$name: $w"))
+                      val _ = answers.put(name, stepCreator(agent, client.model))
                       Right(o)
                     case Left(ps) =>
                       // the rejected answer is kept on the failed attempt (never a checkpoint: only a
@@ -736,5 +746,12 @@ final class RunCtx private[automation] (
 
 object RunCtx:
   export LlmCall.MaxTokens
+
+  def modelAgent(definition: AgentDef.Name, model: ModelRef): Option[Creator.Agent] =
+    for
+      d <- Creator.Definition.Name.from(definition).toOption
+      p <- Creator.Provider.Name.from(model.provider.wire).toOption
+      m <- Creator.LanguageModel.Name.from(model.model).toOption
+    yield Creator.Agent.Model(d, p, m)
   type LastAttempt = LastAttempt.T
   object LastAttempt extends Newtype[Boolean, Pure]
