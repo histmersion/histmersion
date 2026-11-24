@@ -102,6 +102,7 @@ class StructuredLogDbSuite extends DbSuite:
     val agent = Job.Kind("agent")
     connect(ds) {
       sql"DELETE FROM log_counts".update.run(): Unit
+      sql"DELETE FROM jobs WHERE id = '0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99'".update.run(): Unit
       sql"""INSERT INTO jobs (id, kind, status, creator) VALUES ('0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99', 'agent', 'running', jsonb_build_object('kind', 'unknown'))""".update
         .run(): Unit
     }
@@ -144,9 +145,12 @@ class StructuredLogDbSuite extends DbSuite:
     "a write statement is recorded once with the connection's trace and label; the writer moves it to table and file"
   ):
     val _ = migrated
+    Transactor(ds).write {
+      sql"DELETE FROM jobs WHERE id LIKE 'log-suite-%'".update.run(): Unit
+      sql"DELETE FROM log_writes".update.run(): Unit
+    }
     val dir = tempDir()
     val writer = LogWriter(() => settings(dir), files(dir), Transactor(ds), WritePermit.Gate(), Clock.systemUTC())
-    writer.flush()
     val trace = writer.mintTrace()
     val traced = TracedDataSource(ds)
     val scope = TraceScope(trace, Some(LogEvent.Label("suite-label")), LogEvent.Actor.Client, writer)
