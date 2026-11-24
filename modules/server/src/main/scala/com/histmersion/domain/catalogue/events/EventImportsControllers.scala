@@ -23,6 +23,7 @@ import com.histmersion.api.catalogue.Correction
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.domain.Creator
 
 /** The event catalogues' operations as REST, MCP and the CLI reach them: the catalogues, an import (a job, dry run or
   * not), a re-derivation of the stored records' dating (a job), and the corrections by hand. `page` is the page size a
@@ -39,7 +40,7 @@ final class EventImportsControllers(
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 
-  def importJob(caller: Caller, req: EventImportRequest): Either[Api.Error, JobInfo] =
+  def importJob(caller: Caller, req: EventImportRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     for
       provider <- imports
         .resolve(CatalogRecord.Provider(req.provider.value))
@@ -75,7 +76,7 @@ final class EventImportsControllers(
       }
     yield job
 
-  def rederiveJob(caller: Caller, req: EventRederiveRequest): Either[Api.Error, JobInfo] =
+  def rederiveJob(caller: Caller, req: EventRederiveRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     for
       provider <- req.provider.map(_.value.trim).filter(_.nonEmpty) match
         // no network: a built-in catalogue switched off since still has its records to re-derive

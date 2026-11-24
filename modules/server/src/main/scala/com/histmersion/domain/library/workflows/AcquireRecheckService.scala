@@ -40,6 +40,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.github.iltotore.iron.constraint.any.Pure
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every
@@ -195,7 +196,7 @@ final class AcquireRecheckService(
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** From the managers' tick: a pass when on, not draining, and `pass-minutes` passed since the last. */
-  def tick(now: Instant)(using WritePermit): List[Line] =
+  def tick(now: Instant)(using WritePermit)(using Creator.New): List[Line] =
     val s = settings
     if jobSlot.isRunning || agents.drain.draining then Nil
     else
@@ -223,7 +224,7 @@ final class AcquireRecheckService(
     */
   def run(in: RecheckRequest, now: Instant = Instant.now(agents.clock))(using
       WritePermit
-  ): Either[Api.Error, RecheckResult] =
+  )(using Creator.New): Either[Api.Error, RecheckResult] =
     in.id.filter(id =>
       !site.queues
         .get(QueueItemId(id.value))
@@ -282,7 +283,9 @@ final class AcquireRecheckService(
   /** A pass by hand, not a dry run, not one item: a job over every item (`all`, resuming the `all` job that was
     * stopped) or over the due ones the caps allow — or, when that is at most one, the pass at once.
     */
-  private def byHand(in: RecheckRequest, now: Instant)(using WritePermit): Either[Api.Error, RecheckResult] =
+  private def byHand(in: RecheckRequest, now: Instant)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, RecheckResult] =
     val by = By(in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
     val fs = facts(None)
     val base = RecheckResult(
@@ -364,7 +367,7 @@ final class AcquireRecheckService(
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
     */
-  private def resumeStopped()(using WritePermit): Option[Line] =
+  private def resumeStopped()(using WritePermit)(using Creator.New): Option[Line] =
     latestJob().filter(resumable).flatMap { j =>
       j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
         startJob(plan, By(d.by.value), Some(jobIdOf(j))) match
@@ -378,7 +381,9 @@ final class AcquireRecheckService(
 
   /** Start `plan` as a `jobs` row (`histmersion jobs <id>` follows it); `resumes` = the stopped job it takes up.
     */
-  private def startJob(plan: JobPlan, by: By, resumes: Option[Job.Id])(using WritePermit): Either[Api.Error, JobInfo] =
+  private def startJob(plan: JobPlan, by: By, resumes: Option[Job.Id])(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(
       RecheckJob.All(plan.all.value),
       RecheckJob.UpTo(plan.upTo.value.toLong),

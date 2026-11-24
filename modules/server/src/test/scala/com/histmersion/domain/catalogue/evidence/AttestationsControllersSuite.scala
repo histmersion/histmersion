@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.catalogue.evidence.passages.Passage
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The attestations' controllers over the in-memory service, no server and no database: an old citekey and an old place
   * id resolved before they are stored, an unknown target kind and a missing source refused, a finding id kept as given,

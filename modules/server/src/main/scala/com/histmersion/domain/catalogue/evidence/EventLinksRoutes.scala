@@ -8,12 +8,14 @@ import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.Event
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.Creator
 
 /** The event links' endpoints bound to their controllers, in their old order: matched before `events/{id}`, which would
   * read `events/leads` as an event id.
   */
 object EventLinksRoutes:
   def apply(links: EventLinksControllers): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     // an id that is no event id names no event
     def eventId(id: com.histmersion.api.catalogue.Event.Id) =

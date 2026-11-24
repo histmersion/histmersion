@@ -30,6 +30,8 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.CodexRetention
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up
@@ -156,7 +158,7 @@ object ManagerRepo:
       config: ManagerConfig,
       cron: Option[ManagerRow.Cron] = None,
       nextTick: Option[java.time.Instant] = None
-  )(using DbCon): Boolean =
+  )(using DbCon)(using Creator.New): Boolean =
     createIn(id, kind, goal, state, config, cron, nextTick)
 
   def createIn(
@@ -167,10 +169,11 @@ object ManagerRepo:
       config: ManagerConfig,
       cron: Option[ManagerRow.Cron],
       nextTick: Option[java.time.Instant]
-  )(using DbCon): Boolean =
+  )(using DbCon)(using creator: Creator.New): Boolean =
     val next = nextTick.map(_.toString)
-    sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config, cron, next_tick_at)
-          VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb, $cron, $next::timestamptz)
+    sql"""INSERT INTO agent_managers (id, kind, goal_slug, state, config, cron, next_tick_at, creator)
+          VALUES ($id, ${kind.wire}, $goal, ${state.wire}, $config::jsonb, $cron, $next::timestamptz, ${StoredCreator
+        .column(creator)}::jsonb)
           ON CONFLICT (id) DO NOTHING""".update.run() > 0
 
   /** When its cron fires next (None: not scheduled). */
@@ -1037,10 +1040,12 @@ object ManagerRepo:
       effect: Option[HintEffect],
       author: HintRow.Author,
       standing: HintRow.Standing
-  )(using DbCon): ManagerHint =
+  )(using DbCon)(using creator: Creator.New): ManagerHint =
     val id =
-      sql"""INSERT INTO manager_hints (manager_id, item_id, text, effect, author, standing)
-            VALUES ($managerId, $itemId, $text, $effect::jsonb, $author, $standing) RETURNING id"""
+      sql"""INSERT INTO manager_hints (manager_id, item_id, text, effect, author, standing, creator)
+            VALUES ($managerId, $itemId, $text, $effect::jsonb, $author, $standing, ${StoredCreator.column(
+          creator
+        )}::jsonb) RETURNING id"""
         .query[HintRow.Id]
         .run()
         .head

@@ -25,6 +25,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.
@@ -62,7 +63,7 @@ private[workflows] trait GoalSweep:
       doi: Doi,
       text: Queue.QueueItem.Text,
       queued: Map[Doi, Queue.QueueItem.Id]
-  )(using WritePermit): Either[String, Boolean] =
+  )(using WritePermit)(using Creator.New): Either[String, Boolean] =
     queued.get(doi).orElse(site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(

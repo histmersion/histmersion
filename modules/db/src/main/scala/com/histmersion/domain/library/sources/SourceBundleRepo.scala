@@ -40,6 +40,8 @@ import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
@@ -186,7 +188,7 @@ private[sources] object SourceBundleRepo:
   private def bodiesChanged(w: BundleImport.Writer): scala.collection.mutable.LinkedHashSet[UUID] =
     w.once(changedBodies)
 
-  def sourcesIn(w: BundleImport.Writer, referrers: SourceReferrers): Unit =
+  def sourcesIn(w: BundleImport.Writer, referrers: SourceReferrers)(using Creator.New): Unit =
     given DbCon = w.transaction
     // `rename-left`: a source here gives its citekey up first, to the bundle's work that has it; the
     // old citekey does not stay an alias (it is the other work's now)
@@ -224,13 +226,15 @@ private[sources] object SourceBundleRepo:
         bodiesChanged(w) ++= s.bodySha256.map(_ => s.uid)
         sql"""INSERT INTO sources (uid, origin, citekey, title, authors, doi, year, venue, status, topics,
                 regions, tags, period, summary, notes, source, cited_by_count, influential_citations,
-                added_date, sha256, updated_at)
+                added_date, sha256, updated_at, creator)
               VALUES (${s.uid}, ${s.origin}, ${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.doi},
                 ${s.year}, ${s.venue}, ${s.status.wire}, ${s.topics}::text[], ${s.regions}::text[],
                 ${s.tags}::text[],
                 ${rangeLiteral(s.period)}::int8range,
                 ${s.summary}, ${s.notes}, ${s.provenance}, ${s.citedByCount}, ${s.influentialCitations},
-                ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz)""".update.run()
+                ${s.addedDate}::date, ${s.originalSha256}, ${s.updatedAt}::timestamptz, ${StoredCreator.write(
+            Creator.unrecorded
+          )}::jsonb)""".update.run()
       else
         val before = w.local.sources.find(_.uid == s.uid)
         if before.flatMap(_.bodySha256) != s.bodySha256 then
@@ -280,7 +284,8 @@ private[sources] object SourceBundleRepo:
       w.citekeyHere(e.dstUid).foreach { dst =>
         val src = w.citekeyOf(e.srcUid)
         Unused(
-          sql"INSERT INTO edges (src, dst, kind) VALUES ($src, $dst, ${e.kind}) ON CONFLICT DO NOTHING".update.run(),
+          sql"INSERT INTO edges (src, dst, kind, creator) VALUES ($src, $dst, ${e.kind}, ${StoredCreator.write(Creator.unrecorded)}::jsonb) ON CONFLICT DO NOTHING".update
+            .run(),
           Unused.Why.Idempotent
         )
       }
@@ -288,6 +293,7 @@ private[sources] object SourceBundleRepo:
 
   def unresolvedEdgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
+    given Creator.New = Creator.New.FromBundle
     w.es.unresolvedEdges.filter(e => w.writes(e.srcUid)).foreach { e =>
       Edge.Kind.fromWire(e.kind).foreach { k =>
         Unused(
@@ -315,12 +321,13 @@ private[sources] object SourceBundleRepo:
       val ck = w.citekeyOf(f.sourceUid)
       val confidence: Option[String] = f.confidence.map(_.wire.value)
       sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,
-              tags, confidence, significance, updated_at)
+              tags, confidence, significance, updated_at, creator)
             VALUES (${f.uid}, ${f.origin}, ${f.id}, $ck, ${f.claim}, ${f.region},
               CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
                    ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
               ${rangeLiteral(f.period)}::int8range,
-              ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz)
+              ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz, ${StoredCreator
+          .write(Creator.unrecorded)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
               geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,
@@ -333,9 +340,9 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     w.es.assessments.foreach { a =>
       Unused(
-        sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
+        sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict, creator)
             SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.print(a.notices)}::jsonb,
-                   ${a.citedBy}, ${a.influential}, ${a.verdict}
+                   ${a.citedBy}, ${a.influential}, ${a.verdict}, ${StoredCreator.write(Creator.unrecorded)}::jsonb
             FROM sources WHERE uid = ${a.sourceUid}
             ON CONFLICT (citekey) DO UPDATE SET checked_at = EXCLUDED.checked_at,
               retracted = EXCLUDED.retracted, notices = EXCLUDED.notices, cited_by = EXCLUDED.cited_by,

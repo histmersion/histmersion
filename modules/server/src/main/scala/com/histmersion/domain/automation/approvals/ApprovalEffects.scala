@@ -5,6 +5,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** What approving a proposal does, contributed by the domain the proposal is about: a source's status or edge (the
   * library), an article's coverage filter (research). The engine claims the decision and records the outcome; the
@@ -20,7 +21,7 @@ trait ApprovalEffects:
   def subjectKinds: Set[Approval.Kind]
 
   /** Apply an approved proposal of one of [[subjectKinds]]: what it did, or why it failed. */
-  def applySubject(a: ApprovalInfo): Either[Problem, String]
+  def applySubject(a: ApprovalInfo)(using Creator.New): Either[Problem, String]
 
 object ApprovalEffects:
   type Payload = Payload.T
@@ -31,7 +32,7 @@ object ApprovalEffects:
   def of(proposals: ProposalEffect, subjects: List[SubjectEffect]): ApprovalEffects = new ApprovalEffects:
     def proposal(payload: Payload): Option[() => Either[Problems, String]] = proposals.proposal(payload)
     val subjectKinds: Set[Approval.Kind] = subjects.map(_.kind).toSet
-    def applySubject(a: ApprovalInfo): Either[Problem, String] =
+    def applySubject(a: ApprovalInfo)(using Creator.New): Either[Problem, String] =
       subjects.find(s => Approval.Kind.parse(Approval.Kind.Wire(a.kind.value)).contains(s.kind)) match
         case Some(s) => s.apply(a)
         case None    =>

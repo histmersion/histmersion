@@ -13,6 +13,8 @@ import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.data.mirror.Mirror
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
+import com.histmersion.domain.Creator
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 
 /** What the library says about the data it owns: its tables, the originals, the spool and the corpus folder it keeps
   * files in, the sources a restore must not drop unasked, what a bundle carries of it and how a merge treats it, the
@@ -46,7 +48,7 @@ final class LibraryData(referrers: SourceReferrers) extends DataContribution:
     BackupShare(guarded = List(GuardedTable(TableName("sources"), GuardedTable.Noun("source"))))
 
   /** The sources and what they own. */
-  override val carried: List[CarriedKind] = LibraryExchange.carried(referrers)
+  override val carried: List[CarriedKind] = LibraryExchange.carried(referrers)(using Creator.New.FromBundle)
 
   /** How a merge treats sources and findings. */
   override val mergeRules: List[MergeRules] = LibraryExchange.mergeRules
@@ -62,7 +64,7 @@ final class LibraryData(referrers: SourceReferrers) extends DataContribution:
 
   override val maintenance: List[MaintenanceTask] = List(SourcesData.reindex(owner))
 
-  override val checks: List[CheckRule] = SourcesData.checks(owner)
+  override val checks: List[CheckRule] = SourcesData.checks(owner)(using InTreeWorkflow.CheckFix.creator)
 
   def figures(using DbCon): DataFigures = DataFigures(SourcesData.figures)
 

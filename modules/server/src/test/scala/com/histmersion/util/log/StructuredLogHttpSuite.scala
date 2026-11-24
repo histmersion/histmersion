@@ -17,6 +17,7 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.util.database.TestCreators.given
 
 class StructuredLogHttpSuite extends DbSuite:
   private val testDb = TestDb.url

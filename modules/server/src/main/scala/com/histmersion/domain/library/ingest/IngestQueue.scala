@@ -48,6 +48,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent
@@ -75,7 +76,7 @@ final class IngestQueue(
     ds: () => DataSource,
     pins: Pinning,
     /** Asked on the job's thread, under the job's unit permit. */
-    afterStore: Citekey => WritePermit ?=> Option[IngestQueue.Note]
+    afterStore: Citekey => (WritePermit, Creator.New) ?=> Option[IngestQueue.Note]
 ) extends Quiescent:
 
   /** Everything a queued job needs that is not in its row. Concurrent because the HTTP thread writes it and a worker
@@ -96,7 +97,7 @@ final class IngestQueue(
   /** After a restore: the uploads held for queued jobs are dropped with them, and every unfinished job of the restored
     * database is failed as cut short by the restore.
     */
-  def restored()(using WritePermit): Unit =
+  def restored()(using WritePermit)(using Creator.New): Unit =
     pending.clear()
     val n = pool.restored(Problem.Run.Restored)
     if n != RowCount(0) then scribe.info(s"restore: $n unfinished job(s) of the restored database marked failed")
@@ -117,10 +118,10 @@ final class IngestQueue(
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
   def enqueue(kind: Job.Kind, citekey: Citekey, sha: Sha256, file: Store.Key, params: Ingest.Params)(using
       WritePermit
-  ): Ingest.Accepted =
+  )(using creator: Creator.New): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem.map(i => JobRow.AcquireItem(i.value)))
     val jobId = Job.Id.assume(job.id.value)
-    val _ = pending.put(jobId, IngestPending(params, citekey, file, sha, kind))
+    val _ = pending.put(jobId, IngestPending(params, citekey, file, sha, creator, kind))
     pool.submit(jobId)
     Ingest.Accepted(
       job.id,
@@ -197,6 +198,7 @@ final class IngestQueue(
           )
         )
       case Some(job) =>
+        given Creator.New = job.creator
         jobs.transition(id, JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))) match
           case None    => () // someone else claimed it, or it was cancelled — leave the row alone
           case Some(_) =>
@@ -258,7 +260,7 @@ final class IngestQueue(
       )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
-  private def afterStoreSafely(citekey: Citekey)(using WritePermit): List[String] =
+  private def afterStoreSafely(citekey: Citekey)(using WritePermit, Creator.New): List[String] =
     try afterStore(citekey).toList.map(_.value)
     catch
       case e: InterruptedException => throw e
@@ -274,7 +276,7 @@ final class IngestQueue(
       jobId: Job.Id,
       job: IngestPending,
       doc: ConvertedDoc
-  ): Either[String, AssetService.ReplacedFigureCount] =
+  )(using Creator.New): Either[String, AssetService.ReplacedFigureCount] =
     maintenance.permits
       .permit(storeNow(jobId, job, doc))
       .fold(
@@ -289,7 +291,7 @@ final class IngestQueue(
       jobId: Job.Id,
       job: IngestPending,
       doc: ConvertedDoc
-  )(using WritePermit): Either[String, AssetService.ReplacedFigureCount] =
+  )(using WritePermit)(using Creator.New): Either[String, AssetService.ReplacedFigureCount] =
     val citekey = job.citekey
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = Source.OcrMarkdown(doc.markdown.value.filterNot(_.toInt == 0))

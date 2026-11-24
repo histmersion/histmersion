@@ -5,13 +5,14 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.Api
 import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.domain.Creator
 
 /** `POST /api/jobs/{id}/{action}`, the `job_control` tool and `histmersion jobs pause|resume|cancel`: a write, under
   * the maintenance gate.
   */
 final class JobControlControllers(jobs: JobControlService, maintenance: WriteGate):
 
-  def control(id: Job.Id, action: JobAction.Wire): Either[Api.Error, JobInfo] =
+  def control(id: Job.Id, action: JobAction.Wire)(using Creator.New): Either[Api.Error, JobInfo] =
     JobAction
       .parse(action)
       .toRight(

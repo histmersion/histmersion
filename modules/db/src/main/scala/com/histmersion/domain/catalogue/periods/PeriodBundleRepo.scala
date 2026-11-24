@@ -14,6 +14,8 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.
@@ -78,9 +80,11 @@ private[periods] object PeriodBundleRepo:
     val periods = w.es.periods.filter(p => w.writes(p.uid))
     periods.foreach { p =>
       val range = rangeOrAll(p.period)
-      sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at)
+      sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at, creator)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
-              $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz)
+              $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz, ${StoredCreator.write(
+          Creator.unrecorded
+        )}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
               dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

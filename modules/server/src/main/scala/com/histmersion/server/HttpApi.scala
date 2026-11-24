@@ -95,6 +95,8 @@ final class HttpApi(
 ):
   import HttpApi.Endpoint
 
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
+
   private val rest: List[ServerEndpoint[Any, Identity]] = List(
     Api.version.serverLogicSuccess[Identity](_ => h.instance.version),
     Api.health.serverLogicSuccess[Identity](_ => h.instance.health),

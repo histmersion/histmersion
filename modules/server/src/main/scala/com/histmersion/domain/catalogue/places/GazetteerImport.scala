@@ -8,6 +8,7 @@ import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 private[places] object GazetteerImport:
   def session(
@@ -30,7 +31,7 @@ private[places] object GazetteerImport:
     private def write[A](work: DbCon ?=> A)(using WritePermit): A =
       if apply then transactions.write(work) else transactions.rollback(work)
 
-    def batch(records: List[GazRecord])(using WritePermit): Gazetteer.LoadCounts =
+    def batch(records: List[GazRecord])(using WritePermit)(using Creator.New): Gazetteer.LoadCounts =
       @tailrec def dedupe(
           rest: List[GazRecord],
           ok: Vector[GazRecord],

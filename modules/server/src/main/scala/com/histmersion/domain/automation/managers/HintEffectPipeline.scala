@@ -39,6 +39,7 @@ import com.histmersion.api.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as
@@ -58,7 +59,7 @@ final class HintEffectPipeline(
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
-  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val mid = ManagerInfo.Id(ctx.run.target.value)
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(
@@ -141,7 +142,9 @@ final class HintEffectPipeline(
   /** The proposal, through the write gate: an open `hint-effect` approval about the manager (and the manager's event).
     * Nothing passed or asked for: nothing is recorded.
     */
-  private def record(ctx: RunCtx, l: Loaded, p: Proposed)(using WritePermit): Either[Problems, String] =
+  private def record(ctx: RunCtx, l: Loaded, p: Proposed)(using
+      WritePermit
+  )(using Creator.New): Either[Problems, String] =
     p.effect match
       case None =>
         Right(if p.problems.isEmpty then "the hint asks for no structured action"

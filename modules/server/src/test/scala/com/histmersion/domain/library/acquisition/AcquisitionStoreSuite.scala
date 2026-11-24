@@ -14,6 +14,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** A contract of the acquisition's services, run once in memory and once on the database (a scratch database per test,
   * gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone.

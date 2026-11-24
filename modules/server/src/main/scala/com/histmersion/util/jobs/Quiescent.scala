@@ -3,6 +3,7 @@ package util.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** A long-running worker of the server (a pool, a loop, a background job's thread) as a restore holds it. A restore
   * replaces the whole database, so every worker registers with the server's [[Workers]]: the restore asks each to
@@ -26,7 +27,7 @@ trait Quiescent:
   /** After a restore, on the restore's own thread (the only one the database answers then): drop what this worker holds
     * in memory about rows the restore replaced, and take up the restored ones as a start does.
     */
-  def restored()(using WritePermit): Unit
+  def restored()(using WritePermit)(using Creator.New): Unit
 
   /** Take work again. */
   def resume(): Unit

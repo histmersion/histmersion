@@ -15,6 +15,7 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The `auth` settings read into a policy, and the start-up rule: a server one of whose bind addresses can be reached
   * from a network its settings leave open does not start, nor one whose HTTPS public URL sits in front of a trusted

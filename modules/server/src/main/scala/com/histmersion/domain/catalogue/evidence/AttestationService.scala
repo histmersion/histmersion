@@ -14,6 +14,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** What attests a data point: an attestation names a source, a target (a finding, an event, an event's dating, a place,
   * an edge) and where in the source it is said (quote, offsets, page, IIIF region, CTS URN).
@@ -31,7 +32,7 @@ trait AttestationService:
   def get(id: Attestation.Id): Option[Attestation]
 
   /** A new attestation, with its id; the citekey and target are stored as given (checked by the caller). */
-  def create(in: Attestation.Put)(using WritePermit): Attestation
+  def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation
 
   /** Change the fields `p` names; the others stay. */
   def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation]
@@ -63,7 +64,8 @@ object AttestationService:
     )
     def get(id: Attestation.Id): Option[Attestation] =
       db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
-    def create(in: Attestation.Put)(using WritePermit): Attestation = db.write(AttestationRepo.create(in))
+    def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation =
+      db.write(AttestationRepo.create(in))
     def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation] =
       db.write:
         if !AttestationRepo.exists(AttestationRepo.AttestationId(id.value)) then Left(missing(id))
@@ -96,7 +98,7 @@ object AttestationService:
 
     def get(id: Attestation.Id): Option[Attestation] = state.get.attestations.find(_.id == id)
 
-    def create(in: Attestation.Put)(using WritePermit): Attestation =
+    def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation =
       val after = state.updateAndGet { s =>
         val id = s.lastAttestationId.value + 1
         val a = Attestation(

@@ -10,6 +10,7 @@ import com.histmersion.domain.library.search.{FilterSql, Search, SearchControlle
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.Creator
 
 /** The library's endpoints bound to its features' controllers, in the order route matching needs (`sources/{ck}/lint`
   * and `…/view` before `sources/{ck}`, `sources/{ck}/export` before the write paths). The endpoints of other owners
@@ -30,6 +31,7 @@ object LibraryRoutes:
       exportSource: ServerEndpoint[Any, Identity],
       reindex: ServerEndpoint[Any, Identity]
   ): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     def citekey(ck: ApiCitekey): Either[Api.Error, Citekey] =
       sources.parseCitekey(ck)
     def citekeyOpt(ck: Option[ApiCitekey]): Either[Api.Error, Option[Citekey]] =

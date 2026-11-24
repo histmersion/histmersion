@@ -30,6 +30,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -56,7 +57,7 @@ final class EnrichSourcePipeline(
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 
-  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     for
       ck <- Citekey.parse(ctx.run.target.value).left.map(Halt.Fail(_))
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
@@ -239,7 +240,7 @@ final class EnrichSourcePipeline(
       c: Classified,
       fs: List[Finding.Input],
       notes: String
-  ): Either[Problems, Patched] =
+  )(using Creator.New): Either[Problems, Patched] =
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty).map(PatchNotes(_)))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
@@ -304,7 +305,7 @@ final class EnrichSourcePipeline(
   /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a warning, never a
     * failed run — the enrichment is already written).
     */
-  private def refs(ctx: RunCtx, l: Loaded)(using WritePermit): Upstreamed =
+  private def refs(ctx: RunCtx, l: Loaded)(using WritePermit)(using Creator.New): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
       case None      =>
@@ -324,7 +325,7 @@ final class EnrichSourcePipeline(
             )
 
   /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
-  private def assess(ctx: RunCtx, l: Loaded)(using WritePermit): Upstreamed =
+  private def assess(ctx: RunCtx, l: Loaded)(using WritePermit)(using Creator.New): Upstreamed =
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
       case None      =>
@@ -346,7 +347,7 @@ final class EnrichSourcePipeline(
     */
   private def status(ctx: RunCtx, ck: Citekey, c: Classified, p: Patched, a: Upstreamed)(using
       WritePermit
-  ): StatusRouted =
+  )(using Creator.New): StatusRouted =
     if p.fieldsSet.contains(Patched.FieldsSet("status")) then
       StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
     else if c.status == ApiSource.Status.Unassessed then

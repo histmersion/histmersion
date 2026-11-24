@@ -14,6 +14,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.library.Citekey
+import com.histmersion.domain.Creator
 
 /** The attestations for agents: list or show, create, delete. */
 object AttestationsTools:
@@ -78,6 +79,7 @@ object AttestationsTools:
       .modify(_.id)(_.description("Id of the attestation to delete"))
 
   def apply(attestations: AttestationsControllers) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val listTool =
       tool("attestations")
         .description(

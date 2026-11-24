@@ -16,6 +16,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The synchronous, metadata-only half of an acquisition.
   *
@@ -35,7 +36,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       copy: Option[FetchedCopy],
       citekey: Citekey,
       meta: IngestMeta
-  )(using WritePermit): Either[Problems, IngestOutcome] =
+  )(using WritePermit)(using Creator.New): Either[Problems, IngestOutcome] =
     val exists = sources.exists(citekey)
     val result =
       if exists then patchExisting(citekey, meta)
@@ -54,7 +55,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
     }
 
-  private def create(citekey: Citekey, meta: IngestMeta)(using WritePermit): Either[Problems, Unit] =
+  private def create(citekey: Citekey, meta: IngestMeta)(using WritePermit)(using Creator.New): Either[Problems, Unit] =
     Source.Write
       .applyPut(
         apiKey(citekey),
@@ -75,7 +76,9 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
         val _ = sources.put(s, Caller.Local)
       }
 
-  private def patchExisting(citekey: Citekey, meta: IngestMeta)(using WritePermit): Either[Problems, Unit] =
+  private def patchExisting(citekey: Citekey, meta: IngestMeta)(using
+      WritePermit
+  )(using Creator.New): Either[Problems, Unit] =
     sources
       .patch(
         citekey,

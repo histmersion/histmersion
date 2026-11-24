@@ -49,6 +49,7 @@ import com.histmersion.domain.automation.ScheduleKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The ONE implementation of the process-manager operations (docs/research-process-managers.md §5): REST
   * ([[AgentsRoutes]]), the MCP tool `manager` ([[AgentsTools]]) and the CLI (over REST) call these. Reading and
@@ -158,9 +159,12 @@ final class ManagersControllers(
   def create(
       in: ManagerCreate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
-  ): Either[Api.Error, ManagerInfo] = held(WriteGate.OperationName("create_manager"))(createHeld(in, now))
+  )(using Creator.New): Either[Api.Error, ManagerInfo] =
+    held(WriteGate.OperationName("create_manager"))(createHeld(in, now))
 
-  private def createHeld(in: ManagerCreate, now: java.time.Instant)(using WritePermit): Either[Api.Error, ManagerInfo] =
+  private def createHeld(in: ManagerCreate, now: java.time.Instant)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, ManagerInfo] =
     // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
     val state =
       if in.paused.exists(!_.value) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
@@ -170,7 +174,7 @@ final class ManagersControllers(
         id: ManagerLight.Id,
         g: Option[DomainGoal.Slug],
         cron: Option[ManagerLight.Cron] = None
-    ): Either[Api.Error, ManagerInfo] =
+    )(using Creator.New): Either[Api.Error, ManagerInfo] =
       for
         _ <- validate(k, in.config)
         c <- cron
@@ -281,7 +285,7 @@ final class ManagersControllers(
   def createArea(
       in: Goal.AreaCreate,
       now: java.time.Instant = java.time.Instant.now(agents.clock)
-  )(using WritePermit): Either[Api.Error, Goal.AreaCreated] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Goal.AreaCreated] =
     val state = if agents.autopilot.on then State.Active else State.Paused
     def cronOf(k: Kind): Either[Api.Error, Option[Cron]] =
       kinds
@@ -329,7 +333,9 @@ final class ManagersControllers(
                 )
               )
             )
-            def made(id: ManagerInfo.Id, k: Kind, config: ManagerConfig, cron: Option[Cron]): ManagerInfo.Id =
+            def made(id: ManagerInfo.Id, k: Kind, config: ManagerConfig, cron: Option[Cron])(using
+                Creator.New
+            ): ManagerInfo.Id =
               val goal = Some(slug.transformInto[Goal.Slug])
               val c = cron.map(x => ManagerInfo.Cron(x.text.value))
               if !ManagerRepo.createIn(id, k, goal, state, config, c, cron.flatMap(_.next(now))) then
@@ -501,13 +507,14 @@ final class ManagersControllers(
       id: ManagerLight.Id,
       action: ManagersControllers.Action,
       runs: Option[ManagerInfo.PauseRuns]
-  ): Either[Api.Error, ManagerInfo] = held(WriteGate.OperationName("manager_action"))(actionHeld(id, action, runs))
+  )(using Creator.New): Either[Api.Error, ManagerInfo] =
+    held(WriteGate.OperationName("manager_action"))(actionHeld(id, action, runs))
 
   private def actionHeld(
       id: ManagerLight.Id,
       action: ManagersControllers.Action,
       runs: Option[ManagerInfo.PauseRuns]
-  )(using WritePermit): Either[Api.Error, ManagerInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
       val withRuns = runs.exists(_.value)
       action.value.trim.toLowerCase match
@@ -693,10 +700,10 @@ final class ManagersControllers(
     * source or the unenriched sources an article cites or a goal links (the enrich manager), `seed` a research area
     * (its seeding manager proposes its next articles). A manager that does not exist yet is created PAUSED.
     */
-  def enqueue(in: EnqueueRequest): Either[Api.Error, EnqueueResult] =
+  def enqueue(in: EnqueueRequest)(using Creator.New): Either[Api.Error, EnqueueResult] =
     held(WriteGate.OperationName("enqueue"))(enqueueHeld(in))
 
-  private def enqueueHeld(in: EnqueueRequest)(using WritePermit): Either[Api.Error, EnqueueResult] =
+  private def enqueueHeld(in: EnqueueRequest)(using WritePermit)(using Creator.New): Either[Api.Error, EnqueueResult] =
     EnqueueKind.parse(in.kind) match
       case None =>
         Left(
@@ -917,10 +924,12 @@ final class ManagersControllers(
     * ([[applyProposal]]). `suggest` asks the server's planner model to read the text and propose the action (a
     * `hint-effect` run, started for the person; its proposal waits for approval the same way).
     */
-  def addHint(id: ManagerLight.Id, in: HintAdd): Either[Api.Error, ManagerHint] =
+  def addHint(id: ManagerLight.Id, in: HintAdd)(using Creator.New): Either[Api.Error, ManagerHint] =
     held(WriteGate.OperationName("add_hint"))(addHintHeld(id, in))
 
-  private def addHintHeld(id: ManagerLight.Id, in: HintAdd)(using WritePermit): Either[Api.Error, ManagerHint] =
+  private def addHintHeld(id: ManagerLight.Id, in: HintAdd)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, ManagerHint] =
     val propose = in.propose.exists(_.value)
     val suggest = in.suggest.exists(_.value)
     for
@@ -1071,7 +1080,7 @@ final class ManagersControllers(
       text: ManagerHint.Text,
       e: HintEffect,
       by: ManagerHint.Author
-  )(using WritePermit): String =
+  )(using WritePermit)(using Creator.New): String =
     val a = agents.approvalStore.openSubject(
       None,
       ApprovalKind.HintEffect,
@@ -1250,7 +1259,7 @@ final class ManagersControllers(
       kind: Goal.Plans.ScheduleKind,
       in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
-  ): Either[Api.Error, Goal.Plans.GoalSchedule] =
+  )(using Creator.New): Either[Api.Error, Goal.Plans.GoalSchedule] =
     held(WriteGate.OperationName("set_schedule"))(setScheduleHeld(goal, kind, in, now))
 
   private def setScheduleHeld(
@@ -1258,7 +1267,7 @@ final class ManagersControllers(
       kind: Goal.Plans.ScheduleKind,
       in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
-  )(using WritePermit): Either[Api.Error, Goal.Plans.GoalSchedule] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Goal.Plans.GoalSchedule] =
     val id = watchId(Goal.Ref(goal.value))
     val sw = WatchSchedules.sweepOf(kind)
     val budget = in.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))
@@ -1418,7 +1427,7 @@ final class ManagersControllers(
   def digest: ApprovalDigest.Digest = agents.digest.digest()
 
   /** `POST /api/agents/approvals/decide` — a whole group at once. */
-  def decideAll(in: ApprovalDigest.BulkDecide): Either[Api.Error, ApprovalDigest.BulkResult] =
+  def decideAll(in: ApprovalDigest.BulkDecide)(using Creator.New): Either[Api.Error, ApprovalDigest.BulkResult] =
     agents.digest.decideAll(in)
 
   /** `GET /api/agents/scheduler/why/{item}`. */
@@ -1431,10 +1440,12 @@ final class ManagersControllers(
   /** `POST /api/agents/autopilot/mode {mode}` — the three-way control ([[AgentMode]]): the autopilot and the drain
     * moved, in order, to what the mode stands for. Idempotent.
     */
-  def setMode(in: AgentMode.ModeSet): Either[Api.Error, Autopilot.EngineStatus] =
+  def setMode(in: AgentMode.ModeSet)(using Creator.New): Either[Api.Error, Autopilot.EngineStatus] =
     held(WriteGate.OperationName("set_mode"))(setModeHeld(in))
 
-  private def setModeHeld(in: AgentMode.ModeSet)(using WritePermit): Either[Api.Error, Autopilot.EngineStatus] =
+  private def setModeHeld(
+      in: AgentMode.ModeSet
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Autopilot.EngineStatus] =
     AgentMode
       .parse(in.mode)
       .toRight(
@@ -1463,7 +1474,7 @@ final class ManagersControllers(
       }
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
-  def setAutopilot(in: Autopilot.AutopilotSet): Either[Problems, Autopilot.EngineStatus] =
+  def setAutopilot(in: Autopilot.AutopilotSet)(using Creator.New): Either[Problems, Autopilot.EngineStatus] =
     Right(agents.maintenance.writing(agents.autopilot.set(in)))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────

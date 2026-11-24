@@ -65,6 +65,8 @@ import com.histmersion.config.ConverterConfig
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.automation.Creation
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** The acquisition handlers against a real Postgres (`HISTMERSION_TEST_DB_URL`), with every upstream replaced by a
   * fake. What is exercised here is the part fixtures cannot reach: resolving references to stored citekeys, writing
@@ -177,7 +179,8 @@ class AcquireHandlerSuite extends DbSuite:
         Problem.Unclassified(Legacy.Text("the chain downloads it"))
       )
     val library = new RefusingCollectionLibrary:
-      override def archiveImport(i: ArchiveItem, f: ArchiveFile, req: ArchiveImportRequest) = h.archiveImport(i, f, req)
+      override def archiveImport(i: ArchiveItem, f: ArchiveFile, req: ArchiveImportRequest)(using Creator.New) =
+        h.archiveImport(i, f, req)
     CollectionsService.InMemory(
       java.util.concurrent.atomic.AtomicReference(Nil),
       library,
@@ -214,7 +217,9 @@ class AcquireHandlerSuite extends DbSuite:
   final private class RecordingJobs extends IngestJobs:
     private val skeleton = AcquisitionTesting.skeleton(Deps(cfg, ds))
     val files = java.util.concurrent.ConcurrentLinkedQueue[Option[FetchedCopy]]()
-    def enqueue(copy: Option[FetchedCopy], citekey: domain.library.Citekey, meta: IngestMeta)(using WritePermit) =
+    def enqueue(copy: Option[FetchedCopy], citekey: domain.library.Citekey, meta: IngestMeta)(using
+        WritePermit
+    )(using Creator.New) =
       files.add(copy); skeleton.enqueue(copy, citekey, meta)
 
   /** A PDF fetcher that counts its calls. */

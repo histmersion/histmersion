@@ -16,6 +16,7 @@ import com.histmersion.domain.media.imports.Target
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** What the pictures' service answers, the same on the database and in memory. */
 abstract class AssetServiceContract extends MediaStoreSuite:

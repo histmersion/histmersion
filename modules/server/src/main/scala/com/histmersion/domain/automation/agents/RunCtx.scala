@@ -29,6 +29,7 @@ import com.histmersion.util.jobs.JobRow
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** What a running pipeline sees: its run, and the two kinds of step. Every step is checkpointed in `agent_steps`;
   * before running step `n` the context looks for a finished attempt of `n` and, if there is one, REPLAYS its output
@@ -217,7 +218,7 @@ final class RunCtx private[automation] (
     */
   def approval(name: AgentRepo.StepRecord.Name, kind: ApprovalKind, subject: ApprovalQuery.Subject, mode: ApprovalMode)(
       payload: => Either[Problems, String]
-  )(using WritePermit): Either[Halt, Decided] =
+  )(using WritePermit)(using Creator.New): Either[Halt, Decided] =
     val seq = claimSeq()
     replay[Decided](seq, name).getOrElse {
       engine.checkControl(runId).flatMap { _ =>

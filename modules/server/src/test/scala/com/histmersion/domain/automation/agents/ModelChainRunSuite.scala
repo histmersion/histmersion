@@ -55,6 +55,7 @@ import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** Model chains and allowances end to end against a `*_test` database, with sttp-ai's scripted model per chained model:
   * the chain's next model takes over when the first is below its allowance (before a step, during one, or when its plan

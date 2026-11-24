@@ -19,6 +19,8 @@ import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the
@@ -161,8 +163,10 @@ private[goals] object GoalBundleRepo:
         case _ => Some(l.ref.value)
       ref.foreach { r =>
         Unused(
-          sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at)
-              VALUES ($slug, ${l.kind}, $r, ${l.note}, ${l.createdAt}::timestamptz) ON CONFLICT DO NOTHING""".update
+          sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, created_at, creator)
+              VALUES ($slug, ${l.kind}, $r, ${l.note}, ${l.createdAt}::timestamptz, ${StoredCreator.write(
+              Creator.unrecorded
+            )}::jsonb) ON CONFLICT DO NOTHING""".update
             .run(),
           Unused.Why.Idempotent
         )
@@ -171,9 +175,11 @@ private[goals] object GoalBundleRepo:
     g.schedules.getOrElse(Nil).foreach { x =>
       val usd = x.budgetUsd.map(b => BigDecimal(b.value))
       Unused(
-        sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note)
+        sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note, creator)
             VALUES ($slug, ${x.kind}, ${x.cron}, ${x.enabled}, $usd,
-              'brought in by a merge: save it once here to schedule it')
+              'brought in by a merge: save it once here to schedule it', ${StoredCreator.write(
+            Creator.unrecorded
+          )}::jsonb)
             ON CONFLICT DO NOTHING""".update.run(),
         Unused.Why.Idempotent
       )
@@ -189,11 +195,12 @@ private[goals] object GoalBundleRepo:
       val plan = g.plan.map(BundleFormat.print)
       val usd = g.budgetUsd.map(b => BigDecimal(b.value))
       sql"""INSERT INTO goals (uid, origin, slug, title, status, notes, tags, regions, period, created_at, updated_at,
-              plan, plan_approved_at, budget_usd)
+              plan, plan_approved_at, budget_usd, creator)
             VALUES (${g.uid}, ${g.origin}, ${g.slug}, ${g.title}, ${g.status}, ${g.notes}, ${g.tags}::text[],
               ${g.regions}::text[],
               ${rangeLiteral(g.period)}::int8range,
-              ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd)
+              ${g.createdAt}::timestamptz, ${g.updatedAt}::timestamptz, $plan::jsonb, ${g.planApprovedAt}::timestamptz, $usd, ${StoredCreator
+          .write(Creator.unrecorded)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
               status = EXCLUDED.status, notes = EXCLUDED.notes, tags = EXCLUDED.tags,
               regions = EXCLUDED.regions, period = EXCLUDED.period, created_at = EXCLUDED.created_at,

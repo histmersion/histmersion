@@ -9,6 +9,8 @@ import com.histmersion.domain.library.{Edge, Source}
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.ManagerPolicy
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 private[workflows] object SourceApprovalRepo:
 
@@ -24,13 +26,13 @@ private[workflows] object SourceApprovalRepo:
       state: ApprovalState,
       result: Option[String],
       now: java.time.Instant
-  )(using DbCon): Option[ManagerPolicy.ApprovalId] =
+  )(using DbCon)(using creator: Creator.New): Option[ManagerPolicy.ApprovalId] =
     val decided = Option.when(state != ApprovalState.Open)(now.toString)
     sql"""INSERT INTO approvals (job_id, kind, citekey, status, current_status, edge_kind, target, proposal, state,
-                                 result, decided_at)
+                                 result, decided_at, creator)
           VALUES ($jobId, ${kind.wire}, $citekey, ${status.map(_.wire)}, ${current.map(_.wire)},
                   ${edgeKind.map(Edge.Kind.wireOf)}, $target, $payload::jsonb, ${state.wire}, $result,
-                  $decided::timestamptz)
+                  $decided::timestamptz, ${StoredCreator.column(creator)}::jsonb)
           ON CONFLICT DO NOTHING RETURNING id"""
       .query[Long]
       .run()

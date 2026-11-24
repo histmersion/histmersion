@@ -16,6 +16,7 @@ import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.MergeJobState
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The `jobs` rows of merge applies (kind `merge-apply`): one is `running` from its start (it runs on its own thread,
   * never queued), with its bundle and its plan; it ends `done` with its report or `failed` with why. A restart fails an
@@ -26,7 +27,7 @@ trait MergeApplyRuns:
   def running: Boolean
 
   /** A new running row for the bundle and plan; its id. */
-  def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id
+  def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit)(using Creator.New): Job.Id
 
   /** How the run ended; a row a restart already failed is left as it is. */
   def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit
@@ -40,7 +41,7 @@ object MergeApplyRuns:
 
   final private class Implementation(ds: DataSource) extends MergeApplyRuns:
     def running: Boolean = Transactor(ds).read(JobRepo.mergeApplyRunning)
-    def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id =
+    def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit)(using Creator.New): Job.Id =
       Transactor(ds).write(JobRepo.startMergeApply(MergeRepo.BundleName(bundle.value), planHash))
     def finish(id: Job.Id, outcome: Either[Problems, MergeApplyResult])(using WritePermit): Unit =
       if !Transactor(ds).write(JobRepo.finishMergeApply(id, outcome)) then
@@ -57,7 +58,7 @@ object MergeApplyRuns:
 
     def running: Boolean = state.get().values.exists(_.outcome.isEmpty)
 
-    def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit): Job.Id =
+    def start(bundle: Sha256, planHash: MergeRow.PlanHash)(using WritePermit)(using Creator.New): Job.Id =
       val next = state.updateAndGet(m => m + (idOf(m.size + 1) -> Run(bundle, planHash, None)))
       idOf(next.size)
 

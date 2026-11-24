@@ -44,6 +44,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** What the catalogue answers, on a crafted collection, recorded on the code before the catalogue moved into its own
   * domain: places and their names, overrides, merges, removals and renames, the hierarchy, footprints and the map's

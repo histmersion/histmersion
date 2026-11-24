@@ -17,6 +17,7 @@ import java.time.Clock
 import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.PlacesJobKinds
+import com.histmersion.domain.Creator
 
 /** The refinement of the Wikidata sites' types (a job, dry run or not): each site on the map asked for its classes
   * (P31) and their superclasses (P279), and given the curated type they fall under.
@@ -34,7 +35,7 @@ final class SiteTypesControllers(
   private def polite(intervalMs: PluginEvents.IntervalMs): Polite =
     PluginEvents.polite(http, settings().media, intervalMs)
 
-  def refineSiteTypes(caller: Caller, req: SiteTypes.Request): Either[Api.Error, JobInfo] =
+  def refineSiteTypes(caller: Caller, req: SiteTypes.Request)(using Creator.New): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
       JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.value then " (dry run)" else ""}")

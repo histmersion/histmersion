@@ -47,6 +47,7 @@ import com.histmersion.domain.automation.managers.ManagerContext
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -76,12 +77,12 @@ final class CompileArticlePipeline(
     cfg: => AgentsConfig,
     research: => ResearchAgentsConfig,
     lib: => LibraryAgentsConfig,
-    startChild: (RunRequest, RunInfo) => Either[Api.Error, RunInfo]
+    startChild: (RunRequest, RunInfo) => Creator.New ?=> Either[Api.Error, RunInfo]
 ) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
 
-  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     for
       snap <- ctx.code[Snap](StepRecord.Name("snapshot"))(snapshot(ctx, ctx.run.target))
       found <- ctx.code[Found](StepRecord.Name("filter"))(filter(ctx, snap))
@@ -97,7 +98,9 @@ final class CompileArticlePipeline(
         else compile(ctx, snap, found)
     yield PipelineDef.Summary(line)
 
-  private def compile(ctx: RunCtx, snap: Snap, found: Found)(using WritePermit): Either[Halt, String] =
+  private def compile(ctx: RunCtx, snap: Snap, found: Found)(using
+      WritePermit
+  )(using Creator.New): Either[Halt, String] =
     for
       extracted <- extractAll(ctx, snap, found)
       ev <- ctx.code[Evidence](StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
@@ -345,7 +348,8 @@ final class CompileArticlePipeline(
     * extension appended with the snapshot's token (a 412 drops it, never overwrites).
     */
   private def write(ctx: RunCtx, s: Snap, d: ArticleDraft, decided: Decided)(using
-      WritePermit
+      WritePermit,
+      Creator.New
   ): Either[Problems, Written] =
     def task(why: String)(using WritePermit): Unit =
       ctx.warn(why)
@@ -444,7 +448,7 @@ final class CompileArticlePipeline(
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
     * configured) is a warning: the article is written either way.
     */
-  private def review(ctx: RunCtx, s: Snap, w: Written)(using WritePermit): Option[String] =
+  private def review(ctx: RunCtx, s: Snap, w: Written)(using WritePermit, Creator.New): Option[String] =
     if !w.written.value || !ctx.run.params.chainReview.map(_.value).getOrElse(research.compile.review.value) then None
     else
       // the run's per-role models carry over to the roles the review uses
@@ -468,7 +472,7 @@ final class CompileArticlePipeline(
 
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String])(using
       WritePermit
-  ): Either[Problems, String] =
+  )(using Creator.New): Either[Problems, String] =
     if w.written.value then
       Pipelines
         .goalOf(ctx.run)

@@ -13,6 +13,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Doi
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** [[IngestJobs]] backed by the OCR job queue.
   *
@@ -42,7 +43,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       copy: Option[FetchedCopy],
       citekey: Citekey,
       meta: IngestMeta
-  )(using WritePermit): Either[Problems, IngestOutcome] =
+  )(using WritePermit)(using Creator.New): Either[Problems, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match
@@ -65,7 +66,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       citekey: Citekey,
       meta: IngestMeta,
       base: IngestOutcome
-  ): Either[Problems, IngestOutcome] =
+  )(using Creator.New): Either[Problems, IngestOutcome] =
     // a copy gone from the spool reads as an empty upload, which the ingest refuses
     val upload =
       spooled(file).getOrElse(Upload.inline(Upload.Name(file.key.name.value), Upload.Bytes(Array.emptyByteArray)))

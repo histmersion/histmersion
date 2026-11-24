@@ -2224,9 +2224,9 @@
 { "finding_id" : "zxs2019_places#0", "place_id" : "zx_ville" }
 { "finding_id" : "zxs2019_places#1", "place_id" : "zx_fort" }
 ## edges 1 rows
-{ "dst" : "zxb2002_nofindings", "kind" : "cites", "src" : "zxa2001_edges" }
+{ "created_at" : "TS", "creator" : { "agent" : { "definition" : null, "kind" : "code", "model" : null, "provider" : null }, "kind" : "automated", "plugin" : "library", "surface" : "internal", "workflow" : "check-fix" }, "dst" : "zxb2002_nofindings", "kind" : "cites", "src" : "zxa2001_edges" }
 ## unresolved_edges 1 rows
-{ "dst" : "zxnobody1900_lost", "kind" : "references", "src" : "zxa2001_edges" }
+{ "creator" : { "kind" : "unattributed", "surface" : "rest" }, "dst" : "zxnobody1900_lost", "kind" : "references", "src" : "zxa2001_edges" }
 ## assessments 0 rows
 ## tombstones 0 rows
 ## uid_aliases 0 rows

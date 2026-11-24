@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.Title
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The sources proposed as discussing an event — scored, then confirmed or rejected — and which events' proposals were
   * computed.
@@ -26,7 +27,7 @@ trait EventLinkService:
   /** Replace the event's proposed candidates with `cs` (one confirmed or rejected before keeps its status) and record
     * the check.
     */
-  def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit
+  def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit)(using Creator.New): Unit
 
   /** Set one candidate's status; `false` when the event has no candidate of that source. */
   def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean
@@ -43,7 +44,7 @@ object EventLinkService:
   final private class Implementation(db: Transactor) extends EventLinkService:
     def candidates(id: Event.Id, rejected: RejectedLinks): List[EventLinkCandidate] =
       db.read(EventLinkRepo.candidates(BEventRow.Id(id.value), rejected))
-    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit =
+    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit)(using Creator.New): Unit =
       db.write(EventLinkRepo.saveCandidates(BEventRow.Id(id.value), cs))
     def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire)(using WritePermit): Boolean =
       db.write(EventLinkRepo.setStatus(BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
@@ -72,7 +73,7 @@ object EventLinkService:
         .sortBy(c => (c.status.value != Event.LinkStatus.Confirmed, -c.score.value, c.citekey.value.toString))
         .toList
 
-    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit): Unit =
+    def saveCandidates(id: Event.Id, cs: List[EventLinkCandidate])(using WritePermit)(using Creator.New): Unit =
       val _ = state.updateAndGet { s =>
         val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
         val kept = s.candidates.filterNot(c => c.eventId == apiId && c.status.value == Event.LinkStatus.Proposed)

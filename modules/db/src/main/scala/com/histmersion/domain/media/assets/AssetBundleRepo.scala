@@ -13,6 +13,8 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the
@@ -82,11 +84,11 @@ private[assets] object AssetBundleRepo:
     bytes match
       case Some(b) =>
         sql"""INSERT INTO assets (uid, origin, citekey, name, mime, bytes, sha256, width, height, kind, caption,
-                license, geom, period, updated_at)
+                license, geom, period, updated_at, creator)
               VALUES (${a.uid}, ${a.origin}, $ck, ${a.name}, ${a.mime}, $b, ${a.sha256}, ${a.width}, ${a.height},
                 ${a.kind}, ${a.caption}, ${a.license}, ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
                 ${rangeLiteral(a.period)}::int8range,
-                ${a.updatedAt}::timestamptz)
+                ${a.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, name = EXCLUDED.name,
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, width = EXCLUDED.width,
                 height = EXCLUDED.height, kind = EXCLUDED.kind, caption = EXCLUDED.caption,

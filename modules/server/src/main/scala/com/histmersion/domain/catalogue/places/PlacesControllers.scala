@@ -20,6 +20,7 @@ import com.histmersion.api.aliases.AliasKind
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.domain.Creator
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
   * map's shapes, imports, a person's names, kinds, periods and points, merges, removals and renames, the matching of
@@ -136,7 +137,7 @@ final class PlacesControllers(
       kind: Option[Place.Kind.Wire],
       dataset: Option[Dataset.Wire],
       body: PlacesControllers.DatasetBody
-  ): Either[Api.Error, com.histmersion.api.catalogue.Place.ImportResult] =
+  )(using Creator.New): Either[Api.Error, com.histmersion.api.catalogue.Place.ImportResult] =
     maintenance.guard(WriteGate.OperationName("places/import")):
       val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Place.Kind.Region)
       if !Place.Kind.all.contains(Place.Kind.Wire(k)) then
@@ -192,7 +193,7 @@ final class PlacesControllers(
       caller: Caller,
       id: Place.Id,
       in: com.histmersion.api.catalogue.Place.OverrideSet
-  ): Either[Api.Error, com.histmersion.api.catalogue.Place.OverrideChanged] =
+  )(using Creator.New): Either[Api.Error, com.histmersion.api.catalogue.Place.OverrideChanged] =
     maintenance.guard(WriteGate.OperationName("places/override")):
       com.histmersion.api.catalogue.Place.Overrides
         .edit(in)
@@ -231,7 +232,7 @@ final class PlacesControllers(
   def add(
       caller: Caller,
       in: com.histmersion.api.catalogue.Place.Add
-  ): Either[Api.Error, com.histmersion.api.catalogue.Place.Summary] =
+  )(using Creator.New): Either[Api.Error, com.histmersion.api.catalogue.Place.Summary] =
     maintenance.guard(WriteGate.OperationName("places/add")):
       com.histmersion.api.catalogue.Place.Edits.toInput(in).flatMap(places.add)
 

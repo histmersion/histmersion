@@ -15,7 +15,8 @@ import com.histmersion.domain.automation.agents.ToolResultCap
 import com.histmersion.api.Markdown
 import com.histmersion.api.library.{AcquireMarkdown, Query}
 import com.histmersion.config.AgentToolsConfig
-import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
+import com.histmersion.domain.automation.workflows.{InTreeWorkflow, ToolContribution, ToolName}
+import com.histmersion.domain.Creator
 import com.histmersion.domain.library.LibraryTools.{FacetsInput, NeighborsInput, PassagesInput}
 import com.histmersion.domain.library.search.QueryTools.QueryInput
 import com.histmersion.api.VocabularyCodecs.given
@@ -44,6 +45,8 @@ import com.histmersion.api.library.Citekey
   */
 final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstream, caps: => AgentToolsConfig):
   import ToolResultCap.cap
+
+  private given Creator.New = InTreeWorkflow.AgentTools.creator
 
   private def max: ToolResultCap.CapMax = ToolResultCap.CapMax(caps.resultMaxChars.value)
 

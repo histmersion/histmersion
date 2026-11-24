@@ -10,6 +10,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.
@@ -76,10 +78,11 @@ object GoalLinkRepo:
       kind: LinkKind,
       ref: GoalLink.Ref,
       note: Option[GoalLink.Note]
-  )(using DbCon): Boolean =
+  )(using DbCon)(using creator: Creator.New): Boolean =
     val exists = sql"SELECT 1 FROM goals WHERE slug = $goal".query[Int].run().nonEmpty
     if exists then
-      sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES ($goal, ${kind.wire}, $ref, $note)
+      sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, creator) VALUES ($goal, ${kind.wire}, $ref, $note, ${StoredCreator
+          .column(creator)}::jsonb)
             ON CONFLICT (goal_slug, kind, ref) DO UPDATE SET note = coalesce(EXCLUDED.note, goal_links.note)""".update
         .run()
     exists
@@ -202,11 +205,13 @@ object GoalLinkRepo:
       enabled: GoalSchedule.Enabled,
       budgetUsd: Option[BigDecimal],
       next: Option[java.time.Instant]
-  )(using DbCon): Unit =
+  )(using DbCon)(using creator: Creator.New): Unit =
     val at = next.map(_.toString)
     val _ =
-      sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, next_run_at)
-            VALUES ($goal, ${kind.wire}, $cron, $enabled, $budgetUsd, $at::timestamptz)
+      sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, next_run_at, creator)
+            VALUES ($goal, ${kind.wire}, $cron, $enabled, $budgetUsd, $at::timestamptz, ${StoredCreator.column(
+          creator
+        )}::jsonb)
             ON CONFLICT (goal_slug, kind) DO UPDATE SET cron = EXCLUDED.cron, enabled = EXCLUDED.enabled,
               budget_usd = EXCLUDED.budget_usd, next_run_at = EXCLUDED.next_run_at, updated_at = now()""".update.run()
 

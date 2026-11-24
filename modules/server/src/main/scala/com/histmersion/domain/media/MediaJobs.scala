@@ -12,6 +12,7 @@ import javax.sql.DataSource
 import com.histmersion.api.Api
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** Media's runs — an import, the sources' pictures, as one request or as a job — one at a time: the polite pace is per
   * run, and two runs would ask twice as fast. A job is a `jobs` row a person may pause, resume or cancel between its
@@ -54,7 +55,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     */
   def start(kind: Job.Kind, describe: JobKinds.Subject)(
       body: (JobInfo.Progress => Unit) => WritePermit ?=> Either[Problems, BackgroundJob.Outcome.Summary]
-  ): Either[Api.Error, JobInfo] =
+  )(using Creator.New): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName(kind.value)) {
       BackgroundJob.start(
         ds,

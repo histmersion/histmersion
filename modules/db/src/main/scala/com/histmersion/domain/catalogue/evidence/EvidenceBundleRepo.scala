@@ -17,6 +17,8 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
@@ -130,9 +132,11 @@ private[evidence] object EvidenceBundleRepo:
           val passages = BundleFormat.print(c.passages)
           here.get((id.value, ck.value)) match
             case None =>
-              sql"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons, computed_at)
+              sql"""INSERT INTO event_link_candidates (event_id, citekey, score, status, findings, passages, reasons, computed_at, creator)
                     VALUES ($id, $ck, ${c.score}, ${c.status}, ${c.findings}::text[], $passages::jsonb,
-                      ${c.reasons}::text[], ${c.computedAt}::timestamptz)""".update.run(): Unit
+                      ${c.reasons}::text[], ${c.computedAt}::timestamptz, ${StoredCreator.write(
+                  Creator.unrecorded
+                )}::jsonb)""".update.run(): Unit
             case Some((status, at)) =>
               val keep = Bundle.EventSets.candidateStatus(Bundle.EventCandidate.Status(status), c.status)
               if newer(Some(Bundle.UpdatedAt(at)), Some(Bundle.UpdatedAt(c.computedAt.value))) then
@@ -193,10 +197,12 @@ private[evidence] object EvidenceBundleRepo:
         t.targetUid
       )
       sql"""INSERT INTO attestations (uid, origin, citekey, target_type, target_id, quote, prefix, suffix,
-              char_start, char_end, chunk_ord, page, canvas, xywh, cts_urn, note, created_at, updated_at)
+              char_start, char_end, chunk_ord, page, canvas, xywh, cts_urn, note, created_at, updated_at, creator)
             VALUES (${t.uid}, ${t.origin}, $ck, ${t.targetType}, $target, ${t.quote}, ${t.prefix}, ${t.suffix},
               ${t.charStart}, ${t.charEnd}, ${t.chunkOrd}, ${t.page}, ${t.canvas}, ${t.xywh}, ${t.ctsUrn},
-              ${t.note}, ${t.createdAt}::timestamptz, ${t.updatedAt}::timestamptz)
+              ${t.note}, ${t.createdAt}::timestamptz, ${t.updatedAt}::timestamptz, ${StoredCreator.write(
+          Creator.unrecorded
+        )}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
               target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, quote = EXCLUDED.quote,
               prefix = EXCLUDED.prefix, suffix = EXCLUDED.suffix, char_start = EXCLUDED.char_start,

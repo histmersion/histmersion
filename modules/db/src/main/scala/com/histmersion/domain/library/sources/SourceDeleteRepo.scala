@@ -17,6 +17,8 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
   * [[com.histmersion.api.library.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it
@@ -39,7 +41,7 @@ private[sources] object SourceDeleteRepo:
       referrers: SourceReferrers
   )(using
       DbCon
-  ): Either[Api.Error, SourceDeletePlan] =
+  )(using Creator.New): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
     planIn(requested, referrers).flatMap { p0 =>
       val d0 = p0.deletion
@@ -155,13 +157,15 @@ private[sources] object SourceDeleteRepo:
                                WHERE s.citekey = $ck""")
     ).collect { case (p, rows) if rows.value > 0 => DeleteCount(p, DeleteCount.Rows(rows.value)) }
 
-  private def deleteNow(p: SourceDeletePlan, source: SourceKeys, referrers: SourceReferrers)(using DbCon): Unit =
+  private def deleteNow(p: SourceDeletePlan, source: SourceKeys, referrers: SourceReferrers)(using
+      DbCon
+  )(using creator: Creator.New): Unit =
     val ck = p.deletion.citekey
     // other sources' edges to it are PARKED, exactly as an edge to a work not in the corpus is (V026):
     // they are that source's data, and come back if this one is ingested again
     Unused(
-      sql"""INSERT INTO unresolved_edges (src, dst, kind)
-          SELECT src, dst, kind FROM edges WHERE dst = $ck AND src <> $ck
+      sql"""INSERT INTO unresolved_edges (src, dst, kind, creator)
+          SELECT src, dst, kind, ${StoredCreator.column(creator)}::jsonb FROM edges WHERE dst = $ck AND src <> $ck
           ON CONFLICT DO NOTHING""".update.run(),
       Unused.Why.Idempotent
     )

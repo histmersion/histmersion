@@ -70,6 +70,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -248,7 +249,7 @@ final class AgentsControllers(
     * paused; idempotent — agents on or off). Returns how many interrupted runs were paused (0 when the lease is held
     * elsewhere).
     */
-  def start(): Int = maintenance.writing:
+  def start()(using Creator.New): Int = maintenance.writing:
     val _ = managers.migrateSchedules(java.time.Instant.now(clock))
     if !cfg.enabled.value then 0
     else
@@ -444,7 +445,7 @@ final class AgentsControllers(
     * interrupted runs paused and queued ones enqueued (the engine and the managers keep their threads; their next unit
     * of work runs on the new database).
     */
-  def adoptDatabase(): Unit = maintenance.writing:
+  def adoptDatabase()(using Creator.New): Unit = maintenance.writing:
     if cfg.enabled.value then
       val _ = managers.migrateSchedules(java.time.Instant.now(clock))
       managers.ensureDefaults()
@@ -721,12 +722,14 @@ final class AgentsControllers(
   /** `POST /api/agents/runs` — validated up front (pipeline, target, model, prices, budgets) so a mistake is a 400 now,
     * not a failed run later; then queued.
     */
-  def startRun(req: RunRequest): Either[Api.Error, RunInfo] = startRunAs(req, Origin.Person, None)
+  def startRun(req: RunRequest)(using Creator.New): Either[Api.Error, RunInfo] = startRunAs(req, Origin.Person, None)
 
   /** [[startRun]] for a schedule or another run: `parent` is the run that starts this one (its goal and model carry
     * over when the request names none).
     */
-  def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo]): Either[Api.Error, RunInfo] =
+  def startRunAs(req: RunRequest, origin: Origin, parent: Option[RunInfo])(using
+      Creator.New
+  ): Either[Api.Error, RunInfo] =
     startRunWith(req, origin, parent, identity)
 
   /** [[startRunAs]] with the options a request does not carry set by `tweak` (a hint-effect run's hint). */
@@ -735,7 +738,7 @@ final class AgentsControllers(
       origin: Origin,
       parent: Option[RunInfo],
       tweak: RunParams => RunParams
-  ): Either[Api.Error, RunInfo] =
+  )(using Creator.New): Either[Api.Error, RunInfo] =
     maintenance.guard(WriteGate.OperationName("start_run"))(startRunHeld(req, origin, parent, tweak))
 
   private def startRunHeld(
@@ -743,7 +746,7 @@ final class AgentsControllers(
       origin: Origin,
       parent: Option[RunInfo],
       tweak: RunParams => RunParams
-  )(using WritePermit): Either[Api.Error, RunInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, RunInfo] =
     prepare(req, parent).map { pr =>
       val id = jobRuns.create(
         RunService.row(
@@ -1106,7 +1109,7 @@ final class AgentsControllers(
       action: Action,
       budgetUsd: Option[BudgetUsd],
       budgetTokens: Option[BudgetTokens]
-  ): Either[Api.Error, RunInfo] =
+  )(using Creator.New): Either[Api.Error, RunInfo] =
     maintenance.guard(WriteGate.OperationName("control_run"))(controlHeld(id, action, budgetUsd, budgetTokens))
 
   private def controlHeld(
@@ -1114,7 +1117,7 @@ final class AgentsControllers(
       action: Action,
       budgetUsd: Option[BudgetUsd],
       budgetTokens: Option[BudgetTokens]
-  )(using WritePermit): Either[Api.Error, RunInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, RunInfo] =
     action.value.trim.toLowerCase match
       case "pause"  => engine.pause(id)
       case "resume" => enabled.left.map(Api.Error(_)).flatMap(_ => engine.resume(id, budgetUsd, budgetTokens))
@@ -1182,14 +1185,14 @@ final class AgentsControllers(
       id: DomainApproval.Id,
       decision: DomainApproval.Outcome,
       req: DecisionRequest
-  ): Either[Api.Error, ApprovalInfo] =
+  )(using Creator.New): Either[Api.Error, ApprovalInfo] =
     maintenance.guard(WriteGate.OperationName("decide_approval"))(decideHeld(id, decision, req))
 
   private def decideHeld(
       id: DomainApproval.Id,
       decision: DomainApproval.Outcome,
       req: DecisionRequest
-  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking.value) then
@@ -1217,10 +1220,12 @@ final class AgentsControllers(
       )
     }
 
-  def addGoalLink(slug: DomainGoal.Slug, in: LinkAdd): Either[Api.Error, GoalLink] =
+  def addGoalLink(slug: DomainGoal.Slug, in: LinkAdd)(using Creator.New): Either[Api.Error, GoalLink] =
     maintenance.guard(WriteGate.OperationName("add_goal_link"))(addGoalLinkHeld(slug, in))
 
-  private def addGoalLinkHeld(slug: DomainGoal.Slug, in: LinkAdd)(using WritePermit): Either[Api.Error, GoalLink] =
+  private def addGoalLinkHeld(slug: DomainGoal.Slug, in: LinkAdd)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, GoalLink] =
     val ref = in.ref.value.trim
     for
       _ <- host.goal(slug)
@@ -1303,7 +1308,7 @@ final class AgentsControllers(
       kind: ScheduleKind.Wire,
       in: ScheduleSet,
       now: java.time.Instant = java.time.Instant.now(clock)
-  ): Either[Api.Error, GoalSchedule] =
+  )(using Creator.New): Either[Api.Error, GoalSchedule] =
     for
       _ <- host.goal(slug)
       k <- scheduleKind(kind).left.map(Api.Error(_))

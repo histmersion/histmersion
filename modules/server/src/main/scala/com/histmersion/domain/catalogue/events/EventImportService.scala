@@ -19,6 +19,7 @@ import com.histmersion.api.catalogue.EventCatalogueRef
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** What an import of an event catalogue reads and writes: the stored events as its merge sees them, the placed records
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the
@@ -29,7 +30,7 @@ trait EventImportService:
   def stored(): List[StoredEvent]
 
   /** Write placed records in one transaction. */
-  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit): EventSaved
+  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved
 
   /** The stored records of `provider` (every catalogue's when `None`) with the event each is of and its kind, in key
     * order; and how many no longer decode.
@@ -52,7 +53,7 @@ object EventImportService:
 
   final private class Implementation(db: Transactor) extends EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit): EventSaved =
+    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved =
       db.write(EventImportRepo.save(placed))
     def records(
         provider: Option[CatalogRecord.Provider]
@@ -262,7 +263,7 @@ object EventImportService:
         case Nil       => acc
       (kept(recs, written), created, refreshed)
 
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit): EventSaved =
+    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved =
       val groups = placed.groupBy(_._2.eventId).toList.sortBy(_._1.value)
       @tailrec def loop(
           rest: List[(Event.Id, List[(CatalogRecord, CatalogMerge.Placement)])],

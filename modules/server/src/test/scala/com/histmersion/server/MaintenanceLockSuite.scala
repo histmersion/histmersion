@@ -40,6 +40,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.server.views.WorkListView
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The restore lock (plan §1.10) must cover EVERY write, not the handful it started with.
   *

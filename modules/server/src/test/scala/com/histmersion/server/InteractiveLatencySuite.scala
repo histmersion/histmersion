@@ -11,6 +11,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The interactive budgets (docs/research-interactive-performance.md) as a CI check: the requests a hover, a keystroke
   * and a filter change fire, against a server on the test database, each repeated so the statement is prepared

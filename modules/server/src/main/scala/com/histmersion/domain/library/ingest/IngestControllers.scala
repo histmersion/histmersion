@@ -25,6 +25,7 @@ import com.histmersion.domain.library.acquisition.AcquireAttemptRow
 import com.histmersion.api.library.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
   *
@@ -48,7 +49,7 @@ final class IngestControllers(
   /** `POST /api/ingest`. `upload` is copied into the originals' store BEFORE returning: the HTTP layer deletes its file
     * as soon as the request completes, and the job runs long after that.
     */
-  def ingest(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
+  def ingest(p: Ingest.Params, upload: Upload)(using Creator.New): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(WriteGate.OperationName("ingest"))(ingestNow(p, upload))
 
   private def error(message: Problem, code: Option[Api.Error.Code] = None): Api.Error =
@@ -59,7 +60,9 @@ final class IngestControllers(
   private def invalidCitekey(p: Problem): Api.Error =
     Write.invalid(p, Api.Error.InvalidCitekey)
 
-  private def ingestNow(p: Ingest.Params, upload: Upload)(using WritePermit): Either[Api.Error, Ingest.Accepted] =
+  private def ingestNow(p: Ingest.Params, upload: Upload)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
     Citekey.parse(p.citekey.value).left.map(invalidCitekey).flatMap { validated =>
       val citekey: Citekey = validated
@@ -107,7 +110,7 @@ final class IngestControllers(
       year: Option[Year],
       doi: Option[Doi],
       acquireItem: Option[AcquireAttemptRow.Id] = None
-  ): Either[Api.Error, Ingest.Accepted] =
+  )(using Creator.New): Either[Api.Error, Ingest.Accepted] =
     def params(name: Ingest.Params.Filename) =
       Ingest.Params(
         com.histmersion.api.library.Citekey(citekey.value.trim),
@@ -157,14 +160,14 @@ final class IngestControllers(
   /** `POST /api/sources/{ck}/reocr` — convert the stored original again (a scan first read on the fast path, re-run
     * under docling with `quality`).
     */
-  def reocr(citekey: Citekey, quality: Ingest.Params.Quality): Either[Api.Error, Ingest.Accepted] =
+  def reocr(citekey: Citekey, quality: Ingest.Params.Quality)(using Creator.New): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(WriteGate.OperationName("reocr"))(
       Citekey.parse(citekey.value).left.map(invalidCitekey).flatMap(_ => reocrValid(citekey, quality))
     )
 
   private def reocrValid(citekey: Citekey, quality: Ingest.Params.Quality)(using
       WritePermit
-  ): Either[Api.Error, Ingest.Accepted] =
+  )(using Creator.New): Either[Api.Error, Ingest.Accepted] =
     sources.load(citekey) match
       case None    => Left(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
       case Some(_) =>

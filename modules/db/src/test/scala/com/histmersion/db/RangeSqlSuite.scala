@@ -23,6 +23,7 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** [[RangeSql]] (#1798 item 9): the pure literal/merge rules, and — on a test database — a goal or an asset patched
   * with ONE bound (it used to be silently ignored), read back through [[RangeSql.cols]].

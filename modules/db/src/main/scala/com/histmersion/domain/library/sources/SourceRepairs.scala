@@ -10,6 +10,7 @@ import com.histmersion.util.ocr.Chunker
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The library's repairs that run as several transactions: the re-chunk of the corpus and of the stale sources (one
   * transaction per source, so a large corpus never sits in one) and the safe fixes of `lint --fix`.
@@ -86,7 +87,7 @@ final class SourceRepairs(db: Transactor):
   // ── the safe fixes of `lint --fix`, each as the part of the result it reports ─────────────────
 
   /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
-  def resolveEdgesFix()(using WritePermit): LintFixResult =
+  def resolveEdgesFix()(using WritePermit)(using Creator.New): LintFixResult =
     val resolved = db.write(SourceRepo.resolveEdges())
     LintFixResult(
       List(LintFixResult.Applied(s"resolve-edges: ${resolved.value} edge target(s) rewritten")),

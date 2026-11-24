@@ -13,6 +13,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The contract an event catalogue's import keeps: a new event made from the record it is named after, refreshed when
   * its record is written again, an event made by hand only filled; the records kept by key with their kinds; the parts

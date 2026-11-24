@@ -44,6 +44,7 @@ import com.histmersion.util.data.exchange.MergeRepo
 import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The portable bundle over real HTTP: `GET/PUT /api/instance`, `GET /api/bundle`, `POST /api/bundle/verify` and
   * `POST /api/bundle/import` — the wiring, the write gate, the download name, and an instance importing its own bundle

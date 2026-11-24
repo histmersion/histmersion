@@ -43,6 +43,7 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
@@ -93,7 +94,7 @@ final class Engine(
     * database's runs are reconciled as at a start (its running ones paused as interrupted — none of them runs here —
     * its queued ones queued).
     */
-  def restored()(using WritePermit): Unit =
+  def restored()(using WritePermit)(using Creator.New): Unit =
     era = Era()
     Iterator.continually(queue.poll()).takeWhile(_ != null).foreach(_.work.drop())
     // an engine that never started (agents off, the lease elsewhere) leaves the rows to the start that comes
@@ -255,7 +256,7 @@ final class Engine(
   /** Reconcile (an interrupted run is paused, not failed), re-enqueue queued runs, start the workers. Idempotent.
     * Returns how many runs were paused as interrupted.
     */
-  def start()(using WritePermit): Int =
+  def start()(using WritePermit)(using Creator.New): Int =
     val (paused, queued) = reconcile()
     logPruned(pruneTrace(force = Engine.PruneTraceForce(true)))
     queued.foreach(submit)
@@ -306,7 +307,7 @@ final class Engine(
   /** The thread that resumes runs paused for an allowance; a `var` for the same reason as [[scope]]. */
   private var waker: Option[Thread] = None
 
-  private def resumer(): Unit =
+  private def resumer()(using Creator.New): Unit =
     // the stall check shares this loop: at least once a minute
     val every = math.min(60, math.max(5, cfg.allowanceCheckSeconds.value)).toLong * 1000L
     try
@@ -329,7 +330,7 @@ final class Engine(
     * window has not freed enough after all (another run spent it meanwhile), the run simply pauses again with the next
     * time.
     */
-  def resumeDue(now: java.time.Instant)(using WritePermit): List[Run.Id] =
+  def resumeDue(now: java.time.Instant)(using WritePermit)(using Creator.New): List[Run.Id] =
     agents.jobRuns.due(jobKind, rowStatus(RunState.Paused), now).toList.filter { id =>
       transition(id, RunState.Paused, RunState.Queued).map(_ => submit(id)).isDefined
     }
@@ -349,7 +350,7 @@ final class Engine(
         Paused(id, pipeline, error, at, if byItself then Actor.Agents else Actor.Person)
       }
 
-  def resumeFreed(now: java.time.Instant)(using WritePermit): List[Run.Id] =
+  def resumeFreed(now: java.time.Instant)(using WritePermit)(using Creator.New): List[Run.Id] =
     agents.jobRuns
       .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
       .toList
@@ -432,7 +433,7 @@ final class Engine(
         )(target)
       )
 
-  def submit(id: Run.Id): Unit =
+  def submit(id: Run.Id)(using Creator.New): Unit =
     queue.put(Queued(id, agents.pins.carry(agents.workers.unit(executeInItsTrace(id))), era))
 
   private def pool(): Unit =
@@ -464,11 +465,11 @@ final class Engine(
       // a cancel or a restore that interrupted a run as it ended must not end the worker: only the pool's stop does
       catch case _: InterruptedException => alive = !stopping
 
-  private def executeInItsTrace(id: Run.Id)(using WritePermit): Unit =
+  private def executeInItsTrace(id: Run.Id)(using WritePermit)(using Creator.New): Unit =
     TraceScope.resumed(agents.jobRuns.trace(id))(execute(id))
 
   /** Run one queued run to its next resting state. */
-  private[histmersion] def execute(id: Run.Id)(using WritePermit): Unit =
+  private[histmersion] def execute(id: Run.Id)(using WritePermit)(using Creator.New): Unit =
     agents.runs.get(id) match
       case None      => ()
       case Some(run) =>
@@ -488,10 +489,11 @@ final class Engine(
                     pr => { val _ = ctl.procs.remove(pr) },
                     () => beat(id)
                   )
-                  CliProcess.withHooks(hooks)(
-                    p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this, p))
-                      .map(_.value)
-                  )
+                  CliProcess.withHooks(hooks) {
+                    val ctx = RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this, p)
+                    given Creator.New = ctx.creator
+                    p.run(ctx).map(_.value)
+                  }
             catch
               case _: InterruptedException if ctl.cancel            => Left(Halt.Cancel)
               case _: InterruptedException if ctl.stalled.isDefined => Left(ctl.stalled.get)
@@ -586,7 +588,7 @@ final class Engine(
       }
 
   /** A waiting run whose approval was decided goes back to the queue. `false` = it was not waiting. */
-  def wake(id: Run.Id)(using WritePermit): Boolean =
+  def wake(id: Run.Id)(using WritePermit)(using Creator.New): Boolean =
     transition(id, RunState.WaitingApproval, RunState.Queued).map(_ => submit(id)).isDefined
 
   /** Between steps: a requested pause or cancel takes effect here. */
@@ -682,7 +684,7 @@ final class Engine(
       id: Run.Id,
       budgetUsd: Option[AgentsControllers.BudgetUsd],
       budgetTokens: Option[AgentsControllers.BudgetTokens]
-  )(using WritePermit): Either[Api.Error, RunInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
         Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Resume)))

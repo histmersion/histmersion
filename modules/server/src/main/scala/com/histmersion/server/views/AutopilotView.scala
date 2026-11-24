@@ -11,6 +11,7 @@ import java.time.{Clock, Instant}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Acquire
 import com.histmersion.util.problem.Problems
+import com.histmersion.domain.Creator
 
 /** The autopilot's page as the automation and the library show it together: the automation's status (the switches, the
   * rules, the goals, the focus, the drain) and the library's upstreams' quotas and its acquisition list's re-check at
@@ -31,8 +32,10 @@ final class AutopilotView(
 
   def autopilot: AutopilotStatus = page(managers.autopilot)
 
-  def setAutopilot(in: Autopilot.AutopilotSet): Either[Problems, AutopilotStatus] = managers.setAutopilot(in).map(page)
+  def setAutopilot(in: Autopilot.AutopilotSet)(using Creator.New): Either[Problems, AutopilotStatus] =
+    managers.setAutopilot(in).map(page)
 
-  def setMode(in: AgentMode.ModeSet): Either[Api.Error, AutopilotStatus] = managers.setMode(in).map(page)
+  def setMode(in: AgentMode.ModeSet)(using Creator.New): Either[Api.Error, AutopilotStatus] =
+    managers.setMode(in).map(page)
 
   def drain(in: Autopilot.DrainSet): Either[Problems, AutopilotStatus] = managers.drain(in).map(page)

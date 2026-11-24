@@ -57,6 +57,7 @@ import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.util.jobs.Job
 import com.histmersion.api.catalogue.EvidenceJobKinds
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
 
 /** The links of events to the corpus as REST, MCP and the CLI reach them: the sources proposed as discussing an event
   * (computed on the first ask, stored after) and their confirmation — an attestation from a passage of the source's
@@ -138,7 +139,7 @@ final class EventLinksControllers(
     EventLinkList(d.event.id, EventLinkList.Label(d.event.label.value), links.candidates(idOf(d)))
 
   /** Compute and store an event's candidates. */
-  def compute(d: EventEntry)(using WritePermit): EventLinkList =
+  def compute(d: EventEntry)(using WritePermit)(using Creator.New): EventLinkList =
     val w = ec.links.weights
     val names = namesOf(d)
     val id = idOf(d)
@@ -172,7 +173,7 @@ final class EventLinksControllers(
   /** An event's candidates — computed on the first ask, stored after (that first ask writes, under the maintenance
     * gate).
     */
-  def links(id: Event.Id): Either[Api.Error, EventLinkList] =
+  def links(id: Event.Id)(using Creator.New): Either[Api.Error, EventLinkList] =
     eventOrFail(id).flatMap { d =>
       if links.isChecked(idOf(d)) then Right(listOf(d))
       else maintenance.guard(WriteGate.OperationName("event_links"))(Right(compute(d)))
@@ -182,7 +183,9 @@ final class EventLinksControllers(
     * (not the stored evidence): the attestation carries that passage's quote and offsets. A source with none is
     * refused, with why.
     */
-  def applyLinks(caller: Caller, id: Event.Id, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
+  def applyLinks(caller: Caller, id: Event.Id, req: EventLinksRequest)(using
+      Creator.New
+  ): Either[Api.Error, EventLinksResult] =
     maintenance.guard(WriteGate.OperationName("event_links")) {
       eventOrFail(id).map { d =>
         val eid = idOf(d)
@@ -202,7 +205,7 @@ final class EventLinksControllers(
             rest: List[String],
             ok: List[Attestation],
             no: List[String]
-        ): (List[Attestation], List[String]) =
+        )(using Creator.New): (List[Attestation], List[String]) =
           rest match
             case Nil         => (ok, no)
             case raw :: tail =>
@@ -263,7 +266,7 @@ final class EventLinksControllers(
     }
 
   /** The candidates of many events, as a job: those never computed (or all), `links.batch` at a time. */
-  def candidatesJob(caller: Caller, req: EventCandidatesRequest): Either[Api.Error, JobInfo] =
+  def candidatesJob(caller: Caller, req: EventCandidatesRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     req.event.map(_.value.trim).filter(_.nonEmpty) match
       case Some(one) =>
         Event.Id

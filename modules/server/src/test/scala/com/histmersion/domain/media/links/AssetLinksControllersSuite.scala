@@ -20,6 +20,7 @@ import com.histmersion.api.media.AssetRelation
 import com.histmersion.api.media.MediaTarget
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The figures' links' controllers over the in-memory services: a source and a target named by an old identifier are
   * resolved first; a link that is not there is not found; a held lock refuses every write.

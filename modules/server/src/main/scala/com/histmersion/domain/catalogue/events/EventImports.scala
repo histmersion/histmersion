@@ -29,6 +29,7 @@ import com.histmersion.api.catalogue.Correction
 import com.histmersion.upstreams.dating.CatalogDating
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;
@@ -89,7 +90,7 @@ final class EventImports(
       req: EventImportRequest,
       area: Option[BBox],
       progress: JobInfo.Progress => Unit
-  )(using WritePermit): EventImportReport =
+  )(using WritePermit)(using Creator.New): EventImportReport =
     val info = infoOf(provider)
     val catalogue = registered().get(provider)
     val dryRun = req.dryRun.value
@@ -123,7 +124,7 @@ final class EventImports(
     val clients = scala.collection.mutable.ListBuffer.empty[Polite]
     def client(ms: MediaConfig.RequestIntervalMs): Polite = { val p = polite(ms); clients += p; p }
 
-    def handle(part: PluginEvents.PartName, fetched: Fetched)(using WritePermit): Unit =
+    def handle(part: PluginEvents.PartName, fetched: Fetched)(using WritePermit)(using Creator.New): Unit =
       fetched match
         case Left(why) =>
           report = report.modify(_.failed).using(_ :+ EventImportReport.Failed(s"$part: ${why.sentence}"))
@@ -237,7 +238,7 @@ final class EventImports(
       * last page; every record checked by the host ([[PluginEvents.record]]) before the thresholds, the merge and the
       * store.
       */
-    def run(cat: EventCatalogue)(using WritePermit): Unit =
+    def run(cat: EventCatalogue)(using WritePermit)(using Creator.New): Unit =
       val c = client(MediaConfig.RequestIntervalMs(PluginEvents.safe(cat.requestIntervalMs).fold(1000)(_.value)))
       val h = PluginEvents.http(c)
       val q = PluginEvents.query(from, to, area)
@@ -298,7 +299,7 @@ final class EventImports(
       provider: Option[CatalogRecord.Provider],
       dryRun: Boolean,
       progress: JobInfo.Progress => Unit
-  )(using WritePermit): EventRederiveReport =
+  )(using WritePermit)(using Creator.New): EventRederiveReport =
     val (rows, undecodable) = store.records(provider)
     val present = presentYear()
     def prec(r: CatalogRecord) = EventPrecision.of(r.timeSpan, r.plusMinus.map(p => EventSummary.PlusMinus(p.value)))

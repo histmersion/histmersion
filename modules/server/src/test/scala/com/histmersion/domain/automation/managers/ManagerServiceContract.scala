@@ -14,6 +14,7 @@ import com.histmersion.util.jobs.{Job, RunRow}
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The contract the managers keep: made once, their settings; items added once and brought back, held and released (for
   * a person, for the focus), settled and dispatched; events; the reads over every manager at once.

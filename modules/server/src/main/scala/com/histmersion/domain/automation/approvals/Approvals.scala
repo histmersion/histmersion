@@ -23,6 +23,7 @@ import com.histmersion.api.Api
 import com.histmersion.server.ListQueries
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -103,7 +104,7 @@ final class Approvals(
       id: Approval.Id,
       decision: Approval.Outcome,
       note: Option[Approval.Note]
-  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, ApprovalInfo] =
     val clean = note.map(_.value.trim).filter(_.nonEmpty).map(n => DomainApproval.Note(n.take(2000)))
     for
       d <- Decision
@@ -153,7 +154,7 @@ final class Approvals(
       k: ApprovalKind,
       d: Decision,
       note: Option[Approval.Note]
-  )(using WritePermit): Either[Api.Error, ApprovalInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, ApprovalInfo] =
     val to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
     val id = DomainApproval.Id(a.id.value)
     for

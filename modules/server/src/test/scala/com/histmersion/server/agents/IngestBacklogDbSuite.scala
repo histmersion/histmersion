@@ -58,6 +58,7 @@ import com.histmersion.domain.automation.managers.ManagersControllers
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The watchers' ingest backlog against a `*_test` database (docs/research-process-managers.md "As built: the ingest
   * backlog"): a sweep's legal open-access picks past the day's allowance wait in the backlog — never the acquisition

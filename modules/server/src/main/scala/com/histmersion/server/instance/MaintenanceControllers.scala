@@ -23,6 +23,7 @@ import com.histmersion.util.data.maintenance.MaintenanceTask
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a
@@ -51,7 +52,7 @@ final class MaintenanceControllers(
   /** `POST /api/maintenance/vacuum` (#1445) — VACUUM [(ANALYZE)] of the named tables (default
     * `maintenance.vacuum-tables`) as a job (see [[VacuumJobs]]).
     */
-  def vacuum(in: Vacuum.Request): Either[Api.Error, JobInfo] = vacuumJobs.start(in)
+  def vacuum(in: Vacuum.Request)(using Creator.New): Either[Api.Error, JobInfo] = vacuumJobs.start(in)
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   def reindex(after: Option[MaintenanceControllers.Cursor], limit: Option[PageSize]): Either[Api.Error, ReindexResult] =
@@ -97,7 +98,7 @@ final class MaintenanceControllers(
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
     * afterwards so a stale dump cannot pass silently.
     */
-  def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
+  def restore(req: RestoreRequest)(using Creator.New): Either[Api.Error, RestoreResult] =
     maintenance.exclusively(
       WriteGate.OperationName("restore"),
       cfg.backups.restoreDrainSeconds.duration,
@@ -136,7 +137,7 @@ final class MaintenanceControllers(
 
   private def restoreNow(req: RestoreRequest, quiet: WriteGate.Quiet)(using
       WritePermit
-  ): Either[Api.Error, RestoreResult] =
+  )(using Creator.New): Either[Api.Error, RestoreResult] =
     for
       (archive, before) <- forced(req)
       r <- backups.restore(archive)

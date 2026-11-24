@@ -36,6 +36,8 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.library.sources.CitekeyMillis
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 given DbCodec[Backlink] = DbCodec.derived
@@ -106,7 +108,7 @@ private[articles] object ArticleRepo:
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
-  def put(a: Article)(using DbCon): Article.UpdatedAt =
+  def put(a: Article)(using DbCon)(using Creator.New): Article.UpdatedAt =
     write(a)
     Article.UpdatedAt(token(a.slug.value).getOrElse(""))
 
@@ -115,7 +117,7 @@ private[articles] object ArticleRepo:
     */
   def patch(slug: Slug, p: Article.Patch, by: CritiqueRepo.By = CritiqueRepo.By("person"))(using
       DbCon
-  ): Either[Api.Error, Article.UpdatedAt] =
+  )(using Creator.New): Either[Api.Error, Article.UpdatedAt] =
     // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
     // two concurrent patches both saw the token they were given and both "succeeded", the second
     // discarding the first. See the twin comment in `SourceRepo.patch`.
@@ -142,19 +144,22 @@ private[articles] object ArticleRepo:
   /** The write itself, inside the caller's transaction: snapshot the previous body into `article_versions` (when the
     * article already exists), then upsert the row and its link graph.
     */
-  private def write(a: Article)(using DbCon): Unit =
+  private def write(a: Article)(using DbCon)(using creator: Creator.New): Unit =
     // Snapshot the PREVIOUS version before the update overwrites it.
     Unused(
-      sql"""INSERT INTO article_versions (slug, body, summary, updated_at)
-          SELECT slug, body, summary, updated_at FROM articles WHERE slug = ${a.slug}""".update.run(),
+      sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator)
+          SELECT slug, body, summary, updated_at, ${StoredCreator.column(
+          creator
+        )}::jsonb FROM articles WHERE slug = ${a.slug}""".update.run(),
       Unused.Why.Idempotent
     )
     val periodLit = RangeSql.literal(a.period)
     val filter = filterJson(a)
     val reasons = reasonsJson(a)
-    sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions, coverage_filter, coverage_reasons)
+    sql"""INSERT INTO articles (slug, title, kind, body, summary, tags, period, regions, coverage_filter, coverage_reasons, creator)
           VALUES (${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
-                  ${a.tags}::text[], $periodLit::int8range, ${a.regions}::text[], $filter::jsonb, $reasons::jsonb)
+                  ${a.tags}::text[], $periodLit::int8range, ${a.regions}::text[], $filter::jsonb, $reasons::jsonb, ${StoredCreator
+        .column(creator)}::jsonb)
           ON CONFLICT (slug) DO UPDATE SET
             title=EXCLUDED.title, kind=EXCLUDED.kind, body=EXCLUDED.body, summary=EXCLUDED.summary,
             tags=EXCLUDED.tags, period=EXCLUDED.period, regions=EXCLUDED.regions,
@@ -200,7 +205,7 @@ private[articles] object ArticleRepo:
       to: Article.Link.Target => Option[Article.Link.Target]
   )(using
       DbCon
-  ): List[(Slug, RowCount)] =
+  )(using Creator.New): List[(Slug, RowCount)] =
     sql"""SELECT slug FROM articles
           WHERE strpos(lower(body || ' ' || coalesce(summary, '') || ' ' || coverage_reasons::text), ${needle.value.toLowerCase}) > 0
           ORDER BY slug""".query[Slug].run().toList.flatMap { slug =>
@@ -231,7 +236,9 @@ private[articles] object ArticleRepo:
     * when an article was renamed on the other side, and what `merge apply` does to keep two articles apart. Returns the
     * articles whose links moved.
     */
-  private[histmersion] def renameIn(oldSlug: Slug, newSlug: Slug)(using DbCon): Either[Api.Error, List[Slug]] =
+  private[histmersion] def renameIn(oldSlug: Slug, newSlug: Slug)(using
+      DbCon
+  )(using Creator.New): Either[Api.Error, List[Slug]] =
     def exists(s: Slug) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug"
       .query[Slug]
@@ -279,7 +286,7 @@ private[articles] object ArticleRepo:
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles
     * is rewritten through the write path. One transaction; returns the articles rewritten.
     */
-  def rename(oldSlug: Slug, newSlug: Slug)(using DbCon): Either[Api.Error, List[Slug]] =
+  def rename(oldSlug: Slug, newSlug: Slug)(using DbCon)(using Creator.New): Either[Api.Error, List[Slug]] =
     renameIn(oldSlug, newSlug)
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */

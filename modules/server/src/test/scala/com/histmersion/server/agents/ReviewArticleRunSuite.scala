@@ -59,6 +59,7 @@ import com.histmersion.config.AgentStepConfig
 import com.histmersion.api.research.CritiqueRef
 import com.histmersion.api.research.CritiqueState
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** A scripted model for steps that run IN PARALLEL: each call is routed by its system prompt to the script queue of its
   * reviewer, so the order the three panel calls arrive in does not matter. A reviewer with no script left answers as an

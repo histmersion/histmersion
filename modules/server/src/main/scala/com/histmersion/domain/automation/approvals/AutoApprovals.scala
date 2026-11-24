@@ -27,6 +27,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The checked auto approvals (docs/research-process-managers.md "As built: the autopilot"): on every managers' tick,
   * each OPEN approval of the kinds a person used to decide by hand — an `article-plan` (propose-articles), a
@@ -69,7 +70,7 @@ final class AutoApprovals(
     if auto then Actor.Agents else Actor.Person
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */
-  def sweep(now: Instant)(using WritePermit): List[String] =
+  def sweep(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a
     // person's priority), then the oldest goals; approvals about no known goal last, oldest first
     // the window is taken among the approvals code decides: those a person decides never crowd it out
@@ -125,7 +126,7 @@ final class AutoApprovals(
       run: Option[RunInfo],
       mgr: Option[Managers.ManagerInfo],
       now: Instant
-  )(using WritePermit): List[String] =
+  )(using WritePermit)(using Creator.New): List[String] =
     val verdict = judge(a, run, mgr, now)
     val what = s"${a.kind} #${a.id}${a.subject.fold("")(s => s" ($s)")}"
     val runId = a.runId.flatMap(id => Run.Id.option(id.value))

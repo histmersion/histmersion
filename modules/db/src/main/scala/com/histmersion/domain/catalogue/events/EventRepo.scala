@@ -33,6 +33,8 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.database.given
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
@@ -215,7 +217,7 @@ private[events] object EventRepo:
     * says is recorded as a correction, so the next import keeps it; one set back to the catalogue's value drops its
     * correction. An event compiled from sources (no catalogue) is never refreshed by an import: nothing to record.
     */
-  private def recordCorrections(id: BEventRow.Id, fields: Map[String, Json])(using DbCon): Unit =
+  private def recordCorrections(id: BEventRow.Id, fields: Map[String, Json])(using DbCon)(using Creator.New): Unit =
     if fields.nonEmpty then
       EventImportRepo.upstreamOf(Event.Id.assume(id.value)).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
@@ -263,18 +265,20 @@ private[events] object EventRepo:
   /** Create or replace one event. On an event an import created, the fields that differ from its catalogue's are
     * recorded as corrections ([[recordCorrections]]) — they survive a re-import.
     */
-  def put(id: BEventRow.Id, in: EventPut)(using DbCon): Unit =
+  def put(id: BEventRow.Id, in: EventPut)(using DbCon)(using creator: Creator.New): Unit =
     val geom = in.geometry.map(_.value.trim).filter(_.nonEmpty)
     val scale = in.scale.flatMap(v => EventScale.parse(v).flatten)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after,
-                              historicity, geom, place_id, parent_id, description, citekey, scale)
+                              historicity, geom, place_id, parent_id, description, citekey, scale, creator)
           VALUES ($id, ${in.label}, ${in.kind},
                   ${in.timeSpan.notBefore}, ${in.timeSpan.beginBy},
                   ${in.timeSpan.endFrom}, ${in.timeSpan.notAfter},
                   ${in.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL
                        ELSE ST_SetSRID(ST_GeomFromGeoJSON($geom::text), 4326) END,
-                  ${in.placeId}, ${in.parentId}, ${in.description}, ${in.citekey}, $scale)
+                  ${in.placeId}, ${in.parentId}, ${in.description}, ${in.citekey}, $scale, ${StoredCreator.column(
+        creator
+      )}::jsonb)
           ON CONFLICT (id) DO UPDATE SET
             label = EXCLUDED.label, kind = EXCLUDED.kind,
             not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
@@ -319,7 +323,7 @@ private[events] object EventRepo:
     * ([[recordCorrections]]): the next import of its catalogue keeps it (and retires it once the catalogue agrees, or
     * flags a conflict when the catalogue changes to something else).
     */
-  def patch(id: BEventRow.Id, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
+  def patch(id: BEventRow.Id, p: EventPatch)(using DbCon)(using Creator.New): Either[Api.Error, Unit] =
     if !exists(id) then
       Left(
         Api.Error(

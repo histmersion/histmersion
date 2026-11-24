@@ -16,6 +16,8 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.
@@ -66,24 +68,25 @@ private[acquisition] object CandidateRepo:
       watermark: Option[CandidateWatch.Watermark],
       error: Option[Problem],
       found: CandidateWatch.LastFound
-  )(using DbCon): Unit =
+  )(using DbCon)(using creator: Creator.New): Unit =
     val kept = error.map(NonEmptyVector.of(_))
     val _ =
-      sql"""INSERT INTO candidate_watches (goal, kind, subject, index_name, watermark, last_run, last_error, last_found)
-                    VALUES (${w.goal}, ${w.kind}, ${w.subject}, ${w.index}, $watermark::date, now(), $kept, $found)
+      sql"""INSERT INTO candidate_watches (goal, kind, subject, index_name, watermark, last_run, last_error, last_found, creator)
+                    VALUES (${w.goal}, ${w.kind}, ${w.subject}, ${w.index}, $watermark::date, now(), $kept, $found, ${StoredCreator
+          .column(creator)}::jsonb)
                     ON CONFLICT (goal, kind, subject, index_name) DO UPDATE SET
                       watermark = coalesce(EXCLUDED.watermark, candidate_watches.watermark), last_run = now(),
                       last_error = EXCLUDED.last_error, last_found = EXCLUDED.last_found""".update.run()
 
   /** Store a candidate: a new one (`true`), or one found again — every watch that found it kept, its state as it was.
     */
-  def upsert(c: Source.Candidate)(using DbCon): Boolean =
+  def upsert(c: Source.Candidate)(using DbCon)(using creator: Creator.New): Boolean =
     val existed =
       sql"SELECT 1 FROM source_candidates WHERE goal = ${c.goal} AND doi = ${c.doi}".query[Int].run().nonEmpty
     Unused(
-      sql"""INSERT INTO source_candidates (goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by)
+      sql"""INSERT INTO source_candidates (goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, creator)
                     VALUES (${c.goal}, ${c.doi}, ${c.title}, ${c.year}, ${c.authors}::text[], ${c.venue}, ${c.abstractText},
-                            ${c.isOa}, ${c.arxivId}, ${c.foundBy}::text[])
+                            ${c.isOa}, ${c.arxivId}, ${c.foundBy}::text[], ${StoredCreator.column(creator)}::jsonb)
                     ON CONFLICT (goal, doi) DO UPDATE SET last_seen = now(),
                       found_by = (SELECT array_agg(DISTINCT f) FROM unnest(source_candidates.found_by || EXCLUDED.found_by) f),
                       abstract = coalesce(source_candidates.abstract, EXCLUDED.abstract),

@@ -11,9 +11,12 @@ import com.histmersion.api.automation.{AgentRole, AgentsApi, ModelChains}
 import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.domain.automation.Approval
 import com.histmersion.api.Api
+import com.histmersion.domain.Creator
 
 /** REST wiring of the embedded agents — every route delegates to [[AgentsControllers]]. */
 object AgentsRoutes:
+
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
   def apply(a: AgentsControllers): List[ServerEndpoint[Any, Identity]] = List(
     AgentsApi.generate.serverLogic[Identity](req => a.generate(req).left.map(Api.Error(_))),

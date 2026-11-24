@@ -15,6 +15,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** What research's articles answer, the same on the database and in memory: an article written whole and merged from
   * patches with its token and versions, its link graph, a critique reason refused when no source is stored, renamed

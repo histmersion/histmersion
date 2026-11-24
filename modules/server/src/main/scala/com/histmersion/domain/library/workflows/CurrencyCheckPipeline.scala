@@ -30,6 +30,7 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always
@@ -52,7 +53,7 @@ final class CurrencyCheckPipeline(
   val pipeline: Pipeline = Pipeline.CurrencyCheck
   import CurrencyCheckPipeline.*
 
-  def run(ctx: RunCtx)(using WritePermit): Either[Halt, PipelineDef.Summary] =
+  def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
     val goal = goalOf(ctx)
     for
       targets <- ctx.code[List[Target]](AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
@@ -82,7 +83,7 @@ final class CurrencyCheckPipeline(
           .map(s => Target(ck, s.source.doi.filter(_.value.trim.nonEmpty).flatMap(d => Doi.option(d.value.trim))))
       )
 
-  private def assess(ctx: RunCtx, ts: List[Target])(using WritePermit): Assessed =
+  private def assess(ctx: RunCtx, ts: List[Target])(using WritePermit)(using Creator.New): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
       upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
         case Left(m)  => ctx.warn(s"assess ${t.citekey}: ${m.sentences.mkString("; ")}"); None
@@ -93,7 +94,9 @@ final class CurrencyCheckPipeline(
     }
     Assessed(Assessed.Checked(results.flatten.size), results.flatten.collect { case (ck, true) => ck })
 
-  private def followups(ctx: RunCtx, goal: Goal.Slug, ts: List[Target])(using WritePermit): Followed =
+  private def followups(ctx: RunCtx, goal: Goal.Slug, ts: List[Target])(using
+      WritePermit
+  )(using Creator.New): Followed =
     val queued = queuedDois()
     val counts = ts.filter(_.doi.isDefined).map { t =>
       upstream().followups(

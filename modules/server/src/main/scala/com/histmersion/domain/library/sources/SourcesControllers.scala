@@ -30,6 +30,7 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.time.Timer
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.domain.Creator
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -114,7 +115,7 @@ final class SourcesControllers(
       citekey: Citekey,
       in: Source.Put,
       strict: SourcesControllers.PutStrict = SourcesControllers.PutStrict(false)
-  ): Either[Api.Error, Source.WithFindings] =
+  )(using Creator.New): Either[Api.Error, Source.WithFindings] =
     maintenance.guard(WriteGate.OperationName("put_source")):
       val ck = current(AliasKinds.SourceRecords, citekey)
       Source.Write
@@ -131,7 +132,7 @@ final class SourcesControllers(
       citekey: Citekey,
       p: Source.Patch,
       strict: SourcesControllers.PatchStrict = SourcesControllers.PatchStrict(false)
-  ): Either[Api.Error, Source.WithFindings] =
+  )(using Creator.New): Either[Api.Error, Source.WithFindings] =
     maintenance.guard(WriteGate.OperationName("patch_source")):
       // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
       strictGate(strict.value, issuesOf(p.summary, p.notes))
@@ -140,7 +141,7 @@ final class SourcesControllers(
         .map(withFormatting)
 
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
-  def rename(citekey: Citekey, req: Rename.Request): Either[Api.Error, Source.Renamed] =
+  def rename(citekey: Citekey, req: Rename.Request)(using Creator.New): Either[Api.Error, Source.Renamed] =
     maintenance.guard(WriteGate.OperationName("rename_source")):
       val from = current(AliasKinds.SourceRecords, citekey)
       Citekeys
@@ -167,7 +168,7 @@ final class SourcesControllers(
     * (refused while anything cites the source), and the stored originals are removed after the commit, best effort. Not
     * an MCP tool, like deleting an article: a person's decision.
     */
-  def delete(citekey: Citekey, req: Source.DeleteRequest): Either[Api.Error, Source.Deletion] =
+  def delete(citekey: Citekey, req: Source.DeleteRequest)(using Creator.New): Either[Api.Error, Source.Deletion] =
     val ck = current(AliasKinds.SourceRecords, citekey)
     if !req.apply.value then
       sources
@@ -210,61 +211,62 @@ final class SourcesControllers(
   /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
-  def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard(WriteGate.OperationName("import")):
-    SourceNote.parseNote(
-      SourceNote.Text(req.text.value),
-      req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))
-    ) match
-      case None         => Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.Frontmatter)))
-      case Some(parsed) =>
-        val raw = parsed.citekey
-        if raw.value.isEmpty then Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.NoteCitekey)))
-        else
-          Citekey.parse(raw.value) match
-            case Left(problem) => Left(Write.invalid(problem))
-            case Right(ck)     =>
-              if sources.aliasOf(ck).isDefined then
-                notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
-              else if !req.force.value && req.mtime.exists(m =>
-                  SeedImport.isStale(sources.updatedAtMillis, ck, SeedNote.ModifiedMillis(m.value))
-                )
-              then
-                Right(
-                  SeedResult(
-                    SeedResult.Imported(0),
-                    Nil,
-                    SeedResult.EdgesResolved(0),
-                    List(SeedResult.Skipped(raw.value))
+  def importNote(req: NoteImport)(using Creator.New): Either[Api.Error, SeedResult] =
+    maintenance.guard(WriteGate.OperationName("import")):
+      SourceNote.parseNote(
+        SourceNote.Text(req.text.value),
+        req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))
+      ) match
+        case None         => Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.Frontmatter)))
+        case Some(parsed) =>
+          val raw = parsed.citekey
+          if raw.value.isEmpty then Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.NoteCitekey)))
+          else
+            Citekey.parse(raw.value) match
+              case Left(problem) => Left(Write.invalid(problem))
+              case Right(ck)     =>
+                if sources.aliasOf(ck).isDefined then
+                  notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
+                else if !req.force.value && req.mtime.exists(m =>
+                    SeedImport.isStale(sources.updatedAtMillis, ck, SeedNote.ModifiedMillis(m.value))
                   )
-                )
-              else
-                // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some
-                // OCR output and Postgres `text` rejects them.
-                val withBody = req.body.map(_.value.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
-                  case Some(b) => parsed.modify(_.ocrMarkdown).setTo(Some(Source.OcrMarkdown(b)))
-                  case None    => parsed
-                // figures of the old file pipeline (plan §1.8): every `…/figures/<name>` spelling is
-                // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
-                // away, and any base64 payloads that travelled with the note stored
-                val normalised =
-                  withBody
-                    .modify(_.ocrMarkdown)
-                    .using(
-                      _.map(m =>
-                        Source.OcrMarkdown(
-                          AssetLinks
-                            .normalizeBody(AssetLinks.Body(m.value), AssetLinks.Title(withBody.title.value))
-                            .value
+                then
+                  Right(
+                    SeedResult(
+                      SeedResult.Imported(0),
+                      Nil,
+                      SeedResult.EdgesResolved(0),
+                      List(SeedResult.Skipped(raw.value))
+                    )
+                  )
+                else
+                  // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some
+                  // OCR output and Postgres `text` rejects them.
+                  val withBody = req.body.map(_.value.filterNot(_.toInt == 0)).filter(_.nonEmpty) match
+                    case Some(b) => parsed.modify(_.ocrMarkdown).setTo(Some(Source.OcrMarkdown(b)))
+                    case None    => parsed
+                  // figures of the old file pipeline (plan §1.8): every `…/figures/<name>` spelling is
+                  // normalised to the canonical `assets/<name>` and the OCR's picture-text dumps folded
+                  // away, and any base64 payloads that travelled with the note stored
+                  val normalised =
+                    withBody
+                      .modify(_.ocrMarkdown)
+                      .using(
+                        _.map(m =>
+                          Source.OcrMarkdown(
+                            AssetLinks
+                              .normalizeBody(AssetLinks.Body(m.value), AssetLinks.Title(withBody.title.value))
+                              .value
+                          )
                         )
                       )
-                    )
-                val _ = sources.put(normalised, Caller.Local)
-                if req.assets.isEmpty then
-                  Right(SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
-                else
-                  figures
-                    .putFigures(ck, req.assets)
-                    .map(_ => SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
+                  val _ = sources.put(normalised, Caller.Local)
+                  if req.assets.isEmpty then
+                    Right(SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
+                  else
+                    figures
+                      .putFigures(ck, req.assets)
+                      .map(_ => SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
 
   // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
 
@@ -293,7 +295,7 @@ final class SourcesControllers(
   /** `POST /api/sources/{citekey}/lint/fix` — the wording-safe repairs to summary and notes, written as one patch
     * guarded by the `updatedAt` just read, then the report of what is left.
     */
-  def fix(citekey: Citekey): Either[Api.Error, FormatReport] =
+  def fix(citekey: Citekey)(using Creator.New): Either[Api.Error, FormatReport] =
     maintenance.guard(WriteGate.OperationName("fix_source_format")):
       val ck = canonical(citekey)
       sources.load(ck).toRight(notFound(citekey)).flatMap { s =>

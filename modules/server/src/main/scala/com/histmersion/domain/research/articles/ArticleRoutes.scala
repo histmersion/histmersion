@@ -14,6 +14,7 @@ import sttp.tapir.*
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.Title
+import com.histmersion.domain.Creator
 
 /** The articles over HTTP: the REST routes of the compiled wiki, the rendered page at `/article/{slug}` and the
   * `/articles` redirect, in the order route matching needs (`…/export`, `…/versions` and `…/import` before `…/{slug}`).
@@ -39,6 +40,7 @@ object ArticleRoutes:
       pages: PageBuilder,
       shell: ArticleHtml.Shell
   ): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val rest: List[ServerEndpoint[Any, Identity]] = List(
       Api.articles.serverLogicSuccess[Identity](q => articles.list(q)),
       Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs.map(s => ReviewGoal.Slug(s.value))),

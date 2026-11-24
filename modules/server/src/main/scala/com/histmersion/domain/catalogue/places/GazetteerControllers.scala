@@ -17,6 +17,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.PlacesJobKinds
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The gazetteer's background work as REST, MCP and the CLI reach it: a source a plugin registers fetched, the land
   * fetched, the hierarchy built from spatial containment — one at a time (each rewrites places the others read), each a
@@ -35,7 +36,7 @@ final class GazetteerControllers(
   private def job(kind: Job.Kind, about: String)(
       // runs on the job's thread, under the job's unit permit (never the caller's, whose block has ended by then)
       run: WritePermit ?=> Either[Problem, String]
-  )(using WritePermit): Either[Api.Error, JobInfo] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, JobInfo] =
     BackgroundJob.start(
       ds,
       maintenance.workers,
@@ -60,7 +61,7 @@ final class GazetteerControllers(
       caller: Caller,
       source: Api.ExternalPlaces.Source,
       dryRun: Api.Apply
-  ): Either[Api.Error, Place.ImportResult] =
+  )(using Creator.New): Either[Api.Error, Place.ImportResult] =
     maintenance.guard(WriteGate.OperationName("places/fetch")):
       val name = source.value.trim.toLowerCase
       if name == NaturalEarthLand.name then land(GazetteerControllers.DryRun(dryRun.value))
@@ -92,7 +93,9 @@ final class GazetteerControllers(
   /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025); like the gazetteers, a real run
     * is a background job — two downloads and a re-clip of every polity.
     */
-  private def land(dryRun: GazetteerControllers.DryRun)(using WritePermit): Either[Api.Error, Place.ImportResult] =
+  private def land(
+      dryRun: GazetteerControllers.DryRun
+  )(using WritePermit)(using Creator.New): Either[Api.Error, Place.ImportResult] =
     if dryRun.value then imports.land(dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
     else
       job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), "fetch land")(
@@ -114,7 +117,7 @@ final class GazetteerControllers(
   /** `POST /api/places/build-hierarchy` — parent-child edges from spatial containment, as a background job (ST_Contains
     * across thousands of polygons is slow): the answer carries its id, the finished job's summary the counts.
     */
-  def buildHierarchy(caller: Caller): Either[Api.Error, SpatialHierarchyResult] =
+  def buildHierarchy(caller: Caller)(using Creator.New): Either[Api.Error, SpatialHierarchyResult] =
     maintenance.guard(WriteGate.OperationName("places/build-hierarchy")):
       job(
         Job.Kind.assume(PlacesJobKinds.PlacesHierarchy.kind.value),

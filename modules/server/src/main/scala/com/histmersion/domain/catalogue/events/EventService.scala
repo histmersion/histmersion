@@ -45,6 +45,7 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.LeadFacts
 import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -76,10 +77,10 @@ trait EventService:
   /** Create or replace one event; on one an import created, the fields that differ from its catalogue's are recorded as
     * corrections.
     */
-  def put(id: Event.Id, in: EventPut)(using WritePermit): Unit
+  def put(id: Event.Id, in: EventPut)(using WritePermit)(using Creator.New): Unit
 
   /** Change the fields `p` sets; on one an import created, each changed field is recorded as a correction. */
-  def patch(id: Event.Id, p: EventPatch)(using WritePermit): Either[Api.Error, Unit]
+  def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit]
 
   /** A new id; the old one stays an alias, what names the event follows. */
   def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit]
@@ -118,8 +119,9 @@ object EventService:
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value)))
-    def put(id: Event.Id, in: EventPut)(using WritePermit): Unit = db.write(EventRepo.put(BEventRow.Id(id.value), in))
-    def patch(id: Event.Id, p: EventPatch)(using WritePermit): Either[Api.Error, Unit] =
+    def put(id: Event.Id, in: EventPut)(using WritePermit)(using Creator.New): Unit =
+      db.write(EventRepo.put(BEventRow.Id(id.value), in))
+    def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       db.write(EventRepo.patch(BEventRow.Id(id.value), p))
     def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit] =
       db.write(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
@@ -372,7 +374,7 @@ object EventService:
           .modify(_.lastCorrectionId)
           .setTo(CatalogueState.LastCorrectionId(n))
 
-    def put(id: Event.Id, in: EventPut)(using WritePermit): Unit =
+    def put(id: Event.Id, in: EventPut)(using WritePermit)(using Creator.New): Unit =
       val _ = state.updateAndGet { s =>
         val before = s.events.find(_.id == id)
         val sameSpan = before.exists(_.timeSpan == in.timeSpan)
@@ -406,7 +408,7 @@ object EventService:
         withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
       }
 
-    def patch(id: Event.Id, p: EventPatch)(using WritePermit): Either[Api.Error, Unit] =
+    def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       if !state.get.events.exists(_.id == id) then Left(missing(id))
       else
         val _ = state.updateAndGet { s =>

@@ -28,6 +28,8 @@ import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -142,7 +144,7 @@ private[places] object PlaceRepo:
     */
   def upsertPlaces(batch: List[Place.Input], dataset: Dataset = Dataset.Seed)(using
       DbCon
-  ): Place.ImportResult =
+  )(using Creator.New): Place.ImportResult =
     if batch.isEmpty then
       Place.ImportResult(
         Place.ImportResult.Places(0),
@@ -167,18 +169,19 @@ private[places] object PlaceRepo:
     */
   private def upsertIn(all: List[Place.Input], dataset: Dataset)(using
       DbCon
-  ): Place.ImportResult =
+  )(using creator: Creator.New): Place.ImportResult =
     val skip = suppressed(all.map(_.place.id.value).distinct)
     val batch = if skip.isEmpty then all else all.filterNot(in => skip.contains(in.place.id.value))
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
       val g = in.place.geometry
       val p = bounds(in.place.bounds)
-      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset)
+      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset, creator)
             VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                     CASE WHEN $g::text IS NULL THEN NULL
                          ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END,
-                    $p::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire})
+                    $p::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire}, ${StoredCreator
+          .column(creator)}::jsonb)
             ON CONFLICT (id) DO UPDATE SET
               label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
               period = EXCLUDED.period, source = EXCLUDED.source,
@@ -1156,7 +1159,7 @@ private[places] object PlaceRepo:
     */
   def addPlace(in: Place.Input)(using
       DbCon
-  ): Either[Api.Error, Place.Summary] =
+  )(using Creator.New): Either[Api.Error, Place.Summary] =
     val id = in.place.id
     val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
     val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption

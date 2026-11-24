@@ -26,6 +26,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
+import com.histmersion.domain.Creator
 
 /** The events for agents: list or show one (its page, with its pictures and the articles citing its sources), and patch
   * one.
@@ -116,6 +117,7 @@ object EventCardTools:
       .modify(_.wikidata)(_.description("The Wikidata item the event is (Q…); \"\" clears it"))
 
   def apply(events: EventsControllers, page: EventCardView) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val listTool =
       tool("events")
         .description(

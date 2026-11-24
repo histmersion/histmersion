@@ -36,6 +36,8 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.server.AcquisitionTesting
 import com.histmersion.domain.library.acquisition.RetractionWatchClient
 import com.histmersion.domain.Caller
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
   * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,
@@ -234,7 +236,7 @@ object ArchiveTrafficSuite:
       AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:
-      override def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest) =
+      override def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest)(using Creator.New) =
         h.archiveImport(item, file, req)
     val service = CollectionsService.InMemory(
       java.util.concurrent.atomic.AtomicReference(Nil),

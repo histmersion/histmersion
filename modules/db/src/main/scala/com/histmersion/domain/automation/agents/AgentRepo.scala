@@ -33,6 +33,8 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.Stopped
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -679,11 +681,12 @@ object AgentRepo:
       state: ApprovalState,
       result: Option[ApprovalInfo.Result],
       now: java.time.Instant
-  )(using DbCon): ApprovalInfo =
+  )(using DbCon)(using creator: Creator.New): ApprovalInfo =
     val decided = Option.when(state != ApprovalState.Open)(now.toString)
     Unused(
-      sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at)
-          VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
+      sql"""INSERT INTO approvals (job_id, seq, kind, subject, proposal, state, result, decided_at, creator)
+          VALUES ($jobId, $seq, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz, ${StoredCreator
+          .column(creator)}::jsonb)
           ON CONFLICT (job_id, seq) WHERE seq IS NOT NULL DO NOTHING""".update.run(),
       Unused.Why.Idempotent
     )
@@ -701,11 +704,12 @@ object AgentRepo:
       state: ApprovalState,
       result: Option[ApprovalInfo.Result],
       now: java.time.Instant
-  )(using DbCon): ApprovalInfo =
+  )(using DbCon)(using creator: Creator.New): ApprovalInfo =
     val decided = Option.when(state != ApprovalState.Open)(now.toString)
     val id =
-      sql"""INSERT INTO approvals (job_id, kind, subject, proposal, state, result, decided_at)
-            VALUES ($jobId, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz)
+      sql"""INSERT INTO approvals (job_id, kind, subject, proposal, state, result, decided_at, creator)
+            VALUES ($jobId, ${kind.wire}, $subject, $payload::jsonb, ${state.wire}, $result, $decided::timestamptz, ${StoredCreator
+          .column(creator)}::jsonb)
             RETURNING id""".query[ApprovalInfo.Id].run().head
     approval(id).get
 

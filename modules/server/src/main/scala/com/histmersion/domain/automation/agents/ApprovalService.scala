@@ -23,6 +23,7 @@ import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.automation.Run
+import com.histmersion.domain.Creator
 
 /** The approvals, as the engine's features reach them: what a run proposed for a person to decide — open until decided
   * (once), or recorded approved when it was applied at once — and the reads the lists, the digest, the autopilot and
@@ -72,7 +73,7 @@ trait ApprovalService:
       payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
       result: Option[ApprovalService.StepOutcome] = None
-  )(using WritePermit): ApprovalInfo
+  )(using WritePermit)(using Creator.New): ApprovalInfo
 
   /** A proposal about a goal or an article that no run waits for. */
   def openSubject(
@@ -82,7 +83,7 @@ trait ApprovalService:
       payload: ApprovalService.Payload,
       state: ApprovalState = ApprovalState.Open,
       result: Option[ApprovalService.SubjectOutcome] = None
-  )(using WritePermit): ApprovalInfo
+  )(using WritePermit)(using Creator.New): ApprovalInfo
 
   /** What run `jobId` opened (of `kind`), oldest first. */
   def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind] = None): List[ApprovalInfo]
@@ -178,7 +179,7 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[StepOutcome]
-    )(using WritePermit): ApprovalInfo =
+    )(using WritePermit)(using Creator.New): ApprovalInfo =
       db.write(
         AgentRepo.openForStep(
           jobId,
@@ -198,7 +199,7 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[SubjectOutcome]
-    )(using WritePermit): ApprovalInfo =
+    )(using WritePermit)(using Creator.New): ApprovalInfo =
       db.write(
         AgentRepo.openSubject(
           jobId,
@@ -368,7 +369,7 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[StepOutcome]
-    )(using WritePermit): ApprovalInfo =
+    )(using WritePermit)(using Creator.New): ApprovalInfo =
       val at = now
       val _ =
         AutomationState.insertApproval(this.state)(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value))(
@@ -400,7 +401,7 @@ object ApprovalService:
         payload: Payload,
         state: ApprovalState,
         result: Option[SubjectOutcome]
-    )(using WritePermit): ApprovalInfo =
+    )(using WritePermit)(using Creator.New): ApprovalInfo =
       val at = now
       AutomationState
         .insertApproval(this.state)(_ => false)(id =>

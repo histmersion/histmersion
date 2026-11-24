@@ -15,6 +15,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.plugin.Plugin
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The recorded traffic and results of the network gazetteers (Cliopatria, AWMC, ChronOntology): each download answered
   * by a loopback server from a fixture (Cliopatria's zipped, as its upstream ships it) — the request it sent, every

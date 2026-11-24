@@ -23,6 +23,7 @@ import com.histmersion.domain.automation.goals.BGoalLinkRow
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
@@ -130,7 +131,7 @@ trait ManagerContext:
   def parentOf(slug: Goal.Slug): Option[Goal.Slug]
   def linkGoal(goal: Goal.Slug, kind: LinkKind, ref: BGoalLinkRow.Ref, note: Option[BGoalLinkRow.Note])(using
       WritePermit
-  ): Unit
+  )(using Creator.New): Unit
 
   /** The references a goal links of `kind`. */
   def goalLinks(goal: Goal.Slug, kind: LinkKind): List[BGoalLinkRow.Ref]
@@ -144,7 +145,7 @@ trait ManagerContext:
   // ── the engine's mechanics ────────────────────────────────────────────────────────────────────
 
   /** Manager `id` of kind `k` exists (created paused, or active while the autopilot is on). */
-  def ensure(k: Kind, id: ManagerLight.Id, goal: Option[Goal.Slug])(using WritePermit): Boolean
+  def ensure(k: Kind, id: ManagerLight.Id, goal: Option[Goal.Slug])(using WritePermit)(using Creator.New): Boolean
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened. */
   def chainReview(
@@ -157,7 +158,7 @@ trait ManagerContext:
   /** An approved `article-plan`'s compile items. */
   def applyPlan(a: ApprovalInfo, out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]])(using
       WritePermit
-  ): RowCount
+  )(using Creator.New): RowCount
 
   /** Settle a pending item without a run. */
   def settleNow(
@@ -188,7 +189,7 @@ trait ManagerContext:
       state: ItemState,
       what: ManagerContext.StartWhat,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id]
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id]
 
   /** The one-run rule (infer-filter, extend, enrich, propose, compile, plan, sweeps) after a run settled. */
   def evaluateStep(
@@ -200,7 +201,7 @@ trait ManagerContext:
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]],
       kind: ManagerKindDefinition
-  )(using WritePermit): Unit
+  )(using WritePermit)(using Creator.New): Unit
 
 object ManagerContext:
   export ManagerPolicy.Next.Retry.Failures as FailureCount

@@ -7,10 +7,12 @@ import com.histmersion.domain.Caller
 import com.histmersion.{Offset, PageSize}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
+import com.histmersion.domain.Creator
 
 /** The attestations' endpoints bound to their controllers, in their old order. */
 object AttestationsRoutes:
   def apply(attestations: AttestationsControllers): List[ServerEndpoint[Any, Identity]] =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local
     List(
       Api.attestations.serverLogicSuccess[Identity](q =>

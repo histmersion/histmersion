@@ -35,6 +35,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.Creator
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,
@@ -151,7 +152,7 @@ final class EventsControllers(
       .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id"))))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
-  def put(caller: Caller, id: Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
+  def put(caller: Caller, id: Event.Id, in: EventPut)(using Creator.New): Either[Api.Error, EventEntry] =
     maintenance.guard(WriteGate.OperationName("put_event")):
       val to = now(id)
       validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
@@ -159,7 +160,7 @@ final class EventsControllers(
         get(to)
       }
 
-  def patch(caller: Caller, id: Event.Id, p: EventPatch): Either[Api.Error, EventEntry] =
+  def patch(caller: Caller, id: Event.Id, p: EventPatch)(using Creator.New): Either[Api.Error, EventEntry] =
     maintenance.guard(WriteGate.OperationName("patch_event")):
       val to = now(id)
       validScale(p.scale)

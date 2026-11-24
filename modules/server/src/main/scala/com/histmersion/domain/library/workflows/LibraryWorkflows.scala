@@ -9,6 +9,8 @@ import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.agents.StepAgent
 import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.domain.automation.workflows.ToolContribution
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
+import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.workflows.WorkflowDefinition
 import com.histmersion.util.database.Transactor
 
@@ -41,6 +43,7 @@ final class LibraryWorkflows(
         .option(ck.value)
         .flatMap(c => site.sources.get(c, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
     p =>
+      given Creator.New = InTreeWorkflow.ApprovalEffects.creator
       site.sources
         .patch(p.citekey, p.patch)
         .left

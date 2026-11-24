@@ -11,6 +11,7 @@ import com.histmersion.util.database.WritePermit
 
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import com.histmersion.api.Api
+import com.histmersion.domain.Creator
 
 /** `merge apply` in the background (docs/research-merge-import.md §7.7, open question 3): the apply takes a `pg_dump`
   * before it writes, which on a large collection outlasts an HTTP request. One apply at a time — a second is refused
@@ -35,7 +36,7 @@ final class MergeApplyJobs(
     */
   def start(bundle: Sha256, planHash: MergeRow.PlanHash)(
       run: () => WritePermit ?=> Either[Problems, MergeApplyResult]
-  )(using WritePermit): Either[Api.Error, MergeApplyJob] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
         Left(

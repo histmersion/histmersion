@@ -19,6 +19,8 @@ import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a
@@ -252,10 +254,10 @@ private[places] object PlaceBundleRepo:
     places.foreach { p =>
       val range = rangeOrAll(p.period)
       val props = p.properties.map(BundleFormat.print)
-      sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at)
+      sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at, creator)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
               $range::int8range, ${p.source}, $props::jsonb, 'local',
-              ${p.updatedAt}::timestamptz)
+              ${p.updatedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label, kind = EXCLUDED.kind,
               geom = EXCLUDED.geom, period = EXCLUDED.period, source = EXCLUDED.source,
               properties = EXCLUDED.properties, dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

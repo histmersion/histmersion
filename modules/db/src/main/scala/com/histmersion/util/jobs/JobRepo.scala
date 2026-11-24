@@ -30,6 +30,8 @@ import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.api.exchange.ExchangeJobKinds
 import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no
@@ -84,11 +86,12 @@ object JobRepo:
       sha256: Option[com.histmersion.Sha256],
       acquireItem: Option[JobRow.AcquireItem] = None,
       detail: Option[JobDetail] = None
-  )(using DbCon): JobInfo =
+  )(using DbCon)(using creator: Creator.New): JobInfo =
     val id = java.util.UUID.randomUUID().toString
     val js = detail.map(Jsonb.write[JobDetail](_))
-    sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail)
-          VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, $js::jsonb)""".update.run()
+    sql"""INSERT INTO jobs (id, kind, citekey, status, sha256, acquire_item, detail, creator)
+          VALUES ($id, $kind, $citekey, ${JobState.Queued.wire}, $sha256, $acquireItem, $js::jsonb, ${StoredCreator
+        .column(creator)}::jsonb)""".update.run()
     get(Job.Id.assume(id)).getOrElse(
       JobInfo(
         SpatialHierarchyResult.Job.Id(id),
@@ -239,15 +242,15 @@ object JobRepo:
   // ── runs: jobs that run as checkpointed steps (agent runs) ───────────────────────────────────
 
   /** A new run's row; its id. */
-  def insertRun(r: RunRow)(using DbCon): Run.Id =
+  def insertRun(r: RunRow)(using DbCon)(using creator: Creator.New): Run.Id =
     val id = java.util.UUID.randomUUID().toString
     sql"""INSERT INTO jobs (id, kind, citekey, status, pipeline, pipeline_version, target_kind, target_id,
                             model, budget_usd, budget_tokens, params, acquire_item, goal_slug, parent_job, origin,
-                            dry_run, manager_id, manager_item)
+                            dry_run, manager_id, manager_item, creator)
           VALUES ($id, ${r.kind}, ${r.citekey}, ${r.status},
                   ${r.pipeline}, ${r.pipelineVersion}, ${r.targetKind}, ${r.target}, ${r.model}, ${r.budgetUsd},
                   ${r.budgetTokens}, ${r.params}::jsonb, ${r.acquireItem}, ${r.goal}, ${r.parent}, ${r.origin},
-                  ${r.dryRun}, ${r.managerId}, ${r.managerItem})""".update
+                  ${r.dryRun}, ${r.managerId}, ${r.managerItem}, ${StoredCreator.column(creator)}::jsonb)""".update
       .run()
     Run.Id.applyUnsafe(id)
 
@@ -366,11 +369,14 @@ object JobRepo:
     * its plan in `detail`. A restart fails it as `interrupted` like every other unfinished job ([[failInterrupted]]),
     * so a poll never sees it running forever.
     */
-  def startMergeApply(bundle: MergeRepo.BundleName, planHash: MergeRow.PlanHash)(using DbCon): Job.Id =
+  def startMergeApply(bundle: MergeRepo.BundleName, planHash: MergeRow.PlanHash)(using
+      DbCon
+  )(using creator: Creator.New): Job.Id =
     val id = java.util.UUID.randomUUID().toString
     val js = Jsonb.write[JobDetail](ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash(planHash.value))))
-    sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
-          VALUES ($id, ${ExchangeJobKinds.MergeApply.kind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update
+    sql"""INSERT INTO jobs (id, kind, status, sha256, detail, creator)
+          VALUES ($id, ${ExchangeJobKinds.MergeApply.kind}, ${JobState.Running.wire}, $bundle, $js::jsonb, ${StoredCreator
+        .column(creator)}::jsonb)""".update
       .run()
     Job.Id.assume(id)
 

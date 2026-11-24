@@ -10,6 +10,7 @@ import scala.concurrent.duration.Deadline
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** Every long-running worker of one server, as a restore holds them ([[Quiescent]]): the pools and loops register
   * themselves when the composition builds them, and work that runs once on a thread of its own is started through
@@ -28,7 +29,7 @@ final class Workers(gate: WritePermit.Gate):
     val name: Quiescent.Name = Quiescent.Name("work started once")
     def quiesce(): Unit = ()
     def busy: Vector[Quiescent.Busy] = running.values.asScala.toVector.sorted
-    def restored()(using WritePermit): Unit = ()
+    def restored()(using WritePermit)(using Creator.New): Unit = ()
     def resume(): Unit = ()
 
   registered.add(oneShots)
@@ -72,7 +73,7 @@ final class Workers(gate: WritePermit.Gate):
   /** After a restore: every worker takes up the restored rows. A worker that fails to is logged and named in the
     * answer; the others go on.
     */
-  def reconcileAll()(using WritePermit): List[Problem] =
+  def reconcileAll()(using WritePermit)(using Creator.New): List[Problem] =
     each(Problem.Where("reconciling with the restored database"))(_.restored())
 
   /** The restore has ended: every worker takes work again. */

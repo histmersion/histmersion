@@ -36,6 +36,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until
@@ -92,7 +93,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   override def housework(
       now: Instant,
       draining: => Boolean
-  )(using WritePermit): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
+  )(using WritePermit)(using Creator.New): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
     def lines(f: => List[String]): () => List[ManagerContext.TickLine] =
       () => f.map(ManagerContext.TickLine(_))
     List(
@@ -119,7 +120,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     if item.kind.value == AcquisitionSweep || item.kind.value == CurrencyCheck then
       run.foreach { r =>
         val found = if item.kind.value == AcquisitionSweep then AcquisitionSweepPipeline.picked(c, r) else Nil
@@ -211,7 +212,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id] =
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
         Goal.Slug.option(item.target.value).flatMap(work.agents.host.goal(_).toOption) match

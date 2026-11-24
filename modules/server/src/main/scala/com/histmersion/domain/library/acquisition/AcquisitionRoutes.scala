@@ -27,6 +27,8 @@ final class AcquisitionRoutes(
     gaps: CalibreGapControllers
 ):
 
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
+
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(
     AcquireApi.discover.serverLogic[Identity]((q, since, sort, limit, notInDb) =>
       h.discover(q, since, sort, limit, notInDb)

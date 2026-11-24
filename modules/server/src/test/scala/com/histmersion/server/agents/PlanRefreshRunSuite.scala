@@ -62,6 +62,7 @@ import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.server.ConverterWiring
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** #989 against a `*_test` database: a pool paused only because its reading is stale takes a fresh one before it pauses
   * (the Claude probe, the ChatGPT app-server read) — once per stale-minutes, one at a time; a run paused on such a pool

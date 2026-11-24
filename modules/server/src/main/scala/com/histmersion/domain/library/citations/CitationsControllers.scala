@@ -9,6 +9,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
+import com.histmersion.domain.Creator
 
 /** The citation graph over REST and MCP. Each row's far end arrives classified ([[NeighborTarget]]), so every renderer
   * (MCP, the CLI over HTTP, the HTML page) links sources, articles and unresolved targets without a second lookup. A
@@ -28,6 +29,6 @@ final class CitationsControllers(citations: CitationService, sources: SourceServ
     citations.contradictions(citekey.map(canonical), since)
 
   /** `POST /api/edges/resolve`: the parked edges whose target now names one stored source, promoted. */
-  def resolveEdges: Either[Api.Error, EdgesResolved] =
+  def resolveEdges(using Creator.New): Either[Api.Error, EdgesResolved] =
     maintenance.guard(WriteGate.OperationName("edges/resolve")):
       Right(EdgesResolved(EdgesResolved.Resolved(sources.resolveEdges(Caller.Local).value)))

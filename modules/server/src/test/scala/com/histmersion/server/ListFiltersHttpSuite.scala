@@ -20,6 +20,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.api.automation.Activity
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** The list filters over real HTTP and MCP (core `ListFilters`): `/api/agents/approvals`, `/api/agents/runs` and
   * `/api/jobs` filter on the server, the body stays the plain array, the facet counts come back in their header, a bad

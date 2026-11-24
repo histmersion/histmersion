@@ -23,6 +23,7 @@ import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators.given
 
 /** [[BackgroundJob]] (#1946): the one runner of the server's long work. Pure parts always; the job rows on a test
   * database (gated on HISTMERSION_TEST_DB_URL).

@@ -16,6 +16,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.Creator
 
 /** `event_links` for agents: the sources that may discuss an event, their confirmation (an attestation from a passage
   * that names it), and the leads catalogue events raise.
@@ -50,6 +51,7 @@ object EventLinksTools:
       .modify(_.kind)(_.description("Leads: a kind (eruption, battle…) or natural | human"))
 
   def apply(links: EventLinksControllers) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val linksTool =
       tool("event_links")
         .description(

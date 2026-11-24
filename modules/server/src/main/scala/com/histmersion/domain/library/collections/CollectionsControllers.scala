@@ -32,6 +32,7 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.Api
 import com.histmersion.util.problem.Problems
+import com.histmersion.domain.Creator
 
 /** The collections' endpoints and tools over [[CollectionsService]]: the citekey checked where one is named, every
   * write behind the maintenance lock.
@@ -57,14 +58,14 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
       caller: Caller,
       name: CollectionsService.CollectionName,
       req: CollectionImportRequest
-  ): Either[Api.Error, CollectionImported] =
+  )(using Creator.New): Either[Api.Error, CollectionImported] =
     maintenance.guard(WriteGate.OperationName("collections/import"))(service.importItem(caller, name, req))
 
   def link(
       caller: Caller,
       name: CollectionsService.CollectionName,
       req: CollectionLinkRequest
-  ): Either[Api.Error, CollectionLinked] =
+  )(using Creator.New): Either[Api.Error, CollectionLinked] =
     maintenance.guard(WriteGate.OperationName("collections/link"))(service.link(caller, name, req))
 
   def push(
@@ -132,5 +133,5 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   def archiveInfo(caller: Caller, id: domain.library.ArchiveId): Either[Api.Error, ArchiveItem] =
     service.archiveInfo(id)
 
-  def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
+  def archiveImport(caller: Caller, req: ArchiveImportRequest)(using Creator.New): Either[Api.Error, Ingest.Report] =
     service.archiveImport(caller, req)

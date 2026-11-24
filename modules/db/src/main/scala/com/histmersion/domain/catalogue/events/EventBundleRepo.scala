@@ -23,6 +23,8 @@ import com.histmersion.api.catalogue.EventScale
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a
@@ -247,14 +249,15 @@ private[events] object EventBundleRepo:
       val names = e.names.getOrElse(Nil)
       sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,
               historicity, geom, place_id, description, citekey, updated_at, scale,
-              catalogue, names, wikidata, central, plus_minus, dating_method)
+              catalogue, names, wikidata, central, plus_minus, dating_method, creator)
             VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
               ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
               ${e.placeId.map(p =>
           placeHere(BPlaceRow.Id(p.value))
         )}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
               ${e.scale.flatMap(s => EventScale.parse(EventSummary.Scale(s.value)).flatten)},
-              ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod})
+              ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod}, ${StoredCreator
+          .write(Creator.unrecorded)}::jsonb)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
               end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,
@@ -379,10 +382,10 @@ private[events] object EventBundleRepo:
         target.filter(t => newer(here.get((c.targetKind.value, t, c.field.value)), Some(Bundle.UpdatedAt(at)))).foreach {
           t =>
             sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now,
-                  status, created_at, updated_at, checked_at)
+                  status, created_at, updated_at, checked_at, creator)
                 VALUES (${c.targetKind}, $t, ${c.field}, ${c.value}::jsonb, ${c.upstream}, ${c.upstreamValue}::jsonb,
                   ${c.upstreamNow}::jsonb, ${c.status}, ${c.createdAt}::timestamptz, ${c.updatedAt}::timestamptz,
-                  ${c.checkedAt}::timestamptz)
+                  ${c.checkedAt}::timestamptz, ${StoredCreator.write(Creator.unrecorded)}::jsonb)
                 ON CONFLICT (target_kind, target_id, field) DO UPDATE SET value = EXCLUDED.value,
                   upstream = EXCLUDED.upstream, upstream_value = EXCLUDED.upstream_value,
                   upstream_now = EXCLUDED.upstream_now, status = EXCLUDED.status, created_at = EXCLUDED.created_at,

@@ -49,6 +49,7 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.domain.automation.managers.ManagersControllers
+import com.histmersion.domain.Creator
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it
@@ -69,6 +70,7 @@ object AgentsTools:
       repairAcquire: RepairAcquire => Either[Api.Error, String],
       autopilotPage: Autopilot.EngineStatus => String
   ) =
+    given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val start =
       tool("start_run")
         .description(

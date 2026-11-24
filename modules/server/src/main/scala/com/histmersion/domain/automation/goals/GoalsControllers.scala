@@ -14,6 +14,7 @@ import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalView, LinkKind, 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.LabelRenamed
+import com.histmersion.domain.Creator
 
 /** The goals' operations as REST, MCP and the CLI reach them: list, read, put, patch, delete and rename a goal, and the
   * `meta/GOALS.md` export. An old slug (V053) answers as the goal it was renamed to, and a write to one goes there
@@ -42,7 +43,7 @@ final class GoalsControllers(
     goals.get(current(slug)).toRight(notFound(slug))
 
   /** A put replaces the goal. */
-  def put(slug: domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
+  def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using Creator.New): Either[Api.Error, Goal] =
     maintenance.guard(WriteGate.OperationName("put_goal")):
       val now = current(slug)
       goals.put(now, in).flatMap(_ => get(now))

@@ -13,6 +13,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** A person's bookmarks. A target reaches here checked; an item is bookmarked once, so bookmarking it again answers its
   * bookmark (renamed when a label is given). A removed bookmark is kept as its tombstone. An item's key and title are
@@ -27,7 +28,7 @@ trait BookmarkService:
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       title: Option[TargetLabel],
       at: MarkTime
-  )(using WritePermit): Bookmark
+  )(using WritePermit)(using Creator.New): Bookmark
   def rename(
       user: UserId,
       id: com.histmersion.api.personal.Bookmark.Id,
@@ -67,7 +68,7 @@ object BookmarkService:
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         title: Option[TargetLabel],
         at: MarkTime
-    )(using WritePermit): Bookmark =
+    )(using WritePermit)(using Creator.New): Bookmark =
       val t = resolved(target, items)
       val stored = db.write:
         val id = t.itemRef.flatMap(BookmarkRepo.ofItem(user, _)) match
@@ -130,7 +131,7 @@ object BookmarkService:
         label: Option[com.histmersion.api.personal.Bookmark.Label],
         title: Option[TargetLabel],
         at: MarkTime
-    )(using WritePermit): Bookmark =
+    )(using WritePermit)(using Creator.New): Bookmark =
       val t = resolved(target, items)
       val id = com.histmersion.api.personal.Bookmark.Id(newId().toString)
       val after = state.updateAndGet { s =>

@@ -68,6 +68,8 @@ import com.histmersion.util.jobs.JobQuery
 import com.histmersion.util.jobs.JobRow
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.automation.Creation
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators.given
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched
@@ -159,11 +161,15 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       )
     val asked = java.util.concurrent.ConcurrentLinkedQueue[(Doi, Option[Citekey])]()
     def meta(doi: Doi) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
-    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(Problem.Unclassified(Legacy.Text("not stubbed")))
-    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(
+    def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
-    def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
+    def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) = Left(
+      Problem.Unclassified(Legacy.Text("not stubbed"))
+    )
+    def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using
+        Creator.New
+    ) = Left(
       Problem.Unclassified(Legacy.Text("not stubbed"))
     )
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(

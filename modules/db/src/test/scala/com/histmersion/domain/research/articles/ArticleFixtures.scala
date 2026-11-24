@@ -12,6 +12,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.sources.CitekeyMillis
+import com.histmersion.util.database.TestCreators.given
 
 /** The db suites' reads and writes of research's articles on a database of their own, each write in a transaction of
   * its own and each read on a connection of its own, as the service runs them.

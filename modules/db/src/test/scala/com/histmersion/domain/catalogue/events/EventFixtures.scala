@@ -24,6 +24,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.Event
 import com.augustnagro.magnum.Frag
+import com.histmersion.util.database.TestCreators.given
 
 /** The events' store as a db suite writes and reads it: each call on a connection, or in a transaction, of its own. */
 object EventFixtures:

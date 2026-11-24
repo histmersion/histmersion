@@ -82,6 +82,8 @@ final class McpTools(
 ):
   import McpTools.*
 
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
+
   private def refusedValue(what: String, raw: String, code: String): Api.Error =
     Api.Error(Problem.Unclassified(Legacy.Text(s"invalid $what '$raw'")), Some(Api.Error.Code(code)))
 

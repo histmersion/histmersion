@@ -12,6 +12,7 @@ import com.histmersion.domain.media.assets.{AssetsControllers, AssetService}
 import com.histmersion.util.data.maintenance.WriteGate
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.library.Citekey
+import com.histmersion.util.database.TestCreators.given
 
 class MediaSourceBoundarySuite extends munit.FunSuite:
   private def controllers() =

@@ -12,6 +12,8 @@ import com.augustnagro.magnum.*
 
 import scala.util.chaining.*
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The `bookmarks` table. Takes the connection it runs on; a removed bookmark stays as its tombstone. */
 private[bookmarks] object BookmarkRepo:
@@ -55,12 +57,13 @@ private[bookmarks] object BookmarkRepo:
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       targetLabel: Option[TargetLabel],
       at: MarkTime
-  )(using DbCon): com.histmersion.api.personal.Bookmark.Id =
+  )(using DbCon)(using creator: Creator.New): com.histmersion.api.personal.Bookmark.Id =
     val stamp = at.iso
     sql"""INSERT INTO bookmarks (user_id, target_kind, target_id, target_uid, target_label, lat, lon, zoom,
-                                 period_start, period_end, view, label, created_at, updated_at)
+                                 period_start, period_end, view, label, created_at, updated_at, creator)
           VALUES ($user, ${c.kind}, ${c.key}, ${c.uid}, $targetLabel, ${c.lat}, ${c.lon}, ${c.zoom},
-                  ${c.from}, ${c.to}, ${c.view}, $label, $stamp::timestamptz, $stamp::timestamptz)
+                  ${c.from}, ${c.to}, ${c.view}, $label, $stamp::timestamptz, $stamp::timestamptz, ${StoredCreator
+        .column(creator)}::jsonb)
           RETURNING id::text""".query[com.histmersion.api.personal.Bookmark.Id].run().head
 
   def relabel(

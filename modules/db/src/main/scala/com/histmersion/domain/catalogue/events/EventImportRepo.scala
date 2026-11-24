@@ -22,6 +22,8 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.
@@ -79,7 +81,7 @@ private[events] object EventImportRepo:
     * is never changed, except that an empty Wikidata item is filled and the names are added to. Every record is kept in
     * `event_catalogue` under its key.
     */
-  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using DbCon): EventSaved =
+  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using DbCon)(using Creator.New): EventSaved =
     // `var`s: the counts of this write
     var created, updated = 0
     var counts = Correction.Counts()
@@ -158,17 +160,17 @@ private[events] object EventImportRepo:
 
   private def insertEvent(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using
       DbCon
-  ): Unit =
+  )(using creator: Creator.New): Unit =
     val geom = pointSql(r)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after, historicity, geom,
-                              description, wikidata, names, catalogue, central, plus_minus, dating_method)
+                              description, wikidata, names, catalogue, central, plus_minus, dating_method, creator)
           VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(
         EventSummary.Kind(r.kind.value)
       )}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
                   ${r.description}, $wd, $names::text[], ${r.provider}, ${r.central}, ${r.plusMinus},
-                  ${r.datingMethod})""".update.run()
+                  ${r.datingMethod}, ${StoredCreator.column(creator)}::jsonb)""".update.run()
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
   private def fill(id: Event.Id, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =

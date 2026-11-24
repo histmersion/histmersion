@@ -69,6 +69,7 @@ object Creator:
     case Manual(surface: Surface)
     case Automated(plugin: Plugin.Name, workflow: Workflow.Name, agent: Agent, surface: Surface)
     case Unattributed(surface: Surface)
+    case FromBundle
 
   extension (creator: New)
     def stored: Creator = creator match
@@ -76,10 +77,11 @@ object Creator:
       case New.Automated(plugin, workflow, agent, surface) =>
         Automated(Part.Known(plugin), Part.Known(workflow), Part.Known(agent), Part.Known(surface))
       case New.Unattributed(surface) => Unattributed(surface)
+      case New.FromBundle            => unrecorded
 
     def actor: Actor = creator match
-      case New.Manual(_) | New.Unattributed(_) => Actor.Person
-      case New.Automated(_, _, _, _)           => Actor.Agents
+      case New.Manual(_) | New.Unattributed(_) | New.FromBundle => Actor.Person
+      case New.Automated(_, _, _, _)                            => Actor.Agents
 
   def code(plugin: Plugin.Name, workflow: Workflow.Name): New =
     New.Automated(plugin, workflow, Agent.Code, Surface.Internal)

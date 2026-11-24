@@ -23,6 +23,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** Research's articles as records: one article with the links it makes and what links to it, written whole or merged
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and
@@ -75,15 +76,17 @@ trait ArticleService:
   def articlesByGoal: Map[Goal.Slug, List[Slug]]
 
   /** Replace everything under `article.slug`; the new last-write token. */
-  def put(article: Article, caller: Caller)(using WritePermit): Article.UpdatedAt
+  def put(article: Article, caller: Caller)(using WritePermit)(using Creator.New): Article.UpdatedAt
 
   /** Merge `patch` into the article `slug`, its critique reasons beside it; the new last-write token. */
-  def patch(slug: Slug, patch: Article.Patch, caller: Caller)(using WritePermit): Either[Api.Error, Article.UpdatedAt]
+  def patch(slug: Slug, patch: Article.Patch, caller: Caller)(using
+      WritePermit
+  )(using Creator.New): Either[Api.Error, Article.UpdatedAt]
 
   def delete(slug: Slug, caller: Caller)(using WritePermit): Boolean
 
   /** A new slug, the old one kept as an alias, every `[[old]]` rewritten; the articles rewritten. */
-  def rename(from: Slug, to: Slug, caller: Caller)(using WritePermit): Either[Api.Error, List[Slug]]
+  def rename(from: Slug, to: Slug, caller: Caller)(using WritePermit)(using Creator.New): Either[Api.Error, List[Slug]]
 
 object ArticleService:
   def apply(db: Transactor): ArticleService = Implementation(db)
@@ -106,13 +109,16 @@ object ArticleService:
     def latestVersion(slug: Slug): Option[ArticleRepo.VersionId] = db.read(ArticleRepo.latestVersion(slug))
     def critiqueReasons(slug: Slug): List[CritiqueReason] = db.read(CritiqueRepo.list(slug))
     def articlesByGoal: Map[Goal.Slug, List[Slug]] = db.read(ArticleRepo.articlesByGoal)
-    def put(article: Article, caller: Caller)(using WritePermit): Article.UpdatedAt = db.write(ArticleRepo.put(article))
+    def put(article: Article, caller: Caller)(using WritePermit)(using Creator.New): Article.UpdatedAt =
+      db.write(ArticleRepo.put(article))
     def patch(slug: Slug, patch: Article.Patch, caller: Caller)(using
         WritePermit
-    ): Either[Api.Error, Article.UpdatedAt] =
+    )(using Creator.New): Either[Api.Error, Article.UpdatedAt] =
       db.write(ArticleRepo.patch(slug, patch))
     def delete(slug: Slug, caller: Caller)(using WritePermit): Boolean = db.write(ArticleRepo.delete(slug))
-    def rename(from: Slug, to: Slug, caller: Caller)(using WritePermit): Either[Api.Error, List[Slug]] =
+    def rename(from: Slug, to: Slug, caller: Caller)(using
+        WritePermit
+    )(using Creator.New): Either[Api.Error, List[Slug]] =
       db.write(ArticleRepo.rename(from, to))
 
   /** Over the articles of `state`, as a database holding only research's rows answers: no source is stored, so every
@@ -263,14 +269,14 @@ object ArticleService:
       )
       versioned.modify(_.articles).using(_.updated(key, stored))
 
-    def put(article: Article, caller: Caller)(using WritePermit): Article.UpdatedAt =
+    def put(article: Article, caller: Caller)(using WritePermit)(using Creator.New): Article.UpdatedAt =
       val now = Instant.now(clock)
       state.updateAndGet(written(_, article, now))
       token(now)
 
     def patch(slug: Slug, patch: Article.Patch, caller: Caller)(using
         WritePermit
-    ): Either[Api.Error, Article.UpdatedAt] =
+    )(using Creator.New): Either[Api.Error, Article.UpdatedAt] =
       val now = Instant.now(clock)
       @tailrec def attempt(): Either[Api.Error, Article.UpdatedAt] =
         val st = state.get
@@ -335,7 +341,9 @@ object ArticleService:
       }
       before.articles.contains(articleKey(slug))
 
-    def rename(from: Slug, to: Slug, caller: Caller)(using WritePermit): Either[Api.Error, List[Slug]] =
+    def rename(from: Slug, to: Slug, caller: Caller)(using
+        WritePermit
+    )(using Creator.New): Either[Api.Error, List[Slug]] =
       val (oldSlug, newSlug) = (from, to)
       val now = Instant.now(clock)
       @tailrec def attempt(): Either[Api.Error, List[Slug]] =

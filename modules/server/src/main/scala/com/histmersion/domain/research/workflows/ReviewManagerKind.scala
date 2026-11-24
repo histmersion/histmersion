@@ -42,6 +42,7 @@ import com.histmersion.api.research.Articles
 import com.histmersion.api.research.Article
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
+import com.histmersion.domain.Creator
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,
@@ -90,7 +91,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       error: Option[Problem],
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     if item.kind.value == ArticleReview then evaluateReview(c, m, s, item, st, error, now, out)
     else c.evaluateStep(m, s, item, st, error, now, out, this)
 
@@ -255,7 +256,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item: ManagerItem,
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Unit =
+  )(using WritePermit)(using Creator.New): Unit =
     if item.kind.value == ArticleExtend && run.flatMap(CompileArticlePipeline.written(c, _)).exists(_.written.value)
     then
       c.chainReview(
@@ -534,7 +535,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       item: ManagerItem,
       now: Instant,
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
-  )(using WritePermit): Option[ManagerLight.Id] =
+  )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     val slug = Slug.assume(item.target.value)
     val manager = ManagerLight.Id(m.id.value)
     item.kind.value match

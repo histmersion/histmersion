@@ -11,6 +11,8 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 import com.histmersion.util.database.Unused
+import com.histmersion.domain.Creator
+import com.histmersion.util.database.StoredCreator
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.
@@ -72,10 +74,10 @@ private[acquisition] object AssessmentRepo:
       .toList
 
   /** Record the verdict for a stored source; the `checked_at` stamp. */
-  def putAssessment(a: AssessmentRecord)(using DbCon): String =
-    sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
+  def putAssessment(a: AssessmentRecord)(using DbCon)(using creator: Creator.New): String =
+    sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict, creator)
           VALUES (${a.citekey}, now(), ${a.retracted}, ${a.noticesJson}::jsonb, ${a.citedBy}, ${a.influential},
-                  ${a.verdict})
+                  ${a.verdict}, ${StoredCreator.column(creator)}::jsonb)
           ON CONFLICT (citekey) DO UPDATE SET
             checked_at = now(), retracted = EXCLUDED.retracted, notices = EXCLUDED.notices,
             cited_by = EXCLUDED.cited_by, influential = EXCLUDED.influential,

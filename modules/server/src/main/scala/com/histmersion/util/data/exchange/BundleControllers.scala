@@ -26,6 +26,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
+import com.histmersion.domain.Creator
 
 /** The bundle and merge endpoints, MCP tools and `histmersion bundle|merge` commands (docs/research-merge-import.md):
   * the raw inputs parsed, the maintenance guard of every write, the [[BundleService]] call. An upload is the file the
@@ -86,7 +87,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     * collection's backup does not time the request out. A successful apply drops the review screen's draft of the
     * bundle (its decisions are remembered by issue id).
     */
-  def applyUploaded(req: MergeApplyRequest): Either[Api.Error, MergeApplyJob] =
+  def applyUploaded(req: MergeApplyRequest)(using Creator.New): Either[Api.Error, MergeApplyJob] =
     maintenance.guard(WriteGate.OperationName("merge/apply")):
       BundleControllers
         .sha256(req.bundle.value)

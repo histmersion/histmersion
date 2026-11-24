@@ -26,12 +26,14 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.AssetRelation
 import com.histmersion.api.media.MediaTarget
 import com.histmersion.domain.media.links.AssetLinkService
+import com.histmersion.domain.Creator
 
 /** Media's agent tools, in their place among `/mcp`'s: a source's figures, a figure's description, its links. The
   * imports and the sources' pictures are not tools, on purpose (an operator's decision; a picture is for the reader).
   * `sourceExists` says whether a citekey names a source (the library's), for an empty answer's wording.
   */
 object MediaTools:
+  private given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
 
   import com.histmersion.util.mcp.ToolInputs.given
 
