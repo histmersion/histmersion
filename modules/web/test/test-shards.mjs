@@ -56,8 +56,6 @@ export function parseManifest(text) {
   return text.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
 }
 
-const keyOf = ({ file, name }) => `${file}\t${name}`;
-
 export function checkShards(shards, exclude) {
   const problems = [];
   const counts = new Set(shards.flatMap(s => s.manifest.map(e => e.count)));
@@ -73,43 +71,41 @@ export function checkShards(shards, exclude) {
   const planOf = manifest => {
     const plan = new Map();
     for (const e of manifest) {
-      const key = keyOf(e);
-      if (plan.has(key) && plan.get(key) !== e.shard) problems.push(`"${e.name}" (${e.file}) was dealt to shards ${plan.get(key)} and ${e.shard}`);
-      plan.set(key, e.shard);
+      if (plan.has(e.name) && plan.get(e.name).shard !== e.shard) problems.push(`"${e.name}" (${e.file}) was dealt to shards ${plan.get(e.name).shard} and ${e.shard}`);
+      plan.set(e.name, { file: e.file, shard: e.shard });
     }
     return plan;
   };
+  const listed = plan => [...plan.entries()].map(([name, { file, shard }]) => `${file}\t${name}\t${shard}`).sort().join('\n');
   const plans = shards.map(s => ({ index: s.index, plan: planOf(s.manifest) }));
   const plan = plans[0]?.plan ?? new Map();
-  for (const other of plans.slice(1)) {
-    const a = [...plan.entries()].map(([k, v]) => `${k}\t${v}`).sort().join('\n');
-    const b = [...other.plan.entries()].map(([k, v]) => `${k}\t${v}`).sort().join('\n');
-    if (a !== b) problems.push(`shard ${other.index} saw another test list than shard ${plans[0].index}: the shards did not run the same files`);
-  }
+  for (const other of plans.slice(1))
+    if (listed(plan) !== listed(other.plan)) problems.push(`shard ${other.index} saw another test list than shard ${plans[0].index}: the shards did not run the same files`);
   for (const s of shards) {
     const seen = new Map();
-    for (const e of s.manifest) seen.set(keyOf(e), (seen.get(keyOf(e)) ?? 0) + 1);
-    const twice = [...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k.replace('\t', ': '));
+    for (const e of s.manifest) seen.set(e.name, [...(seen.get(e.name) ?? []), e.file]);
+    const twice = [...seen.entries()].filter(([, files]) => files.length > 1).map(([name, files]) => `${name} (${files.join(', ')})`);
     if (twice.length) problems.push(`shard ${s.index}: test names declared more than once, so a shard cannot be told apart: ${twice.join('; ')}`);
   }
 
-  const expected = [...plan.entries()].filter(([k]) => !exclude?.test(k.split('\t')[1]));
+  const files = new Set([...plan.values()].map(e => e.file));
+  const expected = [...plan.entries()].filter(([name]) => !exclude?.test(name));
   const ranIn = new Map();
   for (const s of shards) for (const c of s.cases) {
-    const key = keyOf(c);
-    ranIn.set(key, [...(ranIn.get(key) ?? []), s.index]);
+    if (files.has(c.name.split(/[\\/]/).at(-1))) continue;
+    ranIn.set(c.name, [...(ranIn.get(c.name) ?? []), s.index]);
   }
-  for (const [key, shard] of expected) {
-    const where = ranIn.get(key) ?? [];
-    const label = key.replace('\t', ': ');
+  for (const [name, { file, shard }] of expected) {
+    const where = ranIn.get(name) ?? [];
+    const label = `${file}: ${name}`;
     if (!where.length) problems.push(`never ran: ${label} (dealt to shard ${shard})`);
     else if (where.length > 1) problems.push(`ran ${where.length} times: ${label} (shards ${where.join(', ')})`);
     else if (where[0] !== shard) problems.push(`ran in shard ${where[0]}, dealt to ${shard}: ${label}`);
   }
-  const known = new Set(expected.map(([k]) => k));
-  for (const [key, where] of ranIn) if (!known.has(key)) problems.push(`ran but is not in the test list: ${key.replace('\t', ': ')} (shards ${where.join(', ')})`);
+  const known = new Set(expected.map(([name]) => name));
+  for (const [name, where] of ranIn) if (!known.has(name)) problems.push(`ran but is not in the test list: ${name} (shards ${where.join(', ')})`);
   for (const s of shards) if (s.skipped) problems.push(`shard ${s.index}: ${s.skipped} test(s) skipped (G125: a skip fails the run)`);
 
-  const sizes = Array.from({ length: count }, (_, i) => expected.filter(([, shard]) => shard === i + 1).length);
+  const sizes = Array.from({ length: count }, (_, i) => expected.filter(([, e]) => e.shard === i + 1).length);
   return { problems, expected: expected.length, ran: [...ranIn.values()].reduce((n, w) => n + w.length, 0), sizes };
 }

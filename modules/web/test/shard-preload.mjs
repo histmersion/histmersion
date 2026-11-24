@@ -11,10 +11,19 @@ if (spec) {
   const file = basename(process.argv[1] ?? '');
   const nodeTest = createRequire(import.meta.url)('node:test');
   const register = nodeTest.test;
+  const hooks = ['before', 'after', 'beforeEach', 'afterEach'].map(kind => ({ kind, registerHook: nodeTest[kind] }));
+  let held = [];
   nodeTest.test = function shardedTest(name, ...rest) {
     const shard = shardOf(file, String(name), count, pins);
     if (manifest) appendFileSync(manifest, `${JSON.stringify({ shard, count, file, name: String(name) })}\n`);
-    return shard === index ? register.call(this, name, ...rest) : Promise.resolve();
+    if (shard !== index) return Promise.resolve();
+    if (held) {
+      for (const run of held) run();
+      held = null;
+    }
+    return register.call(this, name, ...rest);
   };
+  for (const { kind, registerHook } of hooks)
+    nodeTest[kind] = (...args) => { if (held) held.push(() => registerHook(...args)); else registerHook(...args); };
   syncBuiltinESMExports();
 }

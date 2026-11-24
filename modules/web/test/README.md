@@ -62,7 +62,10 @@ Frames are counted dropped against 60 Hz in both (Firefox paints headless at 120
 GPU budgets; elsewhere, or with `HISTMERSION_TEST_GPU=0`, Chromium draws WebGL in software
 (SwiftShader), the page takes its no-GPU path (no relief, the notice's extra line) and the vector maps'
 budgets are their `…Software` ones (`perf.test.mjs`: input and stalls as on a GPU, the frame rate measured but not budgeted). `HISTMERSION_TEST_GPU=1` asks for the GPU on any
-platform. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
+platform; on a machine without one (CI's Linux runners: Chromium answers "SwiftShader"), `browser.test.mjs` then
+tells its pages a GPU renderer (`engine.mjs` `standInGpu`), so the GPU path — relief, contours, the sea's depth — is
+tested there too, drawn by the CPU; the no-GPU path keeps its own tests, in a browser without the stand-in. The
+first line of the run names the renderer and says whether the stand-in is on. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
 the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names, a
 base-map layer's visibility and how many of its features are drawn (`layerVisibility`, `layerDrawn`: the
 sea's depth, the contours inside the Argolid focus region).
@@ -80,8 +83,21 @@ fanned-out bubble. A spec picks markers by
 the helpers that wait for, hover and click them with the real pointer.
 `test:browser` runs the three files one at a time (`--test-concurrency=1`): side by side they wrote the same
 settings file at once and measured the budgets while two other browsers were busy; the budgets and the soak
-test take ~3 minutes of it (100 soak rounds). In CI the `budgets: …` tests run in their own job (`macos-budgets`,
-`--test-name-pattern='^budgets: '`), the rest in `macos` (`--test-skip-pattern`, the same pattern).
+test take ~3 minutes of it (100 soak rounds). In CI (ubuntu-24.04, docs/adr/0028-ci-on-linux-bundles-on-demand.md)
+the `budgets: …` tests run in their own job (`budgets`, `--test-name-pattern='^budgets: '`), the rest in four
+parallel `browser` jobs (`--test-skip-pattern`, the same pattern). Each of those loads every file with
+`--import ./test/shard-preload.mjs`, which registers only its shard's tests (`HISTMERSION_TEST_SHARD=<i>/<n>`;
+`HISTMERSION_TEST_SHARD_PINS=perf.test.mjs=1` sends that file whole to shard 1, every other test goes by the FNV-1a
+hash of its name to one of the other shards, `test-shards.mjs`), registers a file's hooks only when the file has a
+test in the shard, and writes every test it saw with its shard to `HISTMERSION_TEST_SHARD_MANIFEST`. The
+`browser-shards` job (`shards-check.mjs`) then checks that every listed test but the budgets ran exactly once, in its
+own shard, and that none was skipped. To run one shard locally:
+
+```bash
+HISTMERSION_TEST_SHARD=2/4 HISTMERSION_TEST_SHARD_PINS=perf.test.mjs=1 HISTMERSION_SERVER_URL=http://127.0.0.1:18080 \
+  node --import ./test/shard-preload.mjs --test --test-concurrency=1 --test-skip-pattern='^budgets: ' \
+  test/browser.test.mjs test/marks.test.mjs test/perf.test.mjs     # from modules/web
+```
 
 **The absolute budgets are held on a real Mac** (owner decision 2026-11-22), at full speed and with the CPU
 throttled 3× (`HISTMERSION_CPU_THROTTLE=3`, Chromium's own throttling, printed first), against a test server started as
@@ -94,9 +110,9 @@ HISTMERSION_SERVER_URL=http://127.0.0.1:18080 npm --prefix modules/web run budge
 It runs the `budgets: …` tests twice and fails when either run does; rows 30 and 31 of the plan are judged on these
 figures.
 
-**In CI the budgets compare a change with its merge base** (owner decision 2026-11-22). GitHub's macOS runner is a
-shared Apple M1 virtual machine (3 cores, WebGL "Apple Paravirtual device", about 8 frames a second): no user's
-device, so `macos-budgets` holds no absolute limit there. It builds and starts the merge base's server beside this
+**In CI the budgets compare a change with its merge base** (owner decision 2026-11-22). GitHub's hosted runner is no
+user's device (a shared 4-core Linux virtual machine without a GPU: WebGL is drawn by SwiftShader, the map takes its
+no-GPU path and the vector maps' `…Software` budgets), so `budgets` holds no absolute limit there. It builds and starts the merge base's server beside this
 change's, waits until neither server runs or queues a job (a fresh database imports the bundled gazetteer for about
 five minutes after start: measured during it, the first round of both sides ran beside two imports), runs the budget
 tests against each three times, alternating, each side with its own test code (the merge base's from its worktree,
@@ -108,7 +124,7 @@ makes `perf.test.mjs` write every figure instead of holding it), and compares fi
 `budget-figures.mjs`): a main-thread figure is a regression when every run of the change is worse than every run of
 the base and the medians differ by more than the runs' own spread (the larger of the two sides') and a floor (20 ms;
 3 MB of heap; 5 % of the DOM nodes and listeners; nothing for the counts that must not move, such as `notAnimated`).
-Frame-bound figures (below) are printed, not compared. A budget run of either side that fails, skips a test or runs
+Frame-bound figures (below) are printed, not compared (`budget-figures.mjs` `FRAME_BOUND`). A budget run of either side that fails, skips a test or runs
 none fails the job too (the base's with its own tests: a real problem of the base). When the change alters the code
 that measures (`perf.test.mjs` or any module it imports, compared file by file), no figure is compared: each is
 printed as "measurement changed: not compared", with the files and a warning in the summary — neither a pass nor a
@@ -119,25 +135,18 @@ check that the job turns red. Measured here (M4 Pro, the same server on both sid
 itself 73 figures, no regression; with the injection exactly the six zooms' longest tasks (0 → 67–84 ms) and nothing
 else.
 
-**Main-thread and frame-bound figures on a virtual GPU** (owner decision 2026-11-22). The runner paints about 8
-frames a second however idle the page's main thread is (a pan drops 49 % of its frames with no long task; the same
-pan, the CPU throttled 3× on a real GPU, drops none). A run of the budgets that holds them there holds the main-thread
-figures — every `longTaskMax`, the first
-render's and the loads' times (`mapMs`, `markersMs`, `listMs`, `drawnMs`), the playback's request rates, the cluster
-zoom's `notAnimated`, the heap, the DOM and the listeners — and print the frame-bound ones without failing on them:
-dropped frames (`droppedPct`, `stillFramesPct`) and every input-to-next-paint figure (`inputP95`, the hover cards'
+**Frame-bound figures** are the ones a slow painter moves however idle the page's main thread is: dropped frames
+(`droppedPct`, `stillFramesPct`) and every input-to-next-paint figure (`inputP95`, the hover cards'
 `shownMax`/`filledMax`/`warmMax`, the typing's `keyP95`/`keyMax`/`suggestMs`/`previewToListMs`, the article's
-`windowMs`/`contentMs`, the release's `releaseToListMs`, Library's `clickMs`/`keyMs`/`pageMs`). The limits are the
-same. The mode needs both the job's `HISTMERSION_VIRTUAL_GPU=1` and a WebGL renderer naming a paravirtual
-device (`engine.mjs` `frameMode`); anything else — a real GPU, Firefox, an unknown renderer — holds every figure.
-The first line of the run says which mode is in force. `macos-budgets` is not a required check; its colour is the
-comparison's verdict.
+`windowMs`/`contentMs`, the release's `releaseToListMs`, Library's `clickMs`/`keyMs`/`pageMs`). The CI comparison
+prints them and never fails on them; a local run of the budgets holds every figure. `budgets` is not a required
+check; its colour is the comparison's verdict.
 
-The same rule, the same switch (the `macos` job sets the variable too), applies to the functional tests' click
-checks (owner decision 2026-11-22): a chip of the approvals, runs and jobs windows, the news mark in Research's side
-navigation, the theme button. Each is measured twice — the click's own work (its handlers and the microtasks after
-them, the theme's restyle), held under 100 ms everywhere, and the click to the next frame, held under 100 ms on a real
-GPU and printed when over on a virtual one. `browser.test.mjs` prints its mode first, like the budgets.
+The functional tests' click checks (a chip of the approvals, runs and jobs windows, the news mark in Research's side
+navigation, the theme button) are measured twice — the click's own work (its handlers and the microtasks after them,
+the theme's restyle) and the click to the next frame — and both are held under 100 ms everywhere, the CI runners
+included. (On the hosted macOS runner, whose paravirtual GPU painted about 8 frames a second, the second was printed
+rather than held; that runner is no longer used.)
 `npm --prefix modules/web run test:perf` runs them alone; `HISTMERSION_SOAK_ROUNDS=20` shortens the
 soak, `HISTMERSION_PERF_REPORT=1` prints every measured figure. `perf-baseline.mjs` measures the
 same paths on any server, read-only (non-GET requests are refused) — the live baseline in the doc:

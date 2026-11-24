@@ -62,12 +62,19 @@ const plan = [
   { shard: 2, count: 2, file: 'browser.test.mjs', name: 'map' },
   { shard: 2, count: 2, file: 'browser.test.mjs', name: 'list' },
 ];
-const ran = (...names) => names.map(n => plan.find(e => e.name === n)).map(({ file, name }) => ({ file, name }));
+const ran = (...names) => names.map(name => ({ file: 'shard-preload.mjs', name }));
 const shard = (index, cases, extra = {}) => ({ index, manifest: plan, cases, skipped: 0, ...extra });
 
 test('the shards pass when every listed test ran once, in its own shard, and the excluded ones nowhere', () => {
   const result = checkShards([shard(1, ran('soak')), shard(2, ran('map', 'list'))], /^budgets: /);
   assert.deepEqual(result, { problems: [], expected: 3, ran: 3, sizes: [1, 2] });
+});
+
+test('a test file with none of a shard\'s tests is reported by the runner under its own name, and that entry is not a test', () => {
+  const result = checkShards([shard(1, [...ran('soak'), { name: 'test/browser.test.mjs', file: 'browser.test.mjs' }]),
+    shard(2, [...ran('map', 'list'), { name: 'perf.test.mjs', file: undefined }])], /^budgets: /);
+  assert.deepEqual(result.problems, []);
+  assert.equal(result.ran, 3);
 });
 
 test('a test that never ran, ran twice, ran in another shard or is not listed is a problem', () => {
@@ -76,7 +83,7 @@ test('a test that never ran, ran twice, ran in another shard or is not listed is
   assert.deepEqual(p([ran('soak', 'map'), ran('map', 'list')]), ['ran 2 times: browser.test.mjs: map (shards 1, 2)']);
   assert.deepEqual(p([ran('soak', 'list'), ran('map')]), ['ran in shard 1, dealt to 2: browser.test.mjs: list']);
   assert.deepEqual(p([ran('soak', 'budgets: zoom'), ran('map', 'list')]),
-    ['ran but is not in the test list: perf.test.mjs: budgets: zoom (shards 1)']);
+    ['ran but is not in the test list: budgets: zoom (shards 1)']);
 });
 
 test('a missing or doubled shard, a skip, disagreeing lists and a name declared twice are problems', () => {
@@ -88,8 +95,9 @@ test('a missing or doubled shard, a skip, disagreeing lists and a name declared 
   const other = shard(2, ran('map', 'list'), { manifest: plan.slice(0, 3) });
   assert.ok(checkShards([shard(1, ran('soak')), other], /^budgets: /).problems
     .includes('shard 2 saw another test list than shard 1: the shards did not run the same files'));
-  const twice = shard(2, ran('map', 'list'), { manifest: [...plan, plan[2]] });
-  assert.ok(checkShards([shard(1, ran('soak')), twice], /^budgets: /).problems.some(m => /declared more than once.*browser\.test\.mjs: map/.test(m)));
+  const twice = shard(2, ran('map', 'list'), { manifest: [...plan, { ...plan[2], file: 'marks.test.mjs' }] });
+  assert.ok(checkShards([shard(1, ran('soak')), twice], /^budgets: /).problems
+    .some(m => /declared more than once.*map \(browser\.test\.mjs, marks\.test\.mjs\)/.test(m)));
   assert.match(checkShards([], undefined).problems[0], /disagree on their count, or listed no test: none/);
   assert.match(checkShards([shard(1, [], { manifest: [{ ...plan[0], count: 3 }] }), shard(2, [])]).problems[0], /disagree on their count/);
 });
