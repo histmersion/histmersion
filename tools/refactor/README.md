@@ -632,6 +632,20 @@ instead. Run as above with `display-as-is-<batch>.conf`; the fixture:
   tools/refactor/display-as-is-fixture/input tools/refactor/display-as-is-fixture/expected
 ```
 
+`RetypeToNewtype` retypes a parameter from a primitive to a newtype (G1; the G44plaindef findings are its worklist).
+Each `retypes` entry names `param` (the parameter's SemanticDB symbol), `newtype` (its companion's symbol), `tpe` and
+`wrap` (the text of the type and of the constructor). The declared primitive becomes `tpe` (inside an `Option` or a
+collection too); a call that passes `y.value` of that newtype passes `y`, any other argument becomes `wrap(arg)` (a
+construction, the boundary's job: a non-boundary call site is a finding to fix by hand); in the body the parameter
+stays a newtype where one is taken (an argument to a parameter of that newtype, the receiver of a companion
+extension) and gets `.value` everywhere else. `report` lists each change. Run as above with
+`retype-to-newtype-<batch>.conf`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/RetypeToNewtype.scala \
+  tools/refactor/retype-to-newtype-fixture/input tools/refactor/retype-to-newtype-fixture/expected
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.
