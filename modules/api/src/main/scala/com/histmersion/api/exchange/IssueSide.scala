@@ -19,4 +19,5 @@ object IssueSide:
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type Lines = Lines.T
-  object Lines extends Newtype[String, Pure]
+  object Lines extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

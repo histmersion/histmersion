@@ -4,6 +4,7 @@ package api.automation
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline) derives CanEqual:
   case Currency extends ScheduleKind(ScheduleKind.Wire("currency"), Pipeline.CurrencyCheck)
@@ -11,7 +12,8 @@ enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline) derives C
 
 object ScheduleKind:
   type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  object Wire extends Newtype[String, Pure]:
+    given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[ScheduleKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

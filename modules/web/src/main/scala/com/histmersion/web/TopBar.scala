@@ -67,7 +67,7 @@ object TopBar:
         decisionsPill(inApp),
         Theme.toggle,
         Option.when(ui.docsUrl.value.trim.nonEmpty)(
-          a(cls := "btn btn--ghost help-link", href := ui.docsUrl.value, target := "_blank", rel := "noopener", "Help")
+          a(cls := "btn btn--ghost help-link", href := ui.docsUrl, target := "_blank", rel := "noopener", "Help")
         )
       )
     )

@@ -258,9 +258,11 @@ object Preview:
     val Citekey: Target.Source.Citekey.type = Target.Source.Citekey
     export Article.Slug
     type Href = Href.T
-    object Href extends Newtype[String, Pure]
+    object Href extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Command = Command.T
-    object Command extends Newtype[String, Pure]
+    object Command extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Query = Query.T
     object Query extends Newtype[String, Pure]
 
@@ -1253,7 +1255,7 @@ object Preview:
   private def commandView(cmd: Item.Command): HtmlElement =
     span(
       cls := "cite-tip-command",
-      code(cmd.value),
+      code(cmd),
       button(
         typ := "button",
         cls := "btn btn--bare btn--sm",

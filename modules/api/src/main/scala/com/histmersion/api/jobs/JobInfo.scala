@@ -51,7 +51,8 @@ object JobInfo:
 
   export JobState.Wire as Status
   type Progress = Progress.T
-  object Progress extends Newtype[String, Pure]
+  object Progress extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T

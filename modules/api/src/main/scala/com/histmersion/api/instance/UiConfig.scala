@@ -88,6 +88,8 @@ object UiConfig:
   object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     extension (url: T)
       def page(path: String): String =
         if url.value.isEmpty || url.value.endsWith("/") then s"${url.value}$path" else s"${url.value}/$path"

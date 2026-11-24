@@ -243,7 +243,7 @@ object MapRegionsView:
         j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a))
       ),
       j.problems.toList.flatMap(_.sentences).map(s => p(cls := "form-error", role := "alert", s)),
-      j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t.value)),
+      j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t)),
       Option
         .when(j.isTerminal)(j.progress)
         .flatten
@@ -252,8 +252,8 @@ object MapRegionsView:
             cls := "map-region-sizes",
             sizes(SizesText(t.value)).map { l =>
               div(
-                p(cls := "map-region-layer", l.line.value),
-                Option.when(l.zooms.nonEmpty)(ul(cls := "map-region-zooms", l.zooms.map(z => li(z.value))))
+                p(cls := "map-region-layer", l.line),
+                Option.when(l.zooms.nonEmpty)(ul(cls := "map-region-zooms", l.zooms.map(z => li(z))))
               )
             }
           )

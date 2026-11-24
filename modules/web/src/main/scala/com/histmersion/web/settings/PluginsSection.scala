@@ -79,7 +79,7 @@ object PluginsSection:
         div(
           cls := "settings-card-body",
           p(PluginSet.describe(r.set)),
-          r.set.toList.flatMap(_.jars).map(j => p(cls := "muted", j.file.value))
+          r.set.toList.flatMap(_.jars).map(j => p(cls := "muted", j.file))
         )
       )
     )

@@ -138,7 +138,8 @@ enum WindowKey derives CanEqual:
 
 object WindowKey:
   type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  object Wire extends Newtype[String, Pure]:
+    given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
   object Source:
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = api.library.Citekey

@@ -246,7 +246,8 @@ object Backup:
 
   object Result:
     type File = File.T
-    object File extends Newtype[String, Pure]
+    object File extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type DurationMs = DurationMs.T
     object DurationMs extends Newtype[Long, Pure]
     type Pruned = Pruned.T

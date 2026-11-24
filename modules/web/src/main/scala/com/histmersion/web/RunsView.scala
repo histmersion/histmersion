@@ -513,13 +513,13 @@ object RunsView:
       case Some(TargetKind.Goal) =>
         WinLink(
           WindowKey.Goal(WindowKey.Goal.Slug(r.target.value)),
-          title := r.target.value,
+          title := r.target,
           s"Goal: ${Wording.humanize(Wording.Id(r.target.value))}"
         )
       case Some(TargetKind.Manager) =>
         WinLink(
           WindowKey.Manager(WindowKey.Manager.Id(r.target.value)),
-          title := r.target.value,
+          title := r.target,
           Wording.manager(Wording.ManagerId(r.target.value))
         )
       case _ => SourceLink(Citekey(r.target.value))
@@ -545,7 +545,7 @@ object RunsView:
           target(r),
           Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" · $o"))
         ),
-        r.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr.value)),
+        r.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr)),
         r.error.filter(_.sentence.nonEmpty).map(e => div(cls := "job-error", e.sentence)),
         Option.when(r.warnings.nonEmpty)(
           div(
@@ -633,7 +633,7 @@ object RunsView:
         cls := "run-head",
         stateBadge(r.status),
         dryBadge(r),
-        span(cls := "run-title", title := r.pipeline.value, s" ${pipelineLabel(r.pipeline).value} · "),
+        span(cls := "run-title", title := r.pipeline, s" ${pipelineLabel(r.pipeline).value} · "),
         target(r),
         Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" ($o)"))
       ),
@@ -656,13 +656,13 @@ object RunsView:
         p(
           cls := "muted",
           "For the goal ",
-          WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.value)), title := g.value, Wording.humanize(Wording.Id(g.value)))
+          WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.value)), title := g, Wording.humanize(Wording.Id(g.value)))
         )
       ),
       r.error
         .filter(e => e.sentence.nonEmpty && pausedFor(r).isEmpty)
         .map(e => p(cls := "job-error", e.sentence)),
-      r.progress.filter(_.value.nonEmpty).map(pr => p(cls := "job-progress", pr.value)),
+      r.progress.filter(_.value.nonEmpty).map(pr => p(cls := "job-progress", pr)),
       dl(
         cls := "run-facts",
         dt("spent"),
@@ -672,7 +672,7 @@ object RunsView:
         dt("model"),
         dd(r.model.fold("the configured roles")(_.value)),
         dt("run"),
-        dd(code(r.id.value)),
+        dd(code(r.id)),
         dt("started"),
         dd(r.createdAt.value),
         dt("updated"),
@@ -681,7 +681,7 @@ object RunsView:
       ),
       controls(r, busy, raise, act),
       Option.when(r.warnings.nonEmpty)(
-        div(cls := "run-warnings", h4("Warnings"), ul(r.warnings.map(w => li(w.value))))
+        div(cls := "run-warnings", h4("Warnings"), ul(r.warnings.map(w => li(w))))
       ),
       h4("Steps"),
       table(

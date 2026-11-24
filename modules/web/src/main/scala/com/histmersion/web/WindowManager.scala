@@ -423,7 +423,7 @@ object WindowManager:
             dragWin = None
             ev.target.asInstanceOf[dom.HTMLElement].releasePointerCapture(ev.pointerId)
         },
-        span(cls := "wm-title", title := initial.key.wire.value, child.text <-- wSignal.map(_.title.value)),
+        span(cls := "wm-title", title := initial.key.wire, child.text <-- wSignal.map(_.title.value)),
         div(
           cls := "wm-buttons",
           button(

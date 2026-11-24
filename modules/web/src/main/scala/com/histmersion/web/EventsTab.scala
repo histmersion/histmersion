@@ -25,7 +25,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 
 object EventsTab:
   type When = When.T
-  object When extends Newtype[String, Pure]
+  object When extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** The tab ([[FilterTab]]): the GLOBAL filter (title included), as the Sources tab sends it — the server relates it
     * to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past the first.
@@ -109,7 +110,7 @@ object EventsTab:
       div(
         cls := "event-meta",
         span(cls := "event-kind", Fmt.display(UiLabels.Text(evt.kind.value))),
-        span(cls := "event-period", when(evt).value),
+        span(cls := "event-period", when(evt)),
         EventPrecision
           .label(evt.precision)
           .map(l =>

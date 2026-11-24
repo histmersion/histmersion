@@ -618,9 +618,9 @@ object MergeView:
                   button(
                     typ := "button",
                     cls := "link-btn",
-                    code(i.id.value),
+                    code(i.id),
                     " ",
-                    span(cls := "merge-entity", i.entity.wire.value),
+                    span(cls := "merge-entity", i.entity.wire),
                     " ",
                     span(i.left.orElse(i.right).map(_.label.value).getOrElse("")),
                     div(cls := "muted", i.title),
@@ -684,7 +684,7 @@ object MergeView:
     div(
       cls := "merge-issue-review",
       h3(
-        code(i.id.value),
+        code(i.id),
         " ",
         kindText(i.kind),
         span(cls := "muted", s" · ${i.entity.wire} · ${i.severity.toString.toLowerCase}")
@@ -721,7 +721,7 @@ object MergeView:
         div(
           if who == "here" && entity == Bundle.Kind.Source then SourceLink(Citekey(x.label.value))
           else code(x.label),
-          x.lines.map(l => div(cls := "muted", l.value))
+          x.lines.map(l => div(cls := "muted", l))
         )
       }
     )
@@ -735,7 +735,7 @@ object MergeView:
       tbody(rows(fs).map { (f, differs) =>
         tr(
           cls("differs") := differs,
-          td(f.field.value),
+          td(f.field),
           td(f.left.map(_.value).getOrElse("—")),
           resultOf(i, f, i.decision) match
             case Some(Right(v)) => td(cls := "merge-result", v)
@@ -914,7 +914,7 @@ object MergeView:
         ),
         labelText,
         " ",
-        code(d.wire.value)
+        code(d.wire)
       )
     def withArgument(k: MergeDecision.Kind): HtmlElement =
       val arg = Var[String](
@@ -992,7 +992,7 @@ object MergeView:
                 )
               case k => radio(MergeDecision.of(k), describe(k).value)
             },
-            i.suggested.filter(_ => i.decision.isEmpty).map(s => p_(cls := "muted", "suggested: ", code(s.wire.value))),
+            i.suggested.filter(_ => i.decision.isEmpty).map(s => p_(cls := "muted", "suggested: ", code(s.wire))),
             Option.when(current.isDefined)(
               button(typ := "button", cls := "btn", "take the decision back", onClick --> (_ => set(i.id, None)))
             )

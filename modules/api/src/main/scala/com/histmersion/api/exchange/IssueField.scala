@@ -14,7 +14,8 @@ final case class IssueField(field: IssueField.Field, left: Option[IssueField.Val
 
 object IssueField:
   type Field = Field.T
-  object Field extends Newtype[String, Pure]
+  object Field extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** One field's value on one side of a merge issue. */
   type Value = Value.T

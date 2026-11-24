@@ -2222,8 +2222,8 @@ test('managers phase 3: the watch box, the daily spend, a watcher\'s sweeps', as
     const text = await sweeps.innerText();
     assert.match(text, /Cron `@weekly` \(UTC\), next 2026-10-25T00:00:00Z — fires once it is resumed/);
     assert.match(text, /at most 3 a day \(legal open access only\)/);
-    assert.match(text, /swept acquisition-sweep goal zz-pw-watch: 4 picked, 1 ingested/);
-    assert.match(text, /ingested \[\[zz2023_tin\]\] ingested/);
+    assert.match(text, /Swept acquisition-sweep goal zz-pw-watch: 4 picked, 1 ingested/);
+    assert.match(text, /Ingested \[\[zz2023_tin\]\] ingested/);
     assert.doesNotMatch(text, /run 1/);
   });
 });

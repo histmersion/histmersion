@@ -4,6 +4,7 @@ package api.automation
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 /** An approval's vocabularies as the wire spells them (the api's own copies of the model's). */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -97,7 +98,9 @@ object Approval:
 
   object State:
     type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    object Wire extends Newtype[String, Pure]:
+      given Display[T] =
+        Display(wire => parse(wire).fold(Wording.humanize(Wording.Id(wire.value)))(Wording.approvalState))
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

@@ -825,7 +825,7 @@ object ManagersView:
                     cls := "job-subject",
                     WinLink(
                       WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)),
-                      title := g.slug.value,
+                      title := g.slug,
                       Option(g.title.value)
                         .filter(_.trim.nonEmpty)
                         .getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
@@ -1064,7 +1064,7 @@ object ManagersView:
                   cls := "job-row",
                   span(
                     cls := s"job-state state-${x.code}",
-                    title := x.code.value,
+                    title := x.code,
                     Wording.humanize(Wording.Id(x.code.value))
                   ),
                   div(
@@ -1073,7 +1073,7 @@ object ManagersView:
                       cls := "job-subject",
                       WinLink(
                         WindowKey.Goal(WindowKey.Goal.Slug(x.slug.value)),
-                        title := x.slug.value,
+                        title := x.slug,
                         Wording.humanize(Wording.Id(x.slug.value))
                       ),
                       span(cls := "muted", x.idleDays.fold(" · never progressed")(d => s" · idle $d d"))
@@ -1104,7 +1104,7 @@ object ManagersView:
               s.started.map(x =>
                 li(
                   cls := "job-row",
-                  span(cls := "job-state state-running", title := x.jobType.value, jobTypeLabel(x.jobType)),
+                  span(cls := "job-state state-running", title := x.jobType, jobTypeLabel(x.jobType)),
                   div(
                     cls := "job-main",
                     div(
@@ -1112,13 +1112,13 @@ object ManagersView:
                       button(
                         typ := "button",
                         cls := "link-btn",
-                        x.target.value,
+                        x.target,
                         title := "its manager's runs",
                         onClick --> (_ => openRuns(x.manager))
                       ),
                       span(
                         cls := "muted",
-                        title := x.manager.value,
+                        title := x.manager,
                         s" · ${Wording.manager(Wording.Id(x.manager.value))}"
                       )
                     ),
@@ -1170,7 +1170,7 @@ object ManagersView:
               shown.map(w =>
                 li(
                   cls := "job-row",
-                  span(cls := s"job-state state-${w.code}", title := w.code.value, waitLabel(w.code)),
+                  span(cls := s"job-state state-${w.code}", title := w.code, waitLabel(w.code)),
                   div(
                     cls := "job-main",
                     div(
@@ -1247,7 +1247,7 @@ object ManagersView:
                     cls := "job-subject",
                     WinLink(
                       WindowKey.Manager(WindowKey.Manager.Id(m.id.value)),
-                      title := m.id.value,
+                      title := m.id,
                       Wording.manager(Wording.Id(m.id.value))
                     )
                   ),
@@ -1402,7 +1402,7 @@ object ManagersView:
                 else
                   ul(
                     cls := "manager-events",
-                    es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind.value), s" ${e.text}"))
+                    es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), s" ${e.text}"))
                   )
               )
           )
@@ -1481,7 +1481,7 @@ object ManagersView:
               es.map(e =>
                 li(
                   span(cls := "muted", s"${e.at} · "),
-                  strong(e.kind.value),
+                  strong(e.kind),
                   s" ${e.text}",
                   e.runId.map(r =>
                     span(" ", WinLink(WindowKey.Run(WindowKey.Run.Id(r.value)), s"run ${r.value.take(8)}"))
@@ -1513,7 +1513,7 @@ object ManagersView:
       div(
         cls := "run-head",
         stateBadge(m),
-        span(cls := "run-title", title := m.id.value, s" ${Wording.manager(Wording.Id(m.id.value))}")
+        span(cls := "run-title", title := m.id, s" ${Wording.manager(Wording.Id(m.id.value))}")
       ),
       m.statusNote.map(_.render).filter(_.nonEmpty).map(n => p(cls := "job-progress", n)),
       Option.when(m.state == State.Paused.wire && m.inFlight.value == 0)(
@@ -1625,7 +1625,7 @@ object ManagersView:
     val until = Var("")
     li(
       cls := s"job-row manager-item item-${i.status}",
-      span(cls := s"job-state state-${i.status}", i.status.value),
+      span(cls := s"job-state state-${i.status}", i.status),
       div(
         cls := "job-main",
         div(
@@ -1653,7 +1653,7 @@ object ManagersView:
           )
         ),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),
-        i.outcome.filter(_.value.nonEmpty).map(o => div(cls := "muted", o.value)),
+        i.outcome.filter(_.value.nonEmpty).map(o => div(cls := "muted", o)),
         child.maybe <-- Auth.writable.map(w =>
           Option.when(w && itemActionsFor(i).nonEmpty)(
             div(

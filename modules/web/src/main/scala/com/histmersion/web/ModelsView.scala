@@ -215,7 +215,7 @@ object ModelsView:
               strong(pl.title),
               span(
                 cls := "muted",
-                title := pl.floors.value,
+                title := pl.floors,
                 s" · floors ${if pl.floors.value.isEmpty then "none" else floorsText(pl.floors)} (${pl.floorsSource})" +
                   pl.planType.fold("")(t => s" · plan $t")
               ),
@@ -317,7 +317,7 @@ object ModelsView:
     val editing = Var(false)
     val draft = Var[String](c.models.map(_.model.value).mkString(" > "))
     tr(
-      td(c.role.value),
+      td(c.role),
       td(
         if c.models.isEmpty then
           span(cls := "muted", if c.problems.isEmpty then "no model" else c.problems.map(_.sentence).mkString("; "))
@@ -331,7 +331,7 @@ object ModelsView:
                   title := Option((e.problems.map(_.sentence) ++ e.billing.toList).mkString(" · "))
                     .filter(_.nonEmpty)
                     .getOrElse("usable"),
-                  e.model.value,
+                  e.model,
                   e.freesAt.map(t => span(cls := "muted", s" until $t"))
                 )
             }
@@ -376,7 +376,7 @@ object ModelsView:
         }
       ),
       td(c.active.map(_.value).getOrElse(if c.models.isEmpty then "—" else "none: would pause")),
-      td(cls := "muted", c.source.value)
+      td(cls := "muted", c.source)
     )
 
   private def amount(v: Double, m: Measure): String = m match
@@ -391,7 +391,7 @@ object ModelsView:
       cls := s"allowance ${if a.usable.value then "is-usable" else "is-paused"}",
       div(
         cls := "allowance-head",
-        code(a.target.value),
+        code(a.target),
         span(cls := "muted", s" · ${a.source}${if a.reservePct.value > 0 then s" · reserve ${a.reservePct}%" else ""}"),
         if a.usable.value then span(cls := "muted", " · has headroom")
         else
@@ -422,7 +422,7 @@ object ModelsView:
           cls := "allowance-limit",
           span(
             cls := "allowance-name",
-            title := l.limit.value,
+            title := l.limit,
             Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(l.limit.value))
           ),
           div(
@@ -510,7 +510,7 @@ object ModelsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doctorBlock(d: DoctorReport): HtmlElement =
-    def level(l: CheckLevel) = span(cls := s"doctor-level level-${l.wire}", l.wire.value)
+    def level(l: CheckLevel) = span(cls := s"doctor-level level-${l.wire}", l.wire)
     def checks(cs: List[Agents.DoctorCheck]) =
       ul(cls := "doctor-checks", cs.map(c => li(level(c.level), s" ${c.name}: ${c.detail}")))
     div(

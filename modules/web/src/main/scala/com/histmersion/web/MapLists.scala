@@ -291,7 +291,7 @@ object MapLists:
       cls("is-undated") := r.undated.value,
       a(
         cls := "row-link",
-        href := r.href.value,
+        href := r.href,
         span(cls := "cite-tip-icon pick-icon", onMountCallback(ctx => HtmlSink.replace(ctx.thisNode.ref, r.icon))),
         span(cls := "row-title", r.label),
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); r.open() } }

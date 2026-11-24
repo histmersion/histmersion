@@ -242,7 +242,7 @@ object GoalsView:
                   cls := "goal-row",
                   styleAttr := s"--depth:$depth",
                   badge(g.status),
-                  WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)), g.title.value, title := g.slug.value)
+                  WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)), g.title.value, title := g.slug)
                 )
               )
             )
@@ -258,7 +258,7 @@ object GoalsView:
   def badge(status: GoalsView.BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
     span(
       cls := s"job-state goal-status state-${status.value}",
-      meaning(Goal.Stage(status.value)).map(m => title := m.value),
+      meaning(Goal.Stage(status.value)).map(m => title := m),
       if text.value.nonEmpty then text.value else Wording.capitalize(status.value)
     )
 
@@ -268,7 +268,7 @@ object GoalsView:
     ul(
       cls := "goal-legend",
       aria.label := "goal stages",
-      stages.map((s, m) => li(badge(BadgeStatus(s.value)), span(cls := "muted", m.value)))
+      stages.map((s, m) => li(badge(BadgeStatus(s.value)), span(cls := "muted", m)))
     )
 
   /** New research area: a goal, and — ticked — a plan-goal run for it, a seeding manager and a watcher (both created
@@ -465,7 +465,7 @@ object GoalsView:
             dl(
               cls := "run-facts",
               dt("Identifier"),
-              dd(code(v.goal.slug.value)),
+              dd(code(v.goal.slug)),
               Option
                 .when(v.goal.tags.nonEmpty)(
                   List(dt("Tags"), dd(v.goal.tags.map(t => Wording.value(t.value)).mkString(", ")))
@@ -666,7 +666,7 @@ object GoalsView:
       li(
         cls := "goal-schedule",
         div(
-          strong(k.wire.value),
+          strong(k.wire),
           span(
             cls := "muted",
             k match
@@ -689,7 +689,7 @@ object GoalsView:
         child <-- Auth.writable.map { w =>
           if !w then
             current.fold(span(cls := "muted", "no schedule"))(c =>
-              span(code(c.cron.value), if c.enabled.value then " on" else " off")
+              span(code(c.cron), if c.enabled.value then " on" else " off")
             )
           else
             div(
@@ -767,7 +767,7 @@ object GoalsView:
               cls := "goal-runs",
               rs.map(r =>
                 li(
-                  span(cls := s"job-state state-${r.status.value}", r.status.value),
+                  span(cls := s"job-state state-${r.status.value}", r.status),
                   " ",
                   WinLink(WindowKey.Run(WindowKey.Run.Id(r.id.value)), s"${r.pipeline} ${r.target}"),
                   span(cls := "muted", s" · ${r.createdAt}")

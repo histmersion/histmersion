@@ -328,7 +328,7 @@ object JobsView:
             )
           )
         ),
-        j.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr.value)),
+        j.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr)),
         j.problems.toList.flatMap(_.sentences).filter(_.nonEmpty).map(s => div(cls := "job-error", s)),
         skippedLine(j).map(l =>
           div(

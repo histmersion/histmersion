@@ -33,7 +33,8 @@ object GoalPage:
   type LastCheck = LastCheck.T
   object LastCheck extends Newtype[String, Pure]
   type LinkTarget = LinkTarget.T
-  object LinkTarget extends Newtype[String, Pure]
+  object LinkTarget extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Millis = Millis.T
   object Millis extends Newtype[Double, Pure]
   type ScheduleText = ScheduleText.T
@@ -441,7 +442,7 @@ object GoalPage:
     val sources = v.links.count(_.kind == LinkKind.Source)
     def countLink(n: Signal[Option[RowCount]], one: Plural.Noun.Singular, many: Plural.Noun.Plural, to: LinkTarget) =
       a(
-        href := to.value,
+        href := to,
         child.text <-- n.map(_.fold("…")(c => if c.value == 1 then s"1 $one" else s"$c $many")),
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); Router.goHref(to.value) } }
       )
@@ -472,7 +473,7 @@ object GoalPage:
         span(cls := "li-what", "Sources brought in"),
         span(
           a(
-            href := libraryOf(slug).value,
+            href := libraryOf(slug),
             Plural.count(Plural.CountN(sources), Plural.CountSingular("source")),
             onClick --> { ev =>
               if Router.plain(ev) then {
@@ -482,7 +483,7 @@ object GoalPage:
           ),
           " · ",
           a(
-            href := mapOf(slug).value,
+            href := mapOf(slug),
             "on the map",
             onClick --> { ev =>
               if Router.plain(ev) then { ev.preventDefault(); showFiltered(slug, Route.Explore) }

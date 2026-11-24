@@ -23,6 +23,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.ItemKind
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Managers:
@@ -537,7 +538,8 @@ object Managers:
     type At = At.T
     object At extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
+    object Kind extends Newtype[String, Pure]:
+      given Display[T] = Display(kind => Wording.humanize(Wording.Id(kind.value)))
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
@@ -569,7 +571,8 @@ object Managers:
 
   object ManagerInfo:
     type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    object Id extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export Manager.Kind.Wire as Kind
     export Manager.State.Wire as State
     type PauseRuns = PauseRuns.T
@@ -736,7 +739,8 @@ object Managers:
     type NotBefore = NotBefore.T
     object NotBefore extends Newtype[String, Pure]
     type Outcome = Outcome.T
-    object Outcome extends Newtype[String, Pure]
+    object Outcome extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export ItemOrigin.Wire as Origin
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]

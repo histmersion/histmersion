@@ -221,13 +221,11 @@ object ApprovalsView:
         div(
           h5("Sub-goals"),
           ul(
-            plan.subGoals.map(g =>
-              li(code(g.slug.value), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n")))
-            )
+            plan.subGoals.map(g => li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n"))))
           )
         )
       ),
-      Option.when(plan.queries.nonEmpty)(div(h5("Search queries"), ul(plan.queries.map(q => li(q.value))))),
+      Option.when(plan.queries.nonEmpty)(div(h5("Search queries"), ul(plan.queries.map(q => li(q))))),
       Option.when(plan.works.nonEmpty)(
         div(
           h5("Works"),
@@ -246,7 +244,7 @@ object ApprovalsView:
       Option.when(plan.dropped.nonEmpty)(
         htmlTag("details")(
           htmlTag("summary")(s"dropped by code (${plan.dropped.size})"),
-          ul(plan.dropped.map(d => li(cls := "muted", d.value)))
+          ul(plan.dropped.map(d => li(cls := "muted", d)))
         )
       )
     )
@@ -263,7 +261,7 @@ object ApprovalsView:
           s" · cites ${Plural.count(Plural.CountN(d.cited.size), Plural.CountSingular("source"))} · ${d.filter}"
       ),
       p(cls := (if d.problems.isEmpty then "form-ok" else "run-paused"), selfCheck(d)),
-      Option.when(d.problems.nonEmpty)(ul(d.problems.map(x => li(x.value)))),
+      Option.when(d.problems.nonEmpty)(ul(d.problems.map(x => li(x)))),
       Option.when(d.notUsed.nonEmpty)(
         htmlTag("details")(
           htmlTag("summary")(s"not used (${d.notUsed.size})"),
@@ -610,7 +608,7 @@ object ApprovalsView:
       ),
       span(
         cls := s"job-state state-${a.state}",
-        title := a.state.value,
+        title := a.state,
         stateLabel(a.state)
       ),
       div(
@@ -678,7 +676,7 @@ object ApprovalsView:
         a.article.map(draftBlock),
         a.quote.filter(_.value.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),
         a.note.filter(_.value.nonEmpty).map(n => p(cls := "muted", s"note: $n")),
-        a.result.filter(_.value.nonEmpty).map(r => p(cls := "muted", r.value)),
+        a.result.filter(_.value.nonEmpty).map(r => p(cls := "muted", r)),
         div(
           cls := "job-meta muted",
           span(s"#${a.id}"),
