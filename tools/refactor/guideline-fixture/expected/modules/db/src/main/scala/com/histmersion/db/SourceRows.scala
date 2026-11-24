@@ -2,7 +2,9 @@ package com.histmersion
 package db
 
 import com.histmersion.domain.{Citekey, Status}
+import com.histmersion.lint.{BoundaryKind, atBoundary}
 
+@atBoundary(BoundaryKind.Sql, "fixture: binds parameters and reads rows")
 object SourceRows:
   extension (sc: StringContext) def sql(args: Any*): String = sc.s(args*)
   def toParam(c: Citekey): String = c.value + raw"/$c" // assert: GuidelineInventory
