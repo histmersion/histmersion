@@ -232,8 +232,15 @@ class ReadBackSuite extends munit.FunSuite:
               val now = e.current
               assertEquals(p.entry.text, e.text, line)
               assertEquals((p.entry.group, p.entry.`case`), (now.group, now.`case`), line)
-              if !Answer.translations.contains(Answer.Former(e.group, e.`case`)) then assertEquals(p.entry, e, line)
+              if !translated(line) then assertEquals(p.entry, e, line)
     }
+
+  private def translated(line: String): Boolean =
+    RawJson.parse(line.stripSuffix(",")).toOption.exists(holdsFormer)
+
+  private def holdsFormer(json: Json): Boolean =
+    val own = json.as[Answer.Entry].toOption.exists(e => Answer.translations.contains(Answer.Former(e.group, e.`case`)))
+    own || json.asObject.exists(_.values.exists(holdsFormer)) || json.asArray.exists(_.exists(holdsFormer))
 
   private val NeverBuilt: Vector[(Answer.Group, Answer.Case, String)] = Vector(
     (Answer.Group("Refused"), Answer.Case("Quota"), ""),

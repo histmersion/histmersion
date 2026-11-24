@@ -104,21 +104,14 @@ class RenderSuite extends munit.FunSuite:
     "Unstarted" -> 409,
     "UploadUnheld" -> 409,
     "NoModel" -> 409,
-    "Exhausted" -> 409,
     "PassedOver" -> 409,
-    "Unassigned" -> 409,
-    "Cooling" -> 409,
-    "BelowFloor" -> 409,
-    "BelowAllowance" -> 409,
-    "AllowanceUnread" -> 409,
-    "PlanOnly" -> 409,
+    "Skipped" -> 409,
     "Stopped" -> 409,
     "NotNow" -> 409,
     "AtStep" -> 409,
     "AtModel" -> 409,
     "Failed" -> 409,
     "LimitReached" -> 409,
-    "AllowanceReached" -> 409,
     "Needs" -> 409,
     "ApiKeyLogin" -> 503,
     "Exposed" -> 503,
@@ -496,41 +489,56 @@ class RenderSuite extends munit.FunSuite:
     val (role, opus, gpt) = (Run.Role("enricher"), Run.Model("claude-code:opus"), Run.Model("codex:gpt-6"))
     val at = EpochMs(1762732800000L)
     val held = Run.HeldPool(Raw("Claude plan"), Raw("claude-plan"))
-    val floor = Run.PassedOver(opus, NonEmptyVector.of(Run.BelowFloor(Raw("Claude plan"), Raw("5-hour 3% left"))))
-    val planOnly = Run.PassedOver(gpt, NonEmptyVector.of(Run.PlanOnly(role)))
+    val floor = Run.PassedOver(
+      opus,
+      NonEmptyVector.of(Run.Skipped(Run.Skip.BelowFloor(Raw("Claude plan"), Raw("5-hour 3% left"))))
+    )
+    val planOnly = Run.PassedOver(gpt, NonEmptyVector.of(Run.Skipped(Run.Skip.PlanOnly(role))))
     Vector[(Problem, String)](
-      Run.Unassigned(Run.Role("fact-checker"), Run.Asked.Call) ->
+      Run.NoModel(Run.Role("fact-checker"), Run.Shortfall.Unassigned(Run.Asked.Call), Vector.empty) ->
         ("no model for the fact-checker role — set agents.roles.fact-checker (HISTMERSION_AGENTS_ROLE_FACT_CHECKER) " +
           "to provider:model[ > provider:model …], save one with `histmersion agent models set fact-checker " +
           "<provider:model>…`, or pass one"),
-      Run.Unassigned(role, Run.Asked.Listing) ->
+      Run.NoModel(role, Run.Shortfall.Unassigned(Run.Asked.Listing), Vector.empty) ->
         "no model — set agents.roles.enricher or `histmersion agent models set enricher …`",
-      Run.NoModel(role, Vector(floor, planOnly)) ->
+      Run.NoModel(role, Run.Shortfall.Unusable, Vector(floor, planOnly)) ->
         ("no model of the enricher chain can run: claude-code:opus: the Claude plan is below its floor: 5-hour 3% " +
           "left; codex:gpt-6: not used — the chain does not fall from a plan to a paid key (histmersion agent quota " +
           "fallthrough enricher on)"),
-      Run.Exhausted(role, Run.Floor.PlanOrAllowance, Run.Frees.At(at, opus, Vector(held)), Vector(floor, planOnly)) ->
+      Run.NoModel(
+        role,
+        Run.Shortfall.Exhausted(Run.Floor.PlanOrAllowance, Run.Frees.At(at, opus, Vector(held))),
+        Vector(floor, planOnly)
+      ) ->
         ("all models for role enricher are below their plan floor or allowance; next reset at 2025-11-10T00:00:00Z " +
           "(claude-code:opus), when the run resumes by itself; the Claude plan is held (release it with `histmersion " +
           "agent quota release claude-plan`) (claude-code:opus: the Claude plan is below its floor: 5-hour 3% left; " +
           "codex:gpt-6: not used — the chain does not fall from a plan to a paid key (histmersion agent quota " +
           "fallthrough enricher on))"),
-      Run.Exhausted(role, Run.Floor.Allowance, Run.Frees.Released(NonEmptyVector.of(held)), Vector.empty) ->
+      Run.NoModel(
+        role,
+        Run.Shortfall.Exhausted(Run.Floor.Allowance, Run.Frees.Released(NonEmptyVector.of(held))),
+        Vector.empty
+      ) ->
         ("all models for role enricher are below their allowance; no window frees by itself: the Claude plan is held " +
           "(release it with `histmersion agent quota release claude-plan`) ()"),
-      Run.Exhausted(role, Run.Floor.Allowance, Run.Frees.Never, Vector.empty) ->
+      Run.NoModel(role, Run.Shortfall.Exhausted(Run.Floor.Allowance, Run.Frees.Never), Vector.empty) ->
         "all models for role enricher are below their allowance; no window frees by itself — raise or reset the allowance ()",
-      Run.Cooling(at) -> "its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z",
-      Run.BelowAllowance(
-        NonEmptyVector.of(
-          Run.Spent(Raw("5 usd/day"), Raw("4.9 USD"), Raw("0.5 USD")),
-          Run.Spent(Raw("2M tok/week"), Raw("2M"), Raw("0"))
+      Run.Skipped(Run.Skip.Cooling(at)) -> "its plan reported its usage limit; skipped until 2025-11-10T00:00:00Z",
+      Run.Skipped(
+        Run.Skip.BelowAllowance(
+          NonEmptyVector.of(
+            Run.Spent(Raw("5 usd/day"), Raw("4.9 USD"), Raw("0.5 USD")),
+            Run.Spent(Raw("2M tok/week"), Raw("2M"), Raw("0"))
+          )
         )
       ) -> "below its allowance: 5 usd/day (4.9 USD used, reserve 0.5 USD), 2M tok/week (2M used, reserve 0)",
-      Run.AllowanceUnread(
-        NonEmptyVector.of(
-          Run.Unread(Raw("local:*"), NonEmptyVector.of(Relayed(Sentence("x")), Relayed(Sentence("y")))),
-          Run.Unread(Raw("codex:*"), NonEmptyVector.of(Relayed(Sentence("z"))))
+      Run.Skipped(
+        Run.Skip.AllowanceUnread(
+          NonEmptyVector.of(
+            Run.Unread(Raw("local:*"), NonEmptyVector.of(Relayed(Sentence("x")), Relayed(Sentence("y")))),
+            Run.Unread(Raw("codex:*"), NonEmptyVector.of(Relayed(Sentence("z"))))
+          )
         )
       ) -> "its allowance cannot be read (local:*: x; y; codex:*: z)"
     ).foreach((p, want) => assertEquals(p.sentence, want))
@@ -590,7 +598,7 @@ class RenderSuite extends munit.FunSuite:
       Run.AtStep(step, Run.Failure.Declined(Vector.empty)) -> "the answer was rejected",
       Run.LimitReached(Relayed(Sentence("claude-code:opus reached its usage limit")), EpochMs(1762732800000L)) ->
         "claude-code:opus reached its usage limit — skipped until 2025-11-10T00:00:00Z",
-      Run.AllowanceReached(Run.Model("anthropic:claude-opus")) ->
+      Run.Skipped(Run.Skip.AllowanceReached(Run.Model("anthropic:claude-opus"))) ->
         "anthropic:claude-opus reached its allowance during the step; the chain's next model takes it",
       Run.AtStep(step, Run.Failure.OutputCapped(haiku, Count(4096L), Count(4096L), Run.Ceiling.StepMaxTokens)) ->
         ("cold-reader-1: claude-code:haiku's answer exceeded the 4096 output-token cap (the step sent 4096) — raise " +

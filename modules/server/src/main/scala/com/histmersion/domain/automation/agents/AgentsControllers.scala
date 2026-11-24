@@ -511,6 +511,7 @@ final class AgentsControllers(
         Left(
           Problem.Run.NoModel(
             Problem.Run.Role.of(role.wire),
+            Problem.Run.Shortfall.Unusable,
             tried.collect { case (m, Left(w)) =>
               Problem.Run.PassedOver(Problem.Run.Model.of(m.wire), w.toNonEmpty)
             }.toVector

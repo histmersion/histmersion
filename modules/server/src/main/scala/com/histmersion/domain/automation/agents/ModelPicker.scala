@@ -153,7 +153,15 @@ final class ModelPicker(
       case Some(ref) => parseChain(Chain.Spec(ref), known())
       case None      =>
         chain(role).map(_._1).flatMap { ms =>
-          Either.cond(ms.nonEmpty, ms, Problem.Run.Unassigned(Problem.Run.Role.of(role.wire), Problem.Run.Asked.Call))
+          Either.cond(
+            ms.nonEmpty,
+            ms,
+            Problem.Run.NoModel(
+              Problem.Run.Role.of(role.wire),
+              Problem.Run.Shortfall.Unassigned(Problem.Run.Asked.Call),
+              Vector.empty
+            )
+          )
         }
 
   /** Whether `role`'s chain may fall from a plan pool below its floor to a PAID key: saved, else
@@ -291,11 +299,17 @@ final class ModelPicker(
       case (Some(_), _, _, _) =>
         ModelState(ModelState.Usable(false), noLogin, None, ht, hu, unavailable = ModelState.Unavailable(true))
       case (_, Some(unread), _, _) =>
-        ModelState(ModelState.Usable(false), Some(Problem.Run.AllowanceUnread(unread)), None, ht, hu)
+        ModelState(
+          ModelState.Usable(false),
+          Some(Problem.Run.Skipped(Problem.Run.Skip.AllowanceUnread(unread))),
+          None,
+          ht,
+          hu
+        )
       case (_, _, Some(until), _) =>
         ModelState(
           ModelState.Usable(false),
-          Some(Problem.Run.Cooling(Problem.EpochMs(until.value))),
+          Some(Problem.Run.Skipped(Problem.Run.Skip.Cooling(Problem.EpochMs(until.value)))),
           cool,
           ht,
           hu,
@@ -305,7 +319,7 @@ final class ModelPicker(
       case (_, _, _, Some((p, reading, until))) =>
         ModelState(
           ModelState.Usable(false),
-          Some(Problem.Run.BelowFloor(Problem.Raw.of(p.title), Problem.Raw.of(reading))),
+          Some(Problem.Run.Skipped(Problem.Run.Skip.BelowFloor(Problem.Raw.of(p.title), Problem.Raw.of(reading)))),
           until.map(u => PlanQuotaRepo.EpochMillis(u.value)),
           ht,
           hu,
@@ -316,7 +330,9 @@ final class ModelPicker(
       case _ if !ok =>
         ModelState(
           ModelState.Usable(false),
-          NonEmptyVector.from(spent.toVector).map(Problem.Run.BelowAllowance(_)),
+          NonEmptyVector
+            .from(spent.toVector)
+            .map(limits => Problem.Run.Skipped(Problem.Run.Skip.BelowAllowance(limits))),
           frees.map(f => PlanQuotaRepo.EpochMillis(f.value)),
           ht,
           hu,
@@ -381,16 +397,23 @@ final class ModelPicker(
         rest match
           case Nil =>
             if exhausted.isEmpty then
-              Left(PickFailure.Unavailable(Problem.Run.NoModel(Problem.Run.Role.of(role.wire), notReady.toVector)))
+              Left(
+                PickFailure.Unavailable(
+                  Problem.Run.NoModel(
+                    Problem.Run.Role.of(role.wire),
+                    Problem.Run.Shortfall.Unusable,
+                    notReady.toVector
+                  )
+                )
+              )
             else
               val (frees, when) = ModelPicker.whenFrees(exhausted.map(e => (e.model, e.freesAt, e.held)))
               val floor = if planHit then Problem.Run.Floor.PlanOrAllowance else Problem.Run.Floor.Allowance
               Left(
                 PickFailure.Exhausted(
-                  Problem.Run.Exhausted(
+                  Problem.Run.NoModel(
                     Problem.Run.Role.of(role.wire),
-                    floor,
-                    when,
+                    Problem.Run.Shortfall.Exhausted(floor, when),
                     (exhausted.map(_.passed) ++ notReady).toVector
                   ),
                   frees.map(f => Instant.ofEpochMilli(f.value)),
@@ -398,7 +421,12 @@ final class ModelPicker(
                 )
               )
           case m :: tail if planHit && !mayFallThrough && pools.paid(m) =>
-            go(tail, notReady :+ passed(m, Problem.Run.PlanOnly(Problem.Run.Role.of(role.wire))), exhausted, planHit)
+            go(
+              tail,
+              notReady :+ passed(m, Problem.Run.Skipped(Problem.Run.Skip.PlanOnly(Problem.Run.Role.of(role.wire)))),
+              exhausted,
+              planHit
+            )
           case m :: tail =>
             resolve(m) match
               case Left(why)                => go(tail, notReady :+ passed(m, why), exhausted, planHit)
@@ -480,7 +508,13 @@ final class ModelPicker(
             entries,
             entries.find(_.usable.value).map(e => RoleChain.Active(e.model.value)),
             Option
-              .when(ms.isEmpty)(Problem.Run.Unassigned(Problem.Run.Role.of(r.wire), Problem.Run.Asked.Listing))
+              .when(ms.isEmpty)(
+                Problem.Run.NoModel(
+                  Problem.Run.Role.of(r.wire),
+                  Problem.Run.Shortfall.Unassigned(Problem.Run.Asked.Listing),
+                  Vector.empty
+                )
+              )
               .toList
           )
     }

@@ -1869,34 +1869,26 @@ object Problem:
     /** A queued upload's file was held by the process that a restart ended: its job cannot run. */
     case object UploadUnheld extends Run
 
-    /** No model of `role`'s chain can run: each of its models, passed over and why. */
-    final case class NoModel(role: Role, passed: Vector[PassedOver]) extends Run
+    /** No model of `role`'s chain can run, for want of `shortfall`: each of its models, passed over and why. */
+    final case class NoModel(role: Role, shortfall: Shortfall, passed: Vector[PassedOver]) extends Run
 
-    /** Every model of `role`'s chain is out of headroom, below `floor`: the run waits until `frees`. `passed`: each
-      * model passed over and why, those out of headroom first.
-      */
-    final case class Exhausted(role: Role, floor: Floor, frees: Frees, passed: Vector[PassedOver]) extends Run
+    enum Shortfall derives CanEqual:
+      case Unusable
+      case Exhausted(floor: Floor, frees: Frees)
+      case Unassigned(asked: Asked)
+
+    final case class Skipped(skip: Skip) extends Run
+
+    enum Skip derives CanEqual:
+      case Cooling(until: EpochMs)
+      case BelowFloor(pool: Raw, reading: Raw)
+      case BelowAllowance(limits: NonEmptyVector[Spent])
+      case AllowanceUnread(broken: NonEmptyVector[Unread])
+      case PlanOnly(role: Role)
+      case AllowanceReached(model: Model)
 
     /** `model` of a chain is passed over: `why` (each reason it cannot run now). */
     final case class PassedOver(model: Model, why: NonEmptyVector[Problem]) extends Run
-
-    /** No model is set for `role`: `asked` says where the question came from, and with it what to do. */
-    final case class Unassigned(role: Role, asked: Asked) extends Run
-
-    /** The model's plan reported its usage limit: it is skipped until `until`. */
-    final case class Cooling(until: EpochMs) extends Run
-
-    /** The plan pool `pool` (its title) the model draws on is below its floor: `reading`, the pool's own words. */
-    final case class BelowFloor(pool: Raw, reading: Raw) extends Run
-
-    /** The model is below its allowance: each limit without headroom. */
-    final case class BelowAllowance(limits: NonEmptyVector[Spent]) extends Run
-
-    /** An allowance covering the model cannot be read, so it blocks what it covers: each target and why. */
-    final case class AllowanceUnread(broken: NonEmptyVector[Unread]) extends Run
-
-    /** The model is not used: `role`'s chain does not fall from a plan pool to a paid key. */
-    final case class PlanOnly(role: Role) extends Run
 
     /** Run `run` is `status`, in which `control` does not apply. */
     final case class NotNow(run: Raw, status: Raw, control: Control) extends Run
@@ -1923,9 +1915,6 @@ object Problem:
     /** The model's plan reported its usage limit (`why`, as its runtime said it): the model is skipped until `until`.
       */
     final case class LimitReached(why: Problem, until: EpochMs) extends Run
-
-    /** `model` reached its allowance during a step: the chain's next model takes the step. */
-    final case class AllowanceReached(model: Model) extends Run
 
     /** A restart cut it short. */
     case object Interrupted extends Run
@@ -2961,60 +2950,33 @@ object Problem:
         External.PluginSaid("the AWMC server is in maintenance")
       ),
       Run.Paused(Run.PauseReason.Requested, Some(EpochMs(1762732800000L))),
-      Run.Halted(Run.PauseCause.PlanQuota, Run.Cooling(EpochMs(1762732800000L))),
+      Run.Halted(Run.PauseCause.PlanQuota, Run.Skipped(Run.Skip.Cooling(EpochMs(1762732800000L)))),
       Run.Unstarted,
       Run.UploadUnheld,
       Run.NoModel(
         Run.Role("reviewer"),
+        Run.Shortfall.Unusable,
         Vector(
           Run.PassedOver(
             Run.Model("claude-code:opus"),
             NonEmptyVector.of(Config.Unpriced(Run.Model("claude-code:opus"), None))
           ),
-          Run.PassedOver(Run.Model("codex:gpt-6"), NonEmptyVector.of(Run.PlanOnly(Run.Role("reviewer"))))
-        )
-      ),
-      Run.Exhausted(
-        Run.Role("enricher"),
-        Run.Floor.PlanOrAllowance,
-        Run.Frees.At(
-          EpochMs(1762732800000L),
-          Run.Model("claude-code:sonnet"),
-          Vector(Run.HeldPool(Raw("Claude plan"), Raw("claude-plan")))
-        ),
-        Vector(
           Run.PassedOver(
-            Run.Model("claude-code:sonnet"),
-            NonEmptyVector.of(Run.BelowFloor(Raw("Claude plan"), Raw("5-hour window 3% left, floor 10%")))
+            Run.Model("codex:gpt-6"),
+            NonEmptyVector.of(Run.Skipped(Run.Skip.PlanOnly(Run.Role("reviewer"))))
           )
         )
       ),
-      Run.PassedOver(Run.Model("local:qwen"), NonEmptyVector.of(Run.Cooling(EpochMs(1762732800000L)))),
-      Run.Unassigned(Run.Role("skeptic"), Run.Asked.Call),
-      Run.Cooling(EpochMs(1762732800000L)),
-      Run.BelowFloor(Raw("ChatGPT plan"), Raw("weekly window 2% left, floor 5%")),
-      Run.BelowAllowance(
-        NonEmptyVector.of(
-          Run.Spent(Raw("5 usd/day"), Raw("4.9 USD"), Raw("0.5 USD")),
-          Run.Spent(Raw("2M tokens/week"), Raw("1.9M"), Raw("0"))
-        )
-      ),
-      Run.AllowanceUnread(
-        NonEmptyVector.of(
-          Run.Unread(
-            Raw("claude-code:*"),
-            NonEmptyVector.of(
-              Invalid.Unreadable.here(TypeName("ModelChains.Limit.Spec"), Raw("5 usd/fortnight"), Vector.empty)
-            )
-          )
-        )
-      ),
-      Run.PlanOnly(Run.Role("writer")),
+      Run
+        .PassedOver(Run.Model("local:qwen"), NonEmptyVector.of(Run.Skipped(Run.Skip.Cooling(EpochMs(1762732800000L))))),
+      Run.Skipped(Run.Skip.Cooling(EpochMs(1762732800000L))),
       Run.Stopped(Run.Stop.Stalled(Count(4L), Count(31L), Count(3L))),
       Run.NotNow(Raw("0193f1c4"), Raw("done"), Run.Control.Resume),
       Run.AtStep(
         Run.Step("enrich"),
-        Run.Failure.Failed(NonEmptyVector.of(Run.Unassigned(Run.Role("enricher"), Run.Asked.Call)))
+        Run.Failure.Failed(
+          NonEmptyVector.of(Run.NoModel(Run.Role("enricher"), Run.Shortfall.Unassigned(Run.Asked.Call), Vector.empty))
+        )
       ),
       Run.AtModel(
         Run.Model("hello-ai:echo"),
@@ -3025,7 +2987,6 @@ object Problem:
         Upstream.Limited(Upstream.Name("claude-code"), Some(EpochMs(1762732800000L))),
         EpochMs(1762732800000L)
       ),
-      Run.AllowanceReached(Run.Model("anthropic:claude-opus")),
       Run.Needs(Run.Need.Text(Raw("anthony2007"))),
       Run.Interrupted,
       Run.Restored,
@@ -3101,7 +3062,50 @@ object Problem:
       Run.Step("cold-reader-1"),
       Run.Failure
         .OutputCapped(Run.Model("claude-code:haiku"), Count(4096L), Count(4096L), Run.Ceiling.StepMaxTokens)
-    )
+    ),
+    Run.NoModel(
+      Run.Role("enricher"),
+      Run.Shortfall.Exhausted(
+        Run.Floor.PlanOrAllowance,
+        Run.Frees.At(
+          EpochMs(1762732800000L),
+          Run.Model("claude-code:sonnet"),
+          Vector(Run.HeldPool(Raw("Claude plan"), Raw("claude-plan")))
+        )
+      ),
+      Vector(
+        Run.PassedOver(
+          Run.Model("claude-code:sonnet"),
+          NonEmptyVector.of(
+            Run.Skipped(Run.Skip.BelowFloor(Raw("Claude plan"), Raw("5-hour window 3% left, floor 10%")))
+          )
+        )
+      )
+    ),
+    Run.NoModel(Run.Role("skeptic"), Run.Shortfall.Unassigned(Run.Asked.Call), Vector.empty),
+    Run.Skipped(Run.Skip.BelowFloor(Raw("ChatGPT plan"), Raw("weekly window 2% left, floor 5%"))),
+    Run.Skipped(
+      Run.Skip.BelowAllowance(
+        NonEmptyVector.of(
+          Run.Spent(Raw("5 usd/day"), Raw("4.9 USD"), Raw("0.5 USD")),
+          Run.Spent(Raw("2M tokens/week"), Raw("1.9M"), Raw("0"))
+        )
+      )
+    ),
+    Run.Skipped(
+      Run.Skip.AllowanceUnread(
+        NonEmptyVector.of(
+          Run.Unread(
+            Raw("claude-code:*"),
+            NonEmptyVector.of(
+              Invalid.Unreadable.here(TypeName("ModelChains.Limit.Spec"), Raw("5 usd/fortnight"), Vector.empty)
+            )
+          )
+        )
+      )
+    ),
+    Run.Skipped(Run.Skip.PlanOnly(Run.Role("writer"))),
+    Run.Skipped(Run.Skip.AllowanceReached(Run.Model("anthropic:claude-opus")))
   )
 
   // ---- Problems: one or many ----------------------------------------------------------------------------------
