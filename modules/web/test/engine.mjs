@@ -1,9 +1,9 @@
 // The browser engine the regressions and budgets run in: HISTMERSION_TEST_BROWSER=chromium (the default) or
 // firefox. The map is drawn by WebGL; Chromium is launched on the GPU on macOS (Metal) unless
-// HISTMERSION_TEST_GPU=0 (its software rasteriser, the map's no-GPU path); with HISTMERSION_TEST_GPU=1 on a machine
-// without a GPU the regressions' pages are told a GPU renderer (standInGpu), so they take the GPU path, drawn by the
-// CPU; Firefox draws WebGL as it would for a person (on macOS: the GPU). What only Chromium can measure (CDP: the
-// heap, listener counts, forced garbage collection) is answered as `null` in Firefox, and the budgets name those figures.
+// HISTMERSION_TEST_GPU=0 (its software rasteriser, the map's no-GPU path); without a GPU, the regressions of the GPU
+// path tell their pages a GPU renderer (standInGpu), so that path is tested too, drawn by the CPU; Firefox draws WebGL
+// as it would for a person (on macOS: the GPU). What only Chromium can measure (CDP: the heap, listener counts, forced
+// garbage collection) is answered as `null` in Firefox, and the budgets name those figures.
 import { chromium, firefox } from 'playwright';
 
 export const engineName = (process.env.HISTMERSION_TEST_BROWSER || 'chromium').toLowerCase();
@@ -38,10 +38,10 @@ export async function rendererOf(browser) {
 
 export async function renderMode(browser, what) {
   const renderer = await rendererOf(browser);
-  const standIn = isChromium && wantsGpu() && softwareRenderer(renderer);
+  const noGpu = isChromium && softwareRenderer(renderer);
   console.log(`# ${what}: every figure held (renderer "${renderer || 'unknown'}"` +
-    `${standIn ? `; the GPU path asked for without a GPU: the pages are told their renderer is "${GPU_STAND_IN}"` : ''})`);
-  return standIn;
+    `${noGpu ? `; no GPU: the tests of the GPU path tell their pages the renderer "${GPU_STAND_IN}"` : ''})`);
+  return noGpu;
 }
 
 export function standInGpu(context) {

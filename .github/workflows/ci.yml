@@ -358,9 +358,9 @@ jobs:
 
   browser:
     # The browser tests but the budgets, against the server on the JVM from the build job's compile, in Chromium
-    # headless. The runner has no GPU: WebGL is drawn by SwiftShader, and HISTMERSION_TEST_GPU=1 has the pages told a
-    # GPU renderer so they take the GPU path (test/engine.mjs standInGpu); the no-GPU path has its own tests, in a
-    # browser without the stand-in. Every shard loads every file; test/shard-preload.mjs registers only
+    # headless. The runner has no GPU: WebGL is drawn by SwiftShader and the pages take the no-GPU path, but for the
+    # tests of the GPU path, whose pages are told a GPU renderer (test/engine.mjs standInGpu, withPage's `gpu`).
+    # Every shard loads every file; test/shard-preload.mjs registers only
     # the shard's own tests (perf.test.mjs whole to shard 1, every other test by a hash of its name to shards 2…n)
     # and lists every test it saw with its shard (the manifest), so browser-shards can check the union.
     name: browser ${{ matrix.shard }}
@@ -375,7 +375,6 @@ jobs:
       HISTMERSION_SERVER_URL: http://127.0.0.1:18080
       HISTMERSION_TEST_SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
       HISTMERSION_TEST_SHARD_PINS: perf.test.mjs=1
-      HISTMERSION_TEST_GPU: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
