@@ -63,3 +63,4 @@ audited and moved here.
 | [0027](0027-booleans-are-enums-and-passed-by-name.md) | A state is an enum, and a Boolean left is passed by name |
 | [0028](0028-declared-proxy-client-address.md) | A declared proxy's reported client address decides, read from the right and failing closed |
 | [0029](0029-named-provenance-on-every-created-record.md) | Every created record names its creator: the person, or a named (plugin, workflow, agent) |
+| [0031](0031-ci-on-linux-bundles-on-demand.md) | Every PR check runs on Linux; the per-platform bundles are built on demand |
