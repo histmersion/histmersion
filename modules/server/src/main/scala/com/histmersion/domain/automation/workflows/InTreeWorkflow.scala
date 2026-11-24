@@ -3,6 +3,7 @@ package domain.automation.workflows
 
 import com.histmersion.domain.Creator
 import com.histmersion.domain.Creator.{Plugin, Workflow}
+import io.github.iltotore.iron.RefinedType
 
 enum InTreeWorkflow(val plugin: Plugin.Name, val workflow: Workflow.Name) derives CanEqual:
   case RunNotices extends InTreeWorkflow(Plugin.Name("engine"), Workflow.Name("run-notices"))
@@ -30,3 +31,14 @@ object InTreeWorkflow:
   def Engine: Plugin.Name = Plugin.Name("engine")
   def Library: Plugin.Name = Plugin.Name("library")
   def Research: Plugin.Name = Plugin.Name("research")
+  def Catalogue: Plugin.Name = Plugin.Name("catalogue")
+  def Media: Plugin.Name = Plugin.Name("media")
+
+  def EventImporting: Workflow.Name = Workflow.Name("event-import")
+  def GazetteerImporting: Workflow.Name = Workflow.Name("gazetteer-import")
+  def MediaImporting: Workflow.Name = Workflow.Name("media-import")
+
+  def imported[Id](owner: Option[Id], inTree: Plugin.Name, workflow: Workflow.Name)(using
+      RefinedType.Mirror[Id]
+  ): Creator.New =
+    Creator.code(owner.flatMap(id => Plugin.Name.from(id).toOption).getOrElse(inTree), workflow)

@@ -3,6 +3,7 @@ package domain.automation.workflows
 
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.Creator
+import com.histmersion.plugin.Plugin
 
 class InTreeWorkflowSuite extends munit.FunSuite:
 
@@ -26,3 +27,21 @@ class InTreeWorkflowSuite extends munit.FunSuite:
     List(WorkflowId("enrich-source") -> "enrich-source", WorkflowId("plan-goal") -> "plan-goal").foreach { (id, raw) =>
       assertEquals(s"${id.creatorName}", raw)
     }
+
+  test("an import names the plugin that registered what it reads, else the in-tree contributor, never the starter"):
+    val owned = InTreeWorkflow.imported(
+      Some(Plugin.Info.Id("events-gvp")),
+      InTreeWorkflow.Catalogue,
+      InTreeWorkflow.EventImporting
+    )
+    assertEquals(owned, Creator.code(Creator.Plugin.Name("events-gvp"), Creator.Workflow.Name("event-import")))
+    val inTree =
+      InTreeWorkflow.imported(Option.empty[Plugin.Info.Id], InTreeWorkflow.Media, InTreeWorkflow.MediaImporting)
+    assertEquals(inTree, Creator.code(Creator.Plugin.Name("media"), Creator.Workflow.Name("media-import")))
+    val malformed =
+      InTreeWorkflow.imported(
+        Some(Plugin.Info.Id("Not A Name")),
+        InTreeWorkflow.Catalogue,
+        InTreeWorkflow.GazetteerImporting
+      )
+    assertEquals(malformed, Creator.code(Creator.Plugin.Name("catalogue"), Creator.Workflow.Name("gazetteer-import")))

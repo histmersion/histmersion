@@ -94,7 +94,8 @@ final class CatalogueWiring(
       () => deps.cfg,
       http,
       presentYear,
-      () => deps.maintenance.active
+      () => deps.maintenance.active,
+      () => deps.plugins.contributions.toList.flatMap((id, r) => r.eventCatalogues.values.map(_ -> id)).toMap
     )
 
   lazy val eventImports: EventImportsControllers =
@@ -182,5 +183,6 @@ object CatalogueWiring:
       download,
       u => text(u),
       () => deps.plugins.registries.gazetteerSources,
-      () => PluginGazetteers.http(PluginGazetteers.transport(deps.cfg.places))
+      () => PluginGazetteers.http(PluginGazetteers.transport(deps.cfg.places)),
+      () => deps.plugins.contributions.toList.flatMap((id, r) => r.gazetteerSources.values.map(_ -> id)).toMap
     )

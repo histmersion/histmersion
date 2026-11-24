@@ -20,6 +20,7 @@ import com.histmersion.server.HttpDownload
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -35,9 +36,13 @@ final class GazetteerImports(
     download: GazetteerLoad.Download,
     text: HttpDownload.Url => Either[Problem, HttpDownload.Text],
     registered: () => ListMap[Registries.GazetteerSourcesKey, GazetteerSource],
-    http: () => Plugin.Http
+    http: () => Plugin.Http,
+    owners: () => Map[GazetteerSource, Plugin.Info.Id]
 ):
   private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores())
+
+  def importerOf(source: GazetteerSource): Creator.New =
+    InTreeWorkflow.imported(owners().get(source), InTreeWorkflow.Catalogue, InTreeWorkflow.GazetteerImporting)
 
   private def pointTolerance: GeocodeSettings.ToleranceKm =
     GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
@@ -51,6 +56,7 @@ final class GazetteerImports(
       apply: GazetteerLoad.LoadApply,
       note: JobInfo.Progress => Unit
   )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
+    given Creator.New = Creator.code(InTreeWorkflow.Catalogue, InTreeWorkflow.GazetteerImporting)
     GazetteerLoad.load(db, settings, kind, apply, note, download)
 
   /** The bundled gazetteer, the way `histmersion places seed` imports it: [[PlaceSeed.files]] order, then a second pass

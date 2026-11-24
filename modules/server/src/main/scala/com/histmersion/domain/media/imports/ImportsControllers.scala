@@ -26,6 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a
@@ -96,6 +97,14 @@ final class ImportsControllers(
       n => cfg().collections.licencesFor(MediaPluginCollectionsConfig.PerCollectionKey(n.value))
     )
 
+  private def importer(imp: MediaImporter): Creator.New =
+    val (registered, owners) = collections()
+    InTreeWorkflow.imported(
+      registered.collectFirst { case (key, c) if c eq imp.collection => owners.get(key) }.flatten,
+      InTreeWorkflow.Media,
+      InTreeWorkflow.MediaImporting
+    )
+
   /** One import run, answered when it ends: a dry run (at most `media.max-limit`), or a real one of ONE place or event.
     * A real run over many is a job ([[importJob]], #1491): asked here it outlived the CLI's request while the server
     * kept going.
@@ -103,6 +112,7 @@ final class ImportsControllers(
   def importMedia(req: MediaImportRequest)(using Creator.New): Either[Api.Error, MediaImportReport] =
     def go(using WritePermit)(using Creator.New): Either[Api.Error, MediaImportReport] =
       providerOf(req.provider).flatMap { imp =>
+        given Creator.New = importer(imp)
         targetsOf(req).flatMap { (place, event) =>
           jobs.exclusive(BackgroundJob.Work("media import")) {
             imp
@@ -179,6 +189,7 @@ final class ImportsControllers(
             // a refresh asks again what was asked before this job started — a resumed job too
             val since = Option.when(req.refresh.value)(ImportService.Since(clock.millis()))
             jobs.start(ImportsControllers.ImportJobKind, JobKinds.Subject(what)) { progress =>
+              given Creator.New = importer(imp)
               Right(ImportsControllers.summary(runImport(imp, place, event, refresh, single, cap, since, progress)))
             }
           }

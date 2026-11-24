@@ -33,6 +33,8 @@ trait MediaImporter:
 
   /** Targets per job batch. */
   def batch: MediaConfig.ImportBatch
+
+  def collection: MediaCollection
   def targets(
       place: Option[Place.Id],
       event: Option[Event.Id],
@@ -95,6 +97,7 @@ object MediaImporter:
       val title = what
       val over = MediaImporter.over(asks)
       def batch = cfg().importBatch
+      def collection = col
       def targets(
           place: Option[Place.Id],
           event: Option[Event.Id],
