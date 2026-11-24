@@ -15,7 +15,7 @@ final case class ForwardedChain private (hops: Vector[ForwardedChain.Hop]):
   def client(policy: AccessPolicy): Either[Fault, InetAddress] =
     @tailrec def walk(at: Int): Either[Fault, InetAddress] =
       hops(at) match
-        case Hop.Hidden                                                  => Left(Fault.Hidden)
+        case Hop.Hidden                                                    => Left(Fault.Hidden)
         case Hop.Address(address) if at > 0 && policy.proxiedFrom(address) => walk(at - 1)
         case Hop.Address(address)                                          => Right(address)
     walk(hops.size - 1)
@@ -133,11 +133,12 @@ object ForwardedChain:
         if quoting == Quoting.Inside then Left(Fault.Malformed) else Right((text.substring(start) :: parts).reverse)
       else
         (text.charAt(at), quoting) match
-          case ('"', Quoting.Outside)                      => loop(at + 1, start, Quoting.Inside, parts)
-          case ('"', Quoting.Inside)                       => loop(at + 1, start, Quoting.Outside, parts)
-          case ('\\', Quoting.Inside)                      => loop(at + 2, start, quoting, parts)
-          case (c, Quoting.Outside) if c == separator => loop(at + 1, at + 1, quoting, text.substring(start, at) :: parts)
-          case _                                           => loop(at + 1, start, quoting, parts)
+          case ('"', Quoting.Outside)                 => loop(at + 1, start, Quoting.Inside, parts)
+          case ('"', Quoting.Inside)                  => loop(at + 1, start, Quoting.Outside, parts)
+          case ('\\', Quoting.Inside)                 => loop(at + 2, start, quoting, parts)
+          case (c, Quoting.Outside) if c == separator =>
+            loop(at + 1, at + 1, quoting, text.substring(start, at) :: parts)
+          case _ => loop(at + 1, start, quoting, parts)
     loop(0, 0, Quoting.Outside, Nil)
 
   private def traverse[A, B](items: List[A])(each: A => Either[Fault, B]): Either[Fault, List[B]] =

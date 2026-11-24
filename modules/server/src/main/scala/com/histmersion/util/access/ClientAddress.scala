@@ -25,9 +25,9 @@ object ClientAddress:
       case Some(fault) => Unusable(fault)
       case None        =>
         clients.collect { case Right(address) => address } match
-          case Nil                                                           => Unusable(Fault.Absent)
+          case Nil                                                        => Unusable(Fault.Absent)
           case first :: others if others.forall(agrees(_, first, policy)) => Forwarded(first)
-          case _                                                             => Unusable(Fault.Conflicting)
+          case _                                                          => Unusable(Fault.Conflicting)
 
   private def agrees(other: InetAddress, client: InetAddress, policy: AccessPolicy): Boolean =
     Cidr.sameAddress(other, client) || policy.proxiedFrom(other)
