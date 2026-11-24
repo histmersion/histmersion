@@ -37,14 +37,6 @@ object RetypeToNewtype {
   }
 }
 
-/** Retypes a parameter from a primitive to a newtype (G1) and fixes what follows from it: the declared type becomes the
-  * newtype (`tpe`, inside an Option or a collection too); a call site that passes `y.value` of that newtype passes `y`,
-  * any other argument is wrapped (`wrap(arg)`, the boundary's construction); inside the body the parameter keeps
-  * working where a newtype is taken (an argument to a parameter of that newtype, the receiver of one of the
-  * companion's extensions) and is unwrapped with `.value` everywhere else. Each entry: `param` (the parameter's
-  * SemanticDB symbol), `newtype` (its companion's symbol), `tpe` and `wrap` (the source text of the type and of the
-  * constructor at the call sites).
-  */
 class RetypeToNewtype(config: RetypeToNewtype.Config, index: ConcurrentHashMap[String, s.SymbolInformation])
     extends SemanticRule("RetypeToNewtype") {
   import RetypeToNewtype._
@@ -69,8 +61,7 @@ class RetypeToNewtype(config: RetypeToNewtype.Config, index: ConcurrentHashMap[S
   }
   private val log = new ConcurrentLinkedQueue[String]()
 
-  /** The companions' symbols as SemanticDB writes them (`a/File$package.X.` for one beside top-level definitions). */
-  private lazy val companions: Map[String, String] = {
+  private lazy val companionsAsWritten: Map[String, String] = {
     val wanted = config.retypes.map(_.newtype).toSet
     index.keySet.asScala.iterator.filter(k => wanted(k.replaceAll("[^/.#]*\\$package\\.", ""))).map(k =>
       k.replaceAll("[^/.#]*\\$package\\.", "") -> k).toMap
@@ -134,7 +125,7 @@ class RetypeToNewtype(config: RetypeToNewtype.Config, index: ConcurrentHashMap[S
       byParam.get(param).map(_.newtype).orElse(infoS(param).map(_.signature).collect { case v: s.ValueSignature => v.tpe }
         .flatMap(newtypeOf))
     def hasExtension(configured: String, op: String): Boolean = {
-      val obj = companions.getOrElse(configured, configured)
+      val obj = companionsAsWritten.getOrElse(configured, configured)
       (List(s"$obj$op().")++ (1 to 6).map(i => s"$obj$op(+$i).")).exists(m => infoS(m).isDefined)
     }
     def symbolOf(fun: Term): String = fun match {

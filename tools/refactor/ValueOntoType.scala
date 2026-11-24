@@ -62,11 +62,6 @@ object ValueOntoType {
   }
 }
 
-/** Removes `.value` where the newtype itself does the job: `x.value.op(…)` becomes `x.op(…)` when the newtype's companion
-  * defines the extension `op`; `X(x.value)` of an `x: X` becomes `x`; `x.value == y.value` (and `!=`, `<`, `<=`, `>`,
-  * `>=`) of two values of one newtype becomes `x == y`; and `.value` handed to a configured sink (a method whose
-  * parameter accepts the newtype through an instance lifted from its base) is dropped.
-  */
 class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[String, s.SymbolInformation])
     extends SemanticRule("ValueOntoType") {
   import ValueOntoType._
@@ -162,7 +157,6 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
       }
     def newtypeOfTerm(t: Term): Option[String] = termType(t).flatMap(newtypeOf)
 
-    /** The companion `obj` declares the extension `op` on its own type. */
     def hasExtension(obj: String, op: String): Boolean = {
       val name = if (op.matches("[A-Za-z_][A-Za-z0-9_]*")) op else s"`$op`"
       (List(s"$obj$name().") ++ (1 to 6).map(i => s"$obj$name(+$i).")).exists { m =>
@@ -214,7 +208,6 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
     def sinkSymbol(sym: String): Boolean = sym.nonEmpty && sinkPatterns.exists(_.pattern.matcher(sym).matches)
     def outsideCompanion(t: Tree, nt: String): Boolean = !enclosingNewtypes(t).contains(nt)
 
-    /** The companion `obj` gives an instance of `typeClass` for its own type (a given in its body). */
     def hasInstance(obj: String, typeClass: String): Boolean = infoS(obj).map(_.signature).exists {
       case cs: s.ClassSignature => cs.declarations.toList.flatMap(_.symlinks).flatMap(infoS).exists { i =>
         (i.properties & s.SymbolInformation.Property.GIVEN.value) != 0 && (i.signature match {
@@ -236,7 +229,6 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
       } else missing.add(s"${config.sinkRequires}\t$nt\t$path:${sel.pos.startLine + 1}")
 
     doc.tree.traverse {
-      // X(x.value) of x: X → x
       case a: Term.Apply if config.roundTrips && !inImport(a) && a.argClause.values.size == 1 &&
           constructionOf(a.fun).nonEmpty =>
         val nt = constructionOf(a.fun).get
@@ -245,7 +237,6 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
           rewritten.add(s"$path:${a.pos.startLine + 1}\tround-trip:$nt")
           patches += Patch.removeTokens(a.tokens.filter(t => t.start < sel.qual.pos.start || t.start >= sel.qual.pos.end)).atomic
         }
-      // x.value == y.value of one newtype → x == y
       case i: Term.ApplyInfix if config.comparisons && compared(i.op.value) && i.argClause.values.size == 1 =>
         (valueSelect(i.lhs), valueSelect(i.argClause.values.head)) match {
           case (Some((l, a)), Some((r, b))) if a == b && outsideCompanion(i, a) =>
@@ -253,7 +244,6 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
             patches += dropValue(r, s"compare:${i.op.value}:$a")
           case _ =>
         }
-      // x.value.op → x.op when the companion has the extension op
       case outer @ Term.Select(inner @ Term.Select(q, v), op) if config.operations && isIronValue(v) && !used(inner) &&
           !inImport(outer) =>
         newtypeOfTerm(q).filter(nt => outsideCompanion(outer, nt)).foreach { nt =>
