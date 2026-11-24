@@ -11,9 +11,6 @@ object DisplayAsIs {
   }
 }
 
-/** Gives each listed newtype (its companion's SemanticDB symbol) the display form that equals its raw value: one
-  * `given` line in the companion, the owner's per-type decision written down where the type is.
-  */
 class DisplayAsIs(config: DisplayAsIs.Config) extends SemanticRule("DisplayAsIs") {
   def this() = this(DisplayAsIs.Config())
 
