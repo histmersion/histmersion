@@ -1,6 +1,6 @@
 package fixture
 
-import io.github.iltotore.iron.RefinedType
+import com.histmersion.Display
 
 trait Shown[-A]:
   def text(a: A): String
@@ -8,7 +8,7 @@ trait Shown[-A]:
 object Shown:
   given Shown[String] = identity(_)
 
-given lifted: [N] => (m: RefinedType.Mirror[N] { type BaseType = String }) => Shown[N] = _.asInstanceOf[String]
+given displayed: [N] => (display: Display[N]) => Shown[N] = display.text(_)
 
 object Dom:
   final class Tag(name: String):

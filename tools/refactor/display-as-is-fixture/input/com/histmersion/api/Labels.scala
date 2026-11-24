@@ -1,0 +1,16 @@
+package com.histmersion
+package api
+
+import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.any.Pure
+
+object Labels:
+  type Text = Text.T
+  object Text extends RefinedType[String, Pure]
+
+  type Title = Title.T
+  object Title extends RefinedType[String, Pure]:
+    extension (title: Title) def isBlank: Boolean = title.value.isBlank
+
+  type Wire = Wire.T
+  object Wire extends RefinedType[String, Pure]

@@ -601,8 +601,10 @@ type's companion and at a boundary: `x.value.op(…)` becomes `x.op(…)` when t
 extension `op` (an operation added to the type by hand, then every call site follows); `X(x.value)` of an `x: X`
 becomes `x`; `x.value == y.value` (`!=`, `<`, `<=`, `>`, `>=`) of one newtype becomes `x == y` (Newtype's lifted
 CanEqual and Ordering); and a `.value` handed to a `sinks` method (regexes over SemanticDB symbols of methods whose
-parameter takes the newtype through an instance lifted from its base) is dropped, adding `sinkImport` where the
-file's package is not `sinkPackage`. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
+parameter takes the newtype through a type class instance, e.g. Laminar's text child and `:=` through
+`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`. With
+`sinkRequires` (a type class symbol) a sink is rewritten only for a newtype whose companion gives that instance: the
+type's own display form, never the raw value lifted for every newtype; the others go to the worklist. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
 extensions, limits itself to `paths`, and writes `report` (each rewrite) and `<report>-missing.tsv` (each
 `x.value.op` whose newtype has no extension `op`: the worklist of operations to add to the types). After
 `sbt compile Test/compile`, from the worktree root:
@@ -617,6 +619,17 @@ The fixture:
 ```text
 .claude/skills/scalafix/scripts/run-rule.sh tools/refactor/ValueOntoType.scala \
   tools/refactor/value-onto-type-fixture/input tools/refactor/value-onto-type-fixture/expected
+```
+
+`DisplayAsIs` writes the per-type decision that a newtype's friendly form is its text as it is: for each listed
+companion (`types`, SemanticDB symbols) one line `given Display[T] = Display(_.value)` at the top of its body (a body
+is created for a one-line object), importing `com.histmersion.Display` where the file's package does not see it.
+Types whose friendly form differs (enum spellings, times, years, ids shown short) get a hand-written instance
+instead. Run as above with `display-as-is-<batch>.conf`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/DisplayAsIs.scala \
+  tools/refactor/display-as-is-fixture/input tools/refactor/display-as-is-fixture/expected
 ```
 
 ## Remaining work
