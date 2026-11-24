@@ -25,6 +25,7 @@ import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.domain.Creator
 
 /** The contract the approvals keep: a source's open proposal is not doubled; a run's step approval opens once; a
   * decision is taken once; the lists' pages, filters and facets; the digest's, the autopilot's and the scheduler's
@@ -172,6 +173,25 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
         Some(("rejected", Some("rejected: the run was cancelled")))
       )
       assertEquals(a(s).closeForRun(run, Problem.Unclassified(Legacy.Text("again"))), 0)
+  }
+
+  stest("an approval keeps the creator that proposed it, which its effect is applied under") { s =>
+    val planner = Creator.New.Automated(
+      Creator.Plugin.Name("engine"),
+      Creator.Workflow.Name("plan-goal"),
+      Creator.Agent.Model(
+        Creator.Definition.Name("goal-planner"),
+        Creator.Provider.Name("anthropic"),
+        Creator.LanguageModel.Name("claude-opus-5-5")
+      ),
+      Creator.Surface.Internal
+    )
+    val proposed =
+      a(s).openSubject(None, ApprovalKind.GoalPlan, ApprovalQuery.Subject("zz-gp"), ApprovalService.Payload("{}"))(using
+        summon
+      )(using planner)
+    assertEquals(a(s).creatorOf(idOf(proposed)), Some(planner))
+    assertEquals(a(s).creatorOf(Approval.Id(987654321L)), None)
   }
 
   stest("what the autopilot approved since a moment, and who decided each") { s =>

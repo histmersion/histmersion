@@ -32,7 +32,8 @@ class RunCreatorSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      RunCtx.modelAgent(AgentDef.Name("article-fixer"), ModelRef(ProviderKind.Local, ModelRef.Model("qwen2.5-coder:32b"))),
+      RunCtx
+        .modelAgent(AgentDef.Name("article-fixer"), ModelRef(ProviderKind.Local, ModelRef.Model("qwen2.5-coder:32b"))),
       Some(
         Creator.Agent.Model(
           Creator.Definition.Name("article-fixer"),

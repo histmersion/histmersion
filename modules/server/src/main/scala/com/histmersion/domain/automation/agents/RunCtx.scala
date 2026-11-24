@@ -505,7 +505,7 @@ final class RunCtx private[automation] (
           val call = LlmCall[A](
             LlmCall.System(prompt.system.value),
             LlmCall.User(user.value),
-            engine.agents.toolbox.tools(engine.offered(run, agent)),
+            engine.agents.toolbox.tools(engine.offered(run, agent))(using stepCreator(agent, client.model)),
             schema,
             LlmCall.MaxIterations(turns.value),
             maxTokens,

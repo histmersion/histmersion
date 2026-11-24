@@ -17,6 +17,7 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.domain.library.LibraryTools.GetSourceInput
 import com.histmersion.api.VocabularyCodecs.given
+import com.histmersion.util.database.TestCreators.given
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}

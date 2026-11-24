@@ -8,7 +8,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.domain.automation.workflows.Pipelines
+import com.histmersion.domain.automation.workflows.{InTreeWorkflow, Pipelines}
 
 import chimp.server.*
 import com.histmersion.util.json.JsonCodec
@@ -698,7 +698,10 @@ object AgentsTools:
         case Right(d) =>
           List(
             McpEdge
-              .server(d.tools.flatMap(a.toolbox.tool).map(mcpTool(_)), limits)
+              .server(
+                d.tools.flatMap(t => a.toolbox.tool(t)(using InTreeWorkflow.AgentTools.creator)).map(mcpTool(_)),
+                limits
+              )
               .endpoint(List("mcp", "agent", d.name.value))
           )
         case Left(m) =>

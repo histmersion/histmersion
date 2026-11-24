@@ -4,6 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
+import com.histmersion.domain.Creator
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
 
@@ -17,9 +18,9 @@ final class Toolbox(contributed: List[ToolContribution]):
   def names: List[ToolName] = contributed.map(_.name)
 
   /** The tools for an allowlist, in its order. */
-  def tools(allow: List[ToolName]): List[AgentTool[Identity, ?]] = allow.distinct.flatMap(tool)
+  def tools(allow: List[ToolName])(using Creator.New): List[AgentTool[Identity, ?]] = allow.distinct.flatMap(tool)
 
-  def tool(t: ToolName): Option[AgentTool[Identity, ?]] = byName.get(t).map(_.agentTool)
+  def tool(t: ToolName)(using Creator.New): Option[AgentTool[Identity, ?]] = byName.get(t).map(_.agentTool)
 
 object Toolbox:
   /** A tool's input schema as `/mcp/agent/<agent>` lists it, and so as every turn of a step re-sends it. */

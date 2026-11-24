@@ -129,7 +129,8 @@ object SourceApprovalService:
             None,
             result,
             at,
-            decidedAt(state)
+            decidedAt(state),
+            Some(summon[Creator.New])
           )
         )
         .flatMap(approvals.approval)

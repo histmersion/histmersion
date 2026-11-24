@@ -572,9 +572,12 @@ object AgentRepo:
             .setTo(p.flatMap(_.quote).map(q => ApprovalInfo.Quote(q.value)))
         }
 
-  /** The payload an approval was recorded with, as stored. */
-  def payload(id: ApprovalInfo.Id)(using DbCon): Option[Jsonb.JsonText] =
-    sql"SELECT proposal::text FROM approvals WHERE id = $id".query[Jsonb.JsonText].run().headOption
+  /** The payload an approval was recorded with, as stored, and the creator that proposed it. */
+  def payload(id: ApprovalInfo.Id)(using DbCon): Option[(Jsonb.JsonText, Jsonb.JsonText)] =
+    sql"SELECT proposal::text, creator::text FROM approvals WHERE id = $id"
+      .query[(Jsonb.JsonText, Jsonb.JsonText)]
+      .run()
+      .headOption
 
   def approval(id: ApprovalInfo.Id)(using DbCon): Option[ApprovalInfo] =
 

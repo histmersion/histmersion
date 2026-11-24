@@ -1,6 +1,7 @@
 package com.histmersion
 package domain.automation.workflows
 
+import com.histmersion.domain.Creator
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
 
@@ -13,4 +14,4 @@ import sttp.shared.Identity
   */
 trait ToolContribution:
   def name: ToolName
-  def agentTool: AgentTool[Identity, ?]
+  def agentTool(using Creator.New): AgentTool[Identity, ?]

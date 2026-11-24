@@ -24,6 +24,7 @@ import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
 import com.histmersion.domain.automation.managers.{DrainService, ManagersControllers, ManagerSupervisor, Zero}
 import com.histmersion.domain.automation.scheduler.SchedulerService
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.server.agents.{AgentDoctor, BuiltinAi, ClaudeCode, CliRuntime, Codex, Opencode, PlanPools}
 
 import com.histmersion.domain.automation.worklists.QueueItemId
@@ -1377,7 +1378,7 @@ final class AgentsControllers(
     def call(user: String) = LlmCall[ProbeAnswer](
       system = LlmCall.System(system),
       user = LlmCall.User(user),
-      tools = toolbox.tools(d.tools),
+      tools = toolbox.tools(d.tools)(using InTreeWorkflow.AgentTools.creator),
       schema = AnswerSchemas.probe,
       maxIterations = LlmCall.MaxIterations(math.min(cfg.step.maxIterations.value, 3)),
       maxTokens = LlmCall.MaxTokens(math.min(cfg.step.maxTokens.value, 512)),

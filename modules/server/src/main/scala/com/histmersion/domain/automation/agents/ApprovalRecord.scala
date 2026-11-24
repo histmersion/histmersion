@@ -6,6 +6,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Creator
 
 /** An approval as [[ApprovalService.InMemory]] holds it: its columns, the payload as written, and its times. */
 final case class ApprovalRecord(
@@ -24,7 +25,8 @@ final case class ApprovalRecord(
     note: Option[ApprovalRecord.Note],
     result: Option[ApprovalRecord.Result],
     createdAt: Instant,
-    decidedAt: Option[Instant]
+    decidedAt: Option[Instant],
+    creator: Option[Creator.New] = None
 )
 
 object ApprovalRecord:

@@ -92,6 +92,24 @@ class StoredCreatorSuite extends munit.FunSuite:
       "a backfilled person's record: the surface unknown"
     )
 
+  test("a stored creator reads back as the creator it was written from, and an incomplete one as none"):
+    val run = Creator.New.Automated(
+      Creator.Plugin.Name("library"),
+      Creator.Workflow.Name("enrich-source"),
+      Creator.Agent.RunModels(Some(Creator.Definition.Name("enrich-notes"))),
+      Creator.Surface.Internal
+    )
+    List(
+      reviewer,
+      run,
+      Creator.code(Creator.Plugin.Name("engine"), Creator.Workflow.Name("drain")),
+      Creator.New.Manual(Creator.Surface.Web),
+      Creator.New.Unattributed(Creator.Surface.Mcp)
+    ).foreach(c => assertEquals(StoredCreator.recorded(StoredCreator.column(c)), Some(c)))
+    assertEquals(StoredCreator.recorded(StoredCreator.write(Creator.unrecorded)), None)
+    assertEquals(StoredCreator.recorded(Jsonb.JsonText("""{"kind": "manual"}""")), None)
+    assertEquals(StoredCreator.recorded(Jsonb.JsonText("""{"kind": "automated", "plugin": "Bad Name"}""")), None)
+
   test("the run's write shows a model agent with its one definition, or none, and never a provider or model"):
     def run(definition: Option[Creator.Definition.Name]) =
       Creator.New.Automated(
