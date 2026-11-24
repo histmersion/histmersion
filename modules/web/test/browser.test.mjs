@@ -2266,7 +2266,7 @@ test('autopilot: the switch and the goals\' stages in the managers window', asyn
     // the new state shows before the server answers (the answer takes 300 ms here)
     await page.waitForFunction(() => document.querySelector('.autopilot-state.is-on'), null, { timeout: 250 });
     await page.waitForFunction(() => /seed:zz-pw-ap2 created/.test(document.querySelector('.autopilot').innerText));
-    assert.deepEqual(posted, [{ on: true, by: 'web' }]);
+    assert.deepEqual(posted, [{ on: true, by: 'web', createdBy: null, via: 'web' }]);
     assert.match(await ap.innerText(), /plan new articles: checked/);
     assert.match(await ap.innerText(), /ingests today 0 of 20/);
   });
