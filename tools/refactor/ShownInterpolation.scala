@@ -125,6 +125,13 @@ class ShownInterpolation(config: ShownInterpolation.Config, index: ConcurrentHas
     def termType(t: Term): Option[s.Type] = t match {
       case n: Term.Name if !isObject(n.symbol.value) => resultOf(n.symbol.value)
       case sel: Term.Select if !isObject(sel.name.symbol.value) => resultOf(sel.name.symbol.value)
+      case a: Term.Apply => (a.fun match {
+          case n: Term.Name => Some(n.symbol.value)
+          case Term.Select(_, n) => Some(n.symbol.value)
+          case _ => None
+        }).filterNot(isObject).flatMap(infoS).map(_.signature).collect {
+          case m: s.MethodSignature if m.parameterLists.nonEmpty => m.returnType
+        }
       case b: Term.Block if b.stats.size == 1 => b.stats.head match { case x: Term => termType(x); case _ => None }
       case _: Lit.String | _: Lit.Int | _: Lit.Long | _: Lit.Double | _: Lit.Boolean | _: Lit.Char =>
         Some(s.TypeRef(s.Type.Empty, "scala/Int#", Nil))
