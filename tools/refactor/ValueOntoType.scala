@@ -13,6 +13,7 @@ object ValueOntoType {
   case class Config(
       semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}"),
       paths: List[String] = Nil,
+      excludes: List[String] = Nil,
       operations: Boolean = true,
       roundTrips: Boolean = true,
       comparisons: Boolean = true,
@@ -93,6 +94,7 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
       case other => other.toString
     })
     if (config.paths.nonEmpty && !config.paths.exists(path.startsWith)) return Patch.empty
+    if (config.excludes.exists(e => path.matches(e))) return Patch.empty
 
     def infoS(sym: String): Option[s.SymbolInformation] =
       if (sym.isEmpty) None else Option(index.get(if (sym.startsWith("local")) path + "::" + sym else sym))
