@@ -21,6 +21,7 @@ import javax.imageio.ImageIO
 import javax.sql.DataSource
 import com.histmersion.db.*
 import com.histmersion.api.exchange.{MergePlan, MergeResolutions}
+import com.histmersion.api.jobs.JobInfo
 import com.histmersion.config.DbConfig
 import com.histmersion.config.BackupsConfig
 import com.histmersion.config.BundlesConfig
@@ -139,9 +140,12 @@ class LibraryOracleSuite extends DbSuite:
   private def field(json: String, name: String): String =
     s""""$name"\\s*:\\s*"([^"]*)"""".r.findFirstMatchIn(json).map(_.group(1)).getOrElse(fail(s"no $name in $json"))
 
+  @scala.annotation.tailrec
   private def awaitJob(url: String, id: String, left: Int = 600): String =
-    val j = get(s"$url/api/jobs/$id")
-    if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
+    val r = raw(HttpRequest.newBuilder(URI.create(s"$url/api/jobs/$id")))
+    val body = String(r.body, UTF_8)
+    val ended = r.statusCode != 200 || RawJson.decode[JobInfo](body).exists(_.isTerminal)
+    if ended || left == 0 then s"${r.statusCode} $body"
     else { Thread.sleep(100); awaitJob(url, id, left - 1) }
 
   /** An MCP tool's answer, its Markdown text. */
