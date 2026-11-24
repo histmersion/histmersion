@@ -33,7 +33,9 @@ Scalafix rule rather than by hand.
   likewise. "How" is a property of every write: an agent that calls the MCP is `Automated(…, mcp)`, the same agent
   through the CLI `Automated(…, cli)`, a step of a run in the server `Automated(…, internal)`. The stored `Automated`'s
   four parts are each `Part.Known | Part.Unknown`, and so is the stored `Manual`'s and `Unattributed`'s surface, since
-  a backfilled person's run (`jobs.origin = person`) has no recorded surface. The write side has no `Unknown` part.
+  a backfilled person's run (`jobs.origin = person`) has no recorded surface. The write side has no `Unknown` part,
+  only the named case `FromBundle`: a row a bundle brings in, whose creator the bundle does not carry yet; it is
+  stored as `Unknown(Unrecorded)`, as V113 did for a bundle's queue item.
 - **`Creator.Surface`** stays `Rest | Mcp | Cli | Web | Internal`. The owner's "API" is `rest`, "scheduler" is
   `internal`: the server's own processes (the scheduler, the managers, a run's steps, a merge's follow-ups).
 - **The names are required and typed.** A plugin is named by its `Plugin.Info.Id` (the SPI's id, checked by
@@ -52,10 +54,14 @@ Scalafix rule rather than by hand.
     carries `createdBy`/`via` gives what they say: `Manual(web)` for the web page, `Manual(cli)` or the CLI's
     identity (`Automated(…, cli)`), the MCP caller's `createdBy` (`Automated(…, mcp)`, refused without one where V113
     refuses it);
-  - a run: `RunCtx.creator`, the run's workflow with the agent of the step that writes (`Code` for a code step, the
-    step's model for a model step);
-  - an in-process writer that is no workflow definition: its `InTreeWorkflow` case (new cases: `event-import`,
-    `gazetteer-import`, `media-import`, `bundle-import`, `merge`, `ingest`);
+  - a run: the engine gives each pipeline's run `RunCtx.creator`, the run's workflow (agent `Code` today; naming the
+    model step's agent on what a model step writes is the next refinement), and a run that starts another (a compiled
+    article's review) starts it as itself;
+  - background work keeps its starter's creator: an OCR job its enqueuer's (`IngestPending`), a job's body the
+    creator in scope where the job was started;
+  - an in-process writer that is no workflow definition: its `InTreeWorkflow` case (new cases: `init` (catalogue),
+    `adopt-database`, `engine-start` and `approval-effects` (engine), `ingest`, `check-fix` and `agent-tools`
+    (library));
   - tests: `TestCreators.given` (a `Manual(internal)` of the test sources), imported like `TestPermits.given`.
 - **One parse boundary for outside callers** generalises `WorkListControllers.creatorOf` to
   `domain.CreatorRequest` (server): `createdBy` (plugin and workflow both, or no record; the agent's three names all,
@@ -146,16 +152,20 @@ the MCP write tools take `createdBy`.
 
 ### 6. The check
 
-`ProvenanceSuite` (server tests, beside `ArchitectureSuite`), over main sources and the migrations:
+`ProvenanceSuite` (server tests, beside `ArchitectureSuite`), over every main source:
 
-1. **Every table main code inserts into is classified**: a record table (§3) or one of the not-record kinds. A new
-   table that is neither fails, so a new create path cannot be added without deciding.
-2. **Every INSERT into a record table writes `creator`**, and the def around it takes a `Creator` or `Creator.New`
-   (a parameter or a `using` clause). A repository method that writes a record without one fails, naming
-   `path:line`.
-3. **The schema agrees** (on the test database): every record table has `creator jsonb NOT NULL` with no default.
-4. Until a record table's create paths are all done, it is in the suite's `pending` list (one row per table, the slot
-   that does it); a row may only be removed, and a table on it is still held to rules 1 and 3 except the default.
+1. **Every table main code inserts into is classified**: a record table (§3) or one of the not-record kinds, each
+   named once, and only tables main code inserts into. A new table that is neither fails, so a new create path
+   cannot be added without deciding.
+2. **Every INSERT into a record table writes `creator`**, naming `path:line` when one does not.
+3. **Each binds a creator the compiler demanded**: the def around it takes a `Creator.New` (a parameter or a `using`
+   clause, which every caller must then supply up to a binding or an in-process writer), or the INSERT copies a
+   waiting edge's own creator, or it is a bundle's import binding `Creator.unrecorded`.
+4. The suite's own fixture holds the scan to its reading (a table, its columns, the def's signature).
+
+And the schema agrees: `MigrateSquashSuite` (db tests, on a `*_test` database) checks after V116 that every `creator`
+column is NOT NULL with no default, and that an INSERT naming none is refused by Postgres (`23502`). Every record
+table's create paths were done in this lane, so no table waits on a pending list.
 
 ### 7. How the work is done (mechanical vs judgement)
 
@@ -166,7 +176,7 @@ the MCP write tools take `createdBy`.
 | 2. migrations | — | V115 (columns, backfill), its rehearsal |
 | 3. create paths | `CreatorRewrite` (Scalafix, after `WritePermitRewrite`): adds `creator` to each record INSERT's column list, `(using Creator.New)` to the def around it, and follows it up the call graph and across overrides (trait, `Implementation`, `InMemory`), test files getting `TestCreators.given` | each `stop` row: the controller's or worker's provider, the `InMemory` states recording it, the bundle imports' rule |
 | 4. surfaces | — | `createdBy` on the write inputs, the views, Markdown, the CLI flags, the web card |
-| 5. check | — | `ProvenanceSuite`, V116 |
+| 5. check | `CreatorRewrite` with `testFixtures` (`creator-fixtures.conf`): the tests' own fixture INSERTs name an unknown creator | `ProvenanceSuite`, V116 and its schema test |
 
 ## Consequences
 

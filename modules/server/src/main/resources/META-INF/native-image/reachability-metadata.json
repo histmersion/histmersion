@@ -26257,6 +26257,9 @@
       "glob": "db/migration/V115__record_creators.sql"
     },
     {
+      "glob": "db/migration/V116__record_creators_required.sql"
+    },
+    {
       "glob": "db/migration/index.txt"
     },
     {

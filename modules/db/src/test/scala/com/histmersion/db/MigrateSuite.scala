@@ -16,7 +16,8 @@ class MigrateSuite extends munit.FunSuite:
         "V111__structured_log.sql",
         "V112__acquire_attempts.sql",
         "V113__queue_creator_actor.sql",
-        "V115__record_creators.sql"
+        "V115__record_creators.sql",
+        "V116__record_creators_required.sql"
       ),
       "the squash, then each migration after it, by the next number"
     )

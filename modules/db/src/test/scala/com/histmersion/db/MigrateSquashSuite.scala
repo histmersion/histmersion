@@ -46,8 +46,8 @@ class MigrateSquashSuite extends DbSuite with Bounded:
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   /** The migrations since the squash, by version, in order: each new migration adds itself here. */
-  private val Chain = List("109", "110", "111", "112", "113", "115")
-  private val Latest = Migrate.Version("115")
+  private val Chain = List("109", "110", "111", "112", "113", "115", "116")
+  private val Latest = Migrate.Version("116")
 
   private val UpdatedAt =
     """SELECT t || ':' || string_agg(u::text, ',' ORDER BY k) FROM (
@@ -257,8 +257,8 @@ class MigrateSquashSuite extends DbSuite with Bounded:
       val planQuota = NonEmptyVector.of[Problem](
         Problem.Run.Halted(Problem.Run.PauseCause.PlanQuota, Problem.Run.Cooling(Problem.EpochMs(0L)))
       )
-      sql"""INSERT INTO jobs (id, kind, status, error, manager_id)
-            VALUES ('run-q', 'agent', 'paused', $planQuota, 'm1')""".update.run()
+      sql"""INSERT INTO jobs (id, kind, status, error, manager_id, creator)
+            VALUES ('run-q', 'agent', 'paused', $planQuota, 'm1', '{"kind": "unknown"}')""".update.run()
     }
     assertEquals(Transactor(problems).read(ManagerRepo.running(ManagerInfo.Id("m1"))), RowCount(2), "and a plan pool's")
 
@@ -435,3 +435,22 @@ class MigrateSquashSuite extends DbSuite with Bounded:
       ),
       List("29")
     )
+
+  test("V116: no record table's creator has a default, so an INSERT that names none fails"):
+    val ds = emptyDatabase("histmersion_squash_required_test")
+    assertEquals(Migrate.run(ds), Latest)
+    assertEquals(
+      strings(
+        ds,
+        """SELECT table_name FROM information_schema.columns
+          |WHERE table_schema = 'public' AND column_name = 'creator'
+          |  AND (column_default IS NOT NULL OR is_nullable <> 'NO')""".stripMargin
+      ),
+      Nil
+    )
+    val refused =
+      try
+        exec(ds, "INSERT INTO sources (citekey, title) VALUES ('zz-nobody', 'Made by nobody')")
+        None
+      catch case e: java.sql.SQLException => Some(e.getSQLState)
+    assertEquals(refused, Some("23502"), "not_null_violation")
