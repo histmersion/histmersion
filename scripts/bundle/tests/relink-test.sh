@@ -161,7 +161,11 @@ check "Sloth ran over the plugin jar only, then its verifier" 'grep -q "sloth.ja
 check "the pre-flight ran on the JVM before the build (check, then the server's self-check)" \
   '[ "$(grep -n "pluginTool check" "$state/java.calls" | cut -d: -f1)" -lt "$(grep -n -- "--self-check" "$state/java.calls" | cut -d: -f1)" ]'
 check "the service was restarted once and reports the new digest" '[ "$(grep -c kickstart "$state/restarts")" = 1 ] && grep -q "test.histmersion.relink" "$state/restarts"'
-check "signed ad hoc, the keychain never asked (identity -)" 'grep -q "codesign --force --sign - --identifier com.histmersion.server" "$state/codesign.calls" && [ ! -e "$state/security.calls" ]'
+if [ "$(uname -s)" = Darwin ]; then
+  check "signed ad hoc, the keychain never asked (identity -)" 'grep -q "codesign --force --sign - --identifier com.histmersion.server" "$state/codesign.calls" && [ ! -e "$state/security.calls" ]'
+else
+  check "not code-signed on Linux, the keychain never asked" '[ ! -e "$state/codesign.calls" ] && [ ! -e "$state/security.calls" ] && grep -q "code signing: none on Linux" "$tmp/out"'
+fi
 check "the work dir and the lock are gone; a log was written" '[ ! -e "$INSTALL/.relink" ] && [ ! -e "$HISTMERSION_DATA_DIR/plugins/.relink.lock" ] && grep -q native-image "$HISTMERSION_DATA_DIR/logs/relink.log"'
 check "it reports the build and the peak memory" 'grep -q "Peak RSS: 1,23GB" "$tmp/out"'
 # shellcheck source=../kit-common.sh

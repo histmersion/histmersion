@@ -346,6 +346,7 @@ jobs:
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the CLI's class path (from the replay)
+        timeout-minutes: 20
         run: $SBT cli/writeClasspath
       - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
         run: just test-scripts
@@ -395,6 +396,7 @@ jobs:
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the server's class path (from the replay)
+        timeout-minutes: 20
         run: |
           $SBT server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
@@ -426,6 +428,7 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       - name: browser tests of this shard (the files of `npm run test:browser` but the `budgets:` tests; a skipped test fails, G125)
+        timeout-minutes: 30
         working-directory: modules/web
         run: |
           files="$(node -p "require('./package.json').scripts['test:browser'].split(' ').filter(a => a.startsWith('test/')).join(' ')")"
@@ -433,7 +436,7 @@ jobs:
           report="$out/browser-junit.xml"
           export HISTMERSION_TEST_SHARD_MANIFEST="$out/manifest.jsonl"
           rc=0
-          node --import ./test/shard-preload.mjs --test --test-concurrency=1 --test-skip-pattern='^budgets: ' \
+          node --import ./test/shard-preload.mjs --test --test-concurrency=1 --test-force-exit --test-skip-pattern='^budgets: ' \
             --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=junit --test-reporter-destination="$report" $files || rc=$?
           tests="$(grep -c '<testcase' "$report" || true)"
@@ -519,11 +522,13 @@ jobs:
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the server's class path (from the replay)
+        timeout-minutes: 20
         run: |
           $SBT server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: the merge base's server class path (a worktree of it, compiled from the same replay where unchanged)
+        timeout-minutes: 30
         run: |
           base="$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-contracts3-pilot}")"
           echo "the merge base: $base (this change: $(git rev-parse HEAD))"
