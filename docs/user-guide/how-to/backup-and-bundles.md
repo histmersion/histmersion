@@ -179,6 +179,11 @@ report.
 - **Identity.** Every row a bundle carries has a `uid` (UUIDv7) and an `origin` (the instance that
   created it); a citekey or slug is only a label — `rename` keeps the uid. A delete, cascades
   included, leaves a tombstone, so a deletion travels too.
+- **Creators.** A record carries its `creator` ([Who created a record](../exploring/who-created-what.md)),
+  and an import writes it on the rows it adds; a row already here keeps its own. The creator is not
+  part of the `rev`. Bundles that carry creators are format 2. A format 1 bundle still imports, its
+  rows as `unknown`, and a build that reads only format 1 refuses a format 2 bundle rather than drop
+  the creators.
 - **The file.** A gzip'd tar: `manifest.json` (format and schema version, the exporting instance,
   `since`/`asOf`, a checksum per file, a fingerprint of the gazetteer and periods), one NDJSON file
   per kind (one canonical JSON line per row, with a `rev` = the sha256 of its content), and

@@ -73,6 +73,7 @@ nav:
       - "Events": "exploring/events.md"
       - "Pictures": "exploring/media.md"
       - "Citations and statuses": "exploring/citations-and-statuses.md"
+      - "Who created a record": "exploring/who-created-what.md"
       - "Settings and the first-run setup": "exploring/settings.md"
   - "Articles":
       - "articles/index.md"

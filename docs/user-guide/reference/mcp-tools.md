@@ -20,6 +20,8 @@ API answers with, so a client can branch on the problem's case instead of the se
 `start_run`, …) takes `createdBy`: the `plugin` and `workflow` you run in (both), and your agent as `agentDefinition`,
 `provider` and `model` (all three, or none for code without a model). What you create is recorded as that agent's,
 through the MCP; without `createdBy` it is recorded as an unnamed MCP caller's. `queue` `add` refuses an item without it.
+A record's Markdown names its creator in one line, "Created by … via … at …" ([Who created a
+record](../exploring/who-created-what.md)).
 
 **One size cap for every tool** (`mcp.result-max-chars`, default 100 000 characters): a longer answer
 is cut at a line and ends with `…cut at N of M characters` and how to ask for less. A call whose
