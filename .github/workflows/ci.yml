@@ -347,7 +347,7 @@ jobs:
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the CLI's class path (from the replay)
         timeout-minutes: 20
-        run: $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" cli/writeClasspath
+        run: $SBT "$NOFMT" cli/writeClasspath
       - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
         run: just test-scripts
       - name: unit tests of the browser tests' tools (the shards, the budget comparison)
@@ -400,7 +400,7 @@ jobs:
       - name: the server's class path (from the replay)
         timeout-minutes: 20
         run: |
-          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
+          $SBT "$NOFMT" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: throwaway PostgreSQL 18 + PostGIS
@@ -528,7 +528,7 @@ jobs:
       - name: the server's class path (from the replay)
         timeout-minutes: 20
         run: |
-          $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath
+          $SBT "$NOFMT" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: the merge base's server class path (a worktree of it, compiled from the same replay where unchanged)
@@ -537,7 +537,7 @@ jobs:
           base="$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-contracts3-pilot}")"
           echo "the merge base: $base (this change: $(git rev-parse HEAD))"
           git worktree add --detach "$RUNNER_TEMP/base" "$base"
-          (cd "$RUNNER_TEMP/base" && $SBT "set Global / concurrentRestrictions += Tags.limit(Tags.Compile, 1)" server/writeClasspath)
+          (cd "$RUNNER_TEMP/base" && $SBT "$NOFMT" server/writeClasspath)
           cp="$(find "$RUNNER_TEMP/base/target/out" -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "BASE_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: throwaway PostgreSQL 18 + PostGIS (a database each)
