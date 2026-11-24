@@ -83,7 +83,7 @@ class TileRepoSuite extends DbSuite:
       siteType: Option[TileRepo.SiteType] = None
   ): Unit = connect(ds):
     val _ =
-      sql"INSERT INTO places (id, label, kind, period, geom) VALUES ($id, $label, 'site', ${SqlLiteral(period)}, ST_SetSRID(ST_MakePoint(${Lon.value + dx}, ${Lat.value + dy}), 4326))".update
+      sql"INSERT INTO places (id, label, kind, period, geom, creator) VALUES ($id, $label, 'site', ${SqlLiteral(period)}, ST_SetSRID(ST_MakePoint(${Lon.value + dx}, ${Lat.value + dy}), 4326), jsonb_build_object('kind', 'unknown'))".update
         .run()
     // the optional columns set apart: `Param` has no null
     val _ =
@@ -301,7 +301,7 @@ class TileRepoSuite extends DbSuite:
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone
     connect(ds):
       val _ =
-        sql"INSERT INTO places (id, label, kind, period, geom) SELECT 'zztile_g' || i || '_' || j, 'Zztile G', 'site', int8range(-1000 + i, -900 + j, '[]'), ST_SetSRID(ST_MakePoint($Lon + i * 0.01, $Lat + j * 0.01), 4326) FROM generate_series(0, 29) i, generate_series(0, 29) j".update
+        sql"INSERT INTO places (id, label, kind, period, geom, creator) SELECT 'zztile_g' || i || '_' || j, 'Zztile G', 'site', int8range(-1000 + i, -900 + j, '[]'), ST_SetSRID(ST_MakePoint($Lon + i * 0.01, $Lat + j * 0.01), 4326), jsonb_build_object('kind', 'unknown') FROM generate_series(0, 29) i, generate_series(0, 29) j".update
           .run()
     val small =
       TileGrid.of(maxZoom = TileGrid.MaxZoom(11), maxPoints = TileGrid.MaxPoints(100), cellPx = TileGrid.CellPx(32))
@@ -339,13 +339,13 @@ class TileRepoSuite extends DbSuite:
 
   test("events and pictures: a span is a range of overlap; a picture's provider and licence narrow it"):
     connect(ds):
-      val _ = sql"""INSERT INTO events (id, label, kind, not_before, not_after, geom)
-                    VALUES ('zztile_e1', 'Zztile battle', 'battle', -1300, -1290, ST_SetSRID(ST_MakePoint($Lon, $Lat), 4326)),
-                           ('zztile_e2', 'Zztile flood', 'flood', -800, -790, ST_SetSRID(ST_MakePoint(${Lon.value + 0.01}, $Lat), 4326))""".update
+      val _ = sql"""INSERT INTO events (id, label, kind, not_before, not_after, geom, creator)
+                    VALUES ('zztile_e1', 'Zztile battle', 'battle', -1300, -1290, ST_SetSRID(ST_MakePoint($Lon, $Lat), 4326), jsonb_build_object('kind', 'unknown')),
+                           ('zztile_e2', 'Zztile flood', 'flood', -800, -790, ST_SetSRID(ST_MakePoint(${Lon.value + 0.01}, $Lat), 4326), jsonb_build_object('kind', 'unknown'))""".update
         .run()
-      val _ = sql"""INSERT INTO assets (provider, provider_key, source_url, retrieved_at, name, mime, bytes, sha256, geom, period, license)
-                    VALUES ('zztile', 'k1', 'https://example.org/1', now(), 'Zz one', 'image/jpeg', decode('00', 'hex'), 'zz1', ST_SetSRID(ST_MakePoint($Lon, $Lat), 4326), int8range(-1400, -1200, '[]'), 'CC0-1.0'),
-                           ('zztile', 'k2', 'https://example.org/2', now(), 'Zz two', 'image/jpeg', decode('00', 'hex'), 'zz2', ST_SetSRID(ST_MakePoint($Lon, ${Lat.value + 0.01}), 4326), int8range(100, 200, '[]'), NULL)""".update
+      val _ = sql"""INSERT INTO assets (provider, provider_key, source_url, retrieved_at, name, mime, bytes, sha256, geom, period, license, creator)
+                    VALUES ('zztile', 'k1', 'https://example.org/1', now(), 'Zz one', 'image/jpeg', decode('00', 'hex'), 'zz1', ST_SetSRID(ST_MakePoint($Lon, $Lat), 4326), int8range(-1400, -1200, '[]'), 'CC0-1.0', jsonb_build_object('kind', 'unknown')),
+                           ('zztile', 'k2', 'https://example.org/2', now(), 'Zz two', 'image/jpeg', decode('00', 'hex'), 'zz2', ST_SetSRID(ST_MakePoint($Lon, ${Lat.value + 0.01}), 4326), int8range(100, 200, '[]'), NULL, jsonb_build_object('kind', 'unknown'))""".update
         .run()
     val c = tileAt(TileCoord.Z(9))
     def events(lo: Year, hi: Year) =
@@ -366,8 +366,8 @@ class TileRepoSuite extends DbSuite:
     )
     // an event with no known date: only when asked for, marked, whatever the span
     connect(ds):
-      val _ = sql"""INSERT INTO events (id, label, kind, geom)
-                    VALUES ('zztile_e3', 'Zztile quake', 'earthquake', ST_SetSRID(ST_MakePoint(${Lon.value + 0.02}, $Lat), 4326))""".update
+      val _ = sql"""INSERT INTO events (id, label, kind, geom, creator)
+                    VALUES ('zztile_e3', 'Zztile quake', 'earthquake', ST_SetSRID(ST_MakePoint(${Lon.value + 0.02}, $Lat), 4326), jsonb_build_object('kind', 'unknown'))""".update
         .run()
     assertEquals(events(Year(-1500), Year(0)), Set("zztile_e1", "zztile_e2"))
     def withUndated(lo: Year, hi: Year) =

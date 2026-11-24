@@ -91,16 +91,22 @@ object CatalogueStoreSuite:
           val siteTypes = SiteTypeService(db)
           val places = PlaceService(db)
           def source(citekey: String): Unit =
-            connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES ($citekey, $citekey)".update.run()): Unit
+            connect(ds)(
+              sql"INSERT INTO sources (citekey, title, creator) VALUES ($citekey, $citekey, jsonb_build_object('kind', 'unknown'))".update
+                .run()
+            ): Unit
           def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
             val props = cls.fold("{}")(c => s"""{"class":"$c"}""")
             connect(ds):
-              sql"""INSERT INTO places (id, label, kind, import_source, properties)
-                    VALUES ($id, $id, 'site', 'wikidata', $props::jsonb)""".update.run()
+              sql"""INSERT INTO places (id, label, kind, import_source, properties, creator)
+                    VALUES ($id, $id, 'site', 'wikidata', $props::jsonb, jsonb_build_object('kind', 'unknown'))""".update
+                .run()
               if onMap then
                 val ck = s"zz_on_$id".replace("_q", "q")
-                sql"INSERT INTO sources (citekey, title) VALUES ($ck, $ck) ON CONFLICT DO NOTHING".update.run()
-                sql"INSERT INTO findings (id, citekey, claim) VALUES (${ck + "#1"}, $ck, 'here')".update.run()
+                sql"INSERT INTO sources (citekey, title, creator) VALUES ($ck, $ck, jsonb_build_object('kind', 'unknown')) ON CONFLICT DO NOTHING".update
+                  .run()
+                sql"INSERT INTO findings (id, citekey, claim, creator) VALUES (${ck + "#1"}, $ck, 'here', jsonb_build_object('kind', 'unknown'))".update
+                  .run()
                 sql"INSERT INTO finding_places (finding_id, place_id) VALUES (${ck + "#1"}, $id)".update.run()
             : Unit
           def seedRows(): List[String] =

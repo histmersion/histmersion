@@ -626,8 +626,9 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
         cfg.limits.chunkChars,
         cfg.places.pointToleranceKm
       )
-      val _ = sql"""INSERT INTO attestations (citekey, target_type, target_id, quote)
-                    VALUES ('zzgaz_src', 'place', 'wikidata_q999000741', 'here')""".update.run()
+      val _ = sql"""INSERT INTO attestations (citekey, target_type, target_id, quote, creator)
+                    VALUES ('zzgaz_src', 'place', 'wikidata_q999000741', 'here', jsonb_build_object('kind', 'unknown'))""".update
+        .run()
     try
       val c = run(Wikidata, V1, List(area))
       assertEquals((c.placesRemoved, c.pointAreasSkipped), (0L, 0L), c.describe)

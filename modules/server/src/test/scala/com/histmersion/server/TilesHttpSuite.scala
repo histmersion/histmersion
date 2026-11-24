@@ -47,8 +47,8 @@ class TilesHttpSuite extends munit.FunSuite:
       Migrate.run(ds)
       connect(ds):
         val _ = sql"DELETE FROM places WHERE id LIKE 'zztilehttp%'".update.run()
-        val _ = sql"""INSERT INTO places (id, label, kind, period, geom) VALUES
-                      ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint(${lon.value: Double}, ${lat.value: Double}), 4326))""".update
+        val _ = sql"""INSERT INTO places (id, label, kind, period, geom, creator) VALUES
+                      ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint(${lon.value: Double}, ${lat.value: Double}), 4326), jsonb_build_object('kind', 'unknown'))""".update
           .run()
       supervised {
         val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()

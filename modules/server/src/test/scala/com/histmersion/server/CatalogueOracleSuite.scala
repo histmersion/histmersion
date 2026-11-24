@@ -1304,7 +1304,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       home,
-      sql"INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+      sql"INSERT INTO periods (id, label, period, region, dataset, creator) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local', jsonb_build_object('kind', 'unknown')), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local', jsonb_build_object('kind', 'unknown'))"
     )
     val _ = step(
       "home: event tremor",
@@ -1391,7 +1391,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       cat,
-      sql"INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+      sql"INSERT INTO periods (id, label, period, region, dataset, creator) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local', jsonb_build_object('kind', 'unknown')), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local', jsonb_build_object('kind', 'unknown'))"
     )
     val _ = step(
       "cat: event quake",

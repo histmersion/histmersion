@@ -205,9 +205,11 @@ class PluginMediaImportSuite extends DbSuite:
         )
       )
       connect(ds):
-        sql"INSERT INTO sources (citekey, title) VALUES ('zqpl2020_x', 'Zqpl')".update.run()
-        sql"""INSERT INTO findings (id, citekey, claim, period) VALUES
-              ('zqpl2020_x#1', 'zqpl2020_x', 'a', int8range(-1600, -1100, '[]'))""".update.run()
+        sql"INSERT INTO sources (citekey, title, creator) VALUES ('zqpl2020_x', 'Zqpl', jsonb_build_object('kind', 'unknown'))".update
+          .run()
+        sql"""INSERT INTO findings (id, citekey, claim, period, creator) VALUES
+              ('zqpl2020_x#1', 'zqpl2020_x', 'a', int8range(-1600, -1100, '[]'), jsonb_build_object('kind', 'unknown'))""".update
+          .run()
         sql"INSERT INTO finding_places (finding_id, place_id) VALUES ('zqpl2020_x#1', $PlaceId)".update.run()
         ()
   override def afterSuite(): Unit = if testDb.isDefined then clean()

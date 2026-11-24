@@ -189,8 +189,9 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   override def beforeEach(context: BeforeEach): Unit =
     clean()
     connect(ds):
-      sql"""INSERT INTO places (id, label, kind, geom)
-            VALUES ('zzagent_place', 'Zzagentville', 'site', ST_GeomFromText('POINT(31.4 36.1)', 4326))""".update.run()
+      sql"""INSERT INTO places (id, label, kind, geom, creator)
+            VALUES ('zzagent_place', 'Zzagentville', 'site', ST_GeomFromText('POINT(31.4 36.1)', 4326), jsonb_build_object('kind', 'unknown'))""".update
+        .run()
 
   override def afterEach(context: AfterEach): Unit = clean()
 

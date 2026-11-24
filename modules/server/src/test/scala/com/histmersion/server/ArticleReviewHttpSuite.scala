@@ -108,18 +108,22 @@ class ArticleReviewHttpSuite extends DbSuite:
     val ds = testPool(cfg.db)
     ReviewLedgerFixtures.put(ds, ledger)
     transact(ds):
-      sql"""INSERT INTO jobs (id, kind, status, created_at) VALUES
-            ($RunA, ${Agents.JobKind: String}, 'done', '2026-10-01T10:00:00Z'::timestamptz),
-            ($RunB, ${Agents.JobKind: String}, 'running', '2026-10-02T10:00:00Z'::timestamptz)""".update.run()
+      sql"""INSERT INTO jobs (id, kind, status, created_at, creator) VALUES
+            ($RunA, ${Agents.JobKind: String}, 'done', '2026-10-01T10:00:00Z'::timestamptz, jsonb_build_object('kind', 'unknown')),
+            ($RunB, ${Agents.JobKind: String}, 'running', '2026-10-02T10:00:00Z'::timestamptz, jsonb_build_object('kind', 'unknown'))""".update
+        .run()
       sql"""INSERT INTO agent_steps (job_id, seq, attempt, name, kind, status) VALUES
             ($RunB, 1, 1, 'ledger', 'code', 'done'), ($RunB, 2, 1, 'snapshot-1', 'code', 'done'),
             ($RunB, 3, 1, 'snapshot-2', 'code', 'done')""".update.run()
-      sql"INSERT INTO agent_managers (id, kind) VALUES ('review', 'review') ON CONFLICT (id) DO NOTHING".update.run()
+      sql"INSERT INTO agent_managers (id, kind, creator) VALUES ('review', 'review', jsonb_build_object('kind', 'unknown')) ON CONFLICT (id) DO NOTHING".update
+        .run()
       sql"""INSERT INTO manager_items (manager_id, kind, target, status, attempts, run_id, origin)
             VALUES ('review', 'article-review', $Running, 'active', 2, $RunB, 'person')""".update.run()
-      sql"INSERT INTO goals (slug, title, status) VALUES ($Goal, 'Zz review goal', 'compiled')".update.run()
-      sql"INSERT INTO goal_links (goal_slug, kind, ref) VALUES ($Goal, 'article', $Running)".update.run()
-      sql"""INSERT INTO approvals (kind, subject, proposal, state) VALUES ('article-filter', $Running, '{}'::jsonb, 'open')""".update
+      sql"INSERT INTO goals (slug, title, status, creator) VALUES ($Goal, 'Zz review goal', 'compiled', jsonb_build_object('kind', 'unknown'))".update
+        .run()
+      sql"INSERT INTO goal_links (goal_slug, kind, ref, creator) VALUES ($Goal, 'article', $Running, jsonb_build_object('kind', 'unknown'))".update
+        .run()
+      sql"""INSERT INTO approvals (kind, subject, proposal, state, creator) VALUES ('article-filter', $Running, '{}'::jsonb, 'open', jsonb_build_object('kind', 'unknown'))""".update
         .run()
 
   test("review state on the list, the history over REST, the page and MCP; an article with none is not reviewed"):

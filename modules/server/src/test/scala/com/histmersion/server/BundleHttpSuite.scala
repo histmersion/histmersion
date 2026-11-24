@@ -252,7 +252,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
         val m = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, plan_hash, backup)
                       VALUES (gen_random_uuid(), ${"b" * 64}, gen_random_uuid(), 'zz-home', 'cafe0123', 'histmersion-x.dump')
                       RETURNING id""".query[java.util.UUID].run().head
-        sql"""INSERT INTO sources (citekey, title, authors) VALUES ('zzmerge2020_ledger', 'Ledger', ARRAY['A'])
+        sql"""INSERT INTO sources (citekey, title, authors, creator) VALUES ('zzmerge2020_ledger', 'Ledger', ARRAY['A'], jsonb_build_object('kind', 'unknown'))
               ON CONFLICT (citekey) DO NOTHING""".update.run()
         val u = sql"SELECT uid FROM sources WHERE citekey = 'zzmerge2020_ledger'".query[java.util.UUID].run().head
         val f = java.util.UUID.randomUUID()

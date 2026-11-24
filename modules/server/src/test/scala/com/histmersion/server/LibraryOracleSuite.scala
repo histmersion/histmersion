@@ -512,9 +512,9 @@ class LibraryOracleSuite extends DbSuite:
     )
     exec(
       ds,
-      sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES
-        |('zq-goal', 'source', 'zqalpha1990_tell', 'the walls'),
-        |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report')""".stripMargin
+      sql"""INSERT INTO goal_links (goal_slug, kind, ref, note, creator) VALUES
+        |('zq-goal', 'source', 'zqalpha1990_tell', 'the walls', jsonb_build_object('kind', 'unknown')),
+        |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report', jsonb_build_object('kind', 'unknown'))""".stripMargin
     )
     val _ =
       step("a task mentioning delta", post(s"$url/api/queue/tasks", """{"text":"re-read [[zqdelta2010_gone]]"}"""))

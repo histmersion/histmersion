@@ -131,15 +131,17 @@ class ActivityServiceSuite extends DbSuite:
     // the job's problems as the server stores them: a list of entries
     val failed = NonEmptyVector.of[Problem](Problem.Unclassified(Legacy.Text("HTTP 500")))
     transact(ds):
-      sql"""INSERT INTO jobs (id, kind, status, pipeline, target_kind, target_id, goal_slug, created_at, updated_at)
+      sql"""INSERT INTO jobs (id, kind, status, pipeline, target_kind, target_id, goal_slug, created_at, updated_at, creator)
             VALUES ('r1', 'agent', 'running', 'review-article', 'article', 'sea-peoples', 'g1', ${t(
           ago(1)
-        )}::timestamptz, ${t(ago(1))}::timestamptz)""".update.run()
-      sql"""INSERT INTO jobs (id, kind, status, error, created_at, updated_at)
-            VALUES ('j1', 'media-import', 'failed', $failed, ${t(ago(2))}::timestamptz, ${t(ago(1))}::timestamptz),
+        )}::timestamptz, ${t(ago(1))}::timestamptz, jsonb_build_object('kind', 'unknown'))""".update.run()
+      sql"""INSERT INTO jobs (id, kind, status, error, created_at, updated_at, creator)
+            VALUES ('j1', 'media-import', 'failed', $failed, ${t(ago(2))}::timestamptz, ${t(
+          ago(1)
+        )}::timestamptz, jsonb_build_object('kind', 'unknown')),
                    ('j0', 'basemap-fetch', 'failed', NULL, ${t(ago(60 * 24 * 9))}::timestamptz, ${t(
           ago(60 * 24 * 9)
-        )}::timestamptz)""".update.run()
+        )}::timestamptz, jsonb_build_object('kind', 'unknown'))""".update.run()
       // three lines of one instant (by a run, by a job, by a person), a note block and a backlog item (neither listed)
       sql"""INSERT INTO queue_items (list, text, status, created_at, goal_slug, created_job, creator, actor) VALUES
             ('log', 'reviewed', 'open', ${t(ago(3))}::timestamptz, 'g1', 'r1', '{"kind":"unknown"}', 'agents'),
@@ -152,14 +154,16 @@ class ActivityServiceSuite extends DbSuite:
           ago(3)
         )}::timestamptz, 'g1', 'r1', '{"kind":"unknown"}', 'agents')""".update.run()
       // a person's decision, one the autopilot made, one still open
-      sql"""INSERT INTO approvals (job_id, kind, citekey, proposal, state, note, result, created_at, decided_at) VALUES
+      sql"""INSERT INTO approvals (job_id, kind, citekey, proposal, state, note, result, created_at, decided_at, creator) VALUES
             ('r1', 'edge', 'drake2012', '{}'::jsonb, 'approved', 'looks right', 'applied', ${t(
           ago(30)
-        )}::timestamptz, ${t(ago(4))}::timestamptz),
+        )}::timestamptz, ${t(ago(4))}::timestamptz, jsonb_build_object('kind', 'unknown')),
             ('r1', 'edge', 'drake2013', '{}'::jsonb, 'approved', 'autopilot: checked', 'applied', ${t(
           ago(30)
-        )}::timestamptz, ${t(ago(5))}::timestamptz),
-            ('r1', 'edge', 'drake2014', '{}'::jsonb, 'open', NULL, NULL, ${t(ago(30))}::timestamptz, NULL)""".update
+        )}::timestamptz, ${t(ago(5))}::timestamptz, jsonb_build_object('kind', 'unknown')),
+            ('r1', 'edge', 'drake2014', '{}'::jsonb, 'open', NULL, NULL, ${t(
+          ago(30)
+        )}::timestamptz, NULL, jsonb_build_object('kind', 'unknown'))""".update
         .run()
     ()
 

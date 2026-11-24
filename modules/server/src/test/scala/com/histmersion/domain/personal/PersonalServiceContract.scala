@@ -85,7 +85,11 @@ abstract class PersonalServiceContract(prefix: String) extends DbSuite:
       NoteService(db, items),
       ReadingService(db, items, List(SourceReadable(db))),
       SeenService(db),
-      (ck, title) => run(sql"INSERT INTO sources (citekey, title) VALUES ($ck, $title)".update.run(): Unit),
+      (ck, title) =>
+        run(
+          sql"INSERT INTO sources (citekey, title, creator) VALUES ($ck, $title, jsonb_build_object('kind', 'unknown'))".update
+            .run(): Unit
+        ),
       (ck, title) => run(sql"UPDATE sources SET title = $title WHERE citekey = $ck".update.run(): Unit),
       (a, b) =>
         run {

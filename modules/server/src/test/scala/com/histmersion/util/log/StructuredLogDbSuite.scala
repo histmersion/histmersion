@@ -102,7 +102,7 @@ class StructuredLogDbSuite extends DbSuite:
     val agent = Job.Kind("agent")
     connect(ds) {
       sql"DELETE FROM log_counts".update.run(): Unit
-      sql"""INSERT INTO jobs (id, kind, status) VALUES ('0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99', 'agent', 'running')""".update
+      sql"""INSERT INTO jobs (id, kind, status, creator) VALUES ('0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e99', 'agent', 'running', jsonb_build_object('kind', 'unknown'))""".update
         .run(): Unit
     }
     val staged = connect(ds)(sql"SELECT count(*) FROM log_writes".query[Long].run().head)
@@ -152,8 +152,8 @@ class StructuredLogDbSuite extends DbSuite:
     val scope = TraceScope(trace, Some(LogEvent.Label("suite-label")), LogEvent.Actor.Client, writer)
     scope.within {
       Transactor(traced).write {
-        sql"""INSERT INTO jobs (id, kind, status, citekey) VALUES ('log-suite-1', 'ocr', 'done', 'logsuite2026'),
-              ('log-suite-2', 'ocr', 'done', NULL)""".update.run(): Unit
+        sql"""INSERT INTO jobs (id, kind, status, citekey, creator) VALUES ('log-suite-1', 'ocr', 'done', 'logsuite2026', jsonb_build_object('kind', 'unknown')),
+              ('log-suite-2', 'ocr', 'done', NULL, jsonb_build_object('kind', 'unknown'))""".update.run(): Unit
         sql"UPDATE jobs SET status = 'failed' WHERE id = 'no-such-job'".update.run(): Unit
       }
     }
