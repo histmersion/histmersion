@@ -17,10 +17,10 @@ assert.ok(baseURL, 'Set HISTMERSION_SERVER_URL to the test server');
 const origin = new URL(baseURL).origin;
 const consoleLog = process.env.HISTMERSION_TEST_CONSOLE_LOG;
 let browser;
-let gpuStoodIn = false;
+let noGpu = false;
 before(async () => {
   browser = await launch();
-  gpuStoodIn = await renderMode(browser, 'click-to-next-frame checks');
+  noGpu = await renderMode(browser, 'click-to-next-frame checks');
 });
 after(async () => { await browser?.close(); });
 
@@ -31,12 +31,13 @@ function answeredWithin(what, t, max = 100) {
 
 /** `source`: the base-map family the page is told it has (`/api/config`'s resolved `ui.base-map-source`),
   * `local` or `online`; by default what the server says. `outside`: every request to another host is
-  * recorded there (and refused, as always). */
+  * recorded there (and refused, as always). `gpu`: a test of the GPU path (relief, contours, the sea's depth); in
+  * a browser without a GPU its pages are told a GPU renderer (engine.mjs `standInGpu`), so it takes that path. */
 
-async function withPage(viewport, run, { source, outside, setup, path } = {}) {
+async function withPage(viewport, run, { source, outside, setup, path, gpu } = {}) {
   // Firefox has no mobile emulation: a narrow viewport with touch is its phone (the layout follows the width)
   const context = await browser.newContext({ viewport, isMobile: isChromium && viewport.width < 760, hasTouch: true });
-  if (gpuStoodIn) await standInGpu(context);
+  if (gpu && noGpu) await standInGpu(context);
   try {
     const page = await context.newPage();
     const errors = [];
@@ -1156,11 +1157,13 @@ test('a cluster of events is a square; a zoom animates by the markers drawn, not
     });
     assert.deepEqual(shape, { events: true, says: '3 events', rects: 4, circles: 0 });
     // does the next zoom animate the bubbles? The cluster layer counts the zooms it animated
-    const zoomAnimates = (z) => page.evaluate((zoom) => new Promise(resolve => {
-      const map = window.__testMap, before = map.clusterAnimations();
-      map.once('zoomend', () => setTimeout(() => resolve(map.clusterAnimations() > before), 600));
-      map.setZoom(zoom);
-    }), z);
+    const zoomAnimates = async (z) => {
+      const before = await page.evaluate(() => window.__testMap.clusterAnimations());
+      await page.evaluate((zoom) => new Promise(resolve => { window.__testMap.once('zoomend', resolve); window.__testMap.setZoom(zoom); }), z);
+      await quiet(page);
+      await page.waitForFunction(() => window.__testMap.markersSettled(), null, { timeout: 15000 });
+      return page.evaluate(b => window.__testMap.clusterAnimations() > b, before);
+    };
     // the markers drawn, once they stop changing (a large drawing is made a slice at a time)
     const drawn = () => page.evaluate(() => new Promise(resolve => {
       let last = -1, same = 0;
@@ -2397,7 +2400,7 @@ test('the base map: Readable and Physical drawn from the server\'s extract (the 
     // an online map's credits: the box holds them alone
     await page.waitForFunction(() => /OpenStreetMap/.test(document.querySelector('.map-foot .map-credits')?.textContent ?? '') &&
       !document.querySelector('.terrain-notice'));
-  }, { source: 'online' });
+  }, { source: 'online', gpu: true });
 });
 
 /** A style's fill opacity for a feature of `kind` at MapLibre zoom `z`: the two forms the styles use — a number,
@@ -2601,7 +2604,7 @@ test('map options: names off and on, their language, contours only where Physica
     await page.locator('.map-option-contours').uncheck();
     await page.waitForFunction(n => window.__testMap.baseMapsDrawn() > n, before, { timeout: 15000 });
     assert.equal(await page.evaluate(() => window.__testMap.layerVisibility('contours')), null, 'off: the layer is gone');
-  }, { source: 'online' });
+  }, { source: 'online', gpu: true });
 });
 
 test('contours: a line saying why none are drawn here (zoomed out, outside the detailed relief), and the on-demand relief alone enables them', async t => {
@@ -2624,7 +2627,7 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
     await page.waitForFunction(() => /outside the detailed relief \(argolid\) and on-demand relief is off/
       .test(document.querySelector('.map-option-contours-why')?.textContent ?? ''), null, { timeout: 10000 });
     assert.ok(await page.locator('.map-option-contours').isEnabled());
-  }, { source: 'local' });
+  }, { source: 'local', gpu: true });
   // a server with no focus region: the on-demand relief alone enables the contours; without it they are disabled
   for (const onDemand of [true, false]) {
     await withPage({ width: 1440, height: 900 }, async page => {
@@ -2648,7 +2651,7 @@ test('contours: a line saying why none are drawn here (zoomed out, outside the d
         assert.match(await why(page).innerText(), /no focus region downloaded and on-demand relief is off — `histmersion basemap fetch --layer terrain --focus <region>`/);
         assert.equal(await page.evaluate(() => window.__testMap.layerVisibility('contours')), null);
       }
-    }, { source: 'local' });
+    }, { source: 'local', gpu: true });
   }
 });
 
@@ -2696,7 +2699,7 @@ test('the sea\'s depth: an option of both styles, on in Physical and off in Read
     assert.ok(await depth(page).isChecked());
     await page.locator('.map-options-reset').click();
     await page.waitForFunction(() => window.__testMap.layerVisibility('sea-depth') === 'none', null, { timeout: 15000 });
-  }, { source: 'local' });
+  }, { source: 'local', gpu: true });
 });
 
 test('map options: an option whose data is not downloaded is disabled, its line saying what to fetch', async t => {
@@ -2720,7 +2723,7 @@ test('map options: an option whose data is not downloaded is disabled, its line 
     assert.match(await page.locator('.map-option-depth-why').innerText(), /no sea floor downloaded — `histmersion basemap fetch --layer bathymetry`/);
     assert.ok(await page.locator('.map-option-names').isEnabled(), 'the names need no relief');
     assert.ok(await mapColours(page) > 10, 'drawn without the relief');
-  }, { source: 'online' });
+  }, { source: 'online', gpu: true });
 });
 
 test('the names are placed across the whole view: a wide window, after pans, still places the seas and ranges whole', async t => {

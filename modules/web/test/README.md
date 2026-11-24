@@ -62,10 +62,11 @@ Frames are counted dropped against 60 Hz in both (Firefox paints headless at 120
 GPU budgets; elsewhere, or with `HISTMERSION_TEST_GPU=0`, Chromium draws WebGL in software
 (SwiftShader), the page takes its no-GPU path (no relief, the notice's extra line) and the vector maps'
 budgets are their `…Software` ones (`perf.test.mjs`: input and stalls as on a GPU, the frame rate measured but not budgeted). `HISTMERSION_TEST_GPU=1` asks for the GPU on any
-platform; on a machine without one (CI's Linux runners: Chromium answers "SwiftShader"), `browser.test.mjs` then
-tells its pages a GPU renderer (`engine.mjs` `standInGpu`), so the GPU path — relief, contours, the sea's depth — is
-tested there too, drawn by the CPU; the no-GPU path keeps its own tests, in a browser without the stand-in. The
-first line of the run names the renderer and says whether the stand-in is on. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
+platform. Without a GPU (CI's Linux runners: Chromium answers "SwiftShader") the tests of the GPU path — relief,
+contours, the sea's depth; `withPage(…, { gpu: true })` in `browser.test.mjs` — tell their pages a GPU renderer
+(`engine.mjs` `standInGpu`), so that path is tested there too, drawn by the CPU; every other test takes the no-GPU
+path, as a person's browser without a GPU would (the GPU path drawn by the CPU makes every frame several times slower,
+and the motion tests count frames). The first line of the run names the renderer. The tests reach the map through `window.histmersionMap` (`web/MapHandle.scala`): the view,
 the shape sets and the shapes under a point, the cluster layer's counts, the drawn base-map names, a
 base-map layer's visibility and how many of its features are drawn (`layerVisibility`, `layerDrawn`: the
 sea's depth, the contours inside the Argolid focus region).
