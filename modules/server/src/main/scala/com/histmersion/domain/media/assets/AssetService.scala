@@ -617,7 +617,7 @@ object AssetService:
     ): Unit =
       def mine(m: HeldMediaLink) =
         onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role
-      val linked = property.map(p => LinkProperty(p.value))
+      val linked = property.map(p => p)
       val _ = state.updateAndGet { s =>
         val others = s.mediaLinks.filterNot(m => mine(m) && m.assetUid != uid)
         val updated =

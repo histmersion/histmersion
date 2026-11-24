@@ -263,8 +263,8 @@ object Backup:
     export Result.Pruned
 
     def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status =
-      Status(file, State.Running.wire, Result.DurationMs((elapsedMs).value))
+      Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
     def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, problems: Problems): Status =
-      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), problems = Some(problems.toNonEmpty))
+      Status(file, State.Failed.wire, elapsedMs, problems = Some(problems.toNonEmpty))

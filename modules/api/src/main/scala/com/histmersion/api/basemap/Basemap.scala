@@ -87,7 +87,7 @@ object Basemap:
         .parse(s)
         .toRight(Invalid.Unreadable.here(TypeName.of(Focus.Bbox), Raw(s"$s"), Vector(Raw("19,34,30,42"), Raw("world"))))
         .flatMap { b =>
-          if (b.minLon).value >= (b.maxLon).value || (b.minLat).value >= (b.maxLat).value then
+          if (b.minLon) >= (b.maxLon) || (b.minLat) >= (b.maxLat) then
             Left(
               Invalid.Inconsistent.here(
                 NonEmptyVector.of(Field("minLon"), Field("maxLon"), Field("minLat"), Field("maxLat")),

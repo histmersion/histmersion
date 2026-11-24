@@ -107,7 +107,7 @@ object FirstPartySettings:
     */
   def hostKeys: List[ConfigReload.Key] =
     (ClientKeys ++ all.flatMap(_.paths)).distinct.filterNot(k =>
-      HotPlan.keyMatches(ConfigReload.Key(k.value), ConfigReload.Key(PluginHost.Root))
+      HotPlan.keyMatches(k, ConfigReload.Key(PluginHost.Root))
     )
 
   /** Whether a change of the host key `changed` rebuilds `plugin`: one of its paths for a first-party plugin, a client

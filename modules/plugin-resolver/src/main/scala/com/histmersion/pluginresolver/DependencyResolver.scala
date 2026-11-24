@@ -76,7 +76,7 @@ object DependencyResolver:
       case refactorPattern4 :: d :: t if (refactorPattern4.value == "--histmersion-repo") =>
         loop(t, acc.copy(histmersionRepo = Some(Path.of((d).value))))
       case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo") =>
-        RepositoryUrl.fromArgument(Resolver.Argument((r).value)) match
+        RepositoryUrl.fromArgument(r) match
           case Right(url) => loop(t, acc.copy(repositories = acc.repositories :+ url))
           case Left(e)    => Left(e.at(Problem.Field("--repo")))
       case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>

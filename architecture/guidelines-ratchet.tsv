@@ -74,7 +74,7 @@ G3misplaced	server	test	72
 G3misplaced	upstreams	main	56
 G3misplaced	values	main	4
 G3misplaced	web	main	924
-G44	api	main	6188
+G44	api	main	6162
 G44	api	test	771
 G44	chimney-iron-tests	test	3
 G44	cli	main	445
@@ -94,13 +94,13 @@ G44	plugin-fixtures/hello	main	12
 G44	plugin-fixtures/hello-ai	main	20
 G44	plugin-fixtures/hello-deps	main	4
 G44	plugin-fixtures/hello-lib	main	2
-G44	plugin-host	main	324
+G44	plugin-host	main	322
 G44	plugin-host	test	49
-G44	plugin-resolver	main	50
+G44	plugin-resolver	main	49
 G44	plugin-resolver	test	41
 G44	plugin-testkit	main	116
 G44	plugin-testkit	test	38
-G44	plugin-vaults	main	167
+G44	plugin-vaults	main	164
 G44	plugin-vaults	test	27
 G44	plugins/ai-http	main	36
 G44	plugins/ai-http	test	23
@@ -116,7 +116,7 @@ G44	plugins/media	main	107
 G44	plugins/media	test	63
 G44	problem	main	6
 G44	problem	test	8
-G44	server	main	11243
+G44	server	main	11239
 G44	server	test	4579
 G44	upstreams	main	151
 G44	upstreams	test	42
@@ -144,7 +144,7 @@ G45boundary	console	main	1
 G45boundary	core	main	5
 G45boundary	db	main	1230
 G45boundary	files	main	31
-G45boundary	plugin-host	main	212
+G45boundary	plugin-host	main	211
 G45boundary	plugin-resolver	main	21
 G45boundary	plugin-testkit	main	13
 G45boundary	plugin-vaults	main	6

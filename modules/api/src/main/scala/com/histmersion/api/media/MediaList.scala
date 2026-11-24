@@ -23,8 +23,8 @@ object MediaList:
 
   def of(total: RowCount, rows: List[MediaItem], offset: UnreadPage.Offset): MediaList =
     MediaList(
-      RowCount((total).value),
+      total,
       rows,
       Offset((offset).value),
-      OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+      OffsetPage(total, Offset((offset).value), RowCount(rows.size)).next
     )

@@ -7,7 +7,7 @@ import com.histmersion.api.given
 object PluginsMarkdown:
 
   def line(p: PluginStatus): String =
-    val what = PluginState.parse(PluginState.Wire(p.state.value)) match
+    val what = PluginState.parse(p.state) match
       case Some(PluginState.Registered) =>
         "registered" + (if p.provides.isEmpty then "" else p.provides.mkString(" (", ", ", ")"))
       case Some(PluginState.Failed)  => s"FAILED: ${p.reasons}"

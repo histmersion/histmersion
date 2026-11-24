@@ -89,7 +89,7 @@ object MergeDecision:
       def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(k => wireOf(k) == Wire((s).value.trim))
   def of(kind: Kind): MergeDecision = MergeDecision(kind, None)
-  def withArg(kind: Kind, arg: Argument): MergeDecision = MergeDecision(kind, Some(Argument((arg).value)))
+  def withArg(kind: Kind, arg: Argument): MergeDecision = MergeDecision(kind, Some(arg))
 
   def parse(raw: Wire): Either[Problem, MergeDecision] =
     val s = (raw).value.trim
