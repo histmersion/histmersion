@@ -74,11 +74,13 @@ class ShownInterpolation(config: ShownInterpolation.Config, index: ConcurrentHas
 
   private val asIs: Set[String] = (config.asIs ++ config.asIsFrom.flatMap(symbolsIn)).map(norm).toSet
   private val log = new ConcurrentLinkedQueue[String]()
+  private val blocking = new ConcurrentLinkedQueue[String]()
 
   override def afterComplete(): Unit =
     if (config.report.nonEmpty) {
       Option(Paths.get(config.report).getParent).foreach(Files.createDirectories(_))
       Files.write(Paths.get(config.report), log.asScala.toList.sorted.asJava, UTF_8)
+      Files.write(Paths.get(config.report.stripSuffix(".tsv") + "-blocking.tsv"), blocking.asScala.toList.sorted.asJava, UTF_8)
     }
 
   override def fix(implicit doc: SemanticDocument): Patch = {
@@ -171,7 +173,16 @@ class ShownInterpolation(config: ShownInterpolation.Config, index: ConcurrentHas
             Patch.removeTokens(tokens.drop(dot).filter(_.end <= sel.name.pos.end))
           }
           (Patch.replaceTree(i.prefix, config.interpolator) +: unwraps).asPatch.atomic
-        } else Patch.empty
+        } else {
+          args.filter(_._2.isEmpty).map(a => unwrapped(a._1)).foreach { arg =>
+            val nt = arg match {
+              case Term.Select(q, v) if isIronValue(v) => termType(q).flatMap(newtypeOf)
+              case other => termType(other).flatMap(newtypeOf)
+            }
+            blocking.add(s"${nt.map(norm).getOrElse("-")}\t$path:${i.pos.startLine + 1}")
+          }
+          Patch.empty
+        }
     }.asPatch
   }
 }
