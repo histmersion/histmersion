@@ -214,11 +214,33 @@ class ReadBackSuite extends munit.FunSuite:
     val frozen = Files.readAllLines(FrozenEntries, UTF_8).asScala.toVector.filter(_.startsWith("{"))
     assert(frozen.size >= examples.size, s"${frozen.size} frozen entries")
     frozen.foreach { line =>
-      RawJson.decode[Answer.Entry](line.stripSuffix(",")).flatMap(e => e.problem.map(e -> _)) match
-        case Left(why)     => fail(s"$line does not read: $why")
-        case Right((e, p)) =>
-          val now = e.current
-          assertEquals(p.entry.text, e.text, line)
-          assertEquals((p.entry.group, p.entry.`case`), (now.group, now.`case`), line)
-          if !Answer.translations.contains(Answer.Former(e.group, e.`case`)) then assertEquals(p.entry, e, line)
+      RawJson.decode[Answer.Entry](line.stripSuffix(",")) match
+        case Left(why)                 => fail(s"$line does not read: $why")
+        case Right(e) if neverBuilt(e) =>
+          RawJson.decode[Problem](line.stripSuffix(",")) match
+            case Right(p @ Stored.Unrecognised(_)) => assertEquals(p.entry.text, e.text, line)
+            case other                             => fail(s"$line reads as $other")
+        case Right(e) =>
+          e.problem match
+            case Left(why) => fail(s"$line does not read: $why")
+            case Right(p)  =>
+              val now = e.current
+              assertEquals(p.entry.text, e.text, line)
+              assertEquals((p.entry.group, p.entry.`case`), (now.group, now.`case`), line)
+              if !Answer.translations.contains(Answer.Former(e.group, e.`case`)) then assertEquals(p.entry, e, line)
     }
+
+  private val NeverBuilt: Vector[(Answer.Group, Answer.Case, String)] = Vector(
+    (Answer.Group("Refused"), Answer.Case("Quota"), ""),
+    (Answer.Group("Config"), Answer.Case("Reload"), ""),
+    (Answer.Group("Run"), Answer.Case("Blocked"), ""),
+    (Answer.Group("Run"), Answer.Case("Aborted"), ""),
+    (Answer.Group("Refused"), Answer.Case("Policy"), "RunTokenRequired"),
+    (Answer.Group("Plugin"), Answer.Case("Vault"), "TimedOut"),
+    (Answer.Group("Run"), Answer.Case("Paused"), "Allowance"),
+    (Answer.Group("Conflict"), Answer.Case("Busy"), "Backup"),
+    (Answer.Group("Content"), Answer.Case("Finding"), "UncitedParagraph")
+  )
+
+  private def neverBuilt(e: Answer.Entry): Boolean =
+    NeverBuilt.exists((group, name, word) => group == e.group && name == e.`case` && e.data.noSpaces.contains(word))

@@ -335,6 +335,8 @@ object GuidelineRatchetSuite:
     /** The places that build a problem (SentenceSites, run in the same pass), for SentenceLedgerSuite. */
     val SentenceSites: Path = Path.of("target/guidelines/sentence-sites.tsv")
 
+    val ProblemSymbols: Path = Path.of("target/guidelines/problem-symbols.tsv")
+
     /** The findings of one run, shared by the suites that read its reports (this one, SentenceLedgerSuite). */
     lazy val findings: List[Finding] = run()
 
@@ -392,6 +394,7 @@ object GuidelineRatchetSuite:
       Files.createDirectories(Log.getParent)
       Files.deleteIfExists(Report)
       Files.deleteIfExists(SentenceSites)
+      Files.deleteIfExists(ProblemSymbols)
       val versions = BuildVersions.build
       val targetRoots = semanticdbTargetRoots(Path.of("target/out"), versions.scala)
         .flatMap(p => List("--semanticdb-targetroots", p.toString))

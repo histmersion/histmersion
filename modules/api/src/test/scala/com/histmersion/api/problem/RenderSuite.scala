@@ -64,7 +64,6 @@ class RenderSuite extends munit.FunSuite:
     "Policy" -> 403,
     "Unauthenticated" -> 401,
     "Misdirected" -> 421,
-    "Quota" -> 429,
     "Disabled" -> 403,
     "Space" -> 403,
     "Offline" -> 503,
@@ -94,7 +93,6 @@ class RenderSuite extends munit.FunSuite:
     "Database" -> 500,
     "Setting" -> 503,
     "Unavailable" -> 503,
-    "Reload" -> 503,
     "Cycle" -> 503,
     "Load" -> 500,
     "Rejected" -> 422,
@@ -150,7 +148,6 @@ class RenderSuite extends munit.FunSuite:
     "BindRepeated" -> 503,
     "FloorsUnread" -> 503,
     "ReadAt" -> 503,
-    "Blocked" -> 409,
     "Interrupted" -> 409,
     "Restored" -> 409,
     "Cancelled" -> 409,
@@ -162,7 +159,6 @@ class RenderSuite extends munit.FunSuite:
     "Definition" -> 503,
     "CutShort" -> 409,
     "Unrecorded" -> 409,
-    "Aborted" -> 409,
     "Finding" -> 422,
     "Proposal" -> 422,
     "Answer" -> 422,
@@ -224,11 +220,11 @@ class RenderSuite extends munit.FunSuite:
         .isLeft
     )
 
-  test("the status of several problems is the first one's; a spent allowance says when to retry"):
+  test("the status of several problems is the first one's; a reached usage limit says when to retry"):
     val many: Problems = Problems.of(NotFound.Entity(TypeName("x.Y"), Raw("k")), Invalid.Missing.here(Field("f")))
     assertEquals(many.status.code, 404)
     assertEquals(
-      examples.collect { case q: Refused.Quota => q.retryAfter },
+      examples.collect { case q: Upstream.Limited => q.retryAfter },
       Vector(Some(EpochMs(1762732800000L)))
     )
     assertEquals(Invalid.Missing.here(Field("f")).retryAfter, None)
@@ -240,7 +236,7 @@ class RenderSuite extends munit.FunSuite:
         .sentence
     assertEquals(said(Upstream.Shape.Range), "x's answer at https://x.example/f is not a byte range — eof")
     assertEquals(said(Upstream.Shape.Json), "x's answer at https://x.example/f is not JSON — eof")
-    assertEquals(said(Upstream.Shape.Image), "x's answer at https://x.example/f is not an image — eof")
+    assertEquals(said(Upstream.Shape.Document), "x's answer at https://x.example/f is not a document — eof")
     assertEquals(Upstream.Shape.values.map(said).distinct.length, Upstream.Shape.values.length)
     assert(Upstream.Shape.values.forall(s => !said(s).contains(s" ${s.productPrefix} ")))
 
@@ -621,7 +617,6 @@ class RenderSuite extends munit.FunSuite:
       Run.AtModel(Run.Model("hello-ai:echo"), NonEmptyVector.of(Refused.Policy(Refused.Rule.PlanOutsideLocal))) ->
         ("hello-ai:echo: this provider is refused while the server listens beyond loopback: it spends your own " +
           "plan, and another client could spend it"),
-      Refused.Policy(Refused.Rule.RunTokenRequired) -> "a live run token is required",
       Refused.Policy(Refused.Rule.TokenOtherAgent) -> "this run token is not for that agent",
       Refused.Unauthenticated(Refused.Credential.RunToken) -> "a live run token is required",
       Upstream.CallFailed(Upstream.Name("anthropic:claude-opus"), Relayed(Sentence("Overloaded"))) ->

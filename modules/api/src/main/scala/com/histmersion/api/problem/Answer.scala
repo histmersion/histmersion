@@ -59,7 +59,6 @@ object Answer:
       case _: Conflict.Held               => StatusCode.Conflict
       case _: Conflict.Job                => StatusCode.Conflict
       case _: Refused.Policy              => StatusCode.Forbidden
-      case _: Refused.Quota               => StatusCode.TooManyRequests
       case _: Refused.Disabled            => StatusCode.Forbidden
       case _: Refused.Space               => StatusCode.Forbidden
       case _: Refused.Unauthenticated     => StatusCode.Unauthorized
@@ -97,11 +96,10 @@ object Answer:
 
     /** When a refused request may be sent again: the end of a spent allowance, when it is known. */
     def retryAfter: Option[EpochMs] = problem match
-      case Refused.Quota(_, _, _, until) => until
-      case Upstream.Limited(_, until)    => until
-      case Upstream.Offline(_, until)    => until
-      case Upstream.Unasked(why)         => why.retryAfter
-      case _                             => None
+      case Upstream.Limited(_, until) => until
+      case Upstream.Offline(_, until) => until
+      case Upstream.Unasked(why)      => why.retryAfter
+      case _                          => None
 
     /** The problem as the body lists it: its group, its case, its fields and its sentence. A [[Relayed]] problem, known
       * by its sentence alone, is the `Relayed` group and case with no fields, which reads back as the same problem. The

@@ -78,7 +78,6 @@ object Text:
         s"'$label' [$place] is referred to by ${refs.toVector.map(_.said).mkString(", ")} — merge it into the place it " +
           "is the same as instead, or move those first"
       case Refused.Policy(rule)                               => rule.said
-      case Refused.Quota(limit, used, cap, at)                => s"${limit.named} is spent: $used of $cap${until(at)}"
       case Refused.Space(work, needs, on, free, least)        => work.refused(needs, on, free, least)
       case Refused.Unauthenticated(Refused.Credential.ApiKey) =>
         "this server needs its API key from your network — send it as `Authorization: Bearer <key>` (the CLI " +
@@ -169,7 +168,6 @@ object Text:
       case Config.ReadAt(file, at, why) =>
         why.toVector.map(_.sentence.replace(s"$at", s"$file")).mkString("; ")
       case Config.Unavailable(capability) => s"this server has no ${words(capability.productPrefix)}"
-      case Config.Reload(stage, scope)    => s"reloading the settings failed at ${words(stage.productPrefix)} ($scope)"
       case Config.Cycle(scopes)           =>
         s"the parts a reload rebuilds depend on each other in a cycle: ${scopes.toVector.mkString(" → ")}"
       case Config.Definition(file, flaw) => s"$file${flaw.said}"
@@ -271,19 +269,17 @@ object Text:
       case Problem.Run.NoLogin(why)            => s"unavailable: no login — $why"
       case Problem.Run.ProbeUnread(exit, said) =>
         s"the probe printed no rate_limit_event (exit $exit${said.fold("")(m => s": $m")})"
-      case Problem.Run.Blocked(block)       => s"held back: ${block.said}"
       case Problem.Run.Interrupted          => "interrupted by a restart"
       case Problem.Run.Restored             => "interrupted by a restore, which replaced the database it was writing to"
       case Problem.Run.CutShort(activity)   => activity.cutShort
       case Problem.Run.Unrecorded(activity) => activity.unrecorded
       case Problem.Run.Cancelled(by)        => s"cancelled by ${words(by.productPrefix)}"
       case Problem.Run.Draining(Some(since)) => s"stopped while the autopilot drains (since ${since.iso})"
-      case Problem.Run.Draining(None)       => "stopped while the autopilot drains: it resumes once the drain is lifted"
-      case Problem.Run.Aborted(step, cause) => s"step $step cannot go on: ${words(cause.productPrefix)}"
-      case Content.Finding(cause)           => cause.said
-      case Content.Proposal(rule, at)       => s"$at: ${rule.said}"
-      case Content.Answer(rule)             => rule.said
-      case Content.NotProposed(why)         => s"not proposed: ${why.sentence}"
+      case Problem.Run.Draining(None) => "stopped while the autopilot drains: it resumes once the drain is lifted"
+      case Content.Finding(cause)     => cause.said
+      case Content.Proposal(rule, at) => s"$at: ${rule.said}"
+      case Content.Answer(rule)       => rule.said
+      case Content.NotProposed(why)   => s"not proposed: ${why.sentence}"
       case Content.Undecoded(why, finish, began) =>
         s"${why.said}${finish.fold("")(f => s" ($f)")}${began.fold("")(b => s" — the answer began: $b")}"
       case Internal.Unexpected(id, where, e, r) => s"$where failed unexpectedly ($e, problem $id) — $r"
@@ -745,18 +741,13 @@ object Text:
 
   extension (rule: Refused.Rule)
     private def said: String = rule match
-      case Refused.Rule.RunTokenRequired => "a live run token is required"
-      case Refused.Rule.ApiKeyRequired   => "the API key is required"
-      case Refused.Rule.WorkingDirDenied => "the command may not write in this working directory"
-      case Refused.Rule.ReadOnlyQuery    => "a query may only read: it holds a statement that writes"
-      case Refused.Rule.OneStatement     =>
+      case Refused.Rule.OneStatement =>
         "a query runs exactly one statement: drop the ';'-separated batch and ask again"
-      case Refused.Rule.LoginOutsideLocal => "this login is refused while the server listens beyond this machine"
-      case Refused.Rule.LegalOnly         => "only legal open-access copies may be fetched"
-      case Refused.Rule.ReadOnly          => "the collection is read-only"
-      case Refused.Rule.LendingOnly       => "the item is lending-only: borrow it on its site"
-      case Refused.Rule.RangesOnly        => "this client reads ranges of a file, never a whole file"
-      case Refused.Rule.RegistrationOver  =>
+      case Refused.Rule.LegalOnly        => "only legal open-access copies may be fetched"
+      case Refused.Rule.ReadOnly         => "the collection is read-only"
+      case Refused.Rule.LendingOnly      => "the item is lending-only: borrow it on its site"
+      case Refused.Rule.RangesOnly       => "this client reads ranges of a file, never a whole file"
+      case Refused.Rule.RegistrationOver =>
         "registration is over: a plugin adds to a registry only from inside its register"
       case Refused.Rule.PersonOnly => "bookmarks, notes and read marks are a person's own; an automated run has none"
       case Refused.Rule.PersonHeldSetting =>
@@ -790,26 +781,11 @@ object Text:
           "directly, or, when a proxy serves it, add the proxy's network to auth.proxy-networks on the server and " +
           "restart it"
 
-  extension (limit: Refused.Limit)
-    private def named: String = limit match
-      case Refused.Limit.DailySpend    => "today's agent spend"
-      case Refused.Limit.MonthlySpend  => "this month's agent spend"
-      case Refused.Limit.RunSpend      => "the run's spend"
-      case Refused.Limit.ProviderQuota => "the provider's quota"
-      case Refused.Limit.RateLimit     => "the rate limit"
-      case Refused.Limit.PlanAllowance => "the plan's allowance"
-
   extension (shape: Upstream.Shape)
     /** What the answer should have been, as a noun phrase: `a byte range`, `JSON`. */
     private def noun: String = shape match
       case Upstream.Shape.Json     => "JSON"
-      case Upstream.Shape.Xml      => "XML"
-      case Upstream.Shape.Html     => "HTML"
-      case Upstream.Shape.Text     => "text"
-      case Upstream.Shape.Image    => "an image"
       case Upstream.Shape.Document => "a document"
-      case Upstream.Shape.Archive  => "an archive"
-      case Upstream.Shape.Problems => "a list of problems"
       case Upstream.Shape.Range    => "a byte range"
 
   extension (kind: Io.Kind)
@@ -817,7 +793,6 @@ object Text:
       case Io.Kind.File              => "is not a file"
       case Io.Kind.Directory         => "is not a directory"
       case Io.Kind.Present           => "is not there"
-      case Io.Kind.Absent            => "is there already"
       case Io.Kind.Executable        => "is not executable"
       case Io.Kind.Listed            => "is not in the manifest"
       case Io.Kind.OnPath            => "was not found on the PATH"
@@ -1093,7 +1068,6 @@ object Text:
         s"= '$raw' is neither ${known.mkString(" nor ")}; treated as $used"
       case Config.Fault.NoPlugin(id)     => s"names '$id', which is no plugin in this binary"
       case Config.Fault.Conflicts(other) => s"contradicts $other"
-      case Config.Fault.NoSecret         => "names a secret no vault holds"
       case Config.Fault.Block            => "is a block of settings, not one setting: set one of the settings inside it"
       case Config.Fault.WrongKind(e, f)  => s"must be ${e.said}, not ${f.said}"
       case Config.Fault.Unreadable(r)    => s"cannot be read — $r"
@@ -1157,7 +1131,6 @@ object Text:
 
   extension (failure: Plugin.Retrieval)
     private def said: String = failure match
-      case Plugin.Retrieval.TimedOut(after) => s"it did not answer within $after ms"
       case Plugin.Retrieval.NoVault        => "no vault of that name is registered (enable the plugin that provides it)"
       case Plugin.Retrieval.Failed(stderr) => s"its tool failed — $stderr"
       case Plugin.Retrieval.Blank(ref)     => s"'$ref' has an empty value"
@@ -1241,11 +1214,6 @@ object Text:
     private def said: String =
       s"the ${held.title} is held (release it with `histmersion agent quota release ${held.pool}`)"
 
-  extension (block: Problem.Run.Block)
-    private def said: String = block match
-      case Problem.Run.Block.PoolFull(pool) => s"the $pool pool runs as many as it may"
-      case other                            => words(other.productPrefix)
-
   extension (control: Conflict.Control)
     private def said(job: Raw, status: Conflict.State): String = control match
       case Conflict.Control.OnePiece(kind) =>
@@ -1261,18 +1229,11 @@ object Text:
   extension (cause: Content.Flaw)
     private def said: String = cause match
       case Content.Flaw.HandWrittenSourcesCited => "a hand-written Sources cited section (the page generates it)"
-      case Content.Flaw.UncitedParagraph        => "a paragraph cites no source"
-      case Content.Flaw.UnknownCitekey          => "a citation names no source in the corpus"
-      case Content.Flaw.FormattingIntroduced    => "a formatting error the last edits introduced"
-      case Content.Flaw.MissingSection          => "a required section is missing"
 
   extension (rule: Content.Requirement)
     private def said: String = rule match
-      case Content.Requirement.NoYearZero     => "there is no year 0; use BCE years as negative numbers"
-      case Content.Requirement.CitesNoSource  => "the text cites no source"
-      case Content.Requirement.UnknownCitekey => "it names a source that is not in the corpus"
-      case Content.Requirement.OutsidePeriod  => "it falls outside the period"
-      case Content.Requirement.StandIn        =>
+      case Content.Requirement.CitesNoSource => "the text cites no source"
+      case Content.Requirement.StandIn       =>
         "it is a stand-in (a placeholder, TODO or lorem ipsum), not the text: write it, or leave it out"
       case Content.Requirement.TooManyClaims(cap, gave) => s"at most $cap claims per source (you gave $gave)"
       case Content.Requirement.ExactTitle               =>
