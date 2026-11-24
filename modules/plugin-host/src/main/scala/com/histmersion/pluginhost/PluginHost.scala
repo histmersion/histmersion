@@ -17,6 +17,7 @@ import org.ekrich.config.{
   ConfigObject,
   ConfigParseOptions,
   ConfigRenderOptions,
+  ConfigResolveOptions,
   ConfigUtil,
   ConfigValue,
   ConfigValueFactory,
@@ -216,7 +217,7 @@ object PluginHost:
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
   def configuredOrder(user: Config, env: Config): Either[Problem, List[Plugin.Info.Id]] =
     val path = s"$Root.$OrderKey"
-    Try(user.withFallback(env).resolve()).toEither.left
+    Try(user.withFallback(env).resolve(ConfigResolveOptions.noSystem)).toEither.left
       .map(e =>
         Problem.Config.Setting(Problem.SettingKey(path), Problem.Config.Fault.Unreadable(External.Reported.of(e)))
       )
@@ -267,7 +268,7 @@ object PluginHost:
           .withFallback(host)
           .withFallback(defaults)
           .withFallback(env)
-          .resolve()
+          .resolve(ConfigResolveOptions.noSystem)
       val trimmed = resolved.root.keySet.asScala.toList.filterNot(keep).foldLeft(resolved.root)(_.withoutKey(_))
       Right(trimmed.toConfig)
     catch
@@ -742,7 +743,7 @@ object PluginHost:
           for
             defs <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
             // the defaults resolved on their own: `${?ENV}` lines leave the default standing
-            known = Try(defs.resolve()).getOrElse(defs)
+            known = Try(defs.resolve(ConfigResolveOptions.noSystem)).getOrElse(defs)
             _ <- Problems.from(typeCheck(id, user, known).toVector).toLeft(()).left.map { errs =>
               status(
                 p,
