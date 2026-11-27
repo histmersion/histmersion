@@ -108,7 +108,8 @@ object MediaCovers:
                 Api.FileBytes(bytes)
               ) match
                 case Right(_) => Outcome.Uploaded(line)
-                case Left(e) => Outcome.Failed(MediaCoversReport.Failed(s"$ck: ${e.problems.sentences.mkString("; ")}"))
+                case Left(e)  =>
+                  Outcome.Failed(MediaCoversReport.Failed(shown"$ck: ${e.problems.sentences.mkString("; ")}"))
       case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
         Outcome.AskOpenLibrary(ck, MediaCoversRequest.Isbn(isbn.value))
       case Some(CoverChoice.Pick.OpenLibrary(_, _)) =>

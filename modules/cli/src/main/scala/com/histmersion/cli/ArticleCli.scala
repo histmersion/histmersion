@@ -165,7 +165,7 @@ object ArticleCli:
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
-        Cli.out.println(s"${i + 1}/$total $slug")
+        Cli.out.println(shown"${i + 1}/$total $slug")
         c.exportArticle(slug) match
           case Right(text) =>
             val dir = out.resolve(kindOfNote(text).value)
@@ -175,7 +175,7 @@ object ArticleCli:
               text.value
             )
             None
-          case Left(e) => Some(s"$slug: ${e.problems.sentences.mkString("; ")}")
+          case Left(e) => Some(shown"$slug: ${e.problems.sentences.mkString("; ")}")
       }
       Cli.out.println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))

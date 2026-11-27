@@ -16,7 +16,15 @@ object ShownInterpolation {
       asIs: List[String] = Nil,
       asIsFrom: List[String] = Nil,
       interpolator: String = "shown",
-      report: String = ""
+      report: String = "",
+      plainCalls: List[String] = List(
+        "scala/collection/IterableOnceOps#mkString\\(.*",
+        "(scala/Any|java/lang/Object|java/lang/String)#toString\\(\\)\\.",
+        "scala/collection/(IterableOnceOps|IterableOps|SeqOps|StringOps)#(size|length|knownSize)\\(\\)\\.",
+        "scala/collection/(IterableOnceOps|StringOps)#count\\(\\)\\.",
+        "java/lang/String#(length|trim|strip|toUpperCase|toLowerCase|replace|replaceAll|substring)\\(.*",
+        "scala/collection/StringOps#(take|drop|takeRight|dropRight|capitalize|stripSuffix|stripPrefix|stripMargin|trim)\\(.*"
+      )
   )
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
@@ -73,6 +81,7 @@ class ShownInterpolation(config: ShownInterpolation.Config, index: ConcurrentHas
     }
 
   private val asIs: Set[String] = (config.asIs ++ config.asIsFrom.flatMap(symbolsIn)).map(norm).toSet
+  private val plainCalls: List[String] = config.plainCalls
   private val log = new ConcurrentLinkedQueue[String]()
   private val blocking = new ConcurrentLinkedQueue[String]()
 
@@ -140,9 +149,36 @@ class ShownInterpolation(config: ShownInterpolation.Config, index: ConcurrentHas
       case _ => None
     }
     def isIronValue(n: Name): Boolean = n.value == "value" && n.symbol.value.startsWith(ironValue)
-    def isPlain(t: Term): Boolean = termType(t).map(dealias(_)).exists {
-      case r: s.TypeRef => plain(r.symbol)
+    def plainSemantic(t: SemanticType): Boolean = t match {
+      case TypeRef(_, sym, Nil) => plain(sym.value)
       case _ => false
+    }
+    def calleeOf(t: Term): Option[Symbol] = unwrapped(t) match {
+      case n: Term.Name => Some(n.symbol)
+      case sel: Term.Select => Some(sel.name.symbol)
+      case a: Term.Apply => a.fun match {
+          case n: Term.Name => Some(n.symbol)
+          case Term.Select(_, n) => Some(n.symbol)
+          case _ => None
+        }
+      case _ => None
+    }
+    def isLibraryPlain(t: Term): Boolean = calleeOf(t).filterNot(_.isNone).exists { sym =>
+      plainCalls.exists(p => sym.value.matches(p)) || sym.info.map(_.signature).exists {
+        case m: MethodSignature => m.typeParameters.isEmpty && plainSemantic(m.returnType)
+        case v: ValueSignature => plainSemantic(v.tpe)
+        case _ => false
+      }
+    }
+    def isPlain(t: Term): Boolean = unwrapped(t) match {
+      case inf: Term.ApplyInfix if Set("+", "-", "*", "/", "%")(inf.op.value) && inf.argClause.values.size == 1 =>
+        isPlain(inf.lhs) && isPlain(inf.argClause.values.head)
+      case Term.If(_, thenp, elsep) => isPlain(thenp) && isPlain(elsep)
+      case other => termType(other).map(dealias(_)) match {
+          case Some(r: s.TypeRef) => plain(r.symbol)
+          case Some(_) => false
+          case None => isLibraryPlain(other)
+        }
     }
     def unwrapped(t: Term): Term = t match {
       case Term.Block(List(only: Term)) => unwrapped(only)

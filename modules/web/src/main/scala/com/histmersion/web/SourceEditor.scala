@@ -187,7 +187,7 @@ object SourceEditor:
     def load(then0: Option[String] = None): Unit =
       ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false)).onComplete { r =>
         r.fold(
-          e => errors.set(List(Field.Form -> s"Could not load $ck: ${e.getMessage}")),
+          e => errors.set(List(Field.Form -> shown"Could not load $ck: ${e.getMessage}")),
           sw =>
             orig.set(Some(sw.source))
             draft.set(Some(Draft.of(sw.source)))

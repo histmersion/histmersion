@@ -13,3 +13,6 @@ object Uses:
   def counting(): Int = 3
   def called(title: Title): String = shown"$title, ${counting()} times"
   def numbered(count: Count): String = shown"entry ${count}"
+  def joined(title: Title, names: List[String]): String = shown"$title by ${names.mkString(", ")}, ${names.size}"
+  def computed(title: Title, n: Int): String = shown"$title ${n + 1} copie${if n > 1 then "s" else ""}"
+  def generic(title: Title, name: Option[String]): String = s"$title by ${name.getOrElse("")}"

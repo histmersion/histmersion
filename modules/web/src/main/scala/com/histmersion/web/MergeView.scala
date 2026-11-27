@@ -608,7 +608,7 @@ object MergeView:
         grouped(filtered(p.issues, t)).map { (g, is) =>
           div(
             cls := "merge-group",
-            h4(cls := "merge-group-title", s"${g.title} (${is.size})"),
+            h4(cls := "merge-group-title", shown"${g.title} (${is.size})"),
             ul(
               cls := "merge-issues",
               is.map(i =>

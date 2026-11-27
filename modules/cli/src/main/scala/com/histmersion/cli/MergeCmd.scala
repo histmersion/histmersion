@@ -116,7 +116,7 @@ object MergeCmd:
               .Try(Files.readString(path))
               .toEither
               .left
-              .map(e => s"${x.issue}: file:$p — ${e.getMessage}")
+              .map(e => shown"${x.issue}: file:$p — ${e.getMessage}")
               .map(t => x.modify(_.text).setTo(Some(MergeResolution.Text(t))))
     }
     val errors = read.flatMap(_.left.toOption)

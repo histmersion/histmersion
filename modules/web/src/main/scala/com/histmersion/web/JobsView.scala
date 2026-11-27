@@ -129,7 +129,7 @@ object JobsView:
     j.detail.filter(SkippedPeriod.SkippedCount.of(_).value > 0).map { d =>
       val ids = SkippedPeriod.Skipped.of(d).map(_.id)
       val more = SkippedPeriod.SkippedCount.of(d).value - ids.size
-      s"skipped ${Plural.count(Plural.CountN(SkippedPeriod.SkippedCount.of(d).value.toLong), Plural.CountSingular("period definition"))}: ${ids.mkString(", ")}" +
+      shown"skipped ${Plural.count(Plural.CountN(SkippedPeriod.SkippedCount.of(d).value.toLong), Plural.CountSingular("period definition"))}: ${ids.mkString(", ")}" +
         (if more > 0 then s" and $more more" else "")
     }
 

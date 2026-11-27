@@ -193,7 +193,7 @@ object ApprovalsView:
       .sortBy(-_._2)
       .map((k, n) => s"$n ${kindLabel(k).toLowerCase}")
       .mkString(", ")
-    s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(Plural.CountN(as.size), Plural.CountSingular("approval"))} ($kinds)? " +
+    shown"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(Plural.CountN(as.size), Plural.CountSingular("approval"))} ($kinds)? " +
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
   /** Who decided an approval, as its row says it (nothing while it is open). */
@@ -339,7 +339,9 @@ object ApprovalsView:
       acc.flatMap(errs =>
         ApiClient
           .decide(a.id, d, None)
-          .transform(r => scala.util.Success(r.failed.toOption.fold(errs)(e => errs :+ s"#${a.id}: ${e.getMessage}")))
+          .transform(r =>
+            scala.util.Success(r.failed.toOption.fold(errs)(e => errs :+ shown"#${a.id}: ${e.getMessage}"))
+          )
       )
     }
     done.foreach { errs =>
@@ -350,7 +352,7 @@ object ApprovalsView:
         Option.when(errs.nonEmpty)(
           Problem.Unclassified(
             Legacy.Text(
-              s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"
+              shown"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"
             )
           )
         )
@@ -659,7 +661,7 @@ object ApprovalsView:
                   span(
                     cls := "muted",
                     s" — proposed by ${Option(p.by.value).filter(_.nonEmpty).getOrElse("a model")} " +
-                      s"from hint #${p.hint}: “${p.text.value.take(200)}”"
+                      shown"from hint #${p.hint}: “${p.text.value.take(200)}”"
                   )
                 )
               )
