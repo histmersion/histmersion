@@ -123,6 +123,14 @@ fmt:
 fmt-check:
     {{sbt}} scalafmtCheckAll scalafmtSbtCheck
 
+# The lint rules (tools/lint): their tests, every rule over every module, and no more suppressions than the merge base
+[group('dev')]
+lint:
+    {{sbt}} Test/compile
+    tools/lint/test.sh
+    tools/lint/lint.sh
+    tools/lint/count.sh
+
 # Pure test suites (no database)
 [group('dev')]
 test:
