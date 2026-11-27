@@ -24,6 +24,7 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.time.IsoLocal
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -563,9 +564,11 @@ object Agents:
     object Warnings extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends Newtype[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]:
+      given Display[T] = Display(at => IsoLocal.text(at.value))
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends Newtype[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]:
+      given Display[T] = Display(at => IsoLocal.text(at.value))
     type TargetKind = TargetKind.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object TargetKind extends Newtype[String, Pure]

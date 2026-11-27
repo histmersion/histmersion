@@ -17,6 +17,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.Sha256
 import com.histmersion.api.automation.Queue
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.time.IsoLocal
 
 /** A job's row. `problems`: every problem a job that failed (or stopped) keeps, in order; none for one that did not. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -54,9 +55,11 @@ object JobInfo:
   object Progress extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends Newtype[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]:
+    given Display[T] = Display(at => IsoLocal.text(at.value))
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends Newtype[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]:
+    given Display[T] = Display(at => IsoLocal.text(at.value))
 
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Kind = JobKinds.Wire

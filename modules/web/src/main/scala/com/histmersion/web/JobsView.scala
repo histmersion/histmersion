@@ -359,10 +359,10 @@ object JobsView:
           ,
           Option(j.createdAt)
             .filter(_.value.nonEmpty)
-            .map(c => span(title := c.value, s" · started ${agoOf(c.value)}")),
+            .map(c => span(title := c, s" · started ${agoOf(c.value)}")),
           Option(j.updatedAt)
             .filter(u => u.value.nonEmpty && u.value != j.createdAt.value)
-            .map(u => span(title := u.value, s" · updated ${agoOf(u.value)}"))
+            .map(u => span(title := u, s" · updated ${agoOf(u.value)}"))
         )
       )
     )

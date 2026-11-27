@@ -559,7 +559,7 @@ object RunsView:
           span(
             shown" · ${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
           ),
-          Option(r.createdAt).filter(_.value.nonEmpty).map(c => span(title := c.value, s" · started ${ago(c.value)}"))
+          Option(r.createdAt).filter(_.value.nonEmpty).map(c => span(title := c, s" · started ${ago(c.value)}"))
         )
       )
     )
@@ -674,9 +674,9 @@ object RunsView:
         dt("run"),
         dd(code(r.id)),
         dt("started"),
-        dd(r.createdAt.value),
+        dd(r.createdAt),
         dt("updated"),
-        dd(r.updatedAt.value),
+        dd(r.updatedAt),
         Creation.line(r.creator, None).toList.flatMap(c => List(dt("created"), dd(c)))
       ),
       controls(r, busy, raise, act),
