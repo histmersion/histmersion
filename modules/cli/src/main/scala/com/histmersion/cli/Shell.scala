@@ -2,10 +2,13 @@ package com.histmersion
 package cli
 import com.histmersion.util.problem.{Legacy, Problem}
 
+import scala.Conversion.into
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import java.nio.file.Path
 
 /** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
   * installation.
@@ -18,6 +21,18 @@ trait Shell:
 object Shell:
   type ProcessMatch = ProcessMatch.T
   object ProcessMatch extends Newtype[String, Pure]
+
+  final class Arg private[Shell] (val text: String)
+
+  object Arg:
+    given Conversion[String, Arg] = Arg(_)
+    given Conversion[Int, Arg] = number => Arg(s"$number")
+    given Conversion[Long, Arg] = number => Arg(s"$number")
+    given Conversion[Path, Arg] = path => Arg(s"$path")
+    given lifted: [T] => (m: RefinedType.Mirror[T]) => (base: Conversion[m.BaseType, Arg]) => Conversion[T, Arg] =
+      newtype => base(newtype.asInstanceOf[m.BaseType])
+
+  def command(parts: into[Arg]*): List[String] = parts.map(_.text).toList
 
   /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
 
@@ -46,4 +61,4 @@ object Shell:
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def isRunning(processMatch: ProcessMatch): Boolean =
-      run(List("pgrep", "-f", processMatch.value)).exists(_.trim.nonEmpty)
+      run(command("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)

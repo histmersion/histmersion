@@ -23,7 +23,8 @@ object CollectionFieldChange:
   type Field = Field.T
   object Field extends Newtype[String, Pure]
   type From = From.T
-  object From extends Newtype[String, Pure]
+  object From extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type To = To.T
   object To extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

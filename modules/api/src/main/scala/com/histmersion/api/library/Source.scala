@@ -83,7 +83,8 @@ object Source:
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends Newtype[String, Pure]
+  object Summary extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type CitedByCount = CitedByCount.T
   object CitedByCount extends Newtype[Int, Pure]
   type InfluentialCitations = InfluentialCitations.T

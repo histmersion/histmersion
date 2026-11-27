@@ -47,14 +47,15 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def libArgs = List("--with-library", cfg.library.value)
+  private def libArgs = Shell.command("--with-library", cfg.library)
 
   /** The Calibre GUI holds an exclusive lock on the library for writes. */
   def guiRunning: Boolean = shell.isRunning(Shell.ProcessMatch("/Applications/calibre.app/Contents/MacOS/calibre"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def libraryExists: Boolean = Files.isRegularFile(Path.of(cfg.library.value, "metadata.db"))
+  private def metadataDb: Path = Path.of(cfg.library.value, "metadata.db")
+
+  def libraryExists: Boolean = Files.isRegularFile(metadataDb)
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
@@ -79,14 +80,14 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       query: Option[Api.Search.Text],
       limit: Paging.Limit
   ): Either[Problem, List[Calibre.Book]] =
-    val cmd = List(cfg.calibredb.value, "list") ++ libArgs ++
-      List(
+    val cmd = Shell.command(cfg.calibredb, "list") ++ libArgs ++
+      Shell.command(
         "--for-machine",
         "--fields",
         "id,title,authors,pubdate,publisher,tags,comments,identifiers,formats,cover",
         "--limit",
-        limit.value.toString
-      ) ++ query.toList.flatMap(q => List("--search", q.value))
+        limit
+      ) ++ query.toList.flatMap(q => Shell.command("--search", q))
     shell.run(cmd).flatMap(Calibre.parseMachineJson)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -102,7 +103,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         s"(b.title LIKE $like OR b.author_sort LIKE $like)"
     val sql = Calibre.sqliteQuery(where, limit)
     shell
-      .run(List(cfg.sqlite.value, "-readonly", "-json", Path.of(cfg.library.value, "metadata.db").toString, sql))
+      .run(Shell.command(cfg.sqlite, "-readonly", "-json", metadataDb, sql))
       .flatMap(Calibre.parseSqliteJson(_, cfg.library))
 
   // ── writing (push) ──────────────────────────────────────────────────────────────────────────
@@ -183,7 +184,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Problem, Unit] =
     if changes.isEmpty then Right(())
-    else shell.run(Calibre.setMetadataCmd(cfg.calibredb.value, libArgs, id, changes)).map(_ => ())
+    else shell.run(Calibre.setMetadataCmd(cfg.calibredb, libArgs, id, changes)).map(_ => ())
 
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private val GuiRunning =
@@ -199,7 +200,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def set(id: Calibre.Book.Id, fields: List[CollectionFieldValue]): Either[Problem, Unit] =
     for
-      cmd <- Calibre.setCmd(cfg.calibredb.value, libArgs, id, fields)
+      cmd <- Calibre.setCmd(cfg.calibredb, libArgs, id, fields)
       _ <- Either.cond(
         !guiRunning,
         (),
@@ -225,15 +226,15 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       )
       _ <- Either.cond(Files.isRegularFile(file), (), Problem.Unclassified(Legacy.Text(s"no such file: $file")))
       _ <- byId(id).flatMap(_.toRight(Problem.Unclassified(Legacy.Text(shown"there is no Calibre entry $id"))))
-      _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb.value, libArgs, id, file))
+      _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def addCmd(file: Path, meta: Calibre.Push): List[String] =
-    List(cfg.calibredb.value, "add", file.toString) ++ libArgs ++
-      List("--title", meta.title.value.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
+    Shell.command(cfg.calibredb, "add", file) ++ libArgs ++
+      Shell.command("--title", meta.title.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
       meta.doi.toList.flatMap(d => List("--identifier", shown"doi:$d")) ++
-      meta.isbn.toList.flatMap(i => List("--isbn", i.value)) ++
+      meta.isbn.toList.flatMap(i => Shell.command("--isbn", i)) ++
       (if meta.tags.isEmpty then Nil else List("--tags", meta.tags.mkString(",")))
 
   /** The fields `calibredb add` cannot set. Best-effort: a failure here leaves a usable entry. */
@@ -241,13 +242,13 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def setMetadata(id: Calibre.Book.Id, meta: Calibre.Push): Either[Problem, Unit] =
     val fields = List(
-      meta.publisher.map(p => "publisher:" + p.value),
+      meta.publisher.map(p => shown"publisher:$p"),
       meta.year.map(y => s"pubdate:$y-01-01"),
-      meta.summary.map(c => "comments:" + c.value)
+      meta.summary.map(c => shown"comments:$c")
     ).flatten
     if fields.isEmpty then Right(())
     else
-      val cmd = List(cfg.calibredb.value, "set_metadata") ++ libArgs ++ List(id.toString) ++
+      val cmd = Shell.command(cfg.calibredb, "set_metadata") ++ libArgs ++ Shell.command(id) ++
         fields.flatMap(f => List("--field", f))
       shell
         .run(cmd)
@@ -258,7 +259,8 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
 /** The PURE half: parsing what the two readers print, the metadata guard, and SQL assembly. */
 object Calibre:
   type VolumeNumber = VolumeNumber.T
-  object VolumeNumber extends Newtype[Int, Pure]
+  object VolumeNumber extends Newtype[Int, Pure]:
+    given Display[T] = Display(number => s"${number.value}")
 
   /** Values that mean "nobody filled this in". Pushing one of these into Calibre creates an entry nobody will ever find
     * again, so both `import` and `push` refuse.
@@ -315,7 +317,7 @@ object Calibre:
     // `López-Ruiz` gives `lopezruiz`, not `lpezruiz` (#830): Acquire.citekey folds accents itself (#878)
     api.library.Citekey(
       Acquire.citekey(b.authors, b.year, Some(b.title)).value +
-        volumeOf(b.title).fold("")(n => s"_v$n")
+        volumeOf(b.title).fold("")(n => shown"_v$n")
     )
 
   /** Whether importing Calibre entry `id` under `ck` may go ahead (#714: two volumes once generated the same citekey
@@ -375,8 +377,13 @@ object Calibre:
   /** `calibredb add_format` replaces the entry's existing format of the same type (that is its default;
     * `--dont-replace` would be the opposite).
     */
-  def replaceFormatCmd(calibredb: String, libArgs: List[String], id: Book.Id, file: Path): List[String] =
-    List(calibredb, "add_format") ++ libArgs ++ List(id.toString, file.toString)
+  def replaceFormatCmd(
+      calibredb: CalibreCliConfig.Calibredb,
+      libArgs: List[String],
+      id: Book.Id,
+      file: Path
+  ): List[String] =
+    Shell.command(calibredb, "add_format") ++ libArgs ++ Shell.command(id, file)
 
   /** `calibredb add` prints `Added book ids: 1693`. */
   private val AddedIds = """Added book ids?:\s*([0-9,]+)""".r
@@ -406,7 +413,7 @@ object Calibre:
       val ids = mergeIdentifiers(current.identifiers, meta.doi, meta.isbn)
       List(
         // compared and written trimmed (#883): a stray space is not a different title
-        Option.when(current.title.value.trim != meta.title.value.trim)(
+        Option.when(current.title.trim != meta.title.trim)(
           Change(
             Field.Title,
             Change.From(current.title.value),
@@ -431,7 +438,7 @@ object Calibre:
           )
         ),
         Option.when(
-          meta.tags.nonEmpty && meta.tags.map(_.value).distinct.sorted != current.tags.map(_.value).distinct.sorted
+          meta.tags.nonEmpty && meta.tags.distinct.sorted != current.tags.distinct.sorted
         )(
           Change(
             Field.Tags,
@@ -465,12 +472,12 @@ object Calibre:
   /** `calibredb set_metadata` writing `changes` into entry `id`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setMetadataCmd(
-      calibredb: String,
+      calibredb: CalibreCliConfig.Calibredb,
       libArgs: List[String],
       id: Book.Id,
       changes: List[Change]
   ): List[String] =
-    List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
+    Shell.command(calibredb, "set_metadata") ++ libArgs ++ Shell.command(id) ++
       changes.flatMap(c => List("--field", shown"${c.field.name}:${c.to}"))
 
   /** Calibre's identifiers with the record's merged in: the DOI is the record's (it names the work the corpus cites),
@@ -494,13 +501,13 @@ object Calibre:
       isbn
         .map(_.value.trim)
         .filter(ok)
-        .filterNot(_ => current.get(Book.IdentifiersKey("isbn")).exists(_.value.trim.nonEmpty))
+        .filterNot(_ => current.get(Book.IdentifiersKey("isbn")).exists(_.trim.nonEmpty))
         .map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def identifiersValue(ids: Map[Book.IdentifiersKey, Book.IdentifiersValue]): String =
-    ids.toList.sortBy(_._1.value).map((k, v) => s"$k:$v").mkString(",")
+    ids.toList.sortBy(_._1).map((k, v) => shown"$k:$v").mkString(",")
 
   /** Role words a library or a publisher appends to a name: `eds.`, `trans.`, `Hrsg.`. The short ones need their dot —
     * `Smith, Ed` is a man called Ed.
@@ -561,7 +568,8 @@ object Calibre:
   /** `update --all` as Markdown: what changes (or changed), then what was left alone and why. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdownUpdateAll(entries: List[UpdateEntry], applied: CollectionUpdateAll.Applied): String =
-    def cell(s: String) = s.replace("|", "\\|").replace("\n", " ").take(80)
+    def cell[A](value: A)(using display: Display[A]) =
+      display.text(value).replace("|", "\\|").replace("\n", " ").take(80)
     val changing = entries.collect { e =>
       e.outcome match
         case UpdateOutcome.Change(cs)      => (e, cs, "")
@@ -570,7 +578,7 @@ object Calibre:
     }
     val rows = changing.flatMap { (e, cs, note) =>
       cs.map(c =>
-        shown"| ${e.calibreId} | ${e.citekeys.mkString(", ")} | ${c.field.name} | ${cell(c.from.value)} | ${cell(c.to.value)} | $note |"
+        shown"| ${e.calibreId} | ${e.citekeys.mkString(", ")} | ${c.field.name} | ${cell(c.from)} | ${cell(c.to)} | $note |"
       )
     }
     val left = entries.collect { e =>
@@ -579,7 +587,7 @@ object Calibre:
           shown"- ${e.calibreId}: linked from ${e.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
         case UpdateOutcome.Missing =>
           shown"- ${e.calibreId}: no such Calibre entry (${e.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
-        case UpdateOutcome.Refused(why) => s"- ${e.calibreId} (${e.citekeys.mkString(", ")}): ${why.sentence}"
+        case UpdateOutcome.Refused(why) => shown"- ${e.calibreId} (${e.citekeys.mkString(", ")}): ${why.sentence}"
     }
     val upToDate = entries.count(_.outcome == UpdateOutcome.UpToDate)
     val head =
@@ -609,7 +617,7 @@ object Calibre:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def setCmd(
-      calibredb: String,
+      calibredb: CalibreCliConfig.Calibredb,
       libArgs: List[String],
       id: Book.Id,
       fields: List[CollectionFieldValue]
@@ -640,7 +648,7 @@ object Calibre:
             Problem.Unclassified(Legacy.Text("refusing a blank or Unknown author"))
           )
       )
-    yield List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
+    yield Shell.command(calibredb, "set_metadata") ++ libArgs ++ Shell.command(id) ++
       fields.flatMap(f => List("--field", shown"${f.name}:${f.value}"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -666,22 +674,21 @@ object Calibre:
         .map(e => Problem.Unclassified(Legacy.Text(s"calibredb returned unparseable JSON: $e")))
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.cursor
-          c.downField("id").as[Int].toOption.map { id =>
+          c.downField("id").as[Book.Id].toOption.map { id =>
             Book(
-              id = Book.Id(id),
-              title = Book.Title(c.downField("title").as[String].getOrElse("")),
+              id = id,
+              title = c.downField("title").as[Book.Title].getOrElse(Book.Title("")),
               authors = splitAuthors(c.downField("authors").as[String].getOrElse("")),
-              pubdate = c.downField("pubdate").as[String].toOption.map(Book.Pubdate(_)),
-              publisher = c.downField("publisher").as[String].toOption.filter(_.nonEmpty).map(Book.Publisher(_)),
-              tags = c.downField("tags").as[List[String]].getOrElse(Nil).map(Book.Tags(_)),
-              comments = c.downField("comments").as[String].toOption.filter(_.nonEmpty).map(Book.Comments(_)),
+              pubdate = c.downField("pubdate").as[Book.Pubdate].toOption,
+              publisher = c.downField("publisher").as[Book.Publisher].toOption.filter(_.nonEmpty),
+              tags = c.downField("tags").as[List[Book.Tags]].getOrElse(Nil),
+              comments = c.downField("comments").as[Book.Comments].toOption.filter(_.nonEmpty),
               identifiers = c
                 .downField("identifiers")
-                .as[Map[String, String]]
-                .getOrElse(Map.empty)
-                .map((k, v) => Book.IdentifiersKey(k) -> Book.IdentifiersValue(v)),
-              formats = c.downField("formats").as[List[String]].getOrElse(Nil).map(Book.Formats(_)),
-              cover = c.downField("cover").as[String].toOption.map(_.trim).filter(_.nonEmpty).map(Book.Cover(_))
+                .as[Map[Book.IdentifiersKey, Book.IdentifiersValue]]
+                .getOrElse(Map.empty),
+              formats = c.downField("formats").as[List[Book.Formats]].getOrElse(Nil),
+              cover = c.downField("cover").as[Book.Cover].toOption.map(_.trim).filter(_.nonEmpty)
             )
           }
         })
@@ -701,10 +708,11 @@ object Calibre:
         .map(e => Problem.Unclassified(Legacy.Text(s"sqlite3 returned unparseable JSON: $e")))
         .map(_.asArray.toList.flatten.flatMap { j =>
           val c = j.cursor
+          val root = Path.of(libraryDir.value)
           def s(f: String) = c.downField(f).as[String].toOption.map(_.trim).filter(_.nonEmpty)
-          c.downField("id").as[Int].toOption.map { id =>
+          c.downField("id").as[Book.Id].toOption.map { id =>
             Book(
-              id = Book.Id(id),
+              id = id,
               title = Book.Title(s("title").getOrElse("")),
               authors = splitAuthors(s("authors").getOrElse("")),
               pubdate = s("pubdate").map(Book.Pubdate(_)),
@@ -723,8 +731,8 @@ object Calibre:
                 .flatMap(_.split("\\|"))
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .map(f => Book.Formats(Path.of(libraryDir.value, f).toString)),
-              cover = s("cover").map(f => Book.Cover(Path.of(libraryDir.value, f).toString))
+                .map(f => Book.Formats(root.resolve(f).toString)),
+              cover = s("cover").map(f => Book.Cover(root.resolve(f).toString))
             )
           }
         })
@@ -811,7 +819,8 @@ object Calibre:
 
   object GapOriginal:
     type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    object Label extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   /** One source the server lists as not in Calibre, with where its original is and whether it COUNTS as a gap — the
     * `calibre gaps --quiet` reminder and `calibre sync` count only these.
@@ -868,7 +877,7 @@ object Calibre:
         val rows = counted.map { e =>
           val g = e.gap
           s"| `${g.citekey}` | ${esc(g.title.value).take(70)} | ${g.year.fold("—")(_.toString)} " +
-            s"| ${esc(g.authors.take(2).mkString(", "))} | ${esc(g.provenance.fold("—")(_.value))} | ${e.original.label} |"
+            shown"| ${esc(g.authors.take(2).mkString(", "))} | ${esc(g.provenance.fold("—")(_.value))} | ${e.original.label} |"
         }
         (List(
           s"### ${counted.size} source(s) not in Calibre",
@@ -905,7 +914,7 @@ object Calibre:
       val lines = books.map { b =>
         val who = b.authors.take(3).mkString(", ") + (if b.authors.sizeIs > 3 then " et al." else "")
         val year = b.year.fold("")(y => s" ($y)")
-        val files = if b.formats.isEmpty then "  - no file" else b.formats.map(f => s"  - `$f`").mkString("\n")
+        val files = if b.formats.isEmpty then "  - no file" else b.formats.map(f => shown"  - `$f`").mkString("\n")
         shown"- **${b.id}** · ${b.title}$year — ${if who.isEmpty then "no author" else who}\n$files"
       }
       val shown = if total.value > books.size then s"${books.size} of $total" else books.size.toString
@@ -1026,7 +1035,7 @@ object Calibre:
                     s"${b.title} — ${b.authors.mkString("; ")}${year(b).fold("")(y => s" ($y)")}"
                   )
                 val todo =
-                  if f.fixable then s"`histmersion calibre update ${f.record.citekey}`"
+                  if f.fixable then shown"`histmersion calibre update ${f.record.citekey}`"
                   else "re-push, or clear the source's calibre id"
                 shown"| ${f.calibreId} | ${f.citekeys.mkString(", ")} | ${f.issues.map(_.label).mkString("; ")} | ${cell(corpus)} | ${cell(cal)} | $todo |"
               }
@@ -1093,16 +1102,28 @@ object Calibre:
     type Authors = AuthorName
     val Authors: AuthorName.type = AuthorName
     type Pubdate = Pubdate.T
-    object Pubdate extends Newtype[String, Pure]
+    object Pubdate extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export CollectionEntry.{Publisher, Tags}
     type Comments = Comments.T
-    object Comments extends Newtype[String, Pure]
+    object Comments extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
+      extension (comments: Comments) def nonEmpty: Boolean = comments.value.nonEmpty
     export CollectionEntry.IdentifiersKey
     type IdentifiersValue = IdentifiersValue.T
-    object IdentifiersValue extends Newtype[String, Pure]
+    object IdentifiersValue extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
+      extension (value: IdentifiersValue)
+        def trim: IdentifiersValue = IdentifiersValue(value.value.trim)
+        def nonEmpty: Boolean = value.value.nonEmpty
+        def sameIgnoringCase(other: IdentifiersValue): Boolean = value.value.equalsIgnoreCase(other.value)
     export CollectionEntry.Formats
     type Cover = Cover.T
-    object Cover extends Newtype[String, Pure]
+    object Cover extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
+      extension (cover: Cover)
+        def trim: Cover = Cover(cover.value.trim)
+        def nonEmpty: Boolean = cover.value.nonEmpty
 
   /** One field `calibre update` changes: what Calibre has now and what it writes. */
   final case class Change(field: Field, from: Change.From, to: Change.To)
