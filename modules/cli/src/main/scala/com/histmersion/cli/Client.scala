@@ -284,14 +284,12 @@ final class Client(
     call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def putSource(
       ck: Citekey,
       in: Source.Put,
       strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Source.WithFindings] =
     call(Api.putSource)((ck, in, Api.Overwrite(strict.strictly)))
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchSource(
       ck: Citekey,
       p: Source.Patch,
@@ -419,14 +417,12 @@ final class Client(
   def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
   def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] =
     call(Api.getArticle)((slug, Article.FullText(false)))
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def putArticle(
       slug: ReviewGoal.Slug,
       in: Article.Put,
       strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Article.View] =
     call(Api.putArticle)((slug, in, Api.Overwrite(strict.strictly)))
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchArticle(
       slug: ReviewGoal.Slug,
       p: Article.Patch,

@@ -80,7 +80,6 @@ object ResultsList:
   private val moreLabel = Var(Option.empty[UiLabels.Text])
   private val moreLoading = Var(false)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val element: HtmlElement =
     div(
       cls := "results-container",
@@ -119,7 +118,6 @@ object ResultsList:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def busy(on: Busy): Unit =
     isBusy.set(on.busy)
     if on.busy then isError.set(false)
@@ -405,7 +403,6 @@ object ResultsList:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openSource(ck: Preview.Target.Source.Citekey, inPanel: InPanel): Unit =
     if inPanel.inPanel then ResultsPanel.show(Preview.Target.Source(ck))
     else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))

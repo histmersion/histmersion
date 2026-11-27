@@ -185,7 +185,6 @@ object ApprovalsView:
 
   /** What the confirmation of a bulk decision asks. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def confirmText(d: Decision, as: List[ApprovalInfo]): String =
     val kinds = as
       .groupMapReduce(_.kind)(_ => 1)(_ + _)
@@ -204,7 +203,6 @@ object ApprovalsView:
 
   /** The self-check line of a draft. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
     else

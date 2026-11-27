@@ -654,7 +654,6 @@ object CalibreCmd:
     * never a gap.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[cli] def listGaps(using
       console: Console

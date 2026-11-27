@@ -17,7 +17,6 @@ object NewTabLink:
     given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(href0: Href, what: Label): HtmlElement =
     a(
       cls := "btn btn--bare btn--icon btn--sm new-tab",

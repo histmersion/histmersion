@@ -71,7 +71,6 @@ object MapLibreStyles:
       .asInstanceOf[js.Object]
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def style(b: BaseMapSpec, origin: Origin): Future[js.Any] = b match
     case BaseMapSpec.Blank     => Future.successful(blank())
     case r: BaseMapSpec.Raster => Future.successful(raster(r))

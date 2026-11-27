@@ -37,7 +37,6 @@ object ResultsPanel:
     ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resizeTo(w: ResultsWidth.Width, keep: KeepWidth): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
     if keep.keeps then ResultsWidth.keep(width.now())

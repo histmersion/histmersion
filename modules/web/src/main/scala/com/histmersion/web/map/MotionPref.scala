@@ -40,7 +40,6 @@ object MotionPref:
   private val state: Var[(MapMotion, SystemReduced)] = Var((MapMotion.System, SystemReduced.Full))
 
   /** Read the system's setting and follow its changes (once; also done by the first read). */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def install(): Unit =
     if !installed then
       installed = true
@@ -70,19 +69,16 @@ object MotionPref:
   def choice: MapMotion = choiceNow
 
   /** Does the system ask for reduced motion? */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def systemReduced: Boolean = { install(); systemNow.reduced }
 
   /** Should the map animate now? */
   def animate(): Boolean = { install(); MapMotion.animates(choice, systemNow) }
 
   /** Whether the map animates, as it changes. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val animates: Signal[Animates] =
     state.signal.map((m, r) => (if MapMotion.animates(m, r) then Animates.Animates else Animates.Still))
 
   /** Whether the menu says the map is still because the system asks for it. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val heldBySystem: Signal[HeldBySystem] =
     state.signal.map((m, r) => (if MapMotion.heldBySystem(m, r) then HeldBySystem.Held else HeldBySystem.Free))
 

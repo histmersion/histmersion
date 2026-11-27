@@ -100,7 +100,6 @@ object MapKey:
 
   /** The key's markup: the shapes, then the icons of the layers on. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def html(events: Events, sites: Sites, undated: Undated = Undated.Hidden): Html =
     val body =
       shapesHtml ++ (if events.shown then eventsHtml else Html.empty) ++ (if sites.shown then sitesHtml else Html.empty)

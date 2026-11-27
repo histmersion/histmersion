@@ -254,7 +254,6 @@ object Cli:
         Error(Problem.Unclassified(Legacy.Text(WorkingDir.message))).exitCode.exit()
 
   /** The exit code is decided here, at the edge. */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def runCommand(args: Array[String])(using console: Console): Unit =
     CommandLine.parse(args.toSeq) match
       case CommandLine.Outcome.Help(text)                   => out.println(text); sys.exit(0)
@@ -331,7 +330,6 @@ object Cli:
   object Error:
     def answered(problems: Problems): Error = Error(problems, ExitCode.Origin.Server)
 
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def traceLine(trace: LogEvent.Trace): String =
       shown"trace $trace — what happened: histmersion log --trace $trace"
 

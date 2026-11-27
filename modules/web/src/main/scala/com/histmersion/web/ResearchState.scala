@@ -56,7 +56,6 @@ final class ResearchState:
         case _               => ()
       }
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def history(id: Queue.QueueItem.Id): HtmlElement =
     val r = historyOf(id)
     div(
@@ -253,7 +252,6 @@ object ResearchState:
 
   def pane: HtmlElement = ResearchState().element
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(i: OpenItem): String = i match
     case d: OpenItem.Decision    => shown"decision-${d.approval.id}"
     case a: OpenItem.Acquisition => shown"acquisition-${a.item}"
@@ -268,5 +266,4 @@ object ResearchState:
   def handedTo(t: OpenItem.Task): Creation.Actor =
     if t.actor == Who.Owner then Creation.Agents else Creation.Person
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def firstLine(text: Queue.QueueItem.Text): String = shown"$text".linesIterator.nextOption().getOrElse("")

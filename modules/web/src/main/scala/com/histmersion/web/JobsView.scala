@@ -39,7 +39,6 @@ object JobsView:
     val MaxMs: Int = web.Poll.MaxMs
 
     /** The delay before the next poll, or `None` to stop: no job left to wait for. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def next(
         previous: Option[web.Poll.Revision],
         jobs: List[JobInfo],

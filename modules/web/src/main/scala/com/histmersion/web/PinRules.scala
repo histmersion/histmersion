@@ -34,7 +34,6 @@ object PinRules:
     * chosen; the click that unchooses it closes the card too.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pinAfterClick(chosenNow: ChosenNow): Boolean = chosenNow.chosenNow
 
   /** Pure: a point in the map container (`x`, `y`, from its top-left) as a viewport point, when it is inside the

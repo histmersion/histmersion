@@ -5,13 +5,11 @@ import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.TheMap
 import com.histmersion.api.media.DataCredits
 import com.histmersion.api.Html
-import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › Credits: what the base map shown now credits, then every dataset Histmersion draws or reads with its
   * licence and the credit it asks for ([[DataCredits]]), and the software's licences.
   */
 object CreditsView:
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tool-pane credits-pane",

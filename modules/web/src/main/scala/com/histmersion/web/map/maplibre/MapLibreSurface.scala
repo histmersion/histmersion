@@ -419,7 +419,6 @@ final class MapLibreSurface(
       Option(e.querySelector(".maplibregl-popup-content")).collect { case h: dom.HTMLElement => h }.getOrElse(e)
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def setLocked(locked: MapSurface.Locked): Unit =
     List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
       if locked.locked then h.disable() else h.enable()

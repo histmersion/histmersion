@@ -697,7 +697,6 @@ object Preview:
           case _ => false
         if !inside then unpin(restoreFocus = RestoreFocus.Leave)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pinUnder(el: dom.Element, keyboard: PinUnderKeyboard): Unit =
     targetOfElement(el).foreach { t =>
       if isPinned(t) && !keyboard.keyboard then unpin(restoreFocus = RestoreFocus.Leave)
@@ -1111,7 +1110,6 @@ object Preview:
 
   /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unpin(restoreFocus: RestoreFocus = RestoreFocus.Restore): Unit =
     pinned.foreach { p =>
       pinned = None

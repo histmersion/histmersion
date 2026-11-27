@@ -186,7 +186,6 @@ object MapView:
     * the tiles and the boundaries of the whole span) — this alone only lets go of playback's states.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setPlaybackMode(on: Playback): Unit =
     val was = playbackMode
     playbackMode = on
@@ -674,7 +673,6 @@ object MapView:
     * share (so it stays on the map); `render` keeps them current while they are out.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showSources(on: ShowSources): Unit =
     if on.shown then findingsLayer.attach() else findingsLayer.detach()
 
@@ -836,7 +834,6 @@ object MapView:
     * playhead (the tiled ones by whole time buckets, [[tileSpanOf]]).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: Playback): Boolean =
     !playback.playing && (layer match
       case MapLayer.Boundaries => !pick.snapshot

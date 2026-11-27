@@ -26,7 +26,6 @@ object ItemActions:
   def bookmark(ref: ItemRef): Unit = writing(MyItems.toggle(ref))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bookmarkButton(ref: ItemRef, compact: BookmarkButtonCompact = BookmarkButtonCompact.Full): HtmlElement =
     val on = MyItems.bookmarked(ref)
     button(
