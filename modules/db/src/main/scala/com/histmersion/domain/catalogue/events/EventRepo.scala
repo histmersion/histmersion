@@ -33,7 +33,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.database.given
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
@@ -276,11 +276,11 @@ private[events] object EventRepo:
   /** Create or replace one event. On an event an import created, the fields that differ from its catalogue's are
     * recorded as corrections ([[recordCorrections]]) — they survive a re-import.
     */
-  def put(id: BEventRow.Id, in: EventPut)(using DbCon)(using creator: Creator.New): Unit =
+  def put(id: BEventRow.Id, in: EventPut)(using DbCon)(using creator: Creator.New, at: CreatedAt): Unit =
     val geom = in.geometry.map(_.value.trim).filter(_.nonEmpty)
     val scale = in.scale.flatMap(v => EventScale.parse(v).flatten)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after,
-                              historicity, geom, place_id, parent_id, description, citekey, scale, creator)
+                              historicity, geom, place_id, parent_id, description, citekey, scale, creator, created_at)
           VALUES ($id, ${in.label}, ${in.kind},
                   ${in.timeSpan.notBefore}, ${in.timeSpan.beginBy},
                   ${in.timeSpan.endFrom}, ${in.timeSpan.notAfter},
@@ -289,7 +289,7 @@ private[events] object EventRepo:
                        ELSE ST_SetSRID(ST_GeomFromGeoJSON($geom::text), 4326) END,
                   ${in.placeId}, ${in.parentId}, ${in.description}, ${in.citekey}, $scale, ${StoredCreator.column(
         creator
-      )}::jsonb)
+      )}::jsonb, ${at.iso}::timestamptz)
           ON CONFLICT (id) DO UPDATE SET
             label = EXCLUDED.label, kind = EXCLUDED.kind,
             not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,

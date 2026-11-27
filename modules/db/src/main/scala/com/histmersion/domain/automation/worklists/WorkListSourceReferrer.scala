@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
@@ -29,7 +29,8 @@ final class WorkListSourceReferrer extends SourceReferrer:
     )
 
   override def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using
-      DbCon
+      DbCon,
+      CreatedAt
   ): Option[SourceReferrers.Entry] =
     Some(
       SourceReferrers.Entry(
@@ -37,7 +38,8 @@ final class WorkListSourceReferrer extends SourceReferrer:
           .insert(
             Queue.Kind.Log,
             Queue.QueueAdd(Queue.QueueItem.Text(line.value), topic = Some(Queue.QueueItem.Topic(day.value))),
-            Creator.New.Manual(Creator.Surface.Internal)
+            Creator.New.Manual(Creator.Surface.Internal),
+            summon[CreatedAt]
           )
           .id
           .value

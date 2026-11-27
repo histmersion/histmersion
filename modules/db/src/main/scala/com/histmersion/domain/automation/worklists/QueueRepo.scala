@@ -3,7 +3,7 @@ package domain.automation.worklists
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.*
-import com.histmersion.domain.{Creator, Scheduling}
+import com.histmersion.domain.{CreatedAt, Creator, Scheduling}
 
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.{Jsonb, StoredCreator}
@@ -124,7 +124,7 @@ private[worklists] object QueueRepo:
   /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry keeps the date from
     * its heading, which is what orders the exported file.
     */
-  def insert(kind: Kind, in: QueueAdd, creator: Creator.New)(using DbCon): QueueItem =
+  def insert(kind: Kind, in: QueueAdd, creator: Creator.New, at: CreatedAt)(using DbCon): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
     val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)
     val job = in.job.map(_.value.trim).filter(_.nonEmpty)
@@ -133,7 +133,7 @@ private[worklists] object QueueRepo:
       sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at, goal_slug, created_job,
                                      creator, actor)
                    VALUES (${kind.label}, ${in.text}, ${in.topic}, $status, ${in.reason},
-                           coalesce(${in.createdAt}::timestamptz, now()),
+                           coalesce(${in.createdAt}::timestamptz, ${at.iso}::timestamptz),
                            CASE WHEN $status = $Done THEN now() END, $goal, $job,
                            $stored::jsonb, ${StoredCreator.actor(creator)})
                    RETURNING id""".query[Int].run().head

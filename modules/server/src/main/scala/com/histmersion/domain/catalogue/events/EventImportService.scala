@@ -19,7 +19,8 @@ import com.histmersion.api.catalogue.EventCatalogueRef
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
+import java.time.Clock
 
 /** What an import of an event catalogue reads and writes: the stored events as its merge sees them, the placed records
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the
@@ -49,12 +50,14 @@ trait EventImportService:
   def clearParts(provider: CatalogRecord.Provider)(using WritePermit): Unit
 
 object EventImportService:
-  def apply(db: Transactor): EventImportService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): EventImportService = Implementation(db, clock)
 
-  final private class Implementation(db: Transactor) extends EventImportService:
+  final private class Implementation(db: Transactor, clock: Clock) extends EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
     def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved =
-      db.write(EventImportRepo.save(placed))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        EventImportRepo.save(placed)
     def records(
         provider: Option[CatalogRecord.Provider]
     ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =

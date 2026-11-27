@@ -121,7 +121,7 @@ final class AgentsControllers(
 
   /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */
   val goals: GoalService =
-    GoalService(Transactor(ds))
+    GoalService(Transactor(ds), site.clock)
 
   /** The agent runs and their steps, as the engine's features read them. */
   val runs: RunService = RunService(Transactor(ds))

@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
@@ -136,7 +136,7 @@ trait GoalService:
 
 object GoalService:
 
-  def apply(db: Transactor): GoalService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): GoalService = Implementation(db, clock)
 
   extension (goals: GoalService)
     /** [[GoalService.link]] by the server itself (a sweep, a plan): a goal deleted meanwhile is said in the log, the
@@ -150,14 +150,16 @@ object GoalService:
     )(using WritePermit)(using Creator.New): Unit =
       if !goals.link(goal, kind, ref, note) then scribe.warn(s"goal $goal is gone: a link to it was not written")
 
-  final private class Implementation(db: Transactor) extends GoalService:
+  final private class Implementation(db: Transactor, clock: Clock) extends GoalService:
     def get(slug: domain.automation.Goal.Slug): Option[Goal] = db.read(GoalRepo.get(slug))
     def all(): List[Goal] = db.read(GoalRepo.all())
     def children(slug: domain.automation.Goal.Slug): List[Goal] = db.read(GoalRepo.children(slug))
     def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Unit] =
-      db.write(GoalRepo.put(slug, in))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        GoalRepo.put(slug, in)
     def page(
         status: Option[domain.automation.Goal.Status.Wire],
         limit: PageSize,
@@ -241,6 +243,7 @@ object GoalService:
         DbCon,
         WritePermit
     )(using Creator.New): Either[Api.Error, Unit] =
+      given CreatedAt = CreatedAt.now(clock)
       GoalRepo.createIn(slug, in)
 
   /** The goals in memory; `clock` stands in for the database's `now()`, `targets` for the other domains' rows a link

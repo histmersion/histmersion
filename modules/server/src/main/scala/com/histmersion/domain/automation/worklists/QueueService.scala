@@ -5,7 +5,7 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.api.automation.Goal.Plans.GoalLink
 import com.histmersion.util.database.Transactor
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
@@ -41,9 +41,9 @@ trait QueueService:
   ): ImportCounts
 
 object QueueService:
-  def apply(db: Transactor): QueueService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): QueueService = Implementation(db, clock)
 
-  final private class Implementation(db: Transactor) extends QueueService:
+  final private class Implementation(db: Transactor, clock: Clock) extends QueueService:
     def list(list: Kind, scope: QueueScope): List[QueueItem] = db
       .read(scope match
         case QueueScope.Open                            => QueueRepo.list(list, all = false)
@@ -63,7 +63,7 @@ object QueueService:
       db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
     def naming(list: Kind, doi: Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd, creator: Creator.New)(using WritePermit): QueueItem =
-      db.write(QueueRepo.insert(list, item, creator))
+      db.write(QueueRepo.insert(list, item, creator, CreatedAt.now(clock)))
 
     def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] = db.write:
       val rid = QueueRepo.QueueItemId(id.value)
@@ -83,8 +83,9 @@ object QueueService:
         WritePermit
     ): ImportCounts = db.write:
       val removed: Int = if mode == ImportMode.Replace then QueueRepo.deleteList(list).value else 0
+      val at = CreatedAt.now(clock)
       items.foreach { i =>
-        val _ = QueueRepo.insert(list, i, creator)
+        val _ = QueueRepo.insert(list, i, creator, at)
       }
       ImportCounts(ImportCounts.Written(items.size), ImportCounts.Removed(removed))
 

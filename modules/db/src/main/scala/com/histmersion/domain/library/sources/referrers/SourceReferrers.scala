@@ -3,13 +3,13 @@ package domain.library.sources.referrers
 
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** Every domain that names sources, in the order their rewrites are reported (a rename's columns follow it). */
 final class SourceReferrers(val all: List[SourceReferrer]):
 
   /** Every referrer's rewrite of a rename, in order. */
-  def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences =
+  def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val each = all.map(_.renamed(rename))
     RenamedReferences(each.flatMap(_.columns), each.flatMap(_.texts))
 
@@ -27,7 +27,8 @@ final class SourceReferrers(val all: List[SourceReferrer]):
 
   /** The first entry a referrer kept of the deletion. */
   def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using
-      DbCon
+      DbCon,
+      CreatedAt
   ): Option[SourceReferrers.Entry] =
     all.iterator.map(_.recorded(source, line, day)).collectFirst { case Some(id) => id }
 

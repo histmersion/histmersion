@@ -251,7 +251,7 @@ private[events] object EventBundleRepo:
       val names = e.names.getOrElse(Nil)
       sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,
               historicity, geom, place_id, description, citekey, updated_at, scale,
-              catalogue, names, wikidata, central, plus_minus, dating_method, creator)
+              catalogue, names, wikidata, central, plus_minus, dating_method, creator, created_at)
             VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
               ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
               ${e.placeId.map(p =>
@@ -259,7 +259,7 @@ private[events] object EventBundleRepo:
         )}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
               ${e.scale.flatMap(s => EventScale.parse(EventSummary.Scale(s.value)).flatten)},
               ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod},
-              ${StoredCreator.carried(e.creator)}::jsonb)
+              ${StoredCreator.carried(e.creator)}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
               end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,

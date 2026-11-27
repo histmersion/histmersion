@@ -113,7 +113,7 @@ final class Deps(
 
   /** The work lists' kernel (ACQUIRE, TASKS, LOG over `queue_items`). */
   val queues: QueueService =
-    QueueService(transactor)
+    QueueService(transactor, clock)
 
   /** The work lists' operations as REST, MCP and the CLI reach them. */
   val workLists: WorkListControllers =

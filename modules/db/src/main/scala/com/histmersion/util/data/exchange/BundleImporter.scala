@@ -12,7 +12,7 @@ import com.histmersion.api.exchange.{Bundle, MergeApplyResult, MergeIssue, Merge
 import com.histmersion.api.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.{Jsonb, Transactor, WritePermit}
-import com.histmersion.domain.{MergePlanner, MergeSettings}
+import com.histmersion.domain.{CreatedAt, MergePlanner, MergeSettings}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.BundleEntities.BlobUse
 import com.histmersion.util.data.exchange.BundlePlan.Decision
@@ -20,6 +20,7 @@ import com.histmersion.util.storage.{ByteSource, ContentStore}
 
 import com.augustnagro.magnum.*
 import java.io.InputStream
+import java.time.Clock
 import java.util.UUID
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
@@ -53,7 +54,8 @@ object BundleImporter:
       resolutions: MergeResolutions,
       merge: MergeSettings,
       kinds: CarriedKinds,
-      rules: MergeRuleSet
+      rules: MergeRuleSet,
+      clock: Clock
   )(using WritePermit): Either[Problems, Bundle.ImportResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -61,9 +63,9 @@ object BundleImporter:
       case Some(m) =>
         try
           Right(
-            Transactor(ds).write(
+            Transactor(ds).write:
+              given CreatedAt = CreatedAt.now(clock)
               importIn(bundle, bundleSha256, m, loaded, opts, files, resolutions, merge, kinds, rules)
-            )
           )
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
@@ -124,7 +126,7 @@ object BundleImporter:
       merge: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  )(using DbCon): Bundle.ImportResult =
+  )(using DbCon, CreatedAt): Bundle.ImportResult =
     MergeRepo.lockImports()
     val (input, planned) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
     val plan = planned.plan
@@ -188,7 +190,7 @@ object BundleImporter:
       opts: ImportOptions,
       files: ContentStore,
       kinds: CarriedKinds
-  )(using DbCon): Unit =
+  )(using DbCon)(using at: CreatedAt): Unit =
     val es = planned.localized
     val decided = planned.rows
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
@@ -205,7 +207,8 @@ object BundleImporter:
         planned.skipAliases.map(c => Citekey.assume(c.value)),
         planned.apply,
         opts,
-        kinds
+        kinds,
+        at
       )
     kinds.steps(ImportStage.Rows).foreach(_.write(w))
     // ── pass 2: the blobs ──
@@ -297,7 +300,8 @@ object BundleImporter:
       backup: () => Either[Problems, String],
       kinds: CarriedKinds,
       rules: MergeRuleSet,
-      followUps: MergeFollowUps
+      followUps: MergeFollowUps,
+      clock: Clock
   )(using WritePermit): Either[Problems, MergeApplyResult] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
@@ -305,7 +309,8 @@ object BundleImporter:
       case Some(m) =>
         try
           Right(
-            Transactor(ds).write(
+            Transactor(ds).write:
+              given CreatedAt = CreatedAt.now(clock)
               applyIn(
                 bundle,
                 bundleSha256,
@@ -321,7 +326,6 @@ object BundleImporter:
                 rules,
                 followUps
               )
-            )
           )
         catch
           case a: ImportAbort =>
@@ -349,7 +353,7 @@ object BundleImporter:
       kinds: CarriedKinds,
       rules: MergeRuleSet,
       followUps: MergeFollowUps
-  )(using DbCon): MergeApplyResult =
+  )(using DbCon, CreatedAt): MergeApplyResult =
     MergeRepo.lockImports()
     val (input, planned) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
     val plan = planned.plan

@@ -10,7 +10,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 
 /** The attestations (`attestations`): which passage of a source attests a finding, an event, a dating, a place or an
@@ -58,15 +58,16 @@ private[evidence] object AttestationRepo:
   def get(id: AttestationId)(using DbCon): Option[Attestation] =
     sql"""SELECT $cols FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
-  def create(in: Attestation.Put)(using DbCon)(using creator: Creator.New): Attestation =
+  def create(in: Attestation.Put)(using DbCon)(using creator: Creator.New, at: CreatedAt): Attestation =
     val id = sql"""INSERT INTO attestations (citekey, target_type, target_id,
                       quote, prefix, suffix, char_start, char_end, chunk_ord,
-                      page, canvas, xywh, cts_urn, note, creator)
+                      page, canvas, xywh, cts_urn, note, creator, created_at)
                    VALUES (${in.citekey}, ${in.targetType}, ${in.targetId},
                            ${in.quote}, ${in.prefix}, ${in.suffix},
                            ${in.charStart}, ${in.charEnd}, ${in.chunkOrd},
                            ${in.page}, ${in.canvas}, ${in.xywh},
-                           ${in.ctsUrn}, ${in.note}, ${StoredCreator.column(creator)}::jsonb)
+                           ${in.ctsUrn}, ${in.note}, ${StoredCreator.column(creator)}::jsonb,
+                           ${at.iso}::timestamptz)
                    RETURNING id""".query[Long].run().head
     get(AttestationId(id)).get
 

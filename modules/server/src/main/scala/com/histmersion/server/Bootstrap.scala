@@ -65,7 +65,7 @@ final class Bootstrap(
   // ── periods ──────────────────────────────────────────────────────────────────────────────────
 
   /** The named periods, and how the seed, a sent dataset and the live dump come in. */
-  val periods: PeriodService = PeriodService(deps.transactor)
+  val periods: PeriodService = PeriodService(deps.transactor, deps.clock)
   val periodImports: PeriodImports =
     new PeriodImports(
       periods,
@@ -91,7 +91,7 @@ final class Bootstrap(
   /** The gazetteer's records, and how its seed, its pinned extracts, its drop folder, the plugins' sources and the land
     * come in.
     */
-  private val places: PlaceService = PlaceService(deps.transactor)
+  private val places: PlaceService = PlaceService(deps.transactor, deps.clock)
   private val gazetteerImports: GazetteerImports = CatalogueWiring.gazetteer(deps, places, gazetteerDownload, download)
 
   // ── init ─────────────────────────────────────────────────────────────────────────────────────

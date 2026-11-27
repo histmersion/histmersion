@@ -73,7 +73,8 @@ object BundleImport:
       val merged: MergePlanner.Apply,
       /** The import's options: the chunk size, the point tolerance, the referrers a rename runs. */
       val opts: Options,
-      kinds: CarriedKinds
+      kinds: CarriedKinds,
+      val at: CreatedAt
   )(using
       /** The import's transaction, which every step writes in. */
       val transaction: DbCon

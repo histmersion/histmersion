@@ -80,10 +80,11 @@ private[periods] object PeriodBundleRepo:
     val periods = w.es.periods.filter(p => w.writes(p.uid))
     periods.foreach { p =>
       val range = rangeOrAll(p.period)
-      sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at, creator)
+      sql"""INSERT INTO periods (uid, origin, id, label, authority, period, region, dataset, updated_at, creator,
+                                 created_at)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
               $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz,
-              ${StoredCreator.carried(p.creator)}::jsonb)
+              ${StoredCreator.carried(p.creator)}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
               dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

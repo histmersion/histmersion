@@ -14,7 +14,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
+import java.time.Clock
 
 /** What attests a data point: an attestation names a source, a target (a finding, an event, an event's dating, a place,
   * an edge) and where in the source it is said (quote, offsets, page, IIIF region, CTS URN).
@@ -41,12 +42,12 @@ trait AttestationService:
 
 object AttestationService:
 
-  def apply(db: Transactor): AttestationService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): AttestationService = Implementation(db, clock)
 
   private def missing(id: Attestation.Id) =
     Api.Error(Problem.Unclassified(Legacy.Text(s"No attestation $id")), Some(Api.Error.Code(Write.CodeNotFound)))
 
-  final private class Implementation(db: Transactor) extends AttestationService:
+  final private class Implementation(db: Transactor, clock: Clock) extends AttestationService:
     def list(
         citekey: Option[Citekey],
         targetType: Option[Attestation.TargetType],
@@ -65,7 +66,9 @@ object AttestationService:
     def get(id: Attestation.Id): Option[Attestation] =
       db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
     def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation =
-      db.write(AttestationRepo.create(in))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        AttestationRepo.create(in)
     def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation] =
       db.write:
         if !AttestationRepo.exists(AttestationRepo.AttestationId(id.value)) then Left(missing(id))

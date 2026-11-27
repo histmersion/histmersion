@@ -6,7 +6,7 @@ import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Queue
-import com.histmersion.domain.{Creator, MergePlanner}
+import com.histmersion.domain.{CreatedAt, Creator, MergePlanner}
 import com.histmersion.util.data.exchange.MergeFollowUps
 
 import com.augustnagro.magnum.DbCon
@@ -23,7 +23,8 @@ object WorkListMergeFollowUps extends MergeFollowUps:
       ap: MergePlanner.Apply,
       counts: List[Bundle.KindCounts],
       dump: MergeFollowUps.DumpRecordRef
-  )(using DbCon): (List[Bundle.Article.Slug], Queue.QueueItem.Id) =
+  )(using DbCon, CreatedAt): (List[Bundle.Article.Slug], Queue.QueueItem.Id) =
+    val at = summon[CreatedAt]
     val short = mergeId.toString.take(8)
     val reviews = ap.reviews.map { slug =>
       QueueRepo.insert(
@@ -33,7 +34,8 @@ object WorkListMergeFollowUps extends MergeFollowUps:
           topic = Some(Queue.QueueItem.Topic("merge")),
           reason = Some(Queue.Rationale(s"`merge apply` changed the article; a merged text is not reviewed"))
         ),
-        ByMerge
+        ByMerge,
+        at
       )
       slug
     }
@@ -48,7 +50,8 @@ object WorkListMergeFollowUps extends MergeFollowUps:
         ),
         topic = Some(Queue.QueueItem.Topic("merge"))
       ),
-      ByMerge
+      ByMerge,
+      at
     )
     (reviews, log.id)
 

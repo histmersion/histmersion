@@ -37,7 +37,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.
@@ -154,11 +154,15 @@ object SourceService:
   type Heading = Heading.T
   object Heading extends Newtype[String, Pure]
 
-  def apply(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings): SourceService =
-    Implementation(db, referrers, settings)
+  def apply(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings, clock: Clock): SourceService =
+    Implementation(db, referrers, settings, clock)
 
-  final private class Implementation(db: Transactor, referrers: SourceReferrers, settings: () => SourceSettings)
-      extends SourceService:
+  final private class Implementation(
+      db: Transactor,
+      referrers: SourceReferrers,
+      settings: () => SourceSettings,
+      clock: Clock
+  ) extends SourceService:
     def current(id: Citekey): Option[Citekey] = db.read(SourceRepo.canonical(id))
     def aliasOf(citekey: Citekey): Option[Citekey] = db.read(SourceRepo.aliasOf(citekey))
     def aliasesOf(citekey: Citekey): Set[Citekey] = db.read(SourceRepo.aliasesOf(citekey))
@@ -181,13 +185,17 @@ object SourceService:
 
     def put(source: Source, caller: Caller)(using WritePermit)(using Creator.New): Source.UpdatedAt =
       val s = settings()
-      db.write(SourceRepo.putIn(source, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        SourceRepo.putIn(source, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s))
 
     def patch(requested: Citekey, patch: Source.Patch, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Source.UpdatedAt] =
       val s = settings()
-      db.write(SourceRepo.patchIn(requested, patch, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s)))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        SourceRepo.patchIn(requested, patch, Chunker.ChunkMaxChars(s.chunkChars.value), toleranceKm(s))
 
     private def toleranceKm(s: SourceSettings): FindingPlacement.Implementation.ToleranceKm =
       FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
@@ -195,7 +203,9 @@ object SourceService:
     def rename(from: Citekey, to: Citekey, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Rename.Counts] =
-      db.write(SourceRepo.rename(from, Citekeys.RenameToNewRaw(to.value), referrers))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        SourceRepo.rename(from, Citekeys.RenameToNewRaw(to.value), referrers)
 
     def deletion(citekey: Citekey): Either[Api.Error, SourceDeletePlan] =
       db.read(SourceDeleteRepo.planIn(citekey, referrers))
@@ -206,7 +216,9 @@ object SourceService:
         files: SourceDeletePlan => List[Source.Deletion.Files],
         caller: Caller
     )(using WritePermit)(using Creator.New): Either[Api.Error, SourceDeletePlan] =
-      db.write(SourceDeleteRepo.applyIn(citekey, day, files, referrers))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        SourceDeleteRepo.applyIn(citekey, day, files, referrers)
 
     def resolveEdges(caller: Caller)(using WritePermit)(using Creator.New): RowCount =
       db.write(SourceRepo.resolveEdges())

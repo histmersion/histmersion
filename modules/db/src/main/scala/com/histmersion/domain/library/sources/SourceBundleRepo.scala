@@ -40,7 +40,7 @@ import com.histmersion.util.ocr.Chunker
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
@@ -192,6 +192,7 @@ private[sources] object SourceBundleRepo:
 
   def sourcesIn(w: BundleImport.Writer, referrers: SourceReferrers)(using Creator.New): Unit =
     given DbCon = w.transaction
+    given CreatedAt = w.at
     // `rename-left`: a source here gives its citekey up first, to the bundle's work that has it; the
     // old citekey does not stay an alias (it is the other work's now)
     w.merged.renames.foreach { (_, from, to) =>
@@ -322,13 +323,13 @@ private[sources] object SourceBundleRepo:
       val ck = w.citekeyOf(f.sourceUid)
       val confidence: Option[String] = f.confidence.map(_.wire.value)
       sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,
-              tags, confidence, significance, updated_at, creator)
+              tags, confidence, significance, updated_at, creator, created_at)
             VALUES (${f.uid}, ${f.origin}, ${f.id}, $ck, ${f.claim}, ${f.region},
               CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
                    ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
               ${rangeLiteral(f.period)}::int8range,
               ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz,
-              ${StoredCreator.carried(f.creator)}::jsonb)
+              ${StoredCreator.carried(f.creator)}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
               geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,

@@ -11,12 +11,12 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.api.media.AssetLink
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The figures of a source (they go with it) and the links of other figures to it or to one of its findings. */
 final class AssetLinkSourceReferrer extends SourceReferrer:
 
-  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences =
+  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.value.length)
     RenamedReferences(
       List(

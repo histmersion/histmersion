@@ -22,7 +22,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
@@ -50,7 +50,7 @@ private[assets] object AssetRepo:
     * hand-made links.
     */
 
-  def replace(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New): RowCount =
+  def replace(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New, CreatedAt): RowCount =
     val incoming = NewFigure.dedupe(assets)
     val existing = sql"SELECT name, sha256 FROM assets WHERE citekey = $citekey ORDER BY name"
       .query[(NewFigure.Name, Sha256)]
@@ -70,7 +70,7 @@ private[assets] object AssetRepo:
   /** Add to the set, leaving anything already stored under the same name alone (the seed importer's figures, and
     * `POST /api/sources/{ck}/assets`). Returns how many rows were written.
     */
-  def add(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New): RowCount =
+  def add(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New, CreatedAt): RowCount =
     val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = ReplaceExisting(false))
     touch(citekey)
     n
@@ -89,16 +89,16 @@ private[assets] object AssetRepo:
     */
   private def insert(citekey: Citekey, assets: List[NewFigure], replaceExisting: ReplaceExisting)(using
       DbCon
-  )(using creator: Creator.New): RowCount =
+  )(using creator: Creator.New, at: CreatedAt): RowCount =
     assets.foreach { a =>
       val sha = a.sha256
       if replaceExisting.value then
         // an unchanged picture is not rewritten: its row (and `updated_at`) stays as it was
         Unused(
-          sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator)
+          sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator, created_at)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${StoredCreator.column(
               creator
-            )}::jsonb)
+            )}::jsonb, ${at.iso}::timestamptz)
               ON CONFLICT (citekey, name) DO UPDATE SET
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
                 width = EXCLUDED.width, height = EXCLUDED.height
@@ -108,10 +108,10 @@ private[assets] object AssetRepo:
         )
       else
         Unused(
-          sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator)
+          sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator, created_at)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${StoredCreator.column(
               creator
-            )}::jsonb)
+            )}::jsonb, ${at.iso}::timestamptz)
               ON CONFLICT (citekey, name) DO NOTHING""".update.run(),
           Unused.Why.Idempotent
         )

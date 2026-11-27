@@ -17,7 +17,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
@@ -41,7 +41,7 @@ private[sources] object SourceDeleteRepo:
       referrers: SourceReferrers
   )(using
       DbCon
-  )(using Creator.New): Either[Api.Error, SourceDeletePlan] =
+  )(using Creator.New, CreatedAt): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
     planIn(requested, referrers).flatMap { p0 =>
       val d0 = p0.deletion

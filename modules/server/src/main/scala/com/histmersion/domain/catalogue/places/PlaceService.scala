@@ -24,7 +24,7 @@ import com.histmersion.domain.catalogue.Place as DPlace
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
@@ -119,9 +119,9 @@ object PlaceService:
   type ScopeForValues = ScopeForValues.T
   object ScopeForValues extends Newtype[String, Pure]
 
-  def apply(db: Transactor): PlaceService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): PlaceService = Implementation(db, clock)
 
-  final private class Implementation(db: Transactor) extends PlaceService:
+  final private class Implementation(db: Transactor, clock: Clock) extends PlaceService:
     def count(): RowCount = db.read(PlaceRepo.count())
     def importPlaces(batch: List[Place.Input], dataset: Dataset)(using
         WritePermit
@@ -133,7 +133,10 @@ object PlaceService:
           Place.ImportResult.Relations(0),
           Nil
         )
-      else db.write(PlaceRepo.upsertPlaces(batch, dataset))
+      else
+        db.write:
+          given CreatedAt = CreatedAt.now(clock)
+          PlaceRepo.upsertPlaces(batch, dataset)
     def search(
         q: Option[SearchQ],
         asOf: Option[DeepTime.SignedYear],
@@ -189,7 +192,9 @@ object PlaceService:
       db.write(PlaceRepo.removeName(id, PlaceRepo.Name(name.value), PlaceRepo.Lang(lang.value)))
     def manualNames(id: Option[DPlace.Id]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
     def add(in: Place.Input)(using WritePermit)(using Creator.New): Either[Api.Error, Place.Summary] =
-      db.write(PlaceRepo.addPlace(in))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        PlaceRepo.addPlace(in)
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       db.read(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
     def setOverride(

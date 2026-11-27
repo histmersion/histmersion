@@ -45,7 +45,8 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.LeadFacts
 import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
+import java.time.Clock
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -91,7 +92,8 @@ trait EventService:
   def delete(id: Event.Id)(using WritePermit): Boolean
 
 object EventService:
-  def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
+  def apply(db: Transactor, related: EventSourceFilter, clock: Clock): EventService =
+    Implementation(db, related, clock)
 
   private def missing(id: Event.Id) =
     Api.Error(
@@ -99,7 +101,7 @@ object EventService:
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
-  final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
+  final private class Implementation(db: Transactor, related: EventSourceFilter, clock: Clock) extends EventService:
     def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =
       db.read(EventRepo.list(selection.sql(related), limit, offset))
     def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
@@ -120,7 +122,9 @@ object EventService:
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value)))
     def put(id: Event.Id, in: EventPut)(using WritePermit)(using Creator.New): Unit =
-      db.write(EventRepo.put(BEventRow.Id(id.value), in))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        EventRepo.put(BEventRow.Id(id.value), in)
     def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       db.write(EventRepo.patch(BEventRow.Id(id.value), p))
     def rename(from: Event.Id, to: Event.Id)(using WritePermit): Either[Api.Error, Unit] =

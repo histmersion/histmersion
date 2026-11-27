@@ -13,7 +13,8 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
+import java.time.Clock
 
 /** The named periods: the timeline's presets and the PeriodO definitions behind them, searched, read one by one and
   * written by the seed and the imports.
@@ -56,9 +57,9 @@ object PeriodService:
   type SeedVersion = SeedVersion.T
   object SeedVersion extends Newtype[Int, Pure]
 
-  def apply(db: Transactor): PeriodService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): PeriodService = Implementation(db, clock)
 
-  final private class Implementation(db: Transactor) extends PeriodService:
+  final private class Implementation(db: Transactor, clock: Clock) extends PeriodService:
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = db.read(PeriodRepo.get(id))
     def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = db.read(PeriodRepo.children(id)).toList
     def search(q: PeriodSearch): List[HistoricalPeriod] =
@@ -76,7 +77,9 @@ object PeriodService:
       db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value))))
         .map((k, v) => HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value)))
     def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount =
-      db.write(PeriodRepo.upsert(rows, dataset))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        PeriodRepo.upsert(rows, dataset)
     def retainPresets(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =
       db.write(PeriodRepo.retainPresets(ids))
     def deleteSeedExcept(ids: List[HistoricalPeriod.Id])(using WritePermit): RowCount =

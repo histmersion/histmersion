@@ -37,9 +37,10 @@ final class GazetteerImports(
     text: HttpDownload.Url => Either[Problem, HttpDownload.Text],
     registered: () => ListMap[Registries.GazetteerSourcesKey, GazetteerSource],
     http: () => Plugin.Http,
-    owners: () => Map[GazetteerSource, Plugin.Info.Id]
+    owners: () => Map[GazetteerSource, Plugin.Info.Id],
+    clock: java.time.Clock
 ):
-  private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores())
+  private def settings: GazetteerLoad.Settings = GazetteerLoad.settings(cfg(), stores(), clock)
 
   def importerOf(source: GazetteerSource): Creator.New =
     InTreeWorkflow.imported(owners().get(source), InTreeWorkflow.Catalogue, InTreeWorkflow.GazetteerImporting)

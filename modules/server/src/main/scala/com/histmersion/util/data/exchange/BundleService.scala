@@ -204,7 +204,8 @@ object BundleService:
           resolutions,
           MergeSettingsViews.settings(cfg.merge),
           w.carried,
-          w.rules
+          w.rules,
+          w.clock
         )
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
@@ -314,7 +315,8 @@ object BundleService:
               () => w.backup().fold(e => Left(e.problems), f => Right(f.value)),
               w.carried,
               w.rules,
-              w.followUps
+              w.followUps,
+              w.clock
             )
             .map { r =>
               if r.applied.value && r.mergeId.isDefined then
