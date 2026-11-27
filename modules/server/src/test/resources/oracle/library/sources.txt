@@ -264,7 +264,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -291,7 +291,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -372,7 +372,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -399,7 +399,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -457,7 +457,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -829,7 +829,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -864,7 +864,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqwriter, Bo](/#author=Zqwriter%2
 **Regions:** [Zqland](/#place=Zqland)  
 **Tags:** [zq-walls](/#tag=zq-walls), [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqalpha1990_tell  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 A study of The Walls of Zqtell.
 
@@ -2756,7 +2756,7 @@ _[Zqauthor, Ann](/#author=Zqauthor%2C%20Ann), [Zqhelper, Di](/#author=Zqhelper%2
 **DOI:** 10.9999/zq.1976  
 **Provenance:** zq-press  
 **Uid:** source:zqgamma1975_kings  
-_Created by an unnamed caller via the REST API at 2026-11-24_
+_Created by an unnamed caller via the REST API at 2026-01-02_
 
 Kings, again; see [[zqalpha1990_tell]].
 
@@ -2788,7 +2788,7 @@ Kings, again; see [[zqalpha1990_tell]].
 _n.d. · unassessed_  
 **Tags:** [zq-oracle](/#tag=zq-oracle)  
 **Uid:** source:zqzeta2015_mcp  
-_Created by an unnamed caller via the MCP at 2026-11-24_
+_Created by an unnamed caller via the MCP at 2026-01-02_
 
 ## Findings (1)
 - an MCP claim  
