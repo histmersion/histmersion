@@ -161,8 +161,23 @@ class ShownInterpolation(config: ShownInterpolation.Config, index: ConcurrentHas
       }
     }
 
+    def isDisplayType(t: Type): Boolean = t match {
+      case a: Type.Apply => a.tpe match {
+          case Type.Name("Display") | Type.Select(_, Type.Name("Display")) => true
+          case _ => false
+        }
+      case _ => false
+    }
+    def insideDisplayInstance(t: Tree): Boolean = t.parent match {
+      case Some(g: Defn.GivenAlias) if isDisplayType(g.decltpe) => true
+      case Some(d: Defn.Val) if d.decltpe.exists(isDisplayType) => true
+      case Some(d: Defn.Def) if d.decltpe.exists(isDisplayType) => true
+      case Some(p) => insideDisplayInstance(p)
+      case None => false
+    }
+
     doc.tree.collect {
-      case i: Term.Interpolate if i.prefix.value == "s" && i.args.nonEmpty =>
+      case i: Term.Interpolate if i.prefix.value == "s" && i.args.nonEmpty && !insideDisplayInstance(i) =>
         val args = i.args.map(a => a -> classify(a))
         val newtypes = args.collect { case (_, Some(Displayed(nt))) => nt; case (_, Some(Unwrapped(_, nt))) => nt }
         if (args.forall(_._2.isDefined) && newtypes.nonEmpty) {
