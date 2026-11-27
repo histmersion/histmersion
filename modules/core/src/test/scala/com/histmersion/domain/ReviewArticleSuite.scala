@@ -618,6 +618,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           )
         else Nil
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fix(a: FixerAnswer, last: LastRound, before: Article.Body = Article.Body(Good)) =
     checkFix(
       a,
@@ -949,6 +950,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Nil,
     Nil
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixCov(a: FixerAnswer, last: LastRound = LastRound(false), c: Option[Coverage] = Some(cov)) =
     checkFix(
       a,
@@ -1193,6 +1195,7 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   // ── the review ledger: checks, the verification pass, declining a minor ──────────────────────────
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val revised = Article.Body(Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
   private val askedTin = Finding(
     Finding.Id("R1"),
@@ -1690,6 +1693,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       "We show that the tin of the Uluburun cargo came from Central Asia."
     ))
   private val spotEv = evidenceCheck(records2.contains, records2.get, minRatio)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val spotBody = Article.Body(Good + "\nThe tin came from Central Asia [[tin2024_iso]].\n")
   private val cited2 = Set(Citekey("knapp2016_tin"), Citekey("tin2024_iso"))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

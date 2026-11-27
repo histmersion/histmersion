@@ -282,7 +282,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                   RunRequest(
                     RunRequest.Pipeline(Pipeline.EnrichSource.wire.value),
                     RunRequest.Target(src.source.citekey.value),
-                    budgetUsd = m.config.budgetUsd.map(b => b)
+                    budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
                   ),
                   identity,
                   item.state,

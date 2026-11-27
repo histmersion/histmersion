@@ -377,7 +377,8 @@ object UiState:
   case class Preview(key: Preview.Key, value: Preview.Value) derives CanEqual
 
   object Preview:
-    export Field.Key
+    type Key = Key.T
+    object Key extends Newtype[String, Pure]
     export UiState.FilterTerm as Value
   val preview: Var[Option[Preview]] = Var(None)
 

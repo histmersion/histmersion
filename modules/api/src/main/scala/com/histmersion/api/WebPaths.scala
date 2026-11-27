@@ -32,9 +32,10 @@ object WebPaths:
   val SavedLinks: Set[SavedLinks] =
     Set(Segment("acquire"), Segment("tasks"), Segment("log"), Segment("merge"), Segment("about"), Segment("storage"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isApp(segments: List[Segment]): Boolean = segments match
-    case Nil                              => (true)
-    case first :: _ if Places(first)      => (true)
-    case List(first, _) if Items(first)   => (true)
-    case List(first) if SavedLinks(first) => (true)
-    case _                                => (false)
+    case Nil                                               => (true)
+    case first :: _ if Places(Segment((first).value))      => (true)
+    case List(first, _) if Items(Segment((first).value))   => (true)
+    case List(first) if SavedLinks(Segment((first).value)) => (true)
+    case _                                                 => (false)

@@ -39,8 +39,6 @@ import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
-import com.histmersion.domain.automation.managers.SweepAcquireItem
-import com.histmersion.domain.library.findings.GeoFeedRow
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -847,20 +845,23 @@ private[sources] object SourceRepo:
       )
 
   object GapRow:
-    export GeoFeedRow.Doi
+    type Doi = Doi.T
+    object Doi extends Newtype[String, Pure]
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = domain.Title
     val Title: domain.Title.type = domain.Title
     type Authors = Authors.T
     object Authors extends Newtype[String, Pure]
-    export SweepAcquireItem.Venue
+    type Venue = Venue.T
+    object Venue extends Newtype[String, Pure]
     type Summary = Summary.T
     object Summary extends Newtype[String, Pure]
     type Topics = Topics.T
     object Topics extends Newtype[String, Pure]
     type Provenance = Provenance.T
     object Provenance extends Newtype[String, Pure]
-    export FullSourceRow.CalibreId
+    type CalibreId = CalibreId.T
+    object CalibreId extends Newtype[String, Pure]
     type Isbn = Isbn.T
     object Isbn extends Newtype[String, Pure]
 

@@ -61,6 +61,7 @@ class ArchiveTrafficSuite extends DbSuite:
 
   private val ContentType = CoreQuota.HeaderName("content-type")
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def json(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -69,6 +70,7 @@ class ArchiveTrafficSuite extends DbSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notFound: Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(

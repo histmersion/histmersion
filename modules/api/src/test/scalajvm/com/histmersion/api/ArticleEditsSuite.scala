@@ -30,6 +30,7 @@ class ArticleEditsSuite extends munit.FunSuite:
       |Two dates are argued [[knapp2016_tin]].
       |""".stripMargin
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Body = Article.Body(BodyText)
 
   private def e(op: Op, anchor: Anchor, text: Option[NewText] = None) = EditAnswer(op, anchor, text)

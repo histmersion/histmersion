@@ -16,8 +16,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   "declares the Tapir endpoints of the collections routes with their request and response bodies"
 )
 object CollectionsApi:
-  export Api.GoalQuery.Limit
-  export AcquireApi.Query
+  type Limit = Limit.T
+  object Limit extends Newtype[Int, Pure]
+  type Query = Query.T
+  object Query extends Newtype[String, Pure]
 
   private lazy val base = endpoint.in("api" / "collections").errorOut(Api.problemOut)
   private def named = base.in(path[String]("name").description("the collection's name: calibre, archive-org, …"))

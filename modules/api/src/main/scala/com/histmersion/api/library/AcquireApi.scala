@@ -21,7 +21,8 @@ object AcquireApi:
   object Filter extends Newtype[String, Pure]
   type Identifier = Identifier.T
   object Identifier extends Newtype[String, Pure]
-  export Api.GoalQuery.Limit
+  type Limit = Limit.T
+  object Limit extends Newtype[Int, Pure]
   type Query = Query.T
   object Query extends Newtype[String, Pure]
 

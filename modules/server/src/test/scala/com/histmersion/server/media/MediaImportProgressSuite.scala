@@ -22,6 +22,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaImportProgressSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val r =
     MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),

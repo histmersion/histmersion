@@ -18,12 +18,20 @@ final private[assets] case class MediaThumbRow(
 ) derives DbCodec
 
 object MediaThumbRow:
-  export Known.Uid
+  type Uid = Uid.T
+  object Uid extends Newtype[String, Pure]
   type Role = Role.T
   object Role extends Newtype[String, Pure]
-  export MediaGeoRow.Credit
-  export AssetDetailRow.License
-  export MediaGeoRow.LicenseUrl
-  export MediaGeoRow.SourceUrl
-  export AssetDetailRow.Width
-  export AssetDetailRow.Height
+  type Credit = Credit.T
+  object Credit extends Newtype[String, Pure]
+  type License = License.T
+  object License extends Newtype[String, Pure]
+  type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+  object LicenseUrl extends Newtype[String, Pure]
+  type SourceUrl = SourceUrl.T
+  object SourceUrl extends Newtype[String, Pure]
+  type Width = Width.T
+  object Width extends Newtype[Int, Pure]
+  type Height = Height.T
+  object Height extends Newtype[Int, Pure]

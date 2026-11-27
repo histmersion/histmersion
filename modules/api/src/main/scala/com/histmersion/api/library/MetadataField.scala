@@ -8,14 +8,14 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 
 enum MetadataField:
   case Year, Venue, Doi, Provenance, CalibreId
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object MetadataField:
-  export GeoPick.Wire
+  type Wire = Wire.T
+  object Wire extends Newtype[String, Pure]
 
   def wireOf(f: MetadataField): Wire = f match
     case Year       => Wire("year")

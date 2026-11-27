@@ -16,7 +16,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import MergeIssue.Rationale
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MergeIssue(
@@ -102,7 +101,8 @@ object MergeIssue:
     case GoalPlanDiffers
 
   object Kind:
-    export GeoPick.Wire
+    type Wire = Wire.T
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case SameWork                => Wire("same-work")

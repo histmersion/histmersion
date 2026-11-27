@@ -26,9 +26,6 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
-import com.histmersion.api.aliases.InstanceInfo
-import com.histmersion.api.automation.Agents
-import com.histmersion.api.catalogue.{CatalogRecord, EventEntry, EventGeo, EventSummary}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
@@ -174,7 +171,8 @@ object Bundle:
 
   object Article:
     export api.research.ReviewGoal.Slug
-    export Agents.RunRequest.Title
+    type Title = Title.T
+    object Title extends Newtype[String, Pure]
     export api.research.Article.Kind.Wire as Kind
     export api.research.Article.{Body, SummaryText as Summary}
     type Tags = Tags.T
@@ -499,21 +497,26 @@ object Bundle:
     type Geom = Geom.T
     object Geom extends Newtype[String, Pure]
     export api.catalogue.Place.Id as PlaceId
-    export EventSummary.Description
+    type Description = Description.T
+    object Description extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
     object Rev extends Newtype[String, Pure]
-    export EventGeo.Scale
+    type Scale = Scale.T
+    object Scale extends Newtype[String, Pure]
     type Catalogue = Catalogue.T
     object Catalogue extends Newtype[String, Pure]
-    export EventEntry.Names
+    type Names = Names.T
+    object Names extends Newtype[String, Pure]
     type Wikidata = Wikidata.T
     object Wikidata extends Newtype[String, Pure]
-    export CatalogRecord.Central
+    type Central = Central.T
+    object Central extends Newtype[Long, Pure]
     type PlusMinus = PlusMinus.T
     object PlusMinus extends Newtype[Long, Pure]
-    export EventSummary.DatingMethod
+    type DatingMethod = DatingMethod.T
+    object DatingMethod extends Newtype[String, Pure]
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class EventAlias(alias: EventAlias.Alias, eventUid: UUID, createdAt: EventAlias.CreatedAt)
@@ -572,8 +575,10 @@ object Bundle:
   ) derives JsonCodec
 
   object EventCatalogue:
-    export CatalogRecord.Provider
+    type Provider = Provider.T
+    object Provider extends Newtype[String, Pure]
     type ProviderId = ProviderId.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object ProviderId extends Newtype[String, Pure]
     type Url = Url.T
     object Url extends Newtype[String, Pure]
@@ -788,7 +793,8 @@ object Bundle:
 
   object Goal:
     export api.research.ReviewGoal.Slug
-    export Agents.RunRequest.Title
+    type Title = Title.T
+    object Title extends Newtype[String, Pure]
     export api.automation.Goal.StatusValue as Status
     type Notes = Notes.T
     object Notes extends Newtype[String, Pure]
@@ -902,7 +908,8 @@ object Bundle:
         api.json.Schema
 
   object Instance:
-    export InstanceInfo.Label
+    type Label = Label.T
+    object Label extends Newtype[String, Pure]
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class KindCounts(

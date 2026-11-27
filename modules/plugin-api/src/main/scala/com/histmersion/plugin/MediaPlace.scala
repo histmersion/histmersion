@@ -32,5 +32,7 @@ final case class MediaPlace(
 )
 
 object MediaPlace:
-  export MediaEvent.Id
-  export MediaEvent.Label
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
+  type Label = Label.T
+  object Label extends Newtype[String, Pure]

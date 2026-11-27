@@ -19,4 +19,5 @@ final case class CollectionSetRequest(
       api.json.Schema
 
 object CollectionSetRequest:
-  export CollectionImportRequest.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]

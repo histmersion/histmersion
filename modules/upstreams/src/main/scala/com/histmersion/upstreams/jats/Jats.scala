@@ -13,7 +13,8 @@ object Jats:
   sealed trait Node
   final case class Elem(name: Elem.Name, attrs: Map[String, String], children: Vector[Node]) extends Node:
     def kids(n: Elem.Name): Vector[Elem] = children.collect { case e: Elem if e.name == n => e }
-    def kid(n: Elem.Name): Option[Elem] = kids(n).headOption
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    def kid(n: Elem.Name): Option[Elem] = kids(Elem.Name((n).value)).headOption
     def attr(n: String): Option[String] = attrs.get(n)
     def elems: Vector[Elem] = children.collect { case e: Elem => e }
 

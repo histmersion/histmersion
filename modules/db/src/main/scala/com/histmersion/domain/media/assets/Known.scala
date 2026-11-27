@@ -9,4 +9,5 @@ final case class Known(uid: Known.Uid, license: Option[Known.License])
 object Known:
   type Uid = Uid.T
   object Uid extends Newtype[String, Pure]
-  export AssetDetailRow.License
+  type License = License.T
+  object License extends Newtype[String, Pure]

@@ -67,7 +67,7 @@ final class PortalStore(
     val wanted = keys.map(_.value).toSet
     saved.collect {
       case (k, (uid, a)) if wanted(k.value) =>
-        AssetService.ProviderKey(k.value) -> Known(uid, Some(Known.License(a.license.value)))
+        AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
     }.toMap
   def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using
       WritePermit

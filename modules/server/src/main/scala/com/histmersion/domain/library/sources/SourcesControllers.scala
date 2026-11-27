@@ -32,7 +32,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.automation.agents.ToolResultCap
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -534,7 +533,8 @@ final class SourcesControllers(
 object SourcesControllers:
   type Chars = Chars.T
   object Chars extends Newtype[Int, Pure]
-  export ToolResultCap.Markdown
+  type Markdown = Markdown.T
+  object Markdown extends Newtype[String, Pure]
 
   type GetBody = GetBody.T
   object GetBody extends Newtype[Boolean, Pure]
@@ -543,4 +543,5 @@ object SourcesControllers:
   type PatchStrict = PatchStrict.T
   object PatchStrict extends Newtype[Boolean, Pure]
   type MarkdownFullText = MarkdownFullText.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object MarkdownFullText extends Newtype[Boolean, Pure]

@@ -24,6 +24,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CritiquePairingSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val excerpt =
     Article.Body(scala.io.Source.fromResource("review/achilles-excerpt.md")(using scala.io.Codec.UTF8).mkString)
 

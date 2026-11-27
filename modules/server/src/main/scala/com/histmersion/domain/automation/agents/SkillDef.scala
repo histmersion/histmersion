@@ -22,4 +22,5 @@ object SkillDef:
   object Name extends Newtype[String, Pure]
   type Header = Header.T
   object Header extends Newtype[String, Pure]
-  export AgentDef.Body
+  type Body = Body.T
+  object Body extends Newtype[String, Pure]

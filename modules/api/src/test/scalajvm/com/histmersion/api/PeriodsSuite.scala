@@ -374,7 +374,7 @@ class PeriodsSuite extends munit.FunSuite:
       assertEquals(c.value.take(7), p.value.take(7), s"$c → $p crosses authorities")
       for child <- byId.get(c.value); parent <- byId.get(p.value) do
         assert(
-          parent.period.start <= child.period.start && child.period.end <= parent.period.end,
+          parent.period.start.value <= child.period.start.value && child.period.end.value <= parent.period.end.value,
           s"${child.label} ${child.period} outside ${parent.label} ${parent.period}"
         )
     }

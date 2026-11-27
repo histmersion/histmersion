@@ -22,8 +22,9 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class JobControlRulesSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(kind: JobInfo.Kind, status: JobInfo.Status) =
-    JobInfo(SpatialHierarchyResult.Job.Id("j1"), kind, status, None)
+    JobInfo(SpatialHierarchyResult.Job.Id("j1"), JobKinds.Wire(kind.value), status, None)
 
   test("an agent run takes its own control, whatever it is asked"):
     JobAction.values.foreach(a =>

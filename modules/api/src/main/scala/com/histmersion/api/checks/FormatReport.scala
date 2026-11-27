@@ -34,4 +34,5 @@ object FormatReport:
   object Subject extends Newtype[String, Pure]
   type Fixed = Fixed.T
   object Fixed extends Newtype[String, Pure]
-  export FormatCheck.Text
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]

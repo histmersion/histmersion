@@ -48,6 +48,8 @@ object WatchManagerDefaults:
   object IngestAllowance extends Newtype[Int, Pure]
   type IngestedToday = IngestedToday.T
   object IngestedToday extends Newtype[Int, Pure]
-  export ManagerRunDefaults.MaxRuns
+
+  type MaxRuns = MaxRuns.T
+  object MaxRuns extends Newtype[Int, Pure]
   type AutoIngestPerDay = AutoIngestPerDay.T
   object AutoIngestPerDay extends Newtype[Int, Pure]

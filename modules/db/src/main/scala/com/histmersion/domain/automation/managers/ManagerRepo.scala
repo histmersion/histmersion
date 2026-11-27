@@ -502,6 +502,8 @@ object ManagerRepo:
   /** Active items whose run is terminal and not evaluated yet (or whose run is gone): the evaluation queue.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toEvaluate(managerId: ManagerRow.Id)(using
       DbCon
   ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Problem])])] =
@@ -525,7 +527,7 @@ object ManagerRepo:
         case None => List(i -> None) // its run was deleted
         case Some((st, err))
             if RunState
-              .parse(st)
+              .parse(com.histmersion.api.automation.Run.State.Wire(st.value))
               .exists(_.isTerminal) && !i.evaluatedRun.contains(i.runId.get) =>
           List(i -> Some((st, err)))
         case _ => Nil

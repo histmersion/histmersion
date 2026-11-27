@@ -118,7 +118,8 @@ object ReviewLedger:
     export ReviewArticle.Reviewer.Wire as By
     export ReviewArticle.Merged.Round
     export automation.Run.Id as Run
-    export ReviewArticle.Check.Note
+    type Note = Note.T
+    object Note extends Newtype[String, Pure]
     export ReviewArticle.Evidence.Quote
 
   /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not checked it yet.
@@ -782,7 +783,7 @@ object ReviewLedger:
         .findQuote(
           AgentProposals.Proposal.Quote(q),
           AgentVerify.SourceBody(body.value),
-          minRatio
+          AgentVerify.MinRatio(minRatio.value)
         )
         .accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>

@@ -30,7 +30,7 @@ object PeriodsRoutes:
           to.map(y => PeriodSearch.To(y.value))
         )
       ),
-      Api.period.serverLogic[Identity](id => periods.period(id)),
+      Api.period.serverLogic[Identity](id => periods.period(HistoricalPeriod.Id(id.value))),
       Api.seedPeriods.serverLogic[Identity](replace => periods.seed(me, PeriodImports.Replace(replace.value))),
       Api.importPeriods.serverLogic[Identity]((cols, dataset, body) =>
         periods.importDataset(

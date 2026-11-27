@@ -24,7 +24,8 @@ enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label) derives CanEqu
 object ItemKind:
   type Word = Word.T
   object Word extends Newtype[String, Pure]
-  export GeoPick.Wire
+  type Wire = Wire.T
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
     type Pattern = Pattern.T

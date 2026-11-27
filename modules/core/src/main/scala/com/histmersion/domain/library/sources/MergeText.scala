@@ -9,7 +9,6 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import com.histmersion.domain.library.Isbn
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.util.text.Fingerprint
 
 /** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
   * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of
@@ -23,10 +22,12 @@ object MergeText:
   object Text extends Newtype[String, Pure]
 
   /** A text in lower case with its diacritics removed (`Güterbock` → `guterbock`). */
-  export Fingerprint.Folded
+  type Folded = Folded.T
+  object Folded extends Newtype[String, Pure]
 
   /** One folded alphanumeric word. */
-  export Fingerprint.Token
+  type Token = Token.T
+  object Token extends Newtype[String, Pure]
 
   /** A text as its folded words joined by single spaces. */
   type Words = Words.T

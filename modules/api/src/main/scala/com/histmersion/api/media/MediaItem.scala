@@ -10,7 +10,6 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.catalogue.TilesApi
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaItem(
@@ -43,8 +42,10 @@ object MediaItem:
   type Uid = Uid.T
   object Uid extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  export TilesApi.TileQuery.Provider
+  type Provider = Provider.T
+  object Provider extends Newtype[String, Pure]
   type ProviderKey = ProviderKey.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ProviderKey extends Newtype[String, Pure]
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]

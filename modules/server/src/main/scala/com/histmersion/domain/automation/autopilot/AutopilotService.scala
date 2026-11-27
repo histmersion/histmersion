@@ -494,9 +494,9 @@ final class AutopilotService(
         val facts = AutopilotPolicy.NextFacts(
           AutopilotPolicy.NextFacts.Goal(f.slug.value),
           f.status,
-          f.articles,
-          f.unreviewed,
-          f.compileOpen,
+          AutopilotPolicy.NextFacts.Articles(f.articles.value),
+          AutopilotPolicy.NextFacts.Unreviewed(f.unreviewed.value),
+          AutopilotPolicy.NextFacts.CompileOpen(f.compileOpen.value),
           seeds.get(f.slug.value).map(m => DomainManager.State.Wire(m.state.value)),
           item.map(i => DomainItemStatus.Wire(i.status.value)),
           item.flatMap(i => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(i.updatedAt.value)))

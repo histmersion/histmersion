@@ -4,7 +4,6 @@ package domain.media.assets
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.domain.catalogue.events.EventSelection
 
 final private[assets] case class AssetDetailRow(
     name: AssetDetailRow.Name,
@@ -33,7 +32,8 @@ object AssetDetailRow:
   object Width extends Newtype[Int, Pure]
   type Height = Height.T
   object Height extends Newtype[Int, Pure]
-  export EventSelection.Kind
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]
   type Caption = Caption.T
   object Caption extends Newtype[String, Pure]
   type License = License.T

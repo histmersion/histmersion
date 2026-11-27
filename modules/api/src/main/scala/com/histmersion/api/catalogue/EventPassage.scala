@@ -25,7 +25,8 @@ object EventPassage:
   object Start extends Newtype[Int, Pure]
   type End = End.T
   object End extends Newtype[Int, Pure]
-  export Attestation.Quote
+  type Quote = Quote.T
+  object Quote extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
   type Context = Context.T

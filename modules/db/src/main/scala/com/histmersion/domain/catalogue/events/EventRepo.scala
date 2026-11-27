@@ -490,7 +490,7 @@ private[events] object EventRepo:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def renamedTo(id: BEventRow.Id)(using DbCon): Option[BEventRow.Id] =
     EventAliasTable.table
-      .renamedToIn(id)
+      .renamedToIn(AliasTable.Id(id.value))
       .map(a => BEventRow.Id(a.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

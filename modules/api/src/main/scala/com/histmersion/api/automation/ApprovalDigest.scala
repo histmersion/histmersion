@@ -26,7 +26,8 @@ object ApprovalDigest:
         api.json.Schema
 
   object SubjectCount:
-    export Agents.ApprovalInfo.Subject
+    type Subject = Subject.T
+    object Subject extends Newtype[String, Pure]
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
 
@@ -106,7 +107,8 @@ object ApprovalDigest:
         api.json.Schema
 
   object BulkFailed:
-    export Agents.ApprovalInfo.Id
+    type Id = Id.T
+    object Id extends Newtype[Long, Pure]
 
   final case class BulkResult(
       decision: BulkResult.Decision,
@@ -138,9 +140,11 @@ object ApprovalDigest:
   final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
 
   object Open:
-    export Agents.ApprovalInfo.Id
+    type Id = Id.T
+    object Id extends Newtype[Long, Pure]
     export Approval.Kind.Wire as Kind
-    export Agents.ApprovalInfo.Subject
+    type Subject = Subject.T
+    object Subject extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 

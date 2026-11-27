@@ -13,7 +13,12 @@ final case class Rights(
 )
 
 object Rights:
-  export AssetDetailRow.License
-  export MediaGeoRow.LicenseUrl
-  export MediaGeoRow.Author
-  export MediaGeoRow.Credit
+  type License = License.T
+  object License extends Newtype[String, Pure]
+  type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+  object LicenseUrl extends Newtype[String, Pure]
+  type Author = Author.T
+  object Author extends Newtype[String, Pure]
+  type Credit = Credit.T
+  object Credit extends Newtype[String, Pure]

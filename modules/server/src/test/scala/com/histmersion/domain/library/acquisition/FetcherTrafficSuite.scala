@@ -29,8 +29,11 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 class FetcherTrafficSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Pdf: HttpAnswer.Body = HttpAnswer.Body(("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Epub: HttpAnswer.Body = HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes("ISO-8859-1"))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Xml: HttpAnswer.Body =
     HttpAnswer.Body(scala.io.Source.fromResource("jats/article.xml").mkString.getBytes(UTF_8))
 
@@ -47,6 +50,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
   private def md5(b: HttpAnswer.Body): String =
     OaFetch.md5(OaFetch.Bytes(b.value)).getOrElse(fail("no MD5 in this runtime")).value
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def json(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -55,6 +59,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
         HttpAnswer.Body(s.getBytes(UTF_8))
       )
     )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def html(s: String): Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(
@@ -65,6 +70,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
     )
   private def file(b: HttpAnswer.Body, mime: CoreQuota.HeaderValue): Either[Problem, HttpAnswer] =
     Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> mime), b))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val notFound: Either[Problem, HttpAnswer] =
     Right(
       HttpAnswer(

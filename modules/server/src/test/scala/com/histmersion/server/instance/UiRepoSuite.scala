@@ -131,7 +131,7 @@ class UiRepoSuite extends DbSuite:
     assert(read.latest != Some(latest) || !read.fresh.value, read.toString)
     connect(ds)(sql"UPDATE approvals SET state = 'rejected', decided_at = now() WHERE id = $id".update.run())
     val decided = board(Board.Approvals)
-    assert(decided.latest.exists(_ > latest), decided.toString)
+    assert(decided.latest.exists(_.value > latest.value), decided.toString)
     assert(decided.fresh.value, decided.toString)
 
   test("a goal changed after the mark is news"):

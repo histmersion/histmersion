@@ -21,7 +21,8 @@ final case class SpatialHierarchyResult(
 
 object SpatialHierarchyResult:
   object Job:
-    export Api.Merge.Id
+    type Id = Id.T
+    object Id extends Newtype[String, Pure]
   type EdgesCreated = EdgesCreated.T
   object EdgesCreated extends Newtype[Int, Pure]
   type PolygonPlaces = PolygonPlaces.T

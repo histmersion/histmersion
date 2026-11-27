@@ -52,6 +52,7 @@ class PmcFetchSuite extends munit.FunSuite:
         .applyOrElse(url.value, (u: String) => Left(s"$u: offline"))
         .left
         .map(why => Problem.Unclassified(Legacy.Text(why)))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]

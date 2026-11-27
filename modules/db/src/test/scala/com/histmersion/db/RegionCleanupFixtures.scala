@@ -50,6 +50,7 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def pt(lon: Longitude, lat: Latitude) =
     Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}"""))
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def types(t: String) = Some(Place.Properties(s"""{"feature_types":"$t"}"""))
 
   protected val City = "zzrc_city"

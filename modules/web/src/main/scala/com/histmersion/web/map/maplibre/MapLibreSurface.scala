@@ -70,6 +70,7 @@ final class MapLibreSurface(
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def zoom: MapSurface.Zoom = MapSurface.Zoom(gl.getZoom() + ZoomShift)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def maxZoom: MapSurface.MaxZoom = MapSurface.MaxZoom(gl.getMaxZoom() + ZoomShift)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setMaxZoom(z: MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z.value - ZoomShift) }

@@ -128,7 +128,8 @@ object MapSurface:
   object LabelText extends Newtype[String, Pure]
   type LayerId = LayerId.T
   object LayerId extends Newtype[String, Pure]
-  export MapEngine.MaxZoom
+  type MaxZoom = MaxZoom.T
+  object MaxZoom extends Newtype[Double, Pure]
   type ResizeCount = ResizeCount.T
   object ResizeCount extends Newtype[Int, Pure]
   type Zoom = Zoom.T

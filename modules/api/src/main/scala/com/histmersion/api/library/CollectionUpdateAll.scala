@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.Api
 
 /** An update of every linked item: one row per item, in id order, and whether it was written (`applied`). */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
@@ -32,4 +31,5 @@ object CollectionUpdateAll:
         api.json.Schema
 
   object Request:
-    export Api.Apply
+    type Apply = Apply.T
+    object Apply extends Newtype[Boolean, Pure]

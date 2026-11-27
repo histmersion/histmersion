@@ -8,7 +8,6 @@ import hearth.kindlings.jsoniterjson.Json
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.library.acquisition.CoreEndpoint
 
 /** Repository LANDING PAGES (#1580): an open-access location whose URL is an HTML record page rather than the PDF — a
   * Zenodo record, a DSpace/EPrints/Pure item, a DataCite DOI that resolves to one. The fetch resolves such a page ONE
@@ -99,7 +98,8 @@ object RepositoryLanding:
   )
 
   object Candidate:
-    export CoreEndpoint.Url
+    type Url = Url.T
+    object Url extends Newtype[String, Pure]
     type Repository = Repository.T
     object Repository extends Newtype[Boolean, Pure]
     type Publisher = Publisher.T
@@ -119,7 +119,8 @@ object RepositoryLanding:
   final case class ZenodoFile(url: ZenodoFile.Url, md5: Option[ZenodoFile.Md5])
 
   object ZenodoFile:
-    export CoreEndpoint.Url
+    type Url = Url.T
+    object Url extends Newtype[String, Pure]
     export com.histmersion.upstreams.identifiers.Md5
 
   /** The hosts and platforms the decision reads (`acquire.landing.*`, comma-separated in config). A host entry matches

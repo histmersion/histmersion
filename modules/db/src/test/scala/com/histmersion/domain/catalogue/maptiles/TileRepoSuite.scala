@@ -260,7 +260,7 @@ class TileRepoSuite extends DbSuite:
     assertEquals(connect(ds)(UndatedSiteRepo.version()), before)
     site(DPlace.Id("zztile_v2"), Place.Label("Zztile Undated V"), "int8range(NULL, NULL)")
     val after = connect(ds)(UndatedSiteRepo.version())
-    assert(after > before)
+    assert(after.value > before.value)
     connect(ds)(sql"DELETE FROM places WHERE id = 'zztile_v2'".update.run())
     assert(connect(ds)(UndatedSiteRepo.version()).value > after.value)
 

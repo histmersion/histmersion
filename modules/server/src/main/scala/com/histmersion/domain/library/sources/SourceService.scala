@@ -350,7 +350,7 @@ object SourceService:
         val findings = s.findings.sortBy[String](_.id.value).map { f =>
           Finding.Row(
             f.claim,
-            f.region.map(r => r),
+            f.region.map(r => Place.Region(r.value)),
             f.geo.map(_.lon),
             f.geo.map(_.lat),
             f.period.map(_.start),
@@ -917,8 +917,8 @@ object SourceService:
         s.year,
         s.venue,
         s.summary.map(m => CalibreGap.Summary(m.value)),
-        s.topics.map(t => t),
-        s.provenance.map(p => p),
+        s.topics.map(t => CalibreGap.Topics(t.value)),
+        s.provenance.map(p => CalibreGap.Provenance(p.value)),
         s.calibreId.filter(_.value.nonEmpty)
       )
 

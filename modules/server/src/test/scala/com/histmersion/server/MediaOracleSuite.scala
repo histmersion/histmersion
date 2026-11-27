@@ -1075,6 +1075,7 @@ class MediaOracleSuite extends DbSuite:
           )
         }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ownRoute(url: String): Either[String, HttpAnswer] =
     if url.startsWith("https://zq-own.example/batch") || url.startsWith("https://zq-search.example/q") then
       FakeMediaHttp.json("""{"ok":true}""")

@@ -83,6 +83,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
   private val ReviewLight = ApiIds.manager(Review)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
   private val ReviewEnqueue = EnqueueRequest.Kind(ArticleReview)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

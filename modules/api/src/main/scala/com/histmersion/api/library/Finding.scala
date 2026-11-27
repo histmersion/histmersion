@@ -42,7 +42,8 @@ object Finding:
   type Claim = Claim.T
   object Claim extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  export Place.Region
+  type Region = Region.T
+  object Region extends Newtype[String, Pure]
   type PeriodName = PeriodName.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PeriodName extends Newtype[String, Pure]

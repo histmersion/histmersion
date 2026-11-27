@@ -148,6 +148,7 @@ object PlaceHover:
     }
 
   /** A pinned card's anchor at an element's centre (a keyboard pin), `None` once it is gone. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def anchorOn(el: dom.Element): () => Option[Preview.Anchor] = () =>
     Option.when(el.isConnected) {
       val r = el.getBoundingClientRect()
@@ -173,6 +174,7 @@ object PlaceHover:
       Preview.hide()
       Preview.unpin(restoreFocus = Preview.RestoreFocus.Leave)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(e: dom.MouseEvent): Unit =
     lastX = Preview.ScreenPixels(e.clientX)
     lastY = Preview.ScreenPixels(e.clientY)
@@ -271,6 +273,7 @@ object PlaceHover:
     at(e)
     hovered.filter(Preview.showingAt).foreach(_ => Preview.moveTo(lastX, lastY))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusCard(el: dom.Element, t: Preview.Target): Unit =
     val r = el.getBoundingClientRect()
     hovered = Some(t)

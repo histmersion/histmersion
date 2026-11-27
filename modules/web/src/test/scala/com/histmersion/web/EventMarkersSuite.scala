@@ -64,6 +64,7 @@ class EventMarkersSuite extends munit.FunSuite:
       assert(!Glyphs.inner.contains(n), n)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val battle = EventGeo(
     Event.Id("zz_b"),
     EventGeo.Label("Zz <battle>"),
@@ -76,6 +77,7 @@ class EventMarkersSuite extends munit.FunSuite:
     EventGeo.Anchor("event"),
     tier = EventGeo.Tier(EventTier.Attested)
   )
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val eruption = EventGeo(
     Event.Id("zz_e"),
     EventGeo.Label("Eruption of Zz"),

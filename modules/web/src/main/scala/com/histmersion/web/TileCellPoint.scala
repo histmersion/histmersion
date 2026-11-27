@@ -31,9 +31,11 @@ object TileCellPoint:
   object Lat extends Newtype[Double, Pure]
   type Lon = Lon.T
   object Lon extends Newtype[Double, Pure]
-  export Member.N
+  type N = N.T
+  object N extends Newtype[Int, Pure]
   type MidLo = MidLo.T
   object MidLo extends Newtype[Double, Pure]
   type MidHi = MidHi.T
   object MidHi extends Newtype[Double, Pure]
-  export DotCluster.Undated
+  type Undated = Undated.T
+  object Undated extends Newtype[Int, Pure]

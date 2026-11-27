@@ -81,10 +81,10 @@ class CssTokensSuite extends munit.FunSuite:
       val halo = colour(s"--map-label-halo-$tone")
       val note = colour(s"--map-label-note-$tone")
       assert(Wcag.contrast(ink, halo).value >= 7.0, s"$tone: ink on halo ${Wcag.contrast(ink, halo)}")
-      assert(Wcag.contrast(note, halo) >= Wcag.AaText, s"$tone: note on halo ${Wcag.contrast(note, halo)}")
+      assert(Wcag.contrast(note, halo).value >= Wcag.AaText.value, s"$tone: note on halo ${Wcag.contrast(note, halo)}")
       for t <- tiles do
-        assert(Wcag.contrast(ink, t) >= Wcag.AaText, s"$tone: ink on tile $t: ${Wcag.contrast(ink, t)}")
-        assert(Wcag.contrast(note, t) >= Wcag.AaText, s"$tone: note on tile $t: ${Wcag.contrast(note, t)}")
+        assert(Wcag.contrast(ink, t).value >= Wcag.AaText.value, s"$tone: ink on tile $t: ${Wcag.contrast(ink, t)}")
+        assert(Wcag.contrast(note, t).value >= Wcag.AaText.value, s"$tone: note on tile $t: ${Wcag.contrast(note, t)}")
 
   test("#1442: the dark tone swaps the names' colours, and names use the tone's tokens"):
     val dark =
@@ -425,13 +425,13 @@ class CssTokensSuite extends munit.FunSuite:
       val (bg, fg, _) = looks(s)
       def tokenOf(v: String) = v.stripPrefix("var(").stripSuffix(")")
       val c = Wcag.contrast(colour(theme, tokenOf(fg)), colour(theme, tokenOf(bg)))
-      assert(c >= Wcag.AaText, f"$name: $s's word on its ground is ${c.value}%.2f")
+      assert(c.value >= Wcag.AaText.value, f"$name: $s's word on its ground is ${c.value}%.2f")
 
   test("#7381: a link is the accent in both themes, visited or not — never the browser's purple or pink"):
     assert(css.contains(":where(a) { color:var(--accent); }"), "every link takes the accent")
     assert(""":visited\s*\{""".r.findFirstIn(rules).isEmpty, "no rule gives visited links a colour of their own")
     for (name, theme) <- List("light" -> light, "dark" -> dark); bg <- List("--bg", "--panel", "--sunk") do
       assert(
-        Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)) >= Wcag.AaText,
+        Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)).value >= Wcag.AaText.value,
         s"$name: the link on $bg"
       )

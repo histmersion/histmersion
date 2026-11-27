@@ -953,7 +953,7 @@ final class ReviewArticlePipeline(
         units.indexWhere(u =>
           f.quote.value.trim.nonEmpty && AgentVerify
             .findQuote(
-              f.quote,
+              AgentProposals.Proposal.Quote(f.quote.value),
               AgentVerify.SourceBody(u.text.value),
               minRatio
             )

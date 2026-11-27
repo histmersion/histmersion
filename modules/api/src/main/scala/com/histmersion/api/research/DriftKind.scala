@@ -7,7 +7,6 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 
 enum DriftKind(val wire: DriftKind.Wire) derives CanEqual:
   case Unplaced extends DriftKind(DriftKind.Wire("unplaced"))
@@ -18,7 +17,8 @@ enum DriftKind(val wire: DriftKind.Wire) derives CanEqual:
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object DriftKind:
-  export GeoPick.Wire
+  type Wire = Wire.T
+  object Wire extends Newtype[String, Pure]
 
   given WireEnumValues[DriftKind]:
     def all: Array[DriftKind] = values

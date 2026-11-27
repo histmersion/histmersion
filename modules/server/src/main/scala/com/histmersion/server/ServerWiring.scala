@@ -367,6 +367,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
     * trip.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mentionedIn(citekey: Citekey): SourcesControllers.Markdown =
     SourcesControllers.Markdown(research.articles.mentionedIn(citekey))
 

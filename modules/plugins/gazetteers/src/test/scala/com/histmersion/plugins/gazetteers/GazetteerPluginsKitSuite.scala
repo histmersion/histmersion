@@ -15,6 +15,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class GazetteerPluginsKitSuite extends munit.FunSuite:
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixture(name: String): HttpAnswer.Body =
     HttpAnswer.Body(
       scala.io.Source.fromResource(s"gazetteers/$name")(using scala.io.Codec.UTF8).mkString.getBytes("UTF-8")

@@ -30,8 +30,8 @@ final private[events] case class EventGeoRow(
       e.id,
       EventGeo.Label(e.label.value),
       EventGeo.Kind(e.kind.value),
-      e.scale,
-      e.historicity,
+      EventGeo.Scale(e.scale.value),
+      EventGeo.Historicity(e.historicity.value),
       e.timeSpan,
       com.histmersion.api.catalogue.Latitude(lat.value),
       com.histmersion.api.catalogue.Longitude(lon.value),
@@ -47,7 +47,7 @@ final private[events] case class EventGeoRow(
           magnitude.map(m => LeadFacts.Magnitude(m.value))
         )
         .map(s => EventGeo.Size(s)),
-      e.precision,
+      EventGeo.Precision(e.precision.value),
       e.datingNote.map(EventGeo.Dating(_))
     )
 
@@ -56,5 +56,7 @@ object EventGeoRow:
   object Anchor extends Newtype[String, Pure]
   type PlaceLabel = PlaceLabel.T
   object PlaceLabel extends Newtype[String, Pure]
-  export CatalogueRefRow.Vei
-  export CatalogueRefRow.Magnitude
+  type Vei = Vei.T
+  object Vei extends Newtype[Int, Pure]
+  type Magnitude = Magnitude.T
+  object Magnitude extends Newtype[Double, Pure]

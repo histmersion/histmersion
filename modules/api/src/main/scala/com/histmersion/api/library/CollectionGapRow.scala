@@ -34,11 +34,16 @@ final case class CollectionGapRow(
       api.json.Schema
 
 object CollectionGapRow:
-  export CalibreGap.Summary
-  export CalibreGap.Topics
-  export CalibreGap.Provenance
-  export CalibreGap.Isbn
-  export CalibreGap.StoredOriginal
+  type Summary = Summary.T
+  object Summary extends Newtype[String, Pure]
+  type Topics = Topics.T
+  object Topics extends Newtype[String, Pure]
+  type Provenance = Provenance.T
+  object Provenance extends Newtype[String, Pure]
+  type Isbn = Isbn.T
+  object Isbn extends Newtype[String, Pure]
+  type StoredOriginal = StoredOriginal.T
+  object StoredOriginal extends Newtype[Boolean, Pure]
   type Original = Original.T
   object Original extends Newtype[String, Pure]
   type Counted = Counted.T

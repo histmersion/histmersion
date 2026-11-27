@@ -104,6 +104,7 @@ class RelatedListsRepoSuite extends DbSuite:
       EventPut(label = label, timeSpan = TimeSpan(Some(year), None, None, Some(year)), citekey = citekey)
     )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def beforeAll(): Unit =
     if testDb.isDefined then
       val _ = source(

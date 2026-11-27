@@ -157,7 +157,7 @@ object TreeTab:
       else Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("period"))
     ResultsPaging.countLine(
       Paging.Shown(data.total.value),
-      data.total,
+      Paging.Page.Total(data.total.value),
       Plural.Noun.Singular("source"),
       extras = List(
         UiLabels.Text(groups.value),

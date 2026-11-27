@@ -25,7 +25,8 @@ object RuntimeConfig:
   object Enabled extends Newtype[Boolean, Pure]
   type Home = Home.T
   object Home extends Newtype[String, Pure]
-  export InitConfig.DataDir
+  type DataDir = DataDir.T
+  object DataDir extends Newtype[String, Pure]
   type PgPort = PgPort.T
   object PgPort extends Newtype[Int, Pure]
   type ConverterPort = ConverterPort.T

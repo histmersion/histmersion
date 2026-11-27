@@ -90,12 +90,12 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
               section.map(_.value.toLowerCase) match
                 case None | Some("all") =>
                   ToolResultCap
-                    .source(ToolResultCap.Markdown(ToolResultCap.compactSource(md)), max)
+                    .source(ToolResultCap.Markdown(ToolResultCap.compactSource(ToolResultCap.Markdown(md.value))), max)
                 case Some("body") =>
                   cap(md.value, max, "read on with get_source section=\"body\" offset=… chars=…; a word: passages")
                 case Some("toc") => cap(md.value, max, "read one part with get_source heading=…")
                 case _           =>
-                  cap(ToolResultCap.plainLinks(md), max, "a word in the source: passages")
+                  cap(ToolResultCap.plainLinks(ToolResultCap.Markdown(md.value)), max, "a word in the source: passages")
           )
       }
     },
@@ -143,7 +143,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         site.labels
           .facets(
             Facet.Field.Wire(in.field.value),
-            in.prefix.map(p => p),
+            in.prefix.map(p => FilterSql.FacetPrefix(p.value)),
             facetsIn.toFilter
           )
           .left

@@ -94,7 +94,8 @@ object Stalls:
 
   object SchedWait:
     export Stall.Code
-    export AgentScheduler.Waiting.Position
+    type Position = Position.T
+    object Position extends Newtype[Int, Pure]
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
 
@@ -145,7 +146,8 @@ object Stalls:
 
   object Facts:
     export api.research.ReviewGoal.Slug
-    export Agents.RunRequest.Title
+    type Title = Title.T
+    object Title extends Newtype[String, Pure]
     type Status = Status.T
     object Status extends Newtype[String, Pure]
     type LastProgress = LastProgress.T

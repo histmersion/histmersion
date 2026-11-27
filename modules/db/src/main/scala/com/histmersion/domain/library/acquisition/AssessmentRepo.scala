@@ -47,7 +47,8 @@ private[acquisition] object AssessmentRepo:
     object CitedBy extends Newtype[Int, Pure]
     type Influential = Influential.T
     object Influential extends Newtype[Int, Pure]
-    export AssessmentRecord.Verdict
+    type Verdict = Verdict.T
+    object Verdict extends Newtype[String, Pure]
 
   /** Replace the whole mirror: the CSV is a full export, so a partial refresh would leave a mixture of two vintages.
     * Batched — 60 000 single inserts take minutes.

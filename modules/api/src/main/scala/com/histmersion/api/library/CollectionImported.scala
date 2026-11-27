@@ -34,7 +34,8 @@ final case class CollectionImported(
       api.json.Schema
 
 object CollectionImported:
-  export CollectionImportRequest.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
   type RelinkedFrom = RelinkedFrom.T
   object RelinkedFrom extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

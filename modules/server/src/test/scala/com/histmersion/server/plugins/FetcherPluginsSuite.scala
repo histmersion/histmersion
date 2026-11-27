@@ -146,12 +146,14 @@ class FetcherPluginsSuite extends munit.FunSuite:
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Problem, Http.Text] = Left(Problem.Unclassified(Legacy.Text("no")))
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(
         url: Http.Url,
         headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
     ): Either[Problem, HttpAnswer.Body] =
       record(url, headers); Right(HttpAnswer.Body("{}".getBytes("UTF-8")))
     // CORE is asked once, not retried, through its budget
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       record(url, headers);
       Right(HttpAnswer(HttpAnswer.Code(200), Map.empty, HttpAnswer.Body("{}".getBytes("UTF-8"))))

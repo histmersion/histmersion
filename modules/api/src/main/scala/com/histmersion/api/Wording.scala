@@ -243,6 +243,7 @@ object Wording:
       })
       .getOrElse(humanize(id))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val pluginNames: Map[ProviderKind.Plugin.Id, String] = Map(
     {
       val refactorTuple35 = "archive-org" -> "Internet Archive";

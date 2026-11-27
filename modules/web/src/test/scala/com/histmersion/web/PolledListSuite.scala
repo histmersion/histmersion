@@ -31,6 +31,7 @@ class PolledListSuite extends munit.FunSuite:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def job(id: SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) =
     JobInfo(id, JobKinds.Wire(Ingest.KindIngest), state.wire)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobId(id: String) = SpatialHierarchyResult.Job.Id(id)
   private def page(
       total: Paging.Page.Total,

@@ -13,7 +13,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.automation.managers.SweepAcquireItem
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -80,7 +79,8 @@ object GeoFeedRow:
   object RegionName extends Newtype[String, Pure]
   type Significance = Significance.T
   object Significance extends Newtype[String, Pure]
-  export SweepAcquireItem.Venue
+  type Venue = Venue.T
+  object Venue extends Newtype[String, Pure]
   type Provenance = Provenance.T
   object Provenance extends Newtype[String, Pure]
   type Tags = Tags.T

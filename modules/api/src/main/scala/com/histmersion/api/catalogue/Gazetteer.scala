@@ -22,7 +22,6 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 
 @atBoundary(BoundaryKind.Json, "reads gazetteer download files into place records")
 object Gazetteer:
@@ -91,12 +90,13 @@ object Gazetteer:
     case Some(Kind.Tgn)      => Rank(3)
     case Some(Kind.Geonames) => Rank(4)
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val ImportedSources: List[ImportedSources] =
     List(
       Kind.Wikidata,
       Kind.Geonames,
       Kind.Tgn
-    ).map(k => sourceKey(k))
+    ).map(k => SourceInfo.Key((sourceKey(k)).value))
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[Place.Id] =
@@ -142,8 +142,9 @@ object Gazetteer:
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val PointAreaSources: List[PointAreaSources] =
-    (ImportedSources).map(refactorValue16 => refactorValue16)
+    (ImportedSources).map(refactorValue16 => SourceInfo.Key((refactorValue16).value))
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
@@ -320,9 +321,9 @@ object Gazetteer:
             names = mergeNames(all),
             links = readLinks(f).filterNot(l => own.contains(l.id)),
             source = in.place.source
-              .map(s => s)
+              .map(s => GazRecord.Source(s.value))
               .orElse(defaultSource.map(k => GazRecord.Source(k.value))),
-            properties = in.place.properties.map(p => p),
+            properties = in.place.properties.map(p => GazRecord.Properties(p.value)),
             descriptions = readDescriptions(f),
             itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")).map(c => GazRecord.ItemClass(c))
           )
@@ -470,7 +471,8 @@ object Gazetteer:
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Kind:
-    export GeoPick.Wire
+    type Wire = Wire.T
+    object Wire extends Newtype[String, Pure]
 
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -629,5 +631,7 @@ object Gazetteer:
     object Names extends Newtype[Int, Pure]
     type Links = Links.T
     object Links extends Newtype[Int, Pure]
-    export LpfDataset.Licence
-    export LpfDataset.Citation
+    type Licence = Licence.T
+    object Licence extends Newtype[String, Pure]
+    type Citation = Citation.T
+    object Citation extends Newtype[String, Pure]
