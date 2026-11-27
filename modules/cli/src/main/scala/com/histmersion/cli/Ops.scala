@@ -101,7 +101,7 @@ object Ops:
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
           val f = dir.resolve(kind.file.value)
-          if !Files.isRegularFile(f) then Right(done :+ s"${kind.file}: absent, skipped")
+          if !Files.isRegularFile(f) then Right(done :+ shown"${kind.file}: absent, skipped")
           else
             c.queueImport(
               Queue.Wire(kind.label.value),

@@ -35,7 +35,8 @@ object CollectionEntry:
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
   type IdentifiersKey = IdentifiersKey.T
-  object IdentifiersKey extends Newtype[String, Pure]
+  object IdentifiersKey extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type IdentifiersValue = IdentifiersValue.T
   object IdentifiersValue extends Newtype[String, Pure]
   type Formats = Formats.T

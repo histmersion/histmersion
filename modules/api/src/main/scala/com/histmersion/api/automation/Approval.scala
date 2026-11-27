@@ -11,6 +11,8 @@ import com.histmersion.api.Wording
 object Approval:
   type Note = Note.T
   object Note extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     private def text(n: Note): String = n.value
 
     extension (n: Note)

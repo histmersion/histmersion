@@ -29,7 +29,8 @@ object MapLists:
   type Asked = Asked.T
   object Asked extends Newtype[String, Pure]
   type CountLine = CountLine.T
-  object CountLine extends Newtype[String, Pure]
+  object CountLine extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type ListedCount = ListedCount.T
   object ListedCount extends Newtype[Int, Pure]
   type OnMap = OnMap.T
@@ -227,7 +228,7 @@ object MapLists:
                 hs.map(placeRow),
                 MapListState.Total(hs.size),
                 MapListState.Note(
-                  s"${countLine(ListedCount(hs.size), TotalCount(hs.size), Plural.Noun.Singular("place"), Plural.Noun.Plural("places"), onMap = OnMap(false))} named like “$words”"
+                  shown"${countLine(ListedCount(hs.size), TotalCount(hs.size), Plural.Noun.Singular("place"), Plural.Noun.Plural("places"), onMap = OnMap(false))} named like “$words”"
                 )
               )
             ),

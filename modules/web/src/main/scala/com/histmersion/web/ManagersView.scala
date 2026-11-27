@@ -95,7 +95,8 @@ object ManagersView:
   type WaitMeaning = WaitMeaning.T
   object WaitMeaning extends Newtype[String, Pure]
   type WaitingSummary = WaitingSummary.T
-  object WaitingSummary extends Newtype[String, Pure]
+  object WaitingSummary extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type WriteLabel = WriteLabel.T
   object WriteLabel extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
@@ -673,7 +674,7 @@ object ManagersView:
         )
       ),
       Option.when(f.waiting.nonEmpty)(
-        div(cls := "muted focus-heading", s"cannot use a slot now: ${waitingSummary(f.waiting)}")
+        div(cls := "muted focus-heading", shown"cannot use a slot now: ${waitingSummary(f.waiting)}")
       )
     )
 
@@ -1123,7 +1124,7 @@ object ManagersView:
                         s" · ${Wording.manager(Wording.Id(x.manager.value))}"
                       )
                     ),
-                    div(cls := "muted", s"${x.why}")
+                    div(cls := "muted", shown"${x.why}")
                   )
                 )
               )
@@ -1184,7 +1185,7 @@ object ManagersView:
                           (if w.position.value > 0 then s" · #${w.position} in line" else "")
                       )
                     ),
-                    div(cls := "job-progress", s"${w.why}"),
+                    div(cls := "job-progress", shown"${w.why}"),
                     Option.when(w.behind.nonEmpty)(div(cls := "muted", s"behind ${w.behind.mkString(", ")}")),
                     div(
                       cls := "job-meta muted",
@@ -1403,7 +1404,7 @@ object ManagersView:
                 else
                   ul(
                     cls := "manager-events",
-                    es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), s" ${e.text}"))
+                    es.map(e => li(span(cls := "muted", s"${e.at} · "), strong(e.kind), shown" ${e.text}"))
                   )
               )
           )
@@ -1483,7 +1484,7 @@ object ManagersView:
                 li(
                   span(cls := "muted", s"${e.at} · "),
                   strong(e.kind),
-                  s" ${e.text}",
+                  shown" ${e.text}",
                   e.runId.map(r =>
                     span(" ", WinLink(WindowKey.Run(WindowKey.Run.Id(r.value)), s"run ${r.value.take(8)}"))
                   )

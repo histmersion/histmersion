@@ -91,9 +91,9 @@ object SettingsStore:
         cls := "settings-saved-line",
         if w.changed.isEmpty then "Nothing to save: the settings file already says so."
         else
-          s"Saved in the settings file (${w.file}). " + (if reloadErrors.isEmpty && w.restart.isEmpty then
-                                                           "It applies now."
-                                                         else "")
+          shown"Saved in the settings file (${w.file}). " + (if reloadErrors.isEmpty && w.restart.isEmpty then
+                                                               "It applies now."
+                                                             else "")
       ),
       Option.when(w.restart.nonEmpty)(restartLine(w)),
       w.warnings.map(x => p(cls := "settings-warning", x)),

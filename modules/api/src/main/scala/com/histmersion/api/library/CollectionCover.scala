@@ -20,6 +20,7 @@ final case class CollectionCover(
 
 object CollectionCover:
   type Line = Line.T
-  object Line extends Newtype[String, Pure]
+  object Line extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Warning = Warning.T
   object Warning extends Newtype[Boolean, Pure]

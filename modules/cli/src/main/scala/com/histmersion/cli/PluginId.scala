@@ -17,7 +17,8 @@ object PluginId extends Newtype[String, Match["[a-z][a-z0-9]*(-[a-z0-9]+)*"]]:
   type PackageName = PackageName.T
   object PackageName extends Newtype[String, Pure]
   type TypeName = TypeName.T
-  object TypeName extends Newtype[String, Pure]
+  object TypeName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   def parse(raw: String): Either[String, PluginId] =
     either(raw).left.map(_ =>

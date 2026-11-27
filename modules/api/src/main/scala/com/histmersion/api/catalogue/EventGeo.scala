@@ -37,7 +37,8 @@ final case class EventGeo(
 object EventGeo:
 
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
   type Scale = Scale.T
@@ -48,7 +49,8 @@ object EventGeo:
   object Anchor extends Newtype[String, Pure]
   type PlaceLabel = PlaceLabel.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object PlaceLabel extends Newtype[String, Pure]
+  object PlaceLabel extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type ParentId = ParentId.T
   object ParentId extends Newtype[String, Pure]
   type Outline = Outline.T

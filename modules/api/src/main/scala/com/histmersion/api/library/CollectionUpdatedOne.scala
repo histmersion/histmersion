@@ -22,6 +22,7 @@ final case class CollectionUpdatedOne(
 
 object CollectionUpdatedOne:
   type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  object Id extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Changed = Changed.T
   object Changed extends Newtype[String, Pure]

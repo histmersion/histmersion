@@ -29,7 +29,8 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object GoalPage:
   type DaysText = DaysText.T
-  object DaysText extends Newtype[String, Pure]
+  object DaysText extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type LastCheck = LastCheck.T
   object LastCheck extends Newtype[String, Pure]
   type LinkTarget = LinkTarget.T
@@ -112,8 +113,8 @@ object GoalPage:
     val currency = v.schedules.find(_.kind == ScheduleKind.Currency)
     val last = currency.flatMap(_.lastRunAt).map(_.value).orElse(lastCheck.map(_.value))
     val next = currency.flatMap(_.nextRunAt).map(_.value).orElse(watcher.flatMap(_.nextTickAt).map(_.value))
-    val parts = last.map(t => s"checked for new publications ${days(Millis(js.Date.parse(t)), nowMs)}").toList ++
-      next.map(t => s"next check ${days(Millis(js.Date.parse(t)), nowMs)}").toList
+    val parts = last.map(t => shown"checked for new publications ${days(Millis(js.Date.parse(t)), nowMs)}").toList ++
+      next.map(t => shown"next check ${days(Millis(js.Date.parse(t)), nowMs)}").toList
     Option.when(parts.nonEmpty)(ScheduleText(parts.mkString(" · ")))
 
   /** The goal's managers paused (all of them): what "Pause this goal" undoes. */
@@ -443,7 +444,7 @@ object GoalPage:
     def countLink(n: Signal[Option[RowCount]], one: Plural.Noun.Singular, many: Plural.Noun.Plural, to: LinkTarget) =
       a(
         href := to,
-        child.text <-- n.map(_.fold("…")(c => if c.value == 1 then s"1 $one" else s"$c $many")),
+        child.text <-- n.map(_.fold("…")(c => if c.value == 1 then shown"1 $one" else s"$c $many")),
         onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); Router.goHref(to.value) } }
       )
     sectionTag(

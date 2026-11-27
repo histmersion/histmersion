@@ -26,7 +26,8 @@ object MergeDecision:
     given Display[T] = Display(wire => Wording.humanize(Wording.Id(wire.value)))
 
   type Argument = Argument.T
-  object Argument extends Newtype[String, Pure]
+  object Argument extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   enum Kind derives CanEqual:
     /** Keep this collection's version. */

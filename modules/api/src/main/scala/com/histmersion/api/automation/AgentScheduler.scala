@@ -14,7 +14,8 @@ import com.histmersion.api.Wording
 object AgentScheduler:
   /** Why the scheduler started, keeps waiting or holds an item: the narration of its decision, not a failure. */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe(""))
       derives JsonCodec,
@@ -23,7 +24,8 @@ object AgentScheduler:
 
   object StrategyLine:
     type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    object Name extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Describe = Describe.T
     object Describe extends Newtype[String, Pure]
 

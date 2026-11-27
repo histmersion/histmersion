@@ -91,7 +91,8 @@ object Source:
   type Provenance = Provenance.T
   object Provenance extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends Newtype[String, Pure]
+  object CalibreId extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type OcrMarkdown = OcrMarkdown.T
   object OcrMarkdown extends Newtype[String, Pure]
   type Notes = Notes.T

@@ -542,7 +542,8 @@ object Managers:
     object Kind extends Newtype[String, Pure]:
       given Display[T] = Display(kind => Wording.humanize(Wording.Id(kind.value)))
     type Text = Text.T
-    object Text extends Newtype[String, Pure]
+    object Text extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -828,7 +829,8 @@ object Managers:
 
   object HintProposal:
     type Hint = Hint.T
-    object Hint extends Newtype[Long, Pure]
+    object Hint extends Newtype[Long, Pure]:
+      given Display[T] = Display(hint => s"${hint.value}")
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     type By = By.T

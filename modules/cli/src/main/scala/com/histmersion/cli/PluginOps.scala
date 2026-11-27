@@ -264,7 +264,7 @@ final class PluginOps(using console: Console)(
         _ <- o.sha256
           .map(_.value.trim.toLowerCase)
           .filter(_ != sha.value)
-          .map(w => err(s"SHA-256 mismatch: expected $w, got $sha — not installed"))
+          .map(w => err(shown"SHA-256 mismatch: expected $w, got $sha — not installed"))
           .toLeft(())
         signer <- signature(stage, asc, verifying, o.unsigned.value)
         spi <- spiVersion
@@ -387,7 +387,7 @@ final class PluginOps(using console: Console)(
           "  its access is UNAUTHORISED: it runs only with histmersion.acquire.allow-unauthorised = true, never on the legal-only path"
         )
     }
-    Cli.out.println(s"file ${jar.file} · SHA-256 $sha")
+    Cli.out.println(shown"file ${jar.file} · SHA-256 $sha")
     Cli.out.println(s"from $source")
     if dependencies.isEmpty then Cli.out.println("dependencies: none of its own (no POM lists any)")
     else dependencies.foreach(value => Cli.out.println(value))
@@ -502,6 +502,6 @@ object PluginOps:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ask(question: Cli.Question)(using console: Console): Boolean =
     console
-      .readTerminalLine(Console.Prompt(s"$question [y/N] "))
+      .readTerminalLine(Console.Prompt(shown"$question [y/N] "))
       .map(_.value.trim.toLowerCase)
       .exists(a => a == "y" || a == "yes")

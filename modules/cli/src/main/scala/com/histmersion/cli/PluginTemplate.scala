@@ -13,7 +13,8 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object PluginTemplate:
   type ClassName = ClassName.T
-  object ClassName extends Newtype[String, Pure]
+  object ClassName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   final case class Request(
       id: PluginId,
@@ -77,11 +78,11 @@ object PluginTemplate:
     val core = List(
       TemplateFile(TemplateFile.Path(ProjectFile), TemplateFile.Content(fill(r, directives(r)))),
       TemplateFile(
-        TemplateFile.Path(s"$name.scala"),
+        TemplateFile.Path(shown"$name.scala"),
         TemplateFile.Content(fill(r, header(r) + KindSources.main(r.kind)))
       ),
       TemplateFile(
-        TemplateFile.Path(s"$name.test.scala"),
+        TemplateFile.Path(shown"$name.test.scala"),
         TemplateFile.Content(fill(r, header(r) + KindSources.test(r.kind) + packagingSuite))
       ),
       TemplateFile(TemplateFile.Path("README.md"), TemplateFile.Content(fill(r, readme))),
@@ -89,7 +90,7 @@ object PluginTemplate:
         TemplateFile.Path(".gitignore"),
         TemplateFile.Content(s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n")
       ),
-      TemplateFile(TemplateFile.Path(ServicesPath), TemplateFile.Content(s"${r.pkg.value}.${pluginClass(r.id)}\n")),
+      TemplateFile(TemplateFile.Path(ServicesPath), TemplateFile.Content(shown"${r.pkg}.${pluginClass(r.id)}\n")),
       TemplateFile(defaultsPath(r.id), TemplateFile.Content(fill(r, KindSources.defaults(r.kind)))),
       TemplateFile(nativeMetadataPath(r.id, r.pkg), TemplateFile.Content(nativeMetadata(r)))
     )

@@ -20,8 +20,10 @@ object SeedResult:
   type Imported = Imported.T
   object Imported extends Newtype[Int, Pure]
   type Failed = Failed.T
-  object Failed extends Newtype[String, Pure]
+  object Failed extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type EdgesResolved = EdgesResolved.T
   object EdgesResolved extends Newtype[Int, Pure]
   type Skipped = Skipped.T
-  object Skipped extends Newtype[String, Pure]
+  object Skipped extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

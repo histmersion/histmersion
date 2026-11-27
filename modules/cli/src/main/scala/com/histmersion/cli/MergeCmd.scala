@@ -51,7 +51,8 @@ object MergeCmd:
   object ResolutionFlags:
 
     type File = File.T
-    object File extends Newtype[String, Pure]
+    object File extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Editions = Editions.T
     object Editions extends Newtype[String, Pure]
 
@@ -64,7 +65,7 @@ object MergeCmd:
       case None    => Right(MergeResolutions())
       case Some(p) =>
         val path = Path.of(p.value)
-        if !Files.isRegularFile(path) then Left(List(Problem.Unclassified(Legacy.Text(s"no such file: $p"))))
+        if !Files.isRegularFile(path) then Left(List(Problem.Unclassified(Legacy.Text(shown"no such file: $p"))))
         else
           MergeResolutionsFile
             .parse(MergeResolutionsFile.Text(Files.readString(path)))
@@ -109,7 +110,7 @@ object MergeCmd:
         case Some(_) if x.text.isDefined => Right(x)
         case Some(p)                     =>
           val path = Path.of(p.value)
-          if !Files.isRegularFile(path) then Left(s"${x.issue}: file:$p — no such file")
+          if !Files.isRegularFile(path) then Left(shown"${x.issue}: file:$p — no such file")
           else
             scala.util
               .Try(Files.readString(path))

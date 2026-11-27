@@ -63,6 +63,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 object CommandLine:
   type HelpText = HelpText.T
   object HelpText extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     extension (help: HelpText)
       /** Whether the help says `words` anywhere. */
       def mentions(words: String): Boolean = help.value.contains(words)

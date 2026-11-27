@@ -14,6 +14,8 @@ final case class PluginSetting(key: PluginSetting.Key, value: PluginSetting.Valu
 
 object PluginSetting:
   type Key = Key.T
-  object Key extends Newtype[String, Pure]
+  object Key extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Value = Value.T
-  object Value extends Newtype[String, Pure]
+  object Value extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

@@ -65,7 +65,8 @@ object Cli:
         case Return => Right(())
 
   type Question = Question.T
-  object Question extends Newtype[String, Pure]
+  object Question extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type QuietOutput = QuietOutput.T
   object QuietOutput extends Newtype[Boolean, Pure]
   type Strict = Strict.T
@@ -87,8 +88,8 @@ object Cli:
       s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), " +
         s"failed ${r.failed.size}, edges unified ${r.edgesResolved}"
     )
-    r.skipped.take(10).foreach(s => out.println(s"  ~ $s"))
-    r.failed.take(10).foreach(f => err.println(s"  ! $f"))
+    r.skipped.take(10).foreach(s => out.println(shown"  ~ $s"))
+    r.failed.take(10).foreach(f => err.println(shown"  ! $f"))
 
   /** Seed from a directory on THIS machine: the CLI reads each note and posts its text, so a corpus the container
     * cannot see still gets in. Progress is printed per file; the edge-unification pass a server-side seed does at the
@@ -229,7 +230,7 @@ object Cli:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def confirm(question: Question)(using console: Console): Boolean =
-    err.print(s"$question [y/N] ")
+    err.print(shown"$question [y/N] ")
     err.flush()
     Option(console.readLine()).map(_.value.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
@@ -430,8 +431,8 @@ object Cli:
     def apply(cmd: TopCommand): Either[Error, Unit] =
       cmd match
         case TopCommand.Version() =>
-          out.println(s"cli    ${Version.name} ${Version.version}")
-          c.version.map(v => out.println(s"server ${v.name} ${v.version}"))
+          out.println(shown"cli    ${Version.name} ${Version.version}")
+          c.version.map(v => out.println(shown"server ${v.name} ${v.version}"))
         case TopCommand.Health() =>
           c.health.map(h =>
             out.println(

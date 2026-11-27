@@ -53,10 +53,10 @@ object AboutView:
     val build = Section(
       "Server",
       List(
-        Row("version", s"${a.name} ${b.version}"),
+        Row("version", shown"${a.name} ${b.version}"),
         Row(
           "commit",
-          b.gitCommit.fold("unknown")(c => if b.dirty.value then s"$c (with uncommitted changes)" else s"$c")
+          b.gitCommit.fold("unknown")(c => if b.dirty.value then shown"$c (with uncommitted changes)" else shown"$c")
         ),
         Row("commit date", b.commitDate.fold("unknown")(_.value)),
         Row("licence", b.licence.fold("unknown")(_.value)),
@@ -71,7 +71,7 @@ object AboutView:
           "config file",
           a.configFile.path.fold("none")(_ => if a.configFile.loaded.value then "read" else "not found"),
           detail = a.configFile.path.map(p =>
-            if a.configFile.unknownKeys.isEmpty then s"$p"
+            if a.configFile.unknownKeys.isEmpty then shown"$p"
             else s"$p · ignored unknown: ${a.configFile.unknownKeys.mkString(", ")}"
           )
         )
@@ -142,7 +142,7 @@ object AboutView:
       )
       val rows = Storage.shown(r.entries).map { (e, depth) =>
         Row(
-          if e.host.value == "server" then e.label.value else s"${e.label} (this machine)",
+          if e.host.value == "server" then e.label.value else shown"${e.label} (this machine)",
           Storage.size(e),
           state = Option.when(e.partial.value)(ServiceState.Busy),
           detail = Option(Storage.details(r, e) ++ e.path.toList).filter(_.nonEmpty).map(_.mkString(" · ")),
@@ -183,7 +183,7 @@ object AboutView:
           val detail = List(
             Some(shown"v${p.version}"),
             Option.when(p.provides.nonEmpty)(p.provides.mkString(", ")),
-            Option.when(p.settings.nonEmpty)(p.settings.map(s => s"${s.key} = ${s.value}").mkString(", ")),
+            Option.when(p.settings.nonEmpty)(p.settings.map(s => shown"${s.key} = ${s.value}").mkString(", ")),
             Option.when(p.errors.nonEmpty)(p.errors.map(_.sentence).mkString("; ")),
             Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))
           ).flatten.mkString(" · ")

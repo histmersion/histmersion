@@ -210,8 +210,8 @@ object ArticleCli:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def report(r: SeedResult)(using console: Console): Unit =
     Cli.out.println(s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), failed ${r.failed.size}")
-    r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
-    r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
+    r.skipped.take(10).foreach(s => Cli.out.println(shown"  ~ $s"))
+    r.failed.take(10).foreach(f => Cli.err.println(shown"  ! $f"))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def usage(problem: Problem): Cli.Error = Cli.Error(problem)

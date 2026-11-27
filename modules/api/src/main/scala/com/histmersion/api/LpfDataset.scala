@@ -18,7 +18,8 @@ final case class LpfDataset(
 
 object LpfDataset:
   type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  object Title extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Citation = Citation.T
   object Citation extends Newtype[String, Pure]
   type Licence = Licence.T

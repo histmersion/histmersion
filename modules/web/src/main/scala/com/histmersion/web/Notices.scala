@@ -28,7 +28,8 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object Notices:
   type Spoken = Spoken.T
-  object Spoken extends Newtype[String, Pure]
+  object Spoken extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 

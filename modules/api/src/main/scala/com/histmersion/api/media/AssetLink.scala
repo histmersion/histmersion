@@ -32,7 +32,8 @@ final case class AssetLink(
 object AssetLink:
 
   type Id = Id.T
-  object Id extends Newtype[Long, Pure]
+  object Id extends Newtype[Long, Pure]:
+    given Display[T] = Display(id => s"${id.value}")
   export AssetRelation.Wire as Relation
   type Xywh = Xywh.T
   object Xywh extends Newtype[String, Pure]

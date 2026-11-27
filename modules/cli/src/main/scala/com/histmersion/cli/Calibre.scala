@@ -340,7 +340,7 @@ object Calibre:
       case Some(linked) if explicit.value                          =>
         Right(ImportTarget.Update(linked.map(l => ImportTarget.Update.Previous(l.value))))
       case Some(linked) =>
-        val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
+        val what = linked.fold("a record that is not linked to Calibre")(l => shown"the record of Calibre id $l")
         Left(
           Problem.Unclassified(
             Legacy.Text(
@@ -471,7 +471,7 @@ object Calibre:
       changes: List[Change]
   ): List[String] =
     List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
-      changes.flatMap(c => List("--field", s"${c.field.name}:${c.to}"))
+      changes.flatMap(c => List("--field", shown"${c.field.name}:${c.to}"))
 
   /** Calibre's identifiers with the record's merged in: the DOI is the record's (it names the work the corpus cites),
     * an ISBN only fills a gap, and nothing Calibre has is ever dropped. A DOI is case-insensitive, so one differing
@@ -641,7 +641,7 @@ object Calibre:
           )
       )
     yield List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
-      fields.flatMap(f => List("--field", s"${f.name}:${f.value}"))
+      fields.flatMap(f => List("--field", shown"${f.name}:${f.value}"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAddedId(out: String): Option[Book.Id] =

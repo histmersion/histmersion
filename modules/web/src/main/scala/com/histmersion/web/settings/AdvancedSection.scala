@@ -59,7 +59,7 @@ object AdvancedSection:
         case Some(Right(p)) =>
           div(
             cls := "advanced-file muted",
-            p.file.fold("This server has no settings file.")(f => s"Settings file: $f"),
+            p.file.fold("This server has no settings file.")(f => shown"Settings file: $f"),
             p.problems.map(x => ErrorLine.text(Problem.Unclassified(Legacy.Text(x.value))))
           )
       },
@@ -109,13 +109,15 @@ object AdvancedSection:
         onClick.preventDefault --> (_ => open.update(!_)),
         span(cls := "advanced-name", sectionName(s.id)),
         span(cls := "muted", s" · ${s.fields.size}"),
-        Option.when(s.doc.value.nonEmpty)(span(cls := "advanced-doc muted", s" — ${s.doc}"))
+        Option.when(s.doc.value.nonEmpty)(span(cls := "advanced-doc muted", shown" — ${s.doc}"))
       ),
       children <-- open.signal.combineWith(query).map { (o, q) =>
         if !o && q.value.trim.isEmpty then Nil
         else
           shown
             .filter(matches(_, q))
-            .map(f => SettingControl(f, draft, Some(SettingsForm.Item.Name(f.relative.value.stripPrefix(s"${s.id}.")))))
+            .map(f =>
+              SettingControl(f, draft, Some(SettingsForm.Item.Name(f.relative.value.stripPrefix(shown"${s.id}."))))
+            )
       }
     )

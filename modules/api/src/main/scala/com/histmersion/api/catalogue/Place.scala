@@ -321,7 +321,8 @@ object Place:
 
   object Description:
     type Text = Text.T
-    object Text extends Newtype[String, Pure]
+    object Text extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export Name.Lang
     export Place.Source
 
@@ -642,7 +643,8 @@ object Place:
   object Link:
     type SchemeTitle = SchemeTitle.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object SchemeTitle extends Newtype[String, Pure]
+    object SchemeTitle extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Url = Url.T
     object Url extends Newtype[String, Pure]
 

@@ -392,7 +392,7 @@ object PointKinds:
       )
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def label(h: MediaGeoHit): UiLabels.Text = UiLabels.Text(s"${h.assetName.value} · ${note(h)}")
+    def label(h: MediaGeoHit): UiLabels.Text = UiLabels.Text(shown"${h.assetName} · ${note(h)}")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def action(h: MediaGeoHit): UiLabels.Text = UiLabels.Text("open this picture")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

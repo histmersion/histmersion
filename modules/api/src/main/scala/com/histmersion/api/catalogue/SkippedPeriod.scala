@@ -21,7 +21,8 @@ object SkippedPeriod:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Detail = Detail.T
   object Detail extends Newtype[String, Pure]
 

@@ -712,8 +712,8 @@ object QueueView:
           case _            => div(cls := "item-text", segments(UiLabels.Text(item.text.value)).map(render))
         },
         item.reason
-          .filter(w => s"$w".trim.nonEmpty)
-          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(s"$r")).map(render))),
+          .filter(w => shown"$w".trim.nonEmpty)
+          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(shown"$r")).map(render))),
         item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.value.take(10)}")),
         check
           .filter(_ => !done)

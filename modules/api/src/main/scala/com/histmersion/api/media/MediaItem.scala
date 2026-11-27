@@ -40,7 +40,8 @@ final case class MediaItem(
 
 object MediaItem:
   type Uid = Uid.T
-  object Uid extends Newtype[String, Pure]
+  object Uid extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
   type ProviderKey = ProviderKey.T

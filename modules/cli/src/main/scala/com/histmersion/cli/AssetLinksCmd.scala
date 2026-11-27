@@ -59,4 +59,4 @@ object AssetLinksCmd:
             )
           ).map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
         case Command.Rm(id) =>
-          c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
+          c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(shown"Deleted asset link #${d.id}."))

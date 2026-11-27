@@ -32,11 +32,13 @@ object EventCatalogueRef:
   type Url = Url.T
   object Url extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  object Title extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Licence = Licence.T
   object Licence extends Newtype[String, Pure]
   type Citation = Citation.T
-  object Citation extends Newtype[String, Pure]
+  object Citation extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Vei = Vei.T
   object Vei extends Newtype[Int, Pure]
   type Magnitude = Magnitude.T

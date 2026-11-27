@@ -35,7 +35,8 @@ object DotCluster:
   type StartLabel = StartLabel.T
   object StartLabel extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends Newtype[String, Pure]
+  object Summary extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
   type Undated = Undated.T

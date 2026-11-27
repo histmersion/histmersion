@@ -37,8 +37,10 @@ object CollectionImported:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type RelinkedFrom = RelinkedFrom.T
-  object RelinkedFrom extends Newtype[String, Pure]
+  object RelinkedFrom extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type File = File.T
-  object File extends Newtype[String, Pure]
+  object File extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type JobErrorCode = JobErrorCode.T
   object JobErrorCode extends Newtype[String, Pure]

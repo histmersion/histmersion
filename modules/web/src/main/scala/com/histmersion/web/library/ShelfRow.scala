@@ -38,7 +38,7 @@ object ShelfRow:
       Option(where.value).filter(_.nonEmpty)
     ).flatten.mkString(" · ")
     ShelfRow(
-      s"bookmark:${b.id.value}",
+      shown"bookmark:${b.id}",
       b.target,
       b.name.value,
       b.target.kind.label.value,

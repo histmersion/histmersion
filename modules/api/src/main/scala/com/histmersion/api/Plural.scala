@@ -12,9 +12,11 @@ object Plural:
     object Form extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type Plural = Plural.T
-    object Plural extends Newtype[String, Pure]
+    object Plural extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Singular = Singular.T
-    object Singular extends Newtype[String, Pure]
+    object Singular extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
   type Count = Count.T
   object Count extends Newtype[Long, Pure]
   type Phrase = Phrase.T

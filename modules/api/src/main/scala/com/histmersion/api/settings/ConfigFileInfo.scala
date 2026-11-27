@@ -20,7 +20,8 @@ final case class ConfigFileInfo(
 object ConfigFileInfo:
 
   type Path = Path.T
-  object Path extends Newtype[String, Pure]
+  object Path extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Loaded = Loaded.T
   object Loaded extends Newtype[Boolean, Pure]
   type UnknownKeys = UnknownKeys.T

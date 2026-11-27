@@ -23,4 +23,5 @@ object CollectionFieldValue:
   object Name extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type Value = Value.T
-  object Value extends Newtype[String, Pure]
+  object Value extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

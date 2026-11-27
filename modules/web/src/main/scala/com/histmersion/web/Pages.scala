@@ -131,7 +131,7 @@ object Pages:
       child.maybe <-- c
         .map(Notices.spoken)
         .distinct
-        .map(s => Option.when(s.value.nonEmpty)(span(cls := "sr-only", s", ${s.value}")))
+        .map(s => Option.when(s.value.nonEmpty)(span(cls := "sr-only", shown", $s")))
     )
 
   // ── Library ─────────────────────────────────────────────────────────────────────────────────────

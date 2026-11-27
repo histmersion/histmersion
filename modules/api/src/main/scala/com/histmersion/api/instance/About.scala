@@ -40,7 +40,8 @@ final case class About(
 
 object About:
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type LastBackupAgeSeconds = LastBackupAgeSeconds.T
   object LastBackupAgeSeconds extends Newtype[Long, Pure]
   type Problems = Problems.T

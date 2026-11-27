@@ -37,7 +37,8 @@ object ArticlePatches:
   type ReasonText = ReasonText.T
   object ReasonText extends Newtype[String, Pure]
   type TextFile = TextFile.T
-  object TextFile extends Newtype[String, Pure]
+  object TextFile extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
@@ -197,7 +198,7 @@ object ArticlePatches:
     case Some(f) =>
       val p = java.nio.file.Path.of(f.value)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(wrap(java.nio.file.Files.readString(p))))
-      else Left(Problem.Unclassified(Legacy.Text(s"no such file: $f")))
+      else Left(Problem.Unclassified(Legacy.Text(shown"no such file: $f")))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")

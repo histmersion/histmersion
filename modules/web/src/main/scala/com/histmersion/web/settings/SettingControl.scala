@@ -14,7 +14,8 @@ import com.histmersion.web.{:=, given}
   */
 object SettingControl:
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** The name a setting is shown by: its last word, as words (`contact-email` → "Contact email"). Pure. */
 
@@ -125,13 +126,13 @@ object SettingControl:
               case Some(None)                                      => "Back to the default when saved."
               case Some(Some(_))                                   => "Changed — not saved yet."
               case None if f.source == ConfigEdit.Source.File.wire =>
-                s"Set in the settings file. ${defaultText(f.kind, dflt)}"
+                shown"Set in the settings file. ${defaultText(f.kind, dflt)}"
               case None if f.kind.value == "flag" => defaultText(f.kind, dflt).value
               case None                           => s"The default${if dflt.value.isEmpty then "" else shown": $dflt"}."
           )
         )
       ),
-      f.resolved.map(size => span(cls := "setting-resolved", s" Auto comes to $size on the server's machine.")),
+      f.resolved.map(size => span(cls := "setting-resolved", shown" Auto comes to $size on the server's machine.")),
       f.restart.map(why => span(cls := "setting-restart", s" Takes effect after a restart ($why).")),
       Option.when(f.source == ConfigEdit.Source.File.wire && f.locked.isEmpty)(
         button(

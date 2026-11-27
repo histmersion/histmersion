@@ -25,7 +25,8 @@ object EventPlayback:
   type FadeYears = FadeYears.T
   object FadeYears extends Newtype[Double, Pure]
   type Note = Note.T
-  object Note extends Newtype[String, Pure]
+  object Note extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Rank = Rank.T
   object Rank extends Newtype[Double, Pure]
   type Seconds = Seconds.T
@@ -116,7 +117,7 @@ object EventPlayback:
   def html(e: EventGeo, alpha: Alpha): Html =
     val local = e.scale.value != EventScale.Regional
     val title =
-      s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
+      s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => shown" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
     val dot = if local then
       markup"""<span class="hd-event-dot hd-badge">${Glyphs.badge(

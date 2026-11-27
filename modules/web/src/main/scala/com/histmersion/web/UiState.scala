@@ -538,7 +538,8 @@ object UiState:
 
   object ActiveChip:
     type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    object Label extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     export UiState.FilterTerm as Value
     type Shown = Shown.T
     object Shown extends Newtype[String, Pure]

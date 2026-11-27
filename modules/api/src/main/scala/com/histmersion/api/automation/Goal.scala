@@ -44,7 +44,8 @@ final case class Goal(
 object Goal:
   /** Why a plan names a work: the planner's words, not a failure. */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   type Export = Export.T
   object Export extends Newtype[String, Pure]
@@ -307,9 +308,11 @@ object Goal:
       object Ref extends Newtype[String, Pure]:
         given Display[T] = Display(_.value)
       type Note = Note.T
-      object Note extends Newtype[String, Pure]
+      object Note extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type Title = Title.T
-      object Title extends Newtype[String, Pure]
+      object Title extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type CreatedAt = CreatedAt.T
       object CreatedAt extends Newtype[String, Pure]
       type Queue = Queue.T
@@ -361,7 +364,8 @@ object Goal:
       type LastRun = LastRun.T
       object LastRun extends Newtype[String, Pure]
       type LastNote = LastNote.T
-      object LastNote extends Newtype[String, Pure]
+      object LastNote extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
 
     final case class ScheduleSet(
         cron: ScheduleSet.Cron,

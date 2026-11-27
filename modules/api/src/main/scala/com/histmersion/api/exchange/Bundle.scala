@@ -263,7 +263,8 @@ object Bundle:
     type Extension = Extension.T
     object Extension extends Newtype[String, Pure]
     type FileName = FileName.T
-    object FileName extends Newtype[String, Pure]
+    object FileName extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type MimeText = MimeText.T
     object MimeText extends Newtype[String, Pure]
     type Uid = Uid.T

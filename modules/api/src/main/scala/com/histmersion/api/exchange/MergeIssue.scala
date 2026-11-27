@@ -50,7 +50,8 @@ object MergeIssue:
 
   /** Why the planner raises an issue or suggests a choice: the account of its decision, not a failure. */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   enum Kind derives CanEqual:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years

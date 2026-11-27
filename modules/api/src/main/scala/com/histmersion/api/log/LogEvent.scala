@@ -80,6 +80,8 @@ object LogEvent:
 
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     val MaxLength: Int = 200
 
     def fromHeader(header: String): Option[Label] = Label(header).present
@@ -164,6 +166,8 @@ object LogEvent:
 
   type ProblemId = ProblemId.T
   object ProblemId extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     def of(id: util.problem.Problem.Internal.Id): ProblemId = ProblemId(s"$id")
 
     extension (p: ProblemId)
