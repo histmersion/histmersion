@@ -100,7 +100,7 @@ object GoalRepo:
                   VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                           ${in.tags}::text[], ${in.regions}::text[],
                           $period::int8range, ${in.parentSlug}, now(), ${StoredCreator.column(creator)}::jsonb,
-                          ${at.iso}::timestamptz)
+                          $at::timestamptz)
                   ON CONFLICT (slug) DO NOTHING""".update.run()
           Either.cond(made > 0, (), conflict)
     }
@@ -127,7 +127,7 @@ object GoalRepo:
           VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                   ${in.tags}::text[], ${in.regions}::text[],
                   $period::int8range, ${in.parentSlug}, now(), ${StoredCreator.column(creator)}::jsonb,
-                  ${at.iso}::timestamptz)
+                  $at::timestamptz)
           ON CONFLICT (slug) DO UPDATE SET
             title = EXCLUDED.title, status = EXCLUDED.status, notes = EXCLUDED.notes,
             tags = EXCLUDED.tags, regions = EXCLUDED.regions, period = EXCLUDED.period,

@@ -67,7 +67,7 @@ private[evidence] object AttestationRepo:
                            ${in.charStart}, ${in.charEnd}, ${in.chunkOrd},
                            ${in.page}, ${in.canvas}, ${in.xywh},
                            ${in.ctsUrn}, ${in.note}, ${StoredCreator.column(creator)}::jsonb,
-                           ${at.iso}::timestamptz)
+                           $at::timestamptz)
                    RETURNING id""".query[Long].run().head
     get(AttestationId(id)).get
 

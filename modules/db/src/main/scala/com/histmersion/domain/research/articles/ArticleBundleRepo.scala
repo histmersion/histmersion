@@ -137,7 +137,7 @@ private[articles] object ArticleBundleRepo:
         sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator, created_at)
             SELECT slug, body, summary, updated_at, ${StoredCreator.write(
             Creator.unrecorded
-          )}::jsonb, ${w.at.iso}::timestamptz FROM articles WHERE uid = $u""".update.run(),
+          )}::jsonb, ${w.at}::timestamptz FROM articles WHERE uid = $u""".update.run(),
         Unused.Why.Idempotent
       )
     }
@@ -147,7 +147,7 @@ private[articles] object ArticleBundleRepo:
             VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
               ${a.tags}::text[], ${a.regions}::text[],
               ${rangeLiteral(a.period)}::int8range,
-              ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb, ${w.at.iso}::timestamptz)
+              ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
               kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
               regions = EXCLUDED.regions, period = EXCLUDED.period, updated_at = EXCLUDED.updated_at""".update.run()
@@ -161,7 +161,7 @@ private[articles] object ArticleBundleRepo:
               ${a.regions}::text[],
               ${rangeLiteral(a.period)}::int8range, ${StoredCreator.carried(
             a.creator
-          )}::jsonb, ${w.at.iso}::timestamptz)
+          )}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO NOTHING""".update.run(),
         Unused.Why.Idempotent
       )
@@ -190,7 +190,7 @@ private[articles] object ArticleBundleRepo:
         sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator, created_at)
             SELECT slug, ${v.body}, ${v.summary}, ${v.versionOf}::timestamptz, ${StoredCreator.write(
             Creator.unrecorded
-          )}::jsonb, ${w.at.iso}::timestamptz FROM articles WHERE uid = ${v.articleUid}""".update
+          )}::jsonb, ${w.at}::timestamptz FROM articles WHERE uid = ${v.articleUid}""".update
           .run(),
         Unused.Why.Idempotent
       )

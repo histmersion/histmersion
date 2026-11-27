@@ -41,7 +41,7 @@ private[links] object AssetLinkRepo:
     val id = sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, xywh, notes, creator,
                                             created_at)
           VALUES (${in.citekey}, ${in.assetName}, ${in.relation}, ${in.targetType}, ${in.targetId},
-                  ${in.xywh}, ${in.notes}, ${StoredCreator.column(creator)}::jsonb, ${at.iso}::timestamptz)
+                  ${in.xywh}, ${in.notes}, ${StoredCreator.column(creator)}::jsonb, $at::timestamptz)
           RETURNING id""".query[AssetLink.Id].run().head
     AssetLink(id, in.citekey, in.assetName, in.relation, in.targetType, in.targetId, in.xywh, in.notes)
 

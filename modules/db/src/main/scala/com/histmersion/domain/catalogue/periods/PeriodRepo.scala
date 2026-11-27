@@ -98,7 +98,7 @@ private[periods] object PeriodRepo:
               VALUES (${p.id}, ${p.label}, ${p.authority},
                       ${RangeSql.always(Some(p.period))}::int8range,
                       ${p.region}, ${p.parentId}, ${dataset.wire}, $preset, ${StoredCreator.column(creator)}::jsonb,
-                      ${at.iso}::timestamptz)
+                      $at::timestamptz)
               ON CONFLICT (id) DO UPDATE SET
                 label = EXCLUDED.label, authority = EXCLUDED.authority, period = EXCLUDED.period,
                 region = EXCLUDED.region, parent_id = EXCLUDED.parent_id, dataset = EXCLUDED.dataset,

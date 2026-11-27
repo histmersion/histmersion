@@ -361,7 +361,7 @@ private[places] object GazetteerRepo:
               sql"d.hi"
             )}, d.source, d.props::jsonb, 'seed', $source, d.ref, $version, d.su, ${StoredCreator.column(
               creator
-            )}::jsonb, ${at.iso}::timestamptz
+            )}::jsonb, $at::timestamptz
                 FROM jsonb_to_recordset(${doc.noSpaces}::jsonb)
                   AS d(id text, label text, kind text, gjson text, gwkt text, lo bigint, hi bigint, su boolean,
                        source text, props text, ref text)

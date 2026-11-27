@@ -259,7 +259,7 @@ private[places] object PlaceBundleRepo:
                                 created_at)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
               $range::int8range, ${p.source}, $props::jsonb, 'local',
-              ${p.updatedAt}::timestamptz, ${StoredCreator.carried(p.creator)}::jsonb, ${w.at.iso}::timestamptz)
+              ${p.updatedAt}::timestamptz, ${StoredCreator.carried(p.creator)}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label, kind = EXCLUDED.kind,
               geom = EXCLUDED.geom, period = EXCLUDED.period, source = EXCLUDED.source,
               properties = EXCLUDED.properties, dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

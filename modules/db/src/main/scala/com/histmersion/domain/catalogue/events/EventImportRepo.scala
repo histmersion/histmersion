@@ -176,7 +176,7 @@ private[events] object EventImportRepo:
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
                   ${r.description}, $wd, $names::text[], ${r.provider}, ${r.central}, ${r.plusMinus},
-                  ${r.datingMethod}, ${StoredCreator.column(creator)}::jsonb, ${at.iso}::timestamptz)""".update.run()
+                  ${r.datingMethod}, ${StoredCreator.column(creator)}::jsonb, $at::timestamptz)""".update.run()
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
   private def fill(id: Event.Id, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =

@@ -329,7 +329,7 @@ private[sources] object SourceBundleRepo:
                    ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
               ${rangeLiteral(f.period)}::int8range,
               ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz,
-              ${StoredCreator.carried(f.creator)}::jsonb, ${w.at.iso}::timestamptz)
+              ${StoredCreator.carried(f.creator)}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
               geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,

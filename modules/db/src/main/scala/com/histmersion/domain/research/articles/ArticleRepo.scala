@@ -152,7 +152,7 @@ private[articles] object ArticleRepo:
       sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator, created_at)
           SELECT slug, body, summary, updated_at, ${StoredCreator.column(
           creator
-        )}::jsonb, ${at.iso}::timestamptz FROM articles WHERE slug = ${a.slug}""".update.run(),
+        )}::jsonb, $at::timestamptz FROM articles WHERE slug = ${a.slug}""".update.run(),
       Unused.Why.Idempotent
     )
     val periodLit = RangeSql.literal(a.period)
@@ -162,7 +162,7 @@ private[articles] object ArticleRepo:
                                 created_at)
           VALUES (${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
                   ${a.tags}::text[], $periodLit::int8range, ${a.regions}::text[], $filter::jsonb, $reasons::jsonb, ${StoredCreator
-        .column(creator)}::jsonb, ${at.iso}::timestamptz)
+        .column(creator)}::jsonb, $at::timestamptz)
           ON CONFLICT (slug) DO UPDATE SET
             title=EXCLUDED.title, kind=EXCLUDED.kind, body=EXCLUDED.body, summary=EXCLUDED.summary,
             tags=EXCLUDED.tags, period=EXCLUDED.period, regions=EXCLUDED.regions,

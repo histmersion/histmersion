@@ -94,7 +94,7 @@ private[assets] object MediaRepo:
             VALUES (NULL, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${a.kind},
               nullif(${a.license}, ''), ${a.provider}, ${a.key}, ${a.sourceUrl}, ${a.originalUrl}, ${a.author},
               ${a.credit}, ${a.licenseUrl}, now(), ${a.thumb}, ${a.thumbMime}, ${a.thumbWidth}, ${a.thumbHeight}, ${StoredCreator
-          .column(creator)}::jsonb, ${at.iso}::timestamptz)
+          .column(creator)}::jsonb, $at::timestamptz)
             ON CONFLICT (provider, provider_key) WHERE provider IS NOT NULL DO UPDATE SET
               name = EXCLUDED.name, mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
               width = EXCLUDED.width, height = EXCLUDED.height, license = EXCLUDED.license,

@@ -3,11 +3,11 @@ package util.database
 
 import com.histmersion.domain.{CreatedAt, Creator}
 
-import java.time.{Clock, Instant, ZoneOffset}
+import java.time.Clock
 
 object TestCreators:
   given test: Creator.New = Creator.New.Manual(Creator.Surface.Internal)
 
-  val clock: Clock = Clock.fixed(Instant.parse("2026-01-02T03:04:05Z"), ZoneOffset.UTC)
+  val clock: Clock = Clock.systemUTC()
 
-  given at: CreatedAt = CreatedAt.now(clock)
+  inline given at: CreatedAt = CreatedAt.now(clock)
