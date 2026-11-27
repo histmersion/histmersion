@@ -41,7 +41,13 @@ if [ -n "$native" ] && ! stale "$native"; then
 else
   [ -n "$native" ] && echo "the native CLI in this tree ($native) is older than its sources — using a JVM build instead" >&2
   echo "building this tree's CLI classes (sbt cli/writeClasspath)…" >&2
-  sbt --server -batch cli/writeClasspath >&2 || { echo "error: could not build this tree's CLI (sbt cli/writeClasspath failed)" >&2; exit 1; }
+  if [ -n "${SBT:-}" ]; then
+    read -r -a sbt_cmd <<< "$SBT"
+    sbt_cmd+=("${NOFMT:-set every scalafmtOnCompile := false}")
+  else
+    sbt_cmd=(sbt --server -batch -J-Xss16m "set every scalafmtOnCompile := false")
+  fi
+  "${sbt_cmd[@]}" cli/writeClasspath >&2 || { echo "error: could not build this tree's CLI (sbt cli/writeClasspath failed)" >&2; exit 1; }
   cpfile="$(find target -type f -path '*histmersion-cli/classpath.txt' -print 2>/dev/null | head -n 1)"
   [ -n "$cpfile" ] || { echo "error: sbt cli/writeClasspath wrote no classpath.txt under target/ — cannot run this tree's CLI" >&2; exit 1; }
   java_bin="${JAVA_HOME:+$JAVA_HOME/bin/}java"
