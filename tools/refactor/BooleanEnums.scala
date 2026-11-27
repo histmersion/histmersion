@@ -118,10 +118,12 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
       case _ => None
     }
     def isIronValue(n: Name): Boolean = n.value == "value" && n.symbol.value.startsWith(ironValue)
+    def objectOf(sym: String): Option[Two] = byType.get(norm(sym)).orElse(
+      resultOf(sym).collect { case st: s.SingleType => st.symbol }.flatMap(target => byType.get(norm(target))))
     def constructed(fun: Term): Option[Two] = fun match {
-      case n: Term.Name => byType.get(norm(n.symbol.value))
+      case n: Term.Name => objectOf(n.symbol.value)
       case Term.Select(q, n) if n.value == "apply" => constructed(q)
-      case sel: Term.Select => byType.get(norm(sel.name.symbol.value))
+      case sel: Term.Select => objectOf(sel.name.symbol.value)
       case _ => None
     }
     def prefixOf(fun: Term): String = fun match {
@@ -159,7 +161,24 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
       }
     }
 
+    def textOf(q: Term): Option[Two] = termType(q).flatMap { t =>
+      newtypeOf(t).flatMap(byType.get).orElse(dealias(t) match {
+        case r: s.TypeRef if r.symbol.endsWith("#") => byType.get(norm(r.symbol.stripSuffix("#") + "."))
+        case _ => None
+      })
+    }
+
     doc.tree.collect {
+      case sel @ Term.Select(q, Term.Name("toString")) if textOf(q).nonEmpty =>
+        log.add(s"$path:${sel.pos.startLine + 1}\ttext\t${textOf(q).get.newtype}")
+        Patch.addRight(q, s".${textOf(q).get.test}")
+      case i: Term.Interpolate if i.args.exists(a => textOf(a).nonEmpty) =>
+        i.args.filter(a => textOf(a).nonEmpty).map { a =>
+          val e = textOf(a).get
+          log.add(s"$path:${a.pos.startLine + 1}\ttext\t${e.newtype}")
+          val braced = i.tokens.takeWhile(_.end <= a.pos.start).lastOption.exists(_.is[Token.LeftBrace])
+          if (braced) Patch.addRight(a, s".${e.test}") else Patch.replaceTree(a, s"{${a.syntax}.${e.test}}")
+        }.asPatch
       case o: Defn.Object if byType.contains(norm(o.symbol.value)) && o.templ.inits.exists(_.tpe.syntax.startsWith("Newtype[Boolean")) =>
         definition(o, byType(norm(o.symbol.value)))
       case t: Defn.Type if t.body.syntax == s"${t.name.value}.T" && byType.contains(norm(t.symbol.value.stripSuffix("#") + ".")) =>
@@ -180,7 +199,12 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
         a.argClause.values.head match {
           case Lit.Boolean(true) => Patch.replaceTree(a, yes)
           case Lit.Boolean(false) => Patch.replaceTree(a, no)
-          case other => Patch.replaceTree(a, s"(if ${other.syntax} then $yes else $no)")
+          case other =>
+            val tokens = a.tokens
+            val opening = tokens.filter(t => t.end <= other.pos.start)
+            val closing = tokens.filter(t => t.start >= other.pos.end)
+            Patch.removeTokens(opening) + Patch.addLeft(opening.head, "(if ") + Patch.removeTokens(closing) +
+              Patch.addRight(closing.last, s" then $yes else $no)")
         }
     }.asPatch
   }
