@@ -103,7 +103,7 @@ object SettingControl:
   def defaultText(kind: ConfigEdit.Field.Kind, default: Draft.Text): Text =
     if kind.value == "flag" then Text(s"${if Draft.isOn(default) then "On" else "Off"} by default.")
     else if default.value.isEmpty then Text("Default: (empty).")
-    else Text(s"Default: $default.")
+    else Text(shown"Default: $default.")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -127,7 +127,7 @@ object SettingControl:
               case None if f.source == ConfigEdit.Source.File.wire =>
                 s"Set in the settings file. ${defaultText(f.kind, dflt)}"
               case None if f.kind.value == "flag" => defaultText(f.kind, dflt).value
-              case None                           => s"The default${if dflt.value.isEmpty then "" else s": $dflt"}."
+              case None                           => s"The default${if dflt.value.isEmpty then "" else shown": $dflt"}."
           )
         )
       ),

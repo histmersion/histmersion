@@ -19,4 +19,5 @@ object Hit:
     * `period`): the account of the match, not a failure.
     */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)

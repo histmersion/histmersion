@@ -23,7 +23,8 @@ object PlanQuota:
     * provider's own refusal among them), not a failure of the request.
     */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Now = Now.T
   object Now extends Newtype[Long, Pure]
   type PoolIdText = PoolIdText.T

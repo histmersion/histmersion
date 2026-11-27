@@ -21,7 +21,7 @@ object NoteDrafts:
   def key(target: Target, noteId: Option[Note.Id]): Key =
     Key(
       noteId
-        .map(id => s"note:${id.value}")
+        .map(id => shown"note:$id")
         .orElse(target.identity.map(_.value))
         .getOrElse(
           s"${target.kind.wire}:${target.lat.fold("")(_.value.toString)},${target.lon.fold("")(_.value.toString)}"

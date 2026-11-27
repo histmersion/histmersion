@@ -325,7 +325,7 @@ object ResultsList:
       Some(period.value).filter(_.nonEmpty)
     ).flatten.map(Fmt.esc).mkString(" · ")
 
-    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(s"$w").isDefined)
+    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(shown"$w").isDefined)
     val matched = h.matched
     val shownMatches = matched.take(2)
 
@@ -350,7 +350,7 @@ object ResultsList:
           )
         )
         .getOrElse(emptyNode),
-      if why.nonEmpty then ul(cls := "why", why.map(w => li(s"$w")))
+      if why.nonEmpty then ul(cls := "why", why.map(w => li(shown"$w")))
       else emptyNode,
       if matched.nonEmpty then
         div(
@@ -358,7 +358,7 @@ object ResultsList:
           span(cls := "lbl", "matches:"),
           ul(
             shownMatches.map { m =>
-              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(s"$w").isDefined)
+              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(shown"$w").isDefined)
               li(
                 span(cls := "claim", Fmt.clip(m.claim.value, Markdown.CharLimit(160))),
                 Fmt.periodStr(m.periodStart, m.periodEnd).value match
@@ -405,7 +405,7 @@ object ResultsList:
     val chips = UiState.activeChips()
     val causes = scala.collection.mutable.ListBuffer.empty[String]
     if UiState.inView.now() then causes += "the map viewport (\"only sources in view\" is on)"
-    causes += s"the span ${Fmt.yr(UiState.from.now().map(Year(_)))} → ${Fmt.yr(UiState.to.now().map(Year(_)))}"
+    causes += shown"the span ${Fmt.yr(UiState.from.now().map(Year(_)))} → ${Fmt.yr(UiState.to.now().map(Year(_)))}"
     if chips.nonEmpty then causes += s"${plural(chips.length, "filter")} below"
 
     div(

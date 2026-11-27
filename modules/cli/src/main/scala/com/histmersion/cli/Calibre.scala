@@ -844,7 +844,7 @@ object Calibre:
   /** The informational line for the records with no fetched file — never a gap. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uncountedLine(n: Int): String =
-    s"$n ${Plural.noun(Plural.Count(n.toLong), Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
+    shown"$n ${Plural.noun(Plural.Count(n.toLong), Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
       "(`histmersion queue acquire`); `--json` lists them."
 
   /** `calibre gaps` as Markdown: the counted gaps as a table, then one line for the records with no fetched file (never
@@ -903,7 +903,7 @@ object Calibre:
       }
       val shown = if total.value > books.size then s"${books.size} of $total" else books.size.toString
       (List(
-        s"### $shown Calibre ${Plural.noun(Plural.Count(total.value.toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
+        shown"### $shown Calibre ${Plural.noun(Plural.Count(total.value.toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
         ""
       )
         ++ lines ++ List(

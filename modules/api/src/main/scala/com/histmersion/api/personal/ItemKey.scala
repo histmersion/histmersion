@@ -13,5 +13,7 @@ type ItemKey = ItemKey.T
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ItemKey extends Newtype[String, Pure]:
+  given Display[T] = Display(_.value)
+
   given JsonValueCodec[ItemKey] = JsonCodec.mapped[ItemKey, String](_.value, s => Right(ItemKey(s.trim)))
   given Schema[ItemKey] = Schema.string[ItemKey]

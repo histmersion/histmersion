@@ -222,7 +222,7 @@ object ApprovalsView:
           h5("Sub-goals"),
           ul(
             plan.subGoals.map(g =>
-              li(code(g.slug), s" — ${g.title}", g.notes.map(n => span(cls := "muted", shown": $n")))
+              li(code(g.slug), shown" — ${g.title}", g.notes.map(n => span(cls := "muted", shown": $n")))
             )
           )
         )
@@ -601,7 +601,7 @@ object ApprovalsView:
             input(
               typ := "checkbox",
               cls := "approval-pick",
-              aria.label := s"select approval ${a.id}",
+              aria.label := shown"select approval ${a.id}",
               checked <-- pk.on,
               onClick.mapToChecked --> (c => pk.set(c))
             )
@@ -681,7 +681,7 @@ object ApprovalsView:
         a.result.filter(_.value.nonEmpty).map(r => p(cls := "muted", r)),
         div(
           cls := "job-meta muted",
-          span(s"#${a.id}"),
+          span(shown"#${a.id}"),
           a.runId.map(id =>
             span(" · ", WinLink(WindowKey.Run(WindowKey.Run.Id(id.value)), s"run ${id.value.take(8)}"))
           ),

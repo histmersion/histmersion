@@ -70,7 +70,7 @@ object NotesCmd:
             t <- TargetFlags.target(raw)
             x <- text(inline, file).left.map(Cli.Error(_))
             n <- c.call(PersonalApi.addNote)(Note.New(t, x, title.map(Title(_))))
-          yield Output.emit(json, n)(n => s"Noted on ${n.title} (id `${n.id.value}`).")
+          yield Output.emit(json, n)(n => shown"Noted on ${n.title} (id `${n.id}`).")
         case Command.Edit(id, inline, file, json) =>
           text(inline, file).left
             .map(Cli.Error(_))

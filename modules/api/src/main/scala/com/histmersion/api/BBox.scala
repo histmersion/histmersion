@@ -29,7 +29,8 @@ final case class BBox(minLon: Longitude, minLat: Latitude, maxLon: Longitude, ma
 
 object BBox:
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Text): Option[BBox] =

@@ -72,7 +72,10 @@ object ResearchOverview:
     focus
       .flatMap(_.waiting.find(_.slug == g.slug))
       .map(w =>
-        Option(w.why).filter(w => s"$w".nonEmpty).map(w => s"$w").getOrElse(Wording.humanize(Wording.Id(w.code.value)))
+        Option(w.why)
+          .filter(w => shown"$w".nonEmpty)
+          .map(w => shown"$w")
+          .getOrElse(Wording.humanize(Wording.Id(w.code.value)))
       )
       .orElse(Option.when(g.openApprovals.value > 0)(if g.openApprovals.value == 1 then "waits for your decision"
       else s"waits for ${g.openApprovals} of your decisions"))

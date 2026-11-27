@@ -163,7 +163,7 @@ object TreeTab:
       extras = List(
         UiLabels.Text(groups.value),
         ResultsPaging.span(Some(Year(from.value)), Some(Year(to.value)))
-      ) ++ data.asOf.map(a => UiLabels.Text(s"as of ${Fmt.yr(a)}"))
+      ) ++ data.asOf.map(a => UiLabels.Text(shown"as of ${Fmt.yr(a)}"))
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

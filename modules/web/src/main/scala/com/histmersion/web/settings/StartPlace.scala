@@ -32,7 +32,8 @@ object StartPlace:
   /** The zoom that shows a box of this size whole: a continent ~3, a country ~6, a city ~10. Pure. */
 
   type ChooserName = ChooserName.T
-  object ChooserName extends Newtype[String, Pure]
+  object ChooserName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -109,7 +110,7 @@ object StartPlace:
           cls := "start-place-mode",
           input(
             typ := "radio",
-            nameAttr := s"$name-mode",
+            nameAttr := shown"$name-mode",
             value := m.wire.value,
             controlled(
               checked <-- choice.signal.map(c => MapStartMode.parse(c.mode) == m),
@@ -122,10 +123,10 @@ object StartPlace:
       },
       div(
         cls := "start-place-find",
-        label(forId := s"$name-place", cls := "sr-only", "A place the map opens at"),
+        label(forId := shown"$name-place", cls := "sr-only", "A place the map opens at"),
         input(
           typ := "search",
-          idAttr := s"$name-place",
+          idAttr := shown"$name-place",
           cls := "field start-place-input",
           placeholder := "Find a place: Anatolia, the Andes, Mali…",
           controlled(value <-- query.signal, onInput.mapToValue --> search)

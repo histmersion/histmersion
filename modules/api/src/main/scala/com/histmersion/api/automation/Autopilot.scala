@@ -15,7 +15,8 @@ object Autopilot:
 
   /** Why a goal is active, queued or waiting: the narration of the focus's decision, not a failure. */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AutopilotSet(

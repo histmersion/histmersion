@@ -38,6 +38,8 @@ object Note:
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Id extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     given JsonValueCodec[Id] = JsonCodec.mapped[Id, String](_.value, b => Right(Id(b)))
     given Schema[Id] = Schema.string[Id]
 

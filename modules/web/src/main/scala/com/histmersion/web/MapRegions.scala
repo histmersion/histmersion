@@ -68,11 +68,11 @@ object MapRegions:
       else
         RegionChoice(
           RegionChoice.Id("configured"),
-          RegionChoice.Label(s"the configured region (${s.bbox})"),
+          RegionChoice.Label(shown"the configured region (${s.bbox})"),
           Some(s.bbox)
         )
     List(configured) ++ s.regions.map(r =>
-      RegionChoice(RegionChoice.Id(r.name.value), RegionChoice.Label(s"${r.name} (${r.bbox})"), Some(r.bbox))
+      RegionChoice(RegionChoice.Id(r.name.value), RegionChoice.Label(shown"${r.name} (${r.bbox})"), Some(r.bbox))
     ) ++
       Option.unless(configured.bbox == world.bbox)(world).toList ++ List(
         RegionChoice(RegionChoice.Id(OwnBox), RegionChoice.Label("a box of my own"), None)

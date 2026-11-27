@@ -221,15 +221,15 @@ object Ops:
         // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
         case QueueCmd.Done(id, json) =>
           c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
-            .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
+            .map(i => Output.emit(json, i)(i => shown"done #${i.id}: ${i.text}"))
         case QueueCmd.Edit(id, text, json) =>
           c.queuePatch(id, QueuePatch(text = Some(text)))
-            .map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
+            .map(i => Output.emit(json, i)(i => shown"edited #${i.id}: ${i.text}"))
         case QueueCmd.Patch(id, actor, json) =>
           c.queuePatch(id, QueuePatch(actor = actor))
             .map(i => Output.emit(json, i)(i => s"#${i.id}: ${i.actor.fold("")(a => s"$a acts · ")}${i.text}"))
         case QueueCmd.Rm(id, json) =>
-          c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
+          c.queueDelete(id).map(i => Output.emit(json, i)(i => shown"removed #${i.id}: ${i.text}"))
         case QueueCmd.Export(dir) =>
           writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
         case QueueCmd.Import(dir) =>

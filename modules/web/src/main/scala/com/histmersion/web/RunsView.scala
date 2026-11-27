@@ -648,7 +648,7 @@ object RunsView:
       Option.when(r.isWaiting)(
         p(
           cls := "run-waiting",
-          s"Waiting for a person to decide ${waitingFor(r).fold("its approval")(id => s"approval #$id")}; it goes on by itself once decided. ",
+          s"Waiting for a person to decide ${waitingFor(r).fold("its approval")(id => shown"approval #$id")}; it goes on by itself once decided. ",
           WinLink(WindowKey.Approvals, "open the approvals")
         )
       ),

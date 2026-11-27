@@ -453,7 +453,7 @@ object GoalsView:
       onMountCallback(_ => refresh()),
       ApprovalsView.changed.events --> (_ => refresh()),
       view.signal.changes.collect { case Some(v) if v.goal.title.value.trim.nonEmpty => v.goal.title } --> (t =>
-        WindowManager.retitle(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), UiLabels.Text(s"Goal · ${t.value}"))
+        WindowManager.retitle(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), UiLabels.Text(shown"Goal · $t"))
       ),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child.maybe <-- message.signal.map(_.map(m => p(cls := "form-ok", m))),
@@ -462,7 +462,7 @@ object GoalsView:
         case Some(v) =>
           div(
             cls := "goal-detail",
-            div(cls := "run-head", badge(v.goal.status), span(cls := "run-title", s" ${v.goal.title}")),
+            div(cls := "run-head", badge(v.goal.status), span(cls := "run-title", shown" ${v.goal.title}")),
             v.goal.notes.filter(_.value.nonEmpty).map(n => p(n)),
             dl(
               cls := "run-facts",
@@ -573,9 +573,9 @@ object GoalsView:
               label = l.title.map(t => UiLabels.Text(s"${l.ref.value} — ${t.value}"))
             )
           case LinkKind.Article   => ArticleLink(Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value))
-          case LinkKind.Query     => span(s"“${l.ref}”")
+          case LinkKind.Query     => span(shown"“${l.ref}”")
           case LinkKind.QueueItem =>
-            val text = span(s"#${l.ref} ", span(cls := "muted", l.title.map(_.value).getOrElse("(gone)")))
+            val text = span(shown"#${l.ref} ", span(cls := "muted", l.title.map(_.value).getOrElse("(gone)")))
             l.queue
               .flatMap(q => Queue.Kind.parse(Queue.Kind.Label(q.value)))
               .zip(l.ref.value.toIntOption)

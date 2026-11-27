@@ -36,7 +36,7 @@ object ItemMenu:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(origin: Origin, ref: ItemRef, byline: String): Markdown =
     val title = ref.title.value.replace("[", "\\[").replace("]", "\\]")
-    val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[${ck.value}]]")
+    val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => shown" [[$ck]]")
     Markdown(
       s"[$title](${link(origin, ref).value})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite
     )
