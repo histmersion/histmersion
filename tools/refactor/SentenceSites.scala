@@ -166,8 +166,8 @@ class SentenceSites(config: SentenceSites.Config, index: Map[String, s.SymbolInf
   /** The text an argument of `Legacy.Text(...)` writes, with its splices marked. */
   def template(t: Term): String = t match {
     case Lit.String(v) => literal(v)
-    case i: Term.Interpolate if Set("s", "f", "raw")(i.prefix.value) =>
-      // a part is source text: `$$` and the escapes an `s` or `f` string processes are read as it reads them
+    case i: Term.Interpolate if Set("s", "f", "raw", "shown")(i.prefix.value) =>
+      // a part is source text: `$$` and the escapes an `s`, `f` or `shown` string processes are read as it reads them
       def read(v: String): String =
         if (i.prefix.value == "raw") v.replace("$$", "$")
         else scala.util.Try(StringContext.processEscapes(v.replace("$$", "$"))).getOrElse(v.replace("$$", "$"))

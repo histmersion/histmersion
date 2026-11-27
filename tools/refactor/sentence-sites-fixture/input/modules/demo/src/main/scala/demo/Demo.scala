@@ -6,9 +6,9 @@ import com.histmersion.util.problem.Problem.Run
 object Demo:
   // S1 a literal
   def literal: Either[Problem, Int] = Left(Problem.Unclassified(Legacy.Text("no such file"))) // assert: SentenceSites.unclassified
-  // S2 an interpolation, a splice in braces, literal braces
+  // S2 an interpolation, a splice in braces, literal braces; shown"…" is read as s"…"
   def interpolated(p: String, n: Int): Problem =
-    Problem.Unclassified(Legacy.Text(s"no such file: $p (${n + 1} {tries})")) // assert: SentenceSites.unclassified
+    Problem.Unclassified(Legacy.Text(shown"no such file: $p (${n + 1} {tries})")) // assert: SentenceSites.unclassified
   // S3 a concatenation
   def concatenated(p: String): Problem = Problem.Unclassified(Legacy.Text("missing " + p + "!")) // assert: SentenceSites.unclassified
   // S4 an exception's message, two ways
@@ -49,3 +49,4 @@ object Demo:
     inner
   // S14 escapes and a dollar are read as the string reads them
   def escaped(p: String): Problem = Problem.Unclassified(Legacy.Text(s"say \"$p\" for $$5")) // assert: SentenceSites.unclassified
+  extension (context: StringContext) def shown(parts: Any*): String = context.s(parts*)

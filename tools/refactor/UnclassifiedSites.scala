@@ -178,7 +178,7 @@ class UnclassifiedSites(config: UnclassifiedSites.Config, index: ConcurrentHashM
   }
   def template(t: Term): String = t match {
     case Lit.String(v) => literal(v)
-    case i: Term.Interpolate if Set("s", "f", "raw")(i.prefix.value) =>
+    case i: Term.Interpolate if Set("s", "f", "raw", "shown")(i.prefix.value) =>
       def read(v: String): String =
         if (i.prefix.value == "raw") v.replace("$$", "$")
         else scala.util.Try(StringContext.processEscapes(v.replace("$$", "$"))).getOrElse(v.replace("$$", "$"))
