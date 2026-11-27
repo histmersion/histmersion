@@ -598,7 +598,7 @@ lazy val pluginsCalibre = projectMatrix
 
 lazy val pluginHello = project
   .in(file("modules/plugin-fixtures/hello"))
-  .dependsOn(pluginApi)
+  .dependsOn(pluginApi, lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-plugin-hello",
     description := "A test plugin jar for the plugin and relink tests",
@@ -608,7 +608,7 @@ lazy val pluginHello = project
 
 lazy val pluginHelloAi = project
   .in(file("modules/plugin-fixtures/hello-ai"))
-  .dependsOn(pluginApi)
+  .dependsOn(pluginApi, lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-plugin-hello-ai",
     description := "A test AI-provider plugin jar: scripted, no network",
@@ -618,6 +618,7 @@ lazy val pluginHelloAi = project
 
 lazy val pluginHelloLib = project
   .in(file("modules/plugin-fixtures/hello-lib"))
+  .dependsOn(lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-plugin-hello-lib",
     description := "A test library that the hello-deps test plugin depends on",
@@ -631,7 +632,7 @@ val fixturesRepo = taskKey[File]("Write the test Maven repository with hello-lib
 
 lazy val pluginHelloDeps = project
   .in(file("modules/plugin-fixtures/hello-deps"))
-  .dependsOn(pluginApi % Provided, pluginHelloLib)
+  .dependsOn(pluginApi % Provided, pluginHelloLib, lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-plugin-hello-deps",
     description := "A test plugin with a dependency of its own, published to a fixture Maven repository",
