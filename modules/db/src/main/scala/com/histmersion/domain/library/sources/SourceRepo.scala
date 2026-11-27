@@ -161,7 +161,7 @@ private[sources] object SourceRepo:
              $periodLit::int8range, ${s.summary}, ${s.ocrMarkdown}, ${s.notes},
              ${s.provenance}, ${s.calibreId}, ${s.doi},
              ${s.citedByCount}, ${s.influentialCitations}, ${StoredCreator.column(creator)}::jsonb,
-             (${at.iso}::timestamptz AT TIME ZONE 'UTC')::date)
+             ($at::timestamptz AT TIME ZONE 'UTC')::date)
           ON CONFLICT (citekey) DO UPDATE SET
             title=EXCLUDED.title, authors=EXCLUDED.authors, year=EXCLUDED.year, venue=EXCLUDED.venue,
             status=EXCLUDED.status, topics=EXCLUDED.topics, regions=EXCLUDED.regions, tags=EXCLUDED.tags,
@@ -193,7 +193,7 @@ private[sources] object SourceRepo:
                     ST_SetSRID(ST_MakePoint($lon, $lat), 4326),
                     $fperiod::int8range, ${f.periodName},
                     ${f.tags}::text[],
-                    ${f.confidence}, ${f.significance}, ${StoredCreator.column(creator)}::jsonb, ${at.iso}::timestamptz)
+                    ${f.confidence}, ${f.significance}, ${StoredCreator.column(creator)}::jsonb, $at::timestamptz)
             ON CONFLICT (id) DO UPDATE SET
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim,
               region_name = EXCLUDED.region_name, geom = EXCLUDED.geom, period = EXCLUDED.period,

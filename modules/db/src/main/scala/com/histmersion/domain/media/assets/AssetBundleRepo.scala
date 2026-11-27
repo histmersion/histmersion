@@ -88,7 +88,7 @@ private[assets] object AssetBundleRepo:
               VALUES (${a.uid}, ${a.origin}, $ck, ${a.name}, ${a.mime}, $b, ${a.sha256}, ${a.width}, ${a.height},
                 ${a.kind}, ${a.caption}, ${a.license}, ST_GeomFromEWKB(decode(${a.geom}, 'hex')),
                 ${rangeLiteral(a.period)}::int8range,
-                ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb, ${w.at.iso}::timestamptz)
+                ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb, ${w.at}::timestamptz)
               ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, name = EXCLUDED.name,
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, width = EXCLUDED.width,
                 height = EXCLUDED.height, kind = EXCLUDED.kind, caption = EXCLUDED.caption,

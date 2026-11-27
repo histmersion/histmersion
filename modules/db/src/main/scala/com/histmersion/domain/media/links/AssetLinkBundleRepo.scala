@@ -75,7 +75,7 @@ private[links] object AssetLinkBundleRepo:
             VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
               ${l.notes}, ${l.updatedAt}::timestamptz, ${StoredCreator.carried(
           l.creator
-        )}::jsonb, ${w.at.iso}::timestamptz)
+        )}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
               asset_name = EXCLUDED.asset_name, relation = EXCLUDED.relation,
               target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, xywh = EXCLUDED.xywh,

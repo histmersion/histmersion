@@ -259,7 +259,7 @@ private[events] object EventBundleRepo:
         )}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
               ${e.scale.flatMap(s => EventScale.parse(EventSummary.Scale(s.value)).flatten)},
               ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod},
-              ${StoredCreator.carried(e.creator)}::jsonb, ${w.at.iso}::timestamptz)
+              ${StoredCreator.carried(e.creator)}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
               end_from = EXCLUDED.end_from, not_after = EXCLUDED.not_after,

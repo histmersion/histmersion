@@ -84,7 +84,7 @@ private[periods] object PeriodBundleRepo:
                                  created_at)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.authority},
               $range::int8range, ${p.region}, 'local', ${p.updatedAt}::timestamptz,
-              ${StoredCreator.carried(p.creator)}::jsonb, ${w.at.iso}::timestamptz)
+              ${StoredCreator.carried(p.creator)}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               authority = EXCLUDED.authority, period = EXCLUDED.period, region = EXCLUDED.region,
               dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

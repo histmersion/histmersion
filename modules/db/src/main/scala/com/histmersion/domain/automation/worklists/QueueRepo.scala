@@ -133,7 +133,7 @@ private[worklists] object QueueRepo:
       sql"""INSERT INTO queue_items (list, text, topic, status, reason, created_at, done_at, goal_slug, created_job,
                                      creator, actor)
                    VALUES (${kind.label}, ${in.text}, ${in.topic}, $status, ${in.reason},
-                           coalesce(${in.createdAt}::timestamptz, ${at.iso}::timestamptz),
+                           coalesce(${in.createdAt}::timestamptz, $at::timestamptz),
                            CASE WHEN $status = $Done THEN now() END, $goal, $job,
                            $stored::jsonb, ${StoredCreator.actor(creator)})
                    RETURNING id""".query[Int].run().head

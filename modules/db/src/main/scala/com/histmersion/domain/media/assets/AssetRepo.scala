@@ -98,7 +98,7 @@ private[assets] object AssetRepo:
           sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator, created_at)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${StoredCreator.column(
               creator
-            )}::jsonb, ${at.iso}::timestamptz)
+            )}::jsonb, $at::timestamptz)
               ON CONFLICT (citekey, name) DO UPDATE SET
                 mime = EXCLUDED.mime, bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256,
                 width = EXCLUDED.width, height = EXCLUDED.height
@@ -111,7 +111,7 @@ private[assets] object AssetRepo:
           sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator, created_at)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height}, ${StoredCreator.column(
               creator
-            )}::jsonb, ${at.iso}::timestamptz)
+            )}::jsonb, $at::timestamptz)
               ON CONFLICT (citekey, name) DO NOTHING""".update.run(),
           Unused.Why.Idempotent
         )

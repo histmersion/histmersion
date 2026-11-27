@@ -289,7 +289,7 @@ private[events] object EventRepo:
                        ELSE ST_SetSRID(ST_GeomFromGeoJSON($geom::text), 4326) END,
                   ${in.placeId}, ${in.parentId}, ${in.description}, ${in.citekey}, $scale, ${StoredCreator.column(
         creator
-      )}::jsonb, ${at.iso}::timestamptz)
+      )}::jsonb, $at::timestamptz)
           ON CONFLICT (id) DO UPDATE SET
             label = EXCLUDED.label, kind = EXCLUDED.kind,
             not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,

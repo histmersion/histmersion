@@ -184,7 +184,7 @@ private[places] object PlaceRepo:
                     CASE WHEN $g::text IS NULL THEN NULL
                          ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END,
                     $p::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire}, ${StoredCreator
-          .column(creator)}::jsonb, ${at.iso}::timestamptz)
+          .column(creator)}::jsonb, $at::timestamptz)
             ON CONFLICT (id) DO UPDATE SET
               label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
               period = EXCLUDED.period, source = EXCLUDED.source,
