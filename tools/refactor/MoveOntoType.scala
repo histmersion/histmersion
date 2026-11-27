@@ -279,8 +279,18 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       case _ => false
     }
 
+    /** A name in the path of an `export` (`export Obj.X.Y as Z`), not one of its importees. */
+    def inExportRef(t: Tree): Boolean = {
+      def walk(c: Tree, p: Option[Tree]): Boolean = p match {
+        case Some(imp: Importer) => imp.parent.exists(_.is[Export]) && (imp.ref eq c)
+        case Some(s: Term.Select) => walk(s, s.parent)
+        case _ => false
+      }
+      walk(t, t.parent)
+    }
+
     def site(t: Tree): Option[Tree] = t match {
-      case n: Name if !isDefinitionName(n) && !inImport(n) && moved(n).isDefined =>
+      case n: Name if !isDefinitionName(n) && (!inImport(n) || inExportRef(n)) && moved(n).isDefined =>
         val p = moved(n).get
         val ref: Tree = n.parent match {
           case Some(s: Term.Select) if s.name eq n => s
@@ -404,7 +414,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   }
 
   private final case class Extracted(planned: Planned, text: String, imports: List[String], start: Int, column: Int,
-      order: Int, outerPackage: Option[String])
+      order: Int, outerPackage: Option[String], isObject: Boolean, isType: Boolean)
 
   private lazy val extracted: List[Extracted] = {
     var order = 0
@@ -429,7 +439,8 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         order += 1
         val imports = (neededImports(so, stat, p, definedHere) ++ rw.imports).distinct
         val outerPackage = sd.tree.collect { case pk: Pkg => pk.ref.syntax }.headOption
-        Extracted(p, comments + body, imports, start, column(sd.text, start), order, outerPackage)
+        Extracted(p, comments + body, imports, start, column(sd.text, start), order, outerPackage,
+          stat.is[Defn.Object], stat.is[Defn.Type])
       }
     }
   }
@@ -463,6 +474,12 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       sym.nonEmpty && !sym.startsWith("local") && !definedHere(sym) && !sym.contains(".(") && !sym.contains("[")
     }
       .groupBy(_._1).map { case (k, v) => k -> v.forall(_._2) }
+    // names SemanticDB records no occurrence for (a `derives` clause's type classes): matched to an import by name
+    val unresolved: Set[String] = stat.collect {
+      case n: Name if sd.definitions(n).isEmpty && sd.occurrences(n).isEmpty && n.value.headOption.exists(_.isUpper) &&
+          !n.parent.exists { case s: Term.Select => s.name eq n; case s: Type.Select => s.name eq n; case _ => false } =>
+        n.value
+    }.toSet
     val importers = sd.tree.collect { case i: Import => i }.filter(i => i.pos.end <= stat.pos.start)
       .filter(i => !i.parent.exists(_.is[Template]) || i.parent.exists(_ eq so.obj.templ))
       .flatMap(_.importers)
@@ -482,7 +499,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
           refs.keys.filter(r =>
             syms(strip(r)) || (lastName(r) == i.name.value && path(owner(r)) == imp.ref.syntax.replace("_root_.", ""))
-          ).toList
+          ).toList ++ List(s"name:${i.name.value}").filter(_ => unresolved(i.name.value))
         case i: Importee.Rename =>
           val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
           refs.keys.filter(r => syms(strip(r))).toList
@@ -528,10 +545,10 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         visible.exists(v => i.startsWith(v + ".") && !i.drop(v.length + 1).contains('.'))
       }.filterNot(i => promoted.exists(x => i == s"$pkg.$x"))
       val ordered = members.sortBy(_.order)
-      val companionOf: Map[String, Extracted] = ordered.filter(m => m.planned.promote && m.text.trim.startsWith("object ")).map(m => m.planned.name -> m).toMap
+      val companionOf: Map[String, Extracted] = ordered.filter(m => m.planned.promote && m.isObject).map(m => m.planned.name -> m).toMap
       val body = ordered.zipWithIndex.map { case (m, i) =>
         val pair = ordered.lift(i - 1).exists(prev =>
-          prev.planned.name == m.planned.name && prev.text.trim.startsWith("type ") && m.text.trim.startsWith("object "))
+          prev.planned.name == m.planned.name && prev.isType && m.isObject)
         val text = reindent(m.text, m.column, 0)
         val more = extras.getOrElse(m.planned.name, Nil)
         val withExtras =
@@ -630,10 +647,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     val topLevel = doc.tree.collect { case p: Pkg => p.stats }.flatten.filterNot(s => s.is[Import] || s.is[Pkg])
     if (removedRanges.nonEmpty && topLevel.nonEmpty && topLevel.forall(removed)) emptiedFiles.add(uri)
 
-    val sites = rw.sitesIn(doc.tree).filterNot(removed)
-    val refPatches = rw.outermost(sites).map(s => Patch.replaceTree(s, rw.rewrite(s, sites.filter(i => (i ne s) && rw.contains(s, i)))))
-    rw.lints.foreach { case (t, msg) => reported.add(s"$uri:${t.pos.startLine + 1}\t$msg") }
-
     def exported(i: Importee): Boolean = i.parent.exists(_.parent.exists(_.is[Export]))
     def importeeName(i: Importee): Option[Name] = i match {
       case n: Importee.Name => Some(n.name)
@@ -647,9 +660,18 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       }
       owner.flatMap(o => List(".", "#", "().").flatMap(d => plannedFor(o + n.value + d)).headOption)
     }
+    def exportOfMoved(imp: Importer): Boolean =
+      imp.parent.exists(_.is[Export]) && imp.importees.flatMap(importeeName).exists(n => exportedPlan(imp, n).isDefined)
+    val handledExports = doc.tree.collect { case imp: Importer if exportOfMoved(imp) => imp }
+    def inHandledExport(t: Tree): Boolean = handledExports.exists(imp => rw.contains(imp, t))
+
+    val sites = rw.sitesIn(doc.tree).filterNot(removed).filterNot(inHandledExport)
+    val refPatches = rw.outermost(sites).map(s => Patch.replaceTree(s, rw.rewrite(s, sites.filter(i => (i ne s) && rw.contains(s, i)))))
+    rw.lints.foreach { case (t, msg) => reported.add(s"$uri:${t.pos.startLine + 1}\t$msg") }
+
     val exportImports = mutable.ListBuffer.empty[String]
-    val importPatches = doc.tree.collect {
-      case imp: Importer if imp.parent.exists(_.is[Export]) && imp.importees.flatMap(importeeName).exists(n => exportedPlan(imp, n).isDefined) =>
+    val importPatches = doc.tree.collect { case t if !removed(t) => t }.collect {
+      case imp: Importer if exportOfMoved(imp) =>
         val plans = imp.importees.flatMap(importeeName).flatMap(n => exportedPlan(imp, n).map(n -> _))
         val p = plans.head._2
         val ref =
@@ -666,7 +688,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
             case imp: Importer => deletedObjects(refSymbol(imp))
             case _ => false
           } => Patch.removeImportee(i)
-      case imp: Importer if importerPathMoved(imp).isDefined =>
+      case imp: Importer if !imp.parent.exists(_.is[Export]) && importerPathMoved(imp).isDefined =>
         val (sel, p) = importerPathMoved(imp).get
         Patch.replaceTree(sel, if (p.toplevel) path(p.to) + "." + p.newName else path(termOf(p.to)) + "." + p.newName)
     }
@@ -680,7 +702,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         case _: Importee.Wildcard => s"${i.ref.syntax}.*"
       }
     }.flatten.toSet
-    def single(imp: String): List[String] = imp.parse[Importer].toOption match {
+    def single(imp: String): List[String] = dialects.Scala3(imp).parse[Importer].toOption match {
       case Some(i) if i.importees.forall(_.is[Importee.Name]) =>
         i.importees.collect { case n: Importee.Name => s"${i.ref.syntax}.${n.name.value}" }
       case _ => List(imp)
@@ -689,7 +711,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val plain = imp.matches("[\\w.`]+")
       val pkg = imp.split('.').dropRight(1).mkString(".")
       existing(imp) || (plain && (visible.contains(pkg) || existing(pkg + ".*") || existing(pkg + "._")))
-    }.map(i => Patch.addGlobalImport(i.parse[Importer].get))
+    }.map(i => Patch.addGlobalImport(dialects.Scala3(i).parse[Importer].get))
 
     (removals ++ refPatches ++ importPatches ++ List(inserts) ++ importAdds).asPatch
   }
@@ -729,7 +751,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       }.headOption
       def bodyAt(col: Int, first: String) = ordered.zipWithIndex.map { case (m, i) =>
         val pair = ordered.lift(i - 1).exists(prev =>
-          prev.planned.name == m.planned.name && prev.text.trim.startsWith("type ") && m.text.trim.startsWith("object "))
+          prev.planned.name == m.planned.name && prev.isType && m.isObject)
         (if (i == 0) first else if (pair) "\n" else "\n\n") + (" " * col) + reindent(m.text, m.column, col)
       }.mkString
       obj match {
