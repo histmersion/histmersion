@@ -11,6 +11,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The attestations that name a source: those it makes (they go with it), and those of other sources whose target is
   * one of its findings, an edge from it or a dating it gives (they lose their target).
@@ -20,6 +21,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 @atBoundary(BoundaryKind.Sql, "counts and removes the attestation rows that point at a deleted source")
 final class AttestationSourceReferrer extends SourceReferrer:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.value.length)
     val findings =

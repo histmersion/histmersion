@@ -41,6 +41,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pictures (`assets`) and where they are shown (`media_links`): a source's figures stored, read, described and
   * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown

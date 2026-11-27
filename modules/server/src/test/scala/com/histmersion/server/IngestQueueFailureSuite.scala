@@ -33,6 +33,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
   * acquisition bookkeeping failed. Uses only the disposable *_test database.

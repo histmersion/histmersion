@@ -54,6 +54,7 @@ private[assets] object AssetRepo:
     * hand-made links.
     */
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def replace(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New, CreatedAt): RowCount =
     val incoming = NewFigure.dedupe(assets)
     val existing = sql"SELECT name, sha256 FROM assets WHERE citekey = $citekey ORDER BY name"
@@ -74,6 +75,7 @@ private[assets] object AssetRepo:
   /** Add to the set, leaving anything already stored under the same name alone (the seed importer's figures, and
     * `POST /api/sources/{ck}/assets`). Returns how many rows were written.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def add(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New, CreatedAt): RowCount =
     val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = ReplaceExisting(false))
     touch(citekey)

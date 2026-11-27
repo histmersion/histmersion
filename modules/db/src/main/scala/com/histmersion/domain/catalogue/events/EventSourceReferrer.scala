@@ -11,6 +11,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The events a source is the primary source of, the relations and participants sourced to it (they refuse a delete),
   * and the datings it gives (they go with it).

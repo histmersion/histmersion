@@ -15,6 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
 import java.time.Clock
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The named periods: the timeline's presets and the PeriodO definitions behind them, searched, read one by one and
   * written by the seed and the imports.

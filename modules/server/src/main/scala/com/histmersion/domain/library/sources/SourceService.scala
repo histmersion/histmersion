@@ -38,6 +38,7 @@ import com.histmersion.domain.catalogue.places.FindingPlacement
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's sources: a record with its findings and the edges it makes, its old citekeys, its rename and delete
   * (what other domains hold of it follows through the referrers), and its body as read by part.

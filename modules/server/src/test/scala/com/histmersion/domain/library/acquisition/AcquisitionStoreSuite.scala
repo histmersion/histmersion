@@ -16,6 +16,7 @@ import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A contract of the acquisition's services, run once in memory and once on the database (a scratch database per test,
   * gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone.
@@ -66,6 +67,7 @@ object AcquisitionStoreSuite:
           val attempts = AcquireCheckService(db)
           val sources = SourceService(db, SourceReferrers(Nil), () => LibraryStoreSuite.Settings, TestCreators.clock)
           val queues = QueueService(db, TestCreators.clock)
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
           def goal(slug: String) =
             val _ = GoalService(db, TestCreators.clock)
               .put(

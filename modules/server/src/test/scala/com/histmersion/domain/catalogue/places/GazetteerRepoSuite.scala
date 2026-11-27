@@ -39,6 +39,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The external gazetteer sources in the store (#1064), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): joining by identifier only, provenance per row, idempotent re-runs, the sweep, the dry run, and the

@@ -295,6 +295,8 @@ private[events] object EventRepo:
   /** Create or replace one event. On an event an import created, the fields that differ from its catalogue's are
     * recorded as corrections ([[recordCorrections]]) — they survive a re-import.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def put(id: BEventRow.Id, in: EventPut)(using DbCon)(using creator: Creator.New, at: CreatedAt): Unit =
     val geom = in.geometry.map(_.value.trim).filter(_.nonEmpty)
     val scale = in.scale.flatMap(v => EventScale.parse(v).flatten)

@@ -137,6 +137,8 @@ private[worklists] object QueueRepo:
   /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry keeps the date from
     * its heading, which is what orders the exported file.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def insert(kind: Kind, in: QueueAdd, creator: Creator.New, at: CreatedAt)(using DbCon): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
     val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)

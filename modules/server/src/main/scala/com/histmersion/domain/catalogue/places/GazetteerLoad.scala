@@ -309,6 +309,8 @@ object GazetteerLoad:
     type Rebuild = Rebuild.T
     object Rebuild extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def settings(cfg: AppConfig, stores: Stores, clock: java.time.Clock): Settings =
     Settings(
       stores,

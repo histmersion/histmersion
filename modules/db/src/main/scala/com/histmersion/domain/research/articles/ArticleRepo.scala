@@ -126,6 +126,8 @@ private[articles] object ArticleRepo:
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def put(a: Article)(using DbCon)(using Creator.New, CreatedAt): Article.UpdatedAt =
     write(a)
     Article.UpdatedAt(token(a.slug.value).getOrElse(""))
@@ -165,6 +167,8 @@ private[articles] object ArticleRepo:
   /** The write itself, inside the caller's transaction: snapshot the previous body into `article_versions` (when the
     * article already exists), then upsert the row and its link graph.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def write(a: Article)(using DbCon)(using creator: Creator.New, at: CreatedAt): Unit =
     // Snapshot the PREVIOUS version before the update overwrites it.
     Unused(
@@ -315,6 +319,7 @@ private[articles] object ArticleRepo:
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles
     * is rewritten through the write path. One transaction; returns the articles rewritten.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def rename(oldSlug: Slug, newSlug: Slug)(using
       DbCon
   )(using

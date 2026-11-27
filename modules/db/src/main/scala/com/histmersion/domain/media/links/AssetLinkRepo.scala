@@ -45,6 +45,7 @@ private[links] object AssetLinkRepo:
   def figureExists(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def insert(in: AssetLink.Put)(using DbCon)(using creator: Creator.New, at: CreatedAt): AssetLink =
     val id = sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, xywh, notes, creator,
                                             created_at)

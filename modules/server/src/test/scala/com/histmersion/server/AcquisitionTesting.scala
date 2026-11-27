@@ -14,6 +14,7 @@ import com.histmersion.util.storage.Location
 import javax.sql.DataSource
 import com.histmersion.domain.research.articles.ArticleService
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's acquisition as the server wires it, over one test's `deps` and its own upstream fakes. */
 object AcquisitionTesting:

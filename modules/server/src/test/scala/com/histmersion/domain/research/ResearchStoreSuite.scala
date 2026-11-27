@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A contract of research's services, run once on the in-memory stores and once on the database (a scratch database per
   * test, gated on HISTMERSION_TEST_DB_URL), each holding research's rows alone: no source is stored, so no link is a

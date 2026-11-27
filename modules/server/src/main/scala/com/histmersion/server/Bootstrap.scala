@@ -71,6 +71,7 @@ final class Bootstrap(
 
   /** The named periods, and how the seed, a sent dataset and the live dump come in. */
   val periods: PeriodService = PeriodService(deps.transactor, deps.clock)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val periodImports: PeriodImports =
     new PeriodImports(
       periods,

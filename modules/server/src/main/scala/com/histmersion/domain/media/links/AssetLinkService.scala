@@ -22,6 +22,7 @@ import com.histmersion.domain.media.assets.AssetInfoRow
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
 import java.time.Clock
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
@@ -59,6 +60,7 @@ object AssetLinkService:
     )
 
   final private class Implementation(db: Transactor, clock: Clock) extends AssetLinkService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def list(
         citekey: Option[Citekey],
         asset: Option[AssetService.AssetUid],

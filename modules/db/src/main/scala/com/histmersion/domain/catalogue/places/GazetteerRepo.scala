@@ -212,6 +212,7 @@ private[places] object GazetteerRepo:
         descriptionsRemoved = Gazetteer.LoadCounts.DescriptionsRemoved(descs.toLong)
       )
 
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def write(rs: List[GazRecord])(using Creator.New, CreatedAt): Gazetteer.LoadCounts =
       if rs.isEmpty then Gazetteer.LoadCounts(source, version)
       else
@@ -338,6 +339,7 @@ private[places] object GazetteerRepo:
     private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)
 
     /** The records' own places: inserted, or updated where something differs. (inserted, updated) */
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     private def writePlaces(rows: List[(GazRecord, Place.Id)])(using
         creator: Creator.New,
         at: CreatedAt

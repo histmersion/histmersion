@@ -10,6 +10,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The gazetteer's provenance that names a source (a person's place types and footprints, a place's `source`), which a
   * delete keeps as history, and the places its findings were assigned to, which go with them.
