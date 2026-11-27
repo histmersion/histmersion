@@ -1,0 +1,3 @@
+Example.scala	7	3
+Example.scala	10	3
+Other.scala	6	3
