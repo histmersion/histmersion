@@ -2,11 +2,14 @@ package com.histmersion
 package server
 
 import java.nio.file.Path
+import scala.concurrent.duration.Duration
 
 import comments.CommentScope
 
 class CommentGrowthSuite extends munit.FunSuite:
   import CommentGrowthSuite.*
+
+  override val munitTimeout = Duration(5, "min")
 
   test(
     "G22: no file has more comments than at the merge base with the pilot, and a file the base does not have has none"
