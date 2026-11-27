@@ -6,7 +6,9 @@ import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "a test plugin standing in for a third-party author: it builds and reads SPI values directly")
 final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasToken) extends AiProvider:
   val title = AiProvider.Title("Hello AI (scripted test provider)")
   override val description =

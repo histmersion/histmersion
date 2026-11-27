@@ -4,7 +4,9 @@ import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "a test plugin standing in for a third-party author: it builds and reads SPI values directly")
 final class HelloPlugin extends Plugin:
   type Config = HelloConfig
   val info = Plugin.Info(

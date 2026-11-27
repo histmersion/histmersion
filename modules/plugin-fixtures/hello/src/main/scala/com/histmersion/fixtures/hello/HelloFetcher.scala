@@ -6,7 +6,9 @@ import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.lint.{LintRule, tolerated}
 
+@tolerated(LintRule.G44, "a test plugin standing in for a third-party author: it builds and reads SPI values directly")
 final class HelloFetcher(mirrors: HelloFetcher.Mirrors) extends SourceFetcher:
   val access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
