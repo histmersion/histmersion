@@ -27,6 +27,7 @@ import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media from outside providers (#1446): the collections `media import` can run, one import run (a dry run, or one
   * place or event), and the import as a JOB over every place not asked yet. Every collection — first-party or a

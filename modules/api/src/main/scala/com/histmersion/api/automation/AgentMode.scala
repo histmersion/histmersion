@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 enum AgentMode(val wire: AgentMode.Wire) derives CanEqual:
   case Working extends AgentMode(AgentMode.Wire("working"))

@@ -9,6 +9,7 @@ import com.histmersion.domain.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An article as a bundle reads it, its period in its three columns (Magnum maps a SELECT's columns positionally). */
 final private[articles] case class BArticleRow(

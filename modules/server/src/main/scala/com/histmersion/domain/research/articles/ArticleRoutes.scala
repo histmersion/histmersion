@@ -16,6 +16,7 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.Title
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The articles over HTTP: the REST routes of the compiled wiki, the rendered page at `/article/{slug}` and the
   * `/articles` redirect, in the order route matching needs (`…/export`, `…/versions` and `…/import` before `…/{slug}`).

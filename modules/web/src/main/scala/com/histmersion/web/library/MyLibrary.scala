@@ -11,6 +11,7 @@ import com.histmersion.web.marks.MyItems
 import com.histmersion.api.Paging
 import com.histmersion.api.Offset
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Library's part of the filter panel: "My library" above the filters, the shelves of the collection the lists read
   * from, and "Show these on the map" under them. Both show only beside Library's lists.

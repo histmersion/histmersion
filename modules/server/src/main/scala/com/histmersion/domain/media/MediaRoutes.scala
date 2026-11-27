@@ -19,6 +19,7 @@ import com.histmersion.domain.Creator
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Media's endpoints bound to its features' controllers, in the order route matching needs: `sources/{ck}/assets`
   * before `sources/{ck}`, the media paths that are fixed before `media/{uid}`.

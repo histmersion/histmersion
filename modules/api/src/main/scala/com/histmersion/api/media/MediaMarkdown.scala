@@ -7,6 +7,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.YearFmt
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MediaMarkdown:

@@ -9,6 +9,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

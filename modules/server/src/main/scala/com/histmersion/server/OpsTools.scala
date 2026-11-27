@@ -32,6 +32,7 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{FeaturePlace, LintRule, movesTo, tolerated}
 
 /** The MCP half of stream 2.8: `lint`, `queue`, `query` — the three tools that replace the research workspace's
   * `lint-wiki`, `bookkeeping` and "just run DuckDB SQL" habits (plan §5.1).

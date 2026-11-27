@@ -13,6 +13,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** A group of settings with one Save: the changes are held until Save writes them into the settings file together (or
   * Undo drops them), then the server applies them.

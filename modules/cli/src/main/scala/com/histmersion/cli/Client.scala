@@ -107,6 +107,7 @@ import com.histmersion.lint.{LintRule, tolerated}
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
   * `Authorization: Bearer <key>` value for authenticated servers; `None` = local.
   */
+@atBoundary(BoundaryKind.Http, "sends the CLI's HTTP requests to the server and decodes the answers")
 final class Client(
     val serverUrl: Client.ServerUrl,
     token: Option[Client.Token] = None,

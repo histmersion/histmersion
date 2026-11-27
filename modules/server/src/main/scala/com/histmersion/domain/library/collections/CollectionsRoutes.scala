@@ -9,6 +9,7 @@ import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The collections' endpoints bound to their controllers. Every request is the local person's until there are accounts.
   */

@@ -25,6 +25,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.

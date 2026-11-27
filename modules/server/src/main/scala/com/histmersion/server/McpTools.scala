@@ -74,6 +74,7 @@ import com.histmersion.domain.library.acquisition.AcquisitionTools
 import com.histmersion.domain.library.collections.CollectionsTools
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{FeaturePlace, LintRule, movesTo, tolerated}
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 @tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")

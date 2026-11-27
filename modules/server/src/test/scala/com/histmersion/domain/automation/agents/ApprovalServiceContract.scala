@@ -26,6 +26,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The contract the approvals keep: a source's open proposal is not doubled; a run's step approval opens once; a
   * decision is taken once; the lists' pages, filters and facets; the digest's, the autopilot's and the scheduler's

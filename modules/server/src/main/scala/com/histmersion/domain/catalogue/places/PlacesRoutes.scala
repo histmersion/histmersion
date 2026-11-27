@@ -13,6 +13,7 @@ import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The gazetteer's endpoints bound to their controllers, in the order route matching needs: the `/{id}` route is a
   * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page (`GET

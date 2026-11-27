@@ -4,6 +4,7 @@ package domain.automation.workflows
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.Creator
 import com.histmersion.plugin.Plugin
+import com.histmersion.lint.{LintRule, tolerated}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class InTreeWorkflowSuite extends munit.FunSuite:

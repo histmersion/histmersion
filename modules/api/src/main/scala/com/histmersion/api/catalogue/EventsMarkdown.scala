@@ -3,6 +3,7 @@ package api.catalogue
 import com.histmersion.api.{OffsetPage, TimeSpan, YearFmt}
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 object EventsMarkdown:
 

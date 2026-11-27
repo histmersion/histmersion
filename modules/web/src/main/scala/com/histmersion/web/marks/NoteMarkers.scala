@@ -14,6 +14,7 @@ import com.histmersion.api.checks.FormatIssue
 import com.histmersion.web.map.MapSurface
 import com.histmersion.api.Html
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The map's "My notes" layer: each note left at a place on the map, as a marker of the map's own kind — off until
   * switched on under Layers. A click or Enter on one shows the note there, to read, change or delete.

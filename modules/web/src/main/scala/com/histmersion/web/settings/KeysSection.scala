@@ -12,6 +12,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › Keys and passwords: every key and password a setting refers to — only whether it is set and how it is
   * referred to, never its value. A plugin's is written as a REFERENCE (an environment variable, a password manager's

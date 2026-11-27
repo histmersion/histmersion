@@ -27,6 +27,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 final case class Place(
     id: Place.Id,
     label: Place.Label,
