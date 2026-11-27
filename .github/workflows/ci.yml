@@ -51,7 +51,7 @@ env:
   # -Xss16m: the compiler's deep recursion (forced-run.sh's flag; the default stack overflows in Namer)
   # -Dsbt.cache_test_result=false: a forced run — sbt 2 replays a passed suite's result from its disk cache otherwise
   SBT: >-
-    sbt --server -batch -J-Xss16m -Dsbt.cache_test_result=false
+    ${{ github.workspace }}/scripts/ci/watched.sh sbt --server -batch -J-Xss16m -Dsbt.cache_test_result=false
     -Dsbt.global.localcache=${{ github.workspace }}/target/sbt-cache
   # what forced-run.sh sets: compiling never rewrites the sources (the format job checks them)
   NOFMT: set every scalafmtOnCompile := false
@@ -59,13 +59,16 @@ env:
 jobs:
   format:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
       - uses: ./.github/actions/setup
       - name: formatting (scalafmt; `just fmt` fixes it)
+        timeout-minutes: 8
         run: $SBT scalafmtCheckAll scalafmtSbtCheck
+      - if: always()
+        uses: ./.github/actions/thread-dumps
 
   converter:
     runs-on: ubuntu-24.04
@@ -81,7 +84,7 @@ jobs:
 
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 45
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
@@ -101,6 +104,7 @@ jobs:
           key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
           restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
       - name: compile every module, list every suite
+        timeout-minutes: 30
         run: $SBT -J-Xmx6g "$NOFMT" Test/compile ciSuites
       - name: class the suites (unit or IT) and deal them into shards
         id: plan
@@ -146,6 +150,8 @@ jobs:
             ~/.sbt
             ~/.ivy2/cache
           key: ${{ env.HISTMERSION_CI_SAVE_DEPS }}
+      - if: always()
+        uses: ./.github/actions/thread-dumps
 
   # the lint rules (tools/lint, docs/adr/0032): every rule over every module, main and test, on the SemanticDB of
   # the build job's compile; a finding fails unless its definition carries @tolerated(LintRule.X, "why"), and a
@@ -154,7 +160,7 @@ jobs:
   lint:
     needs: build
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
@@ -178,23 +184,29 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with: { name: compiled, path: "${{ runner.temp }}" }
       - name: the build job's compilation output, replayed into target/out (the SemanticDB the rules read)
+        timeout-minutes: 10
         run: |
           mkdir -p target
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
           $SBT "$NOFMT" Test/compile
       - name: the lint rules' own tests (unit tests, and the guideline rule over its fixture)
+        timeout-minutes: 8
         run: tools/lint/test.sh
       - name: every lint rule over every module
+        timeout-minutes: 8
         run: tools/lint/lint.sh
       - name: no rule has more suppressions than at the merge base
+        timeout-minutes: 5
         run: tools/lint/count.sh
+      - if: always()
+        uses: ./.github/actions/thread-dumps
 
   test:
     needs: build
     name: ${{ matrix.shard }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -260,6 +272,7 @@ jobs:
             echo "HISTMERSION_PG_BIN_DIR=$GITHUB_WORKSPACE/runtime/postgres/.pixi/envs/default/bin"
           } >> "$GITHUB_ENV"
       - name: forced tests of the shard
+        timeout-minutes: 20
         run: |
           projects="$(cut -f1 "$HISTMERSION_CI_SHARD_FILE" | sort -u)"
           echo "shard ${{ matrix.shard }}: $(wc -l < "$HISTMERSION_CI_SHARD_FILE") suite(s) of" $projects
@@ -303,6 +316,9 @@ jobs:
           if-no-files-found: warn
       - if: always() && matrix.db
         run: just test-db-down
+      - if: always()
+        uses: ./.github/actions/thread-dumps
+        with: { suffix: "${{ matrix.shard }}" }
 
   shards:
     needs: [build, test]
@@ -389,15 +405,20 @@ jobs:
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the CLI's class path (from the replay)
-        timeout-minutes: 20
+        timeout-minutes: 8
         run: $SBT "$NOFMT" cli/writeClasspath
       - name: the scripts' own tests (the LaunchAgent environment merge, the CI shard tools, …)
+        timeout-minutes: 8
         run: just test-scripts
       - name: unit tests of the browser tests' tools (the shards, the budget comparison)
+        timeout-minutes: 5
         working-directory: modules/web
         run: node --test test/test-shards.unit.test.mjs test/budget-figures.unit.test.mjs
       - name: CLI reference in the docs is current (the CLI's help, on the JVM)
+        timeout-minutes: 15
         run: ./tools/gen-cli-docs.sh --check
+      - if: always()
+        uses: ./.github/actions/thread-dumps
 
   browser:
     # The browser tests but the budgets, against the server on the JVM from the build job's compile, in Chromium
@@ -441,7 +462,7 @@ jobs:
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the server's class path (from the replay)
-        timeout-minutes: 20
+        timeout-minutes: 8
         run: |
           $SBT "$NOFMT" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
@@ -520,6 +541,9 @@ jobs:
           if-no-files-found: ignore
       - if: always()
         run: just test-db-down
+      - if: always()
+        uses: ./.github/actions/thread-dumps
+        with: { suffix: "${{ matrix.shard }}" }
 
   browser-shards:
     needs: [build, browser]
@@ -569,13 +593,13 @@ jobs:
           zstd -d -q -c "$RUNNER_TEMP/compiled.tar.zst" | tar -C target -xf -
           rm "$RUNNER_TEMP/compiled.tar.zst"
       - name: the server's class path (from the replay)
-        timeout-minutes: 20
+        timeout-minutes: 8
         run: |
           $SBT "$NOFMT" server/writeClasspath
           cp="$(find target/out -path '*histmersion-server/classpath.txt' | head -1)"
           test -s "$cp" && echo "SERVER_CLASSPATH_FILE=$cp" >> "$GITHUB_ENV"
       - name: the merge base's server class path (a worktree of it, compiled from the same replay where unchanged)
-        timeout-minutes: 30
+        timeout-minutes: 20
         run: |
           base="$(git merge-base HEAD "origin/${GITHUB_BASE_REF:-contracts3-pilot}")"
           echo "the merge base: $base (this change: $(git rev-parse HEAD))"
@@ -646,3 +670,5 @@ jobs:
           if-no-files-found: ignore
       - if: always()
         run: just test-db-down
+      - if: always()
+        uses: ./.github/actions/thread-dumps
