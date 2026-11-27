@@ -217,7 +217,7 @@ object CalibreCmd:
         .pick(format)
         .toRight(
           fail(
-            s"Calibre id $id has no pdf/epub (formats: ${book.formats.mkString(", ")}); " +
+            shown"Calibre id $id has no pdf/epub (formats: ${book.formats.mkString(", ")}); " +
               "KFX/MOBI must be converted in Calibre first"
           )
         )
@@ -352,7 +352,7 @@ object CalibreCmd:
     if replace then
       replaceOne(c, ck, file.map(f => Path.of(f))).map { case (id, fmt) =>
         Output.emit(json, Calibre.Json.Replaced(ck, id, Calibre.Json.Replaced.Value(fmt.value)))(_ =>
-          s"replaced the ${fmt.value.toUpperCase} of Calibre id $id with `$ck`'s original"
+          shown"replaced the ${fmt.value.toUpperCase} of Calibre id $id with `$ck`'s original"
         )
       }
     else
@@ -564,7 +564,7 @@ object CalibreCmd:
           val results = ready.map(e => e.gap.citekey -> pushOne(c, e.gap.citekey, None, calibre, originals))
           results.foreach {
             case (ck, Right((id, _))) => Cli.out.println(shown"  + $ck → Calibre id $id")
-            case (ck, Left(e))        => Cli.err.println(s"  ! $ck: ${e.problems.sentences.mkString("; ")}")
+            case (ck, Left(e))        => Cli.err.println(shown"  ! $ck: ${e.problems.sentences.mkString("; ")}")
           }
           val failed = results.count(_._2.isLeft)
           Cli.out.println(s"pushed ${results.size - failed} source(s), $failed failed$note")
@@ -699,7 +699,7 @@ object CalibreCmd:
       Calibre.Json.Updated(ck, id, changes.map(ch => Calibre.Json.Updated.Changed(ch.field.name.value)))
     )(u =>
       if u.changed.isEmpty then shown"Calibre id $id already agrees with `$ck` — nothing written"
-      else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
+      else shown"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
     )
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
@@ -789,7 +789,7 @@ object CalibreCmd:
                         Calibre.Book.Id(p.id.value.toIntOption.getOrElse(0)),
                         Calibre.Json.Replaced.Value(fmt.value)
                       )
-                    )(_ => s"replaced the ${fmt.value.toUpperCase} of Calibre id ${p.id} with `$ck`'s original")
+                    )(_ => shown"replaced the ${fmt.value.toUpperCase} of Calibre id ${p.id} with `$ck`'s original")
                   case None =>
                     Output.emit(json, Calibre.Json.Linked(ck, Calibre.Book.Id(p.id.value.toIntOption.getOrElse(0))))(
                       _ => shown"added `$ck` to Calibre as id ${p.id} — ${p.title}"
@@ -811,7 +811,7 @@ object CalibreCmd:
                   s.set(CollectionSetRequest(CollectionSetRequest.Id(id.value.toString), fields)).map(_ => ())
                 case None => calibre(c).set(id, fields).left.map(failProblem)
             )
-            .map(_ => Cli.out.println(s"set ${raw.map(_.takeWhile(_ != ':')).mkString(", ")} on Calibre id $id"))
+            .map(_ => Cli.out.println(shown"set ${raw.map(_.takeWhile(_ != ':')).mkString(", ")} on Calibre id $id"))
         case Command.Audit(json) =>
           server(c) match
             case Some(s) =>
@@ -880,7 +880,7 @@ object CalibreCmd:
                   Calibre.Json.Updated(ck, Calibre.Book.Id(u.id.value.toIntOption.getOrElse(0)), u.changed)
                 )(x =>
                   if x.changed.isEmpty then shown"Calibre id ${u.id} already agrees with `$ck` — nothing written"
-                  else s"updated Calibre id ${u.id} from `$ck` (${x.changed.mkString(", ")}) — ${u.title}"
+                  else shown"updated Calibre id ${u.id} from `$ck` (${x.changed.mkString(", ")}) — ${u.title}"
                 )
               }
             case None => hostUpdate(c, ck, json)

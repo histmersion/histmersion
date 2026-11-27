@@ -156,7 +156,7 @@ object JobFollow:
             Left(
               Cli.Error(
                 unanswered(
-                  s"backup ${s.file}: ${failures + 1} poll(s) in a row failed (${e.problems.sentences.mkString("; ")}); " +
+                  shown"backup ${s.file}: ${failures + 1} poll(s) in a row failed (${e.problems.sentences.mkString("; ")}); " +
                     "last known state: running"
                 )
               )

@@ -402,7 +402,7 @@ object QueueView:
     /** Every write of this pane: its failure lands in the pane; the list reloads either way. */
     def write[A](what: UiLabels.Text, f: scala.concurrent.Future[A])(done: A => Unit = (_: A) => ()): Unit =
       f.onComplete { r =>
-        r.fold(e => failure.set(Some(s"Could not $what: ${e.getMessage}")), a => { failure.set(None); done(a) })
+        r.fold(e => failure.set(Some(shown"Could not $what: ${e.getMessage}")), a => { failure.set(None); done(a) })
         load()
         Notices.refreshSoon() // the toolbar's count follows (the open window keeps it read)
       }
@@ -829,7 +829,7 @@ object QueueView:
                   QueueItemLink(
                     kind,
                     Goal.Plans.GoalLink.QueueNumber(i.id.value),
-                    s"${listName(kind)}: ${i.text.value.take(120)}"
+                    shown"${listName(kind)}: ${i.text.value.take(120)}"
                   )
                 )
               }

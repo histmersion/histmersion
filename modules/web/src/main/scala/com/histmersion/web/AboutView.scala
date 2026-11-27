@@ -72,7 +72,7 @@ object AboutView:
           a.configFile.path.fold("none")(_ => if a.configFile.loaded.value then "read" else "not found"),
           detail = a.configFile.path.map(p =>
             if a.configFile.unknownKeys.isEmpty then shown"$p"
-            else s"$p · ignored unknown: ${a.configFile.unknownKeys.mkString(", ")}"
+            else shown"$p · ignored unknown: ${a.configFile.unknownKeys.mkString(", ")}"
           )
         )
       )

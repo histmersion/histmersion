@@ -570,15 +570,15 @@ object Calibre:
     }
     val rows = changing.flatMap { (e, cs, note) =>
       cs.map(c =>
-        s"| ${e.calibreId} | ${e.citekeys.mkString(", ")} | ${c.field.name} | ${cell(c.from.value)} | ${cell(c.to.value)} | $note |"
+        shown"| ${e.calibreId} | ${e.citekeys.mkString(", ")} | ${c.field.name} | ${cell(c.from.value)} | ${cell(c.to.value)} | $note |"
       )
     }
     val left = entries.collect { e =>
       e.outcome match
         case UpdateOutcome.Shared =>
-          s"- ${e.calibreId}: linked from ${e.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
+          shown"- ${e.calibreId}: linked from ${e.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
         case UpdateOutcome.Missing =>
-          s"- ${e.calibreId}: no such Calibre entry (${e.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
+          shown"- ${e.calibreId}: no such Calibre entry (${e.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
         case UpdateOutcome.Refused(why) => s"- ${e.calibreId} (${e.citekeys.mkString(", ")}): ${why.sentence}"
     }
     val upToDate = entries.count(_.outcome == UpdateOutcome.UpToDate)
@@ -587,7 +587,7 @@ object Calibre:
       else
         val verb = if applied.value then "updated" else "would change"
         (List(
-          s"### ${changing.size} Calibre ${Plural.noun(Plural.Count(changing.size.toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
+          shown"### ${changing.size} Calibre ${Plural.noun(Plural.Count(changing.size.toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
           "",
           "| id | citekey | field | Calibre | record | |",
           "|---:|---|---|---|---|---|"
@@ -906,7 +906,7 @@ object Calibre:
         val who = b.authors.take(3).mkString(", ") + (if b.authors.sizeIs > 3 then " et al." else "")
         val year = b.year.fold("")(y => s" ($y)")
         val files = if b.formats.isEmpty then "  - no file" else b.formats.map(f => s"  - `$f`").mkString("\n")
-        s"- **${b.id}** · ${b.title}$year — ${if who.isEmpty then "no author" else who}\n$files"
+        shown"- **${b.id}** · ${b.title}$year — ${if who.isEmpty then "no author" else who}\n$files"
       }
       val shown = if total.value > books.size then s"${books.size} of $total" else books.size.toString
       (List(
@@ -928,7 +928,7 @@ object Calibre:
         val fmts = b.formats.flatMap(_.value.split("\\.").lastOption).map(_.toUpperCase).distinct.mkString(", ")
         // a multi-author paper in Calibre can carry 200 names; a table cell shows the first few
         val who = b.authors.take(3).mkString(", ") + (if b.authors.sizeIs > 3 then " et al." else "")
-        s"| ${b.id} | ${b.title.value.replace("|", "\\|")} | ${who.replace("|", "\\|")} " +
+        shown"| ${b.id} | ${b.title.value.replace("|", "\\|")} | ${who.replace("|", "\\|")} " +
           s"| ${b.year.map(_.toString).getOrElse("—")} | $fmts |"
       }
       (List(s"### ${books.size} book(s)", "", "| id | title | authors | year | formats |", "|---|---|---|---:|---|")
@@ -1028,7 +1028,7 @@ object Calibre:
                 val todo =
                   if f.fixable then s"`histmersion calibre update ${f.record.citekey}`"
                   else "re-push, or clear the source's calibre id"
-                s"| ${f.calibreId} | ${f.citekeys.mkString(", ")} | ${f.issues.map(_.label).mkString("; ")} | ${cell(corpus)} | ${cell(cal)} | $todo |"
+                shown"| ${f.calibreId} | ${f.citekeys.mkString(", ")} | ${f.issues.map(_.label).mkString("; ")} | ${cell(corpus)} | ${cell(cal)} | $todo |"
               }
               .mkString("\n")
         s"### ${findings.size} of $checked linked Calibre entries disagree with the corpus\n\n$table\n\n" +

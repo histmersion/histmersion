@@ -261,7 +261,7 @@ object Cli:
       case CommandLine.Outcome.Failed(problems, help, json) =>
         val e = Error(problems)
         e.printJson(json)
-        err.println(s"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
+        err.println(shown"${problems.sentences.map(s => s"error: $s").mkString("\n")}\n\n$help");
         e.exitCode.exit()
       case CommandLine.Outcome.Run(server, caller, cmd, json) =>
         finish(server, caller.orElse(AgentIdentity.configured(Settings.app.cli.agent)), cmd.run, json)
@@ -628,7 +628,7 @@ object Cli:
           (if only.nonEmpty then Right(only.map(Citekey(_))) else c.citekeys).flatMap { ks =>
             val total = ks.size
             val failed = ks.zipWithIndex.flatMap { (ck, i) =>
-              Cli.out.println(s"${i + 1}/$total $ck")
+              Cli.out.println(shown"${i + 1}/$total $ck")
               c.exportSource(ck) match
                 case Right(text) =>
                   val _ = Files.writeString(
@@ -636,7 +636,7 @@ object Cli:
                     text.value
                   )
                   None
-                case Left(e) => Some(s"$ck: ${e.problems.sentences.mkString("; ")}")
+                case Left(e) => Some(shown"$ck: ${e.problems.sentences.mkString("; ")}")
             }
             Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
             // a renamed source's note would otherwise linger under its OLD citekey — and a later

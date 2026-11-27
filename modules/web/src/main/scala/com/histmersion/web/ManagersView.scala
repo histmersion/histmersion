@@ -574,7 +574,7 @@ object ManagersView:
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         call.onComplete(
-          _.fold(e => failure.set(Some(s"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) })
+          _.fold(e => failure.set(Some(shown"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) })
         )
     def pinButton(g: Autopilot.FocusGoal) =
       val (verb, tip) = if g.pinned.value then ("unpin", "Let the focus choose again")
@@ -1339,7 +1339,7 @@ object ManagersView:
       f.onComplete { r =>
         busy.set(false)
         r.fold(
-          e => failure.set(Some(s"$what: ${e.getMessage}")),
+          e => failure.set(Some(shown"$what: ${e.getMessage}")),
           _ => { failure.set(None); message.set(Some(shown"$what: done")) }
         )
         refresh(changed = Poll.DataChanged(true))

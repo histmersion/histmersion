@@ -290,7 +290,7 @@ object ResearchOverview:
               oldestFirst(as) match
                 case Nil    => ""
                 case h :: _ =>
-                  s"${as.size} · oldest waiting ${waited(EpochMillis(js.Date.parse(h.createdAt.value)), EpochMillis(js.Date.now()))}"
+                  shown"${as.size} · oldest waiting ${waited(EpochMillis(js.Date.parse(h.createdAt.value)), EpochMillis(js.Date.now()))}"
             )
           )
         ),
