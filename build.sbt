@@ -65,8 +65,8 @@ ThisBuild / scalacOptions ++= Seq(
   "-Xmacro-settings:scalacheckDerivation.timeout=30s"
 )
 
-// Every compile writes its SemanticDB (beside the classes, in `meta`/`test-meta`, never into a jar): the guideline
-// ratchet (GuidelineRatchetSuite, server tests) reads it, so the check needs no separate build.
+// Every compile writes its SemanticDB (beside the classes, in `meta`/`test-meta`, never into a jar): the lint rules
+// (tools/lint) and the ledger sites (LedgerSites, server tests) read it, so the checks need no separate build.
 ThisBuild / semanticdbEnabled := true
 
 // Dependency versions live in project/Dependencies.scala (imported above as `V`).
@@ -221,7 +221,6 @@ def dbTestGroups(
   }
 )
 
-// The base trait of every newtype's companion (CanEqual and the base type's Ordering, lifted once), on Iron alone
 lazy val lint = projectMatrix
   .in(file("modules/lint"))
   .settings(
@@ -232,9 +231,10 @@ lazy val lint = projectMatrix
   .jvmPlatform(scalaVersions = Seq(scala3))
   .jsPlatform(scalaVersions = Seq(scala3))
 
+// The base trait of every newtype's companion (CanEqual and the base type's Ordering, lifted once), on Iron alone
 lazy val newtype = projectMatrix
   .in(file("modules/newtype"))
-  .dependsOn(lint % Provided)
+  .dependsOn(lint % "provided;test")
   .settings(
     name := "histmersion-newtype",
     description := "The base trait of every Histmersion newtype: an Iron RefinedType with CanEqual and a lifted Ordering"
@@ -252,7 +252,7 @@ lazy val newtype = projectMatrix
 // NonEmptyVector of them), on the standard library alone
 lazy val nonEmpty = projectMatrix
   .in(file("modules/nonempty"))
-  .dependsOn(lint % Provided)
+  .dependsOn(lint % "provided;test")
   .settings(
     name := "histmersion-nonempty",
     description := "NonEmptyVector: a vector with at least one element, the vector itself at run time"
@@ -266,7 +266,7 @@ lazy val nonEmpty = projectMatrix
 // never in a binary)
 lazy val nonEmptyDerivation = projectMatrix
   .in(file("modules/nonempty-derivation"))
-  .dependsOn(nonEmpty, json % "test->compile", lint % Provided)
+  .dependsOn(nonEmpty, json % "test->compile", lint % "provided;test")
   .settings(
     name := "histmersion-nonempty-derivation",
     description := "A Hearth IsCollection provider for NonEmptyVector, so that Kindlings derives its codecs and schemas"
@@ -290,7 +290,7 @@ lazy val nonEmptyDerivation = projectMatrix
 
 lazy val problem = projectMatrix
   .in(file("modules/problem"))
-  .dependsOn(newtype, nonEmpty, lint % Provided)
+  .dependsOn(newtype, nonEmpty, lint % "provided;test")
   .settings(
     name := "histmersion-problem",
     description :=
@@ -308,7 +308,7 @@ lazy val problem = projectMatrix
 // cursor over it; shared by the wire contract and the plugin SPI
 lazy val json = projectMatrix
   .in(file("modules/json"))
-  .dependsOn(lint % Provided)
+  .dependsOn(lint % "provided;test")
   .settings(
     name := "histmersion-json",
     description := "JSON for Histmersion and its plugins: derived jsoniter codecs, raw JSON (Kindlings' AST) and a cursor"
@@ -326,7 +326,7 @@ lazy val json = projectMatrix
 
 lazy val values = projectMatrix
   .in(file("modules/values"))
-  .dependsOn(newtype, problem, lint % Provided)
+  .dependsOn(newtype, problem, lint % "provided;test")
   .settings(
     name := "histmersion-values",
     description := "The model's newtypes and vocabularies the server-side modules share, on Iron alone (JVM)"
@@ -337,7 +337,7 @@ lazy val values = projectMatrix
 
 lazy val api = projectMatrix
   .in(file("modules/api"))
-  .dependsOn(nonEmptyDerivation % Provided, lint % Provided)
+  .dependsOn(nonEmptyDerivation % Provided, lint % "provided;test")
   .dependsOn(newtype, problem, json)
   .settings(
     name := "histmersion-api",
@@ -368,7 +368,7 @@ lazy val api = projectMatrix
 
 lazy val config = project
   .in(file("modules/config"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(values.jvm(scala3))
   .settings(
     name := "histmersion-config",
@@ -384,7 +384,7 @@ lazy val config = project
 
 lazy val files = project
   .in(file("modules/files"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(values.jvm(scala3), api.jvm(scala3) % "compile->compile;test->test")
   .settings(
     name := "histmersion-files",
@@ -395,7 +395,7 @@ lazy val files = project
 
 lazy val core = projectMatrix
   .in(file("modules/core"))
-  .dependsOn(nonEmptyDerivation % Provided, lint % Provided)
+  .dependsOn(nonEmptyDerivation % Provided, lint % "provided;test")
   .dependsOn(values, api % "compile->compile;test->test")
   // config for its tests only: the domain takes settings records of its own, which the server converts; the
   // upstreams' host rules for the tests that pass them in as the server does
@@ -424,7 +424,7 @@ lazy val core = projectMatrix
 
 lazy val pluginApi = project
   .in(file("modules/plugin-api"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(newtype.jvm(scala3), problem.jvm(scala3), json.jvm(scala3))
   // sconfig, kindlings-sconfig-derivation and iron only (all in the plugin platform): no Histmersion class on a plugin's class path
   .settings(
@@ -445,7 +445,7 @@ lazy val pluginApi = project
 // plugins and by the host. Plugin platform only (plugin-api, its JSON, sttp's model): it registers nothing.
 lazy val upstreams = project
   .in(file("modules/upstreams"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(pluginApi)
   .settings(
     name := "histmersion-upstreams",
@@ -465,7 +465,7 @@ lazy val upstreams = project
 
 lazy val pluginHost = project
   .in(file("modules/plugin-host"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(core.jvm(scala3) % "compile->compile;test->test", config, pluginApi, upstreams)
   .settings(
     name := "histmersion-plugin-host",
@@ -481,7 +481,7 @@ lazy val pluginHost = project
 
 lazy val pluginTestkit = project
   .in(file("modules/plugin-testkit"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(pluginHost)
   .settings(
     name := "histmersion-plugin-testkit",
@@ -491,7 +491,7 @@ lazy val pluginTestkit = project
 
 lazy val pluginVaults = project
   .in(file("modules/plugin-vaults"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(pluginApi, pluginHost % Test)
   .settings(
     name := "histmersion-plugin-vaults",
@@ -504,7 +504,7 @@ lazy val pluginVaults = project
 // server's runtime dependency, each switched off by its `enabled`
 lazy val pluginsFetchers = projectMatrix
   .in(file("modules/plugins/fetchers"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(upstreams, pluginTestkit % Test)
   .settings(
     name := "histmersion-plugins-fetchers",
@@ -517,7 +517,7 @@ lazy val pluginsFetchers = projectMatrix
 // library alone, read by the host's one import loop as any catalogue; in every image, each switched off by its `enabled`
 lazy val pluginsEvents = projectMatrix
   .in(file("modules/plugins/events"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(upstreams, pluginTestkit % Test)
   .settings(
     name := "histmersion-plugins-events",
@@ -536,7 +536,7 @@ lazy val pluginsEvents = projectMatrix
 // `enabled` (the two keyed ones off by default)
 lazy val pluginsMedia = projectMatrix
   .in(file("modules/plugins/media"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(upstreams, pluginTestkit % Test)
   .settings(
     name := "histmersion-plugins-media",
@@ -554,7 +554,7 @@ lazy val pluginsMedia = projectMatrix
 // by its `enabled`
 lazy val pluginsGazetteers = projectMatrix
   .in(file("modules/plugins/gazetteers"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(upstreams, pluginTestkit % Test)
   .settings(
     name := "histmersion-plugins-gazetteers",
@@ -568,7 +568,7 @@ lazy val pluginsGazetteers = projectMatrix
 // loop runs them as any plugin's provider; in every image, each switched off by its `enabled`
 lazy val pluginsAiHttp = projectMatrix
   .in(file("modules/plugins/ai-http"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(pluginApi, pluginTestkit % Test)
   .settings(
     name := "histmersion-plugins-ai-http",
@@ -587,7 +587,7 @@ lazy val pluginsAiHttp = projectMatrix
 // its `enabled`. Its suites run a fake calibredb over fixture libraries only.
 lazy val pluginsCalibre = projectMatrix
   .in(file("modules/plugins/calibre"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(pluginApi, pluginTestkit % Test)
   .settings(
     name := "histmersion-plugins-calibre",
@@ -665,14 +665,14 @@ lazy val pluginHelloDeps = project
 
 lazy val console = project
   .in(file("modules/console"))
-  .dependsOn(newtype.jvm(scala3), lint.jvm(scala3) % Provided)
+  .dependsOn(newtype.jvm(scala3), lint.jvm(scala3) % "provided;test")
   .settings(commonDeps)
   .settings(name := "histmersion-console", publish / skip := true)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
 
 lazy val pluginResolver = project
   .in(file("modules/plugin-resolver"))
-  .dependsOn(console, problem.jvm(scala3), lint.jvm(scala3) % Provided)
+  .dependsOn(console, problem.jvm(scala3), lint.jvm(scala3) % "provided;test")
   // run from the relink kit's tools/, never on the server's class path: coursier's jar carries native-image settings
   .settings(
     name := "histmersion-plugin-resolver",
@@ -698,7 +698,7 @@ lazy val pluginResolver = project
 
 lazy val chimneyIron = project
   .in(file("modules/chimney-iron"))
-  .dependsOn(lint.jvm(scala3) % Provided)
+  .dependsOn(lint.jvm(scala3) % "provided;test")
   // consumers depend on it % Provided; Chimney 2 and Iron 3.4 need Scala 3.10+ (3.9.0 fails here on a cyclic reference)
   .settings(
     name := "histmersion-chimney-iron",
@@ -717,7 +717,7 @@ lazy val chimneyIron = project
 
 lazy val chimneyIronTests = project
   .in(file("modules/chimney-iron-tests"))
-  .dependsOn(chimneyIron % Provided, newtype.jvm(scala3), lint.jvm(scala3) % Provided)
+  .dependsOn(chimneyIron % Provided, newtype.jvm(scala3), lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-chimney-iron-tests",
     description := "chimney-iron used as a layer uses it, as a Provided dependency",
@@ -734,7 +734,7 @@ lazy val chimneyIronTests = project
 
 lazy val db = project
   .in(file("modules/db"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(config, core.jvm(scala3) % "compile->compile;test->test")
   // the store's rows (the model's vocabularies) into the api's records where a repository answers one: compile time only
   .dependsOn(chimneyIron % Provided)
@@ -813,18 +813,18 @@ def webBuild(js: String): (String, String) = {
   (id, js.replace(WebBuildPlaceholder, id))
 }
 
-/** Every module's sources and the files the source-reading suites compare them with (ContractsSuite, ArchitectureSuite,
-  * GuidelineRatchetSuite): a digest that keys the server's cached test result, so a change in any module runs those
-  * suites again rather than replaying a pass.
+/** Every module's sources and the files the source-reading suites compare them with (CommentGrowthSuite, the ledgers,
+  * WorkersSuite): a digest that keys the server's cached test result, so a change in any module runs those suites again
+  * rather than replaying a pass.
   */
-val sourcesDigest = taskKey[String]("A digest of every module's sources and of the architecture and ratchet files")
+val sourcesDigest = taskKey[String]("A digest of every module's sources and of the architecture files")
 
-/** Every module compiled with its tests: the SemanticDB GuidelineRatchetSuite reads is that of the last compile. */
+/** Every module compiled with its tests: the SemanticDB LedgerSites reads is that of the last compile. */
 val everyModuleCompiled = taskKey[Unit]("Compile every module of the build, main and test")
 
 lazy val server = project
   .in(file("modules/server"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   .dependsOn(
     core.jvm(scala3),
     db % "compile->compile;test->test",
@@ -864,7 +864,11 @@ lazy val server = project
         .filter(f => f.isFile && f.getName.endsWith(".scala") && !f.getPath.contains("/target/"))
         .get() ++
         (root / "architecture").allPaths.filter(_.isFile).get() ++
-        Seq(root / "tools/refactor/GuidelineInventory.scala", root / "tools/refactor/guideline-ratchet.conf")
+        Seq(
+          root / "tools/refactor/SentenceSites.scala",
+          root / "tools/refactor/ProblemSymbols.scala",
+          root / "tools/refactor/ledger-sites.conf"
+        )
       val digest = java.security.MessageDigest.getInstance("SHA-256")
       files.filter(_.isFile).sortBy(_.getPath).foreach { f =>
         digest.update(f.getPath.getBytes("UTF-8"))
@@ -1069,7 +1073,7 @@ lazy val server = project
       streams.value.log.info(s"plugin repository → $repo")
       repo
     },
-    // the versions of project/Dependencies.scala (`BuildVersions`): GuidelineRatchetSuite runs Scalafix with them
+    // the versions of project/Dependencies.scala (`BuildVersions`): LedgerSites runs Scalafix with them
     Test / resourceGenerators += Def.task {
       val out = (Test / resourceManaged).value / BuildVersions.FileName
       if !out.exists() || IO.read(out) != BuildVersions.text then IO.write(out, BuildVersions.text)
@@ -1223,7 +1227,7 @@ lazy val server = project
 
 lazy val cli = project
   .in(file("modules/cli"))
-  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3) % "provided;test")
   // pluginTestkit and the Scala compiler are TEST dependencies only: the generated plugin projects are compiled against
   // the plugin API in `GeneratedPluginsCompileSuite`; the CLI itself still depends on neither core nor db
   .dependsOn(api.jvm(scala3), config, files, console, pluginTestkit % Test)
@@ -1285,7 +1289,7 @@ lazy val cli = project
 
 lazy val web = project
   .in(file("modules/web"))
-  .dependsOn(nonEmptyDerivation.js(scala3) % Provided, lint.js(scala3) % Provided)
+  .dependsOn(nonEmptyDerivation.js(scala3) % Provided, lint.js(scala3) % "provided;test")
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(api.js(scala3))
   .settings(

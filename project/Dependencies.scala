@@ -9,7 +9,7 @@ object Dependencies {
     // THE Scala version: every module's compiler and library. Code outside sbt reads it from what `BuildVersions`
     // writes; .sdkmanrc's `scala=` must name the same one (BuildVersionsSuite).
     val scala = "3.10.1"
-    // ch.epfl.scala scalafix-cli and the Scala 2.13 it is published for: tools only (GuidelineRatchetSuite and the
+    // ch.epfl.scala scalafix-cli and the Scala 2.13 it is published for: tools only (tools/lint, LedgerSites and the
     // rules under tools/refactor read them from `BuildVersions`)
     val scalafix = "0.14.9"
     val scalafixScala = "2.13.18"
@@ -50,7 +50,7 @@ object Dependencies {
 
   /** The versions code outside sbt needs, in one `key=value` file: sbt writes it to `target/build-versions.properties`
     * whenever it loads the build (scripts and tools/refactor read it there) and into the server's test resources
-    * (GuidelineRatchetSuite, BuildVersionsSuite). The JDK pin is not here: its source is .sdkmanrc and
+    * (LedgerSites, BuildVersionsSuite). The JDK pin is not here: its source is .sdkmanrc and
     * scripts/bundle/graalvm-pins.txt, which scripts read directly.
     */
   object BuildVersions {
