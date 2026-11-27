@@ -100,7 +100,7 @@ object ArticlePatches:
       places: Option[CsvText] = None,
       period: Option[FilterFlags.Period] = None,
       extraQueries: List[FilterFlags.ExtraQueries] = Nil,
-      clear: FilterFlags.Clear = FilterFlags.Clear(false)
+      clear: FilterFlags.Clear = FilterFlags.Clear.Kept
   ):
     def anyGiven: Boolean = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
       places.isDefined || period.isDefined || extraQueries.nonEmpty
@@ -112,8 +112,10 @@ object ArticlePatches:
     object Period extends Newtype[String, Pure]
     type ExtraQueries = ExtraQueries.T
     object ExtraQueries extends Newtype[String, Pure]
-    type Clear = Clear.T
-    object Clear extends Newtype[Boolean, Pure]
+    enum Clear derives CanEqual:
+      case Cleared, Kept
+    object Clear:
+      extension (clear: Clear) def clears: Boolean = clear == Cleared
 
   /** The coverage flags (#958) over a built patch: any `--filter-*` flag REPLACES the filter with the one the flags
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
@@ -127,7 +129,7 @@ object ArticlePatches:
     for
       period <- periodOf(f.period)
       _ <- Either.cond(
-        !(f.clear.value && f.anyGiven),
+        !(f.clear.clears && f.anyGiven),
         (),
         Problem.Unclassified(Legacy.Text("--clear-filter with --filter-* flags: give one or the other"))
       )
@@ -147,7 +149,7 @@ object ArticlePatches:
       }
     yield
       val filter =
-        if f.clear.value then Some(Article.Filter())
+        if f.clear.clears then Some(Article.Filter())
         else if f.anyGiven then
           Some(
             Article.Filter(

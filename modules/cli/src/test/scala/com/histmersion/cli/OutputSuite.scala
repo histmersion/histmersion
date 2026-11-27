@@ -32,17 +32,17 @@ class OutputSuite extends munit.FunSuite:
       Some(Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")),
       None
     )
-    assertEquals(Output.render(json = Cli.JsonOutput(false), item)(i => s"#${i.id}"), "#7")
-    val js = Output.render(json = Cli.JsonOutput(true), item)(_ => "unused")
+    assertEquals(Output.render(json = Cli.JsonOutput.Text, item)(i => s"#${i.id}"), "#7")
+    val js = Output.render(json = Cli.JsonOutput.Json, item)(_ => "unused")
     assert(js.startsWith("{\n  \"id\" : 7,"), js)
     assert(js.contains("\"reason\" : null"), "an absent field is printed as null, as the server sends it: " + js)
 
   test("the one --json flag parses, and defaults to Markdown"):
     assertEquals(
       Parsing.parse("query", "select 1", "--json"),
-      Right(Ops.Command.Query("select 1", Cli.JsonOutput(true)))
+      Right(Ops.Command.Query("select 1", Cli.JsonOutput.Json))
     )
-    assertEquals(Parsing.parse("query", "select 1"), Right(Ops.Command.Query("select 1", Cli.JsonOutput(false))))
+    assertEquals(Parsing.parse("query", "select 1"), Right(Ops.Command.Query("select 1", Cli.JsonOutput.Text)))
 
   test("calibre search --json keeps the field names it always printed"):
     val b =
@@ -122,8 +122,8 @@ class OutputSuite extends munit.FunSuite:
         summon[util.console.Console].writeLine()
         summon[util.console.Console].writeLine(null)
         List("a", "b").foreach(summon[util.console.Console].writeLine)
-        Output.emit(json = Cli.JsonOutput(false), "answer")(identity)
-        Output.emit(json = Cli.JsonOutput(true), "answer")(_ => fail("JSON must not render Markdown"))
+        Output.emit(json = Cli.JsonOutput.Text, "answer")(identity)
+        Output.emit(json = Cli.JsonOutput.Json, "answer")(_ => fail("JSON must not render Markdown"))
       }
     }
     val nl = System.lineSeparator()

@@ -256,7 +256,7 @@ final class PluginOps(using console: Console)(
     val asc = Path.of(stage.toString + ".asc")
     val lib = work.resolve("lib")
     val repos = repositories(o)
-    val verifying = install.signingOn || o.verify.value
+    val verifying = install.signingOn || o.verify.checks
     try
       for
         source <- fetch(origin, stage, wantAsc = verifying, repos)
@@ -266,7 +266,7 @@ final class PluginOps(using console: Console)(
           .filter(_ != sha.value)
           .map(w => err(shown"SHA-256 mismatch: expected $w, got $sha — not installed"))
           .toLeft(())
-        signer <- signature(stage, asc, verifying, o.unsigned.value)
+        signer <- signature(stage, asc, verifying, o.unsigned.allowsUnsigned)
         spi <- spiVersion
         deps <- dependencies(stage, lib, repos)
         jar <- describe(stage, Some(lib))
@@ -290,7 +290,7 @@ final class PluginOps(using console: Console)(
         )
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
-          o.yes.value || confirm(
+          o.yes.confirmed || confirm(
             Cli.Question(s"Install ${jar.plugins.map(p => shown"${p.id} ${p.version}").mkString(", ")}?")
           ),
           (),

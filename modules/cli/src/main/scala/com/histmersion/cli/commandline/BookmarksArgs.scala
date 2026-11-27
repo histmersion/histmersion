@@ -45,7 +45,7 @@ object BookmarksArgs:
           "period (`period --from -1200 --to -1150 --label 'the crisis years'`)"
       )
       with SharedFlags:
-    private val raw_ = targetFlags(ItemKind.Bookmarkable, TargetFlags.Views(true))
+    private val raw_ = targetFlags(ItemKind.Bookmarkable, TargetFlags.Views.WithViews)
     private val label_ = value[String]("label", "Your name for it")
     private val title_ = value[String]("title", "What the item is called, when the collection does not hold it")
     private val json_ = json()

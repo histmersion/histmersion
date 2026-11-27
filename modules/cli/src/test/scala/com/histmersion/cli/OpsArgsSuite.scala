@@ -16,14 +16,14 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class OpsArgsSuite extends munit.FunSuite:
 
-  private val json = Cli.JsonOutput(false)
+  private val json = Cli.JsonOutput.Text
 
   private def parse(args: String*) = Parsing.parse("queue" +: args*)
 
   test("`queue <list>` shows that list, --all with the done items"):
     assertEquals(parse("acquire"), Right(QueueCmd.Show(Queue.Kind.Label("acquire"), false, json)))
     assertEquals(parse("tasks"), Right(QueueCmd.Show(Queue.Kind.Label("tasks"), false, json)))
-    assertEquals(parse("log", "--json"), Right(QueueCmd.Show(Queue.Kind.Label("log"), false, Cli.JsonOutput(true))))
+    assertEquals(parse("log", "--json"), Right(QueueCmd.Show(Queue.Kind.Label("log"), false, Cli.JsonOutput.Json)))
     assertEquals(parse("tasks", "--all"), Right(QueueCmd.Show(Queue.Kind.Label("tasks"), true, json)))
 
   test("`queue <list> add \"text\"` adds, with --topic and --reason when given"):
@@ -154,7 +154,7 @@ class OpsArgsSuite extends munit.FunSuite:
     )
     assertEquals(
       parse("acquire", "recheck", "--limit", "20", "--no-wait", "--json"),
-      Right(QueueCmd.Recheck(Apply, Some(20), None, all = false, Return, Cli.JsonOutput(true)))
+      Right(QueueCmd.Recheck(Apply, Some(20), None, all = false, Return, Cli.JsonOutput.Json))
     )
     assert(parse("acquire", "recheck", "--all", "--id", "4").isLeft)
     assert(parse("acquire", "recheck", "--all", "--limit", "4").isLeft)

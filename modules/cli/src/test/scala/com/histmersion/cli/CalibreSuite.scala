@@ -600,14 +600,14 @@ class CalibreSuite extends munit.FunSuite:
 
   test("import refuses to merge a second Calibre entry into an existing record unless --citekey says so"):
     assertEquals(
-      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), None),
+      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit.Generated, None),
       Right(ImportTarget.Create)
     )
     assertEquals(
       Calibre.importTarget(
         Citekey("k"),
         Calibre.Book.Id(1806),
-        explicit = ImportTarget.Explicit(false),
+        explicit = ImportTarget.Explicit.Generated,
         Some(Some(Source.CalibreId("1806")))
       ),
       Right(ImportTarget.Update(None))
@@ -616,7 +616,7 @@ class CalibreSuite extends munit.FunSuite:
       .importTarget(
         Citekey("k"),
         Calibre.Book.Id(1806),
-        explicit = ImportTarget.Explicit(false),
+        explicit = ImportTarget.Explicit.Generated,
         Some(Some(Source.CalibreId("1805")))
       )
       .swap
@@ -625,7 +625,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(e.sentence.contains("Calibre id 1805") && e.sentence.contains("--citekey"), e)
     assert(
       Calibre
-        .importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), Some(None))
+        .importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit.Generated, Some(None))
         .isLeft,
       "an unlinked record is not merged silently either"
     )
@@ -634,13 +634,13 @@ class CalibreSuite extends munit.FunSuite:
       Calibre.importTarget(
         Citekey("k"),
         Calibre.Book.Id(1806),
-        explicit = ImportTarget.Explicit(true),
+        explicit = ImportTarget.Explicit.Asked,
         Some(Some(Source.CalibreId("1805")))
       ),
       Right(ImportTarget.Update(Some(ImportTarget.Update.Previous("1805"))))
     )
     assertEquals(
-      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(true), Some(None)),
+      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit.Asked, Some(None)),
       Right(ImportTarget.Update(None))
     )
 

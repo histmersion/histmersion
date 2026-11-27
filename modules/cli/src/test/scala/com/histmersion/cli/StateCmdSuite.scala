@@ -6,7 +6,7 @@ import com.histmersion.api.automation.{Goal, Queue}
 import com.histmersion.api.research.OpenWork
 
 class StateCmdSuite extends munit.FunSuite:
-  private val json = Cli.JsonOutput(false)
+  private val json = Cli.JsonOutput.Text
 
   test("state: each flag sets its part of the scope; none asks for everything"):
     assertEquals(Parsing.parse("state"), Right(StateCmd.Command.State(OpenWork.Scope(), json)))
@@ -19,7 +19,7 @@ class StateCmdSuite extends munit.FunSuite:
             Some(Goal.Slug("bronze-age")),
             Some(OpenWork.Terms.Kind("acquisition"))
           ),
-          Cli.JsonOutput(true)
+          Cli.JsonOutput.Json
         )
       )
     )

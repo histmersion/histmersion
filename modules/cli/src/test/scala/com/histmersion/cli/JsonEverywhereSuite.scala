@@ -16,7 +16,7 @@ class JsonEverywhereSuite extends munit.FunSuite:
 
   private val PatchJson = Set(List("patch"), List("article", "patch"))
 
-  private val Asked = Cli.JsonOutput(true)
+  private val Asked = Cli.JsonOutput.Json
 
   private def help(path: List[String]): String =
     CommandLine.parse(path :+ "--help") match
@@ -59,7 +59,7 @@ class JsonEverywhereSuite extends munit.FunSuite:
             case Problem.Invalid.Unknown(_, raw, _, _) => s"$raw".contains("--json")
             case _                                     => false
           }
-          Option.when(unknownJson || json != Asked)(s"${p.mkString(" ")}: $problems (json $json)")
+          Option.when(unknownJson || json != Asked)(s"${p.mkString(" ")}: $problems (json ${json.asJson})")
         case other => Some(s"${p.mkString(" ")}: ${other.toString}")
     }
     assertEquals(wrong, Nil, wrong.mkString("\n"))
@@ -69,7 +69,7 @@ class JsonEverywhereSuite extends munit.FunSuite:
       case CommandLine.Outcome.Run(_, _, _, json) => assertEquals(json, Asked)
       case other                                  => fail(other.toString)
     CommandLine.parse(List("version")) match
-      case CommandLine.Outcome.Run(_, _, _, json) => assertEquals(json, Cli.JsonOutput(false))
+      case CommandLine.Outcome.Run(_, _, _, json) => assertEquals(json, Cli.JsonOutput.Text)
       case other                                  => fail(other.toString)
 
   test("a failure in JSON is the API's body: every typed entry decodes back to its problem, in order"):

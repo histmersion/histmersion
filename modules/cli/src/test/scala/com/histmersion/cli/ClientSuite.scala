@@ -17,7 +17,7 @@ class ClientSuite extends munit.FunSuite:
   test("a 401 names the missing API key and where the CLI reads it, never 'cannot reach' nor a command-line flag"):
     val m =
       Client
-        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(true))
+        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write.Changes)
         .sentence
     assert(m.contains("API key") && m.contains("HISTMERSION_TOKEN") && m.contains("cli.token-file"), m)
     assert(!m.contains("cannot reach") && !m.contains("--token"), m)
@@ -25,7 +25,7 @@ class ClientSuite extends munit.FunSuite:
   test("a 403 is a refusal the key does not lift: it says so without asking for the key"):
     val m =
       Client
-        .unexpected(Client.HttpStatus(403), Client.ServerUrl("http://h:8000"), write = Client.Write(true))
+        .unexpected(Client.HttpStatus(403), Client.ServerUrl("http://h:8000"), write = Client.Write.Changes)
         .sentence
     assertEquals(m, "http://h:8000 refused this write (HTTP 403)")
 
@@ -41,12 +41,12 @@ class ClientSuite extends munit.FunSuite:
   test("other unexpected answers report the status as it is"):
     assert(
       Client
-        .unexpected(Client.HttpStatus(404), Client.ServerUrl("http://h:8000"), write = Client.Write(false))
+        .unexpected(Client.HttpStatus(404), Client.ServerUrl("http://h:8000"), write = Client.Write.Reads)
         .sentence
         .contains("no such endpoint")
     )
     assertEquals(
-      Client.unexpected(Client.HttpStatus(502), Client.ServerUrl("http://h:8000"), write = Client.Write(false)),
+      Client.unexpected(Client.HttpStatus(502), Client.ServerUrl("http://h:8000"), write = Client.Write.Reads),
       Problem.Unclassified(Legacy.Text("unexpected answer from http://h:8000: HTTP 502"))
     )
 
@@ -54,19 +54,19 @@ class ClientSuite extends munit.FunSuite:
   test("a refused read says 'this request', a refused write says 'this write'"):
     assert(
       Client
-        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(false))
+        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write.Reads)
         .sentence
         .contains("refused this request")
     )
     assert(
       !Client
-        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(false))
+        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write.Reads)
         .sentence
         .contains("write")
     )
     assert(
       Client
-        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write(true))
+        .unexpected(Client.HttpStatus(401), Client.ServerUrl("http://h:8000"), write = Client.Write.Changes)
         .sentence
         .contains("refused this write")
     )

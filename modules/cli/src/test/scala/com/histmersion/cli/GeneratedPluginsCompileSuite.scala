@@ -27,7 +27,7 @@ class GeneratedPluginsCompileSuite extends munit.FunSuite:
       kind,
       ScalaPackage.parse(pid.packageName.value).toOption.get,
       repo,
-      PluginTemplate.Request.AgentNotes(false)
+      PluginTemplate.Request.AgentNotes.WithoutNotes
     )
 
   /** The sources of the project, written under a fresh directory: `main` and `test`. */

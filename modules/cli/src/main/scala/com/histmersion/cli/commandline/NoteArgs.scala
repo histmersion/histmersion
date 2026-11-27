@@ -56,7 +56,7 @@ object NoteArgs:
           "place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`)"
       )
       with SharedFlags:
-    private val raw_ = targetFlags(ItemKind.Notable, TargetFlags.Views(false))
+    private val raw_ = targetFlags(ItemKind.Notable, TargetFlags.Views.WithoutViews)
     private val inline_ = value[String]("text", "The note (Markdown)")
     private val file_ = value[String]("file", "Read the note from this Markdown file")
     private val title_ = value[String]("title", "What the item is called, when the collection does not hold it")

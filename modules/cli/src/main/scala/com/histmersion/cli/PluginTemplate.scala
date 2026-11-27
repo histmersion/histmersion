@@ -25,8 +25,10 @@ object PluginTemplate:
   )
 
   object Request:
-    type AgentNotes = AgentNotes.T
-    object AgentNotes extends Newtype[Boolean, Pure]
+    enum AgentNotes derives CanEqual:
+      case WithNotes, WithoutNotes
+    object AgentNotes:
+      extension (agentNotes: AgentNotes) def withNotes: Boolean = agentNotes == WithNotes
 
   /** The version a new plugin is published under, as its `Plugin.Info` states it too. */
   val FirstVersion = "0.1.0"
@@ -94,7 +96,7 @@ object PluginTemplate:
       TemplateFile(defaultsPath(r.id), TemplateFile.Content(fill(r, KindSources.defaults(r.kind)))),
       TemplateFile(nativeMetadataPath(r.id, r.pkg), TemplateFile.Content(nativeMetadata(r)))
     )
-    if r.agentNotes.value then
+    if r.agentNotes.withNotes then
       core ++ List(
         TemplateFile(TemplateFile.Path("AGENTS.md"), TemplateFile.Content(fill(r, agentNotes(r)))),
         TemplateFile(TemplateFile.Path("CLAUDE.md"), TemplateFile.Content("@AGENTS.md\n"))

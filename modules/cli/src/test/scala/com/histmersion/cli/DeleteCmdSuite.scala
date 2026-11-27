@@ -24,7 +24,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         DeleteCmd.Args(
           DeleteCmd.Args.Citekey("page2024_history"),
           apply = DeleteCmd.Args.Apply(false),
-          json = DeleteCmd.Args.Json(false)
+          json = DeleteCmd.Args.Json.Text
         )
       )
     )
@@ -34,7 +34,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         DeleteCmd.Args(
           DeleteCmd.Args.Citekey("page2024_history"),
           apply = DeleteCmd.Args.Apply(true),
-          json = DeleteCmd.Args.Json(false)
+          json = DeleteCmd.Args.Json.Text
         )
       )
     )
@@ -44,7 +44,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         DeleteCmd.Args(
           DeleteCmd.Args.Citekey("page2024_history"),
           apply = DeleteCmd.Args.Apply(false),
-          json = DeleteCmd.Args.Json(true)
+          json = DeleteCmd.Args.Json.Json
         )
       )
     )
@@ -58,7 +58,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         DeleteCmd.Args(
           DeleteCmd.Args.Citekey("Page 2024"),
           apply = DeleteCmd.Args.Apply(false),
-          json = DeleteCmd.Args.Json(false)
+          json = DeleteCmd.Args.Json.Text
         )
       )
     )

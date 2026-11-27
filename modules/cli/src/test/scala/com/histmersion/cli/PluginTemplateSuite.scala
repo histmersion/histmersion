@@ -24,7 +24,7 @@ class PluginTemplateSuite extends munit.FunSuite:
   private def request(
       id: String,
       kind: PluginKind = PluginKind.SourceFetcher,
-      agentNotes: PluginTemplate.Request.AgentNotes = PluginTemplate.Request.AgentNotes(false)
+      agentNotes: PluginTemplate.Request.AgentNotes = PluginTemplate.Request.AgentNotes.WithoutNotes
   ) =
     val pid = PluginId.parse(id).toOption.get
     PluginTemplate.Request(pid, kind, ScalaPackage.parse(pid.packageName.value).toOption.get, repo, agentNotes)
@@ -111,10 +111,12 @@ class PluginTemplateSuite extends munit.FunSuite:
 
   test("agent notes are written only when asked for"):
     val paths =
-      PluginTemplate.files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes(true))).map(_.path.value)
+      PluginTemplate
+        .files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes.WithNotes))
+        .map(_.path.value)
     assert(paths.contains("AGENTS.md") && paths.contains("CLAUDE.md"), paths)
     val notes = file(
-      PluginTemplate.files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes(true))),
+      PluginTemplate.files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes.WithNotes)),
       TemplateFile.Path("AGENTS.md")
     )
     assert(notes.contains("`m2Local`") && notes.contains("histmersion plugin repo --m2"), notes)

@@ -169,7 +169,7 @@ object AcquireCmd:
         case Command.AssessUpdateRetractions(json) =>
           val client = AcquireClient(c)
           client.updateRetractions.flatMap { started =>
-            if json.value then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
+            if json.asJson then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
             else
               Cli.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
               pollRetractions(client, 0).map(r => Cli.out.println(AcquireMarkdown.retractionsUpdate(r)))

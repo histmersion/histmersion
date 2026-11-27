@@ -31,7 +31,7 @@ class CommandLineSuite extends munit.FunSuite:
     case CommandLine.Outcome.Failed(p, _, _) => p.fold(identity)(ps => fail(s"several problems: $ps"))
     case other                               => fail(s"${args.mkString(" ")}: ${other.toString}")
 
-  private val json = Cli.JsonOutput(false)
+  private val json = Cli.JsonOutput.Text
   private val slug = ReviewGoal.Slug("sea_peoples")
 
   /** Every subcommand, with its optional, repeated and flag arguments, in the shapes people write them. */
@@ -121,7 +121,7 @@ class CommandLineSuite extends munit.FunSuite:
         Some(Client.ServerUrl("http://h:1")),
         AgentIdentity.Nobody,
         ArticleCommand.Delete(slug),
-        Cli.JsonOutput(false)
+        Cli.JsonOutput.Text
       )
     )
 
@@ -231,4 +231,4 @@ class CommandLineSuite extends munit.FunSuite:
     assertEquals(problem(), Problem.Invalid.Missing.here(Problem.Field("command")))
 
   test("put keeps the path as given"):
-    assertEquals(run("put", "a.md"), ArticleCommand.Put(Path.of("a.md"), None, Cli.Strict(false)))
+    assertEquals(run("put", "a.md"), ArticleCommand.Put(Path.of("a.md"), None, Cli.Strict.Leniently))

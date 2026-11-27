@@ -181,7 +181,11 @@ class ArticlePatchesSuite extends munit.FunSuite:
     )
     assertEquals(
       ArticlePatches
-        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear(true)), Nil)
+        .withCoverage(
+          Article.Patch(),
+          ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear.Cleared),
+          Nil
+        )
         .left
         .map(Cli.Error(_))
         .toOption
@@ -194,7 +198,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
         .withCoverage(
           Article.Patch(),
           ArticlePatches
-            .FilterFlags(query = Some(Api.ArticleQuery.Text("x")), clear = ArticlePatches.FilterFlags.Clear(true)),
+            .FilterFlags(query = Some(Api.ArticleQuery.Text("x")), clear = ArticlePatches.FilterFlags.Clear.Cleared),
           Nil
         )
         .left

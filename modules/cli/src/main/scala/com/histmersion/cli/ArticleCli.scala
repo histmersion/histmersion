@@ -238,7 +238,7 @@ object ArticleCli:
             val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
             val req = toImport(p, fallback, force = Api.Overwrite(true))
               .modify(_.strict)
-              .setTo(Article.Import.Strict(strict.value))
+              .setTo(Article.Import.Strict(strict.strictly))
             c.importArticle(req).map { r =>
               report(r)
               // the import answers with counts only: ask for the article's formatting problems by the
@@ -253,7 +253,7 @@ object ArticleCli:
                 )
             }
         case ArticleCommand.Lint(slug, fix, json) =>
-          (if fix.value then c.fixArticleFormat(slug) else c.lintArticle(slug))
+          (if fix.fixes then c.fixArticleFormat(slug) else c.lintArticle(slug))
             .map(r => Output.emit(json, r)(FormatMarkdown.report))
         case ArticleCommand.Check(slug, draft, kind, json) =>
           val req = draft match

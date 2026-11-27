@@ -61,8 +61,10 @@ import com.histmersion.lint.{tolerated, LintRule}
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion calibre` arguments")
 object CalibreCmd:
 
-  type Unlinked = Unlinked.T
-  object Unlinked extends Newtype[Boolean, Pure]
+  enum Unlinked derives CanEqual:
+    case OnlyUnlinked, Every
+  object Unlinked:
+    extension (unlinked: Unlinked) def onlyUnlinked: Boolean = unlinked == OnlyUnlinked
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
@@ -96,7 +98,7 @@ object CalibreCmd:
       max: Paging.Limit,
       json: Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
-    if !unlinked.value then
+    if !unlinked.onlyUnlinked then
       calibre(c).search(q.getOrElse(Api.Search.Text("")), max).left.map(failProblem).map { books =>
         Output.emit(json, books.map(Calibre.Json.Book.of))(_ => Calibre.markdownSearch(books))
       }
@@ -153,11 +155,11 @@ object CalibreCmd:
         citekey,
         format,
         CollectionImportRequest.Convert(!noConvert),
-        CollectionImportRequest.Cover(!json.value),
+        CollectionImportRequest.Cover(!json.asJson),
         item.map(i => CollectionImportRequest.AcquireItem(i.value))
       )
     ).flatMap { res =>
-      if json.value then Cli.out.println(Output.json(res.source))
+      if json.asJson then Cli.out.println(Output.json(res.source))
       else
         Cli.out.println(shown"Imported Calibre id $id as `${res.citekey}` — ${res.title}")
         res.relinkedFrom
@@ -225,12 +227,17 @@ object CalibreCmd:
         case Left(e) if e.notFound => Right(None)
         case Left(e)               => Left(e)
       target <- Calibre
-        .importTarget(ck, id, ImportTarget.Explicit(citekey.isDefined), existing)
+        .importTarget(
+          ck,
+          id,
+          (if citekey.isDefined then ImportTarget.Explicit.Asked else ImportTarget.Explicit.Generated),
+          existing
+        )
         .left
         .map(m => Cli.Error(m))
       res <- upsert(c, ck, book, target)
       _ =
-        if json.value then Cli.out.println(Output.json(res))
+        if json.asJson then Cli.out.println(Output.json(res))
         else
           Cli.out.println(shown"Imported Calibre id $id as `$ck` — ${book.title}")
           target match
@@ -239,7 +246,7 @@ object CalibreCmd:
           Cli.out.println(s"File (left in place, never modified): $file")
       // the book's cover for its hover card (#1446): Calibre's own, else Open Library's by its ISBN —
       // best-effort, a missing cover never fails the import
-      _ = if !json.value then importCover(c, ck, book)
+      _ = if !json.asJson then importCover(c, ck, book)
       // the conversion is the same upload `histmersion ingest <file>` makes, marked as Calibre's
       _ <-
         if noConvert then Right(())
@@ -540,10 +547,10 @@ object CalibreCmd:
       originals: Option[CalibreCliConfig.OriginalsDir] = Settings.app.cli.calibre.originals
   ): Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
-      if json.value && !apply.value then
+      if json.asJson && !apply.value then
         Right(Output.emit(json, Calibre.Json.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
       else
-        val ready = entries.filter(_.counted.value)
+        val ready = entries.filter(_.counted.counts)
         val missing = entries.count(_.original == Calibre.GapOriginal.Missing)
         val note = if missing == 0 then "" else " · " + Calibre.uncountedLine(missing)
         if ready.nonEmpty then Cli.out.println(Calibre.markdownGaps(ready) + "\n")
@@ -585,7 +592,7 @@ object CalibreCmd:
       CollectionSync
         .Request(CollectionSync.Request.Apply(apply.value), limit.map(l => CollectionSync.Request.Limit(l.value)))
     ).flatMap { r =>
-      if json.value && !apply.value then
+      if json.asJson && !apply.value then
         Right(
           Output.emit(json, Calibre.Json.Gaps.of(r.gaps))(_ => CollectionsMarkdown.gaps(r.gaps.gaps))
         )
@@ -626,8 +633,8 @@ object CalibreCmd:
   )(using console: Console): Either[Cli.Error, Unit] =
     s.gaps(limit).flatMap { g =>
       val counted = g.gaps.filter(_.counted.value)
-      if json.value then Right(Output.emit(json, Calibre.Json.Gaps.of(g))(_ => CollectionsMarkdown.gaps(g.gaps)))
-      else if !quiet.value then Right(Cli.out.println(CollectionsMarkdown.gaps(g.gaps)))
+      if json.asJson then Right(Output.emit(json, Calibre.Json.Gaps.of(g))(_ => CollectionsMarkdown.gaps(g.gaps)))
+      else if !quiet.quiet then Right(Cli.out.println(CollectionsMarkdown.gaps(g.gaps)))
       else if counted.isEmpty then Right(())
       else
         Left(
@@ -659,9 +666,9 @@ object CalibreCmd:
       originals: Option[CalibreCliConfig.OriginalsDir] = Settings.app.cli.calibre.originals
   ): Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
-      val counted = entries.filter(_.counted.value)
-      if json.value then Right(Output.emit(json, Calibre.Json.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
-      else if !quiet.value then Right(Cli.out.println(Calibre.markdownGaps(entries)))
+      val counted = entries.filter(_.counted.counts)
+      if json.asJson then Right(Output.emit(json, Calibre.Json.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
+      else if !quiet.quiet then Right(Cli.out.println(Calibre.markdownGaps(entries)))
       else if counted.isEmpty then Right(())
       else
         // exit 1 with ONE line: this is what the Stop/PostToolUse reminder hook reads
@@ -817,7 +824,7 @@ object CalibreCmd:
           val max = limit.map(Paging.Limit(_))
           onServerUnlessLocalOriginals(c).fold(syncGaps(c, applying, max, json))(serverSync(_, applying, max, json))
         case Command.Gaps(quiet, limit, json) =>
-          val quietOutput = Cli.QuietOutput(quiet)
+          val quietOutput = (if quiet then Cli.QuietOutput.Quiet else Cli.QuietOutput.Verbose)
           val max = limit.map(Paging.Limit(_))
           onServerUnlessLocalOriginals(c).fold(listGaps(c, quietOutput, max, json))(
             serverGaps(_, quietOutput, max, json)
@@ -830,14 +837,14 @@ object CalibreCmd:
               s.search(
                 if unlinked then query else Some(query.getOrElse(Api.Search.Text(""))),
                 Some(max),
-                Unlinked(unlinked)
+                (if unlinked then Unlinked.OnlyUnlinked else Unlinked.Every)
               ).map { r =>
                 Output.emit(json, r.entries.map(Calibre.Json.Book.of(_)))(_ =>
                   if unlinked then CollectionsMarkdown.unlinked(r.entries, CollectionsMarkdown.Total(r.total.value))
                   else CollectionsMarkdown.search(r.entries)
                 )
               }
-            case None => hostSearch(c, query, Unlinked(unlinked), max, json)
+            case None => hostSearch(c, query, (if unlinked then Unlinked.OnlyUnlinked else Unlinked.Every), max, json)
         case Command.Import(id, citekey, format, noConvert, following, item, json) =>
           server(c) match
             case Some(s) =>
