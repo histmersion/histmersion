@@ -20,6 +20,7 @@ final case class CollectionFieldValue(
 
 object CollectionFieldValue:
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Value = Value.T
   object Value extends Newtype[String, Pure]

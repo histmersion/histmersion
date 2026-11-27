@@ -9,7 +9,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 object Plural:
   object Noun:
     type Form = Form.T
-    object Form extends Newtype[String, Pure]
+    object Form extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Plural = Plural.T
     object Plural extends Newtype[String, Pure]
     type Singular = Singular.T

@@ -44,7 +44,8 @@ object Draft:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** A value as HOCON writes it, as a person types it: a string without its quotes. Pure. */
 

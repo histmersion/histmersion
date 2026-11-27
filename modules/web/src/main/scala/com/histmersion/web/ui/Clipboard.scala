@@ -23,7 +23,8 @@ object Clipboard:
   type FallbackText = FallbackText.T
   object FallbackText extends Newtype[String, Pure]
   type FallbackWhat = FallbackWhat.T
-  object FallbackWhat extends Newtype[String, Pure]
+  object FallbackWhat extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
@@ -34,7 +35,7 @@ object Clipboard:
     clip match
       case Some(c) =>
         val p = c.writeText(text.value).asInstanceOf[js.Promise[Unit]]
-        p.`then`[Unit](_ => Flash.say(Flash.Text(s"Copied $what.")), (_: Any) => fallback(text, what)): Unit
+        p.`then`[Unit](_ => Flash.say(Flash.Text(shown"Copied $what.")), (_: Any) => fallback(text, what)): Unit
       case None => fallback(text, what)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -48,4 +49,5 @@ object Clipboard:
     ta.select()
     val ok = Try(dom.document.execCommand("copy")).getOrElse(false)
     ta.remove()
-    Flash.say(Flash.Text(if ok then s"Copied $what." else s"Could not copy $what: the browser did not allow it."))
+    Flash.say(Flash.Text(if ok then shown"Copied $what."
+    else shown"Could not copy $what: the browser did not allow it."))

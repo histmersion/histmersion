@@ -450,7 +450,7 @@ object Preview:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventFacts(d: EventDetail, years: Years.Text): List[UiLabels.Text] =
     val e = d.event
-    (Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
+    (Option.when(e.datingNote.isDefined)(shown"window: $years").toList ++
       EventPrecision
         .label(e.precision)
         .map(l =>

@@ -27,7 +27,8 @@ object Years:
   type Shift = Shift.T
   object Shift extends Newtype[Long, Pure]
   type Text = Text.T
-  object Text extends Newtype[String, Pure]
+  object Text extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   export com.histmersion.api.catalogue.Year as ShiftH
 

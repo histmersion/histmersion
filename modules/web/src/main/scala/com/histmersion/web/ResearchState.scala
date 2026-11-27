@@ -255,7 +255,7 @@ object ResearchState:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(i: OpenItem): String = i match
-    case d: OpenItem.Decision    => s"decision-${d.approval.id}"
+    case d: OpenItem.Decision    => shown"decision-${d.approval.id}"
     case a: OpenItem.Acquisition => shown"acquisition-${a.item}"
     case t: OpenItem.Task        => shown"task-${t.item}"
     case r: OpenItem.PausedRun   => shown"run-${r.run}"
@@ -269,4 +269,4 @@ object ResearchState:
     if t.actor == Who.Owner then Creation.Agents else Creation.Person
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def firstLine(text: Queue.QueueItem.Text): String = s"$text".linesIterator.nextOption().getOrElse("")
+  def firstLine(text: Queue.QueueItem.Text): String = shown"$text".linesIterator.nextOption().getOrElse("")

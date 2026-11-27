@@ -97,7 +97,8 @@ object ManagersView:
   type WaitingSummary = WaitingSummary.T
   object WaitingSummary extends Newtype[String, Pure]
   type WriteLabel = WriteLabel.T
-  object WriteLabel extends Newtype[String, Pure]
+  object WriteLabel extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   /** Items per page, events per page. */
   val ItemLimit = Paging.Limit(25)
@@ -641,9 +642,9 @@ object ManagersView:
                 cls := "job-subject",
                 goalLink(g.slug),
                 Option.when(g.pinned.value)(span(cls := "muted", " · pinned")),
-                span(cls := "muted", s" · ${g.title}")
+                span(cls := "muted", shown" · ${g.title}")
               ),
-              div(cls := "job-progress", s"${g.why}"),
+              div(cls := "job-progress", shown"${g.why}"),
               g.doing.map(d => div(cls := "muted", s"now: $d")),
               div(cls := "job-meta muted", focusPace(g)),
               child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
@@ -663,7 +664,7 @@ object ManagersView:
                 div(
                   cls := "job-main",
                   div(cls := "job-subject", goalLink(g.slug)),
-                  div(cls := "muted", s"${g.why}"),
+                  div(cls := "muted", shown"${g.why}"),
                   child.maybe <-- Auth.writable.map(w => Option.when(w)(div(cls := "form-row", pinButton(g))))
                 )
               )
@@ -1338,7 +1339,7 @@ object ManagersView:
         busy.set(false)
         r.fold(
           e => failure.set(Some(s"$what: ${e.getMessage}")),
-          _ => { failure.set(None); message.set(Some(s"$what: done")) }
+          _ => { failure.set(None); message.set(Some(shown"$what: done")) }
         )
         refresh(changed = Poll.DataChanged(true))
       }
@@ -1649,7 +1650,7 @@ object ManagersView:
             cls := "muted",
             "held" + h.until.fold("")(u => s" until $u") + h.untilSource.fold("")(s => s" until $s exists") +
               h.focus.fold("")(g => s" for the focus (goal $g; pin it in the managers window to run it now)") +
-              Option(h.reason).filter(w => s"$w".nonEmpty).fold("")(r => s" — $r")
+              Option(h.reason).filter(w => shown"$w".nonEmpty).fold("")(r => shown" — $r")
           )
         ),
         i.notBefore.map(t => div(cls := "muted", s"not before $t")),

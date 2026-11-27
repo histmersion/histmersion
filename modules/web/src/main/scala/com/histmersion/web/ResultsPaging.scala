@@ -55,7 +55,7 @@ object ResultsPaging:
 
   /** The filter's time window, as every tab's count line ends: `1475 BCE → 1465 BCE`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def span(from: Option[Year], to: Option[Year]): UiLabels.Text = UiLabels.Text(s"${Fmt.yr(from)} → ${Fmt.yr(to)}")
+  def span(from: Option[Year], to: Option[Year]): UiLabels.Text = UiLabels.Text(shown"${Fmt.yr(from)} → ${Fmt.yr(to)}")
 
   /** The count line's element (`.count`; `is-loading` adds `· loading…`, `is-error` colours a failure). `id` keeps the
     * sources tab's `#count`, which the map's tests wait on.

@@ -901,7 +901,8 @@ object Agents:
 
   object ApprovalInfo:
     type Id = Id.T
-    object Id extends Newtype[Long, Pure]
+    object Id extends Newtype[Long, Pure]:
+      given Display[T] = Display(id => s"${id.value}")
     export Approval.Kind.Wire as Kind
     type Status = Status.T
     object Status extends Newtype[String, Pure]

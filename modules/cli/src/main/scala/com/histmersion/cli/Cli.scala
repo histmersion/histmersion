@@ -327,7 +327,7 @@ object Cli:
 
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def traceLine(trace: LogEvent.Trace): String =
-      s"trace $trace — what happened: histmersion log --trace $trace"
+      shown"trace $trace — what happened: histmersion log --trace $trace"
 
   /** What `histmersion …` of this group was asked to do, every argument parsed. */
   enum TopCommand extends Command:

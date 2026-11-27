@@ -288,7 +288,7 @@ object GoalPage:
         div(
           cls := "muted goal-crumbs",
           RouteLink(Route.Research(ResearchSection.Goals), "Goals"),
-          s" › ${g.title}",
+          shown" › ${g.title}",
           g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(Wording.Id(p.value)))))
         ),
         g.notes.filter(_.value.trim.nonEmpty).map(n => p(cls := "goal-question", n)),
@@ -396,7 +396,7 @@ object GoalPage:
             case Mark.Todo =>
               span(
                 i.hold
-                  .map(h => s"Waiting: ${Option(s"${h.reason}").filter(_.nonEmpty).getOrElse("held")}")
+                  .map(h => s"Waiting: ${Option(shown"${h.reason}").filter(_.nonEmpty).getOrElse("held")}")
                   .getOrElse("To do")
               ),
           i.runId.map(id => span(" · ", RouteLink(Route.Run(Route.Run.Id(id.value)), "see what it did")))

@@ -53,7 +53,7 @@ object ShelfRow:
   def of(n: Note, isRead: Target.Identity => Boolean, ago: String => String): ShelfRow =
     val where = Target.where(n.target)
     ShelfRow(
-      s"note:${n.id.value}",
+      shown"note:${n.id}",
       n.target,
       n.title.value,
       s"Note on a ${n.target.kind.label.value.toLowerCase}",

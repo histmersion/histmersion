@@ -66,7 +66,8 @@ object Goal:
   object Slug extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  object Title extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type StatusValue = StatusValue.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object StatusValue extends Newtype[String, Pure]
@@ -303,7 +304,8 @@ object Goal:
       @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
       object QueueNumber extends Newtype[Int, Pure]
       type Ref = Ref.T
-      object Ref extends Newtype[String, Pure]
+      object Ref extends Newtype[String, Pure]:
+        given Display[T] = Display(_.value)
       type Note = Note.T
       object Note extends Newtype[String, Pure]
       type Title = Title.T

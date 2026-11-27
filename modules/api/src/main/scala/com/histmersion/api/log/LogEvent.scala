@@ -65,6 +65,8 @@ object LogEvent:
 
   type Trace = Trace.T
   object Trace extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     def v7(millis: Long, high: Long, low: Long): Trace = Trace(uuidV7(millis, high, low))
 
     def fromHeader(header: String): Option[Trace] = Trace(header).present
@@ -152,6 +154,8 @@ object LogEvent:
 
   type Key = Key.T
   object Key extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     extension (k: Key) def present: Option[Key] = Option(k.value.trim).filter(_.nonEmpty).map(Key(_))
 
   type Tool = Tool.T

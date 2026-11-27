@@ -70,7 +70,8 @@ object Queue:
       given Display[T] = Display(id => s"${id.value}")
     export Kind.Label as List
     type Text = Text.T
-    object Text extends Newtype[String, Pure]
+    object Text extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Topic = Topic.T
     object Topic extends Newtype[String, Pure]
     type Status = Status.T

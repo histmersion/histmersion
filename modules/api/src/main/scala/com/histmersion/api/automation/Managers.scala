@@ -29,7 +29,8 @@ import com.histmersion.api.Wording
 object Managers:
   /** Why a manager proposes, holds or changes an item: the narration of a decision, not a failure. */
   type Rationale = Rationale.T
-  object Rationale extends Newtype[String, Pure]
+  object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   object Usd:
     type Amount = Amount.T

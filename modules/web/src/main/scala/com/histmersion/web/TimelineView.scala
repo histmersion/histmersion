@@ -374,7 +374,7 @@ object TimelineView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hoverText(b: TimeBucket): UiLabels.Text =
     val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value
-    else s"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
+    else shown"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
     UiLabels.Text(shown"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -721,7 +721,7 @@ object TimelineView:
         span(cls := "tl-preset-count", s" ${g.presets.size}")
       ),
       g.presets.map { p =>
-        val years = s"${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}"
+        val years = shown"${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}"
         val where = p.region.getOrElse("")
         val who = PresetMenu.source(p).getOrElse("")
         button(
