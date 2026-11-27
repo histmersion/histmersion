@@ -67,6 +67,7 @@ import com.histmersion.domain.catalogue.evidence.AttestationService
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** What data management answers over HTTP, on a crafted pair of collections ("work" and "home"), recorded on the code
   * before data management moved into its own area: the whole bundle of work and the part changed since a moment (every
@@ -340,7 +341,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
       ),
       Dataset.Local
     )
-    val _ = PeriodService(Transactor(ds))
+    val _ = PeriodService(Transactor(ds), TestCreators.clock)
       .write(
         List(
           HistoricalPeriod(
@@ -379,7 +380,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
         NewFigure(NewFigure.Name("fig2.png"), NewFigure.Mime("image/png"), png(2), None, None)
       )
     )
-    val _ = AttestationService(Transactor(ds))
+    val _ = AttestationService(Transactor(ds), TestCreators.clock)
       .create(
         Attestation.Put(
           Citekey("zzalpha2001_storm"),

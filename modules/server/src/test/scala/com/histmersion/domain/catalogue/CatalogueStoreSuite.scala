@@ -20,6 +20,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.domain.Title
 import com.histmersion.api.catalogue.EventSourceRef
 import com.histmersion.db.TestDb
+import com.histmersion.util.database.TestCreators
 
 /** A contract of the catalogue's services, run once on the in-memory stores and once on the database (a scratch
   * database per test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with
@@ -79,17 +80,17 @@ object CatalogueStoreSuite:
       testDb.map { _ =>
         val ds = scratch(made.incrementAndGet().toString)
         val db = Transactor(ds)
-        val evs = EventService(db, FilterEventSources())
+        val evs = EventService(db, FilterEventSources(), TestCreators.clock)
         new CatalogueStores:
-          val periods = PeriodService(db)
-          val attestations = AttestationService(db)
+          val periods = PeriodService(db, TestCreators.clock)
+          val attestations = AttestationService(db, TestCreators.clock)
           val events = evs
           val corrections = CorrectionService(db)
-          val eventImports = EventImportService(db)
+          val eventImports = EventImportService(db, TestCreators.clock)
           val eventLinks = EventLinkService(db)
           val leads = LeadService(db, FilterEventSources())
           val siteTypes = SiteTypeService(db)
-          val places = PlaceService(db)
+          val places = PlaceService(db, TestCreators.clock)
           def source(citekey: String): Unit =
             connect(ds)(
               sql"INSERT INTO sources (citekey, title, creator) VALUES ($citekey, $citekey, jsonb_build_object('kind', 'unknown'))".update

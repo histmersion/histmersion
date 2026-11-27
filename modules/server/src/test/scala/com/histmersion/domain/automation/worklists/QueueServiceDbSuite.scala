@@ -12,6 +12,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Creation
+import com.histmersion.util.database.TestCreators
 
 class QueueServiceDbSuite extends QueueServiceContract("db"):
   private val testDb = TestDb.url
@@ -22,7 +23,7 @@ class QueueServiceDbSuite extends QueueServiceContract("db"):
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   protected def fresh(test: String): Option[QueueService] =
-    testDb.map(_ => QueueService(Transactor(scratch(made.incrementAndGet().toString))))
+    testDb.map(_ => QueueService(Transactor(scratch(made.incrementAndGet().toString)), TestCreators.clock))
 
   test("G94: writing over or removing a row that is gone answers false, never a success over nothing"):
     val ds = scratch("gone")

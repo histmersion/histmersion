@@ -336,7 +336,13 @@ class MediaOracleSuite extends DbSuite:
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
       val b = Composition
-        .server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWire.Thumbs())
+        .server(
+          cfgFor(name),
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          MediaWire.Thumbs(),
+          system = FixedClock.system
+        )
         .start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()

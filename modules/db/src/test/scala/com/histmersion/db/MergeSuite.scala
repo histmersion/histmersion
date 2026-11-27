@@ -70,6 +70,7 @@ import com.histmersion.util.storage.ContentStore
 import com.histmersion.util.data.exchange.MergeRow
 import com.histmersion.domain.research.Slug
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
@@ -155,7 +156,8 @@ class MergeSuite extends DbSuite with Bounded:
         res,
         merge,
         TestExchange.kinds,
-        TestExchange.rules
+        TestExchange.rules,
+        TestCreators.clock
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
@@ -865,7 +867,8 @@ class MergeSuite extends DbSuite with Bounded:
         () => { val _ = backupsTaken.incrementAndGet(); Right("stub.dump") },
         TestExchange.kinds,
         TestExchange.rules,
-        TestExchange.followUps
+        TestExchange.followUps,
+        TestCreators.clock
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 

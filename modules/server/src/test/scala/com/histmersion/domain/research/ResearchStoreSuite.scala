@@ -10,6 +10,7 @@ import com.histmersion.util.database.Transactor
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
+import com.histmersion.util.database.TestCreators
 
 /** A contract of research's services, run once on the in-memory stores and once on the database (a scratch database per
   * test, gated on HISTMERSION_TEST_DB_URL), each holding research's rows alone: no source is stored, so no link is a
@@ -47,6 +48,6 @@ object ResearchStoreSuite:
       testDb.map { _ =>
         val db = Transactor(scratch(made.incrementAndGet().toString))
         new ResearchStores:
-          val articles = ArticleService(db)
+          val articles = ArticleService(db, TestCreators.clock)
           val ledgers = ReviewLedgerService(db)
       }

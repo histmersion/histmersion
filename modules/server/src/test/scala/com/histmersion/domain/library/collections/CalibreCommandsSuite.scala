@@ -6,7 +6,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.library.sources.SourceFixtures
 
 import com.histmersion.config.*
-import com.histmersion.server.{Composition, OfflineConverter}
+import com.histmersion.server.{Composition, FixedClock, OfflineConverter}
 import com.histmersion.plugins.calibre.CalibreFixture
 import ox.supervised
 
@@ -279,7 +279,8 @@ class CalibreCommandsSuite extends DbSuite:
           ServerConfig.Host("127.0.0.1"),
           ServerConfig.Port(0),
           OfflineConverter(),
-          plugins = CalibreCommandsSuite.plugins(lib)
+          plugins = CalibreCommandsSuite.plugins(lib),
+          system = FixedClock.system
         )
         .start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -371,7 +372,14 @@ class CalibreCommandsSuite extends DbSuite:
     ): List[(Int, String, String)] =
       supervised {
         val b = Composition
-          .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = plugins)
+          .server(
+            cfg,
+            ServerConfig.Host("127.0.0.1"),
+            ServerConfig.Port(0),
+            OfflineConverter(),
+            plugins = plugins,
+            system = FixedClock.system
+          )
           .start()
         val url = s"http://127.0.0.1:${b.port}"
         try

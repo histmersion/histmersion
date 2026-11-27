@@ -39,6 +39,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** What an imported place's silence about time means (V074, 2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise):
@@ -122,7 +123,11 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
       version: Gazetteer.LoadCounts.Version,
       rs: List[GazRecord]
   ): Gazetteer.LoadCounts =
-    connect(ds)(GazetteerImport.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
+    connect(ds)(
+      GazetteerImport
+        .session(source, version, apply = true, pointAreaKinds = Set.empty, clock = TestCreators.clock)
+        .batch(rs)
+    )
 
   private val Patones = rec(
     wd(ExternalId.Id("Q999500001")),

@@ -31,6 +31,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** Named periods and the first-run job against a real Postgres (#719, #720); skipped without HISTMERSION_TEST_DB_URL.
   * The network is a function the test supplies, and the data directory is a temporary one holding the REAL committed
@@ -78,7 +79,7 @@ class BootstrapSuite extends DbSuite:
     def fetchPeriods(source: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections]) =
       ctl.fetch(Caller.Local, source, collections)
 
-  private lazy val periods = PeriodService(Transactor(ds))
+  private lazy val periods = PeriodService(Transactor(ds), TestCreators.clock)
 
   private def clean(): Unit =
     // the fixture's ids (text), then the seed's (newtypes): each bound through its own codec

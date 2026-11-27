@@ -16,6 +16,7 @@ import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
+import com.histmersion.util.database.TestCreators
 
 /** A contract of media's services, run once on the in-memory stores and once on the database (a scratch database per
   * test, gated on HISTMERSION_TEST_DB_URL): [[fresh]] gives each test empty stores, or none on a run with no such
@@ -65,8 +66,8 @@ object MediaStoreSuite:
         val ds = scratch(made.incrementAndGet().toString)
         val db = Transactor(ds)
         new MediaStores:
-          val assets = AssetService(db)
-          val links = AssetLinkService(db)
+          val assets = AssetService(db, TestCreators.clock)
+          val links = AssetLinkService(db, TestCreators.clock)
           val imports = ImportService(db)
           val covers = CoverService(db)
           val figures = FigureService(db)
