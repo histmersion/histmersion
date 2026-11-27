@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.sources.referrers
 
 import com.augustnagro.magnum.DbCon
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** A domain whose records name a source — its citekey in a column, `[[citekey]]` in a text — and that keeps them right
   * when the library renames or deletes the source, inside the library's transaction. Each member's default is "nothing
@@ -13,7 +13,7 @@ trait SourceReferrer:
   /** The source is called `rename.to` from now on: what this domain stores of `rename.from` follows; the columns and
     * texts it rewrote.
     */
-  def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences = RenamedReferences()
+  def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences = RenamedReferences()
 
   /** What of this domain a delete of the source would touch: what refuses it, what goes, what stays and is reported. */
   def report(source: SourceKeys)(using DbCon): DeleteReport = DeleteReport()
@@ -23,5 +23,6 @@ trait SourceReferrer:
 
   /** The source went: the entry this domain keeps of it (the log's), with `line` as its text and `day` as its topic. */
   def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using
-      DbCon
+      DbCon,
+      CreatedAt
   ): Option[SourceReferrers.Entry] = None

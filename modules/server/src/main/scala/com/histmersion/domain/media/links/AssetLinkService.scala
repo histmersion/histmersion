@@ -20,7 +20,8 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.media.assets.AssetInfoRow
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
+import java.time.Clock
 
 /** A source's figures tied to what they show (plan §1.6): what a figure depicts, where it was taken, what it
   * illustrates, whose page it is — the links listed by source, figure and target, made and removed.
@@ -43,7 +44,7 @@ object AssetLinkService:
   type LinkId = LinkId.T
   object LinkId extends Newtype[Long, Pure]
 
-  def apply(db: Transactor): AssetLinkService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): AssetLinkService = Implementation(db, clock)
 
   private def named(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
@@ -53,7 +54,7 @@ object AssetLinkService:
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
-  final private class Implementation(db: Transactor) extends AssetLinkService:
+  final private class Implementation(db: Transactor, clock: Clock) extends AssetLinkService:
     def list(
         citekey: Option[Citekey],
         asset: Option[AssetService.AssetUid],
@@ -72,6 +73,7 @@ object AssetLinkService:
 
     def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink] =
       db.write:
+        given CreatedAt = CreatedAt.now(clock)
         val exists = Citekey
           .option(in.citekey.value)
           .exists(ck => AssetLinkRepo.figureExists(ck, AssetInfoRow.Name(in.assetName.value)))

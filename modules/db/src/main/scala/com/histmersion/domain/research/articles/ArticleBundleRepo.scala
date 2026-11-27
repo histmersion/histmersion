@@ -16,7 +16,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.util.data.exchange.PlanQuestions
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
@@ -113,6 +113,7 @@ private[articles] object ArticleBundleRepo:
   def articleRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     given Creator.New = Creator.New.FromBundle
+    given CreatedAt = w.at
     w.followRenames(
       w.es.articles,
       _.uid,
@@ -133,19 +134,20 @@ private[articles] object ArticleBundleRepo:
     given DbCon = w.transaction
     w.merged.snapshots.toList.filter(w.writes).foreach { u =>
       Unused(
-        sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator)
+        sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator, created_at)
             SELECT slug, body, summary, updated_at, ${StoredCreator.write(
             Creator.unrecorded
-          )}::jsonb FROM articles WHERE uid = $u""".update.run(),
+          )}::jsonb, ${w.at.iso}::timestamptz FROM articles WHERE uid = $u""".update.run(),
         Unused.Why.Idempotent
       )
     }
     w.es.articles.filter(a => w.writes(a.uid)).foreach { a =>
-      sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at, creator)
+      sql"""INSERT INTO articles (uid, origin, slug, title, kind, body, summary, tags, regions, period, updated_at, creator,
+                                  created_at)
             VALUES (${a.uid}, ${a.origin}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary},
               ${a.tags}::text[], ${a.regions}::text[],
               ${rangeLiteral(a.period)}::int8range,
-              ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb)
+              ${a.updatedAt}::timestamptz, ${StoredCreator.carried(a.creator)}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, title = EXCLUDED.title,
               kind = EXCLUDED.kind, body = EXCLUDED.body, summary = EXCLUDED.summary, tags = EXCLUDED.tags,
               regions = EXCLUDED.regions, period = EXCLUDED.period, updated_at = EXCLUDED.updated_at""".update.run()
@@ -154,10 +156,12 @@ private[articles] object ArticleBundleRepo:
     // rewrote, recorded as versions: the next merge finds them in this collection's history
     w.merged.copies.foreach { a =>
       Unused(
-        sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period, creator)
+        sql"""INSERT INTO articles (uid, slug, title, kind, body, summary, tags, regions, period, creator, created_at)
             VALUES (${a.uid}, ${a.slug}, ${a.title}, ${a.kind}, ${a.body}, ${a.summary}, ${a.tags}::text[],
               ${a.regions}::text[],
-              ${rangeLiteral(a.period)}::int8range, ${StoredCreator.carried(a.creator)}::jsonb)
+              ${rangeLiteral(a.period)}::int8range, ${StoredCreator.carried(
+            a.creator
+          )}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO NOTHING""".update.run(),
         Unused.Why.Idempotent
       )
@@ -183,10 +187,10 @@ private[articles] object ArticleBundleRepo:
     given DbCon = w.transaction
     w.merged.versions.foreach { v =>
       Unused(
-        sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator)
+        sql"""INSERT INTO article_versions (slug, body, summary, updated_at, creator, created_at)
             SELECT slug, ${v.body}, ${v.summary}, ${v.versionOf}::timestamptz, ${StoredCreator.write(
             Creator.unrecorded
-          )}::jsonb FROM articles WHERE uid = ${v.articleUid}""".update
+          )}::jsonb, ${w.at.iso}::timestamptz FROM articles WHERE uid = ${v.articleUid}""".update
           .run(),
         Unused.Why.Idempotent
       )

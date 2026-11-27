@@ -164,7 +164,7 @@ private[places] object GazetteerRepo:
       pointAreaKinds: Set[Gazetteer.PointAreaKinds]
   )(using con: DbCon):
 
-    def writeBatch(records: List[GazRecord])(using Creator.New): Gazetteer.LoadCounts = write(records)
+    def writeBatch(records: List[GazRecord])(using Creator.New, CreatedAt): Gazetteer.LoadCounts = write(records)
 
     def recordSeen(records: List[GazRecord]): Unit =
       val refs = records.map(_.ref)
@@ -202,7 +202,7 @@ private[places] object GazetteerRepo:
         descriptionsRemoved = Gazetteer.LoadCounts.DescriptionsRemoved(descs.toLong)
       )
 
-    private def write(rs: List[GazRecord])(using Creator.New): Gazetteer.LoadCounts =
+    private def write(rs: List[GazRecord])(using Creator.New, CreatedAt): Gazetteer.LoadCounts =
       if rs.isEmpty then Gazetteer.LoadCounts(source, version)
       else
         val keys = Json.arr(
@@ -328,7 +328,10 @@ private[places] object GazetteerRepo:
     private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)
 
     /** The records' own places: inserted, or updated where something differs. (inserted, updated) */
-    private def writePlaces(rows: List[(GazRecord, Place.Id)])(using creator: Creator.New): (RowCount, RowCount) =
+    private def writePlaces(rows: List[(GazRecord, Place.Id)])(using
+        creator: Creator.New,
+        at: CreatedAt
+    ): (RowCount, RowCount) =
       if rows.isEmpty then (RowCount(0), RowCount(0))
       else
         val doc = Json.arr(rows.map { (r, id) =>
@@ -349,7 +352,7 @@ private[places] object GazetteerRepo:
         }*)
         val out =
           sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset,
-                                    import_source, import_ref, import_version, start_unknown, creator)
+                                    import_source, import_ref, import_version, start_unknown, creator, created_at)
                 SELECT d.id, d.label, d.kind,
                        CASE WHEN d.gjson IS NOT NULL THEN ST_SetSRID(ST_GeomFromGeoJSON(d.gjson), 4326)
                             WHEN d.gwkt IS NOT NULL THEN ST_GeomFromText(d.gwkt, 4326) END,
@@ -358,7 +361,7 @@ private[places] object GazetteerRepo:
               sql"d.hi"
             )}, d.source, d.props::jsonb, 'seed', $source, d.ref, $version, d.su, ${StoredCreator.column(
               creator
-            )}::jsonb
+            )}::jsonb, ${at.iso}::timestamptz
                 FROM jsonb_to_recordset(${doc.noSpaces}::jsonb)
                   AS d(id text, label text, kind text, gjson text, gwkt text, lo bigint, hi bigint, su boolean,
                        source text, props text, ref text)

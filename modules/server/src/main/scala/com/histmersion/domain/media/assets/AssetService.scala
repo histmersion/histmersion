@@ -40,7 +40,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.UnreadPage
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The pictures (`assets`) and where they are shown (`media_links`): a source's figures stored, read, described and
   * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown
@@ -177,19 +177,23 @@ object AssetService:
   type PictureKey = PictureKey.T
   object PictureKey extends Newtype[String, Pure]
 
-  def apply(db: Transactor): AssetService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): AssetService = Implementation(db, clock)
 
-  final private class Implementation(db: Transactor) extends AssetService:
+  final private class Implementation(db: Transactor, clock: Clock) extends AssetService:
     def figures(citekey: Citekey): List[AssetInfo] = db.read(AssetRepo.list(citekey)).toList
     def figure(citekey: Citekey, name: AssetName): Option[(Mime, Bytes)] =
       db.read(AssetRepo.read(citekey, name)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def figureCount(citekey: Citekey): FigureCount = db.read(AssetRepo.count(citekey))
     def addFigures(citekey: Citekey, figures: List[NewFigure])(using WritePermit)(using Creator.New): AddedFigureCount =
-      db.write(AssetRepo.add(citekey, figures))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        AssetRepo.add(citekey, figures)
     def replaceFigures(citekey: Citekey, figures: List[NewFigure])(using
         WritePermit
     )(using Creator.New): ReplacedFigureCount =
-      db.write(AssetRepo.replace(citekey, figures))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        AssetRepo.replace(citekey, figures)
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
     def patch(citekey: Citekey, name: AssetName, p: AssetPatch)(using WritePermit): Either[Api.Error, AssetDetail] =
       db.write(AssetRepo.patch(citekey, name, p))
@@ -207,7 +211,9 @@ object AssetService:
     def save(a: ProviderAsset, firstTarget: (TargetType, TargetId))(using
         WritePermit
     )(using Creator.New): (AssetUid, Boolean) =
-      db.write(MediaRepo.save(a, firstTarget))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        MediaRepo.save(a, firstTarget)
     def refreshRights(uid: AssetUid, r: Rights)(using WritePermit): Unit = db.write(MediaRepo.refreshRights(uid, r))
     def setThumb(
         uid: AssetUid,

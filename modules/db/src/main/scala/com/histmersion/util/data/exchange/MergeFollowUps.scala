@@ -1,7 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
-import com.histmersion.domain.MergePlanner
+import com.histmersion.domain.{CreatedAt, MergePlanner}
 
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
@@ -22,7 +22,7 @@ trait MergeFollowUps:
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
       dump: MergeFollowUps.DumpRecordRef
-  )(using DbCon): (List[com.histmersion.api.exchange.Bundle.Article.Slug], Queue.QueueItem.Id)
+  )(using DbCon, CreatedAt): (List[com.histmersion.api.exchange.Bundle.Article.Slug], Queue.QueueItem.Id)
 
 object MergeFollowUps:
   type DumpRecordRef = DumpRecordRef.T

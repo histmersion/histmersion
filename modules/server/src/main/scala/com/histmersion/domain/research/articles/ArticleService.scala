@@ -23,7 +23,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** Research's articles as records: one article with the links it makes and what links to it, written whole or merged
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and
@@ -89,9 +89,9 @@ trait ArticleService:
   def rename(from: Slug, to: Slug, caller: Caller)(using WritePermit)(using Creator.New): Either[Api.Error, List[Slug]]
 
 object ArticleService:
-  def apply(db: Transactor): ArticleService = Implementation(db)
+  def apply(db: Transactor, clock: Clock): ArticleService = Implementation(db, clock)
 
-  final private class Implementation(db: Transactor) extends ArticleService:
+  final private class Implementation(db: Transactor, clock: Clock) extends ArticleService:
     def canonical(slug: Slug): Slug = db.read(ArticleRepo.canonical(slug))
     def load(slug: Slug): Option[Article] = db.read(ArticleRepo.load(slug))
     def view(requested: Slug): Option[Article.View] = db.read(ArticleRepo.view(requested))
@@ -110,16 +110,22 @@ object ArticleService:
     def critiqueReasons(slug: Slug): List[CritiqueReason] = db.read(CritiqueRepo.list(slug))
     def articlesByGoal: Map[Goal.Slug, List[Slug]] = db.read(ArticleRepo.articlesByGoal)
     def put(article: Article, caller: Caller)(using WritePermit)(using Creator.New): Article.UpdatedAt =
-      db.write(ArticleRepo.put(article))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        ArticleRepo.put(article)
     def patch(slug: Slug, patch: Article.Patch, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, Article.UpdatedAt] =
-      db.write(ArticleRepo.patch(slug, patch))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        ArticleRepo.patch(slug, patch)
     def delete(slug: Slug, caller: Caller)(using WritePermit): Boolean = db.write(ArticleRepo.delete(slug))
     def rename(from: Slug, to: Slug, caller: Caller)(using
         WritePermit
     )(using Creator.New): Either[Api.Error, List[Slug]] =
-      db.write(ArticleRepo.rename(from, to))
+      db.write:
+        given CreatedAt = CreatedAt.now(clock)
+        ArticleRepo.rename(from, to)
 
   /** Over the articles of `state`, as a database holding only research's rows answers: no source is stored, so every
     * link is an article link, nothing cites a source and a critique reason names no citekey; no goal links an article.

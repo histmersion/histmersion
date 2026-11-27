@@ -255,10 +255,11 @@ private[places] object PlaceBundleRepo:
     places.foreach { p =>
       val range = rangeOrAll(p.period)
       val props = p.properties.map(BundleFormat.print)
-      sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at, creator)
+      sql"""INSERT INTO places (uid, origin, id, label, kind, geom, period, source, properties, dataset, updated_at, creator,
+                                created_at)
             VALUES (${p.uid}, ${p.origin}, ${p.id}, ${p.label}, ${p.kind}, ST_GeomFromEWKB(decode(${p.geom}, 'hex')),
               $range::int8range, ${p.source}, $props::jsonb, 'local',
-              ${p.updatedAt}::timestamptz, ${StoredCreator.carried(p.creator)}::jsonb)
+              ${p.updatedAt}::timestamptz, ${StoredCreator.carried(p.creator)}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label, kind = EXCLUDED.kind,
               geom = EXCLUDED.geom, period = EXCLUDED.period, source = EXCLUDED.source,
               properties = EXCLUDED.properties, dataset = 'local', updated_at = EXCLUDED.updated_at""".update.run()

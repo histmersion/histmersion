@@ -27,7 +27,7 @@ final class ResearchWiring(
 ):
 
   /** The articles as research stores them. */
-  val articleStore: ArticleService = ArticleService(deps.transactor)
+  val articleStore: ArticleService = ArticleService(deps.transactor, deps.clock)
 
   /** The articles' review ledgers. */
   val ledgers: ReviewLedgerService = ReviewLedgerService(deps.transactor)

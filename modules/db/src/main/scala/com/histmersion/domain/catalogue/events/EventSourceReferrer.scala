@@ -10,14 +10,14 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The events a source is the primary source of, the relations and participants sourced to it (they refuse a delete),
   * and the datings it gives (they go with it).
   */
 final class EventSourceReferrer extends SourceReferrer:
 
-  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences =
+  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val (from, to) = (rename.from, rename.to)
     RenamedReferences(
       List(

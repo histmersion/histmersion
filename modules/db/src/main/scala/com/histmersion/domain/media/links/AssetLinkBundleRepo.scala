@@ -70,9 +70,12 @@ private[links] object AssetLinkBundleRepo:
         BundleImport.Writer.TargetId(l.targetId.value),
         l.targetUid
       )
-      sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at, creator)
+      sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at, creator,
+                                     created_at)
             VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
-              ${l.notes}, ${l.updatedAt}::timestamptz, ${StoredCreator.carried(l.creator)}::jsonb)
+              ${l.notes}, ${l.updatedAt}::timestamptz, ${StoredCreator.carried(
+          l.creator
+        )}::jsonb, ${w.at.iso}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, citekey = EXCLUDED.citekey,
               asset_name = EXCLUDED.asset_name, relation = EXCLUDED.relation,
               target_type = EXCLUDED.target_type, target_id = EXCLUDED.target_id, xywh = EXCLUDED.xywh,

@@ -40,7 +40,7 @@ final class LibraryWiring(
 
   /** The sources, their findings and edges, as the library stores them. */
   val sourceStore: SourceService =
-    SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg))
+    SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg), deps.clock)
 
   /** How a filter's page and places are read. */
   val filters: SearchFilters = SearchFilters(places, cfg)

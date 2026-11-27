@@ -147,7 +147,7 @@ private[places] object PlaceRepo:
     */
   def upsertPlaces(batch: List[Place.Input], dataset: Dataset = Dataset.Seed)(using
       DbCon
-  )(using Creator.New): Place.ImportResult =
+  )(using Creator.New, CreatedAt): Place.ImportResult =
     if batch.isEmpty then
       Place.ImportResult(
         Place.ImportResult.Places(0),
@@ -172,19 +172,19 @@ private[places] object PlaceRepo:
     */
   private def upsertIn(all: List[Place.Input], dataset: Dataset)(using
       DbCon
-  )(using creator: Creator.New): Place.ImportResult =
+  )(using creator: Creator.New, at: CreatedAt): Place.ImportResult =
     val skip = suppressed(all.map(_.place.id.value).distinct)
     val batch = if skip.isEmpty then all else all.filterNot(in => skip.contains(in.place.id.value))
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
       val g = in.place.geometry
       val p = bounds(in.place.bounds)
-      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset, creator)
+      sql"""INSERT INTO places (id, label, kind, geom, period, source, properties, dataset, creator, created_at)
             VALUES (${in.place.id}, ${in.place.label}, ${in.place.kind},
                     CASE WHEN $g::text IS NULL THEN NULL
                          ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END,
                     $p::int8range, ${in.place.source}, ${in.place.properties}::jsonb, ${dataset.wire}, ${StoredCreator
-          .column(creator)}::jsonb)
+          .column(creator)}::jsonb, ${at.iso}::timestamptz)
             ON CONFLICT (id) DO UPDATE SET
               label = EXCLUDED.label, kind = EXCLUDED.kind, geom = EXCLUDED.geom,
               period = EXCLUDED.period, source = EXCLUDED.source,
@@ -1170,7 +1170,7 @@ private[places] object PlaceRepo:
     */
   def addPlace(in: Place.Input)(using
       DbCon
-  )(using Creator.New): Either[Api.Error, Place.Summary] =
+  )(using Creator.New, CreatedAt): Either[Api.Error, Place.Summary] =
     val id = in.place.id
     val taken = sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty
     val alias = sql"SELECT place_id FROM place_aliases WHERE alias = $id".query[String].run().headOption

@@ -269,6 +269,7 @@ object GazetteerLoad:
       maxLpfBytes: Settings.MaxLpfBytes,
       downloadTimeoutSeconds: Settings.DownloadTimeoutSeconds,
       toleranceKm: GeocodeSettings.ToleranceKm,
+      clock: java.time.Clock,
       rebuild: Settings.Rebuild = Settings.Rebuild(true),
       openStartWindowYears: Gazetteer.ValidityWindowYears =
         Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
@@ -285,13 +286,14 @@ object GazetteerLoad:
     type Rebuild = Rebuild.T
     object Rebuild extends Newtype[Boolean, Pure]
 
-  def settings(cfg: AppConfig, stores: Stores): Settings =
+  def settings(cfg: AppConfig, stores: Stores, clock: java.time.Clock): Settings =
     Settings(
       stores,
       Settings.Batch(math.max(1, cfg.places.sources.batch.value)),
       Settings.MaxLpfBytes(cfg.places.sources.maxLpfMb.value.toLong * 1024 * 1024),
       Settings.DownloadTimeoutSeconds(cfg.places.sources.downloadTimeoutSeconds.value),
       GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value),
+      clock,
       openStartWindowYears = Gazetteer.ValidityWindowYears(cfg.places.sources.openStartWindowYears.value),
       pointAreaKinds = cfg.places.sources.pointAreaKindSet.map(k => Gazetteer.PointAreaKinds(k.value))
     )
@@ -380,7 +382,7 @@ object GazetteerLoad:
       label: String
   )(feed: Batcher => Unit)(using WritePermit)(using Creator.New): (Gazetteer.LoadCounts, Span) =
     db.read:
-      val session = GazetteerImport.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
+      val session = GazetteerImport.session(key, version, apply, s.clock, s.openStartWindowYears, s.pointAreaKinds)
       val pruned = session.prune(s.batch.value)
       if pruned.value > 0 then note(JobInfo.Progress(s"$key: $pruned point-only area place(s) removed"))
       var batches = 0 // progress

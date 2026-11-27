@@ -85,11 +85,11 @@ final class CatalogueWiring(
   val jobs: CatalogueJobs =
     CatalogueJobs(deps.ds, deps.maintenance, deps.pins, deps.jobStops, Set(EventImportsControllers.ImportJobKind))
 
-  lazy val eventStore: EventService = EventService(deps.transactor, deps.eventSources)
+  lazy val eventStore: EventService = EventService(deps.transactor, deps.eventSources, deps.clock)
 
   lazy val eventImporter: EventImports =
     EventImports(
-      EventImportService(deps.transactor),
+      EventImportService(deps.transactor, deps.clock),
       () => deps.plugins.registries.eventCatalogues.map((k, c) => CatalogRecord.Provider(k.value) -> c),
       () => deps.cfg,
       http,
@@ -112,7 +112,7 @@ final class CatalogueWiring(
       EventLinkService(deps.transactor),
       LeadService(deps.transactor, deps.eventSources),
       eventStore,
-      AttestationService(deps.transactor),
+      AttestationService(deps.transactor, deps.clock),
       deps.passages,
       jobs,
       eventImporter.infoOf,
@@ -126,7 +126,7 @@ final class CatalogueWiring(
     SiteTypesControllers(SiteTypeService(deps.transactor), jobs, () => deps.cfg, http, deps.clock)
 
   /** The gazetteer's records. */
-  lazy val placeStore: PlaceService = PlaceService(deps.transactor)
+  lazy val placeStore: PlaceService = PlaceService(deps.transactor, deps.clock)
 
   /** The gazetteer's geometry: findings matched to places, the hierarchy, the land. */
   lazy val placeGeometry: PlaceGeometry = PlaceGeometry(deps.transactor)(using deps.timer)
@@ -184,5 +184,6 @@ object CatalogueWiring:
       u => text(u),
       () => deps.plugins.registries.gazetteerSources,
       () => PluginGazetteers.http(PluginGazetteers.transport(deps.cfg.places)),
-      () => deps.plugins.contributions.toList.flatMap((id, r) => r.gazetteerSources.values.map(_ -> id)).toMap
+      () => deps.plugins.contributions.toList.flatMap((id, r) => r.gazetteerSources.values.map(_ -> id)).toMap,
+      deps.clock
     )

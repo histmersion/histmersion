@@ -453,7 +453,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** What attests a data point: the attestations' operations. */
   lazy val attestations: AttestationsControllers =
     new AttestationsControllers(
-      AttestationService(deps.transactor),
+      AttestationService(deps.transactor, deps.clock),
       deps.passages,
       (k, id) =>
         AttestationsControllers.Alias(
@@ -517,7 +517,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** The goals' operations; an old slug answers as the goal it was renamed to (#1799). */
   lazy val goals: GoalsControllers =
     GoalsControllers(
-      GoalService(deps.transactor),
+      GoalService(deps.transactor, deps.clock),
       deps.queues,
       slug =>
         Goal.Slug
@@ -544,7 +544,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     WorkListView(
       deps.workLists,
       deps.queues,
-      GoalService(deps.transactor),
+      GoalService(deps.transactor, deps.clock),
       AcquireCheckService(deps.transactor)
     )
 

@@ -24,14 +24,16 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
   def this(deps: Deps) = this(deps, MediaWiring.NoThumbnails)
 
   /** The pictures and where they are shown. */
-  val assetStore: AssetService = AssetService(deps.transactor)
+  val assetStore: AssetService = AssetService(deps.transactor, deps.clock)
 
   /** What the imports ask about and what they recorded asking. */
   val importStore: ImportService = ImportService(deps.transactor)
 
   /** The sources the figures and covers belong to. */
   val sources: MediaSources =
-    SourceMedia(SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg)))
+    SourceMedia(
+      SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg), deps.clock)
+    )
 
   /** One media run at a time. */
   val jobs: MediaJobs = MediaJobs(deps.ds, deps.maintenance, deps.pins, deps.jobStops)
@@ -43,7 +45,7 @@ final class MediaWiring(deps: Deps, http: HttpTransport, converter: ConverterCli
 
   val links: AssetLinksControllers =
     AssetLinksControllers(
-      AssetLinkService(deps.transactor),
+      AssetLinkService(deps.transactor, deps.clock),
       (k, id) => Deps.aliasTables.current(deps.ds, k, id),
       deps.maintenance
     )

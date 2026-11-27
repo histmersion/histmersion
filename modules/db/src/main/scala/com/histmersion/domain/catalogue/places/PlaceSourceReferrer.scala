@@ -9,14 +9,14 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The gazetteer's provenance that names a source (a person's place types and footprints, a place's `source`), which a
   * delete keeps as history, and the places its findings were assigned to, which go with them.
   */
 final class PlaceSourceReferrer extends SourceReferrer:
 
-  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences =
+  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val (from, to) = (rename.from, rename.to)
     RenamedReferences(
       List(

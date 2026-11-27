@@ -34,7 +34,7 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.domain.Licence
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
@@ -96,7 +96,7 @@ private[sources] object SourceRepo:
   /** [[put]] inside the caller's transaction. */
   def putIn(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(
       using DbCon
-  )(using Creator.New): Source.UpdatedAt =
+  )(using Creator.New, CreatedAt): Source.UpdatedAt =
     write(s, chunkChars, toleranceKm)
     Source.UpdatedAt(domainCitekey(s.citekey).flatMap(token(_)).getOrElse(""))
 
@@ -108,7 +108,7 @@ private[sources] object SourceRepo:
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
   )(using
       DbCon
-  )(using Creator.New): Either[Api.Error, Source.UpdatedAt] =
+  )(using Creator.New, CreatedAt): Either[Api.Error, Source.UpdatedAt] =
     // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
     val citekey = canonical(requested).getOrElse(requested)
     // FOR UPDATE, not a plain read: `ifUpdatedAt` is a compare-and-swap, and two patches that both
@@ -141,7 +141,7 @@ private[sources] object SourceRepo:
       s: Source,
       chunkChars: Chunker.ChunkMaxChars,
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
-  )(using DbCon)(using creator: Creator.New): Unit =
+  )(using DbCon)(using creator: Creator.New, at: CreatedAt): Unit =
     // Creating a source under an OLD citekey would make the alias and a new row answer to the same
     // name. The handlers refuse it with a readable 400 first; this is the net under every other
     // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
@@ -154,13 +154,14 @@ private[sources] object SourceRepo:
     sql"""INSERT INTO sources
             (citekey, title, authors, year, venue, status, topics, regions, tags,
              period, summary, ocr_markdown, notes, source, calibre_id, doi,
-             cited_by_count, influential_citations, creator)
+             cited_by_count, influential_citations, creator, added_date)
           VALUES
             (${s.citekey}, ${s.title}, ${s.authors}::text[], ${s.year}, ${s.venue}, $status,
              ${s.topics}::text[], ${s.regions}::text[], ${s.tags}::text[],
              $periodLit::int8range, ${s.summary}, ${s.ocrMarkdown}, ${s.notes},
              ${s.provenance}, ${s.calibreId}, ${s.doi},
-             ${s.citedByCount}, ${s.influentialCitations}, ${StoredCreator.column(creator)}::jsonb)
+             ${s.citedByCount}, ${s.influentialCitations}, ${StoredCreator.column(creator)}::jsonb,
+             (${at.iso}::timestamptz AT TIME ZONE 'UTC')::date)
           ON CONFLICT (citekey) DO UPDATE SET
             title=EXCLUDED.title, authors=EXCLUDED.authors, year=EXCLUDED.year, venue=EXCLUDED.venue,
             status=EXCLUDED.status, topics=EXCLUDED.topics, regions=EXCLUDED.regions, tags=EXCLUDED.tags,
@@ -186,12 +187,13 @@ private[sources] object SourceRepo:
       val fperiod = RangeSql.literal(f.period)
       val lon = f.geo.map(_.lon)
       val lat = f.geo.map(_.lat)
-      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance, creator)
+      sql"""INSERT INTO findings (id, citekey, claim, region_name, geom, period, period_name, tags, confidence, significance, creator,
+                                  created_at)
             VALUES (${f.id}, ${s.citekey}, ${f.claim}, ${f.region},
                     ST_SetSRID(ST_MakePoint($lon, $lat), 4326),
                     $fperiod::int8range, ${f.periodName},
                     ${f.tags}::text[],
-                    ${f.confidence}, ${f.significance}, ${StoredCreator.column(creator)}::jsonb)
+                    ${f.confidence}, ${f.significance}, ${StoredCreator.column(creator)}::jsonb, ${at.iso}::timestamptz)
             ON CONFLICT (id) DO UPDATE SET
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim,
               region_name = EXCLUDED.region_name, geom = EXCLUDED.geom, period = EXCLUDED.period,
@@ -489,7 +491,7 @@ private[sources] object SourceRepo:
     */
   def rename(oldCk: Citekey, newRaw: Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using
       DbCon
-  )(using Creator.New): Either[Api.Error, Rename.Counts] =
+  )(using Creator.New, CreatedAt): Either[Api.Error, Rename.Counts] =
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
@@ -501,7 +503,7 @@ private[sources] object SourceRepo:
     */
   private[histmersion] def renameIn(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
       DbCon
-  )(using Creator.New): Either[Api.Error, Rename.Counts] =
+  )(using Creator.New, CreatedAt): Either[Api.Error, Rename.Counts] =
     lockRow(oldCk)
     def taken(ck: Citekey) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
     val findingIdsTaken =
@@ -564,7 +566,7 @@ private[sources] object SourceRepo:
 
   private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
       DbCon
-  )(using Creator.New): Rename.Counts =
+  )(using Creator.New, CreatedAt): Rename.Counts =
     // the short forms that pointed at the old key — decided BEFORE it moves
     val forms = Rename.shortForms(apiCitekey(oldCk))
     val shorts = resolveAliases(forms.map(f => WikiLinks.Occurrence.Target(f.value))).collect {

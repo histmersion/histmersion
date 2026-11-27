@@ -8,25 +8,28 @@ import hearth.kindlings.optics.syntax.*
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
+import java.time.Clock
 
 private[places] object GazetteerImport:
   def session(
       source: Gazetteer.SourceInfo.Key,
       version: Gazetteer.LoadCounts.Version,
       apply: Boolean,
+      clock: Clock,
       windowYears: Gazetteer.ValidityWindowYears =
         Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )(using con: DbCon)(using WritePermit): Session =
     val transactions = Transactor.onConnection
     val repo = transactions.writeAutocommit(GazetteerRepo.session(source, version, windowYears, pointAreaKinds))
-    new Session(repo, transactions, apply)
+    new Session(repo, transactions, apply, clock)
 
   final class Session private[GazetteerImport] (
       repo: GazetteerRepo.Session,
       transactions: Transactor.Session,
-      apply: Boolean
+      apply: Boolean,
+      clock: Clock
   ):
     private def write[A](work: DbCon ?=> A)(using WritePermit): A =
       if apply then transactions.write(work) else transactions.rollback(work)
@@ -44,7 +47,9 @@ private[places] object GazetteerImport:
           case record :: tail => dedupe(tail, ok :+ record, duplicates)
       val (unique, duplicates) = dedupe(records, Vector.empty, Nil)
       val rows = unique.toList
-      val counts = write(repo.writeBatch(rows))
+      val counts = write:
+        given CreatedAt = CreatedAt.now(clock)
+        repo.writeBatch(rows)
       transactions.writeAutocommit(repo.recordSeen(rows))
       counts.modify(_.skipped).setTo((duplicates ++ counts.skipped).take(20))
 

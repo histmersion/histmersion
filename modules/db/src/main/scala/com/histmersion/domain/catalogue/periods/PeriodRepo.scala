@@ -10,7 +10,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 
 /** Named historical periods (`periods`, V016) — the timeline's presets and the PeriodO definitions behind them: the
@@ -84,15 +84,21 @@ private[periods] object PeriodRepo:
   /** Upsert in the order given — parents first, because `parent_id` is a foreign key checked per row. A row with no
     * `preset` leaves a stored one alone.
     */
-  def upsert(ps: List[HistoricalPeriod], dataset: Dataset)(using DbCon)(using creator: Creator.New): RowCount =
+  def upsert(ps: List[HistoricalPeriod], dataset: Dataset)(using
+      DbCon
+  )(using
+      creator: Creator.New,
+      at: CreatedAt
+  ): RowCount =
     if ps.isEmpty then RowCount(0)
     else
       val _ = batchUpdate(ps) { p =>
         val preset = p.preset.map(_.wire)
-        sql"""INSERT INTO periods (id, label, authority, period, region, parent_id, dataset, preset, creator)
+        sql"""INSERT INTO periods (id, label, authority, period, region, parent_id, dataset, preset, creator, created_at)
               VALUES (${p.id}, ${p.label}, ${p.authority},
                       ${RangeSql.always(Some(p.period))}::int8range,
-                      ${p.region}, ${p.parentId}, ${dataset.wire}, $preset, ${StoredCreator.column(creator)}::jsonb)
+                      ${p.region}, ${p.parentId}, ${dataset.wire}, $preset, ${StoredCreator.column(creator)}::jsonb,
+                      ${at.iso}::timestamptz)
               ON CONFLICT (id) DO UPDATE SET
                 label = EXCLUDED.label, authority = EXCLUDED.authority, period = EXCLUDED.period,
                 region = EXCLUDED.region, parent_id = EXCLUDED.parent_id, dataset = EXCLUDED.dataset,

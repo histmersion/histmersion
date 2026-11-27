@@ -13,7 +13,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.util.database.Unused
-import com.histmersion.domain.Creator
+import com.histmersion.domain.{CreatedAt, Creator}
 
 /** The articles that cite a source (`[[citekey]]`, the link graph) or keep a coverage reason for it: a rename rewrites
   * their links through the article write path (each rewrite a recorded version), a citing article refuses a delete, and
@@ -21,7 +21,7 @@ import com.histmersion.domain.Creator
   */
 final class ArticleSourceReferrer extends SourceReferrer:
 
-  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New): RenamedReferences =
+  override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val links = sql"""UPDATE article_links SET target = ${rename.to}
                       WHERE target_kind = 'source' AND target = ${rename.from}""".update.run()
     RenamedReferences(
