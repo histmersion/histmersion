@@ -24,6 +24,7 @@ import com.histmersion.util.storage.DiskTextFiles
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** The seed over a folder of notes, against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise): a note older
   * than the stored source is skipped and `force` overwrites it, and an exported note imports back to the same note.
@@ -39,7 +40,8 @@ class SeedImportSuite extends DbSuite:
   private lazy val sources = SourceService(
     Transactor(ds),
     SourceReferrers(Nil),
-    () => SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0))
+    () => SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0)),
+    TestCreators.clock
   )
   private lazy val seed = SeedImport(sources, (_, figures) => RowCount(figures.size))
 

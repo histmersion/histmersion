@@ -11,6 +11,7 @@ import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
+import com.histmersion.util.database.TestCreators
 
 /** A contract of the library's services, run once on the in-memory stores and once on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone: no referrer is registered, as no
@@ -56,6 +57,6 @@ object LibraryStoreSuite:
       testDb.map { _ =>
         val db = Transactor(scratch(made.incrementAndGet().toString))
         new LibraryStores:
-          val sources = SourceService(db, SourceReferrers(Nil), () => Settings)
+          val sources = SourceService(db, SourceReferrers(Nil), () => Settings, TestCreators.clock)
           val citations = CitationService(db)
       }

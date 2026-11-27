@@ -42,6 +42,7 @@ import com.histmersion.domain.library.workflows.AgentUpstream
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,
   * deduplication across indexes and against the corpus and the acquisition list, a failed index, a dry run, marking —
@@ -114,11 +115,11 @@ class CandidateSearchSuite extends DbSuite:
     CandidateSearch(
       store,
       AcquisitionTesting.sources(deps),
-      GoalService(db),
+      GoalService(db, TestCreators.clock),
       ArticleCitedSources(
-        ArticleService(db)
+        ArticleService(db, TestCreators.clock)
       ),
-      QueueService(db),
+      QueueService(db, TestCreators.clock),
       cfg.acquire.candidates,
       idx,
       alerts,

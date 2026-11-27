@@ -32,6 +32,7 @@ import com.histmersion.util.storage.HandedFile
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** A real queue write can throw instead of returning Left. Never turn stored OCR into a failed job because its optional
   * acquisition bookkeeping failed. Uses only the disposable *_test database.
@@ -67,7 +68,7 @@ class IngestQueueFailureSuite extends DbSuite:
       deps,
       converter,
       AcquisitionTesting.sources(deps),
-      AssetService(deps.transactor),
+      AssetService(deps.transactor, TestCreators.clock),
       _ => None
     )
     val jobs = JobListing(ds, () => cfg)

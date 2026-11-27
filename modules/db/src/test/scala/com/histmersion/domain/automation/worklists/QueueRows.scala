@@ -15,6 +15,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.Creator
+import com.histmersion.util.database.TestCreators
 
 /** Work-list rows written and read straight through the repository, each call in a transaction of its own: how the
   * suites of other features seed and inspect the lists (the work lists' own behaviour is the server's
@@ -22,10 +23,10 @@ import com.histmersion.domain.Creator
   */
 object QueueRows:
   def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem =
-    transact(ds)(QueueRepo.insert(kind, in, Creator.New.Manual(Creator.Surface.Rest)))
+    transact(ds)(QueueRepo.insert(kind, in, Creator.New.Manual(Creator.Surface.Rest), TestCreators.at))
 
   def addAs(ds: DataSource, kind: Kind, in: QueueAdd, creator: Creator.New): QueueItem =
-    transact(ds)(QueueRepo.insert(kind, in, creator))
+    transact(ds)(QueueRepo.insert(kind, in, creator, TestCreators.at))
   def list(ds: DataSource, kind: Kind, all: Boolean): Vector[QueueItem] = connect(ds)(QueueRepo.list(kind, all))
   def get(ds: DataSource, id: QueueItem.Id): Option[QueueItem] = connect(ds)(QueueRepo.get(repoId(id)))
   def acquireNaming(ds: DataSource, doi: Doi): Vector[QueueItem] =

@@ -13,12 +13,13 @@ import com.histmersion.util.storage.Location
 
 import javax.sql.DataSource
 import com.histmersion.domain.research.articles.ArticleService
+import com.histmersion.util.database.TestCreators
 
 /** The library's acquisition as the server wires it, over one test's `deps` and its own upstream fakes. */
 object AcquisitionTesting:
 
   def sources(deps: Deps): SourceService =
-    SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg))
+    SourceService(deps.transactor, Deps.sourceReferrers, () => LibraryWiring.settings(deps.cfg), TestCreators.clock)
 
   def skeleton(deps: Deps): SkeletonIngest = SkeletonIngest(sources(deps))
 
@@ -47,8 +48,8 @@ object AcquisitionTesting:
       () => deps.cfg,
       deps.maintenance,
       deps.pins,
-      GoalService(deps.transactor),
-      ArticleCitedSources(ArticleService(deps.transactor)),
+      GoalService(deps.transactor, TestCreators.clock),
+      ArticleCitedSources(ArticleService(deps.transactor, TestCreators.clock)),
       discovery,
       citations,
       oa,

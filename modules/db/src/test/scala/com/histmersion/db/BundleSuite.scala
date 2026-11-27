@@ -80,6 +80,7 @@ import com.histmersion.util.storage.ContentDirectory
 import com.histmersion.util.data.exchange.BundleImporter
 import com.histmersion.util.storage.ByteSource
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
 
 /** The portable bundle against real Postgres (docs/research-merge-import.md, milestones M0–M2): identity and tombstones
@@ -546,7 +547,8 @@ class BundleSuite extends DbSuite with Bounded:
         resolutions,
         merge,
         TestExchange.kinds,
-        TestExchange.rules
+        TestExchange.rules,
+        TestCreators.clock
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 

@@ -111,7 +111,15 @@ class CatalogueOracleSuite extends DbSuite:
 
   private def withServerOn[A](cfg: AppConfig)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
+      val b = Composition
+        .server(
+          cfg,
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          OfflineConverter(),
+          system = FixedClock.system
+        )
+        .start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }

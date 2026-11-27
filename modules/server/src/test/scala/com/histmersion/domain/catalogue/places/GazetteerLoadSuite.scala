@@ -24,6 +24,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.config.UserPaths
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** The external gazetteer sources end to end (#1064): a pinned extract (checksum verified BEFORE anything is read, a
   * mismatch refused, a missing file downloaded through the seam), and the LPF drop folder (a hand-written Linked Places
@@ -85,7 +86,8 @@ class GazetteerLoadSuite extends DbSuite:
       maxLpfBytes = GazetteerLoad.Settings.MaxLpfBytes(1 << 20),
       downloadTimeoutSeconds = Timeout,
       toleranceKm = GeocodeSettings.ToleranceKm(10),
-      rebuild = GazetteerLoad.Settings.Rebuild(false)
+      rebuild = GazetteerLoad.Settings.Rebuild(false),
+      clock = TestCreators.clock
     )
 
   /** The stores over the directories, the manifest read from its file. */

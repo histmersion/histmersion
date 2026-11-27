@@ -15,6 +15,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** A contract of the acquisition's services, run once in memory and once on the database (a scratch database per test,
   * gated on HISTMERSION_TEST_DB_URL), each holding the library's rows alone.
@@ -62,10 +63,10 @@ object AcquisitionStoreSuite:
           val candidates = CandidateService(db)
           val quotas = UpstreamQuotaService(db)
           val attempts = AcquireCheckService(db)
-          val sources = SourceService(db, SourceReferrers(Nil), () => LibraryStoreSuite.Settings)
-          val queues = QueueService(db)
+          val sources = SourceService(db, SourceReferrers(Nil), () => LibraryStoreSuite.Settings, TestCreators.clock)
+          val queues = QueueService(db, TestCreators.clock)
           def goal(slug: String) =
-            val _ = GoalService(db)
+            val _ = GoalService(db, TestCreators.clock)
               .put(
                 Goal.Slug.applyUnsafe(slug),
                 api.automation.Goal.Put(api.automation.Goal.Title(s"Goal $slug"))

@@ -38,6 +38,7 @@ import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
+import com.histmersion.util.database.TestCreators
 
 /** The external gazetteer sources in the store (#1064), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): joining by identifier only, provenance per row, idempotent re-runs, the sweep, the dry run, and the
@@ -124,7 +125,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
       sweep: Boolean = true
   ): Gazetteer.LoadCounts =
     connect(ds):
-      val s = GazetteerImport.session(source, version, apply, pointAreaKinds = kinds)
+      val s = GazetteerImport.session(source, version, apply, pointAreaKinds = kinds, clock = TestCreators.clock)
       val pruned = s.prune(batch)
       val c =
         rs.grouped(batch)
@@ -493,7 +494,9 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
       GazRecord.Label("Zzgaz hamlet"),
       links = List(GazLink(wd(ExternalId.Id("Q999000702")), LinkMatch.Exact))
     )
-    val g = connect(ds)(GazetteerImport.session(Geonames, V1, apply = true).batch(List(gArea, gSite)))
+    val g = connect(ds)(
+      GazetteerImport.session(Geonames, V1, apply = true, clock = TestCreators.clock).batch(List(gArea, gSite))
+    )
     assertEquals((g.created, g.joined, g.pointAreasSkipped), (1L, 0L, 1L), g.describe)
     assert(!exists("geonames_999000706") && exists("geonames_999000707"))
     // "" keeps every record (the rule is the config's)
@@ -525,7 +528,12 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
       GazRecord.Label("Zzgaz old region (gn)"),
       links = List(GazLink(wd(ExternalId.Id("Q999000711")), LinkMatch.Exact))
     )
-    assertEquals(connect(ds)(GazetteerImport.session(Geonames, V1, apply = true).batch(List(joiner))).joined, 1L)
+    assertEquals(
+      connect(ds)(
+        GazetteerImport.session(Geonames, V1, apply = true, clock = TestCreators.clock).batch(List(joiner))
+      ).joined,
+      1L
+    )
     assert(names("wikidata_q999000711").exists(_._3 == "geonames"))
     val dry = run(Wikidata, V1, List(area), apply = false)
     assertEquals((dry.placesRemoved, dry.pointAreasSkipped), (1L, 1L), dry.describe)
@@ -560,7 +568,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
     // the town makes its own place — which the area, sharing the GeoNames id, then joins (an area
     // known only by a point still joins a place its ids name; it only never makes one)
     val c = connect(ds):
-      val s = GazetteerImport.session(Wikidata, V1, apply = true)
+      val s = GazetteerImport.session(Wikidata, V1, apply = true, clock = TestCreators.clock)
       s.batch(List(site, area)) + s.sweep()
     assertEquals((c.placesRemoved, c.pointAreasSkipped, c.created, c.joined), (1L, 0L, 1L, 1L), c.describe)
     assert(!exists("wikidata_q999000721") && exists("wikidata_q999000722"))
@@ -570,7 +578,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
     clean()
     run(Wikidata, V1, List(area, site), kinds = Set.empty)
     val c2 = connect(ds):
-      val s = GazetteerImport.session(Wikidata, V1, apply = true)
+      val s = GazetteerImport.session(Wikidata, V1, apply = true, clock = TestCreators.clock)
       s.batch(List(area, site)) + s.sweep()
     assertEquals((c2.placesRemoved, c2.pointAreasSkipped, c2.created, c2.joined), (1L, 1L, 1L, 0L), c2.describe)
     assertEquals(names("wikidata_q999000722").map(_._1), List("Zzgaz town by the region"))
@@ -584,14 +592,29 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
     run(Wikidata, V1, List(area), kinds = Set.empty)
     assert(exists("wikidata_q999000731"))
     connect(ds):
-      assertEquals(GazetteerImport.session(Wikidata, V1, apply = false).prune(10), 0L)
+      assertEquals(GazetteerImport.session(Wikidata, V1, apply = false, clock = TestCreators.clock).prune(10), 0L)
     assert(exists("wikidata_q999000731"))
     connect(ds):
-      assertEquals(GazetteerImport.session(Geonames, V1, apply = true).prune(10), 0L, "only the source's own")
-      assertEquals(GazetteerImport.session(LpfWd, V1, apply = true).prune(10), 0L, "never an LPF dataset's")
-      assertEquals(GazetteerImport.session(Wikidata, V1, apply = true, pointAreaKinds = Set.empty).prune(10), 0L)
+      assertEquals(
+        GazetteerImport.session(Geonames, V1, apply = true, clock = TestCreators.clock).prune(10),
+        0L,
+        "only the source's own"
+      )
+      assertEquals(
+        GazetteerImport.session(LpfWd, V1, apply = true, clock = TestCreators.clock).prune(10),
+        0L,
+        "never an LPF dataset's"
+      )
+      assertEquals(
+        GazetteerImport
+          .session(Wikidata, V1, apply = true, pointAreaKinds = Set.empty, clock = TestCreators.clock)
+          .prune(10),
+        0L
+      )
     assert(exists("wikidata_q999000731"))
-    connect(ds)(assert(GazetteerImport.session(Wikidata, V1, apply = true).prune(1).value >= 1L))
+    connect(ds)(
+      assert(GazetteerImport.session(Wikidata, V1, apply = true, clock = TestCreators.clock).prune(1).value >= 1L)
+    )
     assert(!exists("wikidata_q999000731"))
 
   test("evidence keeps a place: a point-only area an attestation names stays, its record on it"):

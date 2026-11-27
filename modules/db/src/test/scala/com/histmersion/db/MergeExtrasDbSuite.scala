@@ -62,6 +62,7 @@ import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.TestPermits.given
+import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
@@ -147,7 +148,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         MergeResolutions(),
         merge,
         TestExchange.kinds,
-        TestExchange.rules
+        TestExchange.rules,
+        TestCreators.clock
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
@@ -172,7 +174,8 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         () => Right("stub.dump"),
         TestExchange.kinds,
         TestExchange.rules,
-        TestExchange.followUps
+        TestExchange.followUps,
+        TestCreators.clock
       )
       .fold(e => fail(e.sentences.mkString("; ")), identity)
 
