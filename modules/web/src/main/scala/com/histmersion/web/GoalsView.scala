@@ -772,7 +772,7 @@ object GoalsView:
                   span(cls := s"job-state state-${r.status.value}", r.status),
                   " ",
                   WinLink(WindowKey.Run(WindowKey.Run.Id(r.id.value)), s"${r.pipeline} ${r.target}"),
-                  span(cls := "muted", s" · ${r.createdAt}")
+                  span(cls := "muted", shown" · ${r.createdAt}")
                 )
               )
             )
