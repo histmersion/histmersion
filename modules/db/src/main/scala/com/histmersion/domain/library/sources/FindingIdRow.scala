@@ -9,6 +9,8 @@ import com.histmersion.domain.library.Confidence
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.catalogue.evidence.NearFindingRow
+import com.histmersion.domain.library.search.FindingHitRow
 
 /** A finding's row with its id, as a write path reads it back. */
 final private[sources] case class FindingIdRow(
@@ -26,15 +28,12 @@ final private[sources] case class FindingIdRow(
 ) derives DbCodec
 
 object FindingIdRow:
-  type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  export NearFindingRow.Id
   type Claim = Claim.T
   object Claim extends Newtype[String, Pure]
   type RegionName = RegionName.T
   object RegionName extends Newtype[String, Pure]
-  type PeriodName = PeriodName.T
-  object PeriodName extends Newtype[String, Pure]
-  type Tags = Tags.T
-  object Tags extends Newtype[String, Pure]
+  export FindingHitRow.PeriodName
+  export FindingHitRow.Tags
   type Significance = Significance.T
   object Significance extends Newtype[String, Pure]

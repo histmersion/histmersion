@@ -87,7 +87,6 @@ object EventTaxonomy:
 
   private val byKind: Map[EventSummary.Kind, Kind] = kinds.map(k => k.kind -> k).toMap
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val aliases: Map[EventSummary.Kind, EventSummary.Kind] = Map(
     EventSummary.Kind("rebellion") -> EventSummary.Kind(Revolt),
     EventSummary.Kind("uprising") -> EventSummary.Kind(Revolt),
@@ -110,7 +109,6 @@ object EventTaxonomy:
     val k = EventScale.normKind(kind)
     aliases.get(k).orElse(Option.when(k.value.endsWith("_era"))(EventSummary.Kind(Era))).getOrElse(k)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val labelRules: List[(ItemKind.Label.Pattern, EventSummary.Kind)] = List(
     (ItemKind.Label.Pattern("erupt|volcan"), EventSummary.Kind(Eruption)),
     (ItemKind.Label.Pattern("earthquake|seism|quake"), EventSummary.Kind(Earthquake)),

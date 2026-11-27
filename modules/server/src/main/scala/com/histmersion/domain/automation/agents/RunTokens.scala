@@ -31,8 +31,8 @@ final class RunTokens(using wallClock: java.time.Clock):
         token,
         RunGrant.Agent(agent.name.value),
         agent.tools,
-        scope.map(s => RunGrant.Run(s.run.value)),
-        scope.map(s => RunGrant.Step(s.step.value)),
+        scope.map(s => s.run),
+        scope.map(s => s.step),
         RunGrant.ExpiresAt(now.value + math.max(1000L, ttlMillis.value))
       )
     val _ = grants.put(token, g)

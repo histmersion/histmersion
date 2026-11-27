@@ -13,6 +13,8 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Api
+import com.histmersion.api.automation.Agents
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Filter(
@@ -58,22 +60,18 @@ object Filter:
 
   type Q = Q.T
   object Q extends Newtype[String, Pure]
-  type Tags = Tags.T
-  object Tags extends Newtype[String, Pure]
+  export Agents.RunRequest.Tags
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
   type Places = Places.T
   object Places extends Newtype[String, Pure]
-  type Topics = Topics.T
-  object Topics extends Newtype[String, Pure]
+  export Agents.RunRequest.Topics
   type Status = Status.T
   object Status extends Newtype[String, Pure]
-  type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  export Api.GoalQuery.Limit
   type Offset = Offset.T
   object Offset extends Newtype[Int, Pure]
-  type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  export Agents.RunRequest.Title
   export ReviewGoal.Slug as Goal
 
   val Earliest: Year = Year(-1000000000L)

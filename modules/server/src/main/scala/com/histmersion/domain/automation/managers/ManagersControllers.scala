@@ -1525,10 +1525,6 @@ final class ManagersControllers(
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerItem.Outcome)(using WritePermit): Unit =
     m.goal
       .flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value)))
@@ -1609,7 +1605,7 @@ final class ManagersControllers(
         val now = agents.autopilot.status()
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).orElse(Some("person"))
         AgentMode
-          .steps(AgentMode.Step.Autopilot.On(now.on.value), AgentMode.Step.Drain.On(now.drain.isDefined), to)
+          .steps(now.on, AgentMode.Step.Drain.On(now.drain.isDefined), to)
           .foldLeft(now) { (_, step) =>
             step match
               case AgentMode.Step.Autopilot(on) =>

@@ -309,7 +309,6 @@ class CatalogueOracleSuite extends DbSuite:
     else Left(s"unexpected $url")
 
   /** Writes, each recorded with its answer. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def craft(url: String, ds: DataSource, name: String = "cat"): String =
     val log = StringBuilder()
     def step(name: String, answer: String): String =

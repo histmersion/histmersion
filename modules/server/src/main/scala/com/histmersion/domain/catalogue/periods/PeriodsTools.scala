@@ -29,12 +29,9 @@ object PeriodsTools:
     object Query extends Newtype[String, Pure]
     type Id = Id.T
     object Id extends Newtype[String, Pure]
-    type Region = Region.T
-    object Region extends Newtype[String, Pure]
-    type From = From.T
-    object From extends Newtype[Long, Pure]
-    type To = To.T
-    object To extends Newtype[Long, Pure]
+    export PeriodSearch.Region
+    export PeriodSearch.From
+    export PeriodSearch.To
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
@@ -75,9 +72,9 @@ object PeriodsTools:
                     periods
                       .search(
                         in.query.map(_.value.trim).filter(_.nonEmpty).map(PeriodSearch.Text(_)),
-                        in.region.map(g => PeriodSearch.Region(g.value)),
-                        in.from.map(y => PeriodSearch.From(y.value)),
-                        in.to.map(y => PeriodSearch.To(y.value))
+                        in.region.map(g => g),
+                        in.from.map(y => y),
+                        in.to.map(y => y)
                       )
                       .toVector
                   )

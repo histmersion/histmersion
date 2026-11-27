@@ -155,7 +155,7 @@ object EventImportService:
             .find(_._1.id == c.id)
             .fold(c) { case (_, o, up) =>
               c.modify(_.status)
-                .setTo(Correction.StatusValue(Corrections.status(o).value))
+                .setTo(Corrections.status(o))
                 .modify(_.upstreamNow)
                 .setTo(Some(Correction.UpstreamNow(up.noSpaces)))
             }

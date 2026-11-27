@@ -34,8 +34,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 object PlanArticles:
   type LastRound = LastRound.T
   object LastRound extends Newtype[Boolean, Pure]
-  type LogLine = LogLine.T
-  object LogLine extends Newtype[String, Pure]
+  export FilterInference.LogLine
   type Outcome = Outcome.T
   object Outcome extends Newtype[String, Pure]
 

@@ -259,7 +259,6 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     _.value == "a2019_tin",
     _ => Some(Source.Status.Current)
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val body = Article.Body("""Tin reached the Aegean by sea [[a2019_tin]].
       |
       |## Disagreements

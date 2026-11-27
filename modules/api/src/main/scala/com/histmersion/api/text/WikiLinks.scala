@@ -86,7 +86,7 @@ object WikiLinks:
       .flatMap(m => normalize(NormalizeRaw(m.group(2))))
       .toList
       .distinct)
-      .map(refactorValue7 => Occurrence.Target((refactorValue7).value))
+      .map(refactorValue7 => refactorValue7)
 
   /** Every link replaced by what `render` makes of its target, explicit label and written target; embeds and links to
     * no target are kept as written.
@@ -105,7 +105,7 @@ object WikiLinks:
           java.util.regex.Matcher.quoteReplacement(normalize(NormalizeRaw(targetPart)) match
             case Some(t) if m.group(1).isEmpty => (
               render(
-                Occurrence.Target((t).value),
+                t,
                 (explicit).map(refactorValue => Alias(refactorValue)),
                 Alias(targetPart.takeWhile(_ != '#').trim)
               )
@@ -122,7 +122,7 @@ object WikiLinks:
       if m.group(1).nonEmpty then None
       else normalize(NormalizeRaw(m.group(2).takeWhile(_ != '|'))).flatMap(to)
     val count = Link.findAllMatchIn((md).value).count(moved(_).isDefined)
-    if count == 0 then (Body((md).value), RetargetCount(0))
+    if count == 0 then (md, RetargetCount(0))
     else
       val out = Link.replaceAllIn(
         (md).value,

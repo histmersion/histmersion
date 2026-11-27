@@ -32,6 +32,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.media.covers.SourcePictures
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[SearchedCollection.matches]]) — and
@@ -374,7 +375,6 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       }
 
 object CollectionImport:
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  export SourcePictures.DryRun
   type Refresh = Refresh.T
   object Refresh extends Newtype[Boolean, Pure]

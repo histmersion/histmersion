@@ -59,7 +59,7 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
     val wanted = keys.map(_.value).toSet
     saved.collect {
       case (k, (uid, a)) if wanted(k.value) =>
-        AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
+        AssetService.ProviderKey(k.value) -> Known(uid, Some(Known.License(a.license.value)))
     }.toMap
   def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId))(using
       WritePermit
@@ -223,7 +223,6 @@ class CollectionsSuite extends munit.FunSuite:
   private def metObject(id: Long, f: String => String = identity): Either[String, HttpAnswer] =
     FakeMediaHttp.json(f(fx("met-object.json").replace("252448", id.toString)))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def met(): FakeMediaHttp = FakeMediaHttp { url =>
     if url.contains("/v1.1/search?") then FakeMediaHttp.json(fx("met-search.json"))
     else if url.endsWith("/v1/objects/252448") then metObject(252448)

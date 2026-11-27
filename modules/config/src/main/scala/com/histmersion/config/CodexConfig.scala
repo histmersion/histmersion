@@ -42,9 +42,7 @@ final case class CodexConfig(
   def leanBase: Boolean = !baseInstructions.value.trim.equalsIgnoreCase("builtin")
 
 object CodexConfig:
-
-  type Command = Command.T
-  object Command extends Newtype[String, Pure]
+  export ClaudeCodeConfig.Command
   type Home = Home.T
   object Home extends Newtype[String, Pure]
   type UseApiKey = UseApiKey.T

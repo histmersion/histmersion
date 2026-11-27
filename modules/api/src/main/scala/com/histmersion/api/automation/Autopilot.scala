@@ -9,6 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Autopilot:
@@ -27,8 +28,7 @@ object Autopilot:
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object AutopilotSet:
-    type On = On.T
-    object On extends Newtype[Boolean, Pure]
+    export AgentMode.Step.Autopilot.On
     type By = By.T
     object By extends Newtype[String, Pure]
 
@@ -43,8 +43,7 @@ object Autopilot:
         api.json.Schema
 
   object ManagerBrief:
-    type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    export Wording.Id
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     export ItemStatus.Wire as State
@@ -242,8 +241,7 @@ object Autopilot:
         api.json.Schema
 
   object DrainSet:
-    type On = On.T
-    object On extends Newtype[Boolean, Pure]
+    export AgentMode.Step.Drain.On
     type By = By.T
     object By extends Newtype[String, Pure]
 
@@ -274,8 +272,7 @@ object Autopilot:
       goalPlansWait: Option[EngineStatus.GoalPlansWait] = None
   )
   object EngineStatus:
-    type On = On.T
-    object On extends Newtype[Boolean, Pure]
+    export AgentMode.Step.Autopilot.On
     type Since = Since.T
     object Since extends Newtype[String, Pure]
     type By = By.T
@@ -293,8 +290,7 @@ object Autopilot:
     type IngestCap = IngestCap.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object IngestCap extends Newtype[Int, Pure]
-    type MaxConcurrentRuns = MaxConcurrentRuns.T
-    object MaxConcurrentRuns extends Newtype[Int, Pure]
+    export Agents.ModelsInfo.MaxConcurrentRuns
     type LastBackup = LastBackup.T
     object LastBackup extends Newtype[String, Pure]
     type LastLint = LastLint.T

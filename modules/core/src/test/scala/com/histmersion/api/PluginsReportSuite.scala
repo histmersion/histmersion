@@ -30,34 +30,31 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PluginsReportSuite extends munit.FunSuite:
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val vault = PluginStatus(
     PluginStatus.Id("keepassxc"),
     PluginStatus.Version("0.1.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(true),
-    PluginState.Wire(PluginState.Registered.wire.value),
+    PluginState.Registered.wire,
     provides = List(PluginDescription.Provides("secret-vault:keepassxc")),
     settings = List(
       PluginSetting(PluginSetting.Key("database"), PluginSetting.Value("/v.kdbx")),
       PluginSetting(PluginSetting.Key("password"), PluginSetting.Value("env:KP_PASSWORD"))
     )
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val off = PluginStatus(
     PluginStatus.Id("bitwarden"),
     PluginStatus.Version("0.1.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(false),
-    PluginState.Wire(PluginState.Disabled.wire.value)
+    PluginState.Disabled.wire
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val broken = PluginStatus(
     PluginStatus.Id("portal"),
     PluginStatus.Version("2.0.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(true),
-    PluginState.Wire(PluginState.Failed.wire.value),
+    PluginState.Failed.wire,
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
     errors = List(
@@ -68,13 +65,12 @@ class PluginsReportSuite extends munit.FunSuite:
       Problem.Plugin.Vault(Problem.Plugin.Id("keepassxc"), Problem.Plugin.Retrieval.NoVault)
     )
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val alien = PluginStatus(
     PluginStatus.Id("old"),
     PluginStatus.Version("0.0.1"),
     PluginStatus.SpiVersion(0),
     enabled = PluginStatus.Enabled(false),
-    PluginState.Wire(PluginState.Refused.wire.value),
+    PluginState.Refused.wire,
     errors = List(
       Problem.Plugin
         .Load(Problem.Plugin.Id("old"), Problem.Plugin.Fault.SpiMismatch(Problem.Raw("0"), Problem.Raw("1")))

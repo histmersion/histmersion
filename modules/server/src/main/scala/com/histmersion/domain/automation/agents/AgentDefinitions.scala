@@ -276,7 +276,7 @@ object AgentDefinitions:
       skills
         .get(SkillDef.Name(s.value))
         .toRight(Problem.Config.Definition(file, Problem.Config.Flaw.SkillMissing(Problem.Raw.of(s))))
-        .map(sk => s"# Skill: ${sk.name}\n\n${forAudience(AgentDef.Body(sk.body.value), keep).value.trim}")
+        .map(sk => s"# Skill: ${sk.name}\n\n${forAudience(sk.body, keep).value.trim}")
     }
     Problems.from(parts.collect { case Left(m) => m }.toVector) match
       case None =>

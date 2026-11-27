@@ -120,7 +120,6 @@ class TreeRepoSuite extends DbSuite:
 
   private val Tag = "zzt-tree-fixture"
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val src = Source(
     citekey = Citekey("zzt_src"),
     title = api.library.Title("Tree fixture"),
@@ -187,7 +186,6 @@ class TreeRepoSuite extends DbSuite:
   /** Only the fixture: the tag rides on the SOURCE, and the finding-level tag predicate unions
     * `findings.tags ∪ sources.tags`, so every one of its findings matches and nothing else does.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val filter = Filter(
     tags = List(Filter.Tags(Tag)),
     period = Some(Period(Year(-1600), Year(-1200)))

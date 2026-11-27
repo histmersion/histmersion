@@ -65,7 +65,6 @@ object MetadataPatch:
   private val derived: JsonCodec[MetadataPatch] = JsonCodec.derived[MetadataPatch]
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given JsonCodec[MetadataPatch] = StrictJson.codec(
     JsonCodec.mapped[MetadataPatch, Json](
       m => m.asJson(using derived).dropNullValues,

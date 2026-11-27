@@ -179,7 +179,7 @@ class PointKindsSuite extends munit.FunSuite:
     val (fw, _) = PointKinds.Findings.box
     assert(fw.value > PointKinds.Sites.box._1.value && fw.value > PointKinds.Events.box._1.value)
     val (pw, ph) = PointKinds.Media.box
-    assert(pw.value > ph.value)
+    assert(pw > ph)
 
   test("findings at one point are one point; the spots keep their order"):
     val a = finding.modify(_.lat).setTo(Some(Latitude(1))).modify(_.lon).setTo(Some(Longitude(2)))

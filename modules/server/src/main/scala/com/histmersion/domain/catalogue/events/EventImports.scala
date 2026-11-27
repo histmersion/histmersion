@@ -160,9 +160,7 @@ final class EventImports(
                 .fold(r)(k =>
                   r.modify(_.kind)
                     .setTo(
-                      CatalogRecord.Kind(
-                        EventProviders.WikidataEvents.moreSpecific(classOrder, k, EventSummary.Kind(r.kind.value)).value
-                      )
+                      EventProviders.WikidataEvents.moreSpecific(classOrder, k, EventSummary.Kind(r.kind.value))
                     )
                 )
             )
@@ -328,9 +326,7 @@ final class EventImports(
       val d = PluginEvents.derive(reread.getOrElse(r), limitsOf(r.provider, present))
       // a Wikidata item read in two classes keeps the more specific kind (V085 stored the last class's)
       val k = if r.provider == CatalogProvider.Wikidata then
-        CatalogRecord.Kind(
-          EventProviders.WikidataEvents.moreSpecific(classOrder, EventSummary.Kind(d.kind.value), eventKind).value
-        )
+        EventProviders.WikidataEvents.moreSpecific(classOrder, EventSummary.Kind(d.kind.value), eventKind)
       else d.kind
       (eventId, r, d.modify(_.kind).setTo(k), reread.isDefined)
     }

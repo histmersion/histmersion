@@ -6,6 +6,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.text.SafeName
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.automation.Agents
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object AssetLinks:
@@ -21,8 +22,7 @@ object AssetLinks:
   type TargetKind = TargetKind.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TargetKind extends Newtype[String, Pure]
-  type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  export Agents.RunRequest.Title
   type Url = Url.T
   object Url extends Newtype[String, Pure]
 

@@ -48,6 +48,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.automation.goals.PlanGoalPipeline
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new
@@ -215,10 +216,9 @@ final class ProposeArticlesPipeline(
       f"${lim.maxOverlap.value * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sourcesOf(e: Existing): Set[Citekey] =
     e.filter.fold(Set.empty[Citekey])(f =>
-      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => Citekey.assume(r.value)).toSet
+      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => r).toSet
     ) ++ e.cited
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -248,7 +248,7 @@ final class ProposeArticlesPipeline(
             val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap)
             (
               Article.Plans.ProposedArticle.Hits(n.value),
-              rows.map(r => Citekey.assume(r.value)).toSet
+              rows.map(r => r).toSet
             )
           },
           existing,
@@ -313,12 +313,9 @@ object ProposeArticlesPipeline:
   ) derives JsonCodec
 
   object Loaded:
-    type Notes = Notes.T
-    object Notes extends Newtype[String, Pure]
-    type Tags = Tags.T
-    object Tags extends Newtype[String, Pure]
-    type Regions = Regions.T
-    object Regions extends Newtype[String, Pure]
+    export PlanGoalPipeline.Loaded.Notes
+    export PlanGoalPipeline.Loaded.Tags
+    export PlanGoalPipeline.Loaded.Regions
     type Queries = Queries.T
     object Queries extends Newtype[String, Pure]
     type Topics = Topics.T

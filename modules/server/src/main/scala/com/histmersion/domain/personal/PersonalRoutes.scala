@@ -14,10 +14,6 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object PersonalRoutes:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   def apply(personal: PersonalControllers): List[ServerEndpoint[Any, Identity]] =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local

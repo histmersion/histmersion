@@ -81,7 +81,6 @@ object CatalogMerge:
   /** Two kinds are the same thing when their canonical kinds are equal (a siege is no battle here: Wikidata lists both
     * for one fight only when it says so through the item).
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def canonical(kind: String): EventSummary.Kind =
     EventTaxonomy.canonical(EventSummary.Kind(kind))
 

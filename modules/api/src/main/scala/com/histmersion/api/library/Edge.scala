@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.GeoPick
 final case class Edge(src: Citekey, dst: Citekey, kind: Edge.Kind)
 
 object Edge:
@@ -22,8 +23,7 @@ object Edge:
       Confirms, Cites, FoundationalFor, CompilationOf, ReviewOf, Verifies
 
   object Kind:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    export GeoPick.Wire
 
     private val wireMap: Map[Wire, Kind] = values.map(e => wireOf(e) -> e).toMap
 

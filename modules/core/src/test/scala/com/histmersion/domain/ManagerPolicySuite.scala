@@ -446,7 +446,6 @@ class ManagerPolicySuite extends munit.FunSuite:
     maxRuns = WatchManagerDefaults.MaxRuns(1),
     autoIngestPerDay = WatchManagerDefaults.AutoIngestPerDay(5)
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val mcfg = ManagerDefaults(
     ManagerDefaults.MaxFailures(3),
     ManagerDefaults.BackoffMinutes(15),
@@ -455,7 +454,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     ManagerRunDefaults(ManagerRunDefaults.MaxRuns(2)),
     ManagerRunDefaults(ManagerRunDefaults.MaxRuns(4)),
     ManagerRunDefaults(ManagerRunDefaults.MaxRuns(1)),
-    ManagerRunDefaults(ManagerRunDefaults.MaxRuns(watch.maxRuns.value))
+    ManagerRunDefaults(watch.maxRuns)
   )
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):

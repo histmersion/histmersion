@@ -238,8 +238,8 @@ object EventService:
           sum.id,
           EventGeo.Label(sum.label.value),
           EventGeo.Kind(sum.kind.value),
-          EventGeo.Scale(sum.scale.value),
-          EventGeo.Historicity(sum.historicity.value),
+          sum.scale,
+          sum.historicity,
           sum.timeSpan,
           Latitude(lat.value),
           Longitude(lon.value),
@@ -252,7 +252,7 @@ object EventService:
           EventLeads
             .size(vei.map(LeadFacts.Vei(_)), magnitude.map(LeadFacts.Magnitude(_)))
             .map(EventGeo.Size(_)),
-          EventGeo.Precision(sum.precision.value),
+          sum.precision,
           sum.datingNote.map(EventGeo.Dating(_))
         )
       }
@@ -358,7 +358,7 @@ object EventService:
       val upstream = for
         e <- s.events.find(_.id == id)
         cat <- e.catalogue
-        recs = s.catalogueRecords.filter((ev, r) => ev.value == id.value && r.provider.value == cat.value).map(_._2)
+        recs = s.catalogueRecords.filter((ev, r) => ev == id && r.provider.value == cat.value).map(_._2)
         key <- CatalogRecord.owner(
           CatalogRecord.EventId(id.value),
           CatalogRecord.Provider(cat.value),

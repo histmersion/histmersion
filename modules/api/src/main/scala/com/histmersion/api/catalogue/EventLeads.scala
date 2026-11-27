@@ -13,7 +13,6 @@ object EventLeads:
   object LeadList extends Newtype[String, Pure]
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def years(ts: TimeSpan): EventLead.Years =
     EventLead.Years(YearFmt.span(ts))
 
@@ -87,11 +86,11 @@ object EventLeads:
           f.eventId,
           label,
           EventLead.Kind(EventTaxonomy.canonical(kind).value),
-          EventLead.Tier(f.tier.value),
+          f.tier,
           yrs,
           EventLead.Text(text),
           actions(f.eventId, label, yrs, f.proposed),
-          EventLead.FindingsNear(f.findingsNear.value),
+          f.findingsNear,
           EventLead.Candidates(f.proposed.value)
         )
       )

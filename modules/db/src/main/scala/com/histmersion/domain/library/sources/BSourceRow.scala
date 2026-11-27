@@ -13,6 +13,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.automation.managers.SweepAcquireItem
+import com.histmersion.domain.library.findings.GeoFeedRow
 
 /** A source as the bundle reads it: its columns, its body's and its original's digests and its ISBNs. */
 final private[sources] case class BSourceRow(
@@ -46,15 +48,13 @@ final private[sources] case class BSourceRow(
 ) derives DbCodec
 
 object BSourceRow:
-  type Doi = Doi.T
-  object Doi extends Newtype[String, Pure]
+  export GeoFeedRow.Doi
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
-  type Venue = Venue.T
-  object Venue extends Newtype[String, Pure]
+  export SweepAcquireItem.Venue
   type Topics = Topics.T
   object Topics extends Newtype[String, Pure]
   type Regions = Regions.T

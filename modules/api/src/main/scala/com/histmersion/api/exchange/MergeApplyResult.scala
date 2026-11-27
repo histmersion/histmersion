@@ -45,5 +45,4 @@ object MergeApplyResult:
   object LogEntry extends Newtype[Int, Pure]
   type ReplanChanges = ReplanChanges.T
   object ReplanChanges extends Newtype[Int, Pure]
-  type Notes = Notes.T
-  object Notes extends Newtype[String, Pure]
+  export Bundle.ImportResult.Notes

@@ -6,6 +6,7 @@ import com.histmersion.api.{BBox, WireEnum}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.GeoPick
 
 enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]) derives CanEqual:
   case Aegean
@@ -108,8 +109,7 @@ enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, va
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object PresetRegion:
-  type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  export GeoPick.Wire
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 

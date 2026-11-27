@@ -19,7 +19,6 @@ final case class CollectionSetDone(
       api.json.Schema
 
 object CollectionSetDone:
-  type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  export CollectionImportRequest.Id
   type Fields = Fields.T
   object Fields extends Newtype[String, Pure]

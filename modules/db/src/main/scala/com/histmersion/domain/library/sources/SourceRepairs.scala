@@ -118,7 +118,7 @@ final class SourceRepairs(db: Transactor):
       LintFixResult.EdgesResolved(0),
       LintFixResult.SourcesReindexed(r.sources.value),
       LintFixResult.ChunksWritten(r.chunks.value),
-      LintFixResult.Remaining(r.remaining.value)
+      r.remaining
     )
 
   /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */

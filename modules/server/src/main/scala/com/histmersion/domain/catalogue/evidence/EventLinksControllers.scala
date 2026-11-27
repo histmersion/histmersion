@@ -178,8 +178,8 @@ final class EventLinksControllers(
     val near = leadFacts
       .nearFindings(
         id,
-        CatalogMerge.Tolerance.Km(w.km.value),
-        CatalogMerge.Tolerance.Years(w.years.value),
+        w.km,
+        w.years,
         PageSize(500)
       )
       .map(f =>
@@ -446,13 +446,13 @@ final class EventLinksControllers(
             // a plugin's catalogue: its terms come from the plugin, which the store does not know
             if r.licence.value.nonEmpty then r
             else
-              info(CatalogRecord.Provider(r.provider.value)).fold(r)(i =>
+              info(r.provider).fold(r)(i =>
                 r.modify(_.title)
-                  .setTo(EventCatalogueRef.Title(i.title.value))
+                  .setTo(i.title)
                   .modify(_.licence)
-                  .setTo(EventCatalogueRef.Licence(i.licence.value))
+                  .setTo(i.licence)
                   .modify(_.citation)
-                  .setTo(EventCatalogueRef.Citation(i.citation.value))
+                  .setTo(i.citation)
               )
           )
       )
@@ -509,7 +509,7 @@ final class EventLinksControllers(
           com.histmersion.api.catalogue.Event.Id(id.value),
           ArticleEventLead.Label(label.value),
           ArticleEventLead.Kind(EventTaxonomy.canonical(EventSummary.Kind(kind.value)).value),
-          ArticleEventLead.Years(EventLeads.years(ts).value),
+          EventLeads.years(ts),
           EventLeads
             .size(vei.map(v => LeadFacts.Vei(v.value)), mag.map(m => LeadFacts.Magnitude(m.value)))
             .map(ArticleEventLead.Size(_)),

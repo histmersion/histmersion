@@ -17,6 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.media.covers.SourcePictures
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run
   * over a batch of targets. The one-run endpoint and the job share it, so every provider gets the same dry run,
@@ -51,10 +52,8 @@ trait MediaImporter:
   def start()(using WritePermit)(using Creator.New): MediaImporter.Run
 
 object MediaImporter:
-  type CheckName = CheckName.T
-  object CheckName extends Newtype[String, Pure]
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  export BuiltinMedia.CheckName
+  export SourcePictures.DryRun
   type ImporterName = ImporterName.T
   object ImporterName extends Newtype[String, Pure]
   type OverText = OverText.T
@@ -168,7 +167,7 @@ object MediaImporter:
               collection.run(
                 ts,
                 CollectionImport.DryRun(dryRun.value),
-                CollectionImport.Refresh(refresh.value),
+                refresh,
                 store
               )
         new Run:

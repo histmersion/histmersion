@@ -28,8 +28,7 @@ object WikidataSettings:
 
   type SparqlUrl = SparqlUrl.T
   object SparqlUrl extends Newtype[String, Pure]
-  type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends Newtype[Int, Pure]
+  export GvpSettings.RequestIntervalMs
   type Classes = Classes.T
   object Classes extends Newtype[String, Pure]
   type Languages = Languages.T

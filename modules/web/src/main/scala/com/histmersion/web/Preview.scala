@@ -53,8 +53,7 @@ object Preview:
     case Restore, Leave
   object RestoreFocus:
     extension (restoreFocus: RestoreFocus) def restores: Boolean = restoreFocus == Restore
-  type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends Newtype[Double, Pure]
+  export PinRules.ScreenPixels
   type ViewportHeight = ViewportHeight.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ViewportHeight extends Newtype[Double, Pure]

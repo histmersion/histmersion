@@ -78,11 +78,8 @@ object ChatAnswer:
       case _                               => Other(raw)
 
   /** The most of an unreadable error answer's body its description keeps. */
-
-  type Status = Status.T
-  object Status extends Newtype[Int, Pure]
-  type Body = Body.T
-  object Body extends Newtype[String, Pure]
+  export AnthropicAnswer.Status
+  export AnthropicAnswer.Body
 
   val MaxRawErrorBody = 500
 

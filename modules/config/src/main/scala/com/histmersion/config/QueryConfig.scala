@@ -25,8 +25,7 @@ final case class QueryConfig(
 object QueryConfig:
   type User = User.T
   object User extends Newtype[String, Pure]
-  type Password = Password.T
-  object Password extends Newtype[String, Pure]
+  export DbConfig.Password
   type TimeoutMs = TimeoutMs.T
   object TimeoutMs extends Newtype[Int, Pure]
   type MaxRows = MaxRows.T

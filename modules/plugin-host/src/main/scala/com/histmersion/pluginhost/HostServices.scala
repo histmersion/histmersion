@@ -27,8 +27,7 @@ object HostServices:
   /** The budgets of the metered upstreams the host lends plugins, by upstream name. */
   type PluginId = PluginId.T
   object PluginId extends Newtype[String, Pure]
-  type Line = Line.T
-  object Line extends Newtype[String, Pure]
+  export HostLog.Line
   type Upstream = Upstream.T
   object Upstream extends Newtype[String, Pure]
 

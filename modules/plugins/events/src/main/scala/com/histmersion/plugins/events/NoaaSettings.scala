@@ -26,7 +26,6 @@ object NoaaSettings:
   object Url extends Newtype[String, Pure]
   type PageSize = PageSize.T
   object PageSize extends Newtype[Int, Pure]
-  type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends Newtype[Int, Pure]
+  export GvpSettings.RequestIntervalMs
   type Datasets = Datasets.T
   object Datasets extends Newtype[String, Pure]

@@ -258,12 +258,12 @@ class FilterSuite extends munit.FunSuite:
     // refuses outright (`range lower bound must be less than or equal to range upper bound`) — a 500
     // on a perfectly ordinary query string.
     val p = Filter.periodOf(Some(Year(2000000000L)), None).get
-    assert(p.start.value <= p.end.value, p.toString)
+    assert(p.start <= p.end, p.toString)
     assertEquals(p, Period(Filter.Latest, Filter.Latest))
 
   test("a `to` below the open-ended lower sentinel does not invert it either"):
     val p = Filter.periodOf(None, Some(Year(-2000000000L))).get
-    assert(p.start.value <= p.end.value, p.toString)
+    assert(p.start <= p.end, p.toString)
     assertEquals(p, Period(Filter.Earliest, Filter.Earliest))
 
   test("both bounds are clamped, and a reversed pair is still ordered"):

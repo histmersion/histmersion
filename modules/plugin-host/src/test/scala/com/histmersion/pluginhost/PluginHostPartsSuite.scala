@@ -151,7 +151,6 @@ class PluginHostPartsSuite extends munit.FunSuite:
       sent += headers.map((k, v) => (k.value, v.value))
       left.dequeue()
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def answer(code: HttpAnswer.Code, body: String, headers: (CoreQuota.HeaderName, CoreQuota.HeaderValue)*) =
     Right(HttpAnswer(code, headers.toMap, HttpAnswer.Body(body.getBytes("UTF-8"))))
 

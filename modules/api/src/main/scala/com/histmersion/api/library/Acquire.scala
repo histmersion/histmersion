@@ -410,8 +410,7 @@ object Acquire:
       object DryRun extends Newtype[Boolean, Pure]
       type Limit = Limit.T
       object Limit extends Newtype[Int, Pure]
-      type Id = Id.T
-      object Id extends Newtype[Int, Pure]
+      export Queue.Id
       type By = By.T
       object By extends Newtype[String, Pure]
       type All = All.T

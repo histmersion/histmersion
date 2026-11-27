@@ -22,8 +22,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   * with its kind's ([[CardIcons]]). Pure.
   */
 object MediaPopup:
-  type PeriodText = PeriodText.T
-  object PeriodText extends Newtype[String, Pure]
+  export Fmt.PeriodText
 
   /** Pure: what the picture's full-size view shows. */
 
