@@ -15,7 +15,8 @@ final case class AuditRecord(
 
 object AuditRecord:
   type Citekey = Citekey.T
-  object Citekey extends Newtype[String, Pure]
+  object Citekey extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type CalibreId = CalibreId.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CalibreId extends Newtype[Int, Pure]

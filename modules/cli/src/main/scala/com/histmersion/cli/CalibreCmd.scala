@@ -243,7 +243,7 @@ object CalibreCmd:
           target match
             case ImportTarget.Update(Some(prev)) => Cli.out.println(s"Re-linked `$ck` from Calibre id $prev to $id")
             case _                               => ()
-          Cli.out.println(s"File (left in place, never modified): $file")
+          Cli.out.println(shown"File (left in place, never modified): $file")
       // the book's cover for its hover card (#1446): Calibre's own, else Open Library's by its ISBN —
       // best-effort, a missing cover never fails the import
       _ = if !json.asJson then importCover(c, ck, book)

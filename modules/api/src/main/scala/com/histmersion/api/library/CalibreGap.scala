@@ -31,12 +31,14 @@ object CalibreGap:
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends Newtype[String, Pure]
+  object Summary extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Topics = Topics.T
   object Topics extends Newtype[String, Pure]
   type Provenance = Provenance.T
   object Provenance extends Newtype[String, Pure]
   type Isbn = Isbn.T
-  object Isbn extends Newtype[String, Pure]
+  object Isbn extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type StoredOriginal = StoredOriginal.T
   object StoredOriginal extends Newtype[Boolean, Pure]
