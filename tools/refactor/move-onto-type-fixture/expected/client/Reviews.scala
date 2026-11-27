@@ -2,6 +2,7 @@ package fixture.client
 
 import fixture.api.Issue
 
+
 object Reviews:
   val issue: Issue = Issue.of("rule")
 

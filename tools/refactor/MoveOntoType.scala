@@ -158,7 +158,8 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     case _ => None
   }
 
-  private final case class SourceObject(sd: SourceDoc, obj: Defn.Object, symbol: String, stats: List[(Stat, Option[Planned])]) {
+  private final case class SourceObject(sd: SourceDoc, obj: Defn.Object, symbol: String, stats: List[(Stat, Option[Planned])],
+      widened: List[Stat] = Nil) {
     def emptied: Boolean = stats.forall(_._2.isDefined)
   }
 
@@ -213,8 +214,64 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         }
         stat -> planned
       }
-      SourceObject(sd, o, objSym, stats)
+      val (carried, widened) = carryPrivateHelpers(sd, stats)
+      SourceObject(sd, o, objSym, carried, widened)
     }
+
+  private def isPrivate(stat: Stat): Boolean = StatMods.modsOf(stat).exists {
+    case p: Mod.Private => p.within.is[Name.Anonymous]
+    case _ => false
+  }
+
+  private object StatMods {
+    def modsOf(stat: Stat): List[Mod] = stat match {
+      case d: Defn.Def => d.mods
+      case d: Defn.Val => d.mods
+      case d: Defn.Var => d.mods
+      case d: Defn.Type => d.mods
+      case d: Defn.Object => d.mods
+      case d: Defn.Class => d.mods
+      case d: Defn.Trait => d.mods
+      case d: Defn.Enum => d.mods
+      case d: Defn.GivenAlias => d.mods
+      case _ => Nil
+    }
+  }
+
+  /** A private member the moved members use goes with them when they all go to one place and nothing that stays uses
+    * it; one they share across places (or with what stays) stays and is widened to its package, so they import it. */
+  private def carryPrivateHelpers(sd: SourceDoc, stats: List[(Stat, Option[Planned])]): (List[(Stat, Option[Planned])], List[Stat]) = {
+    def place(p: Planned): String = if (p.promote) p.to + p.name + "." else if (p.toplevel) "" else p.to
+    val refs: List[(String, Int)] = sd.tree.collect {
+      case n: Name if sd.definitions(n).isEmpty => sd.occurrences(n).map(o => o.symbol -> n.pos.start)
+    }.flatten
+    var current = stats
+    var changed = true
+    while (changed) {
+      changed = false
+      val ranges = current.collect { case (st, Some(p)) => (st.pos.start, st.pos.end, place(p)) }
+      current = current.map {
+        case (st, None) if isPrivate(st) && statName(st).nonEmpty =>
+          val syms = sd.definitions(statName(st).get)
+          val uses = refs.filter { case (s, at) => syms(s) && !(at >= st.pos.start && at < st.pos.end) }.map(_._2)
+          val places = uses.map(at => ranges.find { case (a, b, _) => at >= a && at < b }.map(_._3))
+          if (uses.nonEmpty && places.forall(_.isDefined) && places.flatten.distinct.size == 1 && places.head.get.nonEmpty) {
+            changed = true
+            val n = statName(st).get.value
+            st -> Some(Planned(syms, n, n, places.head.get, "companion", ""))
+          } else st -> None
+        case other => other
+      }
+    }
+    val ranges = current.collect { case (st, Some(_)) => (st.pos.start, st.pos.end) }
+    val widened = current.collect {
+      case (st, None) if isPrivate(st) && statName(st).nonEmpty &&
+          refs.exists { case (s, at) =>
+            sd.definitions(statName(st).get)(s) && ranges.exists { case (a, b) => at >= a && at < b }
+          } => st
+    }
+    (current, widened)
+  }
 
   private lazy val planned: Map[String, Planned] =
     sourceObjects.flatMap(_.stats.flatMap(_._2)).flatMap(p => p.symbols.map(_ -> p)).toMap
@@ -340,6 +397,9 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           lints += other -> s"${p.name} became an extension of its first parameter: rewrite this reference by hand"
           text.substring(other.pos.start, other.pos.end)
       }
+      // the file already uses the name for something else (a nested type, a wildcard import's member): an import would
+      // shadow it, so the moved type is written from the project root (`domain.x.T`)
+      else if (p.toplevel && taken(p.newName)) path(p.to).stripPrefix("com.histmersion.") + "." + p.newName
       else if (p.toplevel) {
         imports += path(p.to) + "." + p.newName
         p.newName
@@ -471,7 +531,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         }
         sd.occurrences(n).map(o => o.symbol -> selected)
     }.flatten.filter { case (sym, _) =>
-      sym.nonEmpty && !sym.startsWith("local") && !definedHere(sym) && !sym.contains(".(") && !sym.contains("[")
+      sym.nonEmpty && !sym.startsWith("local") && !ownedBy(definedHere, sym) && !sym.contains(".(") && !sym.contains("[")
     }
       .groupBy(_._1).map { case (k, v) => k -> v.forall(_._2) }
     // names SemanticDB records no occurrence for (a `derives` clause's type classes): matched to an import by name
@@ -485,43 +545,91 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       .flatMap(_.importers)
     val provided = mutable.Set.empty[String]
     val out = mutable.ListBuffer.empty[String]
+    def moving(r: String): Boolean = plannedFor(r).isDefined || deletedObjects(r) || deletedObjects(termOf(r))
     importers.foreach { imp =>
       val refSym = imp.ref match {
         case s: Term.Select => sd.symbol(s.name)
         case n: Term.Name => sd.symbol(n)
         case _ => ""
       }
-      val hits = imp.importees.flatMap {
-        case _: Importee.Given | _: Importee.GivenAll => List("given")
-        case _: Importee.Wildcard =>
-          refs.keys.filter(r => strip(owner(r)) == strip(refSym)).toList
-        case i: Importee.Name =>
-          val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
-          refs.keys.filter(r =>
-            syms(strip(r)) || (lastName(r) == i.name.value && path(owner(r)) == imp.ref.syntax.replace("_root_.", ""))
-          ).toList ++ List(s"name:${i.name.value}").filter(_ => unresolved(i.name.value))
-        case i: Importee.Rename =>
-          val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
-          refs.keys.filter(r => syms(strip(r))).toList
-        case _ => Nil
+      // the importer's path written from the root (an import inside the object is relative to it), and where it moved
+      val absRef =
+        if (refSym.isEmpty || refSym.startsWith("local")) imp.ref.syntax
+        else relocate(refSym).orElse(plannedFor(refSym).map(newPath)).getOrElse(path(refSym))
+      imp.importees.foreach { importee =>
+        val hits = importee match {
+          case _: Importee.Given | _: Importee.GivenAll => List("given")
+          case _: Importee.Wildcard =>
+            refs.keys.filter(r => (strip(owner(r)) == strip(refSym) || strip(owner(norm(r))) == strip(norm(refSym))) &&
+              !moving(r)).toList ++
+              // an outside library's syntax (extension methods SemanticDB may not tie to the import) comes along
+              List(s"wildcard:$refSym").filter(_ => refSym.nonEmpty && !refSym.startsWith("com/histmersion/") &&
+                !refSym.startsWith("scala/"))
+          case i: Importee.Name =>
+            val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
+            refs.keys.filter(r =>
+              (syms(strip(r)) || (lastName(r) == i.name.value && path(owner(r)) == imp.ref.syntax.replace("_root_.", ""))) &&
+                !moving(r)
+            ).toList ++ List(s"name:${i.name.value}").filter(_ => unresolved(i.name.value))
+          case i: Importee.Rename =>
+            val syms = sd.occurrences(i.name).map(s => strip(norm(s.symbol))).toSet
+            refs.keys.filter(r => syms(strip(r)) && !moving(r)).toList
+          case _ => Nil
+        }
+        provided ++= hits
+        val importeeText = importee match {
+          case _: Importee.Wildcard => "*"
+          case other => sd.text.substring(other.pos.start, other.pos.end)
+        }
+        if (hits.nonEmpty) out += s"$absRef.$importeeText"
       }
-      provided ++= hits
-      if (hits.nonEmpty) out += imp.syntax
     }
     refs.foreach { case (sym, onlySelected) =>
-      if (!provided(sym) && !onlySelected) {
+      if (!provided(sym) && !onlySelected && !deletedObjects(sym)) {
         val o = owner(sym)
         plannedFor(sym) match {
           case Some(m) if m.to == p.to && !m.toplevel => ()
           case Some(m) if m.toplevel => out += path(m.to) + "." + m.newName
           case Some(m) => out += targetRef(m.to)._2
           case None =>
-            if (isPackage(o) && !o.startsWith("scala/") && !o.startsWith("java/lang/")) out += path(o) + "." + lastName(sym)
-            else if (o.endsWith(".") && !o.startsWith("scala/") && !termOf(p.to).startsWith(o)) out += path(o) + "." + lastName(sym)
+            relocate(sym) match {
+              case Some(np) => out += np
+              case None =>
+                if (isPackage(o) && !o.startsWith("scala/") && !o.startsWith("java/lang/")) out += path(o) + "." + lastName(sym)
+                else if (o.endsWith(".") && !o.startsWith("scala/") && !termOf(p.to).startsWith(o)) out += path(o) + "." + lastName(sym)
+            }
         }
       }
     }
     out.toList.distinct
+  }
+
+  /** `sym` is one of `defined` or a member of one (an enum case's companion, an enum's `values`). */
+  private def ownedBy(defined: Set[String], sym: String): Boolean = {
+    val s = strip(norm(sym))
+    defined.exists { d =>
+      val base = strip(norm(d))
+      base.nonEmpty && (s == base || s.startsWith(base + ".") || s.startsWith(base + "#"))
+    }
+  }
+
+  /** The path a moved definition is written at: its new top-level name, or its target's path and its name. */
+  private def newPath(m: Planned): String =
+    if (m.toplevel) path(m.to) + "." + m.newName else path(termOf(m.to)) + "." + m.newName
+
+  /** Where a member of a moved definition (`Stalls.SchedWait.Why.Other`) is written now: its moved owner's new path. */
+  private def relocate(sym: String): Option[String] = {
+    var o = owner(sym)
+    var rest = List(lastName(sym))
+    while (o.nonEmpty && !isPackage(o)) {
+      plannedFor(o).orElse(plannedFor(termOf(o))) match {
+        case Some(m) => return Some((newPath(m) :: rest).mkString("."))
+        case None =>
+          rest = lastName(o) :: rest
+          o = owner(o)
+      }
+    }
+    None
   }
 
   private val emptiedFiles = new java.util.concurrent.ConcurrentLinkedQueue[String]()
@@ -541,8 +649,12 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val extras: Map[String, List[Extracted]] = promoted.map { x =>
         x -> extracted.filter(e => !e.planned.toplevel && e.planned.to == members.head.planned.to + x + ".").sortBy(_.order)
       }.toMap
-      val imports = (members ++ extras.values.flatten).flatMap(_.imports).distinct.filterNot { i =>
-        visible.exists(v => i.startsWith(v + ".") && !i.drop(v.length + 1).contains('.'))
+      val all = (members ++ extras.values.flatten).flatMap(_.imports).distinct
+      // a wildcard import outranks a same-package definition in another file, so with one the package's names stay
+      // imported by name
+      val wildcard = all.exists(_.endsWith(".*"))
+      val imports = all.filterNot { i =>
+        !wildcard && visible.exists(v => i.startsWith(v + ".") && !i.drop(v.length + 1).contains('.'))
       }.filterNot(i => promoted.exists(x => i == s"$pkg.$x"))
       val ordered = members.sortBy(_.order)
       val companionOf: Map[String, Extracted] = ordered.filter(m => m.planned.promote && m.isObject).map(m => m.planned.name -> m).toMap
@@ -582,8 +694,14 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private lazy val promotedTargets: Set[String] =
     extracted.filter(_.planned.promote).map(e => e.planned.to + e.planned.name + ".").toSet
 
+  private val insertedTargets = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
+
   override def afterComplete(): Unit = if (enabled && config.report.nonEmpty) {
-    val lines = emptiedFiles.asScala.toList.sorted.map("emptied\t" + _) ++ reported.asScala.toList.sorted.map("lint\t" + _)
+    // a target no file took: its members were removed from their object and written nowhere
+    val missing = extracted.filterNot(e => e.planned.toplevel || promotedTargets(e.planned.to)).map(_.planned.to)
+      .distinct.filterNot(insertedTargets.contains).sorted
+    val lines = missing.map("LOST: no file defines the target\t" + _) ++
+      emptiedFiles.asScala.toList.sorted.map("emptied\t" + _) ++ reported.asScala.toList.sorted.map("lint\t" + _)
     Files.write(Paths.get(config.report), lines.mkString("", "\n", "\n").getBytes(UTF_8))
   }
 
@@ -711,9 +829,40 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val plain = imp.matches("[\\w.`]+")
       val pkg = imp.split('.').dropRight(1).mkString(".")
       existing(imp) || (plain && (visible.contains(pkg) || existing(pkg + ".*") || existing(pkg + "._")))
-    }.map(i => Patch.addGlobalImport(dialects.Scala3(i).parse[Importer].get))
+    }
+    // written as text (Patch.addGlobalImport prints `*` as `_`) after the last top-level import this run leaves as it
+    // is, else after the innermost package clause
+    def kept(i: Import): Boolean = i.importers.forall { imp =>
+      importerPathMoved(imp).isEmpty && imp.importees.forall {
+        case n: Importee.Name => plannedFor(sym(n.name)).isEmpty && !deletedObjects(sym(n.name))
+        case r: Importee.Rename => plannedFor(sym(r.name)).isEmpty
+        case _: Importee.Wildcard => !deletedObjects(refSymbol(imp))
+        case _ => true
+      }
+    }
+    val anchorImport = doc.tree.collect { case i: Import if i.parent.exists(_.is[Pkg]) && kept(i) => i }
+      .sortBy(_.pos.end).lastOption
+    val innermost = doc.tree.collect { case p: Pkg => p }.sortBy(_.ref.pos.start).lastOption
+    val importPatch =
+      if (importAdds.isEmpty) Nil
+      else (anchorImport, innermost) match {
+        case (Some(last), _) => List(Patch.addRight(last, importAdds.map("\nimport " + _).mkString))
+        case (None, Some(p)) => List(Patch.addRight(p.ref, "\n" + importAdds.map("\nimport " + _).mkString))
+        case _ => importAdds.map(i => Patch.addGlobalImport(dialects.Scala3(i).parse[Importer].get))
+      }
 
-    (removals ++ refPatches ++ importPatches ++ List(inserts) ++ importAdds).asPatch
+    val widenPatches = sourceObjects.filter(so => doc.tree.collect { case o: Defn.Object if sym(o.name) == so.symbol => o }.nonEmpty)
+      .flatMap { so =>
+        val pkg = lastName(owner(topLevelOf(so.symbol)))
+        so.widened.flatMap { st =>
+          doc.tree.collect { case s: Stat if s.pos.start == st.pos.start && s.pos.end == st.pos.end => s }.headOption.toList
+            .flatMap(StatMods.modsOf).collect { case p: Mod.Private if p.within.is[Name.Anonymous] =>
+              Patch.replaceTree(p, s"private[$pkg]")
+            }
+        }
+      }
+
+    (removals ++ refPatches ++ importPatches ++ List(inserts) ++ importPatch ++ widenPatches).asPatch
   }
 
   private def refSymbol(imp: Importer)(implicit doc: SemanticDocument): String = imp.ref match {
@@ -725,6 +874,7 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private def importerPathMoved(imp: Importer)(implicit doc: SemanticDocument): Option[(Term, Planned)] = {
     def walk(t: Term): Option[(Term, Planned)] = t match {
       case s: Term.Select => plannedFor(sym(s.name)).map(s -> _).orElse(walk(s.qual))
+      case n: Term.Name => plannedFor(sym(n)).map(n -> _)
       case _ => None
     }
     walk(imp.ref)
@@ -743,12 +893,15 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     val patches = extracted.filterNot(e => e.planned.toplevel || promotedTargets(e.planned.to)).groupBy(_.planned.to).toList.flatMap { case (to, members) =>
       val ordered = members.sortBy(_.order)
       val obj = doc.tree.collect { case o: Defn.Object if sym(o.name) == termOf(to) => o }.headOption
+      // the target names the companion (`T.`) or the type (`T#`); a type without a companion gets one
+      val typeSym = termOf(to).dropRight(1) + "#"
       lazy val tpe = doc.tree.collect {
-        case c: Defn.Class if sym(c.name) == to => c: Stat
-        case c: Defn.Trait if sym(c.name) == to => c: Stat
-        case c: Defn.Enum if sym(c.name) == to => c: Stat
-        case c: Defn.Type if sym(c.name) == to => c: Stat
+        case c: Defn.Class if sym(c.name) == typeSym => c: Stat
+        case c: Defn.Trait if sym(c.name) == typeSym => c: Stat
+        case c: Defn.Enum if sym(c.name) == typeSym => c: Stat
+        case c: Defn.Type if sym(c.name) == typeSym => c: Stat
       }.headOption
+      if (obj.isDefined || tpe.isDefined) insertedTargets.add(to)
       def bodyAt(col: Int, first: String) = ordered.zipWithIndex.map { case (m, i) =>
         val pair = ordered.lift(i - 1).exists(prev =>
           prev.planned.name == m.planned.name && prev.isType && m.isObject)

@@ -1,7 +1,8 @@
 package fixture.client
 
-import fixture.api.Year
 import fixture.kernel.Year.SignedYear
+
+import fixture.api.Year
 
 object Clash:
   val year: Year = Year(1)

@@ -1,9 +1,11 @@
 package fixture.client
 
+import fixture.automation.Approval
+import fixture.api.Finding
+import fixture.api.worst
+
 import fixture.kernel.Year
 import fixture.library.{Citekey, Citekeys}
-import fixture.api.{Finding, worst}
-import fixture.automation.Approval
 
 object Client:
   val mode = Approval.Mode.configured("auto")

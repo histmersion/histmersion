@@ -2,6 +2,7 @@ package fixture
 package kernel
 
 import scala.util.Try
+
 type Year = Year.T
 
 object Year:
