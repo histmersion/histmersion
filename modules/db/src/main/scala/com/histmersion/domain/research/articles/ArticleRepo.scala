@@ -39,6 +39,7 @@ import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")

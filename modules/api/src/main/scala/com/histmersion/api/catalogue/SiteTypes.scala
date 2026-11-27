@@ -7,6 +7,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
   * variant of `temple`), the GeoNames feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb),

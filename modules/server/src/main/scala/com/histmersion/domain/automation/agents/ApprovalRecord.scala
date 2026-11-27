@@ -7,6 +7,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An approval as [[ApprovalService.InMemory]] holds it: its columns, the payload as written, and its times. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

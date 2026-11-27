@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Link source `citekey` to item `id` of a collection (the collection itself is not changed). */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

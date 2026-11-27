@@ -22,6 +22,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.web.ErrorLine
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › Data and downloads: the reference data Histmersion keeps on this computer — the background map, places,
   * periods and events, pictures — each with what it is, whether it is there, and Update / Remove; the downloads under

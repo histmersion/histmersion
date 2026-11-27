@@ -7,6 +7,7 @@ import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Settings › Plugins: every plugin in this server — what it adds, whether it works — each turned on or off in the
   * settings file; and the plugins added to this install (`histmersion plugin add`).

@@ -10,6 +10,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaImportRequest(

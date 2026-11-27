@@ -11,6 +11,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.{Jsonb, StoredCreator}
+import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
 
 /** The figures' links as a bundle carries them: each with its figure's uid and its target's uid when the target is a
   * record — read out in uid order, and written in by an import once every figure is here, the target named by its label

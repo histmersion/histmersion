@@ -12,6 +12,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.{StoredCreator, Timestamps}
+import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
 
 /** What a bundle carries of the work lists: their items, read as the bundle's lines by uid, and the import's step that
   * writes them.

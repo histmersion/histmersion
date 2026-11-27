@@ -36,6 +36,7 @@ import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),

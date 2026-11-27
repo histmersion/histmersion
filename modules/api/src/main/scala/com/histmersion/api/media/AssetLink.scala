@@ -13,6 +13,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class AssetLink(

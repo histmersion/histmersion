@@ -11,6 +11,7 @@ import com.histmersion.{Offset, PageSize}
 import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** REST wiring of the process managers — every route delegates to [[ManagersControllers]]. The fixed paths come before
   * `{id}/{action}`.

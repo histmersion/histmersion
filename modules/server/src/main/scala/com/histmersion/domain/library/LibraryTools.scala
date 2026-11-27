@@ -36,6 +36,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`

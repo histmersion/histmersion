@@ -12,6 +12,7 @@ import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The library's endpoints bound to its features' controllers, in the order route matching needs (`sources/{ck}/lint`
   * and `…/view` before `sources/{ck}`, `sources/{ck}/export` before the write paths). The endpoints of other owners

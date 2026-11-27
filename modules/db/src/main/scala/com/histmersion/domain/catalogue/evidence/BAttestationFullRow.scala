@@ -7,6 +7,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** An attestation, as its bundle line reads it: the row, its source's and its target's uids. */
 final private[evidence] case class BAttestationFullRow(

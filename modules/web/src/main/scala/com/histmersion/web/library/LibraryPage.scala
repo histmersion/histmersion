@@ -10,6 +10,7 @@ import com.raquo.laminar.api.L.*
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.RowCount
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** Library: reading first. The filter panel on the left is Explore's own ([[FilterBar]], one filter state), with "My
   * library" above it; here the tabs (sources, articles, with their counts), the order, a page of the list as a table,

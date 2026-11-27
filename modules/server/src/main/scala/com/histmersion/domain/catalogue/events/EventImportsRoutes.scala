@@ -11,6 +11,7 @@ import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The event catalogues' endpoints bound to their controllers, in their old order: matched before `events/{id}`, which
   * would read `events/import` as an event id.

@@ -13,6 +13,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** REST wiring of the embedded agents — every route delegates to [[AgentsControllers]]. */
 object AgentsRoutes:

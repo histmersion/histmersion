@@ -84,6 +84,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{FeaturePlace, LintRule, movesTo, tolerated}
 
 /** REST (the `Api` contract) + HTML article pages + the static web UI, all interpreted on the same netty-sync server as
   * MCP.

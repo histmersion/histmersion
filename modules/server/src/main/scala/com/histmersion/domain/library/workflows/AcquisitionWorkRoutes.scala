@@ -7,6 +7,7 @@ import com.histmersion.domain.Creator
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The acquisition list's routes among the managers' (the repair of the open-access backlog and the legal re-check),
   * bound to the library's acquisition work, in their place among the managers' routes.

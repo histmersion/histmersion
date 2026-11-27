@@ -4,6 +4,7 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.YearFmt
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 object PlacesMarkdown:
 

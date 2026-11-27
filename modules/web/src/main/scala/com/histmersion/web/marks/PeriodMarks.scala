@@ -14,6 +14,7 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Title
 import com.histmersion.web.{:=, given}
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The person's own periods: years kept under a name (a bookmark of kind "period"), listed first in the timeline's
   * "Zoom to period" menu, beside the authorities' presets; and the years the timeline opens on (`ui.time.default-from`

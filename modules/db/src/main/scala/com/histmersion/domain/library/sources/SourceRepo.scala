@@ -38,6 +38,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its

@@ -6,6 +6,7 @@ import com.histmersion.domain.{Caller, Creator}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The refinement of the sites' types bound to its controller, in its old place (before `events/{id}`). */
 object SiteTypesRoutes:

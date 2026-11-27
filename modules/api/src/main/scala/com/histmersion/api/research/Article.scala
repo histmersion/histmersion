@@ -37,6 +37,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 final case class Article(
     slug: Article.Slug,
     title: Article.Title,

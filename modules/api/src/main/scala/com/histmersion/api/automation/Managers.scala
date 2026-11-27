@@ -22,6 +22,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.api.ItemKind
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{LintRule, tolerated}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Managers:

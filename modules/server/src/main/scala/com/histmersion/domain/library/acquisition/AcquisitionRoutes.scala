@@ -18,6 +18,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.Write
 import com.histmersion.api.Api
 import com.histmersion.domain.CreatorControllers
+import com.histmersion.lint.{LintRule, tolerated}
 
 /** The REST wiring of [[AcquireApi]] — every route delegates to the [[AcquisitionControllers]] the MCP tools also call;
   * `archive search|info|import` to the library's collections, which run archive.org, and the Calibre gaps to theirs.
