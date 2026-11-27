@@ -34,8 +34,7 @@ object SiteTypes:
   object SiteType:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
-    type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    export EventTaxonomy.Kind.Label
     type Icon = Icon.T
     object Icon extends Newtype[String, Pure]
 
@@ -362,12 +361,11 @@ object SiteTypes:
     SiteType.Id(Findspot)
   )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def best(types: Iterable[SiteType.Id]): Option[SiteType.Id] =
     (types.toList.distinct
       .sortBy(t => preference.indexOf(t) match { case -1 => preference.size; case i => i })
       .headOption)
-      .map(refactorValue6 => SiteType.Id((refactorValue6).value))
+      .map(refactorValue6 => refactorValue6)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -735,7 +733,7 @@ object SiteTypes:
     wikidataOwn(p31)
       .orElse(superclasses.flatMap {
         val refactorFunction4 = wikidataClasses.get;
-        (refactorValue8) => refactorFunction4(CatalogRecord.Wikidata.Class((refactorValue8).value))
+        (refactorValue8) => refactorFunction4(refactorValue8)
       }.headOption)
       .orElse(importClass.flatMap {
         val refactorFunction5 = wikidataClasses.get;
@@ -770,11 +768,11 @@ object SiteTypes:
         .filter(byId.contains)
         .orElse(featureTypes.flatMap {
           val refactorFunction3 = pleiades;
-          (refactorValue5) => refactorFunction3(Pleiades.FeatureType((refactorValue5).value))
+          (refactorValue5) => refactorFunction3(refactorValue5)
         })
         .orElse(fcode.flatMap {
           val refactorFunction2 = geonames;
-          (refactorValue10) => refactorFunction2(Geonames.Fcode((refactorValue10).value))
+          (refactorValue10) => refactorFunction2(refactorValue10)
         })
         .orElse(wikidataOwn(p31))
         .orElse(wikidataClass.flatMap(c => wikidataClasses.get(CatalogRecord.Wikidata.Class((c).value.trim))))

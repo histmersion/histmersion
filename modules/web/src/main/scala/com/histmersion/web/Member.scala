@@ -33,5 +33,4 @@ object Member:
   object N extends Newtype[Int, Pure]
   type Mids = Mids.T
   object Mids extends Newtype[Double, Pure]
-  type Undated = Undated.T
-  object Undated extends Newtype[Int, Pure]
+  export DotCluster.Undated

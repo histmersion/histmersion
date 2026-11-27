@@ -23,6 +23,7 @@ import com.histmersion.api.library.Finding
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.catalogue.evidence.NearFindingRow
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the
@@ -170,8 +171,7 @@ private[places] object Geocoder:
   ) derives DbCodec
 
   object Placed:
-    type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    export NearFindingRow.Id
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     type Region = Region.T
@@ -292,8 +292,7 @@ private[places] object Geocoder:
   ) derives DbCodec
 
   object Unplaced:
-    type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    export NearFindingRow.Id
     type Region = Region.T
     object Region extends Newtype[String, Pure]
     type From = From.T

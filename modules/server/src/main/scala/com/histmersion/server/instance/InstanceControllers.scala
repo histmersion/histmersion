@@ -147,7 +147,7 @@ final class InstanceControllers(
         BuildMeta.gitCommit.map(BuildStamp.GitCommit(_)),
         BuildMeta.commitDate.map(BuildStamp.CommitDate(_)),
         BuildStamp.Dirty(BuildMeta.dirty),
-        licence = Some(BuildStamp.Licence(Version.licence.value)),
+        licence = Some(Version.licence),
         sourceUrl = Some(
           BuildStamp.SourceUrl(
             CorrespondingSource

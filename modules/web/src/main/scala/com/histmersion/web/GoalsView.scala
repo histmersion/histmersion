@@ -219,7 +219,6 @@ object GoalsView:
   private val failure = Var(Option.empty[String])
 
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refresh(): Unit =
     ApiClient.goals(Some(Paging.Limit(Limit))).onComplete { r =>
       r.fold(e => failure.set(Some(e.getMessage)), gs => { failure.set(None); goals.set(gs.goals); loaded.set(true) })

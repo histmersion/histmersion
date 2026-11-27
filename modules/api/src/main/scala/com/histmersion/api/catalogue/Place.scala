@@ -28,6 +28,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.GeoPick
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Place(
     id: Place.Id,
@@ -67,10 +68,8 @@ object Place:
   object KindValue extends Newtype[String, Pure]
   type Geometry = Geometry.T
   object Geometry extends Newtype[String, Pure]
-  type Source = Source.T
-  object Source extends Newtype[String, Pure]
-  type Properties = Properties.T
-  object Properties extends Newtype[String, Pure]
+  export GazRecord.Source
+  export GazRecord.Properties
 
   object Kind:
     type Parsed = Parsed.T
@@ -137,8 +136,7 @@ object Place:
   object Precision:
     type CellsMicroNumber = CellsMicroNumber.T
     object CellsMicroNumber extends Newtype[Long, Pure]
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    export GeoPick.Wire
 
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type CellsMicro = CellsMicroValue
@@ -287,8 +285,7 @@ object Place:
   object Dating:
     type Description = Description.T
     object Description extends Newtype[String, Pure]
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    export GeoPick.Wire
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Dating] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -733,8 +730,7 @@ object Place:
 
     type Value = Value.T
     object Value extends Newtype[String, Pure]
-    type Lang = Lang.T
-    object Lang extends Newtype[String, Pure]
+    export ManualPlaceName.Lang
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None)
@@ -1245,8 +1241,7 @@ object Place:
     object ModernFrom extends Newtype[Long, Pure]
     type VisibleEnd = VisibleEnd.T
     object VisibleEnd extends Newtype[Long, Pure]
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
+    export GeoPick.Wire
     type OfKind = OfKind.T
     object OfKind extends Newtype[String, Pure]
     type FindingsNote = FindingsNoteValue

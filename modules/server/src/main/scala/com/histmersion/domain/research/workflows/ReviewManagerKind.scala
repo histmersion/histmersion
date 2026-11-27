@@ -579,7 +579,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                 RunRequest(
                   RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
                   RunRequest.Target(item.target.value),
-                  budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value)),
+                  budgetUsd = m.config.budgetUsd.map(b => b),
                   fix = Some(RunRequest.Fix(true)),
                   rounds = Some(RunRequest.Rounds(rounds))
                 ),
@@ -608,7 +608,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               RunRequest(
                 RunRequest.Pipeline(Pipeline.InferFilter.wire.value),
                 RunRequest.Target(item.target.value),
-                budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
+                budgetUsd = m.config.budgetUsd.map(b => b)
               ),
               identity,
               item.state,
@@ -626,7 +626,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               RunRequest(
                 RunRequest.Pipeline(Pipeline.CompileArticle.wire.value),
                 RunRequest.Target(item.target.value),
-                budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
+                budgetUsd = m.config.budgetUsd.map(b => b)
               ),
               _.modify(_.chainReview).setTo(Some(RunParams.ChainReview(false))),
               item.state,

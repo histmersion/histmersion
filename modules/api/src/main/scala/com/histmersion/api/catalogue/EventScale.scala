@@ -23,7 +23,6 @@ object EventScale:
   val Regional = "regional"
 
   val Auto = "auto"
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[EventSummary.Scale] = List(EventSummary.Scale(Local), EventSummary.Scale(Regional))
 
   val localKinds: Set[LocalKinds] = Set(
@@ -99,7 +98,6 @@ object EventScale:
       case _                          => None
 
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def effective(
       stated: Option[EventSummary.Scale],

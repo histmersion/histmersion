@@ -60,7 +60,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     // 1. each place's record(s): the picture links, in order
     val read = places.map { p =>
       val pids = p.ids.collect {
-        case (scheme, id) if scheme.value == PleiadesPictures.Scheme => GazetteerPlace.Id(id.value)
+        case (scheme, id) if scheme.value == PleiadesPictures.Scheme => id
       }
       (
         p,

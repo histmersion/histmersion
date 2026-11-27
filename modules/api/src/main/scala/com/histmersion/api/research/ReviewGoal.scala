@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Agents
 
 final case class ReviewGoal(slug: ReviewGoal.Slug, title: ReviewGoal.Title, status: ReviewGoal.Status)
     derives JsonCodec,
@@ -16,6 +17,5 @@ object ReviewGoal:
   type Slug = Slug.T
   object Slug extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  export Agents.RunRequest.Title
   export api.automation.Goal.StatusValue as Status

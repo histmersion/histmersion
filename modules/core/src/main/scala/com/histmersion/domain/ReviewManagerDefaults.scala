@@ -3,7 +3,6 @@ package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
-import com.histmersion.lint.{tolerated, LintRule}
 
 @movesTo(FeaturePlace.ResearchWorkflows)
 final case class ReviewManagerDefaults(
@@ -21,12 +20,10 @@ final case class ReviewManagerDefaults(
 )
 
 object ReviewManagerDefaults:
-  type MaxRuns = MaxRuns.T
-  object MaxRuns extends Newtype[Int, Pure]
+  export ManagerRunDefaults.MaxRuns
   type Rounds = Rounds.T
   object Rounds extends Newtype[Int, Pure]
   type MaxRunsPerArticle = MaxRunsPerArticle.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object MaxRunsPerArticle extends Newtype[Int, Pure]
   type NoProgressRuns = NoProgressRuns.T
   object NoProgressRuns extends Newtype[Int, Pure]
@@ -42,5 +39,4 @@ object ReviewManagerDefaults:
   object StaleAfterDays extends Newtype[Int, Pure]
   type InferFilter = InferFilter.T
   object InferFilter extends Newtype[Boolean, Pure]
-  type ExtendMinNew = ExtendMinNew.T
-  object ExtendMinNew extends Newtype[Int, Pure]
+  export AutopilotPolicy.Settings.ExtendMinNew

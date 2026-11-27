@@ -302,7 +302,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   )(using WritePermit)(using Creator.New): Option[ManagerLight.Id] =
     val goalOf = domain.automation.Goal.Slug.option(item.target.value).flatMap(site.goal(_).toOption)
-    def budget = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
+    def budget = m.config.budgetUsd.map(b => b)
     item.kind.value match
       case ProposeArticles =>
         goalOf match
@@ -318,9 +318,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 budgetUsd = budget
               ),
               _.modify(_.minSources)
-                .setTo(m.config.minSources.map(v => RunParams.MinSources(v.value)))
+                .setTo(m.config.minSources.map(v => v))
                 .modify(_.maxArticles)
-                .setTo(m.config.maxArticles.map(v => RunParams.MaxArticles(v.value))),
+                .setTo(m.config.maxArticles.map(v => v)),
               item.state,
               ManagerContext.StartWhat("propose-articles"),
               out
@@ -347,8 +347,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 title = Some(RunRequest.Title(sp.title.value)),
                 kind = Some(RunRequest.Kind(sp.kind.value)),
                 query = sp.filter.query.map(q => RunRequest.Query(q.value)),
-                topics = sp.filter.topics.map(t => RunRequest.Topics(t.value)),
-                tags = sp.filter.tags.map(t => RunRequest.Tags(t.value)),
+                topics = sp.filter.topics.map(t => t),
+                tags = sp.filter.tags.map(t => t),
                 goal = m.goal
               ),
               _.modify(_.chainReview).setTo(Some(RunParams.ChainReview(false))),

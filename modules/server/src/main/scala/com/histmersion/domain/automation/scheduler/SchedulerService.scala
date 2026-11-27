@@ -112,8 +112,8 @@ final class SchedulerService(
             .stage(f, GoalFocus.Settings.MinSources(agents.sourcesToPlan.value)) == GoalFocus.Stage.Gathering,
           AutopilotPolicy
             .articlesInProgress(
-              AutopilotPolicy.NextFacts.Unreviewed(f.unreviewed.value),
-              AutopilotPolicy.NextFacts.CompileOpen(f.compileOpen.value)
+              f.unreviewed,
+              f.compileOpen
             )
             .map(_.value)
         )
@@ -504,7 +504,7 @@ final class SchedulerService(
           WhyInfo.Item(i.id.value),
           WhyInfo.Manager(i.managerId.value),
           WhyInfo.Kind(i.kind.value),
-          WhyInfo.Target(i.target.value),
+          i.target,
           WhyInfo.Status(i.status.value),
           run = i.runId.map(r => WhyInfo.Run(r.value))
         )
@@ -569,7 +569,7 @@ final class SchedulerService(
               case None => say(base, AgentScheduler.Code.Held, "held")
           case Some(ItemStatus.Active) =>
             val run = i.runId.flatMap(r => agents.runs.get(DomainRun.Id.assume(r.value)))
-            run.flatMap(r => RunState.parse(Run.State.Wire(r.status.value))) match
+            run.flatMap(r => RunState.parse(r.status)) match
               case Some(RunState.WaitingApproval) =>
                 val open = run.toList
                   .flatMap(r => agents.approvalStore.approvalsOf(Job.Id.assume(r.id.value), None))

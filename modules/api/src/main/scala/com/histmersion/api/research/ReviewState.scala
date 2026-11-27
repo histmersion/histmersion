@@ -7,6 +7,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.GeoPick
 
 enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning) derives CanEqual:
   case Unreviewed
@@ -32,8 +33,7 @@ enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning) d
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ReviewState:
-  type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  export GeoPick.Wire
   type Meaning = Meaning.T
   object Meaning extends Newtype[String, Pure]
 

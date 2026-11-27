@@ -46,5 +46,4 @@ object WorkflowDefinition:
 
   type Description = Description.T
   object Description extends Newtype[String, Pure]
-  type Summary = Summary.T
-  object Summary extends Newtype[String, Pure]
+  export PipelineDef.Summary

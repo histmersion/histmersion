@@ -23,8 +23,7 @@ object Paging:
   object Cursor extends Newtype[String, Pure]
   type GroupSize = GroupSize.T
   object GroupSize extends Newtype[Long, Pure]
-  type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  export Api.GoalQuery.Limit
   type Shown = Shown.T
   object Shown extends Newtype[Int, Pure]
   type ShownCount = ShownCount.T

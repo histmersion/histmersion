@@ -17,7 +17,6 @@ final case class MessageRecordState(
 )
 
 object MessageRecordState:
-  type Seq = Seq.T
-  object Seq extends Newtype[Int, Pure]
+  export ApprovalRecord.Seq
   type Attempt = Attempt.T
   object Attempt extends Newtype[Int, Pure]

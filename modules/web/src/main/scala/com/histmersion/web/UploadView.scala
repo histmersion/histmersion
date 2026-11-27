@@ -48,8 +48,7 @@ object UploadView:
     object Citekey extends Newtype[String, Pure]
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-    type Authors = Authors.T
-    object Authors extends Newtype[String, Pure]
+    export QueueItemRef.Ref.Authors
     type Year = Year.T
     object Year extends Newtype[String, Pure]
     type Doi = Doi.T

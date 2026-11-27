@@ -146,8 +146,7 @@ object Storage:
       case Some(b)                                         => Backup.humanBytes(ByteCount(b))
 
   object Advice:
-    type Keep = Keep.T
-    object Keep extends Newtype[Int, Pure]
+    export BackupsUsage.Keep
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

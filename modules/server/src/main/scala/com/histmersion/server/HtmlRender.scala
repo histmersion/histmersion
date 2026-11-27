@@ -17,13 +17,13 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.research.articles.ArticleTools
 
 @movesTo(FeaturePlace.ResearchArticles)
 object HtmlRender:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  type Query = Query.T
-  object Query extends Newtype[String, Pure]
+  export ArticleTools.ListArticlesInput.Query
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 

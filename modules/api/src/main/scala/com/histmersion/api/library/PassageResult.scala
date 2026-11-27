@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Api
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -26,8 +27,7 @@ final case class PassageResult(
 object PassageResult:
   type Query = Query.T
   object Query extends Newtype[String, Pure]
-  type Regex = Regex.T
-  object Regex extends Newtype[Boolean, Pure]
+  export Api.PassagesQuery.Regex
   type Matches = Matches.T
   object Matches extends Newtype[Int, Pure]
   type Capped = Capped.T

@@ -38,7 +38,6 @@ class LandingFetchSuite extends munit.FunSuite:
         .applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404"))
         .left
         .map(why => Problem.Unclassified(Legacy.Text(why)))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(HttpAnswer.Body(_))
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =

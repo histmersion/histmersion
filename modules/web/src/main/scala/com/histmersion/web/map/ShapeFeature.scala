@@ -6,6 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.web.EventPlayback
 
 /** One shape: its id (unique in its set), GeoJSON geometry, colour, whether it is drawn dashed, and its visibility
   * (0…1).
@@ -28,5 +29,4 @@ object ShapeFeature:
     case Dashed, Solid
   object Dashed:
     extension (dashed: Dashed) def dashed: Boolean = dashed == Dashed
-  type Alpha = Alpha.T
-  object Alpha extends Newtype[Double, Pure]
+  export EventPlayback.Alpha

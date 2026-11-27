@@ -259,7 +259,7 @@ object Europeana:
       val ids = (spatial.filter(isUri) ++ c.langValues(Field("edmPlace")))
         .flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u)))
         .distinct
-        .map((k, v) => (GazetteerRef.Scheme(k.value), GazetteerRef.Id(v.value)))
+        .map((k, v) => (k, GazetteerRef.Id(v.value)))
       val years = c.langValues(Field("year")).flatMap(y => y.trim.toLongOption).filter(_ != 0)
       val period = Option.when(years.nonEmpty)(()).flatMap(_ => Period.span(years.min, years.max))
       MediaItem(

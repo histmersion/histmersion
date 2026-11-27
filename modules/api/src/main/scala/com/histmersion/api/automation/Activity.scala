@@ -11,17 +11,16 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.{Api, Paging}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Activity:
   type Actor = Actor.T
   object Actor extends Newtype[String, Pure]
-  type Cursor = Cursor.T
-  object Cursor extends Newtype[String, Pure]
+  export Paging.Cursor
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
-  type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  export Api.GoalQuery.Limit
   type Subject = Subject.T
   object Subject extends Newtype[String, Pure]
 

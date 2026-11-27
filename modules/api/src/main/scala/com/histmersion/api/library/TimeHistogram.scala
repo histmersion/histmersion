@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Paging
 
 final case class TimeHistogram(
     from: TimeHistogram.From,
@@ -34,7 +35,6 @@ object TimeHistogram:
   type By = By.T
   object By extends Newtype[String, Pure]
   export Histogram.Unit
-  type Total = Total.T
-  object Total extends Newtype[Int, Pure]
+  export Paging.Page.Total
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]

@@ -500,9 +500,8 @@ object ApiClient:
 
   // ── goals: the list, one goal's view, its links and schedules ───────────────────────────────────
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goals(limit: Option[Paging.Limit]): Future[Goal.List] =
-    call(Api.goals)(Api.GoalQuery(None, limit.map(l => Api.GoalQuery.Limit(l.value)), None))
+    call(Api.goals)(Api.GoalQuery(None, limit.map(l => l), None))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def goalView(slug: Goal.Slug): Future[Goal.Plans.GoalView] = call(AgentsApi.goalView)(ReviewGoal.Slug(slug.value))
@@ -591,9 +590,8 @@ object ApiClient:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def mergeApply(req: MergeApplyRequest): Future[MergeApplyJob] = call(Api.mergeApply)(req)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def mergeApplyStatus(job: MergeApplyJob.Job): Future[MergeApplyJob] =
-    call(Api.mergeApplyStatus)(Api.Merge.Id(job.value))
+    call(Api.mergeApplyStatus)(job)
 
   /** `POST /api/bundle/upload`, with upload progress — a bundle can be large; through `XMLHttpRequest` for the same
     * reason as [[ingest]].

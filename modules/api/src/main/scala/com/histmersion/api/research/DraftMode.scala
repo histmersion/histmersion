@@ -4,14 +4,14 @@ package api.research
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.GeoPick
 
 enum DraftMode(val wire: DraftMode.Wire) derives CanEqual:
   case Create extends DraftMode(DraftMode.Wire("create"))
   case Extend extends DraftMode(DraftMode.Wire("extend"))
 
 object DraftMode:
-  type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  export GeoPick.Wire
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[DraftMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

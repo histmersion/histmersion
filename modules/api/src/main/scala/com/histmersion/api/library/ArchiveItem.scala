@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Agents
 
 /** @param lendingOnly
   *   the item must be borrowed on archive.org; it is never downloaded (no DRM circumvention)
@@ -26,8 +27,7 @@ final case class ArchiveItem(
 
 object ArchiveItem:
   export com.histmersion.api.library.ArchiveId as Identifier
-  type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  export Agents.RunRequest.Title
   type Creator = Creator.T
   object Creator extends Newtype[String, Pure]
   type Publisher = Publisher.T

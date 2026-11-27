@@ -18,8 +18,7 @@ final case class SkippedPeriod(
       KindlingsSchema,
       api.json.Schema
 object SkippedPeriod:
-  type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  export HistoricalPeriod.Id
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

@@ -163,7 +163,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
         val cap = ArticlesControllers.FilterReachCap(research.inferFilter.sample.value + l.cited.size)
         val (total, in, rows) = site.articles.filterReach(f, l.cited, cap)
         val sample = rows
-          .map(r => Citekey.assume(r.value))
+          .map(r => r)
           .filterNot(l.cited.contains)
           .take(math.max(0, research.inferFilter.sample.value))
         FilterInference.judge(

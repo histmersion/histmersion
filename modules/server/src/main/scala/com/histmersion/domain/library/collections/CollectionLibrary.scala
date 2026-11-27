@@ -19,6 +19,7 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.library.acquisition.Spool
 
 /** What the collections' operations read and write of the library, lent by the composition: the records (as their
   * endpoints write them), the Calibre push metadata and gaps, the stored originals, the acquisition list, the ingest
@@ -46,8 +47,7 @@ trait CollectionLibrary:
   ): Either[Api.Error, Ingest.Report]
 
 object CollectionLibrary:
-  type Bytes = Bytes.T
-  object Bytes extends Newtype[Array[Byte], Pure]
+  export Spool.Bytes
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
   type QueueItemId = QueueItemId.T

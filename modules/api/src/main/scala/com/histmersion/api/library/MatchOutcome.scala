@@ -4,6 +4,7 @@ package api.library
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.GeoPick
 
 enum MatchOutcome derives CanEqual:
   /** The same record here (by uid or ledger): imported as an update, if anything. */
@@ -22,8 +23,7 @@ enum MatchOutcome derives CanEqual:
   case DeletedHere
 
 object MatchOutcome:
-  type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  export GeoPick.Wire
 
   def wireOf(o: MatchOutcome): Wire = o match
     case Same          => Wire("same")

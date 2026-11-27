@@ -7,6 +7,7 @@ import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.automation.agents.ApprovalService
 
 /** What approving a proposal does, contributed by the domain the proposal is about: a source's status or edge (the
   * library), an article's coverage filter (research). The engine claims the decision and records the outcome; the
@@ -26,8 +27,7 @@ trait ApprovalEffects:
   def applySubject(a: ApprovalInfo)(using Creator.New): Either[Problem, String]
 
 object ApprovalEffects:
-  type Payload = Payload.T
-  object Payload extends Newtype[String, Pure]
+  export ApprovalService.Payload
 
   /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
 

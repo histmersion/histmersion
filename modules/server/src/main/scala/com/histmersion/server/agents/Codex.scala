@@ -28,6 +28,7 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.config.UserPaths.pathEquality
 import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.util.process.ProcessResult
 
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 @tolerated(LintRule.Process, "pending G39 (processes only through util.process)")
@@ -196,8 +197,7 @@ object Codex:
   object Home:
     type Argument = Argument.T
     object Argument extends Newtype[String, Pure]
-    type ExitCode = ExitCode.T
-    object ExitCode extends Newtype[Int, Pure]
+    export ProcessResult.ExitCode
 
     private val locks = ConcurrentHashMap[Path, ReentrantReadWriteLock]()
     private val lastPass = ConcurrentHashMap[Path, AtomicLong]()

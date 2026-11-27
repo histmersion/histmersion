@@ -294,7 +294,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                   RunRequest(
                     RunRequest.Pipeline(pipelineOf(ManagerContext.ItemKind(item.kind.value)).wire.value),
                     RunRequest.Target(g.slug.value),
-                    budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
+                    budgetUsd = m.config.budgetUsd.map(b => b)
                   ),
                   p =>
                     if autoOn then
