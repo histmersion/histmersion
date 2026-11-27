@@ -22,8 +22,8 @@ choice either, and Scalafix ships no built-in rule for it.
 
 ### The check
 
-Two keys of the guideline inventory (`tools/refactor/GuidelineInventory.scala`, the Scalafix rule over SemanticDB that
-`GuidelineRatchetSuite` runs), counted per module and scope in `architecture/guidelines-ratchet.tsv` and only falling:
+Two rules of `GuidelineLint` (`tools/lint`, a Scalafix rule over SemanticDB; docs/adr/0032), `UnnamedBoolean` and
+`BooleanParam`, each finding fixed or tolerated with `@tolerated` on its definition, the suppressions only falling:
 
 - **`unnamedBoolean`**: an argument passed by position to a `Boolean` parameter of one of our methods or constructors.
   The parameter's declared type decides, not the argument's form: a literal (`f(true)`) and a value (`f(isOpen)`,
@@ -115,14 +115,14 @@ check): booleanParam main 333 → 293, unnamedBoolean main 460 → 396, test 169
 
 ## Consequences
 
-A new positional Boolean argument or a new Boolean field is a rise that fails `GuidelineRatchetSuite`. `Boolean`
+A new positional Boolean argument or a new Boolean field is a finding that fails CI's `lint` job. `Boolean`
 newtypes (`object On extends Newtype[Boolean, Pure]`, 636 in the modules) are named, so neither key counts them; they
 are two-state types that an enum would describe better, and are left to the newtype census (queue row 17).
 
 ## Code
 
 `tools/refactor/GuidelineInventory.scala` (`unnamedBoolean`, `booleanParam`, `reportOnly`), its fixture
-`tools/refactor/guideline-fixture/` (`Switches.scala`), `architecture/guidelines-ratchet.tsv`; the migrations in
+`tools/refactor/guideline-fixture/` (`Switches.scala`), `tools/lint/rules/Guidelines.scala`; the migrations in
 `modules/cli/src/main/scala/com/histmersion/cli/Cli.scala` (`Following`, `Writes`) and `CommandLine.scala`
 (`noWait`, `dryRun`, `applyFlag`), and `modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/`
 (`RejectedLinks`, `EventsToCheck`).

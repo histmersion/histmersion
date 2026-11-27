@@ -1,7 +1,7 @@
 # Architecture decision records
 
-Code in this repository carries no comments (AGENTS.md, *Coding practices* 6; the `G22comment` ratchet in
-`GuidelineRatchetSuite`). What a comment used to say goes to one of three places:
+Code in this repository carries no comments (AGENTS.md, *Coding practices* 6; `CommentGrowthSuite` holds every file
+to its comments at the merge base with the pilot). What a comment used to say goes to one of three places:
 
 - what the code does: its names, types and structure (rename, extract, introduce a type);
 - a shortcut, workaround or "for now": an issue that describes the proper fix;
@@ -57,7 +57,7 @@ audited and moved here.
 | [0020](0020-checker-scope-lifted-instances-and-own-names.md) | What two more ratchet checkers count: lifted newtype instances and a file's own type names |
 | [0021](0021-stall-watchdog-interrupts-before-killing.md) | The stall watchdog interrupts a run before it kills its processes, and a stalled run checkpoints nothing |
 | [0022](0022-process-session-output-read-to-end.md) | A process session's output is read to the end before its exit is reported |
-| [0023](0023-guideline-metric-redefinitions.md) | Guideline metric redefinitions, and how a redefinition's count is proven |
+| [0023](0023-guideline-metric-redefinitions.md) | Guideline metric redefinitions, and how a redefinition's count is proven (superseded by 0032) |
 | [0025](0025-map-markers-drawn-on-a-canvas.md) | The map's point markers are drawn on a canvas; their elements stay as the accessible proxies |
 | [0026](0026-wire-enums-and-schemas-from-one-config.md) | A wire enum of words is a string; codecs and schemas read one config, and a refused input is a problem |
 | [0027](0027-booleans-are-enums-and-passed-by-name.md) | A state is an enum, and a Boolean left is passed by name |
@@ -65,3 +65,4 @@ audited and moved here.
 | [0029](0029-named-provenance-on-every-created-record.md) | Every created record names its creator: the person, or a named (plugin, workflow, agent) |
 | [0030](0030-problem-cases-collapse.md) | Problem cases collapse into parameterised homes; old stored entries are translated on read |
 | [0031](0031-ci-on-linux-bundles-on-demand.md) | Every PR check runs on Linux; the per-platform bundles are built on demand |
+| [0032](0032-lint-rules-with-in-source-suppressions.md) | The checks are stateless lint rules; a finding is fixed or tolerated in the source, with a reason |

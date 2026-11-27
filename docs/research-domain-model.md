@@ -47,7 +47,7 @@ map and the timeline show. The name is one package segment (`domain.catalogue`, 
    doors into domain data drop from 36 repository calls and 55 SQL statements to none (§3.5).
 5. **Direction**: supporting areas never import a domain; domains depend only on supporting areas and the
    domains below them (automation, catalogue, media, library, research); personal only on supporting areas. An
-   `ArchitectureSuite` enforces it, and also that no file-system API is used outside `util.storage` and the
+   `ArchitectureSuite` enforced it (since 2026-11-24 the `ArchitectureLint` rules of `tools/lint`, docs/adr/0032), and also that no file-system API is used outside `util.storage` and the
    composition root.
 6. The model stops passing primitives: **about 55 identifier and value newtypes** and 32 vocabulary enums (§4)
    replace roughly 4 000 measured `String`/`Int`/`Long`/`Double` parameters and fields; their JSON, columns, HOCON
