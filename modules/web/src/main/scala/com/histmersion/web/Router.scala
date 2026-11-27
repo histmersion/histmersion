@@ -69,7 +69,6 @@ object Router:
             current.set(Route.Explore)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def show(r: Route): Unit =
     missing.set(false)
     if current.now() != r then current.set(r)
@@ -101,7 +100,6 @@ object Router:
 
   /** The page's title in the browser's tab: the page's name; an item's own title once it is known. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def retitle(r: Route, t: UiLabels.Text): Unit =
     if current.now() == r then dom.document.title = shown"$t · Histmersion"
     titleBus.emit(r -> t)

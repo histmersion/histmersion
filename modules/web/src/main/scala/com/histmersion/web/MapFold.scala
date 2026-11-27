@@ -43,13 +43,11 @@ object MapFold:
         }" aria-label="$label" title="$label">$inner</button>"""
 
   /** Open or close `box`, its button saying which. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def set(box: dom.Element, open: Open): Unit =
     box.classList.toggle(OpenClass, open.open)
     Option(box.querySelector("button[aria-expanded]")).foreach(_.setAttribute("aria-expanded", open.open.toString))
 
   /** `box`'s button opens and closes it, Escape inside it closes it; `changed` hears the new state. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def wire(box: dom.Element, changed: Changed => Unit = _ => ()): Unit =
     Option(box.querySelector("button[aria-expanded]")).foreach { b =>
       b.addEventListener(

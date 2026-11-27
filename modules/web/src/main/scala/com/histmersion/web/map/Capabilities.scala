@@ -36,7 +36,6 @@ object Capabilities:
   object Webgl2:
     extension (webgl2: Webgl2) def supported: Boolean = webgl2 == Supported
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def withoutWebgl2(c: Capabilities): Option[Problem] =
     if !c.webgl.supported then

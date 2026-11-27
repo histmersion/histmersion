@@ -143,7 +143,6 @@ object AcquireCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =

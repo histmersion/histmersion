@@ -202,7 +202,6 @@ object GoalsView:
 
   /** What the server's one operation made, in one line. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def madeNote(a: NewArea, made: Goal.AreaCreated): CreatedNote =
     val managers = made.seed.toList ++ made.watch.toList
     createdNote(
@@ -516,7 +515,6 @@ object GoalsView:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def planSection(
       slug: GoalsView.PlanSectionSlug,

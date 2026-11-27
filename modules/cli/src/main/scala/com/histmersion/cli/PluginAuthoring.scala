@@ -128,7 +128,6 @@ object PluginAuthoring:
       })
 
   /** What to do next, for the person who ran `plugin new`. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[String] =
     val publishDir = PluginTemplate.PublishDir
     (s"wrote a scala-cli project in $dir:" :: written.map(p => s"  ${dir.relativize(p)}")) ++ List(

@@ -75,7 +75,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), Paging.Limit(1)).map(_.headOption))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def viaCalibredb(
       query: Option[Api.Search.Text],
       limit: Paging.Limit
@@ -180,8 +179,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     }
 
   /** One `set_metadata` with the planned fields; nothing at all when there are none. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Problem, Unit] =
     if changes.isEmpty then Right(())
     else shell.run(Calibre.setMetadataCmd(cfg.calibredb, libArgs, id, changes)).map(_ => ())
@@ -196,7 +193,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     * approved fixes with it). Same guards as every other write.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def set(id: Calibre.Book.Id, fields: List[CollectionFieldValue]): Either[Problem, Unit] =
     for
@@ -214,7 +210,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     * same type. Unlike [[add]] it never creates an entry, so the link stays valid.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def replaceFormat(id: Calibre.Book.Id, file: Path): Either[Problem, Calibre.Book.Format] =
     for
@@ -229,7 +224,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def addCmd(file: Path, meta: Calibre.Push): List[String] =
     Shell.command(cfg.calibredb, "add", file) ++ libArgs ++
       Shell.command("--title", meta.title.trim, "--authors", meta.authors.mkString(" & "), "--duplicates") ++
@@ -470,7 +464,6 @@ object Calibre:
     }
 
   /** `calibredb set_metadata` writing `changes` into entry `id`. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setMetadataCmd(
       calibredb: CalibreCliConfig.Calibredb,
       libArgs: List[String],
@@ -505,7 +498,6 @@ object Calibre:
         .map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def identifiersValue(ids: Map[Book.IdentifiersKey, Book.IdentifiersValue]): String =
     ids.toList.sortBy(_._1).map((k, v) => shown"$k:$v").mkString(",")
 
@@ -1382,7 +1374,6 @@ object Calibre:
     object Gaps:
       export CollectionGaps.{Count, Total, Uncounted}
 
-      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def of(entries: List[GapEntry]): Gaps =
         val n = entries.count(_.counted.counts)
         Gaps(Count(n), Uncounted(entries.size - n), Total(entries.size), entries.map(GapRow.of))

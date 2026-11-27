@@ -59,6 +59,5 @@ object Shell:
         )
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def isRunning(processMatch: ProcessMatch): Boolean =
       run(command("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)

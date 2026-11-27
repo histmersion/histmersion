@@ -27,7 +27,6 @@ object MapMotion:
   def fromWire(s: Wire): Option[MapMotion] = values.find(_.wire.value == s.value.trim.toLowerCase)
 
   /** Pure: does the map animate under choice `m` when the system asks for reduced motion (`systemReduced`)? */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def animates(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m match
     case System => !systemReduced.reduced
     case Always => true
@@ -36,7 +35,6 @@ object MapMotion:
   /** Pure: is the map still only because the system asks for it (the setting follows the system)? The menu says so
     * under the setting.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def heldBySystem(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean =
     m == System && systemReduced.reduced
 

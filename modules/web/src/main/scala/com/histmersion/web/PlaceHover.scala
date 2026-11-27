@@ -157,7 +157,6 @@ object PlaceHover:
 
   /** Pin `t`'s card after a click or Enter that left the place `chosenNow`, or close it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settle(
       t: Preview.Target,
       chosenNow: Boolean,
@@ -329,7 +328,6 @@ object PlaceHover:
     * go and closes the card.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def activatePlace(

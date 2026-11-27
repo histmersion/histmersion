@@ -154,7 +154,6 @@ final class PolledList[A](
   def item: Signal[Option[A]] = listing.signal.map(_.rows.headOption)
 
   /** The "Show older" button under the list. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def olderButton: HtmlElement =
     ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.older), () => showOlder())
 

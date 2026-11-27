@@ -34,7 +34,6 @@ object TreeTab:
   private val loading = Var(false)
   private val failed = Var(false)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     div(
       cls := "tree-pane",

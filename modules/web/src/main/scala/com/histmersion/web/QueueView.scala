@@ -846,7 +846,6 @@ object QueueView:
 
   /** The id of an item's row, which a link to it scrolls to. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemAnchor(id: Queue.QueueItem.Id): String = shown"queue-item-$id"
 
   /** The item a link to the list points at (`?item=12`). Pure. */
@@ -864,7 +863,6 @@ object QueueView:
 
   /** A small button on an item; a write is disabled while writes are not allowed. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def actionButton(text: UiLabels.Text, act: () => Unit, write: Writes = Writes.Writable): HtmlElement =
     button(
       typ := "button",
