@@ -14,16 +14,20 @@ import com.histmersion.lint.{tolerated, LintRule}
   * the wide layout the button is not shown and the overlay is always open.
   */
 object MapFold:
-  type Changed = Changed.T
-  object Changed extends Newtype[Boolean, Pure]
+  enum Changed derives CanEqual:
+    case Changed, Unchanged
+  object Changed:
+    extension (changed: Changed) def changed: Boolean = changed == Changed
   type ClassName = ClassName.T
   object ClassName extends Newtype[String, Pure]
   type ControlsId = ControlsId.T
   object ControlsId extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  type Open = Open.T
-  object Open extends Newtype[Boolean, Pure]
+  enum Open derives CanEqual:
+    case Open, Folded
+  object Open:
+    extension (open: Open) def open: Boolean = open == Open
 
   /** The class an opened overlay carries. */
   val OpenClass = "is-open"
@@ -34,13 +38,15 @@ object MapFold:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toggleHtml(cls: ClassName, controls: ControlsId, label: Label, inner: Html, open: Open): Html =
     html"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ ++
-      html"""aria-expanded="$open" aria-label="$label" title="$label">$inner</button>"""
+      html"""aria-expanded="${
+          if open.open then "true" else "false"
+        }" aria-label="$label" title="$label">$inner</button>"""
 
   /** Open or close `box`, its button saying which. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def set(box: dom.Element, open: Open): Unit =
-    box.classList.toggle(OpenClass, open.value)
-    Option(box.querySelector("button[aria-expanded]")).foreach(_.setAttribute("aria-expanded", open.toString))
+    box.classList.toggle(OpenClass, open.open)
+    Option(box.querySelector("button[aria-expanded]")).foreach(_.setAttribute("aria-expanded", open.open.toString))
 
   /** `box`'s button opens and closes it, Escape inside it closes it; `changed` hears the new state. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -51,8 +57,8 @@ object MapFold:
         { (e: dom.MouseEvent) =>
           e.stopPropagation()
           val open = !box.classList.contains(OpenClass)
-          set(box, Open(open))
-          changed(Changed(open))
+          set(box, (if open then Open.Open else Open.Folded))
+          changed((if open then Changed.Changed else Changed.Unchanged))
         }
       )
     }
@@ -60,8 +66,8 @@ object MapFold:
       "keydown",
       (e: dom.KeyboardEvent) =>
         if e.key == "Escape" && box.classList.contains(OpenClass) then
-          set(box, Open(false))
-          changed(Changed(false))
+          set(box, Open.Folded)
+          changed(Changed.Unchanged)
           Option(box.querySelector("button[aria-expanded]")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
     )
 

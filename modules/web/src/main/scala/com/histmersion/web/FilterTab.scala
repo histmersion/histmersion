@@ -53,20 +53,26 @@ final class FilterTab[Q, Row](
       cls := s"$name-pane",
       ResultsPaging.countBar(
         state.signal.map(_.countLine(singular, noun)),
-        state.signal.map(s => ResultsPaging.Loading(s.loading.value && s.loaded.value)),
-        state.signal.map(s => ResultsPaging.Failed(s.error.nonEmpty))
+        state.signal.map(s =>
+          (if s.loading.loading && s.loaded.loaded then ResultsPaging.Loading.Loading else ResultsPaging.Loading.Idle)
+        ),
+        state.signal.map(s =>
+          (if s.error.nonEmpty then ResultsPaging.Failed.Failed else ResultsPaging.Failed.Succeeded)
+        )
       ),
       child.maybe <-- state.signal.map(
         _.error.map(m => p(cls := "form-error", role := "alert", s"Could not list $noun: ${m.sentence}"))
       ),
       child.maybe <-- state.signal.map(s =>
         Option
-          .when(s.loaded.value && !s.loading.value && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty))
+          .when(s.loaded.loaded && !s.loading.loading && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty))
       ),
       ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown.value).map(render))),
       ResultsPaging.moreButton(
         state.signal.map(_.moreLabel(page)),
-        state.signal.map(s => ResultsPaging.Loading(s.loading.value)),
+        state.signal.map(s =>
+          (if s.loading.loading then ResultsPaging.Loading.Loading else ResultsPaging.Loading.Idle)
+        ),
         () => more()
       )
     )

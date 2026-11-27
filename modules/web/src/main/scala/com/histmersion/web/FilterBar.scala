@@ -36,9 +36,10 @@ object FilterBar:
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
     * its suggestions come from.
     */
-
-  type Folded = Folded.T
-  object Folded extends Newtype[Boolean, Pure]
+  enum Folded derives CanEqual:
+    case Folded, Open
+  object Folded:
+    extension (folded: Folded) def folded: Boolean = folded == Folded
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final private case class ChipField(
@@ -83,7 +84,7 @@ object FilterBar:
   private val moreOpen = Var(false)
 
   /** Whether the panel is folded to its rail (a wide screen; a phone's drawer never folds). */
-  val folded: Var[Folded] = Var(Folded(false))
+  val folded: Var[Folded] = Var(Folded.Open)
 
   def ensureMoreVisible(): Unit = moreOpen.set(true)
 
@@ -116,7 +117,7 @@ object FilterBar:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setFolded(on: Folded): Unit =
     folded.set(on)
-    keep(foldedKey, on.value)
+    keep(foldedKey, on.folded)
 
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -174,7 +175,7 @@ object FilterBar:
           Fmt.parseYear(Years.Text(raw)).map(_.value).filter(y => valid(y, other())) match
             case Some(y) =>
               bad.set(false)
-              UiState.set(field := Some(y))(push = UiState.SetPush(true))
+              UiState.set(field := Some(y))(push = UiState.SetPush.Push)
             case None => bad.set(true)
         }
       )
@@ -216,12 +217,12 @@ object FilterBar:
     val someMoreSet = moreFields.exists(_.state.now().nonEmpty) ||
       UiState.yearFrom.now().isDefined || UiState.yearTo.now().isDefined
     moreOpen.set(moreOpenInitially(stored(moreKey), someMoreSet, Viewport.narrowNow))
-    folded.set(Folded(foldedInitially(stored(foldedKey))))
+    folded.set((if foldedInitially(stored(foldedKey)) then Folded.Folded else Folded.Open))
     val active = UiState.signal.map(_ => FilterChips.countNow(config))
 
     div(
       cls := "fbar filter-panel",
-      cls("is-folded") <-- folded.signal.map(_.value),
+      cls("is-folded") <-- folded.signal.map(_.folded),
       role := "search",
       aria.label := "Filters",
       // on a phone this panel is the filters drawer, and this its heading
@@ -236,7 +237,7 @@ object FilterBar:
         title := "Show the filters",
         Icon(Icon.Filter),
         child.maybe <-- active.map(n => Option.when(n.value > 0)(span(cls := "rail-count", n.toString))),
-        onClick --> (_ => setFolded(Folded(false)))
+        onClick --> (_ => setFolded(Folded.Open))
       ),
       div(
         cls := "filter-body",
@@ -252,7 +253,7 @@ object FilterBar:
             aria.label := "Fold the filters",
             title := "Fold the filters to the side",
             Icon(Icon.FoldLeft),
-            onClick --> (_ => setFolded(Folded(true)))
+            onClick --> (_ => setFolded(Folded.Folded))
           )
         ),
         div(

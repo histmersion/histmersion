@@ -163,7 +163,7 @@ object SetupPage:
                   child.text <-- step.signal.map(x => if x.ordinal > s.ordinal then "✓" else s.number.toString)
                 ),
                 span(cls := "setup-label", s.label),
-                Option.when(s.optional.value)(span(cls := "setup-optional", " optional"))
+                Option.when(s.optional.optional)(span(cls := "setup-optional", " optional"))
               )
             }
           ),

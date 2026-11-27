@@ -162,7 +162,7 @@ object Pages:
     def item(s: ResearchSection, mods: Modifier[HtmlElement]*) =
       val target = if s == ResearchSection.Activity then Route.Activity(ActivityTab.Everything) else Route.Research(s)
       sideLink(target, s.label, on.contains(s), mods)
-    ResearchSection.values.toList.filter(s => ui.agentsEnabled.value || !s.agents.value).map { s =>
+    ResearchSection.values.toList.filter(s => ui.agentsEnabled.value || !s.agents.enabled).map { s =>
       s match
         case ResearchSection.Decisions => item(s, notice(Board.Approvals))
         case ResearchSection.Goals     => item(s, notice(Board.Goals))
@@ -284,7 +284,7 @@ object Pages:
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
         case Some(Right(j)) if j.kind == AgentJobKinds.Agent.kind =>
-          Router.go(Route.Run(Route.Run.Id(j.id.value)), push = Router.Push(false))
+          Router.go(Route.Run(Route.Run.Id(j.id.value)), push = Router.Push.Replace)
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
           Router.retitle(Route.Job(id), UiLabels.Text(Wording.jobKindOf(j.kind)))
@@ -310,7 +310,7 @@ object Pages:
       case _   =>
         ul(
           cls := "activity-list job-controls",
-          ActivityView.row(e, () => Router.go(Route.Job(Route.Job.Id(j.id.value)), push = Router.Push(false)))
+          ActivityView.row(e, () => Router.go(Route.Job(Route.Job.Id(j.id.value)), push = Router.Push.Replace))
         )
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
@@ -319,7 +319,7 @@ object Pages:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def settingsSide(on: SettingsSection): List[Modifier[HtmlElement]] =
-    val (common, rare) = SettingsSection.values.toList.partition(s => !s.rare.value)
+    val (common, rare) = SettingsSection.values.toList.partition(s => !s.rare.rare)
     common.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++ List(group(UiLabels.Text("Rarely needed"))) ++
       rare.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++
       List(RouteLink(Route.Setup, cls := "side-link setup-again", span(cls := "side-label", "Run the setup again")))

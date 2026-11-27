@@ -16,31 +16,37 @@ final case class Capabilities(
     webgl: Capabilities.Webgl,
     software: Capabilities.Software,
     renderer: Capabilities.Renderer,
-    webgl2: Capabilities.Webgl2 = Capabilities.Webgl2(true)
+    webgl2: Capabilities.Webgl2 = Capabilities.Webgl2.Supported
 )
 
 object Capabilities:
   /** Pure: why an engine that needs WebGL 2 cannot draw in a browser with `c`, or None when it can. */
-
-  type Webgl = Webgl.T
-  object Webgl extends Newtype[Boolean, Pure]
-  type Software = Software.T
-  object Software extends Newtype[Boolean, Pure]
+  enum Webgl derives CanEqual:
+    case Supported, Unsupported
+  object Webgl:
+    extension (webgl: Webgl) def supported: Boolean = webgl == Supported
+  enum Software derives CanEqual:
+    case Software, Hardware
+  object Software:
+    extension (software: Software) def software: Boolean = software == Software
   type Renderer = Renderer.T
   object Renderer extends Newtype[String, Pure]
-  type Webgl2 = Webgl2.T
-  object Webgl2 extends Newtype[Boolean, Pure]
+  enum Webgl2 derives CanEqual:
+    case Supported, Unsupported
+  object Webgl2:
+    extension (webgl2: Webgl2) def supported: Boolean = webgl2 == Supported
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def withoutWebgl2(c: Capabilities): Option[Problem] =
-    if !c.webgl.value then
+    if !c.webgl.supported then
       Some(
         Problem.Unclassified(
           Legacy.Text("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
         )
       )
-    else if !c.webgl2.value then Some(Problem.Unclassified(Legacy.Text("this browser draws WebGL 1 only, not WebGL 2")))
+    else if !c.webgl2.supported then
+      Some(Problem.Unclassified(Legacy.Text("this browser draws WebGL 1 only, not WebGL 2")))
     else None
 
   /** Pure: a WebGL renderer string that names a software rasteriser. */

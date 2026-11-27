@@ -99,7 +99,7 @@ final class MapLibreSurface(
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setView(at: LatLon, z: MapSurface.Zoom, animate: MapSurface.SetViewAnimate): Unit =
     val o = js.Dynamic.literal(center = js.Array(at.lon.value, at.lat.value), zoom = z.value - ZoomShift)
-    if MapLibreSurface.eases(animate.value) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
+    if MapLibreSurface.eases(animate.animated) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
     else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -113,7 +113,7 @@ final class MapLibreSurface(
     val _ = gl.fitBounds(
       js.Array(js.Array(b.west.value, b.south.value), js.Array(b.east.value, b.north.value)),
       MapLibreSurface.motion(
-        animate.value,
+        animate.animated,
         js.Dynamic.literal(padding = padding.value, maxZoom = maxZoom.value - ZoomShift)
       )
     )
@@ -121,7 +121,7 @@ final class MapLibreSurface(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate): Unit =
-    val _ = gl.panBy(js.Array(dx.value, dy.value), MapLibreSurface.motion(animate.value, js.Dynamic.literal()))
+    val _ = gl.panBy(js.Array(dx.value, dy.value), MapLibreSurface.motion(animate.animated, js.Dynamic.literal()))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon.value, p.lat.value)); ScreenPt(q.x, q.y) }
@@ -393,7 +393,7 @@ final class MapLibreSurface(
   def shapesAt(p: ScreenPt): Seq[ShapeHit] =
     val at = unproject(p)
     shapeSets.values.toSeq.reverse
-      .filter(_.look.interactive.value)
+      .filter(_.look.interactive.interactive)
       .flatMap(set => set.under(at, p, this).map(fid => ShapeHit(ShapeHit.Set(set.id.value), ShapeHit.Id(fid.value))))
 
   // ── point layers from the server's tiles ─────────────────────────────────────────────────────
@@ -422,12 +422,12 @@ final class MapLibreSurface(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def setLocked(locked: MapSurface.Locked): Unit =
     List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
-      if locked.value then h.disable() else h.enable()
+      if locked.locked then h.disable() else h.enable()
     }
-    if !locked.value then
+    if !locked.locked then
       gl.touchZoomRotate.disableRotation()
       gl.keyboard.disableRotation()
-    el.classList.toggle("is-map-locked", locked.value)
+    el.classList.toggle("is-map-locked", locked.locked)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def popup(at: LatLon, html: Html, cls: MapSurface.PopupCls): Popup =

@@ -117,12 +117,12 @@ object PlaceHover:
               val on = PlacesInput.toggleFromMap(id, label, kind)
               val anchor =
                 e.at.map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-              settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = Preview.KeyboardDriven(false))
+              settle(Preview.Target.Place(id, ps.asOf()), on, anchor, None, keyboard = Preview.KeyboardDriven.Pointer)
             case None =>
               // a click on the empty map lets every card go
               hovered = None
               Preview.hide()
-              Preview.unpin(restoreFocus = Preview.RestoreFocus(false))
+              Preview.unpin(restoreFocus = Preview.RestoreFocus.Leave)
       }
       // a pinned card stays at its place while the map moves under it
       m.on(MapEventKind.Move)(_ => Preview.reposition())
@@ -166,13 +166,14 @@ object PlaceHover:
       keyboard: Preview.KeyboardDriven
   ): Unit =
     intent.cancelPending()
-    if PinRules.pinAfterClick(PinRules.ChosenNow(chosenNow)) then
+    if PinRules.pinAfterClick((if chosenNow then PinRules.ChosenNow.ChosenNow else PinRules.ChosenNow.ChosenBefore))
+    then
       hovered = Some(t)
       Preview.pin(t, anchor, owner, keyboard)
     else
       hovered = None
       Preview.hide()
-      Preview.unpin(restoreFocus = Preview.RestoreFocus(false))
+      Preview.unpin(restoreFocus = Preview.RestoreFocus.Leave)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def at(e: dom.MouseEvent): Unit =
@@ -213,7 +214,7 @@ object PlaceHover:
         val on = choose()
         val anchor =
           latLonOf(e).map(anchorAt).getOrElse { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-        settle(target, on, anchor, None, keyboard = Preview.KeyboardDriven(false))
+        settle(target, on, anchor, None, keyboard = Preview.KeyboardDriven.Pointer)
       override def focus(e: dom.FocusEvent): Unit = focusCard(m.el, target)
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -221,7 +222,7 @@ object PlaceHover:
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
-          settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = Preview.KeyboardDriven(true))
+          settle(target, choose(), anchorOn(m.el), Some(m.el), keyboard = Preview.KeyboardDriven.Keyboard)
     button(m.el, shown"$label — show only this place and pin its card")
 
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
@@ -252,7 +253,7 @@ object PlaceHover:
             PlacesInput.toggleFromMap(id, label, kind),
             anchorOn(el),
             Some(el),
-            keyboard = Preview.KeyboardDriven(true)
+            keyboard = Preview.KeyboardDriven.Keyboard
           )
     button(el, shown"$label — show only this place and pin its card")
 
@@ -310,7 +311,7 @@ object PlaceHover:
         intent.cancelPending()
         hovered = None
         Preview.hide()
-        activate(Activation(keyboard = Activation.Keyboard(false), Some(el), latLonOf(e)))
+        activate(Activation(keyboard = Activation.Keyboard.Pointer, Some(el), latLonOf(e)))
       override def focus(e: dom.FocusEvent): Unit = target().foreach(t => focusCard(el, t))
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -319,7 +320,7 @@ object PlaceHover:
           e.preventDefault()
           intent.cancelPending()
           Preview.hide()
-          activate(Activation(keyboard = Activation.Keyboard(true), Some(el), None))
+          activate(Activation(keyboard = Activation.Keyboard.Keyboard, Some(el), None))
     m.onRemoved(() => if target().exists(t => hovered.contains(t)) then dropHover())
     button(el, label().value)
 
@@ -340,10 +341,16 @@ object PlaceHover:
   ): Unit =
     val t = Preview.Target.Place(id, asOf())
     val on = PlacesInput.toggleFromMap(id, label, kind)
-    val anchor = (how.keyboard.value, how.element, how.latlng) match
+    val anchor = (how.keyboard.keyboard, how.element, how.latlng) match
       case (true, Some(el), _) => anchorOn(el)
       case (_, _, Some(ll))    => anchorAt(ll)
       case _                   => { val (x, y) = (lastX, lastY); () => Some(Preview.Anchor.At(x, y)) }
-    settle(t, on, anchor, how.element.filter(_ => how.keyboard.value), Preview.KeyboardDriven(how.keyboard.value))
+    settle(
+      t,
+      on,
+      anchor,
+      how.element.filter(_ => how.keyboard.keyboard),
+      (if how.keyboard.keyboard then Preview.KeyboardDriven.Keyboard else Preview.KeyboardDriven.Pointer)
+    )
     // chosen, its detail replaces the results; unchosen, the results come back
     if on then ResultsPanel.show(t) else if ResultsPanel.selected.now().exists(_ == t) then ResultsPanel.back()

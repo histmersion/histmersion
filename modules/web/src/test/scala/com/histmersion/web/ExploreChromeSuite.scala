@@ -106,7 +106,7 @@ class ExploreChromeSuite extends munit.FunSuite:
           MapLists.TotalCount(3),
           Plural.Noun.Singular("place"),
           Plural.Noun.Plural("places"),
-          onMap = MapLists.OnMap(true)
+          onMap = MapLists.OnMap.OnMap
         )
         .value,
       "3 places on the map"
@@ -118,7 +118,7 @@ class ExploreChromeSuite extends munit.FunSuite:
           MapLists.TotalCount(312),
           Plural.Noun.Singular("place"),
           Plural.Noun.Plural("places"),
-          onMap = MapLists.OnMap(true)
+          onMap = MapLists.OnMap.OnMap
         )
         .value,
       "312 places on the map · 40 listed, zoom in to list the rest"
@@ -130,7 +130,7 @@ class ExploreChromeSuite extends munit.FunSuite:
           MapLists.TotalCount(1),
           Plural.Noun.Singular("picture"),
           Plural.Noun.Plural("pictures"),
-          onMap = MapLists.OnMap(false)
+          onMap = MapLists.OnMap.OffMap
         )
         .value,
       "1 picture"
@@ -144,7 +144,7 @@ class ExploreChromeSuite extends munit.FunSuite:
       LatLon.Lat(37),
       LatLon.Lon(22),
       None,
-      undated = SitePoint.Undated(true)
+      undated = SitePoint.Undated.Undated
     )
     assert(MapLists.siteNote(site).value.endsWith("date unknown"), MapLists.siteNote(site))
 
@@ -152,16 +152,16 @@ class ExploreChromeSuite extends munit.FunSuite:
     val s = TileDecode
       .site(feature(LatLon.Lat(37), LatLon.Lon(22), "k" -> "s1", "id" -> "s1", "label" -> "Tower", "u" -> 1))
       .get
-    assert(s.undated.value)
+    assert(s.undated.undated)
     assert(PointKinds.Sites.classes(s).contains(MapView.UndatedClass))
     assert(
       PointKinds.Sites.zIndex(s).value < PointKinds.Sites
-        .zIndex(s.modify(_.undated).setTo(SitePoint.Undated(false)))
+        .zIndex(s.modify(_.undated).setTo(SitePoint.Undated.Dated))
         .value
     )
     assertEquals(PointKinds.Sites.member(s).undated.value, 1)
     assert(
-      !TileDecode.site(feature(LatLon.Lat(37), LatLon.Lon(22), "id" -> "s2", "label" -> "Dated")).get.undated.value
+      !TileDecode.site(feature(LatLon.Lat(37), LatLon.Lon(22), "id" -> "s2", "label" -> "Dated")).get.undated.undated
     )
     val c = TileDecode.cell(
       feature(
@@ -200,8 +200,8 @@ class ExploreChromeSuite extends munit.FunSuite:
   test("the legend keys the dashed outline while undated places are drawn"):
     assert(
       MapKey
-        .html(events = MapKey.Events(false), sites = MapKey.Sites(true), undated = MapKey.Undated(true))
+        .html(events = MapKey.Events.Hidden, sites = MapKey.Sites.Shown, undated = MapKey.Undated.Shown)
         .value
         .contains("date unknown")
     )
-    assert(!MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(true)).value.contains("date unknown"))
+    assert(!MapKey.html(events = MapKey.Events.Hidden, sites = MapKey.Sites.Shown).value.contains("date unknown"))

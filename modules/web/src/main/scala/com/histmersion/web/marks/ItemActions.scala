@@ -14,9 +14,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   * asks for it first.
   */
 object ItemActions:
-
-  type BookmarkButtonCompact = BookmarkButtonCompact.T
-  object BookmarkButtonCompact extends Newtype[Boolean, Pure]
+  enum BookmarkButtonCompact derives CanEqual:
+    case Compact, Full
+  object BookmarkButtonCompact:
+    extension (bookmarkButtonCompact: BookmarkButtonCompact) def compact: Boolean = bookmarkButtonCompact == Compact
 
   private def writing(act: => Unit): Unit =
     if Auth.writableNow then act else WindowManager.open(WindowKey.ApiKey)
@@ -26,11 +27,11 @@ object ItemActions:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def bookmarkButton(ref: ItemRef, compact: BookmarkButtonCompact = BookmarkButtonCompact(false)): HtmlElement =
+  def bookmarkButton(ref: ItemRef, compact: BookmarkButtonCompact = BookmarkButtonCompact.Full): HtmlElement =
     val on = MyItems.bookmarked(ref)
     button(
       typ := "button",
-      cls := (if compact.value then "btn btn--bare btn--icon btn--sm row-bookmark" else "btn btn--sm item-bookmark"),
+      cls := (if compact.compact then "btn btn--bare btn--icon btn--sm row-bookmark" else "btn btn--sm item-bookmark"),
       cls("is-on") <-- on,
       aria.pressed <-- on.map(_.toString),
       title <-- on.map(b =>
@@ -40,7 +41,7 @@ object ItemActions:
         if b then shown"Remove the bookmark of ${ref.title}" else shown"Bookmark ${ref.title}"
       ),
       Icon(Icon.Bookmark),
-      Option.when(!compact.value)(span(child.text <-- on.map(b => if b then "Bookmarked" else "Bookmark"))),
+      Option.when(!compact.compact)(span(child.text <-- on.map(b => if b then "Bookmarked" else "Bookmark"))),
       onClick --> { ev => ev.stopPropagation(); bookmark(ref) }
     )
 

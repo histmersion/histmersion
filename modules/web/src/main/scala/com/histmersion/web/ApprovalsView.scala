@@ -541,7 +541,7 @@ object ApprovalsView:
       bulkBar,
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
         val st = shownState(f.normalized.state)
-        Option.when(isLoaded.value && l.rows.nonEmpty)(
+        Option.when(isLoaded.loaded && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
@@ -555,7 +555,7 @@ object ApprovalsView:
         )
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, f, isLoaded) =>
-        if !isLoaded.value then Some(p(cls := "muted", "Loading…"))
+        if !isLoaded.loaded then Some(p(cls := "muted", "Loading…"))
         else
           Option.when(l.rows.isEmpty)(
             p(

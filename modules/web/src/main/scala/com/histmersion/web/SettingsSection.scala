@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 enum SettingsSection(
     val slug: SettingsSection.Slug,
     val label: SettingsSection.Label,
-    val rare: SettingsSection.Rare = SettingsSection.Rare(false)
+    val rare: SettingsSection.Rare = SettingsSection.Rare.Common
 ) derives CanEqual:
   case General extends SettingsSection(SettingsSection.Slug("general"), SettingsSection.Label("General"))
   case Data extends SettingsSection(SettingsSection.Slug("data"), SettingsSection.Label("Data and downloads"))
@@ -24,29 +24,31 @@ enum SettingsSection(
       extends SettingsSection(
         SettingsSection.Slug("people"),
         SettingsSection.Label("People and access"),
-        rare = SettingsSection.Rare(true)
+        rare = SettingsSection.Rare.Rare
       )
   case Advanced
       extends SettingsSection(
         SettingsSection.Slug("advanced"),
         SettingsSection.Label("Advanced (all settings)"),
-        rare = SettingsSection.Rare(true)
+        rare = SettingsSection.Rare.Rare
       )
   case Credits
       extends SettingsSection(
         SettingsSection.Slug("credits"),
         SettingsSection.Label("Credits and licences"),
-        rare = SettingsSection.Rare(true)
+        rare = SettingsSection.Rare.Rare
       )
   case About
       extends SettingsSection(
         SettingsSection.Slug("about"),
         SettingsSection.Label("About Histmersion"),
-        rare = SettingsSection.Rare(true)
+        rare = SettingsSection.Rare.Rare
       )
 
 object SettingsSection:
   export api.research.Article.Slug
   export UiLabels.Text as Label
-  type Rare = Rare.T
-  object Rare extends Newtype[Boolean, Pure]
+  enum Rare derives CanEqual:
+    case Rare, Common
+  object Rare:
+    extension (rare: Rare) def rare: Boolean = rare == Rare

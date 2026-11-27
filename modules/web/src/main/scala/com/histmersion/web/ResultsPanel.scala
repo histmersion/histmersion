@@ -20,8 +20,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   * is the bottom sheet.
   */
 object ResultsPanel:
-  type KeepWidth = KeepWidth.T
-  object KeepWidth extends Newtype[Boolean, Pure]
+  enum KeepWidth derives CanEqual:
+    case Keep, Reset
+  object KeepWidth:
+    extension (keepWidth: KeepWidth) def keeps: Boolean = keepWidth == Keep
 
   /** The width, px: the one this browser kept, else the default. */
 
@@ -38,7 +40,7 @@ object ResultsPanel:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resizeTo(w: ResultsWidth.Width, keep: KeepWidth): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
-    if keep.value then ResultsWidth.keep(width.now())
+    if keep.keeps then ResultsWidth.keep(width.now())
 
   /** The item whose detail replaces the results. */
   val selected: Var[Option[Preview.Target]] = Var(None)
@@ -60,7 +62,7 @@ object ResultsPanel:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setActiveTab(t: SidebarTab): Unit =
     selected.set(None)
-    UiState.set(UiState.tab := Some(t.key.value))(push = UiState.SetPush(true))
+    UiState.set(UiState.tab := Some(t.key.value))(push = UiState.SetPush.Push)
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
@@ -147,12 +149,12 @@ object ResultsPanel:
             .step(
               width.now(),
               ResultsWidth.KeyName(ev.key),
-              ResultsWidth.ShiftHeld(ev.shiftKey),
+              (if ev.shiftKey then ResultsWidth.ShiftHeld.Held else ResultsWidth.ShiftHeld.Released),
               ResultsWidth.StepViewport(dom.window.innerWidth)
             )
             .foreach { w =>
               ev.preventDefault()
-              resizeTo(w, keep = KeepWidth(true))
+              resizeTo(w, keep = KeepWidth.Keep)
             }
         },
         onPointerDown --> { ev =>
@@ -162,7 +164,7 @@ object ResultsPanel:
           val target = ev.target.asInstanceOf[dom.HTMLElement]
           target.setPointerCapture(ev.pointerId)
           val move = { (me: dom.PointerEvent) =>
-            resizeTo(ResultsWidth.Width(startW.value - (me.clientX - startX).toInt), keep = KeepWidth(false))
+            resizeTo(ResultsWidth.Width(startW.value - (me.clientX - startX).toInt), keep = KeepWidth.Reset)
           }: js.Function1[dom.PointerEvent, Unit]
           val up = { (_: dom.PointerEvent) =>
             target.removeEventListener("pointermove", move)

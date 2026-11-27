@@ -197,7 +197,7 @@ object DotCluster:
   def pinUnder(
       t: Preview.Target,
       row: dom.Element,
-      keyboard: Preview.KeyboardDriven = Preview.KeyboardDriven(false)
+      keyboard: Preview.KeyboardDriven = Preview.KeyboardDriven.Pointer
   ): Unit =
     Preview.pin(
       t,

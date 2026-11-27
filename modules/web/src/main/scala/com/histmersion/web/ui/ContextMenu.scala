@@ -25,7 +25,7 @@ object ContextMenu:
   final case class Entry(
       label: Entry.Label,
       run: () => Unit,
-      disabled: Entry.Disabled = Entry.Disabled(false),
+      disabled: Entry.Disabled = Entry.Disabled.Enabled,
       hint: Option[Entry.Hint] = None,
       pressed: Option[Entry.Pressed] = None
   ) derives CanEqual
@@ -34,13 +34,17 @@ object ContextMenu:
     type Label = Label.T
     object Label extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Disabled = Disabled.T
-    object Disabled extends Newtype[Boolean, Pure]
+    enum Disabled derives CanEqual:
+      case Disabled, Enabled
+    object Disabled:
+      extension (disabled: Disabled) def disabled: Boolean = disabled == Disabled
     type Hint = Hint.T
     object Hint extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Pressed = Pressed.T
-    object Pressed extends Newtype[Boolean, Pure]
+    enum Pressed derives CanEqual:
+      case Pressed, Released
+    object Pressed:
+      extension (pressed: Pressed) def pressed: Boolean = pressed == Pressed
 
   /** A line between groups of actions. */
   val Separator: Entry = Entry(Entry.Label(""), () => ())
@@ -208,11 +212,11 @@ object ContextMenu:
             typ := "button",
             cls := "context-menu-item",
             role := (if e.pressed.isDefined then "menuitemcheckbox" else "menuitem"),
-            e.pressed.map(on => aria.checked := on.value.toString),
-            disabled := e.disabled.value,
+            e.pressed.map(on => aria.checked := on.pressed.toString),
+            disabled := e.disabled.disabled,
             e.hint.map(h => L.title := h),
             span(cls := "context-menu-label", e.label),
-            e.hint.filter(_ => e.disabled.value).map(h => span(cls := "context-menu-hint", h)),
+            e.hint.filter(_ => e.disabled.disabled).map(h => span(cls := "context-menu-hint", h)),
             onClick --> { _ =>
               close()
               e.run()

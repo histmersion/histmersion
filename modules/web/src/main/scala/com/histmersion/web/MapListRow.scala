@@ -18,7 +18,7 @@ final case class MapListRow(
     icon: Html,
     href: MapListRow.Href,
     open: () => Unit,
-    undated: MapListRow.Undated = MapListRow.Undated(false),
+    undated: MapListRow.Undated = MapListRow.Undated.Dated,
     kind: ItemKind = ItemKind.Place
 )
 
@@ -34,5 +34,7 @@ object MapListRow:
   type Href = Href.T
   object Href extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type Undated = Undated.T
-  object Undated extends Newtype[Boolean, Pure]
+  enum Undated derives CanEqual:
+    case Undated, Dated
+  object Undated:
+    extension (undated: Undated) def undated: Boolean = undated == Undated

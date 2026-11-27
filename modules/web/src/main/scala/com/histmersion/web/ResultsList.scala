@@ -27,10 +27,14 @@ import com.histmersion.api.Html.html as markup
 import com.histmersion.lint.{tolerated, LintRule}
 
 object ResultsList:
-  type Busy = Busy.T
-  object Busy extends Newtype[Boolean, Pure]
-  type InPanel = InPanel.T
-  object InPanel extends Newtype[Boolean, Pure]
+  enum Busy derives CanEqual:
+    case Busy, Idle
+  object Busy:
+    extension (busy: Busy) def busy: Boolean = busy == Busy
+  enum InPanel derives CanEqual:
+    case InPanel, Standalone
+  object InPanel:
+    extension (inPanel: InPanel) def inPanel: Boolean = inPanel == InPanel
 
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type HitRowInPanel = InPanel
@@ -39,7 +43,7 @@ object ResultsList:
   case class SourceRenderOpts(
       findings: SourceRenderOpts.Findings = SourceRenderOpts.Findings(0),
       total: SourceRenderOpts.Total = SourceRenderOpts.Total(0),
-      inView: SourceRenderOpts.InView = SourceRenderOpts.InView(false),
+      inView: SourceRenderOpts.InView = SourceRenderOpts.InView.OutOfView,
       params: Option[Filter] = None
   )
 
@@ -48,8 +52,10 @@ object ResultsList:
     object Findings extends Newtype[Int, Pure]
     type Total = Total.T
     object Total extends Newtype[Int, Pure]
-    type InView = InView.T
-    object InView extends Newtype[Boolean, Pure]
+    enum InView derives CanEqual:
+      case InView, OutOfView
+    object InView:
+      extension (inView: InView) def inView: Boolean = inView == InView
 
   sealed private trait LastRender
   private case class LastSources(result: SearchResult, opts: SourceRenderOpts) extends LastRender
@@ -80,8 +86,8 @@ object ResultsList:
       cls := "results-container",
       ResultsPaging.countBar(
         countText.signal,
-        isBusy.signal.map(b => ResultsPaging.Loading(b)),
-        isError.signal.map(b => ResultsPaging.Failed(b)),
+        isBusy.signal.map(b => (if b then ResultsPaging.Loading.Loading else ResultsPaging.Loading.Idle)),
+        isError.signal.map(b => (if b then ResultsPaging.Failed.Failed else ResultsPaging.Failed.Succeeded)),
         id = Some("count")
       ),
       div(
@@ -105,14 +111,18 @@ object ResultsList:
               if nextIdx >= 0 && nextIdx < rows.length then rows(nextIdx).asInstanceOf[dom.HTMLElement].focus()
         }
       ),
-      ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal.map(b => ResultsPaging.Loading(b)), () => more())
+      ResultsPaging.moreButton(
+        moreLabel.signal,
+        moreLoading.signal.map(b => (if b then ResultsPaging.Loading.Loading else ResultsPaging.Loading.Idle)),
+        () => more()
+      )
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def busy(on: Busy): Unit =
-    isBusy.set(on.value)
-    if on.value then isError.set(false)
+    isBusy.set(on.busy)
+    if on.busy then isError.set(false)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -136,7 +146,7 @@ object ResultsList:
     isError.set(false)
 
     countText.set(countLine())
-    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = HitRowInPanel(true))))
+    content.set(if hits.isEmpty then List(emptyState()) else hits.map(hitRow(_, inPanel = HitRowInPanel.InPanel)))
     moreLoading.set(false)
     moreLabel.set(nextLabel())
 
@@ -262,7 +272,7 @@ object ResultsList:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def countLine(): UiLabels.Text =
     val findings = pageOpts match
-      case Some(o) if o.inView.value =>
+      case Some(o) if o.inView.inView =>
         s"${Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding"))} in view / ${o.total} total"
       case Some(o) => Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding")).value
       case None    => ""
@@ -298,7 +308,7 @@ object ResultsList:
           pageTotal = r.total
           pageHits = pageHits ++ r.hits
           countText.set(countLine())
-          content.set(pageHits.map(hitRow(_, inPanel = HitRowInPanel(true))))
+          content.set(pageHits.map(hitRow(_, inPanel = HitRowInPanel.InPanel)))
           moreLoading.set(false)
           moreLabel.set(nextLabel())
         case scala.util.Failure(e) =>
@@ -316,7 +326,7 @@ object ResultsList:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  private[web] def hitRow(h: Hit, inPanel: HitRowInPanel = HitRowInPanel(false)): HtmlElement =
+  private[web] def hitRow(h: Hit, inPanel: HitRowInPanel = HitRowInPanel.Standalone): HtmlElement =
     val src = h.source
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
@@ -397,7 +407,7 @@ object ResultsList:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openSource(ck: Preview.Target.Source.Citekey, inPanel: InPanel): Unit =
-    if inPanel.value then ResultsPanel.show(Preview.Target.Source(ck))
+    if inPanel.inPanel then ResultsPanel.show(Preview.Target.Source(ck))
     else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

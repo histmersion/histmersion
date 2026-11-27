@@ -185,7 +185,7 @@ final class PointSet[D](
       val bubble = bubbles.get(Clustering.GroupLabel(s"${ks.head}|${ks.size}")).filter(_._2 == ks).map(_._1)
       bubble.foreach(_.el.classList.add(Spiderfy.Fanned))
       val members = ds.zip(offsets).map { (k, off) =>
-        val m = single(items(k), PointSet.FadeIn(false))
+        val m = single(items(k), PointSet.FadeIn.Instant)
         m.setLatLng(c.lat, c.lon)
         m.el.classList.add(Spiderfy.Member)
         m.el.style.setProperty("--sx", s"${off._1.value}px")
@@ -235,7 +235,7 @@ final class PointSet[D](
         s.setView(
           p,
           MapSurface.Zoom(math.min(s.maxZoom.value, math.max(s.zoom.value + 1, level.value + 2))),
-          animate = MapSurface.SetViewAnimate(true)
+          animate = MapSurface.SetViewAnimate.Animated
         )
     }
 
@@ -381,7 +381,7 @@ final class PointSet[D](
       val made = id match
         case Left(key) =>
           if !singles.contains(key) && items.contains(key) then
-            val m = single(items(key), PointSet.FadeIn(fadeIn))
+            val m = single(items(key), (if fadeIn then PointSet.FadeIn.FadeIn else PointSet.FadeIn.Instant))
             val sp = paneOf(items(key))
             singles(key) = (m, sp)
             sp.add(m)
@@ -479,8 +479,10 @@ object PointSet:
   export Clustering.GroupKey as Key
   type PointCount = PointCount.T
   object PointCount extends Newtype[Int, Pure]
-  type FadeIn = FadeIn.T
-  object FadeIn extends Newtype[Boolean, Pure]
+  enum FadeIn derives CanEqual:
+    case FadeIn, Instant
+  object FadeIn:
+    extension (fadeIn: FadeIn) def fadesIn: Boolean = fadeIn == FadeIn
   type AnimateMax = AnimateMax.T
   object AnimateMax extends Newtype[Int, Pure]
   type ExitMs = ExitMs.T

@@ -63,7 +63,7 @@ class PolledListSuite extends munit.FunSuite:
     assertEquals(f.asked.map(a => (a._1, a._2)).toList, List((None, None)))
     f.answer(0, List(job(jobId("b")), job(jobId("a"))), page(Paging.Page.Total(2), None))
     assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(SpatialHierarchyResult.Job.Id.apply))
-    assert(f.list.loaded.now().value)
+    assert(f.list.loaded.now().loaded)
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
 
   test("nothing live (approvals): no poll is scheduled"):
@@ -158,23 +158,23 @@ class PolledListSuite extends munit.FunSuite:
     f.asked(1).failure(RuntimeException("HTTP 404"))
     assertEquals(f.one.failure.now().map(_.sentence), Some("HTTP 404"))
     assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
-    f.one.refresh(changed = Poll.DataChanged(true)) // a control button was pressed
+    f.one.refresh(changed = Poll.DataChanged.Changed) // a control button was pressed
     f.asked(2).success(job(jobId("r"), JobState.Running))
     assertEquals(f.one.failure.now(), None)
     assertEquals(f.timers.last._1, Poll.FirstMs)
 
   test("the shared schedule: quick on a change, slower while nothing changes, none when nothing is live"):
-    assertEquals(Poll.next(None, live = Poll.LiveMode(false), changed = Poll.DataChanged(true)), None)
+    assertEquals(Poll.next(None, live = Poll.LiveMode.Paused, changed = Poll.DataChanged.Changed), None)
     assertEquals(
-      Poll.next(Some(Poll.Revision(1000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)),
+      Poll.next(Some(Poll.Revision(1000)), live = Poll.LiveMode.Live, changed = Poll.DataChanged.Unchanged),
       Some(1600)
     )
     assertEquals(
-      Poll.next(Some(Poll.Revision(14000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)),
+      Poll.next(Some(Poll.Revision(14000)), live = Poll.LiveMode.Live, changed = Poll.DataChanged.Unchanged),
       Some(Poll.MaxMs)
     )
     assertEquals(
-      Poll.next(Some(Poll.Revision(8000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(true)),
+      Poll.next(Some(Poll.Revision(8000)), live = Poll.LiveMode.Live, changed = Poll.DataChanged.Changed),
       Some(Poll.FirstMs)
     )
 

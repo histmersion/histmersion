@@ -26,7 +26,7 @@ enum BaseMapSpec:
       names: BaseMapSpec.Vector.Names,
       contours: BaseMapSpec.Vector.Contours,
       seaDepth: BaseMapSpec.Vector.SeaDepth,
-      reduced: BaseMapSpec.Vector.Reduced = BaseMapSpec.Vector.Reduced(false)
+      reduced: BaseMapSpec.Vector.Reduced = BaseMapSpec.Vector.Reduced.Full
   )
 
   /** An online raster map: its tile URL template (`{s}` for its subdomains), its deepest zoom, its credits (HTML),
@@ -36,7 +36,7 @@ enum BaseMapSpec:
       template: BaseMapSpec.Raster.Template,
       maxZoom: BaseMapSpec.Raster.MaxZoom,
       attribution: BaseMapSpec.Raster.Attribution,
-      dark: BaseMapSpec.Raster.Dark = BaseMapSpec.Raster.Dark(false),
+      dark: BaseMapSpec.Raster.Dark = BaseMapSpec.Raster.Dark.Light,
       opacity: BaseMapSpec.Raster.Opacity = BaseMapSpec.Raster.Opacity(0.85)
   )
 
@@ -44,21 +44,31 @@ object BaseMapSpec:
   object Vector:
     type Lang = Lang.T
     object Lang extends Newtype[String, Pure]
-    type Names = Names.T
-    object Names extends Newtype[Boolean, Pure]
-    type Contours = Contours.T
-    object Contours extends Newtype[Boolean, Pure]
-    type SeaDepth = SeaDepth.T
-    object SeaDepth extends Newtype[Boolean, Pure]
-    type Reduced = Reduced.T
-    object Reduced extends Newtype[Boolean, Pure]
+    enum Names derives CanEqual:
+      case Shown, Hidden
+    object Names:
+      extension (names: Names) def shown: Boolean = names == Shown
+    enum Contours derives CanEqual:
+      case Shown, Hidden
+    object Contours:
+      extension (contours: Contours) def shown: Boolean = contours == Shown
+    enum SeaDepth derives CanEqual:
+      case Shown, Hidden
+    object SeaDepth:
+      extension (seaDepth: SeaDepth) def shown: Boolean = seaDepth == Shown
+    enum Reduced derives CanEqual:
+      case Reduced, Full
+    object Reduced:
+      extension (reduced: Reduced) def reduced: Boolean = reduced == Reduced
   object Raster:
     export api.basemap.BasemapApi.TileTemplate as Template
     type MaxZoom = MaxZoom.T
     object MaxZoom extends Newtype[Int, Pure]
     type Attribution = Attribution.T
     object Attribution extends Newtype[String, Pure]
-    type Dark = Dark.T
-    object Dark extends Newtype[Boolean, Pure]
+    enum Dark derives CanEqual:
+      case Dark, Light
+    object Dark:
+      extension (dark: Dark) def dark: Boolean = dark == Dark
     type Opacity = Opacity.T
     object Opacity extends Newtype[Double, Pure]

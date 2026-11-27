@@ -18,9 +18,9 @@ final case class TabState[Row](
     rows: List[Row] = Nil,
     total: RowCount = RowCount(0),
     shown: RowCount = RowCount(0),
-    loading: TabState.Loading = TabState.Loading(false),
+    loading: TabState.Loading = TabState.Loading.Idle,
     error: Option[Problem] = None,
-    loaded: TabState.Loaded = TabState.Loaded(false),
+    loaded: TabState.Loaded = TabState.Loaded.Pending,
     extras: List[TabState.Extras] = Nil
 ):
 
@@ -34,7 +34,7 @@ final case class TabState[Row](
   /** The count line ([[ResultsPaging.countLine]]); `loading…` before the first answer. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def countLine(singular: Plural.Noun.Singular, plural: Plural.Noun.Plural): UiLabels.Text =
-    if !loaded.value then UiLabels.Text("loading…")
+    if !loaded.loaded then UiLabels.Text("loading…")
     else
       ResultsPaging.countLine(
         Paging.Shown(shown.value),
@@ -47,20 +47,23 @@ final case class TabState[Row](
 object TabState:
 
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
-
-  type Loading = Loading.T
-  object Loading extends Newtype[Boolean, Pure]
-  type Loaded = Loaded.T
-  object Loaded extends Newtype[Boolean, Pure]
+  enum Loading derives CanEqual:
+    case Loading, Idle
+  object Loading:
+    extension (loading: Loading) def loading: Boolean = loading == Loading
+  enum Loaded derives CanEqual:
+    case Loaded, Pending
+  object Loaded:
+    extension (loaded: Loaded) def loaded: Boolean = loaded == Loaded
   export TabPage.Extras
 
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
-  def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = Loading(true), error = None)
+  def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = Loading.Loading, error = None)
 
   /** The first page of a query's answer. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def first[Row](p: TabPage[Row], page: ResultsPaging.PageNumber): TabState[Row] =
-    TabState(p.rows, p.total, RowCount(math.min(page.value, p.rows.size)), loaded = Loaded(true), extras = p.extras)
+    TabState(p.rows, p.total, RowCount(math.min(page.value, p.rows.size)), loaded = Loaded.Loaded, extras = p.extras)
 
   /** A further page from the server, appended (what "show more" asked for once the loaded rows ran out). */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
@@ -71,7 +74,7 @@ object TabState:
       rows = rows,
       total = p.total,
       shown = RowCount(math.min(s.shown.value + page.value, rows.size)),
-      loading = Loading(false),
+      loading = Loading.Idle,
       error = None,
       extras = p.extras
     )
@@ -79,7 +82,7 @@ object TabState:
   /** A request failed: loading ends, the error is shown, the rows already there stay. */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   def failed[Row](s: TabState[Row], message: Problem): TabState[Row] =
-    s.copy(loading = Loading(false), error = Some(message), loaded = Loaded(true))
+    s.copy(loading = Loading.Idle, error = Some(message), loaded = Loaded.Loaded)
 
   /** "show more": reveal the next `page` loaded rows, or — when the loaded rows run out before the total —
     * `Left(offset)`, the next page to ask the server for (rows past the first fetch used to be unreachable).

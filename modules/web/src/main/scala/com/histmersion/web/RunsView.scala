@@ -32,14 +32,15 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object RunsView:
   /** How many runs a page lists. */
-
-  type Enabled = Enabled.T
-  object Enabled extends Newtype[Boolean, Pure]
+  enum Enabled derives CanEqual:
+    case Enabled, Disabled
+  object Enabled:
+    extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
 
   val Limit = 100
 
   /** Whether the server runs agents (`/api/config`); the toolbar offers these windows only then. */
-  val enabled: Var[Enabled] = Var(Enabled(false))
+  val enabled: Var[Enabled] = Var(Enabled.Disabled)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -360,7 +361,7 @@ object RunsView:
       list.lifecycle,
       filterSignal.changes --> (_ => list.restart()),
       child.maybe <-- enabled.signal.map(on =>
-        Option.when(!on.value)(
+        Option.when(!on.enabled)(
           p(cls := "muted", "Embedded agents are off on this server (agents.enabled). Earlier runs are still listed.")
         )
       ),
@@ -430,7 +431,7 @@ object RunsView:
       ),
       list.errorLine(Text("Could not list runs")),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        Option.when(isLoaded.value && l.rows.nonEmpty)(
+        Option.when(isLoaded.loaded && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
@@ -445,7 +446,7 @@ object RunsView:
         )
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        if !isLoaded.value then Some(p(cls := "muted", "Loading…"))
+        if !isLoaded.loaded then Some(p(cls := "muted", "Loading…"))
         else
           Option.when(l.rows.isEmpty)(
             p(
@@ -602,7 +603,7 @@ object RunsView:
           busy.set(false)
           r.failed.foreach(e => run.failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage)))))
           if r.isSuccess then raise.set("")
-          refresh(changed = Poll.DataChanged(true))
+          refresh(changed = Poll.DataChanged.Changed)
         }
 
     div(

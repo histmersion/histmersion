@@ -21,7 +21,7 @@ object NoteView:
       htmlTag(s"h${math.min(6, n.value + 2)}")(cls := "note-heading", t.map(inline))
     case NoteMarkdown.Block.Para(t)            => p(t.map(inline))
     case NoteMarkdown.Block.Items(ordered, is) =>
-      (if ordered.value then ol() else ul()).amend(is.map(i => li(i.map(inline))))
+      (if ordered.numbered then ol() else ul()).amend(is.map(i => li(i.map(inline))))
     case NoteMarkdown.Block.Quote(t)     => blockQuote(t.map(inline))
     case NoteMarkdown.Block.CodeBlock(c) => pre(code(c))
 

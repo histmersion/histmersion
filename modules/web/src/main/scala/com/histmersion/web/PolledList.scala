@@ -42,8 +42,8 @@ final class PolledList[A](
 )(using ExecutionContext, CanEqual[A, A]):
 
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
-  val loaded: Var[PolledList.Loaded] = Var(PolledList.Loaded(false))
-  val older: Var[PolledList.Older] = Var(PolledList.Older(false))
+  val loaded: Var[PolledList.Loaded] = Var(PolledList.Loaded.Pending)
+  val older: Var[PolledList.Older] = Var(PolledList.Older.Newest)
   val failure: Var[Option[Problem]] = Var(None)
 
   /** A restart (a filter changed) is on its way: the rows shown are the previous filter's until it lands. */
@@ -56,7 +56,7 @@ final class PolledList[A](
   private var mounted: Boolean = false
 
   /** The window opened: load the newest page (and poll while anything is live). */
-  def open(): Unit = { mounted = true; loaded.set(PolledList.Loaded(false)); restart() }
+  def open(): Unit = { mounted = true; loaded.set(PolledList.Loaded.Pending); restart() }
 
   /** The window closed: no poll, and an answer still on its way is dropped. */
   def close(): Unit = { mounted = false; cancel(timer); delay = None; latest.cancel(); restarting.set(false) }
@@ -65,10 +65,10 @@ final class PolledList[A](
   def lifecycle: Modifier[HtmlElement] = List(onMountCallback(_ => open()), onUnmountCallback(_ => close()))
 
   /** Start over from the newest page: the window opened, a filter changed, or "refresh". */
-  def restart(): Unit = load(reset = true, changed = Poll.DataChanged(true))
+  def restart(): Unit = load(reset = true, changed = Poll.DataChanged.Changed)
 
   /** A poll — or an outside change (a decision, a job started here): the rows shown, current again. */
-  def refresh(changed: Poll.DataChanged = Poll.DataChanged(false)): Unit = load(reset = false, changed)
+  def refresh(changed: Poll.DataChanged = Poll.DataChanged.Unchanged): Unit = load(reset = false, changed)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
@@ -77,7 +77,7 @@ final class PolledList[A](
       cancel(timer)
       val cur = listing.now()
       val upTo = if reset then None else ListPaging.pollUpTo(cur, a => id(a).value).map(Paging.Cursor(_))
-      older.set(PolledList.Older(false))
+      older.set(PolledList.Older.Newest)
       if reset then restarting.set(true)
       val ticket = latest.start()
       fetch(upTo, None).onComplete(r =>
@@ -104,12 +104,18 @@ final class PolledList[A](
         schedule(Some(Poll.Revision(Poll.MaxMs)))
       case Success((rows, page)) =>
         val next = if upTo.isEmpty then ListPaging.first(rows, page) else ListPaging.polled(cur, rows, page)
-        val moved = changed.value || next != cur
-        if !reset && loaded.now().value then after(cur, rows)
+        val moved = changed.changed || next != cur
+        if !reset && loaded.now().loaded then after(cur, rows)
         failure.set(None)
         listing.set(next)
-        loaded.set(PolledList.Loaded(true))
-        schedule(Poll.next(delay, Poll.LiveMode(live(rows, page)), Poll.DataChanged(moved)))
+        loaded.set(PolledList.Loaded.Loaded)
+        schedule(
+          Poll.next(
+            delay,
+            (if live(rows, page) then Poll.LiveMode.Live else Poll.LiveMode.Paused),
+            (if moved then Poll.DataChanged.Changed else Poll.DataChanged.Unchanged)
+          )
+        )
 
   /** "Show older": the next page, appended. A poll on its way is superseded (and rescheduled here). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -118,11 +124,11 @@ final class PolledList[A](
     listing.now().page.next.foreach { cursor =>
       if mounted then
         cancel(timer)
-        older.set(PolledList.Older(true))
+        older.set(PolledList.Older.Older)
         val ticket = latest.start()
         fetch(None, Some(cursor)).onComplete { r =>
           if mounted && latest.isCurrent(ticket) then
-            older.set(PolledList.Older(false))
+            older.set(PolledList.Older.Newest)
             r match
               case Failure(e) =>
                 failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage))));
@@ -131,7 +137,11 @@ final class PolledList[A](
                 failure.set(None)
                 listing.update(ListPaging.appended(_, rows, page, a => id(a).value))
                 schedule(
-                  Poll.next(delay, Poll.LiveMode(live(listing.now().rows, page)), changed = Poll.DataChanged(false))
+                  Poll.next(
+                    delay,
+                    (if live(listing.now().rows, page) then Poll.LiveMode.Live else Poll.LiveMode.Paused),
+                    changed = Poll.DataChanged.Unchanged
+                  )
                 )
         }
     }
@@ -146,7 +156,7 @@ final class PolledList[A](
   /** The "Show older" button under the list. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def olderButton: HtmlElement =
-    ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.value), () => showOlder())
+    ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.older), () => showOlder())
 
   /** The error line: what the last request answered, `what` naming the list. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -168,12 +178,18 @@ object PolledList:
     * `mounted` guard, the stale-answer guard and the error line with the list windows; it has no pages, so it never
     * shows older rows. `after` gets the item before and after each poll (not the first load).
     */
-  type Loaded = Loaded.T
-  object Loaded extends Newtype[Boolean, Pure]
-  type Older = Older.T
-  object Older extends Newtype[Boolean, Pure]
-  type Restarting = Restarting.T
-  object Restarting extends Newtype[Boolean, Pure]
+  enum Loaded derives CanEqual:
+    case Loaded, Pending
+  object Loaded:
+    extension (loaded: Loaded) def loaded: Boolean = loaded == Loaded
+  enum Older derives CanEqual:
+    case Older, Newest
+  object Older:
+    extension (older: Older) def older: Boolean = older == Older
+  enum Restarting derives CanEqual:
+    case Restarting, Running
+  object Restarting:
+    extension (restarting: Restarting) def restarting: Boolean = restarting == Restarting
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def single[A](

@@ -12,8 +12,10 @@ import com.histmersion.lint.{tolerated, LintRule}
 object ResultsWidth:
   type KeyName = KeyName.T
   object KeyName extends Newtype[String, Pure]
-  type ShiftHeld = ShiftHeld.T
-  object ShiftHeld extends Newtype[Boolean, Pure]
+  enum ShiftHeld derives CanEqual:
+    case Held, Released
+  object ShiftHeld:
+    extension (shiftHeld: ShiftHeld) def held: Boolean = shiftHeld == Held
   type ViewportWidth = ViewportWidth.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ViewportWidth extends Newtype[Double, Pure]
@@ -51,7 +53,7 @@ object ResultsWidth:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def step(w: Width, key: KeyName, shift: ShiftHeld, viewport: StepViewport): Option[Width] =
-    val by = if shift.value then 64 else 16
+    val by = if shift.held then 64 else 16
     key.value match
       case "ArrowLeft"  => Some(clamp(Width(w.value + by), viewport))
       case "ArrowRight" => Some(clamp(Width(w.value - by), viewport))

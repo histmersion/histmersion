@@ -16,10 +16,14 @@ import com.histmersion.lint.{tolerated, LintRule}
   * is the reference.
   */
 object ResultsPaging:
-  type Failed = Failed.T
-  object Failed extends Newtype[Boolean, Pure]
-  type Loading = Loading.T
-  object Loading extends Newtype[Boolean, Pure]
+  enum Failed derives CanEqual:
+    case Failed, Succeeded
+  object Failed:
+    extension (failed: Failed) def failed: Boolean = failed == Failed
+  enum Loading derives CanEqual:
+    case Loading, Idle
+  object Loading:
+    extension (loading: Loading) def loading: Boolean = loading == Loading
   type PageNumber = PageNumber.T
   object PageNumber extends Newtype[Int, Pure]
 
@@ -70,8 +74,8 @@ object ResultsPaging:
     div(
       id.map(idAttr := _),
       cls := "count",
-      cls("is-loading") <-- loading.map(_.value),
-      cls("is-error") <-- error.map(_.value),
+      cls("is-loading") <-- loading.map(_.loading),
+      cls("is-error") <-- error.map(_.failed),
       child.text <-- text.map(_.value)
     )
 
@@ -86,8 +90,8 @@ object ResultsPaging:
           button(
             typ := "button",
             cls := "btn btn--block more",
-            child.text <-- loading.map(b => if b.value then "loading…" else l.value),
-            disabled <-- loading.map(_.value),
+            child.text <-- loading.map(b => if b.loading then "loading…" else l.value),
+            disabled <-- loading.map(_.loading),
             onClick --> (_ => onMore())
           )
         )

@@ -41,8 +41,8 @@ object TreeTab:
       idAttr := "tree-pane",
       ResultsPaging.countBar(
         countText.signal,
-        loading.signal.map(ResultsPaging.Loading(_)),
-        failed.signal.map(ResultsPaging.Failed(_)),
+        loading.signal.map((if _ then ResultsPaging.Loading.Loading else ResultsPaging.Loading.Idle)),
+        failed.signal.map((if _ then ResultsPaging.Failed.Failed else ResultsPaging.Failed.Succeeded)),
         id = Some("tree-count")
       ),
       div(idAttr := "tree-list", cls := "tree-list", children <-- treeContent.signal)

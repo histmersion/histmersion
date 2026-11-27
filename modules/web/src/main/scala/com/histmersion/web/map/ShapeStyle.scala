@@ -20,7 +20,7 @@ final case class ShapeStyle(
     dash: List[ShapeStyle.Dash] = Nil,
     dashedLineOpacity: Option[ShapeStyle.DashedLineOpacity] = None,
     circleRadius: ShapeStyle.CircleRadius = ShapeStyle.CircleRadius(0.0),
-    interactive: ShapeStyle.Interactive = ShapeStyle.Interactive(false)
+    interactive: ShapeStyle.Interactive = ShapeStyle.Interactive.Inert
 )
 
 object ShapeStyle:
@@ -38,5 +38,7 @@ object ShapeStyle:
   object DashedLineOpacity extends Newtype[Double, Pure]
   type CircleRadius = CircleRadius.T
   object CircleRadius extends Newtype[Double, Pure]
-  type Interactive = Interactive.T
-  object Interactive extends Newtype[Boolean, Pure]
+  enum Interactive derives CanEqual:
+    case Interactive, Inert
+  object Interactive:
+    extension (interactive: Interactive) def interactive: Boolean = interactive == Interactive

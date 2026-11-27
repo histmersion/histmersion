@@ -73,11 +73,11 @@ class SpiderfySuite extends munit.FunSuite:
   }
 
   test("a bubble is fanned out when it holds dots only, and not too many") {
-    assert(MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell(false)))
+    assert(MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell.NoCell))
     assert(
-      !MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell(true)),
+      !MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell.HoldsCell),
       "a tile's counted cell is no one dot"
     )
-    assert(!MapView.spiderfies(DotCluster.Total(1), holdsCell = MapView.HoldsCell(false)))
-    assert(!MapView.spiderfies(DotCluster.Total(Layout.spiderMax.value + 1), holdsCell = MapView.HoldsCell(false)))
+    assert(!MapView.spiderfies(DotCluster.Total(1), holdsCell = MapView.HoldsCell.NoCell))
+    assert(!MapView.spiderfies(DotCluster.Total(Layout.spiderMax.value + 1), holdsCell = MapView.HoldsCell.NoCell))
   }

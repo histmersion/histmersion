@@ -62,7 +62,7 @@ object EventsTab:
   /** How many the list holds, once it has an answer (its tab's count). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val total: Signal[Option[RowCount]] =
-    tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
+    tab.state.signal.map(s => Option.when(s.loaded.loaded)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`), else its
     * four-point span.

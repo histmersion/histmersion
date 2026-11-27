@@ -142,7 +142,7 @@ object EventLayer:
           ShapeFeature(
             ShapeFeature.Id(id.value),
             g,
-            dashed = ShapeFeature.Dashed(true),
+            dashed = ShapeFeature.Dashed.Dashed,
             alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value))
           )
         )

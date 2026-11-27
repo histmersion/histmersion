@@ -19,7 +19,7 @@ final class Field[A](
     val persist: Persist,
     val role: Role,
     val label: Option[Field.Label] = None,
-    val chip: Field.Chip = Field.Chip(true)
+    val chip: Field.Chip = Field.Chip.Chip
 )(using val codec: FieldCodec[A]):
   private val v = Var(initial)
   // `var`: `from`/`to` default to the CONFIGURED span, known only once `/api/config` has answered
@@ -54,5 +54,7 @@ object Field:
   object HashKey extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  type Chip = Chip.T
-  object Chip extends Newtype[Boolean, Pure]
+  enum Chip derives CanEqual:
+    case Chip, Plain
+  object Chip:
+    extension (chip: Chip) def chip: Boolean = chip == Chip

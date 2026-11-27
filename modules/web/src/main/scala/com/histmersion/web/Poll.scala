@@ -10,10 +10,14 @@ import com.histmersion.lint.{tolerated, LintRule}
   * nothing changes, and none once nothing is live. Pure.
   */
 object Poll:
-  type DataChanged = DataChanged.T
-  object DataChanged extends Newtype[Boolean, Pure]
-  type LiveMode = LiveMode.T
-  object LiveMode extends Newtype[Boolean, Pure]
+  enum DataChanged derives CanEqual:
+    case Changed, Unchanged
+  object DataChanged:
+    extension (dataChanged: DataChanged) def changed: Boolean = dataChanged == Changed
+  enum LiveMode derives CanEqual:
+    case Live, Paused
+  object LiveMode:
+    extension (liveMode: LiveMode) def live: Boolean = liveMode == Live
   type Revision = Revision.T
   object Revision extends Newtype[Int, Pure]
 
@@ -26,6 +30,6 @@ object Poll:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def next(previous: Option[Revision], live: LiveMode, changed: DataChanged): Option[Revision] =
-    if !live.value then None
-    else if changed.value then Some(Revision(FirstMs))
+    if !live.live then None
+    else if changed.changed then Some(Revision(FirstMs))
     else Some(Revision(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p.value * Factor).toInt))))

@@ -162,7 +162,8 @@ object BaseMaps:
       BaseMapSpec.Raster.Template(url),
       BaseMapSpec.Raster.MaxZoom(ui.tilesMaxZoom.value),
       BaseMapSpec.Raster.Attribution(credit),
-      dark = BaseMapSpec.Raster.Dark(BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value))))
+      dark = (if BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value))) then BaseMapSpec.Raster.Dark.Dark
+              else BaseMapSpec.Raster.Dark.Light)
     )
 
   /** What is drawn for base map `b` (already [[effective]]), the server's status and the viewer's options: the spec,
@@ -189,10 +190,12 @@ object BaseMaps:
               v,
               st,
               BaseMapSpec.Vector.Lang(lang),
-              BaseMapSpec.Vector.Names(prefs.names.map(_.value).getOrElse(true)),
-              BaseMapSpec.Vector.Contours(prefs.contours.map(_.value).getOrElse(true)),
-              BaseMapSpec.Vector.SeaDepth(prefs.seaDepth(v)),
-              reduced = BaseMapSpec.Vector.Reduced(soft)
+              (if prefs.names.map(_.value).getOrElse(true) then BaseMapSpec.Vector.Names.Shown
+               else BaseMapSpec.Vector.Names.Hidden),
+              (if prefs.contours.map(_.value).getOrElse(true) then BaseMapSpec.Vector.Contours.Shown
+               else BaseMapSpec.Vector.Contours.Hidden),
+              (if prefs.seaDepth(v) then BaseMapSpec.Vector.SeaDepth.Shown else BaseMapSpec.Vector.SeaDepth.Hidden),
+              reduced = (if soft then BaseMapSpec.Vector.Reduced.Reduced else BaseMapSpec.Vector.Reduced.Full)
             )
             val lacking = st.missing(Basemap.StyleState.Id(b.wire.value))
             val notice = if lacking.nonEmpty then (lackingNotice(lacking.map(_.value)), true) else (PastNotice, false)
@@ -236,7 +239,7 @@ object BaseMaps:
   def install(m: MapSurface, config: UiConfig)(using Owner): Unit =
     surface = m
     ui = config
-    software.set(m.capabilities.software.value)
+    software.set(m.capabilities.software.software)
     view.set(Some((m.zoom.value, m.bounds)))
     val _ = m.on(MapEventKind.MoveEnd)(_ => view.set(Some((m.zoom.value, m.bounds))))
     // the credits are shown at first; the reader's first pan or zoom folds them to their (i) button
@@ -297,7 +300,7 @@ object BaseMaps:
   private def foldAfterMove(): Unit =
     noticeEl.foreach { box =>
       if footOpen.isEmpty && !notice.exists(_._2) then
-        MapFold.set(box, MapFold.Open(false))
+        MapFold.set(box, MapFold.Open.Folded)
         dom.window.requestAnimationFrame((_: Double) => fitNotice())
     }
 
@@ -322,10 +325,10 @@ object BaseMaps:
           if notice.nonEmpty then MapFold.Label("about this map: its terrain and credits")
           else MapFold.Label("map credits"),
           Icon.html(Icon.Info),
-          MapFold.Open(open)
+          (if open then MapFold.Open.Open else MapFold.Open.Folded)
         )
       )
-      MapFold.set(box, MapFold.Open(open))
+      MapFold.set(box, (if open then MapFold.Open.Open else MapFold.Open.Folded))
       box.classList.toggle("is-expanded", footOpen.contains(true))
       // the online OpenStreetMap tiles' credit stays in sight, folded or not
       if keepsOsmCredit(shown.now()) then
@@ -333,7 +336,10 @@ object BaseMaps:
         osm.className = "map-credits-keep"
         HtmlSink.replace(osm, markup"""© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>""")
         box.appendChild(osm)
-      MapFold.wire(box, o => { footOpen = Some(o.value); box.classList.toggle("is-expanded", o.value); fitNotice() })
+      MapFold.wire(
+        box,
+        o => { footOpen = Some(o.changed); box.classList.toggle("is-expanded", o.changed); fitNotice() }
+      )
       val body = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
       body.className = "map-foot-body"
       body.id = "map-foot-body"
@@ -698,7 +704,7 @@ object BaseMaps:
           cls := "field map-motion-select",
           idAttr := "map-motion-select",
           aria.label := "map motion",
-          aria.describedBy <-- MotionPref.heldBySystem.map(h => if h.value then "map-motion-note" else ""),
+          aria.describedBy <-- MotionPref.heldBySystem.map(h => if h.held then "map-motion-note" else ""),
           MapMotion.values.toList.map(m => option(value := m.wire.value, m.label)),
           controlled(
             value <-- UiState.mapMotion.signal.map(_.wire.value),
@@ -709,7 +715,7 @@ object BaseMaps:
         )
       ),
       child.maybe <-- MotionPref.heldBySystem.map(h =>
-        Option.when(h.value)(
+        Option.when(h.held)(
           div(idAttr := "map-motion-note", cls := "map-option-why map-motion-note", role := "note", MotionNote)
         )
       )

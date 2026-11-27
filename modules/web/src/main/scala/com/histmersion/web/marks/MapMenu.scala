@@ -26,14 +26,14 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object MapMenu:
 
-  val locked: Var[MapSurface.Locked] = Var(MapSurface.Locked(false))
+  val locked: Var[MapSurface.Locked] = Var(MapSurface.Locked.Free)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def setLocked(on: MapSurface.Locked, surface: MapSurface): Unit =
     locked.set(on)
     surface.setLocked(on)
-    Flash.say(if on.value then Flash.Text("The map is locked: it does not move until you unlock it.")
+    Flash.say(if on.locked then Flash.Text("The map is locked: it does not move until you unlock it.")
     else Flash.Text("The map moves again."))
 
   /** A point on the map, as a target. Pure. */
@@ -78,10 +78,11 @@ object MapMenu:
         .Entry(ContextMenu.Entry.Label("Add a note here"), () => NoteEditor.write(here, Title("Place on the map"))),
       ContextMenu.Separator,
       ContextMenu.Entry(
-        if locked.now().value then ContextMenu.Entry.Label("Unlock the map")
+        if locked.now().locked then ContextMenu.Entry.Label("Unlock the map")
         else ContextMenu.Entry.Label("Lock the map"),
-        () => setLocked(MapSurface.Locked(!locked.now().value), surface),
-        pressed = Some(ContextMenu.Entry.Pressed(locked.now().value))
+        () => setLocked((if !locked.now().locked then MapSurface.Locked.Locked else MapSurface.Locked.Free), surface),
+        pressed =
+          Some((if locked.now().locked then ContextMenu.Entry.Pressed.Pressed else ContextMenu.Entry.Pressed.Released))
       ),
       ContextMenu.Entry(
         ContextMenu.Entry.Label("Start the map here"),
@@ -171,7 +172,7 @@ object MapMenu:
       box,
       div(
         cls := "map-lock-note",
-        cls("is-hidden") <-- locked.signal.map(l => !l.value),
+        cls("is-hidden") <-- locked.signal.map(l => !l.locked),
         role := "status",
         Icon(Icon.Lock),
         span("The map is locked"),
@@ -179,7 +180,7 @@ object MapMenu:
           typ := "button",
           cls := "btn btn--sm map-unlock",
           "Unlock",
-          onClick --> (_ => setLocked(MapSurface.Locked(false), surface))
+          onClick --> (_ => setLocked(MapSurface.Locked.Free, surface))
         )
       )
     )

@@ -8,8 +8,10 @@ import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure rules of a pinned place card (#1441). */
 object PinRules:
-  type ChosenNow = ChosenNow.T
-  object ChosenNow extends Newtype[Boolean, Pure]
+  enum ChosenNow derives CanEqual:
+    case ChosenNow, ChosenBefore
+  object ChosenNow:
+    extension (chosenNow: ChosenNow) def chosenNow: Boolean = chosenNow == ChosenNow
   type ElementSize = ElementSize.T
   object ElementSize extends Newtype[Double, Pure]
   type KeyName = KeyName.T
@@ -33,7 +35,7 @@ object PinRules:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def pinAfterClick(chosenNow: ChosenNow): Boolean = chosenNow.value
+  def pinAfterClick(chosenNow: ChosenNow): Boolean = chosenNow.chosenNow
 
   /** Pure: a point in the map container (`x`, `y`, from its top-left) as a viewport point, when it is inside the
     * container's `w`×`h` box at (`left`, `top`) — `None` while it is panned out of view.

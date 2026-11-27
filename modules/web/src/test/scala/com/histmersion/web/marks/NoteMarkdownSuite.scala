@@ -17,10 +17,10 @@ class NoteMarkdownSuite extends munit.FunSuite:
       List(
         Block.Heading(Block.Heading.Level(1), List(Inline.Text("Bridge"))),
         Block.Para(List(Inline.Text("It stands near "), Inline.Strong("Tiryns"), Inline.Text("."))),
-        Block.Items(Block.Items.Ordered(false), List(List(Inline.Text("one")), List(Inline.Text("two")))),
+        Block.Items(Block.Items.Ordered.Bulleted, List(List(Inline.Text("one")), List(Inline.Text("two")))),
         Block.Quote(List(Inline.Text("a quote"))),
         Block.CodeBlock("x = 1"),
-        Block.Items(Block.Items.Ordered(true), List(List(Inline.Text("first"))))
+        Block.Items(Block.Items.Ordered.Numbered, List(List(Inline.Text("first"))))
       )
     )
 

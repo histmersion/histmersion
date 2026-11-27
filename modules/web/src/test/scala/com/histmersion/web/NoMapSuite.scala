@@ -22,10 +22,10 @@ class NoMapSuite extends munit.FunSuite:
       MapLibreEngine
         .unsupported(
           Capabilities(
-            webgl = Capabilities.Webgl(false),
-            software = Capabilities.Software(true),
+            webgl = Capabilities.Webgl.Unsupported,
+            software = Capabilities.Software.Software,
             renderer = Capabilities.Renderer(""),
-            webgl2 = Capabilities.Webgl2(false)
+            webgl2 = Capabilities.Webgl2.Unsupported
           )
         )
         .map(_.sentence),
@@ -35,10 +35,10 @@ class NoMapSuite extends munit.FunSuite:
       MapLibreEngine
         .unsupported(
           Capabilities(
-            webgl = Capabilities.Webgl(true),
-            software = Capabilities.Software(false),
+            webgl = Capabilities.Webgl.Supported,
+            software = Capabilities.Software.Hardware,
             renderer = Capabilities.Renderer("Apple M4"),
-            webgl2 = Capabilities.Webgl2(false)
+            webgl2 = Capabilities.Webgl2.Unsupported
           )
         )
         .map(_.sentence),
@@ -47,8 +47,8 @@ class NoMapSuite extends munit.FunSuite:
     assertEquals(
       MapLibreEngine.unsupported(
         Capabilities(
-          webgl = Capabilities.Webgl(true),
-          software = Capabilities.Software(true),
+          webgl = Capabilities.Webgl.Supported,
+          software = Capabilities.Software.Software,
           renderer = Capabilities.Renderer("SwiftShader")
         )
       ),

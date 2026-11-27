@@ -55,7 +55,7 @@ object ArticlesTab:
   /** How many the list holds, once it has an answer (its tab's count). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val total: Signal[Option[RowCount]] =
-    tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
+    tab.state.signal.map(s => Option.when(s.loaded.loaded)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window) and "open in a new tab".

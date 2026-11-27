@@ -176,9 +176,9 @@ class BaseMapsSuite extends munit.FunSuite:
     )
     spec match
       case BaseMapSpec.Vector(VectorStyle.Physical, _, lang, names, contours, seaDepth, reduced)
-          if lang == BaseMapSpec.Vector.Lang("el") && names == BaseMapSpec.Vector.Names(true) &&
-            contours == BaseMapSpec.Vector.Contours(false) && seaDepth == BaseMapSpec.Vector.SeaDepth(true) &&
-            reduced == BaseMapSpec.Vector.Reduced(false) =>
+          if lang == BaseMapSpec.Vector.Lang("el") && names == BaseMapSpec.Vector.Names.Shown &&
+            contours == BaseMapSpec.Vector.Contours.Hidden && seaDepth == BaseMapSpec.Vector.SeaDepth.Shown &&
+            reduced == BaseMapSpec.Vector.Reduced.Full =>
         ()
       case other => fail(other.toString)
     assertEquals((notice.map(_._1), z), (Some(BaseMaps.PastNotice), Basemap.Zoom(16)))
@@ -192,7 +192,7 @@ class BaseMapsSuite extends munit.FunSuite:
         local = false,
         soft = true
       )
-    assert(s2.asInstanceOf[BaseMapSpec.Vector].reduced.value)
+    assert(s2.asInstanceOf[BaseMapSpec.Vector].reduced.reduced)
     assert(n2.exists((t, warn) => warn && t.contains("roads")))
     // the configured language (`basemap.labels.language`) unless the viewer chose one; offered in the menu
     BaseMaps
@@ -206,7 +206,7 @@ class BaseMapsSuite extends munit.FunSuite:
       )
       ._1 match
       case BaseMapSpec.Vector(_, _, lang, _, _, seaDepth, _)
-          if lang == BaseMapSpec.Vector.Lang("de") && seaDepth == BaseMapSpec.Vector.SeaDepth(false) =>
+          if lang == BaseMapSpec.Vector.Lang("de") && seaDepth == BaseMapSpec.Vector.SeaDepth.Hidden =>
         ()
       case other => fail(other.toString)
     assertEquals(BaseMaps.languageChoices("de"), BaseMaps.Languages)
@@ -225,12 +225,12 @@ class BaseMapsSuite extends munit.FunSuite:
 
   test("the online maps: the configured tiles, the HOT style's own, Dark the same tiles inverted; their credits"):
     val std = BaseMaps.raster(BaseMap.Standard, ui)
-    assertEquals((std.template.value, std.maxZoom.value, std.dark.value), (ui.tiles.value, 12, false))
+    assertEquals((std.template.value, std.maxZoom.value, std.dark.dark), (ui.tiles.value, 12, false))
     assert(std.attribution.value.contains("OpenStreetMap") && !std.attribution.value.contains("Humanitarian"))
     assert(BaseMaps.raster(BaseMap.Muted, ui).attribution.value.contains("Humanitarian"))
-    assert(BaseMaps.raster(BaseMap.Dark, ui).dark.value)
+    assert(BaseMaps.raster(BaseMap.Dark, ui).dark.dark)
     assert(
-      !BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo(UiConfig.TilesTone("dark"))).dark.value,
+      !BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo(UiConfig.TilesTone("dark"))).dark.dark,
       "dark tiles already"
     )
     assertEquals(
@@ -307,7 +307,7 @@ class BaseMapsSuite extends munit.FunSuite:
       MapPrefs(depthPhysical = Some(MapPrefs.DepthPhysical(false)))
     )
     BaseMaps.plan(BaseMap.Readable, Some(status(true)), r, ui, local = false, soft = false)._1 match
-      case v: BaseMapSpec.Vector => assert(v.seaDepth.value)
+      case v: BaseMapSpec.Vector => assert(v.seaDepth.shown)
       case other                 => fail(other.toString)
     assertEquals(BaseMaps.seaDepthWhy(BaseMap.Readable, Some(status(true)), soft = false), None)
     assert(
@@ -349,7 +349,7 @@ class BaseMapsSuite extends munit.FunSuite:
         MapFold.ControlsId("hd-legend-body"),
         MapFold.Label("map legend"),
         html"<span>legend</span>",
-        open = MapFold.Open(false)
+        open = MapFold.Open.Folded
       )
     assert(closed.value.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
     assert(closed.value.contains("""aria-controls="hd-legend-body""""), closed)
@@ -363,7 +363,7 @@ class BaseMapsSuite extends munit.FunSuite:
           MapFold.ControlsId("y"),
           MapFold.Label("a \"b\" & c"),
           Html.empty,
-          open = MapFold.Open(true)
+          open = MapFold.Open.Open
         )
         .value
         .contains("""aria-expanded="true" aria-label="a &quot;b&quot; &amp; c"""")

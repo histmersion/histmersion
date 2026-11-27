@@ -39,10 +39,10 @@ object MapLibreEngine extends MapEngine:
         gl match
           case None =>
             Capabilities(
-              webgl = Capabilities.Webgl(false),
-              software = Capabilities.Software(true),
+              webgl = Capabilities.Webgl.Unsupported,
+              software = Capabilities.Software.Software,
               renderer = Capabilities.Renderer(""),
-              webgl2 = Capabilities.Webgl2(false)
+              webgl2 = Capabilities.Webgl2.Unsupported
             )
           case Some(g) =>
             // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
@@ -57,18 +57,19 @@ object MapLibreEngine extends MapEngine:
                 else plain
             // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
             Capabilities(
-              webgl = Capabilities.Webgl(true),
-              software = Capabilities.Software(Capabilities.isSoftware(renderer)),
+              webgl = Capabilities.Webgl.Supported,
+              software = (if Capabilities.isSoftware(renderer) then Capabilities.Software.Software
+                          else Capabilities.Software.Hardware),
               renderer = renderer,
-              webgl2 = Capabilities.Webgl2(gl2.isDefined)
+              webgl2 = (if gl2.isDefined then Capabilities.Webgl2.Supported else Capabilities.Webgl2.Unsupported)
             )
       }
       .getOrElse(
         Capabilities(
-          webgl = Capabilities.Webgl(false),
-          software = Capabilities.Software(true),
+          webgl = Capabilities.Webgl.Unsupported,
+          software = Capabilities.Software.Software,
           renderer = Capabilities.Renderer(""),
-          webgl2 = Capabilities.Webgl2(false)
+          webgl2 = Capabilities.Webgl2.Unsupported
         )
       )
 

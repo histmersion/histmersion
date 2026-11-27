@@ -15,12 +15,12 @@ import com.histmersion.lint.{tolerated, LintRule}
 class MotionPrefSuite extends munit.FunSuite:
 
   override def afterEach(context: AfterEach): Unit =
-    MotionPref.systemChanged(MotionPref.SystemReduced(false))
+    MotionPref.systemChanged(MotionPref.SystemReduced.Full)
     MotionPref.choose(MapMotion.System)
 
   test("follow the system animates unless the system asks for reduced motion; always and never ignore it"):
-    val reduced = MotionPref.SystemReduced(true)
-    val unreduced = MotionPref.SystemReduced(false)
+    val reduced = MotionPref.SystemReduced.Reduced
+    val unreduced = MotionPref.SystemReduced.Full
     assertEquals(MapMotion.animates(MapMotion.System, unreduced), true)
     assertEquals(MapMotion.animates(MapMotion.System, reduced), false)
     for systemReduced <- List(unreduced, reduced) do
@@ -28,10 +28,10 @@ class MotionPrefSuite extends munit.FunSuite:
       assertEquals(MapMotion.animates(MapMotion.Never, systemReduced), false)
 
   test("the note shows only while following the system and the system asks for reduced motion"):
-    assert(MapMotion.heldBySystem(MapMotion.System, systemReduced = MotionPref.SystemReduced(true)))
-    assert(!MapMotion.heldBySystem(MapMotion.System, systemReduced = MotionPref.SystemReduced(false)))
-    assert(!MapMotion.heldBySystem(MapMotion.Always, systemReduced = MotionPref.SystemReduced(true)))
-    assert(!MapMotion.heldBySystem(MapMotion.Never, systemReduced = MotionPref.SystemReduced(true)))
+    assert(MapMotion.heldBySystem(MapMotion.System, systemReduced = MotionPref.SystemReduced.Reduced))
+    assert(!MapMotion.heldBySystem(MapMotion.System, systemReduced = MotionPref.SystemReduced.Full))
+    assert(!MapMotion.heldBySystem(MapMotion.Always, systemReduced = MotionPref.SystemReduced.Reduced))
+    assert(!MapMotion.heldBySystem(MapMotion.Never, systemReduced = MotionPref.SystemReduced.Reduced))
 
   test("MapLibre's reduceMotion: unset to follow the system (it reads it itself), false to always animate, true never"):
     assertEquals(MapMotion.mapLibreReduce(MapMotion.System), None)
@@ -49,20 +49,20 @@ class MotionPrefSuite extends munit.FunSuite:
 
   test("MotionPref follows the choice and a change of the system's setting, live"):
     MotionPref.choose(MapMotion.System)
-    MotionPref.systemChanged(MotionPref.SystemReduced(false))
+    MotionPref.systemChanged(MotionPref.SystemReduced.Full)
     assert(MotionPref.animate())
-    MotionPref.systemChanged(MotionPref.SystemReduced(true))
+    MotionPref.systemChanged(MotionPref.SystemReduced.Reduced)
     assert(!MotionPref.animate(), "the system asks for reduced motion: still")
     MotionPref.choose(MapMotion.Always)
     assert(MotionPref.animate(), "always: animates although the system asks")
     MotionPref.choose(MapMotion.Never)
-    MotionPref.systemChanged(MotionPref.SystemReduced(false))
+    MotionPref.systemChanged(MotionPref.SystemReduced.Full)
     assert(!MotionPref.animate(), "never: still although the system does not ask")
 
   test("a camera move eases only when the caller animates it and the map animates"):
     import com.histmersion.web.map.maplibre.MapLibreSurface
     MotionPref.choose(MapMotion.Always)
-    MotionPref.systemChanged(MotionPref.SystemReduced(true))
+    MotionPref.systemChanged(MotionPref.SystemReduced.Reduced)
     assert(MapLibreSurface.eases(true))
     assert(!MapLibreSurface.eases(false))
     val o = MapLibreSurface.motion(true, scala.scalajs.js.Dynamic.literal()).asInstanceOf[scala.scalajs.js.Dynamic]

@@ -29,7 +29,7 @@ object MapMotion:
   /** Pure: does the map animate under choice `m` when the system asks for reduced motion (`systemReduced`)? */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def animates(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m match
-    case System => !systemReduced.value
+    case System => !systemReduced.reduced
     case Always => true
     case Never  => false
 
@@ -37,7 +37,8 @@ object MapMotion:
     * under the setting.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def heldBySystem(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m == System && systemReduced.value
+  def heldBySystem(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean =
+    m == System && systemReduced.reduced
 
   /** Pure: MapLibre's `reduceMotion` option for a map made under `m` — `None` leaves MapLibre to read the system's
     * setting itself (it reads it on every camera move, so it follows a change at once).

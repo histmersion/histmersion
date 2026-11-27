@@ -93,7 +93,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       )
     )
     kind.title(a).foreach(t => el.setAttribute("title", t.value))
-    if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value)
+    if fadeIn.fadesIn then el.classList.add(FadingLayer.fadeIn.value)
     val m = new DomMarker(at(d).lat, at(d).lon, el, Some((DomMarker.BoxSize(w.value), DomMarker.BoxSize(h.value))))
     val z = kind.zIndex(a)
     if z.value != 0 then m.setZ(DomMarker.ZIndex(z.value))
@@ -111,8 +111,10 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
   def open(d: Dot, row: dom.Element): Unit = kind.open(PointKind.PointKey(d.key.value), d.item.asInstanceOf[A], row)
 
 object PointLayer:
-  type FadeIn = FadeIn.T
-  object FadeIn extends Newtype[Boolean, Pure]
+  enum FadeIn derives CanEqual:
+    case FadeIn, Instant
+  object FadeIn:
+    extension (fadeIn: FadeIn) def fadesIn: Boolean = fadeIn == FadeIn
 
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
 

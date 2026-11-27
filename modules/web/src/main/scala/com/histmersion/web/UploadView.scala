@@ -37,8 +37,8 @@ object UploadView:
       authors: List[Draft.Authors] = Nil,
       year: Draft.Year = Draft.Year(""),
       doi: Draft.Doi = Draft.Doi(""),
-      quality: Draft.Quality = Draft.Quality(false),
-      force: Draft.Force = Draft.Force(false),
+      quality: Draft.Quality = Draft.Quality.Fast,
+      force: Draft.Force = Draft.Force.Normal,
       forItem: Option[Queue.QueueItem] = None
   )
 
@@ -54,10 +54,14 @@ object UploadView:
     object Year extends Newtype[String, Pure]
     type Doi = Doi.T
     object Doi extends Newtype[String, Pure]
-    type Quality = Quality.T
-    object Quality extends Newtype[Boolean, Pure]
-    type Force = Force.T
-    object Force extends Newtype[Boolean, Pure]
+    enum Quality derives CanEqual:
+      case HighQuality, Fast
+    object Quality:
+      extension (quality: Quality) def highQuality: Boolean = quality == HighQuality
+    enum Force derives CanEqual:
+      case Force, Normal
+    object Force:
+      extension (force: Force) def forced: Boolean = force == Force
 
   /** A form field a message belongs next to. */
   enum Field derives CanEqual:
@@ -111,8 +115,8 @@ object UploadView:
         Ingest.Params(
           citekey = api.library.Citekey(d.citekey.value.trim),
           filename = d.fileName.map(f => Ingest.Params.Filename(f.value)),
-          quality = Ingest.Params.Quality(d.quality.value),
-          force = Ingest.Params.Force(d.force.value),
+          quality = Ingest.Params.Quality(d.quality.highQuality),
+          force = Ingest.Params.Force(d.force.forced),
           title = Some(d.title.value.trim).filter(_.nonEmpty).map(api.library.Title(_)),
           authors = d.authors.map(a => AuthorName(a.value)),
           year = year.toOption.flatten.map(y => api.catalogue.Year(y.toLong)),
@@ -411,11 +415,15 @@ object UploadView:
       ),
       div(
         cls := "form-checks",
-        checkbox("slower, higher-quality OCR", _.quality.value, (d, v) => d.modify(_.quality).setTo(Draft.Quality(v))),
+        checkbox(
+          "slower, higher-quality OCR",
+          _.quality.highQuality,
+          (d, v) => d.modify(_.quality).setTo((if v then Draft.Quality.HighQuality else Draft.Quality.Fast))
+        ),
         checkbox(
           "store it even if the same file is already stored under another citekey",
-          _.force.value,
-          (d, v) => d.modify(_.force).setTo(Draft.Force(v))
+          _.force.forced,
+          (d, v) => d.modify(_.force).setTo((if v then Draft.Force.Force else Draft.Force.Normal))
         )
       ),
       fieldError(Field.Form),

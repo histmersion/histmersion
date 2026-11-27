@@ -96,7 +96,7 @@ object FilterChips:
       remove = Some(() =>
         UiState
           .set(UiState.from := Some(config.time.defaultFrom.value), UiState.to := Some(config.time.defaultTo.value))(
-            push = UiState.SetPush(true)
+            push = UiState.SetPush.Push
           )
       )
     )

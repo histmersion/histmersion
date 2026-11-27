@@ -157,29 +157,33 @@ class ToolsSuite extends munit.FunSuite:
 
   test("polling backs off while nothing moves, restarts on a change, and stops when all jobs finished") {
     val running = List(job("a", JobState.Running), job("b", JobState.Done))
-    assertEquals(JobsView.Poll.next(None, running, changed = Poll.DataChanged(false)), Some(JobsView.Poll.FirstMs))
-    assertEquals(JobsView.Poll.next(Some(Poll.Revision(1000)), running, changed = Poll.DataChanged(false)), Some(1600))
+    assertEquals(JobsView.Poll.next(None, running, changed = Poll.DataChanged.Unchanged), Some(JobsView.Poll.FirstMs))
     assertEquals(
-      JobsView.Poll.next(Some(Poll.Revision(14000)), running, changed = Poll.DataChanged(false)),
+      JobsView.Poll.next(Some(Poll.Revision(1000)), running, changed = Poll.DataChanged.Unchanged),
+      Some(1600)
+    )
+    assertEquals(
+      JobsView.Poll.next(Some(Poll.Revision(14000)), running, changed = Poll.DataChanged.Unchanged),
       Some(JobsView.Poll.MaxMs)
     )
     assertEquals(
-      JobsView.Poll.next(Some(Poll.Revision(8000)), running, changed = Poll.DataChanged(true)),
+      JobsView.Poll.next(Some(Poll.Revision(8000)), running, changed = Poll.DataChanged.Changed),
       Some(JobsView.Poll.FirstMs)
     )
     assertEquals(
-      JobsView.Poll.next(Some(Poll.Revision(1000)), List(job("q", JobState.Queued)), changed = Poll.DataChanged(false)),
+      JobsView.Poll
+        .next(Some(Poll.Revision(1000)), List(job("q", JobState.Queued)), changed = Poll.DataChanged.Unchanged),
       Some(1600)
     )
     assertEquals(
       JobsView.Poll.next(
         Some(Poll.Revision(1000)),
         List(job("b", JobState.Done), job("c", JobState.Failed)),
-        Poll.DataChanged(true)
+        Poll.DataChanged.Changed
       ),
       None
     )
-    assertEquals(JobsView.Poll.next(None, Nil, changed = Poll.DataChanged(true)), None)
+    assertEquals(JobsView.Poll.next(None, Nil, changed = Poll.DataChanged.Changed), None)
   }
 
   test("the state filter and its counts") {
@@ -366,7 +370,7 @@ class ToolsSuite extends munit.FunSuite:
         authors = List(UploadView.Draft.Authors("David W. Anthony")),
         year = UploadView.Draft.Year("2007"),
         doi = UploadView.Draft.Doi("https://doi.org/10.1515/9781400831104"),
-        quality = UploadView.Draft.Quality(true)
+        quality = UploadView.Draft.Quality.HighQuality
       )
     )
     assertEquals(

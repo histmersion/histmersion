@@ -64,7 +64,7 @@ object App:
       Viewport.init(ui)
       MobileChrome.install()
       Auth.start(ui.keyRequired)
-      RunsView.enabled.set(RunsView.Enabled(ui.agentsEnabled.value))
+      RunsView.enabled.set((if ui.agentsEnabled.value then RunsView.Enabled.Enabled else RunsView.Enabled.Disabled))
       Notices.install(ui)
       MergeView.configure(ui)
       MapRegionsView.configure(ui)
@@ -75,7 +75,7 @@ object App:
       MyItems.load()
       // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
       if ui.setupDue.value && Router.now() != Route.Setup && !SetupPage.left then
-        Router.go(Route.Setup, push = Router.Push(false))
+        Router.go(Route.Setup, push = Router.Push.Replace)
       val appEl = div(
         cls := "histmersion-app",
         cls("is-setup") <-- Router.route.map(_ == Route.Setup),
@@ -86,7 +86,7 @@ object App:
         styleAttr <-- ResultsPanel.width.signal.map(w => s"--sidebar-w:${w}px"),
         // the filter panel lies over the map: folded or open, the map keeps its size; its corners' controls
         // move clear of it (the stylesheet's `--filters-w`)
-        cls("filters-folded") <-- FilterBar.folded.signal.map(_.value),
+        cls("filters-folded") <-- FilterBar.folded.signal.map(_.folded),
         cls("on-library-list") <-- Router.route.map(r => filtersShown(r) && r != Route.Explore),
         TopBar.element(ui),
         // Explore stays laid out under the other pages, hidden and out of the keyboard's way, so the map
@@ -279,7 +279,7 @@ object App:
     val b = UiState.to.now().getOrElse(config.time.defaultTo.value)
 
     statusVar.set("loading…")
-    ResultsList.busy(ResultsList.Busy(true))
+    ResultsList.busy(ResultsList.Busy.Busy)
 
     // ALL AT ONCE: the map feed, the page of sources and (in view) the feed without the viewport.
     // The sources used to be asked for only once the findings had arrived — a whole round trip and
@@ -310,7 +310,8 @@ object App:
               ResultsList.SourceRenderOpts(
                 findings = ResultsList.SourceRenderOpts.Findings(points.length),
                 total = ResultsList.SourceRenderOpts.Total(totalCount),
-                inView = ResultsList.SourceRenderOpts.InView(inView),
+                inView = (if inView then ResultsList.SourceRenderOpts.InView.InView
+                          else ResultsList.SourceRenderOpts.InView.OutOfView),
                 params = Some(sourceFilter)
               )
             )

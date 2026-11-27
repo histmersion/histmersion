@@ -49,24 +49,24 @@ class RunsViewSuite extends munit.FunSuite:
       !RunsView.live(Agents.RunInfo.Status("paused")) && !RunsView.live(Agents.RunInfo.Status("done")) && !RunsView
         .live(Agents.RunInfo.Status("nonsense"))
     )
-    assertEquals(RunsView.nextPoll(None, anyLive = Poll.LiveMode(false), changed = Poll.DataChanged(true)), None)
+    assertEquals(RunsView.nextPoll(None, anyLive = Poll.LiveMode.Paused, changed = Poll.DataChanged.Changed), None)
     assertEquals(
-      RunsView.nextPoll(None, anyLive = Poll.LiveMode(true), changed = Poll.DataChanged(true)),
+      RunsView.nextPoll(None, anyLive = Poll.LiveMode.Live, changed = Poll.DataChanged.Changed),
       Some(JobsView.Poll.FirstMs)
     )
     val slower = RunsView
       .nextPoll(
         Some(Poll.Revision(JobsView.Poll.FirstMs)),
-        anyLive = Poll.LiveMode(true),
-        changed = Poll.DataChanged(false)
+        anyLive = Poll.LiveMode.Live,
+        changed = Poll.DataChanged.Unchanged
       )
       .get
     assert(slower.value > JobsView.Poll.FirstMs)
     assertEquals(
       RunsView.nextPoll(
         Some(Poll.Revision(JobsView.Poll.MaxMs)),
-        anyLive = Poll.LiveMode(true),
-        changed = Poll.DataChanged(false)
+        anyLive = Poll.LiveMode.Live,
+        changed = Poll.DataChanged.Unchanged
       ),
       Some(JobsView.Poll.MaxMs)
     )

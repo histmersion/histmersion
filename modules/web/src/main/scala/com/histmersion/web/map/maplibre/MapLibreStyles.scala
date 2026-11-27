@@ -77,7 +77,7 @@ object MapLibreStyles:
     case r: BaseMapSpec.Raster => Future.successful(raster(r))
     case v: BaseMapSpec.Vector =>
       val withContours =
-        v.contours.value && !v.reduced.value && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
+        v.contours.shown && !v.reduced.reduced && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
       doc(v.style).flatMap { d =>
         val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin, v.seaDepth)
         if withContours then
@@ -143,7 +143,7 @@ object MapLibreStyles:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def raster(r: BaseMapSpec.Raster): js.Object =
     val paint = js.Dynamic.literal(`raster-opacity` = r.opacity.value)
-    if r.dark.value then
+    if r.dark.dark then
       // the light tiles drawn dark: inverted, the hues turned back, a little dimmed
       paint.`raster-brightness-min` = 0.9
       paint.`raster-brightness-max` = 0.06
@@ -208,7 +208,7 @@ object MapLibreStyles:
       names: BaseMapSpec.Vector.Names,
       reduced: BaseMapSpec.Vector.Reduced,
       origin: Origin,
-      seaDepth: BaseMapSpec.Vector.SeaDepth = BaseMapSpec.Vector.SeaDepth(true)
+      seaDepth: BaseMapSpec.Vector.SeaDepth = BaseMapSpec.Vector.SeaDepth.Shown
   ): js.Dynamic =
     val meta = s.metadata.selectDynamic("histmersion:sources").asInstanceOf[js.Dictionary[String]]
     js.Object.keys(s.sources.asInstanceOf[js.Object]).foreach { id =>
@@ -235,21 +235,21 @@ object MapLibreStyles:
                 .foreach(b => src.bounds = js.Array(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value))
         case None => drop(s, MapSurface.LayerId(id))
     }
-    if reduced.value then
+    if reduced.reduced then
       s.layers = s.layers
         .asInstanceOf[js.Array[js.Dynamic]]
         .filter(l => l.`type`.toString != "hillshade" && l.`type`.toString != "color-relief")
       List("dem", "sea").foreach(id =>
         if !js.isUndefined(s.sources.selectDynamic(id)) then drop(s, MapSurface.LayerId(id))
       )
-    if !names.value then
+    if !names.shown then
       s.layers = s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString != "symbol")
     val seaSources =
       js.Object.keys(s.sources.asInstanceOf[js.Object]).filter(id => meta.get(id).contains("bathymetry")).toSet
     s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>
       if !js.isUndefined(l.source) && seaSources.contains(l.source.toString) then
         if js.isUndefined(l.layout) then l.layout = js.Dynamic.literal()
-        l.layout.visibility = if seaDepth.value then "visible" else "none"
+        l.layout.visibility = if seaDepth.shown then "visible" else "none"
     }
     // the names' language: `name:{lang}` in every text field
     val key = if lang.value == "local" then "name" else s"name:${lang.value}"

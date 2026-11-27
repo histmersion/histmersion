@@ -21,20 +21,20 @@ trait MapSurface:
   def setView(
       at: LatLon,
       zoom: MapSurface.Zoom,
-      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
+      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate.Instant
   ): Unit
-  def setZoom(zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(true)): Unit =
+  def setZoom(zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate.Animated): Unit =
     setView(center, zoom, animate)
   def fitBounds(
       b: GeoBounds,
       padding: MapSurface.FitBoundsPadding,
       maxZoom: MapSurface.MaxZoom,
-      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)
+      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate.Animated
   ): Unit
   def panBy(
       dx: MapSurface.PanByDx,
       dy: MapSurface.PanByDy,
-      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)
+      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate.Instant
   ): Unit
   def project(p: LatLon): ScreenPt
   def unproject(p: ScreenPt): LatLon
@@ -134,20 +134,28 @@ object MapSurface:
   object ResizeCount extends Newtype[Int, Pure]
   type Zoom = Zoom.T
   object Zoom extends Newtype[Double, Pure]
-  type SetViewAnimate = SetViewAnimate.T
-  object SetViewAnimate extends Newtype[Boolean, Pure]
+  enum SetViewAnimate derives CanEqual:
+    case Animated, Instant
+  object SetViewAnimate:
+    extension (setViewAnimate: SetViewAnimate) def animated: Boolean = setViewAnimate == Animated
   type FitBoundsPadding = FitBoundsPadding.T
   object FitBoundsPadding extends Newtype[Int, Pure]
-  type FitBoundsAnimate = FitBoundsAnimate.T
-  object FitBoundsAnimate extends Newtype[Boolean, Pure]
+  enum FitBoundsAnimate derives CanEqual:
+    case Animated, Instant
+  object FitBoundsAnimate:
+    extension (fitBoundsAnimate: FitBoundsAnimate) def animated: Boolean = fitBoundsAnimate == Animated
   type PanByDx = PanByDx.T
   object PanByDx extends Newtype[Double, Pure]
   type PanByDy = PanByDy.T
   object PanByDy extends Newtype[Double, Pure]
-  type PanByAnimate = PanByAnimate.T
-  object PanByAnimate extends Newtype[Boolean, Pure]
-  type Locked = Locked.T
-  object Locked extends Newtype[Boolean, Pure]
+  enum PanByAnimate derives CanEqual:
+    case Animated, Instant
+  object PanByAnimate:
+    extension (panByAnimate: PanByAnimate) def animated: Boolean = panByAnimate == Animated
+  enum Locked derives CanEqual:
+    case Locked, Free
+  object Locked:
+    extension (locked: Locked) def locked: Boolean = locked == Locked
   type ShapesId = ShapesId.T
   object ShapesId extends Newtype[String, Pure]
   type ShapeSetId = ShapeSetId.T

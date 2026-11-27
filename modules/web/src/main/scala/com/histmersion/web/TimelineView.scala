@@ -155,7 +155,7 @@ object TimelineView:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def setSpan(from: Years.Astronomical, to: Years.Astronomical, push: Router.Push = Router.Push(true)): Unit =
+  private def setSpan(from: Years.Astronomical, to: Years.Astronomical, push: Router.Push = Router.Push.Push): Unit =
     val (nf, nt) = clamp(from, to)
     if locked.now() then bumpRender()
     else if nf == spanFrom && nt == spanTo then ()
@@ -165,7 +165,7 @@ object TimelineView:
       bumpRender()
       scheduleDetail()
       App.quickRenderIfCached(nf, nt)
-      if push.value then UiState.set(UiState.from := Some(nf.value), UiState.to := Some(nt.value))()
+      if push.pushes then UiState.set(UiState.from := Some(nf.value), UiState.to := Some(nt.value))()
 
   private def bumpRender(): Unit = renderTick.update(_ + 1)
 
@@ -758,7 +758,7 @@ object TimelineView:
         if locked.now() then ContextMenu.Entry.Label("Unlock the timeline")
         else ContextMenu.Entry.Label("Lock the timeline"),
         () => setLocked(!locked.now()),
-        pressed = Some(ContextMenu.Entry.Pressed(locked.now()))
+        pressed = Some((if locked.now() then ContextMenu.Entry.Pressed.Pressed else ContextMenu.Entry.Pressed.Released))
       ),
       ContextMenu.Entry(
         ContextMenu.Entry.Label(shown"Start the timeline at ${Fmt.periodStr(a, b)}"),
@@ -923,11 +923,11 @@ object TimelineView:
                   case DragKind.LeftHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nf = Math.max(limits.min.value, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
-                    setSpan(Years.Astronomical(nf), Years.Astronomical(d.origTo), push = Router.Push(false))
+                    setSpan(Years.Astronomical(nf), Years.Astronomical(d.origTo), push = Router.Push.Replace)
                   case DragKind.RightHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nt = Math.min(limits.max.value, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
-                    setSpan(Years.Astronomical(d.origFrom), Years.Astronomical(nt), push = Router.Push(false))
+                    setSpan(Years.Astronomical(d.origFrom), Years.Astronomical(nt), push = Router.Push.Replace)
                   case DragKind.PanRange =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val rangeWidth = d.origTo - d.origFrom
@@ -935,7 +935,7 @@ object TimelineView:
                     var nt = d.origTo + yearDelta
                     if nf < limits.min.value then { nf = limits.min.value; nt = nf + rangeWidth }
                     if nt > limits.max.value then { nt = limits.max.value; nf = nt - rangeWidth }
-                    setSpan(Years.Astronomical(nf), Years.Astronomical(nt), push = Router.Push(false))
+                    setSpan(Years.Astronomical(nf), Years.Astronomical(nt), push = Router.Push.Replace)
                   case _ => ()
               }
           )

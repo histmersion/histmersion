@@ -254,7 +254,7 @@ object PlacesInput:
       dash = List(ShapeStyle.Dash(4), ShapeStyle.Dash(3)),
       dashedLineOpacity = Some(ShapeStyle.DashedLineOpacity(0.7)),
       circleRadius = ShapeStyle.CircleRadius(uiConfig.markerRadius.value.toDouble),
-      interactive = ShapeStyle.Interactive(true)
+      interactive = ShapeStyle.Interactive.Interactive
     )
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -267,7 +267,7 @@ object PlacesInput:
       colour = Some(ShapeStyle.Colour(ThemeTokens(ThemeTokens.Name("--place-preview")).value)),
       dash = List(ShapeStyle.Dash(1), ShapeStyle.Dash(2)),
       circleRadius = ShapeStyle.CircleRadius(uiConfig.markerRadius.value.toDouble),
-      interactive = ShapeStyle.Interactive(true)
+      interactive = ShapeStyle.Interactive.Interactive
     )
   )
 
@@ -299,7 +299,14 @@ object PlacesInput:
       TheMap.pane(MapStack.Pane.AreaPoints).add(m)
       names += m
       None
-    else Some(ShapeFeature(ShapeFeature.Id(id.value), geo, dashed = ShapeFeature.Dashed(d.contested.value)))
+    else
+      Some(
+        ShapeFeature(
+          ShapeFeature.Id(id.value),
+          geo,
+          dashed = (if d.contested.value then ShapeFeature.Dashed.Dashed else ShapeFeature.Dashed.Solid)
+        )
+      )
 
   private def clearNames(names: scala.collection.mutable.ListBuffer[DomMarker]): Unit =
     names.foreach(m => TheMap.pane(MapStack.Pane.AreaPoints).remove(m))
@@ -542,7 +549,7 @@ object PlacesInput:
               val geo = js.JSON.parse(geoStr.value)
               previewSet.set(
                 drawPlace(id, d, geo, previewNames, () => effectiveAsOf)
-                  .map(_.modify(_.dashed).setTo(ShapeFeature.Dashed(true)))
+                  .map(_.modify(_.dashed).setTo(ShapeFeature.Dashed.Dashed))
                   .toList
               )
               previewShown = true

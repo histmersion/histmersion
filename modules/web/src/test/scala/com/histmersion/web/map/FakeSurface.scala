@@ -17,7 +17,7 @@ final class FakeSurface(
     w: MapSurface.Dimension = MapSurface.Dimension(1000),
     h: MapSurface.Dimension = MapSurface.Dimension(600),
     caps: Capabilities =
-      Capabilities(Capabilities.Webgl(true), Capabilities.Software(false), Capabilities.Renderer("fake"))
+      Capabilities(Capabilities.Webgl.Supported, Capabilities.Software.Hardware, Capabilities.Renderer("fake"))
 ) extends MapSurface:
   // `var`s: the view, as a map holds it
   private var c = LatLon(LatLon.Lat(37), LatLon.Lon(30))
@@ -50,7 +50,7 @@ final class FakeSurface(
   def setView(
       at: LatLon,
       zoom: MapSurface.Zoom,
-      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
+      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate.Instant
   ): Unit =
     c = at
     z = MapSurface.Zoom(math.min(zoom.value, zmax.value))
@@ -60,7 +60,7 @@ final class FakeSurface(
       b: GeoBounds,
       padding: MapSurface.FitBoundsPadding,
       maxZoom: MapSurface.MaxZoom,
-      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)
+      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate.Animated
   ): Unit =
     setView(
       LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)),
@@ -70,7 +70,7 @@ final class FakeSurface(
   def panBy(
       dx: MapSurface.PanByDx,
       dy: MapSurface.PanByDy,
-      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)
+      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate.Instant
   ): Unit =
     setView(unproject(ScreenPt(ScreenPt.X(w.value / 2 + dx.value), ScreenPt.Y(h.value / 2 + dy.value))), z)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

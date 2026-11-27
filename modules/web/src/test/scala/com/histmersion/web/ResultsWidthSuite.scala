@@ -21,7 +21,7 @@ class ResultsWidthSuite extends munit.FunSuite:
       ResultsWidth.step(
         ResultsWidth.Width(480),
         ResultsWidth.KeyName("ArrowLeft"),
-        shift = ResultsWidth.ShiftHeld(false),
+        shift = ResultsWidth.ShiftHeld.Released,
         ResultsWidth.StepViewport(1440)
       ),
       Some(496)
@@ -30,7 +30,7 @@ class ResultsWidthSuite extends munit.FunSuite:
       ResultsWidth.step(
         ResultsWidth.Width(480),
         ResultsWidth.KeyName("ArrowRight"),
-        shift = ResultsWidth.ShiftHeld(true),
+        shift = ResultsWidth.ShiftHeld.Held,
         ResultsWidth.StepViewport(1440)
       ),
       Some(416)
@@ -39,7 +39,7 @@ class ResultsWidthSuite extends munit.FunSuite:
       ResultsWidth.step(
         ResultsWidth.Width(480),
         ResultsWidth.KeyName("Home"),
-        shift = ResultsWidth.ShiftHeld(false),
+        shift = ResultsWidth.ShiftHeld.Released,
         ResultsWidth.StepViewport(1440)
       ),
       Some(ResultsWidth.min)
@@ -48,7 +48,7 @@ class ResultsWidthSuite extends munit.FunSuite:
       ResultsWidth.step(
         ResultsWidth.Width(480),
         ResultsWidth.KeyName("End"),
-        shift = ResultsWidth.ShiftHeld(false),
+        shift = ResultsWidth.ShiftHeld.Released,
         ResultsWidth.StepViewport(1440)
       ),
       Some(800)
@@ -57,7 +57,7 @@ class ResultsWidthSuite extends munit.FunSuite:
       ResultsWidth.step(
         ResultsWidth.Width(480),
         ResultsWidth.KeyName("a"),
-        shift = ResultsWidth.ShiftHeld(false),
+        shift = ResultsWidth.ShiftHeld.Released,
         ResultsWidth.StepViewport(1440)
       ),
       None

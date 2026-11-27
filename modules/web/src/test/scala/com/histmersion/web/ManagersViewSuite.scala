@@ -433,7 +433,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     val note = GoalsView.createdNote(
       a.toOption.get,
-      planned = GoalsView.Planned(true),
+      planned = GoalsView.Planned.Planned,
       seeded = Some(Managers.ManagerInfo.Id("seed:bronze-age-tin-where-from"))
     )
     assert(note.value.contains("planner is running") && note.value.contains("created paused"), note.value)
@@ -447,7 +447,7 @@ class ManagersViewSuite extends munit.FunSuite:
         GoalsView.TagsText("tin"),
         GoalsView.NewAreaPlan(true),
         GoalsView.NewAreaSeed(true),
-        GoalsView.Watch(true)
+        GoalsView.Watch.Watched
       )
       .toOption
       .get
@@ -508,7 +508,7 @@ class ManagersViewSuite extends munit.FunSuite:
       GoalsView.TagsText(""),
       plan = GoalsView.NewAreaPlan(false),
       seed = GoalsView.NewAreaSeed(false),
-      watch = GoalsView.Watch(true)
+      watch = GoalsView.Watch.Watched
     )
     assertEquals(
       off.map(_.watch),
@@ -522,7 +522,7 @@ class ManagersViewSuite extends munit.FunSuite:
         GoalsView.TagsText(""),
         plan = GoalsView.NewAreaPlan(false),
         seed = GoalsView.NewAreaSeed(false),
-        watch = GoalsView.Watch(true),
+        watch = GoalsView.Watch.Watched,
         autoIngest = Managers.ManagerConfig.AutoIngest(true),
         perDay = GoalsView.PerDay("3")
       )
@@ -536,7 +536,7 @@ class ManagersViewSuite extends munit.FunSuite:
           GoalsView.TagsText(""),
           GoalsView.NewAreaPlan(false),
           GoalsView.NewAreaSeed(false),
-          watch = GoalsView.Watch(true),
+          watch = GoalsView.Watch.Watched,
           autoIngest = Managers.ManagerConfig.AutoIngest(true),
           perDay = GoalsView.PerDay("lots")
         )
@@ -557,7 +557,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     val note = GoalsView.createdNote(
       on.toOption.get,
-      planned = GoalsView.Planned(false),
+      planned = GoalsView.Planned.Unplanned,
       seeded = None,
       watched = Some(Managers.ManagerInfo.Id("watch:zz-tin"))
     )
@@ -569,7 +569,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     val auto = GoalsView.createdNote(
       on.toOption.get,
-      planned = GoalsView.Planned(false),
+      planned = GoalsView.Planned.Unplanned,
       seeded = None,
       watched = Some(Managers.ManagerInfo.Id("watch:zz-tin")),
       active = Set(Managers.ManagerInfo.Id("watch:zz-tin"))

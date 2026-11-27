@@ -274,7 +274,7 @@ object ViewportToggle:
                     ),
                     MapSurface.FitBoundsPadding(0),
                     map.maxZoom,
-                    animate = MapSurface.FitBoundsAnimate(false)
+                    animate = MapSurface.FitBoundsAnimate.Instant
                   )
                 else UiState.set(UiState.bbox := Some(bboxOf(map)))()
               val _ = subs += sub

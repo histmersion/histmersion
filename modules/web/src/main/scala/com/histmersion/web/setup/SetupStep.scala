@@ -5,14 +5,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** The first-run setup's seven steps, in order. */
-enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional(false))
+enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional.Required)
     derives CanEqual:
   case Welcome extends SetupStep(SetupStep.Label("Welcome"))
   case Papers extends SetupStep(SetupStep.Label("Finding open papers"))
   case Maps extends SetupStep(SetupStep.Label("Maps"))
   case Background extends SetupStep(SetupStep.Label("Background data"))
-  case Agents extends SetupStep(SetupStep.Label("Research agents"), optional = SetupStep.Optional(true))
-  case Calibre extends SetupStep(SetupStep.Label("Calibre library"), optional = SetupStep.Optional(true))
+  case Agents extends SetupStep(SetupStep.Label("Research agents"), optional = SetupStep.Optional.Optional)
+  case Calibre extends SetupStep(SetupStep.Label("Calibre library"), optional = SetupStep.Optional.Optional)
   case Ready extends SetupStep(SetupStep.Label("Ready"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -26,5 +26,7 @@ object SetupStep:
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type Optional = Optional.T
-  object Optional extends Newtype[Boolean, Pure]
+  enum Optional derives CanEqual:
+    case Optional, Required
+  object Optional:
+    extension (optional: Optional) def optional: Boolean = optional == Optional

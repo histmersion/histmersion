@@ -43,17 +43,17 @@ object OpenBack:
         Router.go(Route.Explore)
         t.view.foreach(v => UiState.loadHash(UiState.UrlHash(v.value)))
         span(t)
-        UiState.set()(push = UiState.SetPush(true))
+        UiState.set()(push = UiState.SetPush.Push)
         at(t)
       case ItemKind.Point =>
         Router.go(Route.Explore)
         span(t)
-        UiState.set()(push = UiState.SetPush(true))
+        UiState.set()(push = UiState.SetPush.Push)
         at(t)
       case ItemKind.Period =>
         Router.go(Route.Explore)
         span(t)
-        UiState.set()(push = UiState.SetPush(true))
+        UiState.set()(push = UiState.SetPush.Push)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

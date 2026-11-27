@@ -16,12 +16,18 @@ import com.histmersion.lint.{tolerated, LintRule}
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
   */
 object MapKey:
-  type Events = Events.T
-  object Events extends Newtype[Boolean, Pure]
-  type Sites = Sites.T
-  object Sites extends Newtype[Boolean, Pure]
-  type Undated = Undated.T
-  object Undated extends Newtype[Boolean, Pure]
+  enum Events derives CanEqual:
+    case Shown, Hidden
+  object Events:
+    extension (events: Events) def shown: Boolean = events == Shown
+  enum Sites derives CanEqual:
+    case Shown, Hidden
+  object Sites:
+    extension (sites: Sites) def shown: Boolean = sites == Shown
+  enum Undated derives CanEqual:
+    case Shown, Hidden
+  object Undated:
+    extension (undated: Undated) def shown: Boolean = undated == Shown
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventsHtml: Html =
@@ -95,10 +101,10 @@ object MapKey:
   /** The key's markup: the shapes, then the icons of the layers on. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def html(events: Events, sites: Sites, undated: Undated = Undated(false)): Html =
+  def html(events: Events, sites: Sites, undated: Undated = Undated.Hidden): Html =
     val body =
-      shapesHtml ++ (if events.value then eventsHtml else Html.empty) ++ (if sites.value then sitesHtml else Html.empty)
-    (if undated.value then undatedHtml else Html.empty) ++
+      shapesHtml ++ (if events.shown then eventsHtml else Html.empty) ++ (if sites.shown then sitesHtml else Html.empty)
+    (if undated.shown then undatedHtml else Html.empty) ++
       markup"""<details class="hd-key"><summary>key</summary>$body</details>"""
 
   /** The legend's entry while the sites or events of no known date are drawn: their dashed outline. */
