@@ -10,6 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
 import java.time.Clock
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[places] object GazetteerImport:

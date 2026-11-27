@@ -21,6 +21,7 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
 import java.time.Clock
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an import of an event catalogue reads and writes: the stored events as its merge sees them, the placed records
   * written (events created and refreshed, corrections by hand applied), the records kept for a re-derivation, and the

@@ -68,6 +68,7 @@ import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What data management answers over HTTP, on a crafted pair of collections ("work" and "home"), recorded on the code
   * before data management moved into its own area: the whole bundle of work and the part changed since a moment (every

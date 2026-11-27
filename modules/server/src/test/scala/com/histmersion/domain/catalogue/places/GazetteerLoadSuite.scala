@@ -25,6 +25,7 @@ import com.histmersion.config.UserPaths
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The external gazetteer sources end to end (#1064): a pinned extract (checksum verified BEFORE anything is read, a
   * mismatch refused, a missing file downloaded through the seam), and the LPF drop folder (a hand-written Linked Places

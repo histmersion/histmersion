@@ -13,6 +13,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Creation
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 class QueueServiceDbSuite extends QueueServiceContract("db"):
   private val testDb = TestDb.url

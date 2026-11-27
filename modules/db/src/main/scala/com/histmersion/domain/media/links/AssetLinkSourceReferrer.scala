@@ -12,6 +12,7 @@ import com.histmersion.api.library.Rename
 import com.histmersion.api.media.AssetLink
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The figures of a source (they go with it) and the links of other figures to it or to one of its findings. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -19,6 +20,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 @atBoundary(BoundaryKind.Sql, "counts and removes the asset link rows that point at a deleted source")
 final class AssetLinkSourceReferrer extends SourceReferrer:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.value.length)
     RenamedReferences(

@@ -79,6 +79,7 @@ object GoalRepo:
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
     */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def put(slug: domain.automation.Goal.Slug, in: Goal.Put)(using
       DbCon
   )(using

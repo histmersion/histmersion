@@ -14,6 +14,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The articles that cite a source (`[[citekey]]`, the link graph) or keep a coverage reason for it: a rename rewrites
   * their links through the article write path (each rewrite a recorded version), a citing article refuses a delete, and
@@ -23,6 +24,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 @atBoundary(BoundaryKind.Sql, "counts and removes the article rows that point at a deleted source")
 final class ArticleSourceReferrer extends SourceReferrer:
 
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   override def renamed(rename: SourceRename)(using DbCon)(using Creator.New, CreatedAt): RenamedReferences =
     val links = sql"""UPDATE article_links SET target = ${rename.to}
                       WHERE target_kind = 'source' AND target = ${rename.from}""".update.run()

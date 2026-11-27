@@ -24,6 +24,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The goals as the engine's other features reach them: a goal and its sub-goals, what hangs off it (its links, its
   * approved plan and run cap) and the schedules not moved into a watcher yet.
@@ -163,6 +164,7 @@ object GoalService:
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         GoalRepo.put(slug, in)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(
         status: Option[domain.automation.Goal.Status.Wire],
         limit: PageSize,

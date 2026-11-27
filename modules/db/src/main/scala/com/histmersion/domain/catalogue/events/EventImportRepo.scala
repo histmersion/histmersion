@@ -86,6 +86,7 @@ private[events] object EventImportRepo:
     * is never changed, except that an empty Wikidata item is filled and the names are added to. Every record is kept in
     * `event_catalogue` under its key.
     */
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using
       DbCon
   )(using

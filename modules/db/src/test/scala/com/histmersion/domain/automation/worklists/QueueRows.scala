@@ -16,6 +16,7 @@ import com.histmersion.util.database.given
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Work-list rows written and read straight through the repository, each call in a transaction of its own: how the
   * suites of other features seed and inspect the lists (the work lists' own behaviour is the server's
@@ -27,6 +28,8 @@ object QueueRows:
 
   def addAs(ds: DataSource, kind: Kind, in: QueueAdd, creator: Creator.New): QueueItem =
     transact(ds)(QueueRepo.insert(kind, in, creator, TestCreators.at))
+  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
+  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def list(ds: DataSource, kind: Kind, all: Boolean): Vector[QueueItem] = connect(ds)(QueueRepo.list(kind, all))
   def get(ds: DataSource, id: QueueItem.Id): Option[QueueItem] = connect(ds)(QueueRepo.get(repoId(id)))
   def acquireNaming(ds: DataSource, doi: Doi): Vector[QueueItem] =

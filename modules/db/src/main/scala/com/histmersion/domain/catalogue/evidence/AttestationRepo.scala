@@ -66,6 +66,7 @@ private[evidence] object AttestationRepo:
   def get(id: AttestationId)(using DbCon): Option[Attestation] =
     sql"""SELECT $cols FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def create(in: Attestation.Put)(using DbCon)(using creator: Creator.New, at: CreatedAt): Attestation =
     val id = sql"""INSERT INTO attestations (citekey, target_type, target_id,
                       quote, prefix, suffix, char_start, char_end, chunk_ord,

@@ -25,6 +25,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's records: the places, their names (a person's among them), their old ids, the kinds and periods a
   * person set over a source's, and the hierarchy — imported, searched, read at a year, curated by hand. A finding's
@@ -139,6 +140,7 @@ object PlaceService:
         db.write:
           given CreatedAt = CreatedAt.now(clock)
           PlaceRepo.upsertPlaces(batch, dataset)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def search(
         q: Option[SearchQ],
         asOf: Option[DeepTime.SignedYear],
@@ -202,6 +204,7 @@ object PlaceService:
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         PlaceRepo.addPlace(in)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def overrides(id: Option[DPlace.Id]): List[Place.Override] =
       db.read(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

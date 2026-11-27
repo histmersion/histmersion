@@ -24,6 +24,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Research's articles as records: one article with the links it makes and what links to it, written whole or merged
   * from a patch (its critique reasons beside it), renamed (the old slug kept, every `[[old]]` rewritten), deleted, and

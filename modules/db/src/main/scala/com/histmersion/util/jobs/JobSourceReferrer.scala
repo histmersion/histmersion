@@ -10,6 +10,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.{CreatedAt, Creator}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The jobs that wrote or write a source: their records follow a rename and stay as history, and a job not finished yet
   * refuses a delete (it would write the source back).

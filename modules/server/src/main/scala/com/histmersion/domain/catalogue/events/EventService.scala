@@ -47,6 +47,7 @@ import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.{CreatedAt, Creator}
 import java.time.Clock
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events: dated happenings with their datings by source, their relations to each other and their participants,
   * listed by a selection, drawn on the map, written by hand, renamed and deleted.
@@ -133,6 +134,7 @@ object EventService:
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         EventRepo.put(BEventRow.Id(id.value), in)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(id: Event.Id, p: EventPatch)(using WritePermit)(using Creator.New): Either[Api.Error, Unit] =
       db.write(EventRepo.patch(BEventRow.Id(id.value), p))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -47,6 +47,8 @@ object QueueService:
   def apply(db: Transactor, clock: Clock): QueueService = Implementation(db, clock)
 
   final private class Implementation(db: Transactor, clock: Clock) extends QueueService:
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def list(list: Kind, scope: QueueScope): List[QueueItem] = db
       .read(scope match
         case QueueScope.Open                            => QueueRepo.list(list, all = false)
