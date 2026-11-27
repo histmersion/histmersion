@@ -1,6 +1,7 @@
 # 0023. Guideline metric redefinitions, and how a redefinition's count is proven
 
-- Status: accepted (owner decisions 1–5 of 2026-11-19; the proof approved by the coordinator 2026-11-22)
+- Status: superseded by [0032](0032-lint-rules-with-in-source-suppressions.md) (the ratchet files and the proof of
+  a count are gone; the redefinitions of what G44, G45boundary and G60 find stand, as the lint rules' definitions)
 - Date: 2026-11-22
 
 ## Context

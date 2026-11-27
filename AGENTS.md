@@ -161,7 +161,7 @@ Adding an operation to a feature in its own package:
    listed in `HttpApi` and `McpTools`.
 6. `cli` — the client call, the command in its group's ADT (a `Cli.Command`) and its scallop subcommand in the
    group's adapter (`cli.commandline.<Group>Args`; only there and in `cli/CommandLine.scala` may scallop be named —
-   `ContractsSuite` rule `scallop`).
+   `ContractLint` rule `Scallop`).
 7. The contract snapshots (`ContractSnapshotSuite`, `CliHelpSnapshotSuite`) fail on the new endpoint, tool and
    command: rewrite them with `HISTMERSION_UPDATE_CONTRACT=1` and check that the diff holds only the addition.
    Update the reference pages (`docs/user-guide/reference/`) in the same commit.
@@ -211,7 +211,7 @@ Chimney 2.1.0.
 
 ### 1. No primitives in the model
 
-_Check: `ContractsSuite` rules `primitive` (a public service, repository or controller method with a `String`/`Int`/`Long` named for a concept that has a newtype) and `unwrap` (`.value` outside boundary code)._
+_Check: `ContractLint` rule `Primitive` (a public service, repository or controller method with a `String`/`Int`/`Long` named for a concept that has a newtype) and `GuidelineLint` rules `G44`, `G44Conversion`, `G45Boundary` (`.value`, or a newtype built from a runtime value, outside its companion)._
 
 Every value in the model has a type that says what it means: an Iron newtype, not a raw
 `String`/`Int`/`Long`, and not a bare refined type (`String :| Match[…]`) passed around as such. A
@@ -219,8 +219,8 @@ constraint is optional (`Pure` accepts every value of the base type). A smart co
 where the data must be checked. Extend `Newtype` (module `newtype`, an opaque Iron `RefinedType` that also gives
 `CanEqual` and an `Ordering` lifted from the base), not `RefinedSubtype`: a `Citekey` is not silently a `String`.
 The raw value (`.value`, or building a newtype from a runtime primitive) appears only inside the newtype's own
-companion and at a boundary listed in `architecture/boundaries.tsv` (SQL, HTTP bodies, JSON, CLI arguments, the DOM,
-config, processes, the plugin SPI), and there preferably through a lifted type class, not by hand. A file is a boundary only
+companion and in a boundary file, one whose top-level definition carries `@atBoundary(BoundaryKind.X, "why")` (SQL,
+HTTP bodies, JSON, CLI arguments, the DOM, config, processes, the plugin SPI, rendering), and there preferably through a lifted type class, not by hand. A file is a boundary only
 if translating to or from the outside is its job (an adapter); a service that also does I/O moves the I/O behind one. Controllers convert
 API values to domain values; renderers work on concepts and hand only the final text out. A missing operation goes on
 the type's companion. Building a newtype from a literal (`Citekey("x")`) is fine anywhere, and so is building an unconstrained (`Pure`) one from an interpolated string (`Problem(s"cannot open $path")`): there is nothing to validate (a `.value` in the splices is still a finding).
@@ -238,7 +238,7 @@ def neighbours(citekey: Citekey, depth: Int): List[Citekey]   // not (citekey: S
 
 ### 2. Parse, don't validate
 
-_Check: `ContractsSuite` rule `client-refined` (a refined, not `Pure`, constraint in api, web, cli or plugin-api)._
+_Check: `ContractLint` rule `ClientRefined` (a refined, not `Pure`, constraint in api, web, cli or plugin-api)._
 
 Only the domain checks. A client's newtypes (api, web, cli, plugin-api) are opaque over `Pure`: distinct types that
 never judge validity, so a server that changes a rule changes it for every client at once. The server checks once,
@@ -262,7 +262,7 @@ final case class Person(name: PersonName, born: Year)        // no invariant: pu
 
 ### 3. Separate models per layer
 
-_Check: `ContractsSuite` rules `concept` (one top-level type name defined twice within one layer) and `layer` (the
+_Check: `ContractLint` rules `Concept` (one top-level type name defined twice within one layer) and `Layer` (the
 client — api, web — naming a package outside `com.histmersion.api` and the web's own; a domain package naming the
 api outside a boundary file: routes, endpoints, tools, transformers, controllers)._
 
@@ -320,7 +320,7 @@ source.transformInto[SourceView]              // field by field, no constraint r
 
 ### 5. Self-explanatory code
 
-_Check: `ContractsSuite` rule `prefix` (a type `<Entity><Property>` beside a type `<Entity>` in the same layer and
+_Check: `ContractLint` rule `Prefix` and `GuidelineLint` rules `G9Prefix`/`G9PrefixRole` (a type `<Entity><Property>` beside a type `<Entity>` in the same layer and
 package; a component of the entity — `…Service`, `…Routes`, `…Markdown`, `…Html`, … — is no property)._
 
 A property of an entity is a member of the entity's companion, not a prefixed name: `Approval.Kind`, `Source.Patch`,
@@ -338,9 +338,8 @@ def firstPage(citekeys: List[Citekey], pageSize: PageSize): List[Citekey] = cite
 
 ### 6. No comments in code
 
-_Check: `GuidelineRatchetSuite` rule `G22comment` (comment blocks per module and scope in
-`architecture/guidelines-ratchet.tsv`, falls only; no file may hold more comments than at the merge base with the
-pilot, and a new file holds none)._
+_Check: `CommentGrowthSuite` (no file may hold more comments than at the merge base with the pilot, and a new file
+holds none; a comment cannot carry an annotation, so G22 is no lint rule)._
 
 Code in every language (Scala, Java, JavaScript, CSS, HTML, Python, shell, SQL) carries no comments. What a comment would
 say goes elsewhere:
@@ -375,7 +374,7 @@ The `delete-comment` skill
 
 ### 7. Derive in the `derives` clause
 
-_Check: `ContractsSuite` rule `derives` (a codec, schema or config given written by hand, a `.derived` call)._
+_Check: `ContractLint` rule `Derives` (a codec, schema or config given written by hand, a `.derived` call)._
 
 Type-class instances that Kindlings derives are requested in the type's `derives` clause, not as a
 separate `given … = …derived` line.
@@ -386,7 +385,7 @@ final case class BuildStamp(version: Version, commit: CommitId) derives JsonCode
 
 ### 8. Lenses and loops, not copies and reallocating folds
 
-_Check: `ContractsSuite` rule `copy` (`.copy(`)._
+_Check: `ContractLint` rule `Copy` (`.copy(`)._
 
 Updating one field of an accumulator (`acc.copy(queued = acc.queued + n)`) is a job for a lens
 (Kindlings' optics). A fold that allocates a new value for every element is written as a `@tailrec`
@@ -405,7 +404,7 @@ def of(states: List[(JobState, Int)]): JobCounts =
 
 ### 9. One top-level type per file
 
-_Check: `ContractsSuite` rule `one-type` (a companion, a newtype's alias and its `<Name>Rule` constraint and the cases of a sealed type in its file are not counted)._
+_Check: `ContractLint` rule `OneType` (a companion, a newtype's alias and its `<Name>Rule` constraint and the cases of a sealed type in its file are not counted)._
 
 A file holds one top-level type with its companion, unless the types are genuinely one thing: a sealed
 hierarchy, or a helper so tied to a type that it could live in its companion. Several unrelated types in
@@ -424,7 +423,7 @@ one file make the incremental compiler recompile every use site of all of them w
 - Subdomains follow functionality, not the shape of endpoints, MCP tools or CLI commands: one endpoint may
   use several subdomains.
 - No layer buckets: no type in `com.histmersion.db`, `com.histmersion.files`, `com.histmersion.values` or the flat
-  `com.histmersion.upstreams` (`ContractsSuite` rule `bucket`).
+  `com.histmersion.upstreams` (`ContractLint` rule `Bucket`).
 - The `db` module holds database primitives only; migrations and repositories belong to the feature that
   owns the data.
 - Shared API types and API-specific types live apart.
@@ -493,11 +492,11 @@ an article's links follow the merged sources' citekeys through `relinked`, and t
 its `SourceFate` and `SourcePair`). Nothing has a default registry: a caller of the bundle and merge
 mechanism passes the registry's `CarriedKinds` and `MergeRuleSet`, and a merge apply the `MergeFollowUps` (the db suites `TestExchange`).
 Files and directories are reached through `util.storage`, processes launched through `util.process`, and a
-repository is used only inside its feature. `ArchitectureSuite` (server tests) enforces the table, the file and
-process rule and the repository rule. A file not in its feature package yet has its destination in
-`architecture/places.tsv`; a new file goes in its feature package, or gets a row there. Today's violations are
-listed in `architecture/exceptions.tsv`, exactly: a change removes rows and adds none
-(`HISTMERSION_UPDATE_ARCHITECTURE=1` rewrites the list; the diff must only delete lines). A member of a type
+repository is used only inside its feature. `ArchitectureLint` (tools/lint) enforces the table (`Direction`), the file
+and process rules (`FileSystem`, `Process`) and the repository rule (`Repository`). A file not in its feature package
+yet names its destination with `@movesTo(FeaturePlace.X)` on its top-level definition (`Placement`); a new file goes
+in its feature package. Today's violations are tolerated with `@tolerated(LintRule.Direction, "why")` and the like on
+the file's top-level definition; a change removes annotations and adds none. A member of a type
 (`BundleKind.Place`, `Pipeline.EnrichSource`) is that type's own word, not a reference to the top-level type of the
 same name; a package path (`api.Place`) or the bare name is. A wire record's Markdown is rendered by its feature
 (`api.<domain>.<feature>.<F>Markdown`: `SearchMarkdown`, `SourcesMarkdown`, `PlacesMarkdown`, `EventsMarkdown`,
@@ -508,7 +507,7 @@ the label table over every vocabulary. An answer that joins domains is a view in
 
 ### 11. Services own transactions
 
-_Check: `ContractsSuite` rule `transaction` (a `…Repo` that calls `connect`/`transact`, names a `Transactor`, calls `getConnection` or takes a `DataSource`)._
+_Check: `ContractLint` rule `Transaction` (a `…Repo` that calls `connect`/`transact`, names a `Transactor`, calls `getConnection` or takes a `DataSource`)._
 
 A repository method takes the transaction it runs in; it never opens one. The service opens the
 transaction, so several repository calls are atomic together, through `util.database.Transactor`:
@@ -516,7 +515,7 @@ transaction, so several repository calls are atomic together, through `util.data
 
 ### 12. No globals
 
-_Check: `ContractsSuite` rule `global` (`System.getenv`, `sys.env`, `sys.props`, `System.getProperty`, `"user.home"`/`"user.dir"`, `System.currentTimeMillis`, `….now()`, `Clock.system…` outside a `@main def` file and `SystemContext`)._
+_Check: `ContractLint` rule `Global` (`System.getenv`, `sys.env`, `sys.props`, `System.getProperty`, `"user.home"`/`"user.dir"`, `System.currentTimeMillis`, `….now()`, `Clock.system…` outside a `@main def` file and `SystemContext`)._
 
 Nothing reads the environment, system properties, the clock or the working directory directly
 (`System.getenv`, `sys.props`, `Instant.now()` …). Values come from configuration, or are passed in. The
@@ -526,7 +525,7 @@ the settings were loaded with, the `UserPaths` that follow from it) and the comp
 
 ### 13. Services are traits; controllers depend on them
 
-_Check: `ContractsSuite` rule `service` (a `…Service` trait whose file defines no `Implementation` or no `InMemory`)._
+_Check: `ContractLint` rule `Service` (a `…Service` trait whose file defines no `Implementation` or no `InMemory`)._
 
 A service is a trait. Its companion holds the implementations:
 
@@ -555,7 +554,7 @@ accounts exist every request is `Caller.Local`.
 
 ### 14. No free-standing helper objects
 
-_Check: `ContractsSuite` rule `helper` (a top-level object without a type of its name, named as another type's plural or with `Ops`/`Utils`/`Helpers`/`Support`/`Syntax`/`Functions`)._
+_Check: `ContractLint` rule `Helper` (a top-level object without a type of its name, named as another type's plural or with `Ops`/`Utils`/`Helpers`/`Support`/`Syntax`/`Functions`)._
 
 A function about a type is a method of the type or a member of its companion — an extension where the type's
 module must not know the function's dependencies. A closed set of strings is an `enum`. A top-level object
@@ -578,21 +577,21 @@ The entry points are `com.histmersion.server.histmersionServer`, `cli.histmersio
 `pluginresolver.pluginResolver`. A `@main def` must not share its name, ignoring case, with a type of its
 package: on a case-insensitive file system their class files overwrite each other.
 
-Every check lists today's violations in `modules/server/src/test/resources/architecture/contracts.tsv`, exact both
-ways: a new violation fails the build, and so does a row nothing violates any more (`HISTMERSION_UPDATE_ARCHITECTURE=1`
-rewrites the list; a change only ever removes rows or lowers counts). Rules 2, 5 and 10 are judged in review (10 is
-also `ArchitectureSuite`'s direction rule); rule 6 is the `G22comment` ratchet of `GuidelineRatchetSuite`.
+Every check is a stateless lint rule (docs/adr/0032): `tools/lint/lint.sh` runs `GuidelineLint`, `ContractLint`,
+`ArchitectureLint` and `ToleratedLint` over every module, main and test, on the SemanticDB of the last compile (`just
+lint`; CI's `lint` job). A finding fails, unless its definition carries `@tolerated(LintRule.X, "pending G44 (…)")`:
+the rule is a `LintRule` case, the reason a literal naming what it waits for. Rules 2, 5 and 10 are judged in review
+(10 is also `ArchitectureLint`'s `Direction`); rule 6 is `CommentGrowthSuite`.
 
-The guideline inventory (`tools/refactor/GuidelineInventory.scala`, a Scalafix rule over the SemanticDB every compile
-writes) is a ratchet too: `GuidelineRatchetSuite` (server tests) counts its findings per rule, module and scope in
-`architecture/guidelines-ratchet.tsv`. A count above the file fails and names the new findings (path:line); a count
-below it fails until the file is regenerated with `HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly
-*GuidelineRatchetSuite'`. A rewrite of any of the three lists refuses a count that rises. A count is only valid over
-current SemanticDB: the suite reads the `meta`/`test-meta` directories sbt writes (never a leftover
-`classes/META-INF/semanticdb`) and the inventory refuses a file whose SemanticDB describes other text, so a fresh
-baseline (the file deleted and written again) is valid only from a run that reports no stale documents. The source
-checks (`ContractsSuite`, `ArchitectureSuite`, `StyleLintSuite`, the inventory) count occurrences in the code, never
-lines, so formatting moves no count.
+- **Never add a suppression.** `tools/lint/count.sh` counts the `@tolerated` per rule, the `@movesTo`, the
+  `@atBoundary` and the main-code `Unused` calls at HEAD and at the merge base with the pilot; a count above the base's
+  fails CI. Moving a suppression with its code is fine. Fix the finding instead.
+- **A fixed site drops its annotation.** A `@tolerated` whose definition has no finding of its rule left fails, so the
+  count only falls; the goal is zero.
+- **A new rule** adds its `LintRule` case and, in the same PR, its baseline: the counter lets a rule the merge base does
+  not know start at any count. The baseline is written by the rules in `tools/lint/baseline-*.conf`, never by hand; a
+  branch that conflicts with a baseline re-runs them.
+- A file whose SemanticDB describes other text is refused (`SemanticDB` finding): compile first.
 
 Rules 7–14 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
 a restructure by feature), not piecemeal; until then, follow the surrounding code where the two conflict
@@ -609,7 +608,7 @@ schema come from the **same** API case class, so the JSON on the wire and the Op
 cannot drift. JSON no record describes is Kindlings' AST (`hearth.kindlings.jsoniterjson.Json`, read and written through
 `util.json.RawJson`, walked with `util.json.Cursor`). circe is gone from our code: the two libraries that still speak it,
 Chimp and sttp-ai, meet our codecs in one adapter each (`util.mcp.ChimpJson`, `domain.automation.agents.SttpAiJson`;
-`ContractsSuite` rule `circe`, `ClasspathSuite`). A domain type's instances live in the API or DB
+`ContractLint` rule `Circe`, `ClasspathSuite`). A domain type's instances live in the API or DB
 module that needs them, never on its companion (*Coding practices* 3); a newtype's instance maps its
 base type's. Config is the same idea:
 `derives ConfigReader` (kindlings-sconfig-derivation) over `reference.conf`.

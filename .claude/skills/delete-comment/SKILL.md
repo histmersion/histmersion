@@ -1,14 +1,13 @@
 ---
 name: delete-comment
-description: Audit and delete code comments in Histmersion — classify each comment as tautology, stale, excuse or decision record, move decisions into docs/adr/, draft issues for excuses, remove the comments with the committed tool, and record the fall in the G22comment ratchet. Use when the G22comment check fails, when cleaning a module's comments, or when asked to remove or audit comments.
+description: Audit and delete code comments in Histmersion — classify each comment as tautology, stale, excuse or decision record, move decisions into docs/adr/, draft issues for excuses, and remove the comments with the committed tool. Use when CommentGrowthSuite fails, when cleaning a module's comments, or when asked to remove or audit comments.
 ---
 
 # Delete comments
 
-Code in this repository carries no comments (AGENTS.md, *Coding practices* 6). `GuidelineRatchetSuite` enforces it as
-the `G22comment` rule: a count of comment blocks per module and scope in `architecture/guidelines-ratchet.tsv` that may
-only fall, and a per-file check that no file holds more comments than at the merge base with the pilot (a file the base
-does not have: none). This skill is the procedure for bringing a count down.
+Code in this repository carries no comments (AGENTS.md, *Coding practices* 6). `CommentGrowthSuite` enforces it per
+file: no file holds more comments than at the merge base with the pilot (a file the base does not have: none). Nothing
+records the counts; a deleted comment is simply gone. This skill is the procedure for deleting them.
 
 ## 1. Scope
 
@@ -104,7 +103,7 @@ dates, measured numbers). Cite the reason column as `ADR-NNNN`.
 affected `file:line` list, the original excuse text, and what a proper fix looks like. Never file them on GitHub
 yourself (the repository is public; the coordinator scans and files them). No personal data in either.
 
-## 6. Remove, verify, ratchet
+## 6. Remove and verify
 
 ```bash
 scala-cli run --server=false -q tools/refactor/DeleteComments.scala -- apply notes/comment-audit/decisions.tsv modules/<module>/
@@ -121,9 +120,4 @@ Then:
 2. Check: `bash -n` every changed shell script, `python3 -m py_compile` every changed Python file, and run the scripts'
    tests (`just test-scripts`).
 3. Compile and test the touched modules through `notes/forced-run.sh` (the lane rules).
-4. Record the fall: `HISTMERSION_UPDATE_ARCHITECTURE=1` with `server/testOnly *GuidelineRatchetSuite` through
-   `forced-run.sh` rewrites `architecture/guidelines-ratchet.tsv` with the lower `G22comment` counts. It refuses while any
-   count rose. There is no approval for a rise: fix the new comments. A key the merge base's file does not list yet is
-   written only when the suite measures the merge-base tree at no fewer comments (`RatchetBase.TreeInventory`); never
-   edit the file by hand.
-5. Commit one module or package at a time, with the decisions, the ADRs and the issues it produced.
+4. Commit one module or package at a time, with the decisions, the ADRs and the issues it produced.
