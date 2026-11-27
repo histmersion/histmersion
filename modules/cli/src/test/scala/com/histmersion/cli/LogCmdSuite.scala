@@ -6,7 +6,7 @@ import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.api.time.TimeBound
 
 class LogCmdSuite extends munit.FunSuite:
-  private val json = Cli.JsonOutput(false)
+  private val json = Cli.JsonOutput.Text
 
   test("each flag sets its filter; --file reads the file"):
     assertEquals(

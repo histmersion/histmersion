@@ -11,20 +11,26 @@ import com.histmersion.lint.{tolerated, LintRule}
   * configured ones — for the plugin itself and for its dependencies.
   */
 final case class AddOptions(
-    yes: AddOptions.Yes = AddOptions.Yes(false),
-    unsigned: AddOptions.Unsigned = AddOptions.Unsigned(false),
-    verify: AddOptions.Verify = AddOptions.Verify(false),
+    yes: AddOptions.Yes = AddOptions.Yes.Ask,
+    unsigned: AddOptions.Unsigned = AddOptions.Unsigned.RequireSigned,
+    verify: AddOptions.Verify = AddOptions.Verify.Skip,
     sha256: Option[AddOptions.Sha256] = None,
     repos: List[AddOptions.Repos] = Nil
 )
 
 object AddOptions:
-  type Yes = Yes.T
-  object Yes extends Newtype[Boolean, Pure]
-  type Unsigned = Unsigned.T
-  object Unsigned extends Newtype[Boolean, Pure]
-  type Verify = Verify.T
-  object Verify extends Newtype[Boolean, Pure]
+  enum Yes derives CanEqual:
+    case Confirmed, Ask
+  object Yes:
+    extension (yes: Yes) def confirmed: Boolean = yes == Confirmed
+  enum Unsigned derives CanEqual:
+    case AllowUnsigned, RequireSigned
+  object Unsigned:
+    extension (unsigned: Unsigned) def allowsUnsigned: Boolean = unsigned == AllowUnsigned
+  enum Verify derives CanEqual:
+    case Check, Skip
+  object Verify:
+    extension (verify: Verify) def checks: Boolean = verify == Check
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type Sha256 = api.Sha256
   val Sha256: api.Sha256.type = api.Sha256

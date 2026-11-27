@@ -49,8 +49,10 @@ enum ArticleCommand extends Cli.Command:
   def run(c: Client)(using Console): Either[Cli.Error, Unit] = ArticleCli.Perform(c)(this)
 
 object ArticleCommand:
-  type Fix = Fix.T
-  object Fix extends Newtype[Boolean, Pure]
+  enum Fix derives CanEqual:
+    case Fix, Report
+  object Fix:
+    extension (fix: Fix) def fixes: Boolean = fix == Fix
 
   /** The parts of the article `patch` changes, as given (absent = unchanged). */
   final case class Edit(

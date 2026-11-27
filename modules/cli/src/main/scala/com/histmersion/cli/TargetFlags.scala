@@ -16,8 +16,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 @atBoundary(BoundaryKind.CliArgs, "parses the `<kind> [<id>]` target flags of bookmarks and notes")
 object TargetFlags:
-  type Views = Views.T
-  object Views extends Newtype[Boolean, Pure]
+  enum Views derives CanEqual:
+    case WithViews, WithoutViews
+  object Views:
+    extension (views: Views) def withViews: Boolean = views == WithViews
 
   final case class Raw(
       kind: String,

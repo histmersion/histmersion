@@ -76,11 +76,11 @@ class ExitOnProblemsSuite extends munit.FunSuite:
     val req = sttp.client4.basicRequest.get(sttp.model.Uri.unsafeParse("http://h:8000/api/queue/tasks"))
     val refused = new sttp.client4.SttpClientException.ConnectException(req, new java.net.ConnectException("refused"))
     val reset = new sttp.client4.SttpClientException.ReadException(req, new java.io.IOException("connection reset"))
-    assertEquals(ExitCode.of(Client.transport(refused, url, sent, Client.Write(true)), Local), ExitCode.Unreachable)
-    assertEquals(ExitCode.of(Client.transport(reset, url, sent, Client.Write(true)), Local), ExitCode.OutcomeUnknown)
-    assertEquals(ExitCode.of(Client.transport(reset, url, sent, Client.Write(false)), Local), ExitCode.Unreachable)
+    assertEquals(ExitCode.of(Client.transport(refused, url, sent, Client.Write.Changes), Local), ExitCode.Unreachable)
+    assertEquals(ExitCode.of(Client.transport(reset, url, sent, Client.Write.Changes), Local), ExitCode.OutcomeUnknown)
+    assertEquals(ExitCode.of(Client.transport(reset, url, sent, Client.Write.Reads), Local), ExitCode.Unreachable)
     assert(
-      Client.transport(refused, url, sent, Client.Write(false)).toString.contains("is the server running?"),
+      Client.transport(refused, url, sent, Client.Write.Reads).toString.contains("is the server running?"),
       "the hint stays"
     )
 

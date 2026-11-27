@@ -15,8 +15,10 @@ enum ImportTarget:
   case Update(previous: Option[ImportTarget.Update.Previous])
 
 object ImportTarget:
-  type Explicit = Explicit.T
-  object Explicit extends Newtype[Boolean, Pure]
+  enum Explicit derives CanEqual:
+    case Asked, Generated
+  object Explicit:
+    extension (explicit: Explicit) def asked: Boolean = explicit == Asked
   object Update:
     type Previous = Previous.T
     object Previous extends Newtype[String, Pure]

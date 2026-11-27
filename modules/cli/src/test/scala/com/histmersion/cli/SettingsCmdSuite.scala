@@ -74,7 +74,7 @@ class SettingsCmdSuite extends munit.FunSuite:
         onlyLocal = target == Target.ThisMachine,
         nr = true,
         consent = false,
-        json = Cli.JsonOutput(false)
+        json = Cli.JsonOutput.Text
       )
     )
     (result, out.toString(UTF_8))

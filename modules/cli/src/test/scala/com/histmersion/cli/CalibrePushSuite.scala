@@ -213,7 +213,7 @@ class CalibrePushSuite extends munit.FunSuite:
     )
     val got = Calibre.classify(gaps, local.get).map(e => e.gap.citekey -> (e.original.label, e.counted))
     def label(s: String) = Calibre.GapOriginal.Label(s)
-    def counted(b: Boolean) = Calibre.GapEntry.Counted(b)
+    def counted(b: Boolean) = (if b then Calibre.GapEntry.Counted.Counted else Calibre.GapEntry.Counted.Uncounted)
     assertEquals(
       got,
       List(
@@ -238,7 +238,7 @@ class CalibrePushSuite extends munit.FunSuite:
     )
     assert(!md.contains("zz_none1") && !md.contains("zz_none2"), md)
     assert(md.contains("2 records without a fetched file — not counted; see the acquire list"), md)
-    val onlyNone = Calibre.markdownGaps(es.filterNot(_.counted.value))
+    val onlyNone = Calibre.markdownGaps(es.filterNot(_.counted.counts))
     assert(onlyNone.startsWith("_Every source with a fetched file is in Calibre._"), onlyNone)
     assertEquals(Calibre.markdownGaps(Nil), "_Every source with a fetched file is in Calibre._")
 
@@ -257,9 +257,9 @@ class CalibrePushSuite extends munit.FunSuite:
       val (r, out) = captured(
         CalibreCmd.listGaps(
           new Client(s.url),
-          quiet = Cli.QuietOutput(true),
+          quiet = Cli.QuietOutput.Quiet,
           None,
-          json = Cli.JsonOutput(false),
+          json = Cli.JsonOutput.Text,
           Some(CalibreCliConfig.OriginalsDir(dir.toString))
         )
       )
@@ -284,7 +284,7 @@ class CalibrePushSuite extends munit.FunSuite:
       assertEquals(
         captured(
           CalibreCmd
-            .listGaps(new Client(s.url), quiet = Cli.QuietOutput(true), None, json = Cli.JsonOutput(false), None)
+            .listGaps(new Client(s.url), quiet = Cli.QuietOutput.Quiet, None, json = Cli.JsonOutput.Text, None)
         ),
         (Right(()), "")
       )
@@ -292,9 +292,9 @@ class CalibrePushSuite extends munit.FunSuite:
         captured(
           CalibreCmd.listGaps(
             new Client(s.url),
-            quiet = Cli.QuietOutput(false),
+            quiet = Cli.QuietOutput.Verbose,
             None,
-            json = Cli.JsonOutput(false),
+            json = Cli.JsonOutput.Text,
             None
           )
         )
@@ -312,9 +312,9 @@ class CalibrePushSuite extends munit.FunSuite:
         captured(
           CalibreCmd.listGaps(
             new Client(s.url),
-            quiet = Cli.QuietOutput(false),
+            quiet = Cli.QuietOutput.Verbose,
             None,
-            json = Cli.JsonOutput(true),
+            json = Cli.JsonOutput.Json,
             None
           )
         )
@@ -339,7 +339,7 @@ class CalibrePushSuite extends munit.FunSuite:
             new Client(s.url),
             apply = Api.Apply(true),
             None,
-            json = Cli.JsonOutput(false),
+            json = Cli.JsonOutput.Text,
             calibre(shell),
             None
           )
@@ -355,7 +355,7 @@ class CalibrePushSuite extends munit.FunSuite:
             new Client(s.url),
             apply = Api.Apply(false),
             None,
-            json = Cli.JsonOutput(false),
+            json = Cli.JsonOutput.Text,
             calibre(shell),
             None
           )

@@ -164,7 +164,7 @@ object CommandLine:
   given newtype: [T] => (m: RefinedType.Mirror[T]) => (base: ValueConverter[m.BaseType]) => ValueConverter[T] =
     base.flatMap(v => m.ops.either(v).map(t => Some(t.asInstanceOf[T])))
 
-  private def jsonOutput(asked: Boolean): Cli.JsonOutput = Cli.JsonOutput(asked)
+  private def jsonOutput(asked: Boolean): Cli.JsonOutput = (if asked then Cli.JsonOutput.Json else Cli.JsonOutput.Text)
 
   /** A value read by `read`, refused with its message: a choice among words, an alternative of a sealed type. */
   private[cli] def reading[T](read: String => Either[String, T]): ValueConverter[T] =

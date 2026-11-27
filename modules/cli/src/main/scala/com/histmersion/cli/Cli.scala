@@ -51,10 +51,11 @@ object Cli:
     extension (writes: Writes)
       def dry: Boolean = writes == DryRun
       def applies: Boolean = writes == Apply
-
-  type JsonOutput = JsonOutput.T
-  object JsonOutput extends Newtype[Boolean, Pure]:
-    extension (json: JsonOutput) def choose[A](asJson: => A, asText: => A): A = if json.value then asJson else asText
+  enum JsonOutput derives CanEqual:
+    case Json, Text
+  object JsonOutput:
+    extension (jsonOutput: JsonOutput) def asJson: Boolean = jsonOutput == Json
+    extension (json: JsonOutput) def choose[A](asJson: => A, asText: => A): A = if json.asJson then asJson else asText
   enum Following derives CanEqual:
     case Follow, Return
 
@@ -67,10 +68,14 @@ object Cli:
   type Question = Question.T
   object Question extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type QuietOutput = QuietOutput.T
-  object QuietOutput extends Newtype[Boolean, Pure]
-  type Strict = Strict.T
-  object Strict extends Newtype[Boolean, Pure]
+  enum QuietOutput derives CanEqual:
+    case Quiet, Verbose
+  object QuietOutput:
+    extension (quietOutput: QuietOutput) def quiet: Boolean = quietOutput == Quiet
+  enum Strict derives CanEqual:
+    case Strictly, Leniently
+  object Strict:
+    extension (strict: Strict) def strictly: Boolean = strict == Strictly
 
   /** A command the command line asked for, every argument already a typed value ([[CommandLine]] builds it): each
     * command group's ADT extends it and says how it runs against a server.
@@ -504,7 +509,7 @@ object Cli:
           ).map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
         case TopCommand.Get(ck, full, section, heading, offset, chars, json) =>
           if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
-            if json.value then
+            if json.asJson then
               Left(
                 Error(
                   Problem.Unclassified(
@@ -608,7 +613,7 @@ object Cli:
               remE.toList
             )
             .flatMap(p =>
-              c.patchSource(Citekey(ck), p, Strict(strict)).map { sw =>
+              c.patchSource(Citekey(ck), p, (if strict then Strict.Strictly else Strict.Leniently)).map { sw =>
                 out.println(
                   SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )

@@ -112,9 +112,9 @@ object PluginCmd:
               .add(
                 arg,
                 AddOptions(
-                  AddOptions.Yes(yes),
-                  AddOptions.Unsigned(unsigned),
-                  AddOptions.Verify(verify),
+                  (if yes then AddOptions.Yes.Confirmed else AddOptions.Yes.Ask),
+                  (if unsigned then AddOptions.Unsigned.AllowUnsigned else AddOptions.Unsigned.RequireSigned),
+                  (if verify then AddOptions.Verify.Check else AddOptions.Verify.Skip),
                   sha.map(AddOptions.Sha256(_)),
                   rs.map(AddOptions.Repos(_))
                 )
@@ -177,7 +177,16 @@ object PluginCmd:
                 .write(
                   target,
                   PluginTemplate
-                    .files(PluginTemplate.Request(id, kind, pkg, repo, PluginTemplate.Request.AgentNotes(agentNotes)))
+                    .files(
+                      PluginTemplate.Request(
+                        id,
+                        kind,
+                        pkg,
+                        repo,
+                        (if agentNotes then PluginTemplate.Request.AgentNotes.WithNotes
+                         else PluginTemplate.Request.AgentNotes.WithoutNotes)
+                      )
+                    )
                 )
                 .left
                 .map(Cli.Error(_))

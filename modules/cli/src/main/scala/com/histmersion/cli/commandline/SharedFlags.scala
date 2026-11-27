@@ -42,11 +42,11 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
     val lat = value[Double]("lat", "A point's latitude, degrees north")
     val lon = value[Double]("lon", "A point's longitude, degrees east")
     val zoom =
-      Option.when(views.value)(value[Double]("zoom", "A view's map zoom (2 a continent, 5 a country, 9 a city)"))
+      Option.when(views.withViews)(value[Double]("zoom", "A view's map zoom (2 a continent, 5 a country, 9 a city)"))
     val from = value[Int]("from", "The first year (BCE negative)")
     val to = value[Int]("to", "The last year (BCE negative)")
     val view =
-      Option.when(views.value)(value[String]("view", "A view's filters: what follows # in Explore's address"))
+      Option.when(views.withViews)(value[String]("view", "A view's filters: what follows # in Explore's address"))
     () =>
       TargetFlags.Raw(
         kind(),

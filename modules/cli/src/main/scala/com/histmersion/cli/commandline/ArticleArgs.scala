@@ -85,7 +85,13 @@ object ArticleArgs extends CommandLine.Entry:
     private val strict = flag("strict", StrictHelp)
 
     def command: Either[Problem, Cli.Command] =
-      Right(ArticleCommand.Put(file(), kind.toOption, Cli.Strict(strict.getOrElse(false))))
+      Right(
+        ArticleCommand.Put(
+          file(),
+          kind.toOption,
+          (if strict.getOrElse(false) then Cli.Strict.Strictly else Cli.Strict.Leniently)
+        )
+      )
 
   final private class ArticlePatch()
       extends Leaf(Parent, "patch", "Extend or correct one article — only the parts you pass change"):
@@ -157,7 +163,7 @@ object ArticleArgs extends CommandLine.Entry:
             period.toOption,
             ifUpdatedAt.toOption
           ),
-          Cli.Strict(strict.getOrElse(false)),
+          (if strict.getOrElse(false) then Cli.Strict.Strictly else Cli.Strict.Leniently),
           ArticlePatches.FilterFlags(
             filterQuery.toOption,
             filterTopics.toOption,
@@ -166,7 +172,8 @@ object ArticleArgs extends CommandLine.Entry:
             filterPlaces.toOption,
             filterPeriod.toOption,
             extraQuery.getOrElse(Nil),
-            ArticlePatches.FilterFlags.Clear(clearFilter.getOrElse(false))
+            (if clearFilter.getOrElse(false) then ArticlePatches.FilterFlags.Clear.Cleared
+             else ArticlePatches.FilterFlags.Clear.Kept)
           ),
           reason.getOrElse(Nil),
           critiqueReason.getOrElse(Nil).map(text => CritiqueReason.Spec(text))
@@ -185,7 +192,11 @@ object ArticleArgs extends CommandLine.Entry:
 
     def command: Either[Problem, Cli.Command] =
       Right(
-        ArticleCommand.Lint(slug(), ArticleCommand.Fix(fix.getOrElse(false)), asJson())
+        ArticleCommand.Lint(
+          slug(),
+          (if fix.getOrElse(false) then ArticleCommand.Fix.Fix else ArticleCommand.Fix.Report),
+          asJson()
+        )
       )
 
   final private class ArticleCheck()

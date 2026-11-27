@@ -288,16 +288,16 @@ final class Client(
   def putSource(
       ck: Citekey,
       in: Source.Put,
-      strict: Cli.Strict = Cli.Strict(false)
+      strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Source.WithFindings] =
-    call(Api.putSource)((ck, in, Api.Overwrite(strict.value)))
+    call(Api.putSource)((ck, in, Api.Overwrite(strict.strictly)))
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchSource(
       ck: Citekey,
       p: Source.Patch,
-      strict: Cli.Strict = Cli.Strict(false)
+      strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Source.WithFindings] =
-    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Apply(strict.value)))
+    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Apply(strict.strictly)))
   // the formatting lint of agent-written Markdown
   def lintSource(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
   def fixSourceFormat(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.fixSourceFormat)(ck)
@@ -423,16 +423,16 @@ final class Client(
   def putArticle(
       slug: ReviewGoal.Slug,
       in: Article.Put,
-      strict: Cli.Strict = Cli.Strict(false)
+      strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Article.View] =
-    call(Api.putArticle)((slug, in, Api.Overwrite(strict.value)))
+    call(Api.putArticle)((slug, in, Api.Overwrite(strict.strictly)))
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def patchArticle(
       slug: ReviewGoal.Slug,
       p: Article.Patch,
-      strict: Cli.Strict = Cli.Strict(false)
+      strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Article.View] =
-    call(Api.patchArticle)((slug, p, Api.Apply(strict.value)))
+    call(Api.patchArticle)((slug, p, Api.Apply(strict.strictly)))
   def deleteArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.Deleted] = call(Api.deleteArticle)(slug)
   def articleCoverage(slug: ReviewGoal.Slug): Either[Cli.Error, Coverage] = call(Api.articleCoverage)(slug)
   def articleReview(slug: ReviewGoal.Slug): Either[Cli.Error, Article.ReviewView] = call(Api.articleReview)(slug)
@@ -556,11 +556,13 @@ object Client:
 
   type HttpStatus = HttpStatus.T
   object HttpStatus extends Newtype[Int, Pure]
-  type Write = Write.T
-  object Write extends Newtype[Boolean, Pure]:
-    def of(method: sttp.model.Method): Write = Write(isWrite(method))
+  enum Write derives CanEqual:
+    case Changes, Reads
+  object Write:
+    extension (write: Write) def changes: Boolean = write == Changes
+    def of(method: sttp.model.Method): Write = if isWrite(method) then Changes else Reads
 
-    extension (write: Write) def fold[A](changes: => A, reads: => A): A = if write.value then changes else reads
+    extension (write: Write) def fold[A](changes: => A, reads: => A): A = if write.changes then changes else reads
 
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
 

@@ -337,7 +337,7 @@ object Calibre:
     existing match
       case None                                                    => Right(ImportTarget.Create)
       case Some(Some(linked)) if linked.value == id.value.toString => Right(ImportTarget.Update(None))
-      case Some(linked) if explicit.value                          =>
+      case Some(linked) if explicit.asked                          =>
         Right(ImportTarget.Update(linked.map(l => ImportTarget.Update.Previous(l.value))))
       case Some(linked) =>
         val what = linked.fold("a record that is not linked to Calibre")(l => shown"the record of Calibre id $l")
@@ -819,8 +819,10 @@ object Calibre:
   final case class GapEntry(gap: CalibreGap, original: GapOriginal, counted: GapEntry.Counted)
 
   object GapEntry:
-    type Counted = Counted.T
-    object Counted extends Newtype[Boolean, Pure]
+    enum Counted derives CanEqual:
+      case Counted, Uncounted
+    object Counted:
+      extension (counted: Counted) def counts: Boolean = counted == Counted
 
   /** Pure: a gap counts when there is an original to push (on this host, or stored on the server) and the source is not
     * already canonical in Calibre (provenance `calibre`, or a Calibre id — the server leaves both out; an older or
@@ -838,7 +840,12 @@ object Calibre:
             case None                         => GapOriginal.Unknown
       val inCalibre = g.calibreId.exists(_.value.trim.nonEmpty) ||
         g.provenance.exists(_.value.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
-      GapEntry(g, original, counted = GapEntry.Counted(original != GapOriginal.Missing && !inCalibre))
+      GapEntry(
+        g,
+        original,
+        counted = (if original != GapOriginal.Missing && !inCalibre then GapEntry.Counted.Counted
+                   else GapEntry.Counted.Uncounted)
+      )
     }
 
   /** The informational line for the records with no fetched file — never a gap. */
@@ -853,7 +860,7 @@ object Calibre:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdownGaps(entries: List[GapEntry]): String =
     def esc(s: String) = s.replace("|", "\\|").replace("\n", " ").trim
-    val counted = entries.filter(_.counted.value)
+    val counted = entries.filter(_.counted.counts)
     val missing = entries.count(_.original == GapOriginal.Missing)
     val head =
       if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
@@ -1329,7 +1336,7 @@ object Calibre:
           g.isbn.map(x => Isbn(x.value)),
           g.storedOriginal.map(x => StoredOriginal(x.value)),
           Original(e.original.label.value),
-          Counted(e.counted.value)
+          Counted(e.counted.counts)
         )
       def of(r: CollectionGapRow): GapRow =
         GapRow(
@@ -1356,7 +1363,7 @@ object Calibre:
 
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def of(entries: List[GapEntry]): Gaps =
-        val n = entries.count(_.counted.value)
+        val n = entries.count(_.counted.counts)
         Gaps(Count(n), Uncounted(entries.size - n), Total(entries.size), entries.map(GapRow.of))
       def of(g: CollectionGaps): Gaps = Gaps(g.count, g.uncounted, g.total, g.gaps.map(GapRow.of))
 
@@ -1373,8 +1380,10 @@ object Calibre:
   )
 
   object Push:
-    type Replace = Replace.T
-    object Replace extends Newtype[Boolean, Pure]
+    enum Replace derives CanEqual:
+      case Replace, Keep
+    object Replace:
+      extension (replace: Replace) def replaces: Boolean = replace == Replace
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Title = api.library.Title
     val Title: api.library.Title.type = api.library.Title

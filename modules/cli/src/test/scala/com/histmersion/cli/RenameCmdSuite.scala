@@ -18,17 +18,17 @@ class RenameCmdSuite extends munit.FunSuite:
   test("two positional citekeys, --json optional"):
     assertEquals(
       parse("page2024_history", "page1959_history"),
-      Right(RenameCmd.Args(Citekey("page2024_history"), Citekey("page1959_history"), json = Cli.JsonOutput(false)))
+      Right(RenameCmd.Args(Citekey("page2024_history"), Citekey("page1959_history"), json = Cli.JsonOutput.Text))
     )
     assertEquals(
       parse("page2024_history", "page1959_history", "--json"),
-      Right(RenameCmd.Args(Citekey("page2024_history"), Citekey("page1959_history"), json = Cli.JsonOutput(true)))
+      Right(RenameCmd.Args(Citekey("page2024_history"), Citekey("page1959_history"), json = Cli.JsonOutput.Json))
     )
 
   test("the new citekey is trimmed"):
     assertEquals(
       parse("latacz2023_troy", " latacz2004_troy "),
-      Right(RenameCmd.Args(Citekey("latacz2023_troy"), Citekey("latacz2004_troy"), json = Cli.JsonOutput(false)))
+      Right(RenameCmd.Args(Citekey("latacz2023_troy"), Citekey("latacz2004_troy"), json = Cli.JsonOutput.Text))
     )
 
   test("a missing argument is a usage error"):
@@ -39,7 +39,7 @@ class RenameCmdSuite extends munit.FunSuite:
     List("page2024_history", "Page 1959", "page-1959").foreach(to =>
       assertEquals(
         parse("page2024_history", to),
-        Right(RenameCmd.Args(Citekey("page2024_history"), Citekey(to), json = Cli.JsonOutput(false)))
+        Right(RenameCmd.Args(Citekey("page2024_history"), Citekey(to), json = Cli.JsonOutput.Text))
       )
     )
   }

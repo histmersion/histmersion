@@ -226,7 +226,7 @@ class PluginCmdSuite extends munit.FunSuite:
   env.test("add <path>: described, shown, installed as <id>-<version>.jar, indexed"): e =>
     e.describe("hello", "0.1.0")
     val src = jarFile(e.home.getParent.resolve("downloads"), "histmersion-plugin-hello_3-0.1.0.jar")
-    val r = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
+    val r = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed))
     assertEquals(r.map(_.file), Right(PluginJar.File("hello-0.1.0.jar")))
     assertEquals(e.installed, List("hello-0.1.0.jar"))
     val shown = e.out.mkString("\n")
@@ -248,7 +248,7 @@ class PluginCmdSuite extends munit.FunSuite:
     e =>
       val src = jarFile(e.home.getParent.resolve("downloads"), "p.jar")
       e.describe("hello", "0.1.0", spi = 7)
-      val spi = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
+      val spi = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed))
       assert(
         spi.left.exists(
           _.problems.sentences.mkString("; ").contains("built against plugin SPI 7; this Histmersion speaks SPI 1")
@@ -257,13 +257,13 @@ class PluginCmdSuite extends munit.FunSuite:
       )
       e.describe("hello", "0.1.0")
       val sum =
-        e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true), sha256 = Some(AddOptions.Sha256("0" * 64))))
+        e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed, sha256 = Some(AddOptions.Sha256("0" * 64))))
       assert(sum.left.exists(_.problems.sentences.mkString("; ").contains("SHA-256 mismatch")), sum)
       assertEquals(e.installed, Nil)
       // a jar dropped in by hand already provides `portal`
       jarFile(e.plugins, "portal-2.0.jar")
       e.describe("portal", "3.0")
-      val taken = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
+      val taken = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed))
       assertEquals(
         taken.map(_.file),
         Right(PluginJar.File("portal-3.0.jar")),
@@ -274,9 +274,9 @@ class PluginCmdSuite extends munit.FunSuite:
   env.test("add: a newer version replaces the older; without --yes and no terminal it is not installed"): e =>
     val src = jarFile(e.home.getParent.resolve("downloads"), "p.jar")
     e.describe("hello", "0.1.0")
-    assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true))).isRight)
+    assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed)).isRight)
     e.describe("hello", "0.2.0")
-    assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true))).isRight)
+    assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed)).isRight)
     assertEquals(e.installed, List("hello-0.2.0.jar"))
     assertEquals(e.ops.index.jars.map(_.file), List(PluginJar.File("hello-0.2.0.jar")))
     val shy =
@@ -301,7 +301,7 @@ class PluginCmdSuite extends munit.FunSuite:
     ) { (e, repo, url) =>
       Files.writeString(Files.createDirectories(repo.resolve("dl")).resolve("hello.jar"), "served bytes")
       e.describe("hello", "0.1.0")
-      val r = e.ops.add(s"$url/dl/hello.jar", AddOptions(yes = AddOptions.Yes(true)))
+      val r = e.ops.add(s"$url/dl/hello.jar", AddOptions(yes = AddOptions.Yes.Confirmed))
       assertEquals(r.map(_.file), Right(PluginJar.File("hello-0.1.0.jar")))
       assertEquals(Files.readString(e.plugins.resolve("hello-0.1.0.jar")), "served bytes")
       assertEquals(e.ops.index.jars.map(_.source), List(PluginKit.Installed.Source(s"$url/dl/hello.jar")))
@@ -309,7 +309,7 @@ class PluginCmdSuite extends munit.FunSuite:
         e.out.exists(_.startsWith(s"file hello-0.1.0.jar · SHA-256 ${sha("SHA-256", "served bytes".getBytes(UTF_8))}")),
         e.out
       )
-      val missing = e.ops.add(s"$url/dl/none.jar", AddOptions(yes = AddOptions.Yes(true)))
+      val missing = e.ops.add(s"$url/dl/none.jar", AddOptions(yes = AddOptions.Yes.Confirmed))
       assert(missing.left.exists(_.problems.sentences.mkString("; ").contains("not found")), missing)
     }
 
@@ -329,7 +329,7 @@ class PluginCmdSuite extends munit.FunSuite:
       Files.write(dir.resolve("hello_3-0.1.0.pom"), pom)
       Files.writeString(dir.resolve("hello_3-0.1.0.pom.sha1"), sha("SHA-1", pom) + "\n")
       e.describe("hello", "0.1.0")
-      val r = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = AddOptions.Yes(true)))
+      val r = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = AddOptions.Yes.Confirmed))
       assertEquals(r.map(_.file), Right(PluginJar.File("hello-0.1.0.jar")))
       assert(
         e.ops.index.jars.head.source.value.endsWith("/maven2/org/example/hello_3/0.1.0/hello_3-0.1.0.jar"),
@@ -343,9 +343,9 @@ class PluginCmdSuite extends munit.FunSuite:
       )
       // a corrupted download (the published checksum does not match) is refused
       Files.writeString(dir.resolve("hello_3-0.1.0.jar.sha1"), "0" * 40)
-      val bad = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = AddOptions.Yes(true)))
+      val bad = e.ops.add("org.example::hello:0.1.0", AddOptions(yes = AddOptions.Yes.Confirmed))
       assert(bad.left.exists(_.problems.sentences.mkString("; ").contains("SHA-1 mismatch")), bad)
-      val missing = e.ops.add("org.example:nothing:1.0", AddOptions(yes = AddOptions.Yes(true)))
+      val missing = e.ops.add("org.example:nothing:1.0", AddOptions(yes = AddOptions.Yes.Confirmed))
       assert(missing.left.exists(_.problems.sentences.mkString("; ").contains("not resolved from")), missing)
     }
 
@@ -360,7 +360,7 @@ class PluginCmdSuite extends munit.FunSuite:
     val src = jarFile(dl, "oabooks_3-0.1.0.jar")
     Files.writeString(dl.resolve("oabooks_3-0.1.0.pom"), "<project>deps</project>")
     assertEquals(
-      e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true))).map(_.file),
+      e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed)).map(_.file),
       Right(PluginJar.File("oabooks-0.1.0.jar"))
     )
     assertEquals(Files.readString(e.plugins.resolve("oabooks-0.1.0.pom")), "<project>deps</project>")
@@ -387,7 +387,7 @@ class PluginCmdSuite extends munit.FunSuite:
         rc = 2
       )
       val r =
-        e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = AddOptions.Yes(true)))
+        e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = AddOptions.Yes.Confirmed))
       assertEquals(
         r.left.map(_.problems),
         Left(
@@ -401,7 +401,7 @@ class PluginCmdSuite extends munit.FunSuite:
       assertEquals(e.installed, Nil)
       e.resolver(refusals = "could not resolve the plugins' dependencies: not found: org.example:gone_3:1.0", rc = 3)
       val failed =
-        e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = AddOptions.Yes(true)))
+        e.ops.add(jarFile(e.home.getParent.resolve("d"), "p.jar").toString, AddOptions(yes = AddOptions.Yes.Confirmed))
       assert(
         failed.left.exists(
           _.problems.sentences.mkString("; ").contains("dependencies could not be resolved: could not resolve")
@@ -428,7 +428,7 @@ class PluginCmdSuite extends munit.FunSuite:
         e.ops
           .add(
             "org.example::hello:0.1.0",
-            AddOptions(yes = AddOptions.Yes(true), repos = List(AddOptions.Repos(s"$url/mine")))
+            AddOptions(yes = AddOptions.Yes.Confirmed, repos = List(AddOptions.Repos(s"$url/mine")))
           )
           .isRight
       )
@@ -439,7 +439,7 @@ class PluginCmdSuite extends munit.FunSuite:
     e.describe("hello", "0.1.0")
     val dl = e.home.getParent.resolve("d")
     Files.writeString(Files.createDirectories(dl).resolve("h.pom"), "<project/>")
-    assert(e.ops.add(jarFile(dl, "h.jar").toString, AddOptions(yes = AddOptions.Yes(true))).isRight)
+    assert(e.ops.add(jarFile(dl, "h.jar").toString, AddOptions(yes = AddOptions.Yes.Confirmed)).isRight)
     assert(Files.isRegularFile(e.plugins.resolve("hello-0.1.0.pom")))
     e.resolver(refusals = "offline", rc = 3)
     assertEquals(e.ops.rm("hello"), Right(List(PluginJar.File("hello-0.1.0.jar"))))
@@ -452,26 +452,28 @@ class PluginCmdSuite extends munit.FunSuite:
     e.describe("hello", "0.1.0")
     val dl = e.home.getParent.resolve("downloads")
     val src = jarFile(dl, "hello.jar")
-    val unsigned = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
+    val unsigned = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed))
     assert(unsigned.left.exists(_.problems.sentences.mkString("; ").contains("no signature (.asc)")), unsigned)
     Files.writeString(dl.resolve("hello.jar.asc"), "good\nsigner=AAAA\n")
-    assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true))).isRight)
+    assert(e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed)).isRight)
     assertEquals(e.ops.index.jars.map(_.signer), List(Some(PluginKit.Installed.Signer("AAAA"))))
     assertEquals(Files.readString(e.data.resolve("signed-manifest")).trim, "hello-0.1.0.jar\nindex.json", "re-signed")
     // the next version signed by another key: refused (trust on first use)
     Files.writeString(dl.resolve("hello.jar.asc"), "good\nsigner=BBBB\n")
     e.describe("hello", "0.2.0")
-    val other = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
+    val other = e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed))
     assert(other.left.exists(_.problems.sentences.mkString("; ").contains("signed by AAAA")), other)
     Files.writeString(dl.resolve("hello.jar.asc"), "forged")
     assert(
       e.ops
-        .add(src.toString, AddOptions(yes = AddOptions.Yes(true)))
+        .add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("signature not verified"))
     )
     assert(
-      e.ops.add(src.toString, AddOptions(yes = AddOptions.Yes(true), unsigned = AddOptions.Unsigned(true))).isRight,
+      e.ops
+        .add(src.toString, AddOptions(yes = AddOptions.Yes.Confirmed, unsigned = AddOptions.Unsigned.AllowUnsigned))
+        .isRight,
       "--unsigned installs anyway"
     )
     assertEquals(e.installed, List("hello-0.2.0.jar"))
@@ -482,7 +484,7 @@ class PluginCmdSuite extends munit.FunSuite:
     e.describe("hello", "0.1.0")
     assert(
       e.ops
-        .add(jarFile(e.home.getParent.resolve("d"), "h.jar").toString, AddOptions(yes = AddOptions.Yes(true)))
+        .add(jarFile(e.home.getParent.resolve("d"), "h.jar").toString, AddOptions(yes = AddOptions.Yes.Confirmed))
         .isRight
     )
     jarFile(e.plugins, "dropped-1.0.jar")
@@ -502,7 +504,7 @@ class PluginCmdSuite extends munit.FunSuite:
     e.describe("hello", "0.1.0")
     assert(
       e.ops
-        .add(jarFile(e.home.getParent.resolve("d"), "h.jar").toString, AddOptions(yes = AddOptions.Yes(true)))
+        .add(jarFile(e.home.getParent.resolve("d"), "h.jar").toString, AddOptions(yes = AddOptions.Yes.Confirmed))
         .isRight
     )
     val (st, lines) = e.ops.status(Some(PluginsReport(PluginsReport.SpiVersion(1))), serverAnswered = true)

@@ -35,7 +35,12 @@ final class CollectionsClient(c: Client, name: Collection.Name):
       unlinked: CalibreCmd.Unlinked
   ): Either[Cli.Error, CollectionSearch] =
     c.call(CollectionsApi.search)(
-      (name, q.map(t => CollectionsApi.Query(t.value)), limit.map(l => CollectionsApi.Limit(l.value)), unlinked.value)
+      (
+        name,
+        q.map(t => CollectionsApi.Query(t.value)),
+        limit.map(l => CollectionsApi.Limit(l.value)),
+        unlinked.onlyUnlinked
+      )
     )
   def importItem(req: CollectionImportRequest): Either[Cli.Error, CollectionImported] =
     c.call(CollectionsApi.importItem)((name, req))
