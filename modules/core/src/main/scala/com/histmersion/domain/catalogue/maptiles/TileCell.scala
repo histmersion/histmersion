@@ -32,8 +32,10 @@ object TileCell:
   export TilePoint.{X, Y}
   type N = N.T
   object N extends Newtype[Int, Pure]
-  export GridCell.MidLo
-  export GridCell.MidHi
+  type MidLo = MidLo.T
+  object MidLo extends Newtype[Double, Pure]
+  type MidHi = MidHi.T
+  object MidHi extends Newtype[Double, Pure]
   type West = West.T
   object West extends Newtype[Double, Pure]
   type South = South.T

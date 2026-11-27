@@ -54,7 +54,7 @@ final class EventImportsControllers(
   def importJob(caller: Caller, req: EventImportRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     for
       provider <- imports
-        .resolve(req.provider)
+        .resolve(CatalogRecord.Provider(req.provider.value))
         .left
         .map(p => invalid(p))
       area <- req.bbox.map(_.value.trim).filter(_.nonEmpty) match

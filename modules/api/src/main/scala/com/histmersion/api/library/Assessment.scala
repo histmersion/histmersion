@@ -40,7 +40,8 @@ object Assessment:
   object Flagged extends Newtype[Boolean, Pure]
   type Verdict = Verdict.T
   object Verdict extends Newtype[String, Pure]
-  export Acquire.Recommendation
+  type Recommendation = Recommendation.T
+  object Recommendation extends Newtype[String, Pure]
   type Applied = Applied.T
   object Applied extends Newtype[String, Pure]
   type CheckedAt = CheckedAt.T

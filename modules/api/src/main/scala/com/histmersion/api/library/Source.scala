@@ -75,16 +75,22 @@ object Source:
   object Venue extends Newtype[String, Pure]
   type View = View.T
   object View extends Newtype[String, Pure]
-  export CalibreGap.Topics
+
+  type Topics = Topics.T
+  object Topics extends Newtype[String, Pure]
   type Regions = Regions.T
   object Regions extends Newtype[String, Pure]
-  export CollectionEntry.Tags
+  type Tags = Tags.T
+  object Tags extends Newtype[String, Pure]
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  export Acquire.CitedByCount
-  export Assessment.InfluentialCitations
-  export CalibreGap.Provenance
+  type CitedByCount = CitedByCount.T
+  object CitedByCount extends Newtype[Int, Pure]
+  type InfluentialCitations = InfluentialCitations.T
+  object InfluentialCitations extends Newtype[Int, Pure]
+  type Provenance = Provenance.T
+  object Provenance extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
   object CalibreId extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

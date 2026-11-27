@@ -744,7 +744,7 @@ object Calibre:
           case None =>
             List(
               AuditFinding(
-                id,
+                AuditFinding.CalibreId(id.value),
                 keys,
                 List(AuditIssue.Missing),
                 None,
@@ -754,7 +754,7 @@ object Calibre:
           case Some(b) =>
             val (best, found) = rs.map(r => r -> issues(r, b)).minBy((r, is) => (is.size, r.citekey.value))
             if found.isEmpty then Nil
-            else List(AuditFinding(id, keys, found, Some(b), best))
+            else List(AuditFinding(AuditFinding.CalibreId(id.value), keys, found, Some(b), best))
       }
 
   /** One book as Calibre holds it — the shape both readers below produce (`calibredb list --for-machine` and the
@@ -801,7 +801,8 @@ object Calibre:
       }
 
   object Book:
-    export AuditRecord.Year
+    type Year = Year.T
+    object Year extends Newtype[Int, Pure]
 
     type Id = Id.T
     object Id extends Newtype[Int, Pure]

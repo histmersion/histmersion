@@ -20,4 +20,5 @@ final case class CollectionLinked(
       api.json.Schema
 
 object CollectionLinked:
-  export CollectionImportRequest.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]

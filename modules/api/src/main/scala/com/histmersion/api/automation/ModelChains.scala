@@ -15,7 +15,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
-import com.histmersion.api.GeoPick
 
 object ModelChains:
   object Chain:
@@ -63,7 +62,8 @@ object ModelChains:
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Measure:
-    export GeoPick.Wire
+    type Wire = Wire.T
+    object Wire extends Newtype[String, Pure]
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Measure] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))

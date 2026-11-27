@@ -9,6 +9,7 @@ import com.histmersion.api.library.Provenance
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Doi
 import com.histmersion.lint.{tolerated, LintRule}
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class ProvenanceSuite extends munit.FunSuite:
   test("a file brought in from elsewhere is a book when nothing else says what it is"):

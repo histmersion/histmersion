@@ -25,12 +25,12 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.time.IsoLocal
-import com.histmersion.api.Api
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 object Agents:
-  export Api.JobControl.Action
+  type Action = Action.T
+  object Action extends Newtype[String, Pure]
 
   export Approval.Kind as ApprovalKind
   export Approval.Mode as ApprovalMode
@@ -394,7 +394,8 @@ object Agents:
   object RunRequest:
     type Pipeline = Pipeline.T
     object Pipeline extends Newtype[String, Pure]
-    export AgentScheduler.WhyInfo.Target
+    type Target = Target.T
+    object Target extends Newtype[String, Pure]
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type BudgetUsd = BudgetUsd.T

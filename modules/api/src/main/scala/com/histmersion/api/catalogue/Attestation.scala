@@ -96,10 +96,10 @@ object Attestation:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(total: RowCount, rows: scala.List[Attestation], offset: UnreadPage.Offset): List =
       List(
-        total,
+        RowCount((total).value),
         rows,
         Offset((offset).value),
-        OffsetPage(total, Offset((offset).value), RowCount(rows.size)).next
+        OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
       )
 
   final case class Patch(

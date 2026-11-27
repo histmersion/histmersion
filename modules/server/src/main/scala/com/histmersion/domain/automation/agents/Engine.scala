@@ -706,9 +706,10 @@ final class Engine(
   private def conflict(m: Problem) =
     Api.Error(m, Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pause(id: Run.Id)(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
-      RunState.parse(r.status) match
+      RunState.parse(RunState.Wire(r.status.value)) match
         case Some(RunState.Running) =>
           Option(running.get(id)).foreach(_.pause = true)
           Right(r)
@@ -732,7 +733,7 @@ final class Engine(
       budgetTokens: Option[AgentsControllers.BudgetTokens]
   )(using WritePermit)(using Creator.New): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
-      if !RunState.parse(r.status).contains(RunState.Paused) then
+      if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
         Left(conflict(Problem.Run.NotNow(Problem.Raw.of(id), Problem.Raw.of(r.status), Problem.Run.Control.Resume)))
       else
         agents.jobRuns.budget(
@@ -749,7 +750,7 @@ final class Engine(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cancel(id: Run.Id)(using WritePermit): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
-      RunState.parse(r.status) match
+      RunState.parse(RunState.Wire(r.status.value)) match
         case Some(RunState.Running) =>
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)

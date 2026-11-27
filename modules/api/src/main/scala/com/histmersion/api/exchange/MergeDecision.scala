@@ -14,7 +14,6 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
-import com.histmersion.api.GeoPick
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -73,7 +72,8 @@ object MergeDecision:
       case _                                     => (false)
 
   object Kind:
-    export GeoPick.Wire
+    type Wire = Wire.T
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case KeepLeft       => Wire("keep-left")

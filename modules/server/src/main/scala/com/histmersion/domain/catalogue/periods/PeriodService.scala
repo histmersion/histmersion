@@ -79,7 +79,7 @@ object PeriodService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
       db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value))))
-        .map((k, v) => k -> v.map(p => HistoricalPeriod.Id(p.value)))
+        .map((k, v) => HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value)))
     def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount =
       db.write:
         given CreatedAt = CreatedAt.now(clock)

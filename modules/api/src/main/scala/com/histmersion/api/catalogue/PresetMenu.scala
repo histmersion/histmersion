@@ -42,7 +42,7 @@ object PresetMenu:
             Group(
               r,
               rows.sortBy(p => (p.period.start.value: Long, p.period.end.value: Long, p.label.value: String)),
-              cover(r) >= MinShare
+              cover(r).value >= MinShare.value
             )
           )
       }

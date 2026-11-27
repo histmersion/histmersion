@@ -86,7 +86,7 @@ object WorkLookup:
       .map(AcquireParse.unpaywallAccess)
       .fold(w)(a =>
         w.copy(
-          isOa = a.isOa,
+          isOa = WorkRef.IsOa(a.isOa.value),
           oaStatus = a.status.map(s => WorkRef.OaStatus(s.value)),
           oaUrl = a.url.map(u => WorkRef.OaUrl(u.value))
         )

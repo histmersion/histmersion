@@ -319,7 +319,9 @@ object PluginEvents:
           CatalogRecord.ProviderId(id),
           CatalogRecord.Url(Option(e.url).map(_.value).getOrElse("").trim),
           CatalogRecord.Label(label),
-          EventTaxonomy.refine(EventSummary.Kind(e.kind.value), EventSummary.Label(label)),
+          CatalogRecord.Kind(
+            EventTaxonomy.refine(EventSummary.Kind(e.kind.value), EventSummary.Label(label)).value
+          ),
           TimeSpan(long(notBefore), long(beginBy), long(endFrom), long(notAfter)),
           lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
           lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),

@@ -20,4 +20,5 @@ final case class CollectionLinkRequest(
 ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object CollectionLinkRequest:
-  export CollectionImportRequest.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]

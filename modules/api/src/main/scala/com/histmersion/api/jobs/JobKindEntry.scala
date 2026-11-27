@@ -42,10 +42,11 @@ object JobKindEntry:
   ): JobKindEntry = JobKindEntry(
     kind,
     JobKindName((name).value),
-    meaning,
+    JobKindMeaning((meaning).value),
     stoppable, {
       val refactorFunction2 = subject;
-      (refactorValue3) => (refactorFunction2(refactorValue3)).map(refactorValue4 => refactorValue4)
+      (refactorValue3) =>
+        (refactorFunction2(refactorValue3)).map(refactorValue4 => JobKinds.Subject((refactorValue4).value))
     },
     ownControl
   )

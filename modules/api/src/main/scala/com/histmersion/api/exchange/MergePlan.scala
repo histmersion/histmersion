@@ -34,9 +34,14 @@ final case class MergePlan(
   def blocking: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Blocking)
   def defaults: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Default)
 object MergePlan:
-  export Bundle.Manifest.FormatVersion
-  export Bundle.Manifest.SchemaVersion
-  export Bundle.Manifest.AsOf
+
+  type FormatVersion = FormatVersion.T
+  object FormatVersion extends Newtype[Int, Pure]
+  type SchemaVersion = SchemaVersion.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+  object SchemaVersion extends Newtype[String, Pure]
+  type AsOf = AsOf.T
+  object AsOf extends Newtype[String, Pure]
   type PlanHash = PlanHash.T
   object PlanHash extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

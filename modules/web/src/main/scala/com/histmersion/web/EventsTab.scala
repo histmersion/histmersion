@@ -97,7 +97,7 @@ object EventsTab:
         },
         // its kind's icon and its tier, as on the map (#1449)
         span(
-          cls := s"event-icon hd-badge hd-ev hd-ev--${EventMarker.tierClass(evt.tier)} hd-ev--${EventTaxonomy.group(evt.kind)}",
+          cls := s"event-icon hd-badge hd-ev hd-ev--${EventMarker.tierClass(Api.EventQuery.Tier(evt.tier.value))} hd-ev--${EventTaxonomy.group(evt.kind)}",
           title := s"${EventTaxonomy.of(evt.kind).label} · ${
               if evt.tier.value == EventTier.Catalogue then "catalogue only" else "attested"
             }",

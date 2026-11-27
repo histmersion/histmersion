@@ -51,8 +51,8 @@ object GeoPick:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def yearOf(pick: GeoPick, lo: Year, hi: Year): Year = pick match
-    case Start => lo
-    case End   => hi
+    case Start => Year((lo).value)
+    case End   => Year((hi).value)
     case _     => Year(((lo).value + (hi).value) / 2)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

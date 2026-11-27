@@ -9,7 +9,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.Api
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -40,7 +39,8 @@ object EventGeo:
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  export CatalogRecord.Kind
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]
   type Scale = Scale.T
   object Scale extends Newtype[String, Pure]
   type Historicity = Historicity.T
@@ -55,7 +55,8 @@ object EventGeo:
   object ParentId extends Newtype[String, Pure]
   type Outline = Outline.T
   object Outline extends Newtype[String, Pure]
-  export Api.EventQuery.Tier
+  type Tier = Tier.T
+  object Tier extends Newtype[String, Pure]
   type Size = Size.T
   object Size extends Newtype[String, Pure]
   type Precision = Precision.T

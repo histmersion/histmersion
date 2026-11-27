@@ -53,7 +53,7 @@ object AssessmentService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, CheckedAt)] =
       db.read(AssessmentRepo.assessmentFor(citekey))
-        .map((v, at) => (v, CheckedAt(at.value)))
+        .map((v, at) => (AssessmentRecord.Verdict(v.value), CheckedAt(at.value)))
 
   /** The mirror and the verdicts in memory; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends AssessmentService:
@@ -88,4 +88,4 @@ object AssessmentService:
     def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, CheckedAt)] =
       state.get.assessments
         .get(AcquisitionState.AssessmentsKey(citekey.value))
-        .map((a, at) => (a.verdict, at))
+        .map((a, at) => (a.verdict, CheckedAt(at.value)))

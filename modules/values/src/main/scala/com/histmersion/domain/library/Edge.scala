@@ -34,7 +34,8 @@ object Edge:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fromWire(s: Wire): Option[Kind] = wireMap.get(Wire((s).value.toLowerCase))
 
-    val allWire: List[Wire] = (values.map(wireOf).toList).map(refactorValue => refactorValue)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    val allWire: List[Wire] = (values.map(wireOf).toList).map(refactorValue => Wire((refactorValue).value))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values

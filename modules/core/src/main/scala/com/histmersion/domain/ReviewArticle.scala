@@ -877,7 +877,8 @@ object ReviewArticle:
     type Offset = com.histmersion.Offset
     @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     val Offset: com.histmersion.Offset.type = com.histmersion.Offset
-    export AgentProposals.Proposal.Quote
+    type Quote = Quote.T
+    object Quote extends Newtype[String, Pure]
     export AgentVerify.Ratio
 
   /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record (`ratio`, as for

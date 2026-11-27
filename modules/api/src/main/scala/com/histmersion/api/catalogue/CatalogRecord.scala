@@ -39,8 +39,9 @@ final case class CatalogRecord(
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key: (CatalogRecord.Provider, EventCatalogueRef.ProviderId) =
-    (provider, providerId)
+    (CatalogRecord.Provider((provider).value), EventCatalogueRef.ProviderId((providerId).value))
 object CatalogRecord:
   object Wikidata:
     type Class = Class.T

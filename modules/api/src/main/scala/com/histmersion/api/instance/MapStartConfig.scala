@@ -7,7 +7,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.catalogue.ManualPlaceName
 
 final case class MapStartConfig(
     mode: MapStartMode.Wire = MapStartMode.Last.wire,
@@ -22,4 +21,5 @@ final case class MapStartConfig(
 object MapStartConfig:
   type Zoom = Zoom.T
   object Zoom extends Newtype[Double, Pure]
-  export ManualPlaceName.Label
+  type Label = Label.T
+  object Label extends Newtype[String, Pure]

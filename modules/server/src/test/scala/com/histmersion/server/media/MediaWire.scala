@@ -66,6 +66,7 @@ object MediaWire:
       "property":"P18","datavalue":{"value":"Kadesh relief.jpg","type":"string"}},"rank":"normal"}]}},
       "Q5001":{"id":"Q5001","claims":{}}}}"""
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def metObject(url: String): Either[String, HttpAnswer] =
     val id = url.reverse.takeWhile(_ != '/').reverse
     val obj = fx("met-object.json").replace("252448", id)

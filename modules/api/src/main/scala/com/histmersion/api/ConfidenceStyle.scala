@@ -40,7 +40,7 @@ object ConfidenceStyle:
         val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
         def mix(v: Int) = (grey + ((v) - grey) * s.value).round.toInt
         Rgb(s"rgb(${mix((r))},${mix((g))},${mix((b))})")
-      case _ => rgb
+      case _ => Rgb((rgb).value)
 
   final case class IconPart(d: IconPart.D, filled: IconPart.Filled)
 

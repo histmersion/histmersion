@@ -165,7 +165,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
         AssetService.Provider("zq-provider"),
         List(MediaItemRow.ProviderKey("k1"), MediaItemRow.ProviderKey("k2"))
       ),
-      Map("k1" -> Known(uid, None))
+      Map("k1" -> Known(Known.Uid(uid.value), None))
     )
     val (again, inserted) = a.save(
       picture(ProviderAsset.Key("k1"), kind = Some(ProviderAsset.Kind(AssetKind.Map))),

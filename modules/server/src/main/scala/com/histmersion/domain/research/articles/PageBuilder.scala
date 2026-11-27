@@ -109,7 +109,7 @@ final class PageBuilder(
         ).flatten
           .mkString("\n\n")
       val links = articles.pageLinks(Article.Links.targets(WikiLinks.Body(md)))
-      (Title(s.title.value), highlighted(Pages.source(page, ck => links(ck)), term))
+      (Title(s.title.value), highlighted(Pages.source(page, ck => links(WikiLinks.Occurrence.Target(ck.value))), term))
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
@@ -133,7 +133,7 @@ final class PageBuilder(
           v.coverage,
           articles.reviewOf(Slug.assume(v.article.slug.value)).left.map(Api.Error(_)).toOption
         ),
-        s => links(s)
+        s => links(WikiLinks.Occurrence.Target(s.value))
       )
       (Title(v.article.title.value), highlighted(html, q.map(_.value.trim).filter(_.nonEmpty)))
     }

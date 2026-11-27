@@ -166,7 +166,7 @@ object ResearchOverview:
     val busy = Var(false)
     val failed = Var(Option.empty[String])
     val mode = status.signal.map(
-      _.map(s => AgentMode.of(s.on, AgentMode.Step.Drain.On(s.drain.isDefined)))
+      _.map(s => AgentMode.of(AgentMode.Step.Autopilot.On(s.on.value), AgentMode.Step.Drain.On(s.drain.isDefined)))
     )
     def choose(m: AgentMode): Unit = write { () =>
       busy.set(true)

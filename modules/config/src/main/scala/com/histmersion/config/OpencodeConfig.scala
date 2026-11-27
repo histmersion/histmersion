@@ -17,7 +17,8 @@ final case class OpencodeConfig(
 ) derives ConfigReader
 
 object OpencodeConfig:
-  export ClaudeCodeConfig.Command
+  type Command = Command.T
+  object Command extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends Newtype[Int, Pure]
   type ChatgptLogin = ChatgptLogin.T

@@ -279,6 +279,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       .items
       .filter(_.text.value.contains("zzagent"))
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def backlog(mid: ManagerInfo.Id): List[ManagerItem] =
     Transactor(ds)
       .read(ManagerRepo.itemPage(mid, None, Offset(0), PageSize(500)))

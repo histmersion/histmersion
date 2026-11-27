@@ -7,7 +7,6 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 
 enum FormatRule(
     val wire: FormatRule.Wire,
@@ -267,7 +266,8 @@ enum FormatRule(
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object FormatRule:
-  export GeoPick.Wire
+  type Wire = Wire.T
+  object Wire extends Newtype[String, Pure]
   type Fixable = Fixable.T
   object Fixable extends Newtype[Boolean, Pure]
   type Description = Description.T

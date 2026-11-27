@@ -32,8 +32,9 @@ abstract class KeyedCollection(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def requestIntervalMs: MediaCollection.RequestIntervalMs =
     MediaCollection.RequestIntervalMs(conf.requestIntervalMs.value)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMs] =
-    conf.refusalBackoffMs.map(ms => ms)
+    conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMs(ms.value))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   override def latestYear: Option[Year] = conf.latestYear.map(y => Year(y.value))
   val role = MediaCollection.Object

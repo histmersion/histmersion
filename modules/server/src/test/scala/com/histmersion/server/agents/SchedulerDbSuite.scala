@@ -106,10 +106,15 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Review = ManagerInfo.Id(ReviewId)
   private val ReviewLight = ApiIds.manager(Review)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ReviewKind = ManagerItem.Kind(ArticleReview)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val CompileKind = ManagerItem.Kind(ArticleCompile)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ProposeKind = ManagerItem.Kind(ProposeArticles)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val PlanGoalKind = ManagerItem.Kind(PlanGoalItem)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val IngestKind = ManagerItem.Kind(OaIngest)
 
   /** 3 runs at once, goal-first, the crons off (nothing fires by itself), the backlog drained whole. */

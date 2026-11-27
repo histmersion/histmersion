@@ -9,7 +9,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 object CollectionsMarkdown:
   type Missing = Missing.T
   object Missing extends Newtype[Int, Pure]
-  export CollectionSearch.Total
+  type Total = Total.T
+  object Total extends Newtype[Int, Pure]
 
   def collections(cs: List[CollectionInfo]): String =
     if cs.isEmpty then ("_No source collection is registered._")

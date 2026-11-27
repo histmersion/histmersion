@@ -317,6 +317,7 @@ object ActivityView:
 
   /** The whole page: the chips, the list, and the detailed lists it sums up. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig, tab: ActivityTab, goal: Option[Goal.Slug]): HtmlElement =
     val feed = Feed(tab.show.getOrElse(Activity.Show.Everything), goal, Paging.Limit(Activity.DefaultLimit))
     div(

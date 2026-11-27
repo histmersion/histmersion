@@ -11,14 +11,14 @@ import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 final case class Period(start: Year, end: Year):
   def isPoint: Boolean = (start == end)
 
 object Period:
   type End = End.T
   object End extends Newtype[Long, Pure]
-  export HistoricalPeriod.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
   type IsoYear = IsoYear.T
   object IsoYear extends Newtype[Long, Pure]
   type Start = Start.T
@@ -70,7 +70,8 @@ object Period:
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   object Skip:
-    export GeoPick.Wire
+    type Wire = Wire.T
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(p: Skip): Wire = p match
       case NoSpan          => Wire("no_span")

@@ -98,6 +98,7 @@ object FakeMediaHttp:
   /** [[collection]] as the host's collection import runs one searched by a place's name: stored under its provider,
     * judged by its own allowlist in `c`.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def builtin(
       name: BuiltinMedia.EntryName,
       settings: String = "",
@@ -106,6 +107,6 @@ object FakeMediaHttp:
   ): PluginCollection =
     PluginCollection(
       BuiltinMedia.providerOf(name),
-      collection(name, settings, env),
+      collection(Registries.MediaCollectionsKey(name.value), settings, env),
       BuiltinMedia.licencesFor(name, c)
     )

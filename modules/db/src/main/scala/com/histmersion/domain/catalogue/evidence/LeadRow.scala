@@ -4,8 +4,6 @@ package domain.catalogue.evidence
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.domain.catalogue.events.CatalogueRefRow
-import com.histmersion.util.identity.AliasTable
 
 /** The facts one event's lead is computed from: its dates, tier and size, the findings near it, the sources proposed
   * and confirmed.
@@ -27,7 +25,8 @@ final case class LeadRow(
 ) derives DbCodec
 
 object LeadRow:
-  export AliasTable.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type Kind = Kind.T
@@ -42,8 +41,10 @@ object LeadRow:
   object NotAfter extends Newtype[Long, Pure]
   type Tier = Tier.T
   object Tier extends Newtype[String, Pure]
-  export CatalogueRefRow.Vei
-  export CatalogueRefRow.Magnitude
+  type Vei = Vei.T
+  object Vei extends Newtype[Int, Pure]
+  type Magnitude = Magnitude.T
+  object Magnitude extends Newtype[Double, Pure]
   type FindingsNear = FindingsNear.T
   object FindingsNear extends Newtype[Int, Pure]
   type Proposed = Proposed.T

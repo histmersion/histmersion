@@ -838,7 +838,7 @@ object ManagersView:
                     div(
                       cls := "muted",
                       g.managers
-                        .map(m => s"${Wording.manager(m.id).takeWhile(_ != '·').trim} ${m.state}")
+                        .map(m => s"${Wording.manager(Wording.Id(m.id.value)).takeWhile(_ != '·').trim} ${m.state}")
                         .mkString(" · ")
                     )
                   )

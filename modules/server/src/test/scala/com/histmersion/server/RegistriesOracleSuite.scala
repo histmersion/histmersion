@@ -87,7 +87,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
       val subjects = details.map { (name, d) =>
         val j = JobInfo(
           id = SpatialHierarchyResult.Job.Id("j"),
-          kind = k,
+          kind = JobKinds.Wire(k.value),
           status = JobInfo.Status("done"),
           detail = Some(d)
         )
@@ -95,7 +95,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
       }
       val withCitekey = JobInfo(
         id = SpatialHierarchyResult.Job.Id("j"),
-        kind = k,
+        kind = JobKinds.Wire(k.value),
         status = JobInfo.Status("done"),
         citekey = (Some("hattusa_1990")).map(Citekey.apply)
       )

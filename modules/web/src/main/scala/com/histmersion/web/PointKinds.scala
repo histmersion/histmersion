@@ -250,7 +250,7 @@ object PointKinds:
       Glyphs.badge(Glyphs.Name(CardIcons.event(EventSummary.Kind(e.kind.value)).value))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def classes(e: EventGeo): String =
-      s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(EventSummary.Kind(e.kind.value)).group}" +
+      s"hd-ev hd-ev--${EventMarker.tierClass(Api.EventQuery.Tier(e.tier.value))} hd-ev--${EventTaxonomy.of(EventSummary.Kind(e.kind.value)).group}" +
         (if e.precision.value == EventPrecision.Approximate then " hd-ev--approximate" else "") +
         (if undated(e) then s" ${MapView.UndatedClass}" else "")
 

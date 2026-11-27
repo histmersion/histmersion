@@ -167,7 +167,7 @@ final class HttpApi(
     Api.restore.serverLogic[Identity](req => h.upkeep.restore(req)),
     // ── portable bundles (M0–M2) ──────────────────────────────────────────────────────────────
     Api.instance.serverLogicSuccess[Identity](_ => h.bundles.instance),
-    Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in.label.map(l => l))),
+    Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in.label.map(l => InstanceInfo.Label(l.value)))),
     Api.exportBundle.serverLogic[Identity](since =>
       h.bundles.exportBundle(since.map(s => BundleScope.Since.At(s.value))).map((f, d) => (f, Api.FileName(d.value)))
     ),

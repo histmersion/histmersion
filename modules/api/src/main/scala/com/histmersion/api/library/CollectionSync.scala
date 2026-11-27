@@ -11,7 +11,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.Api
 
 /** A sync: the gaps it considered, and with `apply` each push made. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
@@ -52,5 +51,7 @@ object CollectionSync:
         api.json.Schema
 
   object Request:
-    export Api.Apply
-    export Api.GoalQuery.Limit
+    type Apply = Apply.T
+    object Apply extends Newtype[Boolean, Pure]
+    type Limit = Limit.T
+    object Limit extends Newtype[Int, Pure]

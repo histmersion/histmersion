@@ -50,6 +50,7 @@ class MediaImportJobSuite extends DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val N = 300
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def id(i: Int) = BEventRow.Id(f"0zqmj_$i%03d")
   private def qid(i: Int) = s"Q${9_100_000 + i}"
   private def idx(q: String): Int = q.stripPrefix("Q").toInt - 9_100_000

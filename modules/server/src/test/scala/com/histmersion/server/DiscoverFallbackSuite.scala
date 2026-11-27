@@ -64,6 +64,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(
       Problem.Unclassified(Legacy.Text("unused"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
@@ -90,6 +91,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
       @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
       def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         Left(Problem.Unclassified(Legacy.Text("unused")))
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
@@ -137,6 +139,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(
       Problem.Unclassified(Legacy.Text("unused"))
     )
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 

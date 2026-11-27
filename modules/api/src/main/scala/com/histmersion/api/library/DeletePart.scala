@@ -9,7 +9,6 @@ import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.GeoPick
 
 enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label) derives CanEqual:
   case Findings extends DeletePart(DeletePart.Wire("findings"), DeletePart.Label("findings"))
@@ -51,7 +50,8 @@ enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label) derives 
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object DeletePart:
-  export GeoPick.Wire
+  type Wire = Wire.T
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 

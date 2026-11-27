@@ -198,7 +198,8 @@ object CalibreCollection:
   /** A Calibre entry's id as a collection id spells it: decimal digits that fit an `Int`. */
   type IdText = IdText.T
   object IdText extends Newtype[String, Match["[0-9]{1,9}"]]
-  export Calibre.Settings.WriteBack
+  type WriteBack = WriteBack.T
+  object WriteBack extends Newtype[Boolean, Pure]
 
   /** The most books a search answers when the host does not say. */
   val SearchLimit: Calibre.SearchLimit = Calibre.SearchLimit(20)

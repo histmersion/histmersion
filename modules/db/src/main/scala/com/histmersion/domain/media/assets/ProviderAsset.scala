@@ -5,7 +5,6 @@ import com.histmersion.api.media.AssetKind
 import com.histmersion.domain.media.MediaRole
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.catalogue.events.EventSelection
 
 /** A provider's picture to store. `bytes` are the capped rendition, `thumb` the card's thumbnail. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -45,9 +44,12 @@ object ProviderAsset:
   object Key extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  export AssetBytesRow.Mime
-  export AssetDetailRow.Width
-  export AssetDetailRow.Height
+  type Mime = Mime.T
+  object Mime extends Newtype[String, Pure]
+  type Width = Width.T
+  object Width extends Newtype[Int, Pure]
+  type Height = Height.T
+  object Height extends Newtype[Int, Pure]
   type ThumbMime = ThumbMime.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ThumbMime extends Newtype[String, Pure]
@@ -57,13 +59,21 @@ object ProviderAsset:
   type ThumbHeight = ThumbHeight.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ThumbHeight extends Newtype[Int, Pure]
-  export AssetDetailRow.License
-  export MediaGeoRow.LicenseUrl
-  export MediaGeoRow.Author
-  export MediaGeoRow.Credit
-  export MediaGeoRow.SourceUrl
-  export MediaItemRow.OriginalUrl
-  export EventSelection.Kind
+  type License = License.T
+  object License extends Newtype[String, Pure]
+  type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+  object LicenseUrl extends Newtype[String, Pure]
+  type Author = Author.T
+  object Author extends Newtype[String, Pure]
+  type Credit = Credit.T
+  object Credit extends Newtype[String, Pure]
+  type SourceUrl = SourceUrl.T
+  object SourceUrl extends Newtype[String, Pure]
+  type OriginalUrl = OriginalUrl.T
+  object OriginalUrl extends Newtype[String, Pure]
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def kindOf(role: MediaRole.Wire): Kind = role.value match

@@ -136,12 +136,12 @@ final class ArticlesControllers(
     val links = pageLinks(
       MarkdownLint
         .lookups(MarkdownLint.Scan.Text(body.value) :: summary.map(s => MarkdownLint.Scan.Text(s.value)).toList)
-        .map(t => t)
+        .map(t => WikiLinks.Occurrence.Target(t.value))
     )
     MarkdownLint.ofArticle(
       MarkdownLint.Scan.Text(body.value),
       summary.map(s => ArticleSummaryRow.Summary(s.value)),
-      ck => links(ck)
+      ck => links(WikiLinks.Occurrence.Target(ck.value))
     )
 
   /** `strict`: refuse a write whose text has a formatting ERROR; otherwise the problems ride along in the response, and
@@ -234,14 +234,14 @@ final class ArticlesControllers(
     val links = pageLinks(
       MarkdownLint
         .lookups(texts.map(t => MarkdownLint.Scan.Text(t.value)))
-        .map(t => t)
+        .map(t => WikiLinks.Occurrence.Target(t.value))
     )
     ReviewArticle.BodyCorpus(
       t => links(WikiLinks.Occurrence.Target(t.value)).exists(_.isInstanceOf[Source.Ref]),
       t => links(WikiLinks.Occurrence.Target(t.value)).isDefined,
       text =>
         MarkdownLint
-          .ofArticle(MarkdownLint.Scan.Text(text.value), None, ck => links(ck))
+          .ofArticle(MarkdownLint.Scan.Text(text.value), None, ck => links(WikiLinks.Occurrence.Target(ck.value)))
           .filter(_.severity == FormatSeverity.Error)
           .map(i =>
             Problem.Content.Answer(
@@ -437,7 +437,7 @@ final class ArticlesControllers(
         )
         .copy(
           eventLeads = articleLeads(
-            a.body,
+            ArticleEventLead.Body(a.body.value),
             (cited ++ hits.map(h => Citekey.assume(h.citekey.value))).distinct,
             f.period
           ),
@@ -499,7 +499,7 @@ final class ArticlesControllers(
       .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
       .toMap
     val resolve: CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey] =
-      t => links(t).collect { case r: Source.Ref => r.citekey }
+      t => links(WikiLinks.Occurrence.Target(t.value)).collect { case r: Source.Ref => r.citekey }
     (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
 
   /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the hits applied. */
@@ -594,7 +594,7 @@ final class ArticlesControllers(
         .toMap
       Critiques.build(
         body,
-        t => links(t).collect { case r: Source.Ref => r.citekey },
+        t => links(WikiLinks.Occurrence.Target(t.value)).collect { case r: Source.Ref => r.citekey },
         edges,
         reasons,
         refs.get

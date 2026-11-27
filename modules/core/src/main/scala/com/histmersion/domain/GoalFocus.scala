@@ -147,9 +147,12 @@ object GoalFocus:
     object CreatedAt extends Newtype[String, Pure]
     type Sources = Sources.T
     object Sources extends Newtype[Int, Pure]
-    export AutopilotPolicy.NextFacts.Articles
-    export AutopilotPolicy.NextFacts.Unreviewed
-    export AutopilotPolicy.NextFacts.CompileOpen
+    type Articles = Articles.T
+    object Articles extends Newtype[Int, Pure]
+    type Unreviewed = Unreviewed.T
+    object Unreviewed extends Newtype[Int, Pure]
+    type CompileOpen = CompileOpen.T
+    object CompileOpen extends Newtype[Int, Pure]
     type LastStop = LastStop.T
     object LastStop extends Newtype[String, Pure]
     type Pinned = Pinned.T
@@ -234,6 +237,7 @@ object GoalFocus:
     * focus recorded (the counts left empty), each open item with the goals it belongs to, and the per-goal counts.
     * Pure.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def build(
       goals: List[Facts],
       work: List[(List[Goal.Slug], Work)],

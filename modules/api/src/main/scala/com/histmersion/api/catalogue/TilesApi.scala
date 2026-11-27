@@ -46,7 +46,8 @@ object TilesApi:
     object Y extends Newtype[Long, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    export Api.EventQuery.Tier
+    type Tier = Tier.T
+    object Tier extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.Historicity.Wire as Historicity
     type Context = Context.T
     object Context extends Newtype[Boolean, Pure]

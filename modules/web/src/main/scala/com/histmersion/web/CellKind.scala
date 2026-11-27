@@ -42,7 +42,7 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def member(c: TileCellPoint): Member =
     Member(
       dot,
-      c.n,
+      Member.N(c.n.value),
       (c.midLo.toList.map(m => Member.Mids(m.value)) ++ c.midHi.map(m => Member.Mids(m.value))).distinct,
       Certainty.NoSay,
       cell = Some(c.box),
@@ -53,7 +53,7 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def label(c: TileCellPoint): UiLabels.Text =
     UiLabels.Text(
-      DotCluster.summary(Map(dot -> DotCluster.KindCount(c.n.value)), c.undated).value
+      DotCluster.summary(Map(dot -> DotCluster.KindCount(c.n.value)), DotCluster.Undated(c.undated.value)).value
     )
   def action(c: TileCellPoint): UiLabels.Text = UiLabels.Text("zoom in")
   def target(c: TileCellPoint, asOf: Option[Years.Astronomical]): Option[Preview.Target] = None

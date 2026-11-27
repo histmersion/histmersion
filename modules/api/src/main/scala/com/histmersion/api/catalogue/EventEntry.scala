@@ -23,6 +23,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   * page (`EventDetail`), which adds the event's pictures.
   */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventEntry(
     event: EventSummary,

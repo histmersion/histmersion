@@ -10,7 +10,6 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.util.identity.AliasTable
 
 /** An event as its bundle line reads it: the row, its parent's and its source's uids. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -43,7 +42,8 @@ final private[events] case class BEventRow(
 ) derives DbCodec
 
 object BEventRow:
-  export AliasTable.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type Kind = Kind.T

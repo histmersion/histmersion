@@ -8,4 +8,5 @@ object EventTier:
 
   val Attested = "attested"
   val Catalogue = "catalogue"
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[EventSummary.Tier] = List(EventSummary.Tier(Attested), EventSummary.Tier(Catalogue))

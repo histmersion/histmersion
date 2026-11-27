@@ -45,7 +45,7 @@ object ActivityMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stateOf(e: Entry): String = e.entryKind match
     case Some(EntryKind.Run) =>
-      Agents.RunState.parse(e.state).fold(e.state.value)(Wording.runState)
+      Agents.RunState.parse(Run.State.Wire(e.state.value)).fold(e.state.value)(Wording.runState)
     case Some(EntryKind.Job) => JobState.parse(JobState.Wire(e.state.value)).fold(e.state.value)(Wording.jobState)
     case _                   => ("")
 

@@ -3,7 +3,6 @@ package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.Wording
 enum ProviderKind(val wire: ProviderKind.Wire) derives CanEqual:
   case Anthropic extends ProviderKind(ProviderKind.Wire("anthropic"))
   case OpenAI extends ProviderKind(ProviderKind.Wire("openai"))
@@ -31,7 +30,8 @@ object ProviderKind:
     type FilePath = FilePath.T
     object FilePath extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    export Wording.Id
+    type Id = Id.T
+    object Id extends Newtype[String, Pure]
     type Name = Name.T
     object Name extends Newtype[String, Pure]
 

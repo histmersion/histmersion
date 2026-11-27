@@ -174,7 +174,7 @@ object MergeCmd:
           s"merge apply ${j.job.value.take(8)}: running (${j.elapsedMs.value / 1000}s — the backup comes first)"
         )
         Thread.sleep(PollMs.toLong)
-        c.mergeApplyStatus(j.job) match
+        c.mergeApplyStatus(Api.Merge.Id(j.job.value)) match
           case Left(e)     => Cli.err.println(); Left(e)
           case Right(next) =>
             if next.state != MergeJobState.Running then JobFollow.Progress.clear()

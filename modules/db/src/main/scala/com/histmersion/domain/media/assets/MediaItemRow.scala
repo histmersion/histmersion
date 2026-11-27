@@ -6,7 +6,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.catalogue.events.EventSelection
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final private[assets] case class MediaItemRow(
@@ -32,7 +31,8 @@ final private[assets] case class MediaItemRow(
 ) derives DbCodec
 
 object MediaItemRow:
-  export Known.Uid
+  type Uid = Uid.T
+  object Uid extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
   type Mime = Mime.T
@@ -44,15 +44,25 @@ object MediaItemRow:
   type ProviderKey = ProviderKey.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ProviderKey extends Newtype[String, Pure]
-  export AssetDetailRow.Width
-  export AssetDetailRow.Height
-  export EventSelection.Kind
-  export AssetDetailRow.Caption
-  export AssetDetailRow.License
-  export MediaGeoRow.LicenseUrl
-  export MediaGeoRow.Author
-  export MediaGeoRow.Credit
-  export MediaGeoRow.SourceUrl
+  type Width = Width.T
+  object Width extends Newtype[Int, Pure]
+  type Height = Height.T
+  object Height extends Newtype[Int, Pure]
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]
+  type Caption = Caption.T
+  object Caption extends Newtype[String, Pure]
+  type License = License.T
+  object License extends Newtype[String, Pure]
+  type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
+  object LicenseUrl extends Newtype[String, Pure]
+  type Author = Author.T
+  object Author extends Newtype[String, Pure]
+  type Credit = Credit.T
+  object Credit extends Newtype[String, Pure]
+  type SourceUrl = SourceUrl.T
+  object SourceUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
   object OriginalUrl extends Newtype[String, Pure]
   type RetrievedAt = RetrievedAt.T

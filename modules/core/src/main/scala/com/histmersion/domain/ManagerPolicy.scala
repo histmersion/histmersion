@@ -57,7 +57,8 @@ object ManagerPolicy:
   object Room extends Newtype[Int, Pure]
   type StepLabel = StepLabel.T
   object StepLabel extends Newtype[String, Pure]
-  export EnrichSource.Tag
+  type Tag = Tag.T
+  object Tag extends Newtype[String, Pure]
   type Topic = Topic.T
   object Topic extends Newtype[String, Pure]
   type Attempts = Attempts.T
@@ -67,7 +68,8 @@ object ManagerPolicy:
 
   /** A manager's item: its id, what it does, the note it carries, what became of it and the task it left. */
   object Item:
-    export IngestBacklog.Entry.Id
+    type Id = Id.T
+    object Id extends Newtype[Long, Pure]
     type Note = Note.T
     object Note extends Newtype[String, Pure]
 
@@ -274,7 +276,8 @@ object ManagerPolicy:
 
   object Next:
     object Retry:
-      export IngestBacklog.Failure.Retry.Failures
+      type Failures = Failures.T
+      object Failures extends Newtype[Int, Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

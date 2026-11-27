@@ -108,8 +108,9 @@ object CritiquePairing:
       else Some(Mention.Weak)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def targetsOf(u: Critiques.Block): List[WikiLinks.Occurrence.Target] =
-    Article.Links.targets(u.text)
+    Article.Links.targets(WikiLinks.Body(u.text.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -10,7 +10,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.catalogue.evidence.NearFindingRow
 
 /** One row of `FilterSql.findingsQuery`. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -50,7 +49,9 @@ final private[search] case class FindingHitRow(
     placeIds.map(id => domain.catalogue.Place.Id.applyUnsafe(id.value))
 
 object FindingHitRow:
-  export NearFindingRow.Id
+
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
   type Claim = Claim.T
   object Claim extends Newtype[String, Pure]
   type RegionName = RegionName.T

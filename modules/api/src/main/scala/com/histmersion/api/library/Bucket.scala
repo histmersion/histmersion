@@ -7,7 +7,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.catalogue.{ManualPlaceName, RegionNode}
 
 final case class Bucket(
     label: Bucket.Label,
@@ -30,7 +29,8 @@ object Bucket:
     * `children` field and the lazy val would wait on itself forever on first use (tapir's own `Schema.derived` hangs
     * the same way). Ask for it with `Bucket.schema`; do not add a given `Schema[Bucket]` here.
     */
-  export ManualPlaceName.Label
+  type Label = Label.T
+  object Label extends Newtype[String, Pure]
   type Key = Key.T
   object Key extends Newtype[String, Pure]
   type Kind = Kind.T
@@ -40,7 +40,8 @@ object Bucket:
   object Count extends Newtype[Int, Pure]
   type Overlap = Overlap.T
   object Overlap extends Newtype[Int, Pure]
-  export RegionNode.Contested
+  type Contested = Contested.T
+  object Contested extends Newtype[Boolean, Pure]
   type AlsoUnder = AlsoUnder.T
   object AlsoUnder extends Newtype[String, Pure]
 

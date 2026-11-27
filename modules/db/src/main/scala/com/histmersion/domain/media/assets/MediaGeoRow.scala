@@ -6,7 +6,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.domain.catalogue.events.EventSelection
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final private[assets] case class MediaGeoRow(
@@ -31,12 +30,16 @@ final private[assets] case class MediaGeoRow(
 object MediaGeoRow:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  export EventSelection.Kind
-  export AssetDetailRow.Caption
-  export Known.Uid
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]
+  type Caption = Caption.T
+  object Caption extends Newtype[String, Pure]
+  type Uid = Uid.T
+  object Uid extends Newtype[String, Pure]
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
-  export AssetDetailRow.License
+  type License = License.T
+  object License extends Newtype[String, Pure]
   type Credit = Credit.T
   object Credit extends Newtype[String, Pure]
   type HasThumb = HasThumb.T
@@ -44,6 +47,7 @@ object MediaGeoRow:
   type SourceUrl = SourceUrl.T
   object SourceUrl extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
   object Author extends Newtype[String, Pure]
