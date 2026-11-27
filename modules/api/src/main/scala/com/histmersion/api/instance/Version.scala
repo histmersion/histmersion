@@ -20,6 +20,8 @@ object Version:
 
   object Info:
     type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    object Name extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Version = Version.T
-    object Version extends Newtype[String, Pure]
+    object Version extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)

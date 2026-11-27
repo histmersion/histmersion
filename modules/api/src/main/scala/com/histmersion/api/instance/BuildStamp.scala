@@ -23,9 +23,11 @@ final case class BuildStamp(
 
 object BuildStamp:
   type Version = Version.T
-  object Version extends Newtype[String, Pure]
+  object Version extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type GitCommit = GitCommit.T
-  object GitCommit extends Newtype[String, Pure]
+  object GitCommit extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type CommitDate = CommitDate.T
   object CommitDate extends Newtype[String, Pure]
   type Dirty = Dirty.T

@@ -670,7 +670,8 @@ object Agents:
     type Content = Content.T
     object Content extends Newtype[String, Pure]
     type ToolName = ToolName.T
-    object ToolName extends Newtype[String, Pure]
+    object ToolName extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type ToolInput = ToolInput.T
     object ToolInput extends Newtype[String, Pure]
     type ToolOutput = ToolOutput.T
@@ -752,7 +753,8 @@ object Agents:
 
   object DoctorCheck:
     type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    object Name extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
 

@@ -17,7 +17,8 @@ final case class MergeResolution(
 
 object MergeResolution:
   type Issue = Issue.T
-  object Issue extends Newtype[String, Pure]
+  object Issue extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   export MergeDecision.Kind.Wire as Decision
   type Text = Text.T
   object Text extends Newtype[String, Pure]

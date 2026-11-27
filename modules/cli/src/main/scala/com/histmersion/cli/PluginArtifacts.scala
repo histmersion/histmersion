@@ -17,10 +17,12 @@ object PluginArtifacts:
   object Path extends Newtype[String, Pure]
   type CoordinatesName = CoordinatesName.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object CoordinatesName extends Newtype[String, Pure]
+  object CoordinatesName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type PathName = PathName.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object PathName extends Newtype[String, Pure]
+  object PathName extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   val Api = "histmersion-plugin-api"
   val Platform = "histmersion-plugin-platform"
@@ -32,7 +34,7 @@ object PluginArtifacts:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def coordinates(name: CoordinatesName): Coordinates =
-    Coordinates(s"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}")
+    Coordinates(shown"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}")
 
   /** A file of the artifact relative to the repository's root:
     * `com/histmersion/histmersion-plugin-api_3/<v>/…<suffix>`.
@@ -40,6 +42,6 @@ object PluginArtifacts:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def path(name: PathName, suffix: String): Path =
-    val artifact = s"${name}_3"
+    val artifact = shown"${name}_3"
     val version = PluginBuildVersions.histmersion
     Path(s"${PluginBuildVersions.organization.replace('.', '/')}/$artifact/$version/$artifact-$version$suffix")

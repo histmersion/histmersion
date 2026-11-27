@@ -25,11 +25,11 @@ object LogCmd:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def options(filter: LogPage.Filter): List[(String, Option[String])] = List(
       "trace" -> filter.trace.map(t => shown"$t"),
-      "label" -> filter.label.map(l => s"$l"),
+      "label" -> filter.label.map(l => shown"$l"),
       "job" -> filter.job.map(j => shown"$j"),
       "run" -> filter.run.map(r => shown"$r"),
       "source" -> filter.source.map(s => shown"$s"),
-      "problem" -> filter.problem.map(p => s"$p"),
+      "problem" -> filter.problem.map(p => shown"$p"),
       "kind" -> filter.kind.map(k => s"$k"),
       "since" -> filter.since.map(s => s"$s"),
       "until" -> filter.until.map(u => s"$u"),

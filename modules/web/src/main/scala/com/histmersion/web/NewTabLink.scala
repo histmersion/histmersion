@@ -13,7 +13,8 @@ object NewTabLink:
   object Href extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  object Label extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -23,7 +24,7 @@ object NewTabLink:
       href := href0,
       target := "_blank",
       rel := "noopener",
-      title := s"Open “$what” in a new tab",
-      aria.label := s"Open $what in a new tab",
+      title := shown"Open “$what” in a new tab",
+      aria.label := shown"Open $what in a new tab",
       Icon(Icon.NewTab)
     )

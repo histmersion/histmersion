@@ -84,7 +84,8 @@ object MergeView:
 
   object Group:
     type Title = Title.T
-    object Title extends Newtype[String, Pure]
+    object Title extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def groupOf(i: MergeIssue): Group =
@@ -703,7 +704,7 @@ object MergeView:
         )
       ),
       div(cls := "merge-sides", side("here", i.left, i.entity), side("bundle", i.right, i.entity)),
-      Option.when(i.why.nonEmpty)(div(cls := "merge-why", h5("why"), ul(i.why.map(w => li(s"$w"))))),
+      Option.when(i.why.nonEmpty)(div(cls := "merge-why", h5("why"), ul(i.why.map(w => li(shown"$w"))))),
       i.detail.toList.flatMap(d =>
         d.fields.headOption.map(_ => fieldTable(i, d.fields)).toList ++
           d.text.map(t => articleView(i, t, mine.flatMap(_.text))).toList ++

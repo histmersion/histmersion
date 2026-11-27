@@ -718,7 +718,7 @@ object RunsView:
                   cls := s"trace-msg trace-${m.role}",
                   div(
                     cls := "trace-head muted",
-                    s"${m.role}${m.toolName.fold("")(t => s" · $t")}${m.latencyMs.fold("")(l => s" · $l ms")}"
+                    s"${m.role}${m.toolName.fold("")(t => shown" · $t")}${m.latencyMs.fold("")(l => s" · $l ms")}"
                   ),
                   pre(
                     cls := "trace-body",

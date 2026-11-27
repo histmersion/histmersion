@@ -423,7 +423,7 @@ object ResultsList:
                   .map(t =>
                     Chip(
                       Chip.Text(t.value),
-                      prefix = Some(Chip.Prefix(s"${c.label}: ")),
+                      prefix = Some(Chip.Prefix(shown"${c.label}: ")),
                       extraCls = Chip.ExtraClass("place"),
                       remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value))
                     )
@@ -433,7 +433,7 @@ object ResultsList:
               li(
                 Chip(
                   Chip.Text(c.shown.map(_.value).getOrElse(Fmt.displayTag(Fmt.DisplayTagS(c.value.value)).value)),
-                  prefix = Some(Chip.Prefix(s"${c.label}: ")),
+                  prefix = Some(Chip.Prefix(shown"${c.label}: ")),
                   remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), c.value))
                 )
               )

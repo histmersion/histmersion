@@ -89,14 +89,16 @@ object ConfigEdit:
     object Effective extends Newtype[String, Pure]
     export ConfigEdit.Source.Wire as Source
     type EnvVar = EnvVar.T
-    object EnvVar extends Newtype[String, Pure]
+    object EnvVar extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Restart = Restart.T
     object Restart extends Newtype[String, Pure]
     type Locked = Locked.T
     object Locked extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type Resolved = Resolved.T
-    object Resolved extends Newtype[String, Pure]
+    object Resolved extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   final case class Section(id: Section.Id, doc: Section.Doc = Section.Doc(""), fields: List[Field] = Nil)
       derives JsonCodec,
@@ -104,9 +106,11 @@ object ConfigEdit:
 
   object Section:
     type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    object Id extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Doc = Doc.T
-    object Doc extends Newtype[String, Pure]
+    object Doc extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   final case class Page(
       file: Option[Page.File] = None,
@@ -128,7 +132,8 @@ object ConfigEdit:
     object Selector extends Newtype[String, Pure]
 
     type File = File.T
-    object File extends Newtype[String, Pure]
+    object File extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Exists = Exists.T
     object Exists extends Newtype[Boolean, Pure]
     type Version = Version.T
@@ -191,7 +196,8 @@ object ConfigEdit:
 
   object Written:
     type File = File.T
-    object File extends Newtype[String, Pure]
+    object File extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Changed = Changed.T
     object Changed extends Newtype[String, Pure]
     type Unchanged = Unchanged.T

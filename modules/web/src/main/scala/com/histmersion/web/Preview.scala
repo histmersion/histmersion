@@ -252,7 +252,8 @@ object Preview:
 
   object Item:
     type Text = Text.T
-    object Text extends Newtype[String, Pure]
+    object Text extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type Citekey = Target.Source.Citekey
     val Citekey: Target.Source.Citekey.type = Target.Source.Citekey
@@ -360,7 +361,7 @@ object Preview:
         val other =
           rest
             .find(_.lang != first.lang)
-            .map(o => s" · ${o.text}" + (if o.lang.value.nonEmpty then s" (${o.lang})" else ""))
+            .map(o => shown" · ${o.text}" + (if o.lang.value.nonEmpty then s" (${o.lang})" else ""))
         Some(first.text.value + other.getOrElse(""))
     val links = d.links
       .flatMap(l =>
@@ -386,7 +387,7 @@ object Preview:
       summary = description.map(Card.Summary(_)),
       facts = (Option.when(d.datedByFindings)(Place.TimeBasis.FindingsNote.value).toList ++
         d.shapeNotes.map(_.value) ++
-        datasetOf(p).map(s => s"source: $s").toList ++
+        datasetOf(p).map(s => shown"source: $s").toList ++
         d.counts.toList.map(c =>
           List(
             plural(c.sources.value, "source"),
@@ -1241,7 +1242,7 @@ object Preview:
       Option.when(it.query.isEmpty)(
         it.slug
           .map(slug => ArticleLink(slug, it.text.value): HtmlElement)
-          .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text.value))
+          .getOrElse(span(if it.citekey.isDefined then shown" ${it.text}" else it.text.value))
       ),
       it.href
         .flatMap(u => Href.link(u.value))

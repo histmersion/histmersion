@@ -59,7 +59,8 @@ object KeysSection:
     object Label extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type Hint = Hint.T
-    object Hint extends Newtype[String, Pure]
+    object Hint extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
     def of(scheme: Scheme): Form = values.find(_.scheme == scheme).getOrElse(Env)
 
@@ -69,7 +70,7 @@ object KeysSection:
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def reference(form: Form, entry: ReferenceEntry): Either[Problem, Reference] =
     val t = entry.value.trim
-    if t.isEmpty then Left(Problem.Unclassified(Legacy.Text(s"Write ${form.hint}.")))
+    if t.isEmpty then Left(Problem.Unclassified(Legacy.Text(shown"Write ${form.hint}.")))
     else if form == Form.Env && !t.matches("[A-Za-z_][A-Za-z0-9_]*") then
       Left(Problem.Unclassified(Legacy.Text(s"$t is not an environment variable's name.")))
     else Right(Reference(s"${form.scheme}:$t"))
@@ -186,7 +187,7 @@ object KeysSection:
         span(cls := "setting-key muted", f.relative)
       ),
       p(cls := "key-state", f.credential.map(c => state(c).value).getOrElse("")),
-      f.envVar.map(v => p(cls := "muted", s"Environment variable: $v"))
+      f.envVar.map(v => p(cls := "muted", shown"Environment variable: $v"))
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

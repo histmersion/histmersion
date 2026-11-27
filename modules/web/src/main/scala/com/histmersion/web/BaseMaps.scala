@@ -73,9 +73,9 @@ object BaseMaps:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def optionLabel(b: BaseMap, s: Option[Basemap.Status]): String =
     if b.online then b.label.value
-    else if !s.forall(_.available.value) then s"${b.label} — not downloaded"
+    else if !s.forall(_.available.value) then shown"${b.label} — not downloaded"
     else if s.exists(st => st.missing(Basemap.StyleState.Id(b.wire.value)).nonEmpty) then
-      s"${b.label} — needs the full download"
+      shown"${b.label} — needs the full download"
     else b.label.value
 
   /** The notice over a vector style. */

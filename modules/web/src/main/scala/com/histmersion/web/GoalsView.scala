@@ -570,7 +570,7 @@ object GoalsView:
           case LinkKind.Source =>
             SourceLink(
               Preview.Target.Source.Citekey(l.ref.value),
-              label = l.title.map(t => UiLabels.Text(s"${l.ref.value} — ${t.value}"))
+              label = l.title.map(t => UiLabels.Text(shown"${l.ref} — $t"))
             )
           case LinkKind.Article   => ArticleLink(Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value))
           case LinkKind.Query     => span(shown"“${l.ref}”")
@@ -581,7 +581,7 @@ object GoalsView:
               .zip(l.ref.value.toIntOption)
               .fold(text)((k, id) => QueueItemLink(k, GoalLink.QueueNumber(id), text)),
         Option.when(l.title.isEmpty && l.kind != LinkKind.Query)(span(cls := "muted", " (missing)")),
-        l.note.filter(_.value.nonEmpty).map(n => span(cls := "muted", s" · ${n.value}")),
+        l.note.filter(_.value.nonEmpty).map(n => span(cls := "muted", shown" · $n")),
         child.maybe <-- Auth.writable.map(w =>
           Option.when(w)(
             button(
@@ -685,7 +685,7 @@ object GoalsView:
             c.lastRun.map(id =>
               span(" · ", WinLink(WindowKey.Run(WindowKey.Run.Id(id.value)), s"run ${id.value.take(8)}"))
             ),
-            c.lastNote.filter(_.value.nonEmpty).map(n => s" · ${n.value}")
+            c.lastNote.filter(_.value.nonEmpty).map(n => shown" · $n")
           )
         ),
         child <-- Auth.writable.map { w =>

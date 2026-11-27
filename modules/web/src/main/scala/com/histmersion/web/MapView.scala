@@ -526,7 +526,7 @@ object MapView:
         dots.spiderfy(ds.map(d => PointSet.Key(d.key.value)), spiderSeparation)
       ResultsList.pick(
         all.findings,
-        UiLabels.Text(s"${DotCluster.summary(all)} in this cluster"),
+        UiLabels.Text(shown"${DotCluster.summary(all)} in this cluster"),
         Some(() => zoomIn()),
         DotCluster.ordered(DotCluster.others(ds))
       )

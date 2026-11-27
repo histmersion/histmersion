@@ -23,6 +23,7 @@ object AuditFinding:
 
   type CalibreId = CalibreId.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object CalibreId extends Newtype[Int, Pure]
+  object CalibreId extends Newtype[Int, Pure]:
+    given Display[T] = Display(id => s"${id.value}")
   type Citekeys = Citekeys.T
   object Citekeys extends Newtype[String, Pure]

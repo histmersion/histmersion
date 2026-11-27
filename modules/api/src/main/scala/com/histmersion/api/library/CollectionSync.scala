@@ -39,7 +39,8 @@ object CollectionSync:
 
   object Push:
     type Id = Id.T
-    object Id extends Newtype[String, Pure]
+    object Id extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
 
   /** Push every counted gap into a collection (a dry run unless `apply`), considering at most `limit` gaps. */
   final case class Request(

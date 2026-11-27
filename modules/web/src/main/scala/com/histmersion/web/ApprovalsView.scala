@@ -238,7 +238,7 @@ object ApprovalsView:
               a(href := shown"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
               if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
               else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
-              Option(s"${w.why}").filter(_.nonEmpty).map(y => div(cls := "muted", y))
+              Option(shown"${w.why}").filter(_.nonEmpty).map(y => div(cls := "muted", y))
             )
           })
         )
@@ -677,7 +677,7 @@ object ApprovalsView:
         a.plan.map(planBlock),
         a.article.map(draftBlock),
         a.quote.filter(_.value.nonEmpty).map(q => blockQuote(cls := "approval-quote", q)),
-        a.note.filter(_.value.nonEmpty).map(n => p(cls := "muted", s"note: $n")),
+        a.note.filter(_.value.nonEmpty).map(n => p(cls := "muted", shown"note: $n")),
         a.result.filter(_.value.nonEmpty).map(r => p(cls := "muted", r)),
         div(
           cls := "job-meta muted",

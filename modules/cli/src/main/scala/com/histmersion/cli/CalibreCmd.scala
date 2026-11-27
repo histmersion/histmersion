@@ -160,10 +160,11 @@ object CalibreCmd:
       if json.value then Cli.out.println(Output.json(res.source))
       else
         Cli.out.println(shown"Imported Calibre id $id as `${res.citekey}` — ${res.title}")
-        res.relinkedFrom.foreach(prev => Cli.out.println(s"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
-        Cli.out.println(s"File (left in place, never modified): ${res.file}")
+        res.relinkedFrom
+          .foreach(prev => Cli.out.println(shown"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
+        Cli.out.println(shown"File (left in place, never modified): ${res.file}")
         res.cover.foreach(cv =>
-          if cv.warning.value then Cli.err.println(s"warning: cover not stored — ${cv.line}")
+          if cv.warning.value then Cli.err.println(shown"warning: cover not stored — ${cv.line}")
           else Cli.out.println(cv.line)
         )
       if noConvert then Right(())
@@ -603,7 +604,7 @@ object CalibreCmd:
         else
           r.pushes.foreach(p =>
             p.id match
-              case Some(id) => Cli.out.println(s"  + ${p.citekey} → Calibre id $id")
+              case Some(id) => Cli.out.println(shown"  + ${p.citekey} → Calibre id $id")
               case None     =>
                 Cli.err.println(s"  ! ${p.citekey}: ${p.problems.map(_.sentences.mkString("; ")).getOrElse("")}")
           )
@@ -784,7 +785,7 @@ object CalibreCmd:
                     )(_ => s"replaced the ${fmt.value.toUpperCase} of Calibre id ${p.id} with `$ck`'s original")
                   case None =>
                     Output.emit(json, Calibre.Json.Linked(ck, Calibre.Book.Id(p.id.value.toIntOption.getOrElse(0))))(
-                      _ => s"added `$ck` to Calibre as id ${p.id} — ${p.title}"
+                      _ => shown"added `$ck` to Calibre as id ${p.id} — ${p.title}"
                     )
               }
             case None => hostPush(c, ck, file, replace, json)
@@ -871,7 +872,7 @@ object CalibreCmd:
                   json,
                   Calibre.Json.Updated(ck, Calibre.Book.Id(u.id.value.toIntOption.getOrElse(0)), u.changed)
                 )(x =>
-                  if x.changed.isEmpty then s"Calibre id ${u.id} already agrees with `$ck` — nothing written"
+                  if x.changed.isEmpty then shown"Calibre id ${u.id} already agrees with `$ck` — nothing written"
                   else s"updated Calibre id ${u.id} from `$ck` (${x.changed.mkString(", ")}) — ${u.title}"
                 )
               }

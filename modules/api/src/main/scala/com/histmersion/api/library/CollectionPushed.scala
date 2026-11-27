@@ -22,6 +22,7 @@ final case class CollectionPushed(
 
 object CollectionPushed:
   type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  object Id extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Replaced = Replaced.T
   object Replaced extends Newtype[String, Pure]

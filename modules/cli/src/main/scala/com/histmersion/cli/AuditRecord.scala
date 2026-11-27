@@ -20,7 +20,8 @@ object AuditRecord:
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CalibreId extends Newtype[Int, Pure]
   type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  object Title extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
   type Authors = Authors.T
   object Authors extends Newtype[String, Pure]
   type Year = Year.T

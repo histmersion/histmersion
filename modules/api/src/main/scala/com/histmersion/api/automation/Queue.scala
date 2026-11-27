@@ -24,6 +24,8 @@ object Queue:
   /** Why an item is on a list, or how it was closed: a rationale, not a failure. */
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]:
+    given Display[T] = Display(_.value)
+
     extension (r: Rationale)
       /** Does it record that the item was ingested as this citekey (`ingested as [[citekey]]`)? */
       def recordsIngestOf(citekey: Citekey): Boolean = s"$r".contains(ingestTag(citekey))
@@ -165,7 +167,8 @@ object Queue:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
     type File = File.T
-    object File extends Newtype[String, Pure]
+    object File extends Newtype[String, Pure]:
+      given Display[T] = Display(_.value)
     type Checkboxes = Checkboxes.T
     object Checkboxes extends Newtype[Boolean, Pure]
 
