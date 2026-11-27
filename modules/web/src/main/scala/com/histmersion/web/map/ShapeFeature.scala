@@ -15,7 +15,7 @@ final case class ShapeFeature(
     id: ShapeFeature.Id,
     geometry: js.Any,
     colour: ShapeFeature.Colour = ShapeFeature.Colour(""),
-    dashed: ShapeFeature.Dashed = ShapeFeature.Dashed(false),
+    dashed: ShapeFeature.Dashed = ShapeFeature.Dashed.Solid,
     alpha: ShapeFeature.Alpha = ShapeFeature.Alpha(1.0)
 )
 
@@ -24,7 +24,9 @@ object ShapeFeature:
   object Id extends Newtype[String, Pure]
   type Colour = Colour.T
   object Colour extends Newtype[String, Pure]
-  type Dashed = Dashed.T
-  object Dashed extends Newtype[Boolean, Pure]
+  enum Dashed derives CanEqual:
+    case Dashed, Solid
+  object Dashed:
+    extension (dashed: Dashed) def dashed: Boolean = dashed == Dashed
   type Alpha = Alpha.T
   object Alpha extends Newtype[Double, Pure]

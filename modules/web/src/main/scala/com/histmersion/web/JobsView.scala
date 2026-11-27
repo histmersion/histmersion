@@ -45,7 +45,11 @@ object JobsView:
         jobs: List[JobInfo],
         changed: web.Poll.DataChanged
     ): Option[web.Poll.Revision] =
-      web.Poll.next(previous, web.Poll.LiveMode(jobs.exists(!_.isTerminal)), changed)
+      web.Poll.next(
+        previous,
+        (if jobs.exists(!_.isTerminal) then web.Poll.LiveMode.Live else web.Poll.LiveMode.Paused),
+        changed
+      )
 
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just among the rows a filter
     * shows; the rows' own states when the server sent no counts.
@@ -192,7 +196,7 @@ object JobsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def track(jobId: SpatialHierarchyResult.Job.Id): Unit =
     started.set(Some(jobId))
-    list.refresh(changed = web.Poll.DataChanged(true))
+    list.refresh(changed = web.Poll.DataChanged.Changed)
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
@@ -230,7 +234,7 @@ object JobsView:
       ),
       list.errorLine(UiLabels.Text("Could not list jobs")),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        Option.when(isLoaded.value && l.rows.nonEmpty)(
+        Option.when(isLoaded.loaded && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
@@ -244,7 +248,7 @@ object JobsView:
         )
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        if !isLoaded.value then Some(p(cls := "muted", "Loading…"))
+        if !isLoaded.loaded then Some(p(cls := "muted", "Loading…"))
         else
           Option.when(l.rows.isEmpty)(
             p(

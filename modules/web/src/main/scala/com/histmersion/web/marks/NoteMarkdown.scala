@@ -36,8 +36,10 @@ object NoteMarkdown:
       type Level = Level.T
       object Level extends Newtype[Int, Pure]
     object Items:
-      type Ordered = Ordered.T
-      object Ordered extends Newtype[Boolean, Pure]
+      enum Ordered derives CanEqual:
+        case Numbered, Bulleted
+      object Ordered:
+        extension (ordered: Ordered) def numbered: Boolean = ordered == Numbered
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
   private val Bullet = """^\s*[-*+]\s+(.*)$""".r
@@ -69,13 +71,13 @@ object NoteMarkdown:
         val (more, after) = rest.span { case Bullet(_) => true; case _ => false }
         loop(
           after,
-          Block.Items(Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out
+          Block.Items(Block.Items.Ordered.Bulleted, (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out
         )
       case (l @ Number(_)) :: rest =>
         val (more, after) = rest.span { case Number(_) => true; case _ => false }
         loop(
           after,
-          Block.Items(Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out
+          Block.Items(Block.Items.Ordered.Numbered, (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out
         )
       case (l @ QuoteL(_)) :: rest =>
         val (more, after) = rest.span { case QuoteL(_) => true; case _ => false }

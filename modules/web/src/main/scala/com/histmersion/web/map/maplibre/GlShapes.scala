@@ -117,7 +117,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
             `type` = "Feature",
             id = d.n,
             geometry = d.geometry,
-            properties = js.Dynamic.literal(hid = k.value, c = d.colour.value, a = d.alpha.value, d = d.dashed.value)
+            properties = js.Dynamic.literal(hid = k.value, c = d.colour.value, a = d.alpha.value, d = d.dashed.dashed)
           )
         }.toJSArray
       )

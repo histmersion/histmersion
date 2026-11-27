@@ -45,10 +45,14 @@ object Preview:
   object CacheKey extends Newtype[String, Pure]
   type ElementSize = ElementSize.T
   object ElementSize extends Newtype[Double, Pure]
-  type KeyboardDriven = KeyboardDriven.T
-  object KeyboardDriven extends Newtype[Boolean, Pure]
-  type RestoreFocus = RestoreFocus.T
-  object RestoreFocus extends Newtype[Boolean, Pure]
+  enum KeyboardDriven derives CanEqual:
+    case Keyboard, Pointer
+  object KeyboardDriven:
+    extension (keyboardDriven: KeyboardDriven) def keyboard: Boolean = keyboardDriven == Keyboard
+  enum RestoreFocus derives CanEqual:
+    case Restore, Leave
+  object RestoreFocus:
+    extension (restoreFocus: RestoreFocus) def restores: Boolean = restoreFocus == Restore
   type ScreenPixels = ScreenPixels.T
   object ScreenPixels extends Newtype[Double, Pure]
   type ViewportHeight = ViewportHeight.T
@@ -682,7 +686,7 @@ object Preview:
   /** A click on a place chip pins its card under it (its ✕ stops the click: removing is not reading). */
   private def onDocClick(e: dom.MouseEvent): Unit =
     placeAnchorOf(e.target) match
-      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = PinUnderKeyboard(false))
+      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = PinUnderKeyboard.Pointer)
       case _                               =>
         // a click anywhere else in the page, away from the pinned card and what pinned it, lets it go
         // (a click on the map is the map's to judge: it may land on another place, [[PlaceHover]])
@@ -691,12 +695,12 @@ object Preview:
             pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
             n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".map-container") != null
           case _ => false
-        if !inside then unpin(restoreFocus = RestoreFocus(false))
+        if !inside then unpin(restoreFocus = RestoreFocus.Leave)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pinUnder(el: dom.Element, keyboard: PinUnderKeyboard): Unit =
     targetOfElement(el).foreach { t =>
-      if isPinned(t) && !keyboard.value then unpin(restoreFocus = RestoreFocus(false))
+      if isPinned(t) && !keyboard.keyboard then unpin(restoreFocus = RestoreFocus.Leave)
       else
         pin(
           t,
@@ -750,7 +754,7 @@ object Preview:
           if PinRules.activates(PinRules.KeyName(e.key)) then
             chipItself(e.target).foreach { el =>
               e.preventDefault()
-              pinUnder(el, keyboard = PinUnderKeyboard(true))
+              pinUnder(el, keyboard = PinUnderKeyboard.Keyboard)
             }
       )
       document.addEventListener(
@@ -1068,9 +1072,9 @@ object Preview:
       t: Target,
       anchor: () => Option[Anchor],
       owner: Option[dom.Element] = None,
-      keyboard: KeyboardDriven = KeyboardDriven(false)
+      keyboard: KeyboardDriven = KeyboardDriven.Pointer
   ): Unit =
-    unpin(restoreFocus = RestoreFocus(false))
+    unpin(restoreFocus = RestoreFocus.Leave)
     hide()
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
     box.className = "cite-tooltip place-tip is-pinned"
@@ -1088,27 +1092,27 @@ object Preview:
     )
     val root =
       render(box, div(close, child <-- content.signal.map(_.fold(div(cls := "cite-tip-meta", "loading…"))(cardView))))
-    val focusBack = if keyboard.value then owner.collect { case h: dom.HTMLElement => h } else None
+    val focusBack = if keyboard.keyboard then owner.collect { case h: dom.HTMLElement => h } else None
     val p = Pinned(t, box, root, anchor, owner, focusBack)
     pinned = Some(p)
     measure(p)
     reposition()
     p.observer = observe(box, () => if pinned.contains(p) then { measure(p); reposition() })
-    if keyboard.value then close.ref.focus()
+    if keyboard.keyboard then close.ref.focus()
     fetch(t).onComplete {
       case Success(c) if pinned.contains(p) =>
         content.set(Some(c))
         box.setAttribute("aria-label", c.title.value)
         measure(p)
         reposition()
-      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = RestoreFocus(false))
+      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = RestoreFocus.Leave)
       case _                                => ()
     }
 
   /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def unpin(restoreFocus: RestoreFocus = RestoreFocus(true)): Unit =
+  def unpin(restoreFocus: RestoreFocus = RestoreFocus.Restore): Unit =
     pinned.foreach { p =>
       pinned = None
       p.observer.foreach { o =>
@@ -1117,7 +1121,7 @@ object Preview:
       val hadFocus = Option(document.activeElement).exists(a => p.box.contains(a))
       p.root.unmount()
       p.box.remove()
-      if restoreFocus.value || hadFocus then p.returnFocus.filter(_.isConnected).foreach(_.focus())
+      if restoreFocus.restores || hadFocus then p.returnFocus.filter(_.isConnected).foreach(_.focus())
     }
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

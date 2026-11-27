@@ -21,8 +21,8 @@ class PinnedCardSuite extends munit.FunSuite:
     assert(!PinRules.activates(PinRules.KeyName("Escape")))
 
   test("#1441: the click that chooses a place pins its card; the click that unchooses it closes it"):
-    assert(PinRules.pinAfterClick(chosenNow = PinRules.ChosenNow(true)))
-    assert(!PinRules.pinAfterClick(chosenNow = PinRules.ChosenNow(false)))
+    assert(PinRules.pinAfterClick(chosenNow = PinRules.ChosenNow.ChosenNow))
+    assert(!PinRules.pinAfterClick(chosenNow = PinRules.ChosenNow.ChosenBefore))
 
   test("#1441: a pinned card follows its map point and waits, hidden, while it is panned out of view"):
     // a 800×600 map at (100, 50) in the viewport

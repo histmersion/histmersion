@@ -34,14 +34,20 @@ import com.histmersion.lint.{tolerated, LintRule}
   * can only be added. Every write follows [[Auth]].
   */
 object QueueView:
-  type Done = Done.T
-  object Done extends Newtype[Boolean, Pure]
+  enum Done derives CanEqual:
+    case Done, Open
+  object Done:
+    extension (done: Done) def done: Boolean = done == Done
   type GroupCount = GroupCount.T
   object GroupCount extends Newtype[Int, Pure]
-  type ItemIsTarget = ItemIsTarget.T
-  object ItemIsTarget extends Newtype[Boolean, Pure]
-  type Writes = Writes.T
-  object Writes extends Newtype[Boolean, Pure]
+  enum ItemIsTarget derives CanEqual:
+    case Target, Other
+  object ItemIsTarget:
+    extension (itemIsTarget: ItemIsTarget) def isTarget: Boolean = itemIsTarget == Target
+  enum Writes derives CanEqual:
+    case Writable, ReadOnly
+  object Writes:
+    extension (writes: Writes) def writable: Boolean = writes == Writable
 
   /** A run of an item's text: the queue items are short Markdown lines. */
 
@@ -413,7 +419,7 @@ object QueueView:
           UiLabels.Text(shown"update item ${item.id}"),
           ApiClient.queuePatch(
             item.id,
-            Queue.QueuePatch(status = Some(Queue.QueueItem.Status(if d.value then Queue.Done else Queue.Open)))
+            Queue.QueuePatch(status = Some(Queue.QueueItem.Status(if d.done then Queue.Done else Queue.Open)))
           )
         )(),
       edit = (item, p, after) =>
@@ -669,7 +675,7 @@ object QueueView:
             topicsId,
             checks.get(i.id),
             goals.getOrElse(i.id, Nil),
-            ItemIsTarget(target.contains(i.id))
+            (if target.contains(i.id) then ItemIsTarget.Target else ItemIsTarget.Other)
           )
         )
       )
@@ -692,7 +698,7 @@ object QueueView:
       cls := "queue-item",
       idAttr := itemAnchor(item.id),
       cls("done") := done,
-      cls("is-target") := isTarget.value,
+      cls("is-target") := isTarget.isTarget,
       if sp.checkable then
         label(
           cls := "item-check",
@@ -701,7 +707,7 @@ object QueueView:
             aria.label := (if done then sp.tick._2.value else sp.tick._1.value),
             checked := done,
             disabled <-- Auth.writable.map(!_),
-            onChange.mapToChecked --> (v => ops.setDone(item, Done(v)))
+            onChange.mapToChecked --> (v => ops.setDone(item, (if v then Done.Done else Done.Open)))
           )
         )
       else emptyNode,
@@ -752,7 +758,7 @@ object QueueView:
                 cls := "item-actions confirm",
                 span("Delete this item? "),
                 actionButton(UiLabels.Text("delete"), () => ops.delete(item)).amend(cls := "btn--danger"),
-                actionButton(UiLabels.Text("cancel"), () => mode.set(Mode.Idle), write = Writes(false))
+                actionButton(UiLabels.Text("cancel"), () => mode.set(Mode.Idle), write = Writes.ReadOnly)
               )
             case Mode.Linking => linkPicker(item, ops, () => mode.set(Mode.Idle))
             case Mode.Editing => emptyNode
@@ -859,12 +865,12 @@ object QueueView:
   /** A small button on an item; a write is disabled while writes are not allowed. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def actionButton(text: UiLabels.Text, act: () => Unit, write: Writes = Writes(true)): HtmlElement =
+  private def actionButton(text: UiLabels.Text, act: () => Unit, write: Writes = Writes.Writable): HtmlElement =
     button(
       typ := "button",
       cls := "btn btn--sm",
       text,
-      if write.value then disabled <-- Auth.writable.map(!_) else emptyMod,
+      if write.writable then disabled <-- Auth.writable.map(!_) else emptyMod,
       onClick --> (_ => act())
     )
 

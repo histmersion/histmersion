@@ -65,9 +65,9 @@ class FilterTabSuite extends munit.FunSuite:
   test("TabState: loading keeps the rows shown, a failure ends loading with the error"):
     val s = TabState.first(TabPage(rows, RowCount(412)), ResultsPaging.PageNumber(25))
     val l = TabState.loading(s)
-    assert(l.loading.value && l.rows == rows && l.shown.value == 25)
+    assert(l.loading.loading && l.rows == rows && l.shown.value == 25)
     val f = TabState.failed(l, Problem.Unclassified(Legacy.Text("HTTP 500")))
-    assert(!f.loading.value && f.error.map(_.sentence).contains("HTTP 500") && f.rows == rows)
+    assert(!f.loading.loading && f.error.map(_.sentence).contains("HTTP 500") && f.rows == rows)
     assertEquals(TabState.loading(f).error, None, "a new request clears the old error")
 
   test("TabState: show more reveals the loaded rows first, then asks for the next page past them"):
@@ -85,7 +85,7 @@ class FilterTabSuite extends munit.FunSuite:
       TabPage((201 to 400).toList, RowCount(412)),
       ResultsPaging.PageNumber(25)
     )
-    assertEquals((next.rows.size, next.shown.value: Int, next.loading.value), (400, 225, false))
+    assertEquals((next.rows.size, next.shown.value: Int, next.loading.loading), (400, 225, false))
 
   test("TabState: the last rows; nothing more once every row is shown"):
     val s = TabState.first(TabPage((1 to 10).toList, RowCount(10)), ResultsPaging.PageNumber(25))

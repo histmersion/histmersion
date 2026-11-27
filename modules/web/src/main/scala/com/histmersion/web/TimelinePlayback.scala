@@ -158,7 +158,7 @@ object TimelinePlayback:
     // back off afterwards unless the reader had them on already
     overlayWasOn = UiState.layers.now().contains(MapLayer.Boundaries)
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, true)
-    MapView.setPlaybackMode(MapView.Playback(true))
+    MapView.setPlaybackMode(MapView.Playback.Playing)
     // the filter's events over the span played, fetched once; each frame then draws them locally
     if eventsConfig != null then
       EventLayer.start(
@@ -180,7 +180,7 @@ object TimelinePlayback:
     playheadPos.set(None)
     feed.reset()
     dom.window.cancelAnimationFrame(frameId)
-    MapView.setPlaybackMode(MapView.Playback(false))
+    MapView.setPlaybackMode(MapView.Playback.Stopped)
     EventLayer.stop()
     if !overlayWasOn then UiState.setLayer(MapLayer.Boundaries, false)
     // the last frame drew the playhead's window: the map shows the whole span again (findings, legend,

@@ -150,12 +150,12 @@ class EventMarkersSuite extends munit.FunSuite:
   test(
     "the key names every shape and source kind; every kind, both tiers and every site type — only for the layers on"
   ):
-    val k = MapKey.html(events = MapKey.Events(true), sites = MapKey.Sites(true)).value
+    val k = MapKey.html(events = MapKey.Events.Shown, sites = MapKey.Sites.Shown).value
     EventTaxonomy.kinds.foreach(x => assert(k.contains(x.label.value), x.label))
     SiteTypes.all.foreach(x => assert(k.contains(Html.text(x.label.value).value), x.label))
     assert(k.contains("catalogue only (a lead)"))
-    assert(!MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(true)).value.contains("natural events"))
-    val bare = MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(false)).value
+    assert(!MapKey.html(events = MapKey.Events.Hidden, sites = MapKey.Sites.Shown).value.contains("natural events"))
+    val bare = MapKey.html(events = MapKey.Events.Hidden, sites = MapKey.Sites.Hidden).value
     List("a finding (a source", "a site", "an event", "a picture", "a region or polity", "several nearby").foreach(w =>
       assert(bare.contains(w), w)
     )

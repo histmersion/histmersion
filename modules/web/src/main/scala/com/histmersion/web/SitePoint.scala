@@ -21,7 +21,7 @@ final case class SitePoint(
     lat: LatLon.Lat,
     lon: LatLon.Lon,
     period: Option[(PlaybackAreas.FractionalYear, PlaybackAreas.FractionalYear)],
-    undated: SitePoint.Undated = SitePoint.Undated(false)
+    undated: SitePoint.Undated = SitePoint.Undated.Dated
 ):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def name: UiLabels.Text = UiLabels.Text(if label.value.nonEmpty then label.value else id.fold("site")(_.value))
@@ -45,8 +45,10 @@ object SitePoint:
   object SiteType extends Newtype[String, Pure]
   type Basis = Basis.T
   object Basis extends Newtype[String, Pure]
-  type Undated = Undated.T
-  object Undated extends Newtype[Boolean, Pure]
+  enum Undated derives CanEqual:
+    case Undated, Dated
+  object Undated:
+    extension (undated: Undated) def undated: Boolean = undated == Undated
 
   private def str(v: js.Dynamic): Option[String] = if js.isUndefined(v) || v == null then None else Some(v.toString)
 

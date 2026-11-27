@@ -105,7 +105,7 @@ object PointKinds:
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def activate(s: Spot, how: Activation): Unit =
-      Preview.unpin(restoreFocus = Preview.RestoreFocus(false))
+      Preview.unpin(restoreFocus = Preview.RestoreFocus.Leave)
       s.items match
         case List(one) => MapView.popup(s.lat, s.lon, MapView.popupHtml(one))
         case _ => ResultsList.pick(s.items, UiLabels.Text(s"${s.items.size} findings at ${s.lat}, ${s.lon}"), None)
@@ -144,11 +144,11 @@ object PointKinds:
     override def classes(p: SitePoint): String =
       MapView
         .placeClasses(MapView.ClassName("hd-site-icon hd-site-marker"), p.basis.map(b => Place.TimeBasis.Wire(b.value)))
-        .value + (if p.undated.value then s" ${MapView.UndatedClass}"
+        .value + (if p.undated.undated then s" ${MapView.UndatedClass}"
                   else "")
     // a site of no known date beneath the dated ones
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    override def zIndex(p: SitePoint): PointKind.ZIndex = PointKind.ZIndex(if p.undated.value then -100 else 0)
+    override def zIndex(p: SitePoint): PointKind.ZIndex = PointKind.ZIndex(if p.undated.undated then -100 else 0)
     override def attrs(p: SitePoint): Html = p.known.fold(Html.empty)(t => markup""" data-site-type="${t.id}"""")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -164,7 +164,7 @@ object PointKinds:
     private def note(p: SitePoint): String =
       List(
         p.known.fold("site of unknown type")(_.label.value),
-        if p.undated.value then "date unknown"
+        if p.undated.undated then "date unknown"
         else p.period.fold("")((a, b) => Fmt.periodStr(Some(Year(a.value.toLong)), Some(Year(b.value.toLong))).value)
       )
         .filter(_.nonEmpty)
@@ -177,7 +177,7 @@ object PointKinds:
         Member.N(1),
         p.mid.toList.map(m => Member.Mids(m.value)),
         Certainty.NoSay,
-        undated = Member.Undated(if p.undated.value then 1 else 0),
+        undated = Member.Undated(if p.undated.undated then 1 else 0),
         entry = Some(
           DotEntry(
             DotKind.Site,
@@ -321,8 +321,8 @@ object PointKinds:
               Preview.Anchor.Under.Width(r.width)
             )
           },
-        owner = el.filter(_ => how.keyboard.value),
-        keyboard = Preview.KeyboardDriven(how.keyboard.value)
+        owner = el.filter(_ => how.keyboard.keyboard),
+        keyboard = (if how.keyboard.keyboard then Preview.KeyboardDriven.Keyboard else Preview.KeyboardDriven.Pointer)
       )
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

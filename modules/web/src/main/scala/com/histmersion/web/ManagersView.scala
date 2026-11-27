@@ -438,7 +438,7 @@ object ManagersView:
     div(
       cls := "wm-actions",
       child.maybe <-- RunsView.enabled.signal.map(on =>
-        Option.when(on.value)(
+        Option.when(on.enabled)(
           div(
             cls := "btn-group",
             buttons.map((kind, icon, label, tip) =>
@@ -1225,7 +1225,7 @@ object ManagersView:
       onMountCallback(_ => refresh()),
       div(cls := "pane-bar", button(typ := "button", cls := "btn", "Refresh", onClick --> (_ => refresh()))),
       child.maybe <-- RunsView.enabled.signal.map(on =>
-        Option.when(!on.value)(
+        Option.when(!on.enabled)(
           p(cls := "muted", "Embedded agents are off on this server (agents.enabled): no manager starts a run.")
         )
       ),
@@ -1316,7 +1316,7 @@ object ManagersView:
           r.fold(
             e => failure.set(Some(e.getMessage)),
             d => {
-              val moved = changed.value || !detail.now().contains(d)
+              val moved = changed.changed || !detail.now().contains(d)
               failure.set(None)
               detail.set(Some(d))
               if extended then events.update(ListPaging.keepOlder(_, d.events, _.id < _.id))
@@ -1325,10 +1325,11 @@ object ManagersView:
                 older.set(Option.when(d.events.nonEmpty)(EventPage.Before(d.events.last.id.value)))
               delay = Poll.next(
                 delay,
-                Poll.LiveMode(d.manager.inFlight.value > 0 || d.current.nonEmpty),
-                Poll.DataChanged(moved)
+                (if d.manager.inFlight.value > 0 || d.current.nonEmpty then Poll.LiveMode.Live
+                 else Poll.LiveMode.Paused),
+                (if moved then Poll.DataChanged.Changed else Poll.DataChanged.Unchanged)
               )
-              delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(Poll.DataChanged(false)), ms.value))
+              delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(Poll.DataChanged.Unchanged), ms.value))
             }
           )
       }
@@ -1342,7 +1343,7 @@ object ManagersView:
           e => failure.set(Some(shown"$what: ${e.getMessage}")),
           _ => { failure.set(None); message.set(Some(shown"$what: done")) }
         )
-        refresh(changed = Poll.DataChanged(true))
+        refresh(changed = Poll.DataChanged.Changed)
       }
 
     def showOlder(): Unit =
@@ -1362,7 +1363,7 @@ object ManagersView:
     div(
       cls := "tool-pane manager-pane",
       onMountCallback { _ =>
-        mounted = true; extended = false; refresh(changed = Poll.DataChanged(true))
+        mounted = true; extended = false; refresh(changed = Poll.DataChanged.Changed)
       },
       onUnmountCallback { _ => mounted = false; dom.window.clearTimeout(timer) },
       offset.signal.changes --> (_ => items()),
@@ -1795,7 +1796,7 @@ object ManagersView:
                 " next run only"
               ),
               child.maybe <-- RunsView.enabled.signal.map(on =>
-                Option.when(on.value)(
+                Option.when(on.enabled)(
                   label(
                     title := "the server's planner model proposes the action the note asks for; nothing changes until you approve it",
                     input(

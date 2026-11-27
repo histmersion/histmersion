@@ -217,18 +217,18 @@ object MapHandle:
             s.setView(
               ll(at),
               MapSurface.Zoom(z),
-              animate = MapSurface.SetViewAnimate(
-                opts.exists(o => !js.isUndefined(o.animate) && o.animate.asInstanceOf[Boolean])
-              )
+              animate = (if opts.exists(o => !js.isUndefined(o.animate) && o.animate.asInstanceOf[Boolean]) then
+                           MapSurface.SetViewAnimate.Animated
+                         else MapSurface.SetViewAnimate.Instant)
             )
       ): js.Function3[js.Array[Double], Double, js.UndefOr[js.Dynamic], Unit],
       setZoom = (
           (z: Double, opts: js.UndefOr[js.Dynamic]) =>
             s.setZoom(
               MapSurface.Zoom(z),
-              animate = MapSurface.SetViewAnimate(
-                !opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean])
-              )
+              animate = (if !opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean]) then
+                           MapSurface.SetViewAnimate.Animated
+                         else MapSurface.SetViewAnimate.Instant)
             )
       ): js.Function2[Double, js.UndefOr[js.Dynamic], Unit],
       getZoom = (() => s.zoom.value): js.Function0[Double],
@@ -369,10 +369,10 @@ object MapHandle:
       capabilities = (() => {
         val c = s.capabilities;
         js.Dynamic.literal(
-          webgl = c.webgl.value,
-          software = c.software.value,
+          webgl = c.webgl.supported,
+          software = c.software.software,
           renderer = c.renderer.value,
-          webgl2 = c.webgl2.value
+          webgl2 = c.webgl2.supported
         )
       }): js.Function0[js.Dynamic],
       container = s.container

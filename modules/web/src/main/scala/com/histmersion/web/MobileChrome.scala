@@ -136,7 +136,7 @@ object MobileChrome:
         title := "map layers and tools",
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
         // the tools in that drawer: a window there has something new (Notices)
-        cls("has-news") <-- Notices.anyFresh(b => b != UiNotices.Board.Approvals || RunsView.enabled.now().value),
+        cls("has-news") <-- Notices.anyFresh(b => b != UiNotices.Board.Approvals || RunsView.enabled.now().enabled),
         Icon(Icon.Layers),
         onClick --> (_ => toggle(Drawer.MapTools))
       )

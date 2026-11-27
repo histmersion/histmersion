@@ -11,5 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class Activation(keyboard: Activation.Keyboard, element: Option[dom.Element], latlng: Option[LatLon])
 
 object Activation:
-  type Keyboard = Keyboard.T
-  object Keyboard extends Newtype[Boolean, Pure]
+  enum Keyboard derives CanEqual:
+    case Keyboard, Pointer
+  object Keyboard:
+    extension (keyboard: Keyboard) def keyboard: Boolean = keyboard == Keyboard

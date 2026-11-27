@@ -18,48 +18,50 @@ enum ResearchSection(
       extends ResearchSection(
         ResearchSection.Slug(""),
         ResearchSection.Label("Overview"),
-        agents = ResearchSection.Agents(false)
+        agents = ResearchSection.Agents.Disabled
       )
-  case State extends ResearchSection(Slug("state"), Label("State"), agents = Agents(false))
+  case State extends ResearchSection(Slug("state"), Label("State"), agents = Agents.Disabled)
   case Decisions
       extends ResearchSection(
         ResearchSection.Slug("decisions"),
         ResearchSection.Label("Needs your decision"),
-        agents = ResearchSection.Agents(true)
+        agents = ResearchSection.Agents.Enabled
       )
   case Goals
       extends ResearchSection(
         ResearchSection.Slug("goals"),
         ResearchSection.Label("Goals"),
-        agents = ResearchSection.Agents(false)
+        agents = ResearchSection.Agents.Disabled
       )
   case Activity
       extends ResearchSection(
         ResearchSection.Slug("activity"),
         ResearchSection.Label("Activity"),
-        agents = ResearchSection.Agents(false)
+        agents = ResearchSection.Agents.Disabled
       )
   case Backlog
       extends ResearchSection(
         ResearchSection.Slug("backlog"),
         ResearchSection.Label("Backlog"),
-        agents = ResearchSection.Agents(false)
+        agents = ResearchSection.Agents.Disabled
       )
   case Acquire
       extends ResearchSection(
         ResearchSection.Slug("acquire"),
         ResearchSection.Label("To acquire"),
-        agents = ResearchSection.Agents(false)
+        agents = ResearchSection.Agents.Disabled
       )
   case Models
       extends ResearchSection(
         ResearchSection.Slug("models"),
         ResearchSection.Label("AI models and limits"),
-        agents = ResearchSection.Agents(true)
+        agents = ResearchSection.Agents.Enabled
       )
 
 object ResearchSection:
   export api.research.Article.Slug
   export UiLabels.Text as Label
-  type Agents = Agents.T
-  object Agents extends Newtype[Boolean, Pure]
+  enum Agents derives CanEqual:
+    case Enabled, Disabled
+  object Agents:
+    extension (agents: Agents) def enabled: Boolean = agents == Enabled

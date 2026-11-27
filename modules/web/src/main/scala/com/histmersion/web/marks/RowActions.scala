@@ -20,7 +20,7 @@ object RowActions:
       ContextMenu.on(ContextMenu.OnTitle(shown"Actions: ${ref.title}"), () => ItemMenu.entries(ref, byline)),
       div(
         cls := "row-actions",
-        ItemActions.bookmarkButton(ref, compact = ItemActions.BookmarkButtonCompact(true)),
+        ItemActions.bookmarkButton(ref, compact = ItemActions.BookmarkButtonCompact.Compact),
         NewTabLink(NewTabLink.Href(href.value), NewTabLink.Label(ref.title.value))
       )
     )

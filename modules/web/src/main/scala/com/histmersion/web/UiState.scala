@@ -48,8 +48,10 @@ object UiState:
   object RemoveChipKey extends Newtype[String, Pure]
   type NavigatePathAndSearch = NavigatePathAndSearch.T
   object NavigatePathAndSearch extends Newtype[String, Pure]
-  type NavigatePush = NavigatePush.T
-  object NavigatePush extends Newtype[Boolean, Pure]
+  enum NavigatePush derives CanEqual:
+    case Push, Replace
+  object NavigatePush:
+    extension (navigatePush: NavigatePush) def pushes: Boolean = navigatePush == Push
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type SetPush = NavigatePush
   val SetPush: NavigatePush.type = NavigatePush
@@ -139,7 +141,7 @@ object UiState:
     Persist.Hash,
     Role.Filter,
     Some(Field.Label("sort")),
-    chip = Field.Chip(false)
+    chip = Field.Chip.Plain
   )
 
   /** The title quick-filter above the tabs: narrows every list by its items' own title (a source's title, an article's
@@ -153,7 +155,7 @@ object UiState:
     Persist.Hash,
     Role.Filter,
     Some(Field.Label("title")),
-    chip = Field.Chip(false)
+    chip = Field.Chip.Plain
   )
 
   /** A research goal's sources only (its goal page's "sources brought in", in Library or on the map). */
@@ -437,7 +439,7 @@ object UiState:
     * reload its button and layer came back off). The mirroring is therefore a transaction of its own, queued after the
     * assignments; outside any transaction (tests, start-up) it runs at once, as before.
     */
-  def set(assigns: Assign*)(push: NavigatePush = NavigatePush(false)): Unit =
+  def set(assigns: Assign*)(push: NavigatePush = NavigatePush.Replace): Unit =
     assigns.foreach(_.run())
     Transaction { _ =>
       writeHash(push)
@@ -460,7 +462,7 @@ object UiState:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def togglePlace(id: TogglePlaceId): Boolean =
     val next = toggledPlace(placeIds.now(), id)
-    set(placeIds := next)(push = NavigatePush(true))
+    set(placeIds := next)(push = NavigatePush.Push)
     next.contains(id.value)
 
   /** Both search boxes share the raw draft, including a space just typed between words. Filter.of normalizes it at the
@@ -526,7 +528,7 @@ object UiState:
 
   def clearFilters(): Unit =
     fields.filter(_.role == Role.Filter).foreach(_.clear())
-    writeHash(push = NavigatePush(false))
+    writeHash(push = NavigatePush.Replace)
     bump()
 
   case class ActiveChip(
@@ -547,7 +549,7 @@ object UiState:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def activeChips(): List[ActiveChip] =
     fields
-      .filter(f => f.role == Role.Filter && f.chip.value)
+      .filter(f => f.role == Role.Filter && f.chip.chip)
       .flatMap(f =>
         f.encoded.map(v =>
           ActiveChip(
@@ -562,7 +564,7 @@ object UiState:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def removeChip(key: RemoveChipKey, value: FilterTerm): Unit =
     fields.find(_.key.value == key.value).foreach(_.remove(Field.Token(value.value)))
-    writeHash(push = NavigatePush(false))
+    writeHash(push = NavigatePush.Replace)
     bump()
 
   // ── the URL hash ──────────────────────────────────────────────────────────────────────────────
@@ -596,7 +598,7 @@ object UiState:
     if mirrorHash then
       val qs = hashString.value
       val url = pathAndSearch.value + (if qs.nonEmpty then "#" + qs else "")
-      if push.value then
+      if push.pushes then
         seq = { high = ChangeSeq(high.value + 1); high }
         window.history.pushState(js.Dynamic.literal(histmersionSeq = seq.value), "", url)
       else window.history.replaceState(js.Dynamic.literal(histmersionSeq = seq.value), "", url)

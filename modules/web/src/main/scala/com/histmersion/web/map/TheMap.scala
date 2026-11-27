@@ -47,8 +47,8 @@ object TheMap:
     canvas = Option
       .when(
         !Store.Browser.get(MarkerCanvas.StorageKey).contains("off") &&
-          surface.capabilities.webgl == Capabilities.Webgl(true) &&
-          surface.capabilities.webgl2 == Capabilities.Webgl2(true)
+          surface.capabilities.webgl == Capabilities.Webgl.Supported &&
+          surface.capabilities.webgl2 == Capabilities.Webgl2.Supported
       )(())
       .flatMap(_ => els.find((p, _) => pointPane(p)))
       .map((_, first) => MarkerCanvas(surface.overlayRoot, first, surface.container))

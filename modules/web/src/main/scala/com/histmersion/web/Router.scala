@@ -57,7 +57,7 @@ object Router:
         UiState.navigate(
           UiState.NavigatePathAndSearch(to.path + (if Route.parse(path).contains(to) then window.location.search
                                                    else "")),
-          push = Push(false)
+          push = Push.Replace
         )
         query.set(Pages.UrlQuery(window.location.search))
         show(to)
@@ -78,7 +78,7 @@ object Router:
   /** Go to page `r`: a step in the history, unless `push` is false. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def go(r: Route, push: Push = Push(true), search: Pages.UrlQuery = Pages.UrlQuery("")): Unit =
+  def go(r: Route, push: Push = Push.Push, search: Pages.UrlQuery = Pages.UrlQuery("")): Unit =
     if r.serverPage then window.location.assign(r.path)
     else
       UiState.navigate(UiState.NavigatePathAndSearch(r.path + search.value), push)

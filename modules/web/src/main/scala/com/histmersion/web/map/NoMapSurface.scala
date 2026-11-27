@@ -58,20 +58,20 @@ final class NoMapSurface(el: dom.HTMLElement, why: Problem, caps: Capabilities, 
   def setView(
       p: LatLon,
       zoom: MapSurface.Zoom,
-      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
+      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate.Instant
   ): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fitBounds(
       b: GeoBounds,
       padding: MapSurface.FitBoundsPadding,
       maxZoom: MapSurface.MaxZoom,
-      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)
+      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate.Animated
   ): Unit =
     at = LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2))
   def panBy(
       dx: MapSurface.PanByDx,
       dy: MapSurface.PanByDy,
-      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)
+      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate.Instant
   ): Unit = ()
   // far outside any view: a marker placed here is hidden, never moved ([[MarkerPane]])
   def project(p: LatLon): ScreenPt = ScreenPt(ScreenPt.X(-1e6), ScreenPt.Y(-1e6))

@@ -27,8 +27,10 @@ enum PlaceGlyph derives CanEqual:
 object PlaceGlyph:
   type GeometryType = GeometryType.T
   object GeometryType extends Newtype[String, Pure]
-  type LabelHidden = LabelHidden.T
-  object LabelHidden extends Newtype[Boolean, Pure]
+  enum LabelHidden derives CanEqual:
+    case Hidden, Shown
+  object LabelHidden:
+    extension (labelHidden: LabelHidden) def hidden: Boolean = labelHidden == Hidden
   type ZoomLevel = ZoomLevel.T
   object ZoomLevel extends Newtype[Int, Pure]
 
@@ -53,11 +55,11 @@ object PlaceGlyph:
   def labelHtml(
       label: UiLabels.Text,
       kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
-      hidden: LabelHidden = LabelHidden(false)
+      hidden: LabelHidden = LabelHidden.Shown
   ): Html =
     val (note, title) =
       if Place.Shape.isPeople(kind) then (People, Place.Shape.PeopleNote) else (NoBoundary, Place.Shape.NoBoundaryNote)
-    val cls = if hidden.value then "hd-area-point is-culled" else "hd-area-point"
+    val cls = if hidden.hidden then "hd-area-point is-culled" else "hd-area-point"
     markup"""<span class="$cls" title="$label — $title">""" ++
       markup"""<span class="hd-area-point-name">$label</span>""" ++
       markup"""<span class="hd-area-point-note">$note</span></span>"""
@@ -76,7 +78,7 @@ object PlaceGlyph:
       label: UiLabels.Text,
       kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
       wrapClass: String = "hd-area-point-wrap",
-      hidden: LabelHidden = LabelHidden(false)
+      hidden: LabelHidden = LabelHidden.Shown
   ): DomMarker =
     new DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
 

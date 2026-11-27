@@ -17,8 +17,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   * why ([[problem]]).
   */
 object MyItems:
-  type Loaded = Loaded.T
-  object Loaded extends Newtype[Boolean, Pure]
+  enum Loaded derives CanEqual:
+    case Loaded, Pending
+  object Loaded:
+    extension (loaded: Loaded) def loaded: Boolean = loaded == Loaded
 
   val bookmarks: Var[List[Bookmark]] = Var(Nil)
   val notes: Var[List[Note]] = Var(Nil)
@@ -28,7 +30,7 @@ object MyItems:
 
   /** The last change that did not go through, and why. */
   val problem: Var[Option[Problem]] = Var(None)
-  val loaded: Var[Loaded] = Var(Loaded(false))
+  val loaded: Var[Loaded] = Var(Loaded.Pending)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -40,7 +42,7 @@ object MyItems:
       bookmarks.set(bs)
       notes.set(ns)
       marks.set(ms.map(m => markKey(m) -> m).toMap)
-      loaded.set(Loaded(true))
+      loaded.set(Loaded.Loaded)
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

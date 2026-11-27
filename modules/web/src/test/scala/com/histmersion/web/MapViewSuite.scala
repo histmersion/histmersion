@@ -289,7 +289,7 @@ class MapViewSuite extends munit.FunSuite:
       MapView.areaTime(
         (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
         GeoPick.Mid,
-        playback = MapView.Playback(false)
+        playback = MapView.Playback.Stopped
       ),
       GeoTime.At(Year(-1500))
     )
@@ -297,7 +297,7 @@ class MapViewSuite extends munit.FunSuite:
       MapView.areaTime(
         (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
         GeoPick.Start,
-        playback = MapView.Playback(false)
+        playback = MapView.Playback.Stopped
       ),
       GeoTime.At(Year(-2000))
     )
@@ -305,7 +305,7 @@ class MapViewSuite extends munit.FunSuite:
       MapView.areaTime(
         (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
         GeoPick.End,
-        playback = MapView.Playback(false)
+        playback = MapView.Playback.Stopped
       ),
       GeoTime.At(Year(-1000))
     )
@@ -313,14 +313,14 @@ class MapViewSuite extends munit.FunSuite:
       MapView.areaTime(
         (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
         GeoPick.Latest,
-        playback = MapView.Playback(false)
+        playback = MapView.Playback.Stopped
       ),
       GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(true))
     )
     GeoPick.values.foreach(p =>
       assertEquals(
         MapView
-          .areaTime((Years.Astronomical(-1210L), Years.Astronomical(-1190L)), p, playback = MapView.Playback(true)),
+          .areaTime((Years.Astronomical(-1210L), Years.Astronomical(-1190L)), p, playback = MapView.Playback.Playing),
         GeoTime.At(Year(-1200))
       )
     )
@@ -339,7 +339,7 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(
       MapView.tileSpanOf(
         (Years.Astronomical(-1500L), Years.Astronomical(-1600L)),
-        playback = MapView.Playback(false),
+        playback = MapView.Playback.Stopped,
         MapView.YearsPerSecond(0.0),
         MapTilesUiConfig.PlaybackBucketSeconds(1.0)
       ),
@@ -349,7 +349,7 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(
       MapView.tileSpanOf(
         (Years.Astronomical(-1650L), Years.Astronomical(-1550L)),
-        playback = MapView.Playback(true),
+        playback = MapView.Playback.Playing,
         MapView.YearsPerSecond(166.0),
         MapTilesUiConfig.PlaybackBucketSeconds(1.0)
       ),
@@ -359,7 +359,7 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(
       MapView.tileSpanOf(
         (Years.Astronomical(-1640L), Years.Astronomical(-1540L)),
-        playback = MapView.Playback(true),
+        playback = MapView.Playback.Playing,
         MapView.YearsPerSecond(166.0),
         MapTilesUiConfig.PlaybackBucketSeconds(1.0)
       ),
@@ -403,24 +403,24 @@ class MapViewSuite extends munit.FunSuite:
 
   test("waitsForQuiet: the boundaries over a whole range and the tiled layers wait for the span to settle") {
     import com.histmersion.api.GeoPick
-    assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = MapView.Playback(false)))
-    assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Earliest, playback = MapView.Playback(false)))
+    assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = MapView.Playback.Stopped))
+    assert(MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Earliest, playback = MapView.Playback.Stopped))
     for p <- List(GeoPick.Mid, GeoPick.Start, GeoPick.End) do
       assert(
-        !MapView.waitsForQuiet(MapLayer.Boundaries, p, playback = MapView.Playback(false)),
+        !MapView.waitsForQuiet(MapLayer.Boundaries, p, playback = MapView.Playback.Stopped),
         s"a snapshot ($p) follows the drag"
       )
     assert(
-      !MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = MapView.Playback(true)),
+      !MapView.waitsForQuiet(MapLayer.Boundaries, GeoPick.Latest, playback = MapView.Playback.Playing),
       "playback draws one year"
     )
     for l <- List(MapLayer.Sites, MapLayer.Media, MapLayer.Events) do
       assert(
-        MapView.waitsForQuiet(l, GeoPick.Mid, playback = MapView.Playback(false)),
+        MapView.waitsForQuiet(l, GeoPick.Mid, playback = MapView.Playback.Stopped),
         s"$l waits: a new span is every tile cut again"
       )
       assert(
-        !MapView.waitsForQuiet(l, GeoPick.Mid, playback = MapView.Playback(true)),
+        !MapView.waitsForQuiet(l, GeoPick.Mid, playback = MapView.Playback.Playing),
         s"$l follows playback by its buckets"
       )
   }

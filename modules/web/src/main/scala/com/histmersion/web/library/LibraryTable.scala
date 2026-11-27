@@ -48,7 +48,7 @@ object LibraryTable:
           if keys.nonEmpty && !ev.altKey && !ev.metaKey && !ev.ctrlKey then
             ev.preventDefault()
             TableKeys.step(keys, chosenKey(ev), d).foreach { k =>
-              choose(k, Router.Push(false))
+              choose(k, Router.Push.Replace)
               focusRow(ev.currentTarget.asInstanceOf[dom.Element], k)
             }
         }
@@ -97,7 +97,7 @@ object LibraryTable:
       else ItemRef.article(Article.Slug(r.key.value), Title(r.title))
     val unread = MyItems.loaded.signal
       .combineWith(MyItems.isRead(ref))
-      .map((loaded, read) => loaded.value && !read)
+      .map((loaded, read) => loaded.loaded && !read)
     tr(
       cls := "lib-row",
       cls("is-chosen") <-- on,
@@ -105,7 +105,7 @@ object LibraryTable:
       // a click anywhere on the row chooses it, as on its title
       onClick --> { ev =>
         val t = ev.target.asInstanceOf[dom.Element]
-        if t.closest("a") == null && Router.plain(ev) then choose(r.key, Router.Push(true))
+        if t.closest("a") == null && Router.plain(ev) then choose(r.key, Router.Push.Push)
       },
       ContextMenu
         .on(ContextMenu.OnTitle(s"Actions: ${r.title}"), () => ItemMenu.entries(ref, r.byline)),
@@ -122,7 +122,7 @@ object LibraryTable:
           onClick --> { ev =>
             if Router.plain(ev) then
               ev.preventDefault()
-              choose(r.key, Router.Push(true))
+              choose(r.key, Router.Push.Push)
           }
         ),
         Option.when(r.byline.nonEmpty)(div(cls := "lib-byline", r.byline))

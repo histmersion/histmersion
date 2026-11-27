@@ -74,7 +74,7 @@ object TileDecode:
         f.at.lat,
         f.at.lon,
         period,
-        undated = SitePoint.Undated(num(p, P.Undated).exists(_ > 0))
+        undated = (if num(p, P.Undated).exists(_ > 0) then SitePoint.Undated.Undated else SitePoint.Undated.Dated)
       )
     }
 

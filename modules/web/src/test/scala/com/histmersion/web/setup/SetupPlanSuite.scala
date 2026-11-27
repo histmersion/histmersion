@@ -33,7 +33,7 @@ class SetupPlanSuite extends munit.FunSuite:
     assertEquals(SetupStep.Welcome.next, Some(SetupStep.Papers))
     assertEquals(SetupStep.Ready.next, None)
     assertEquals(SetupStep.Welcome.back, None)
-    assertEquals(SetupStep.values.filter(_.optional.value).toList, List(SetupStep.Agents, SetupStep.Calibre))
+    assertEquals(SetupStep.values.filter(_.optional.optional).toList, List(SetupStep.Agents, SetupStep.Calibre))
 
   test("an e-mail address, or none"):
     assertEquals(SetupPlan.email(SetupChoices.Email(" ")), Right(""))

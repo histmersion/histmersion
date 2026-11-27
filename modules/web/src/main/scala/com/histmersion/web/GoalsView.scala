@@ -33,10 +33,14 @@ object GoalsView:
   object TagsText extends Newtype[String, Pure]
   type PerDay = PerDay.T
   object PerDay extends Newtype[String, Pure]
-  type Planned = Planned.T
-  object Planned extends Newtype[Boolean, Pure]
-  type Watch = Watch.T
-  object Watch extends Newtype[Boolean, Pure]
+  enum Planned derives CanEqual:
+    case Planned, Unplanned
+  object Planned:
+    extension (planned: Planned) def planned: Boolean = planned == Planned
+  enum Watch derives CanEqual:
+    case Watched, Unwatched
+  object Watch:
+    extension (watch: Watch) def watched: Boolean = watch == Watched
 
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
 
@@ -138,7 +142,7 @@ object GoalsView:
       tags: TagsText,
       plan: GoalsView.NewAreaPlan,
       seed: GoalsView.NewAreaSeed,
-      watch: Watch = Watch(false),
+      watch: Watch = Watch.Unwatched,
       autoIngest: Managers.ManagerConfig.AutoIngest = Managers.ManagerConfig.AutoIngest(false),
       perDay: PerDay = PerDay("")
   ): Either[Problem, NewArea] =
@@ -146,11 +150,11 @@ object GoalsView:
     val s = Option(slug.value.trim).filter(_.nonEmpty).map(Goal.Slug(_)).getOrElse(slugify(Goal.Title(t)))
     val cap = perDay.value.trim
     if t.isEmpty then Left(Problem.Unclassified(Legacy.Text("a research area needs a title")))
-    else if watch.value && autoIngest.value && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
+    else if watch.watched && autoIngest.value && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
       Left(Problem.Unclassified(Legacy.Text("ingests a day: a whole number")))
     else
       val ok = s
-      val w = Option.when(watch.value)(
+      val w = Option.when(watch.watched)(
         Managers.ManagerConfig(
           autoIngest = Some(autoIngest),
           autoIngestPerDay =
@@ -186,7 +190,7 @@ object GoalsView:
       if active(id) then shown"$id created active (the autopilot is on)"
       else shown"$id created paused — resume it $resume"
     CreatedNote(
-      shown"research area ${a.slug} created" + (if planned.value then
+      shown"research area ${a.slug} created" + (if planned.planned then
                                                   "; the planner is running (its plan waits for you)"
                                                 else "") +
         seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
@@ -203,7 +207,7 @@ object GoalsView:
     val managers = made.seed.toList ++ made.watch.toList
     createdNote(
       a,
-      Planned(made.run.nonEmpty),
+      (if made.run.nonEmpty then Planned.Planned else Planned.Unplanned),
       made.seed.map(_.id),
       made.watch.map(_.id),
       managers.filter(_.state == Managers.State.Active.wire).map(_.id).toSet
@@ -306,7 +310,7 @@ object GoalsView:
         TagsText(tags.now()),
         NewAreaPlan(plan.now()),
         NewAreaSeed(seed.now()),
-        Watch(watch.now()),
+        (if watch.now() then Watch.Watched else Watch.Unwatched),
         Managers.ManagerConfig.AutoIngest(ingest.now()),
         PerDay(perDay.now())
       ) match
@@ -408,7 +412,7 @@ object GoalsView:
       ApiClient
         .goalView(slug)
         .onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
-      if RunsView.enabled.now().value then
+      if RunsView.enabled.now().enabled then
         ApiClient
           .agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(Paging.Limit(RunLimit)))
           .foreach(r => runs.set(r._1))
@@ -531,7 +535,7 @@ object GoalsView:
           )
         case None =>
           div(child <-- RunsView.enabled.signal.combineWith(Auth.writable).map { (agents, w) =>
-            if !agents.value then p(cls := "muted", "Planning needs the server's embedded agents (agents.enabled).")
+            if !agents.enabled then p(cls := "muted", "Planning needs the server's embedded agents (agents.enabled).")
             else if !w then Auth.keyNeeded("plan this goal")
             else
               div(

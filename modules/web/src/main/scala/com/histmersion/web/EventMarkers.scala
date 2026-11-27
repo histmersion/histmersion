@@ -20,8 +20,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   * are [[PointKinds.Events]], the crowded tiles' cells bubbles.
   */
 object EventMarkers:
-  type Undated = Undated.T
-  object Undated extends Newtype[Boolean, Pure]
+  enum Undated derives CanEqual:
+    case Undated, Dated
+  object Undated:
+    extension (undated: Undated) def undated: Boolean = undated == Undated
 
   /** The markers — a [[TiledPoints]] of [[PointKinds.Events]], attached and detached by the map with its other overlays
     * ([[MapView]]).
@@ -44,7 +46,7 @@ object EventMarkers:
       tiles: (Year, Year),
       kind: Option[Api.EventQuery.Kind],
       tier: Option[Api.EventQuery.Tier],
-      undated: Undated = Undated(false)
+      undated: Undated = Undated.Dated
   ): TilesApi.TileQuery =
     TilesApi.TileQuery(
       TileLayer.Events.wire,
@@ -63,7 +65,7 @@ object EventMarkers:
       kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
       tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
       context = Some(TilesApi.TileQuery.Context(true)),
-      undated = Option.when(undated.value)(TilesApi.TileQuery.Undated(true))
+      undated = Option.when(undated.undated)(TilesApi.TileQuery.Undated(true))
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
@@ -76,7 +78,7 @@ object EventMarkers:
           tiles,
           UiState.eventKind.now().map(Api.EventQuery.Kind(_)),
           UiState.eventTier.now().map(Api.EventQuery.Tier(_)),
-          Undated(UiState.eventsUndated.now())
+          (if UiState.eventsUndated.now() then Undated.Undated else Undated.Dated)
         )
       ),
       span

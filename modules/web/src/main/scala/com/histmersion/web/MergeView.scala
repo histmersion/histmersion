@@ -882,7 +882,7 @@ object MergeView:
                 b,
                 MapSurface.FitBoundsPadding(24),
                 MapSurface.MaxZoom(9.0),
-                animate = MapSurface.FitBoundsAnimate(false)
+                animate = MapSurface.FitBoundsAnimate.Instant
               )
             case None =>
               val (at, zoom) = MapStart.initial(startView, None)

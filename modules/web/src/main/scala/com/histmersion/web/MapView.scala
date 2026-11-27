@@ -42,17 +42,23 @@ object MapView:
   object ClassName extends Newtype[String, Pure]
   type Color = Color.T
   object Color extends Newtype[String, Pure]
-  type HoldsCell = HoldsCell.T
-  object HoldsCell extends Newtype[Boolean, Pure]
+  enum HoldsCell derives CanEqual:
+    case HoldsCell, NoCell
+  object HoldsCell:
+    extension (holdsCell: HoldsCell) def holdsCell: Boolean = holdsCell == HoldsCell
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   export DotCluster.Mid
-  type Playback = Playback.T
-  object Playback extends Newtype[Boolean, Pure]
+  enum Playback derives CanEqual:
+    case Playing, Stopped
+  object Playback:
+    extension (playback: Playback) def playing: Boolean = playback == Playing
   type Ring = Ring.T
   object Ring extends Newtype[Int, Pure]
-  type ShowSources = ShowSources.T
-  object ShowSources extends Newtype[Boolean, Pure]
+  enum ShowSources derives CanEqual:
+    case Shown, Hidden
+  object ShowSources:
+    extension (showSources: ShowSources) def shown: Boolean = showSources == Shown
   type SourceLabel = SourceLabel.T
   object SourceLabel extends Newtype[String, Pure]
   type Title = Title.T
@@ -84,7 +90,7 @@ object MapView:
     TileDecode.media,
     () => tilesConfig.maxZoom
   )
-  private var playbackMode: Playback = Playback(false)
+  private var playbackMode: Playback = Playback.Stopped
   private var heldPoints: Option[List[GeoHit]] = None
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
@@ -103,7 +109,8 @@ object MapView:
     at = _.at,
     radius = () => Clustering.GroupRadius(clusterRadius(maxDotRadius, PointKinds.all.map(_.box)).toDouble),
     single = (d, fadeIn) =>
-      if d.member.aggregate then bubbleMarker(Seq(d)) else d.layer.render(d, PointLayer.FadeIn(fadeIn.value)),
+      if d.member.aggregate then bubbleMarker(Seq(d))
+      else d.layer.render(d, (if fadeIn.fadesIn then PointLayer.FadeIn.FadeIn else PointLayer.FadeIn.Instant)),
     bubble = ds => bubbleMarker(ds),
     animateMax = PointSet.AnimateMax(Layout.clusterAnimateMax.value),
     exitMs = PointSet.ExitMs(Layout.exitAnimMs.value),
@@ -122,7 +129,7 @@ object MapView:
       lineOpacity = ShapeStyle.LineOpacity(0.8),
       dash = List(ShapeStyle.Dash(3), ShapeStyle.Dash(2)),
       dashedLineOpacity = Some(ShapeStyle.DashedLineOpacity(0.6)),
-      interactive = ShapeStyle.Interactive(true)
+      interactive = ShapeStyle.Interactive.Interactive
     )
   )
   // what each drawn polity is (the shape under the pointer answers as this place) and its point labels
@@ -183,7 +190,7 @@ object MapView:
   def setPlaybackMode(on: Playback): Unit =
     val was = playbackMode
     playbackMode = on
-    if was.value && !on.value then playAreas.clear()
+    if was.playing && !on.playing then playAreas.clear()
 
   // ── playback (#3764): every frame draws from what is held; nothing is fetched or re-made per frame ──
 
@@ -285,7 +292,7 @@ object MapView:
           ShapeFeature.Id(k.value),
           a.geometry,
           ShapeFeature.Colour(viridisAt(Mid((a.start.value + a.end.value) / 2), span).value),
-          dashed = ShapeFeature.Dashed(a.dashed),
+          dashed = (if a.dashed then ShapeFeature.Dashed.Dashed else ShapeFeature.Dashed.Solid),
           alpha = ShapeFeature.Alpha(if a.dashed then alpha * 0.6 else alpha)
         )
       })
@@ -496,7 +503,7 @@ object MapView:
         s.setView(
           LatLon(LatLon.Lat(b.south.value), LatLon.Lon(b.west.value)),
           MapSurface.Zoom(math.min(s.maxZoom.value, s.zoom.value + 2)),
-          animate = MapSurface.SetViewAnimate(true)
+          animate = MapSurface.SetViewAnimate.Animated
         )
       else s.fitBounds(b, MapSurface.FitBoundsPadding(40), s.maxZoom)
 
@@ -522,8 +529,11 @@ object MapView:
     // too many to list, or counted and not listed: zoom in, unless the map cannot (dots at one point stay one bubble)
     if (all.total.value > pickerMax.value || all.counted) && !inseparable then zoomIn()
     else
-      if inseparable && spiderfies(DotCluster.Total(ds.size), HoldsCell(ds.exists(_.member.aggregate))) then
-        dots.spiderfy(ds.map(d => PointSet.Key(d.key.value)), spiderSeparation)
+      if inseparable && spiderfies(
+          DotCluster.Total(ds.size),
+          (if ds.exists(_.member.aggregate) then HoldsCell.HoldsCell else HoldsCell.NoCell)
+        )
+      then dots.spiderfy(ds.map(d => PointSet.Key(d.key.value)), spiderSeparation)
       ResultsList.pick(
         all.findings,
         UiLabels.Text(shown"${DotCluster.summary(all)} in this cluster"),
@@ -537,7 +547,7 @@ object MapView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def spiderfies(n: DotCluster.Total, holdsCell: HoldsCell): Boolean =
-    n.value >= 2 && n.value <= Layout.spiderMax.value && !holdsCell.value
+    n.value >= 2 && n.value <= Layout.spiderMax.value && !holdsCell.holdsCell
 
   /** How far apart fanned-out dots stand: the widest marker box and a gap. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -568,7 +578,7 @@ object MapView:
             Engines.surface(
               ctx.thisNode.ref,
               MapSurface.MaxZoom(ui.tilesMaxZoom.value.toDouble),
-              caps => Option.when(caps.software.value)(MapEngine.PixelRatio(1.0))
+              caps => Option.when(caps.software.software)(MapEngine.PixelRatio(1.0))
             )
           TheMap.install(surface)
           val (startAt, startZoom) = MapStart
@@ -611,14 +621,16 @@ object MapView:
             .combineWith(UiState.sitesUndated.signal, UiState.eventsUndated.signal)
             .foreach((ls, su, eu) =>
               updateKey(
-                MapKey.Events(ls(MapLayer.Events)),
-                MapKey.Sites(ls(MapLayer.Sites)),
-                MapKey.Undated((ls(MapLayer.Sites) && su) || (ls(MapLayer.Events) && eu))
+                (if ls(MapLayer.Events) then MapKey.Events.Shown else MapKey.Events.Hidden),
+                (if ls(MapLayer.Sites) then MapKey.Sites.Shown else MapKey.Sites.Hidden),
+                (if (ls(MapLayer.Sites) && su) || (ls(MapLayer.Events) && eu) then MapKey.Undated.Shown
+                 else MapKey.Undated.Hidden)
               )
             )(using ctx.owner)
           // the finding markers follow their switch the same way; `render` keeps their content current
           // while they are off, so switching them back on shows the current span at once
-          UiState.sources.signal.foreach(on => showSources(ShowSources(on)))(using ctx.owner)
+          UiState.sources.signal
+            .foreach(on => showSources((if on then ShowSources.Shown else ShowSources.Hidden)))(using ctx.owner)
           surface.container.addEventListener(
             "click",
             { (e: dom.MouseEvent) =>
@@ -664,7 +676,7 @@ object MapView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def showSources(on: ShowSources): Unit =
-    if on.value then findingsLayer.attach() else findingsLayer.detach()
+    if on.shown then findingsLayer.attach() else findingsLayer.detach()
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -691,7 +703,7 @@ object MapView:
         MapFold.ControlsId("hd-legend-body"),
         MapFold.Label("map legend"),
         markup"""<span class="hd-ramp hd-ramp--mini" aria-hidden="true">$ramp</span><span>legend</span>""",
-        open = MapFold.Open(false)
+        open = MapFold.Open.Folded
       ) ++
         markup"""<div class="hd-legend-body" id="hd-legend-body">""" ++
         markup"""<div class="hd-ramp">$ramp</div>""" ++
@@ -730,7 +742,7 @@ object MapView:
   ): (Years.Astronomical, Years.Astronomical) =
     val ordered =
       (Years.Astronomical(span._1.value.min(span._2.value)), Years.Astronomical(span._1.value.max(span._2.value)))
-    if playback.value then
+    if playback.playing then
       PlaybackBuckets.widen(
         ordered,
         PlaybackBuckets.years(yearsPerSecond, PlaybackBuckets.Seconds(bucketSeconds.value))
@@ -826,7 +838,7 @@ object MapView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def waitsForQuiet(layer: MapLayer, pick: GeoPick, playback: Playback): Boolean =
-    !playback.value && (layer match
+    !playback.playing && (layer match
       case MapLayer.Boundaries => !pick.snapshot
       case _                   => true)
 
@@ -874,7 +886,7 @@ object MapView:
       None,
       Some(Year(span._1.value)),
       Some(Year(span._2.value)),
-      if playback.value then GeoPick.Mid else pick
+      if playback.playing then GeoPick.Mid else pick
     )
 
   /** Pure: how many areas the boundaries layer asks for at `time` — a year's few hundred at most, or every state of a
@@ -934,13 +946,13 @@ object MapView:
     val time0 = areaTime(span, UiState.areaPick.now(), playbackMode)
     // in playback the year ahead of the playhead (the states it reaches next are held before it does)
     val time = time0 match
-      case GeoTime.At(y) if playbackMode.value && playAreas.nonEmpty => GeoTime.At(Year(y.value + playLead.value))
-      case t                                                         => t
+      case GeoTime.At(y) if playbackMode.playing && playAreas.nonEmpty => GeoTime.At(Year(y.value + playLead.value))
+      case t                                                           => t
     val playing = playbackMode
     placesGeoCached(Place.Kind.Wire("polity"), time, overlayLimit(time)).foreach { geojson =>
       if myId == overlayReqId && overlayOn && TheMap.isUp && playing == playbackMode then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
-        if playing.value then
+        if playing.playing then
           def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
           addPlayAreas(features, currentSpan, keyOf)
           val shown = playAreas.toSeq
@@ -1001,7 +1013,7 @@ object MapView:
                 ShapeFeature.Id(keyOf(f)),
                 f.geometry,
                 ShapeFeature.Colour(colorOf(f).value),
-                dashed = ShapeFeature.Dashed(byFindings(f)),
+                dashed = (if byFindings(f) then ShapeFeature.Dashed.Dashed else ShapeFeature.Dashed.Solid),
                 alpha = ShapeFeature.Alpha(if byFindings(f) then 0.6 else 1.0)
               )
             )
@@ -1067,7 +1079,7 @@ object MapView:
           UiLabels.Text(label),
           Place.Summary.Kind(kind),
           placeClasses(ClassName("hd-area-point-wrap"), dynStr(p.basis).map(Place.TimeBasis.Wire(_))).value,
-          hidden = PlaceGlyph.LabelHidden(true)
+          hidden = PlaceGlyph.LabelHidden.Hidden
         )
         dynStr(p.id).foreach(id =>
           PlaceHover.bind(m, PlaceHover.PlaceId(id), UiLabels.Text(label), PlaceHover.PlaceKind(kind), () => spanMid())

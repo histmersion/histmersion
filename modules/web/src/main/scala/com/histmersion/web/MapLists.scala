@@ -33,8 +33,10 @@ object MapLists:
     given Display[T] = Display(_.value)
   type ListedCount = ListedCount.T
   object ListedCount extends Newtype[Int, Pure]
-  type OnMap = OnMap.T
-  object OnMap extends Newtype[Boolean, Pure]
+  enum OnMap derives CanEqual:
+    case OnMap, OffMap
+  object OnMap:
+    extension (onMap: OnMap) def onMap: Boolean = onMap == OnMap
   type SiteNote = SiteNote.T
   object SiteNote extends Newtype[String, Pure]
   type TotalCount = TotalCount.T
@@ -53,11 +55,11 @@ object MapLists:
       many: Plural.Noun.Plural,
       onMap: OnMap
   ): CountLine =
-    val where = if onMap.value then " on the map" else ""
+    val where = if onMap.onMap then " on the map" else ""
     val count = Plural.count(Plural.CountN(total.value.toLong), one, many)
     CountLine(
       if total.value <= listed.value then shown"$count$where"
-      else s"$count$where · $listed listed${if onMap.value then ", zoom in to list the rest" else ""}"
+      else s"$count$where · $listed listed${if onMap.onMap then ", zoom in to list the rest" else ""}"
     )
 
   /** Pure: a site's row note — its type, its dates, or that it has none. */
@@ -67,7 +69,7 @@ object MapLists:
     SiteNote(
       List(
         p.known.fold("site")(_.label.value),
-        if p.undated.value then "date unknown"
+        if p.undated.undated then "date unknown"
         else
           p.period.fold("")((a, b) =>
             Fmt
@@ -94,7 +96,7 @@ object MapLists:
           .svg(CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => Place.Entry.SiteType(t.id.value)))),
         MapListRow.Href(Route.Place(Route.Place.Id(id.value)).path),
         () => ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(id.value), MapView.spanMid())),
-        MapListRow.Undated(p.undated.value)
+        (if p.undated.undated then MapListRow.Undated.Undated else MapListRow.Undated.Dated)
       )
     )
 
@@ -175,7 +177,7 @@ object MapLists:
                 TotalCount(sRows.size + sCounted.value),
                 Plural.Noun.Singular("place"),
                 Plural.Noun.Plural("places"),
-                onMap = OnMap(true)
+                onMap = OnMap.OnMap
               ).value
             )
           else MapListState.Note("Turn on Sites under Layers to list the places on the map.")
@@ -194,7 +196,7 @@ object MapLists:
                 TotalCount(mRows.size + mCounted.value),
                 Plural.Noun.Singular("picture"),
                 Plural.Noun.Plural("pictures"),
-                onMap = OnMap(true)
+                onMap = OnMap.OnMap
               ).value
             )
           else MapListState.Note("Turn on Media under Layers to list the pictures on the map.")
@@ -228,7 +230,7 @@ object MapLists:
                 hs.map(placeRow),
                 MapListState.Total(hs.size),
                 MapListState.Note(
-                  shown"${countLine(ListedCount(hs.size), TotalCount(hs.size), Plural.Noun.Singular("place"), Plural.Noun.Plural("places"), onMap = OnMap(false))} named like “$words”"
+                  shown"${countLine(ListedCount(hs.size), TotalCount(hs.size), Plural.Noun.Singular("place"), Plural.Noun.Plural("places"), onMap = OnMap.OffMap)} named like “$words”"
                 )
               )
             ),
@@ -266,7 +268,7 @@ object MapLists:
                 TotalCount(rows.size),
                 Plural.Noun.Singular("picture"),
                 Plural.Noun.Plural("pictures"),
-                onMap = OnMap(false)
+                onMap = OnMap.OffMap
               ).value
             )
           )
@@ -289,7 +291,7 @@ object MapLists:
   private def row(r: MapListRow): HtmlElement =
     li(
       cls := "hit map-row",
-      cls("is-undated") := r.undated.value,
+      cls("is-undated") := r.undated.undated,
       a(
         cls := "row-link",
         href := r.href,
