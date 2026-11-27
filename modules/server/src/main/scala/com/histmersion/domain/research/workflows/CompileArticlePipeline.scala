@@ -20,6 +20,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunRequest}
 import com.histmersion.domain.CompileArticle.*
 import com.histmersion.api.automation.Goal.Plans.{ArticleDraft, DraftMode, LinkKind}
+import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
@@ -374,8 +375,8 @@ final class CompileArticlePipeline(
       ctx.warn(why)
       val item = Pipelines.entry(
         ctx,
-        Pipelines.EntryText(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.value.take(8)})"),
-        Some(Pipelines.EntryTopic("agent compile"))
+        Queue.QueueItem.Text(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.value.take(8)})"),
+        Some(Queue.QueueItem.Topic("agent compile"))
       )
       val _ = ctx.write("tasks item", item.asJson)(
         site.workLists.record(WorkListControllers.ListName("tasks"), item, ctx.creator).map(_ => ())

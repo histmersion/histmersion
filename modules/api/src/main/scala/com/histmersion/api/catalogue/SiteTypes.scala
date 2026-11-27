@@ -25,11 +25,6 @@ object SiteTypes:
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ReportSummary extends Newtype[String, Pure]
 
-  export SiteType.{Icon as IconResult, Id as IconId}
-  export CatalogRecord.Wikidata.Class as WikidataP31
-  export Place.Kind.Wire as OfPlaceKind
-  export CatalogRecord.Wikidata.Class as OfP31
-
   final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
 
   object SiteType:
@@ -85,8 +80,7 @@ object SiteTypes:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def get(id: SiteType.Id): Option[SiteType] = byId.get(SiteType.Id((id).value.trim.toLowerCase(java.util.Locale.ROOT)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def icon(id: SiteTypes.IconId): Option[SiteTypes.IconResult] = get(id).map(_.icon)
+  def icon(id: SiteType.Id): Option[SiteType.Icon] = get(id).map(_.icon)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val pleiadesTypes: Map[Pleiades.FeatureType, SiteType.Id] = Map(
@@ -726,9 +720,8 @@ object SiteTypes:
   )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def wikidata(
-      p31: List[SiteTypes.WikidataP31],
+      p31: List[CatalogRecord.Wikidata.Class],
       superclasses: List[CatalogRecord.Wikidata.Class],
       importClass: Option[CatalogRecord.Wikidata.ImportClass]
   ): Option[SiteType.Id] =
@@ -753,7 +746,6 @@ object SiteTypes:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def of(
       placeId: Place.Id,
       placeKind: Place.Kind.Wire,
@@ -761,7 +753,7 @@ object SiteTypes:
       featureTypes: Option[Pleiades.FeatureType],
       fcode: Option[Geonames.Fcode],
       wikidataClass: Option[CatalogRecord.Wikidata.Class],
-      p31: List[SiteTypes.OfP31] = Nil
+      p31: List[CatalogRecord.Wikidata.Class] = Nil
   ): Option[SiteType.Id] =
     if placeKind != Place.Kind.Wire(Place.Kind.Site) && placeKind != Place.Kind.Wire(Place.Kind.Feature)
     then None

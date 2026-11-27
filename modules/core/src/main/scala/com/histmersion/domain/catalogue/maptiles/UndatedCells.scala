@@ -17,11 +17,8 @@ object UndatedCells:
     * one site is that site, any other its count, with how many of it have no known date.
     */
 
-  export TileCoord.Z as MergeZ
-
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def merge(z: UndatedCells.MergeZ, dated: List[GridCell], undated: List[GridCell]): List[TileCell] =
+  def merge(z: TileCoord.Z, dated: List[GridCell], undated: List[GridCell]): List[TileCell] =
     val byUndated = undated.iterator.map(u => (u.gx, u.gy) -> u).toMap
     val datedSquares = dated.iterator.map(d => (d.gx, d.gy)).toSet
     @tailrec def loop(rest: List[GridCell], out: List[TileCell]): List[TileCell] = rest match

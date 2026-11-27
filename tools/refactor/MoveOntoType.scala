@@ -176,6 +176,8 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         }
       }
 
+  private val nameless = new java.util.concurrent.ConcurrentLinkedQueue[String]()
+
   private lazy val sourceObjects: List[SourceObject] =
     moves.groupBy(_.source).toList.map { case (objSym, moves) =>
       val hit = sourceDocs.iterator.flatMap { sd =>
@@ -193,7 +195,8 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         sameType(paramType, to) || promotedTypes.get(to).contains(paramType)
       val stats = o.templ.body.stats.map { stat =>
         val name = statName(stat)
-        val move = name.flatMap(n => named.get(n.value)).orElse(whole)
+        val move = name.flatMap(n => named.get(n.value)).orElse(whole.filterNot(_ => stat.is[Import]))
+        if (move.nonEmpty && name.isEmpty) nameless.add(s"$objSym: ${stat.syntax.linesIterator.next()}")
         val planned = move.filterNot(_.form == "stay").map { m =>
           val form = m.form match {
             case "auto" if isPackage(m.to) => "toplevel"
@@ -508,6 +511,10 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private val reported = new java.util.concurrent.ConcurrentLinkedQueue[String]()
 
   override def beforeStart(): Unit = if (enabled) {
+    sourceObjects.size
+    require(nameless.isEmpty,
+      "MoveOntoType: members without a name the rule cannot move (dissolve them by hand first):\n  " +
+        nameless.asScala.mkString("\n  "))
     extracted.filter(_.planned.toplevel).groupBy(_.planned.file).foreach { case (file, members) =>
       require(file.nonEmpty, s"MoveOntoType: a toplevel move needs a file (${members.map(_.planned.name).mkString(", ")})")
       val pkg = path(members.head.planned.to)

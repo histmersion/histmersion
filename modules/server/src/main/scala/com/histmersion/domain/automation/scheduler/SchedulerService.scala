@@ -660,7 +660,7 @@ final class SchedulerService(
         Stalls.Facts.Running(running.get(slug).fold(0)(_.value))
       )
     }
-    Stalls.report(facts, Stalls.ReportDays(n), Stalls.ReportAt(now.toString))
+    Stalls.report(facts, Stalls.StallReport.Days(n), Stalls.StallReport.At(now.toString))
 
   // ── a person's switch ──────────────────────────────────────────────────────────────────────────
 

@@ -21,9 +21,9 @@ class StallsSuite extends munit.FunSuite:
     Facts(slug, idleDays = idle)
 
   test("stalled: no progress in N days, or never"):
-    assert(stalled(f(idle = Some(Facts.IdleDays(3))), Stalls.ReportDays(3)))
-    assert(!stalled(f(idle = Some(Facts.IdleDays(2))), Stalls.ReportDays(3)))
-    assert(stalled(f(idle = None), Stalls.ReportDays(3)))
+    assert(stalled(f(idle = Some(Facts.IdleDays(3))), Stalls.StallReport.Days(3)))
+    assert(!stalled(f(idle = Some(Facts.IdleDays(2))), Stalls.StallReport.Days(3)))
+    assert(stalled(f(idle = None), Stalls.StallReport.Days(3)))
 
   test("the first reason that holds is named, with its action"):
     def code(x: Facts) = classify(x)._1
@@ -143,8 +143,8 @@ class StallsSuite extends munit.FunSuite:
         f(Facts.Slug("d"), Some(Facts.IdleDays(1))),
         f(Facts.Slug("e"), Some(Facts.IdleDays(4))).modify(_.running).setTo(Facts.Running(1))
       ),
-      Stalls.ReportDays(3),
-      Stalls.ReportAt("now")
+      Stalls.StallReport.Days(3),
+      Stalls.StallReport.At("now")
     )
     assertEquals(r.stalled.map(_.slug), List("b", "c", "a", "e"))
     assertEquals(r.goals, 5)
@@ -164,6 +164,6 @@ class StallsSuite extends munit.FunSuite:
     )
     assert(
       StallsMarkdown
-        .report(report(Nil, Stalls.ReportDays(3), Stalls.ReportAt("now")))
+        .report(report(Nil, Stalls.StallReport.Days(3), Stalls.StallReport.At("now")))
         .contains("Every unfinished goal progressed")
     )

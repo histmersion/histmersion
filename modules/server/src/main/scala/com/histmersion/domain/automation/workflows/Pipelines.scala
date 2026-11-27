@@ -25,7 +25,6 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[histmersion] object Pipelines:
 
-  export Queue.QueueItem.{Text as EntryText, Topic as EntryTopic}
   type LogLine = LogLine.T
   object LogLine extends Newtype[String, Pure]
 
@@ -43,7 +42,7 @@ private[histmersion] object Pipelines:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-  def entry(ctx: RunCtx, text: EntryText, topic: Option[EntryTopic] = None): QueueAdd =
+  def entry(ctx: RunCtx, text: Queue.QueueItem.Text, topic: Option[Queue.QueueItem.Topic] = None): QueueAdd =
     QueueAdd(
       text,
       topic = topic,
@@ -56,7 +55,7 @@ private[histmersion] object Pipelines:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Problems, LogLine] =
-    val entry = Pipelines.entry(ctx, EntryText(line.value))
+    val entry = Pipelines.entry(ctx, Queue.QueueItem.Text(line.value))
     ctx.write("log line", entry.asJson)(
       workLists
         .record(WorkListControllers.ListName("log"), entry, ctx.creator)

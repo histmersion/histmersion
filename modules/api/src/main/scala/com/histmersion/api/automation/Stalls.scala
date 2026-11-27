@@ -16,8 +16,6 @@ object Stalls:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
 
-  export StallReport.{At as ReportAt, Days as ReportDays}
-
   final case class Stall(
       slug: Stall.Slug,
       title: Stall.Title = Facts.Title(""),
@@ -184,7 +182,7 @@ object Stalls:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def stalled(f: Facts, days: ReportDays): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
+  def stalled(f: Facts, days: StallReport.Days): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -302,7 +300,7 @@ object Stalls:
                           )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def report(facts: List[Facts], days: ReportDays, at: ReportAt): StallReport =
+  def report(facts: List[Facts], days: StallReport.Days, at: StallReport.At): StallReport =
     val stalls = facts
       .filter(stalled(_, days))
       .map { f =>

@@ -680,7 +680,11 @@ name means another type in a file, the member is imported instead), redirects `e
 of what moved, drops the moved members' comments (`keepComments = true` keeps them), deletes emptied objects and
 writes `report` (the emptied files, deleted afterwards with `git rm`, and the references it could not rewrite). A name
 clash at the target, a target module that cannot see the member's dependencies or a receiver whose static type is not
-the target's are compile errors fixed by hand. Each batch has its own `move-onto-type-<batch>.conf`; after
+the target's are compile errors fixed by hand. A whole-object move refuses an object with a member that has no name
+(`export X as Y`: dissolve the alias by hand first) and lists every such member at once. After a run, the moved
+members' tolerations the lint no longer needs go with `bash tools/lint/lint.sh --config tools/lint/prune-guidelines.conf`
+(after a compile). `bash tools/refactor/g3-inventory.sh` writes the G3Misplaced worklist (every finding, tolerated or
+not) that a batch config is generated from. Each batch has its own `move-onto-type-<batch>.conf`; after
 `sbt compile Test/compile`, from the worktree root:
 
 ```text
