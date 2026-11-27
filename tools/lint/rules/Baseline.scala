@@ -137,19 +137,33 @@ object Baseline:
           Patch.addLeft(d.tokens.head, as.map(_._2).distinct.sorted.map(a => a + "\n" + indent).mkString)
         }
         .asPatch
-      val present = tree.collect {
-        case i: Importer if i.ref.syntax == "com.histmersion.lint" =>
-          i.importees.collect { case Importee.Name(n) => n.value }
-      }.flatten.toSet
-      val missing = names -- present
-      val imported =
-        if missing.isEmpty then Patch.empty
-        else
-          val text = s"import com.histmersion.lint.{${missing.toList.sorted.mkString(", ")}}"
-          text.parse[Stat].get match
-            case i: Import => Patch.addGlobalImport(i.importers.head)
-            case _         => Patch.empty
-      inserted + imported
+      inserted + importing(names -- imported(tree))
+
+  def imported(tree: Tree): Set[String] =
+    tree.collect {
+      case i: Importer if i.ref.syntax == "com.histmersion.lint" =>
+        i.importees.collect { case Importee.Name(n) => n.value }
+    }.flatten.toSet
+
+  val AnnotationImports: Map[String, Set[String]] = Map(
+    "tolerated" -> Set("LintRule", "tolerated"),
+    "atBoundary" -> Set("BoundaryKind", "atBoundary"),
+    "movesTo" -> Set("FeaturePlace", "movesTo")
+  )
+
+  def missingImports(tree: Tree): Set[String] =
+    val used = Tolerance.definitions(tree).flatMap(Tolerance.modsOf).collect { case a: Mod.Annot =>
+      Tolerance.annotationName(a)
+    }
+    used.flatMap(a => AnnotationImports.getOrElse(a, Set.empty)).toSet -- imported(tree)
+
+  def importing(missing: Set[String]): Patch =
+    if missing.isEmpty then Patch.empty
+    else
+      val text = s"import com.histmersion.lint.{${missing.toList.sorted.mkString(", ")}}"
+      text.parse[Stat].get match
+        case i: Import => Patch.addGlobalImport(i.importers.head)
+        case _         => Patch.empty
 
   def tolerations(findings: List[Finding], tree: Tree, rel: String): Patch =
     val key = Project.ref(rel).map(_.key)
@@ -208,3 +222,7 @@ object Baseline:
 final class FileBaseline extends SyntacticRule("FileBaseline"):
   override def fix(using doc: SyntacticDocument): Patch =
     Baseline.files(doc.tree, Project.relativeOf(doc.input))
+
+final class LintImports extends SyntacticRule("LintImports"):
+  override def fix(using doc: SyntacticDocument): Patch =
+    Baseline.importing(Baseline.missingImports(doc.tree))
